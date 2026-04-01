@@ -1,0 +1,20 @@
+<template>
+  <span class="badge" :class="'badge-' + (variant || type || 'primary')">
+    <slot></slot>
+  </span>
+</template>
+
+<script>
+  props:
+    type: string = 'primary';
+    variant: string = '';
+</script>
+
+<style>
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: white; display: inline-block; vertical-align: middle; }
+  .badge-primary { background: #0d6efd; }
+  .badge-success { background: #198754; }
+  .badge-danger { background: #dc3545; }
+  .badge-warning { background: #ffc107; color: #000; }
+  .badge-info { background: #0dcaf0; color: #000; }
+</style>

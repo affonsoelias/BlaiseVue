@@ -1,0 +1,18 @@
+<template>
+  <button class="btn" :class="'btn-' + variant" @click="handleClick" style="min-width: 100px; padding: 10px 20px; font-weight: 600;">
+    <span v-if="label">{{ label }}</span>
+    <slot v-if="!label"></slot>
+  </button>
+</template>
+
+<script>
+  props:
+    variant: string = 'primary';
+    label: string = '';
+  
+  methods:
+    procedure handleClick;
+    begin
+       asm this.$emit('click'); end;
+    end;
+</script>

@@ -1,0 +1,187 @@
+unit BVTestUtils;
+
+{$mode objfpc}
+
+interface
+
+uses JS, Web, BVReactivity, BVCompiler;
+
+type
+  TWrapper = class
+  private
+    FEl: TJSHTMLElement;
+  public
+    constructor Create(AEl: TJSHTMLElement);
+    function HTML: string;
+    function Text: string;
+    function Find(Selector: string): TJSHTMLElement;
+    procedure Click;
+    procedure SetValue(AVal: string);
+    procedure Trigger(EventName: string);
+  end;
+
+  TExpectProxy = class
+  private
+    FVal: JSValue;
+  public
+    constructor Create(AVal: JSValue);
+    procedure ToBe(AExpected: JSValue);
+    procedure ToEqual(AExpected: JSValue);
+    procedure ToContain(AExpected: JSValue);
+    procedure ToHaveLength(ALen: Integer);
+    procedure ToBeTruthy;
+    procedure ToBeFalsy;
+    procedure ToBeDefined;
+    procedure ToBeUndefined;
+    procedure ToBeNull;
+  end;
+
+procedure Describe(const Msg: string; Fn: JSValue);
+procedure It(const Msg: string; Fn: JSValue);
+function Expect(Val: JSValue): TExpectProxy;
+function Mount(const TagName: string; Props: TJSObject = nil): TWrapper;
+
+implementation
+
+{ TWrapper }
+
+constructor TWrapper.Create(AEl: TJSHTMLElement);
+begin
+  FEl := AEl;
+end;
+
+function TWrapper.HTML: string;
+begin
+  Result := string(FEl.innerHTML);
+end;
+
+function TWrapper.Text: string;
+begin
+  Result := string(FEl.textContent);
+end;
+
+function TWrapper.Find(Selector: string): TJSHTMLElement;
+begin
+  Result := TJSHTMLElement(FEl.querySelector(Selector));
+end;
+
+procedure TWrapper.Click;
+begin
+  FEl.click();
+end;
+
+procedure TWrapper.SetValue(AVal: string);
+begin
+  asm
+    this.FEl.value = AVal;
+    this.FEl.dispatchEvent(new Event('input'));
+  end;
+end;
+
+procedure TWrapper.Trigger(EventName: string);
+begin
+  asm
+    this.FEl.dispatchEvent(new Event(EventName));
+  end;
+end;
+
+{ TExpectProxy }
+
+constructor TExpectProxy.Create(AVal: JSValue);
+begin
+  FVal := AVal;
+end;
+
+procedure TExpectProxy.ToBe(AExpected: JSValue);
+begin
+  asm expect(this.FVal).toBe(AExpected); end;
+end;
+
+procedure TExpectProxy.ToEqual(AExpected: JSValue);
+begin
+  asm expect(this.FVal).toEqual(AExpected); end;
+end;
+
+procedure TExpectProxy.ToContain(AExpected: JSValue);
+begin
+  asm expect(this.FVal).toContain(AExpected); end;
+end;
+
+procedure TExpectProxy.ToHaveLength(ALen: Integer);
+begin
+  asm expect(this.FVal).toHaveLength(ALen); end;
+end;
+
+procedure TExpectProxy.ToBeTruthy;
+begin
+  asm expect(this.FVal).toBeTruthy(); end;
+end;
+
+procedure TExpectProxy.ToBeFalsy;
+begin
+  asm expect(this.FVal).toBeFalsy(); end;
+end;
+
+procedure TExpectProxy.ToBeDefined;
+begin
+  asm expect(this.FVal).toBeDefined(); end;
+end;
+
+procedure TExpectProxy.ToBeUndefined;
+begin
+  asm expect(this.FVal).toBeUndefined(); end;
+end;
+
+procedure TExpectProxy.ToBeNull;
+begin
+  asm expect(this.FVal).toBeNull(); end;
+end;
+
+procedure Describe(const Msg: string; Fn: JSValue);
+begin
+  asm describe(Msg, Fn); end;
+end;
+
+procedure It(const Msg: string; Fn: JSValue);
+begin
+  asm it(Msg, Fn); end;
+end;
+
+function Expect(Val: JSValue): TExpectProxy;
+begin
+  Result := TExpectProxy.Create(Val);
+end;
+
+function Mount(const TagName: string; Props: TJSObject = nil): TWrapper;
+var
+  El: TJSHTMLElement;
+  Data: TBlaiseData;
+begin
+  El := TJSHTMLElement(document.createElement(TagName));
+  asm
+    if (Props) {
+      Object.keys(Props).forEach(k => {
+         El.setAttribute(':' + k, k);
+      });
+    }
+  end;
+  
+  document.body.appendChild(El);
+  
+  // Use Pascal objects to force dependency inclusion
+  Data := TBlaiseData.Create(Props);
+  // Compile the element with the data
+  Compile(El, Data, TJSObject.new);
+  
+  Result := TWrapper.Create(El);
+end;
+
+procedure ForceInclude;
+var d: TBlaiseData;
+begin
+  d := nil;
+end;
+
+initialization
+  ForceInclude;
+end.

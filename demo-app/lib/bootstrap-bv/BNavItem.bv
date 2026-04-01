@@ -1,0 +1,12 @@
+<template>
+  <li class="nav-item">
+     <a class="nav-link" style="color: inherit; text-decoration: none;" href="#" @click="$emit('click')">
+        {{ label }}
+     </a>
+  </li>
+</template>
+
+<script>
+  props:
+    label: string = 'Item';
+</script>

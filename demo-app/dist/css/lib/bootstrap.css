@@ -1,0 +1,42 @@
+/* Ultra-Standard Bootstrap Subset for BlaiseVue Professional */
+:root { --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --secondary: #64748b; --dark: #1e293b; --light: #f8fafc; }
+
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
+.card-header { background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #334155; }
+.card-body { padding: 20px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; border: 1px solid transparent; text-decoration: none; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-secondary { background: var(--secondary); color: #fff; }
+.btn-outline-primary { border-color: var(--primary); color: var(--primary); background: transparent; }
+.btn-outline-primary:hover { background: var(--primary); color: #fff; }
+
+.badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; line-height: 1; margin-right: 5px; }
+.bg-primary { background: var(--primary); }
+.bg-success { background: var(--success); }
+.bg-info { background: var(--info); }
+.bg-warning { background: var(--warning); color: #000; }
+
+.navbar { background: var(--dark); padding: 15px 25px; display: flex; align-items: center; gap: 20px; border-radius: 8px; margin-bottom: 25px; }
+.navbar-brand { color: #fff; font-size: 20px; font-weight: 800; text-decoration: none; }
+.nav-item { color: rgba(255,255,255,0.7); font-weight: 600; cursor: pointer; }
+.nav-item:hover { color: #fff; }
+
+.alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid transparent; }
+.alert-success { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+
+.progress { background: #e2e8f0; border-radius: 10px; height: 24px; width: 100%; overflow: hidden; display: flex; margin: 10px 0; }
+.progress-bar { height: 100%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: width 0.4s ease; }
+
+.spinner-border { display: inline-block; width: 32px; height: 32px; border: 4px solid rgba(0,0,0,0.1); border-left-color: var(--primary); border-radius: 50%; animation: bv-spin 1s linear infinite; }
+@keyframes bv-spin { to { transform: rotate(360deg); } }
+
+.text-primary { color: var(--primary); }
+.text-success { color: var(--success); }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.d-flex { display: flex; }
+.gap-3 { gap: 15px; }
+.align-items-center { align-items: center; }
+.mt-3 { margin-top: 15px; }

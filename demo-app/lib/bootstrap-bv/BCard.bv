@@ -1,0 +1,15 @@
+<template>
+  <div class="card">
+    <div class="card-header" b-if="title">
+      <slot name="header">{{ title }}</slot>
+    </div>
+    <div class="card-body">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    title: string = '';
+</script>

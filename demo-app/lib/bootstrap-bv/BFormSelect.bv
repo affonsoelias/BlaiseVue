@@ -1,0 +1,26 @@
+<template>
+  <div class="mb-3">
+    <label class="form-label" v-if="label" style="font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">{{ label }}</label>
+    <select class="form-select" :value="value" @change="onChange" 
+            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background-color: #fff;">
+       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>
+    </select>
+  </div>
+</template>
+
+<script>
+  props:
+    label: string = '';
+    value: string = '';
+    options: array of JSValue = [];
+
+  methods:
+    procedure onChange(ev: JSValue);
+    begin
+       asm this.$emit('input', ev.target.value); this.$emit('change', ev.target.value); end;
+    end;
+</script>
+
+<style>
+  .form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); outline: 0; }
+</style>
