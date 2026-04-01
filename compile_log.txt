@@ -1,0 +1,15 @@
+Free Pascal Compiler version 3.2.2 [2026/02/20] for x86_64
+Copyright (c) 1993-2021 by Florian Klaempfl and others
+Target OS: Win64 for x64
+Compiling bin\bv.pas
+bv.pas(277,3) Note: Local variable "S" not used
+bv.pas(461,3) Note: Local variable "i" not used
+bv.pas(583,10) Note: Local variable "SubParts" not used
+bv.pas(584,3) Note: Local variable "i" not used
+bv.pas(1422,13) Note: Local variable "ViewPath" is assigned but never used
+bv.pas(1715,3) Note: Local variable "GenPath" is assigned but never used
+Linking bin\bv.exe
+Error: Can't create object file: bin\bv.exe (error code: 5)
+Fatal: Can't create executable bin\bv.exe
+Fatal: Compilation aborted
+Error: C:\lazarus\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode

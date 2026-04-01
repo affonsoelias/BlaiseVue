@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="pas2js_rtl"/>
+    <Type Value="RunTimeOnly"/>
+    <Author Value="Mattias Gaertner"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <AllowLabel Value="False"/>
+          <UseAnsiStrings Value="False"/>
+          <CPPInline Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="0"/>
+        </Optimizations>
+      </CodeGeneration>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+      <Other>
+        <CustomOptions Value="-dPas2js -O- -Jc"/>
+        <CompilerPath Value="$(pas2js)"/>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_rtl.pas"/>
+          <ScanForFPCMsgs Value="True"/>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Description Value="pas2js RTL - Run Time Library"/>
+    <License Value="Modified LGPL2 as the FPC packages."/>
+    <Version Major="1"/>
+    <Files Count="42">
+      <Item1>
+        <HasRegisterProc Value="True"/>
+        <AddToUsesPkgSection Value="False"/>
+      </Item1>
+      <Item2>
+        <Filename Value="classes.pas"/>
+        <UnitName Value="Classes"/>
+      </Item2>
+      <Item3>
+        <Filename Value="js.pas"/>
+        <UnitName Value="JS"/>
+      </Item3>
+      <Item4>
+        <Filename Value="math.pas"/>
+        <UnitName Value="Math"/>
+      </Item4>
+      <Item5>
+        <Filename Value="nodejs.pas"/>
+        <UnitName Value="NodeJS"/>
+      </Item5>
+      <Item6>
+        <Filename Value="objpas.pas"/>
+        <UnitName Value="ObjPas"/>
+      </Item6>
+      <Item7>
+        <Filename Value="rtlconsts.pas"/>
+        <UnitName Value="RTLConsts"/>
+      </Item7>
+      <Item8>
+        <Filename Value="system.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="System"/>
+      </Item8>
+      <Item9>
+        <Filename Value="sysutils.pas"/>
+        <UnitName Value="SysUtils"/>
+      </Item9>
+      <Item10>
+        <Filename Value="types.pas"/>
+        <UnitName Value="Types"/>
+      </Item10>
+      <Item11>
+        <Filename Value="typinfo.pas"/>
+        <UnitName Value="TypInfo"/>
+      </Item11>
+      <Item12>
+        <Filename Value="web.pas"/>
+        <UnitName Value="Web"/>
+      </Item12>
+      <Item13>
+        <Filename Value="hotreloadclient.pas"/>
+        <UnitName Value="hotreloadclient"/>
+      </Item13>
+      <Item14>
+        <Filename Value="dateutils.pas"/>
+        <UnitName Value="DateUtils"/>
+      </Item14>
+      <Item15>
+        <Filename Value="strutils.pas"/>
+        <UnitName Value="strutils"/>
+      </Item15>
+      <Item16>
+        <Filename Value="contnrs.pas"/>
+        <UnitName Value="contnrs"/>
+      </Item16>
+      <Item17>
+        <Filename Value="browserconsole.pas"/>
+        <UnitName Value="browserconsole"/>
+      </Item17>
+      <Item18>
+        <Filename Value="webrouter.pp"/>
+        <UnitName Value="webrouter"/>
+      </Item18>
+      <Item19>
+        <Filename Value="rtti.pas"/>
+        <UnitName Value="RTTI"/>
+      </Item19>
+      <Item20>
+        <Filename Value="webgl.pas"/>
+        <UnitName Value="webgl"/>
+      </Item20>
+      <Item21>
+        <Filename Value="class2pas.pas"/>
+        <UnitName Value="class2pas"/>
+      </Item21>
+      <Item22>
+        <Filename Value="libjquery.pas"/>
+        <UnitName Value="libjquery"/>
+      </Item22>
+      <Item23>
+        <Filename Value="timer.pas"/>
+        <UnitName Value="timer"/>
+      </Item23>
+      <Item24>
+        <Filename Value="webaudio.pas"/>
+        <UnitName Value="webaudio"/>
+      </Item24>
+      <Item25>
+        <Filename Value="webbluetooth.pas"/>
+        <UnitName Value="webbluetooth"/>
+      </Item25>
+      <Item26>
+        <Filename Value="websvg.pas"/>
+        <UnitName Value="websvg"/>
+      </Item26>
+      <Item27>
+        <Filename Value="generics.collections.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="generics.collections"/>
+      </Item27>
+      <Item28>
+        <Filename Value="generics.defaults.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="generics.defaults"/>
+      </Item28>
+      <Item29>
+        <Filename Value="generics.strings.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="generics.strings"/>
+      </Item29>
+      <Item30>
+        <Filename Value="rstranslate.pp"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="rstranslate"/>
+      </Item30>
+      <Item31>
+        <Filename Value="Rtl.BrowserLoadHelper.pas"/>
+        <UnitName Value="Rtl.BrowserLoadHelper"/>
+      </Item31>
+      <Item32>
+        <Filename Value="Rtl.HTMLActions.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.HTMLActions"/>
+      </Item32>
+      <Item33>
+        <Filename Value="Rtl.HTMLEventNames.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.HTMLEventNames"/>
+      </Item33>
+      <Item34>
+        <Filename Value="Rtl.HTMLTranslate.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.HTMLTranslate"/>
+      </Item34>
+      <Item35>
+        <Filename Value="Rtl.HTMLUtils.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.HTMLUtils"/>
+      </Item35>
+      <Item36>
+        <Filename Value="Rtl.ScriptLoader.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.ScriptLoader"/>
+      </Item36>
+      <Item37>
+        <Filename Value="Rtl.TemplateLoader.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.TemplateLoader"/>
+      </Item37>
+      <Item38>
+        <Filename Value="Rtl.UnitLoader.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="Rtl.UnitLoader"/>
+      </Item38>
+      <Item39>
+        <Filename Value="webassembly.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="webassembly"/>
+      </Item39>
+      <Item40>
+        <Filename Value="webrtc.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="webrtc"/>
+      </Item40>
+      <Item41>
+        <Filename Value="webutils.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="webutils"/>
+      </Item41>
+      <Item42>
+        <Filename Value="webworker.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="webworker"/>
+      </Item42>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <UsageOptions>
+      <CustomOptions Value="-dPas2js"/>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

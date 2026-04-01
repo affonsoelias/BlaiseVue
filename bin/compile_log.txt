@@ -1,0 +1,7 @@
+Free Pascal Compiler version 3.2.2 [2026/02/20] for x86_64
+Copyright (c) 1993-2021 by Florian Klaempfl and others
+Target OS: Win64 for x64
+Compiling bv.pas
+bv.pas(15,52) Fatal: Can't find unit IOUtils used by bv
+Fatal: Compilation aborted
+Error: C:\lazarus\fpc\3.2.2\bin\x86_64-win64\ppcx64.exe returned an error exitcode

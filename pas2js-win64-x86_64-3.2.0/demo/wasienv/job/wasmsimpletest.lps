@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="55" Y="27"/>
+        <UsageCount Value="54"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_web.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2226"/>
+        <CursorPos X="3" Y="2246"/>
+        <UsageCount Value="52"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_js.pas"/>
+        <UnitName Value="JOB_JS"/>
+        <UsageCount Value="52"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <UnitName Value="JOB_Shared"/>
+        <UsageCount Value="52"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job.js.pas"/>
+        <UnitName Value="JOB.Js"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="6" Y="16"/>
+        <UsageCount Value="25"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_browser.pp"/>
+        <UnitName Value="JOB_Browser"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="38" Y="12"/>
+        <UsageCount Value="25"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../FPC/FPC/src/rtl/wasi/wasiapi.pp"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="5" Y="22"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="Wasm.Job.Js.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="51" Y="3"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../FPC/FPC/src/rtl/wasi/system.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="42"/>
+        <CursorPos X="66" Y="62"/>
+        <UsageCount Value="10"/>
+      </Unit>
+      <Unit>
+        <Filename Value="hostsimpletest.lpr"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="7"/>
+        <CursorPos X="31" Y="25"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <OtherDefines Count="1">
+      <Define0 Value="FPC_DOTTEDUNITS"/>
+    </OtherDefines>
+    <JumpHistory HistoryIndex="9">
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="159" Column="5" TopLine="150"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="75" Column="23" TopLine="41"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="115" Column="46" TopLine="86"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="193" Column="25" TopLine="174"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="62" Column="24" TopLine="54"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="210" Column="32" TopLine="181"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="165" Column="20" TopLine="145"/>
+      </Position>
+      <Position>
+        <Filename Value="wasmsimpletest.lpr"/>
+        <Caret Line="163" TopLine="145"/>
+      </Position>
+      <Position>
+        <Filename Value="hostsimpletest.lpr"/>
+        <Caret Line="16" Column="12" TopLine="7"/>
+      </Position>
+      <Position>
+        <Filename Value="hostsimpletest.lpr"/>
+        <Caret Line="25" Column="31" TopLine="7"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>
