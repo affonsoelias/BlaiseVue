@@ -88,13 +88,12 @@ begin
     var
       refs, header: TJSObject;
     begin
-      // Acessando o componente filho via $refs de forma legal no Pascal
       refs := TJSObject(_this['$refs']);
       if Assigned(refs) then
       begin
         header := TJSObject(refs['headerComp']);
         if Assigned(header) then
-          TJSFunction(header['setHeaderTitle']).apply(TJSObject(header['$data']), ['Titulo alterado via $refs!']);
+           header['title'] := 'Titulo alterado via $refs!';
       end;
     end;
     

@@ -17,7 +17,7 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background: #f9f0f9; border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background: #f0faf5; }   .form-header-title { color: #2c3e50; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: #666; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: #eee; margin-top: 12px; }';
+  _styleEl.textContent := '.form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background-color: rgba(66, 184, 131, 0.05); border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background-color: rgba(66, 184, 131, 0.1); }   .form-header-title { color: inherit !important; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: inherit !important; opacity: 0.8; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: rgba(128,128,128,0.2); margin-top: 12px; }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
@@ -40,13 +40,7 @@ begin
   m['headerClick'] := procedure(_this: TJSObject)
 
     begin
-      TJSFunction(_this['$emit']).apply(_this, ['header-clicked', 'Ola do Header!']);
-    end;
-    
-  m['setHeaderTitle'] := procedure(_this: TJSObject; newTitle: string)
-
-    begin
-      _this['title'] := newTitle;
+      TJSFunction(_this['$emit']).call(_this, 'header-clicked', 'Ola do Header!');
     end;
 
   comp['methods'] := m;

@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uUserProfile, uBAccordion, uBAlert, uBBadge, uBBreadcrumb, uBBreadcrumbItem, uBBtn, uBCard, uBFormSelect, uBInput, uBInputGroup, uBListGroup, uBListGroupItem, uBModal, uBNavbar, uBNavItem, uBPagination, uBProgress, uBSpinner, uBTab, uBTabs, uBToast, uCArea, uCBar, uCBaseChart, uCBubble, uCDoughnut, uCLine, uCMixed, uCPie, uCPolarArea, uCRadar, uCScatter, uCStacked;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBAccordion, uBAlert, uBBadge, uBBreadcrumb, uBBreadcrumbItem, uBBtn, uBCard, uBFormSelect, uBIcon, uBInput, uBInputGroup, uBListGroup, uBListGroupItem, uBModal, uBNavbar, uBNavItem, uBPagination, uBProgress, uBSpinner, uBTab, uBTabs, uBToast, uCArea, uCBar, uCBaseChart, uCBubble, uCDoughnut, uCLine, uCMixed, uCPie, uCPolarArea, uCRadar, uCScatter, uCStacked;
 
 procedure Init_App;
 
@@ -56,6 +56,8 @@ begin
   Register_uLibBootstrap;
   asm console.log("[Init] Registering uProFeatures..."); end;
   Register_uProFeatures;
+  asm console.log("[Init] Registering uShowcase..."); end;
+  Register_uShowcase;
   asm console.log("[Init] Registering uUserProfile..."); end;
   Register_uUserProfile;
   asm console.log("[Init] Registering uBAccordion..."); end;
@@ -74,6 +76,8 @@ begin
   Register_uBCard;
   asm console.log("[Init] Registering uBFormSelect..."); end;
   Register_uBFormSelect;
+  asm console.log("[Init] Registering uBIcon..."); end;
+  Register_uBIcon;
   asm console.log("[Init] Registering uBInput..."); end;
   Register_uBInput;
   asm console.log("[Init] Registering uBInputGroup..."); end;
@@ -137,6 +141,7 @@ begin
     '        <a href="#/form">Formulario</a>' +
     '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' +
+    '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' +
     '      </div>' +
     '      <span class="nav-msg">{{ mensagem }}</span>' +
     '    </nav>' +
@@ -211,6 +216,11 @@ begin
   r := TJSObject.new;
   r['path'] := '/charts';
   r['component'] := 'charts-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/showcase';
+  r['component'] := 'showcase-page';
   routesArr.push(r);
 
   routerOpts['routes'] := routesArr;

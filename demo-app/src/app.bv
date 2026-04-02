@@ -9,6 +9,7 @@
         <a href="#/form">Formulario</a>
         <a href="#/bootstrap">Bootstrap Lib 📦</a>
         <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>
+        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>
       </div>
       <span class="nav-msg">{{ mensagem }}</span>
     </nav>
@@ -52,6 +53,7 @@
       '/pro': 'pro-features-page';
       '/bootstrap': 'lib-bootstrap-page';
       '/charts': 'charts-page';
+      '/showcase': 'showcase-page';
 </script>
 
 <style>
