@@ -10,35 +10,35 @@
       <h3>Galeria de Ícones (Inline Local SVGs)</h3>
       <div class="icon-grid">
         <div class="icon-box">
-          <uBIcon name="bootstrap-fill" size="32" class="text-primary" />
+          <b-icon name="bootstrap-fill" size="32" class="text-primary" />
           <div class="small mt-1">bootstrap-fill</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="check-circle" size="32" class="text-success" />
+          <b-icon name="check-circle" size="32" class="text-success" />
           <div class="small mt-1">check-circle</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="warning" size="32" class="text-warning" />
+          <b-icon name="warning" size="32" class="text-warning" />
           <div class="small mt-1">warning</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="gear-fill" size="32" class="text-secondary" />
+          <b-icon name="gear-fill" size="32" class="text-secondary" />
           <div class="small mt-1">gear-fill</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="heart-fill" size="32" class="text-danger" />
+          <b-icon name="heart-fill" size="32" class="text-danger" />
           <div class="small mt-1">heart-fill</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="weather" size="32" class="text-info" />
+          <b-icon name="weather" size="32" class="text-info" />
           <div class="small mt-1">weather</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="code-slash" size="32" class="text-dark" />
+          <b-icon name="code-slash" size="32" class="text-dark" />
           <div class="small mt-1">code-slash</div>
         </div>
         <div class="icon-box">
-          <uBIcon name="cpu" size="32" class="text-primary" />
+          <b-icon name="cpu" size="32" class="text-primary" />
           <div class="small mt-1">cpu</div>
         </div>
       </div>
