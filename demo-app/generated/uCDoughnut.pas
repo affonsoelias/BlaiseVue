@@ -20,6 +20,18 @@ begin
   comp['template'] :=
     '  <c-base-chart type="doughnut" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('data');
+  TJSArray(comp['props']).push('options');
+  TJSArray(comp['props']).push('width');
+  TJSArray(comp['props']).push('height');
 
   m := TJSObject.new;
   comp['methods'] := m;

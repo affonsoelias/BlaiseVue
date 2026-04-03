@@ -16,16 +16,22 @@ var
   m: TJSObject;
   _styleEl: TJSHTMLElement;
 begin
-  _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid transparent; }   .alert-primary { background: #cfe2ff; color: #084298; border-color: #084298; }   .alert-success { background: #d1e7dd; color: #0f5132; border-color: #0f5132; }   .alert-danger { background: #f8d7da; color: #842029; border-color: #842029; }   .alert-info { background: #cff4fc; color: #055160; border-color: #055160; }';
-  document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
-    '  <div class="alert" :class="''alert-'' + variant" v-if="visible">' +
-    '    <div class="flex justify-between align-center" style="display:flex; justify-content:space-between; align-items:center;">' +
-    '       <div><slot></slot></div>' +
-    '       <button v-if="dismissible" type="button" class="btn-close" @click="close" style="background:none; border:none; cursor:pointer; font-weight:bold; font-size:1.5rem; line-height:1;">&times;</button>' +
-    '    </div>' +
+    '  <div class="alert" ' +
+    '       :class="[''alert-'' + variant, dismissible ? ''alert-dismissible fade show'' : '''']" ' +
+    '       role="alert"' +
+    '       b-if="visible"' +
+    '       style="padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.375rem; position: relative;">' +
+    '    <slot></slot>' +
+    '    <button type="button" ' +
+    '            class="btn-close" ' +
+    '            b-if="dismissible" ' +
+    '            @click="close" ' +
+    '            aria-label="Close"' +
+    '            style="position: absolute; top: 0; right: 0; z-index: 2; padding: 1.25rem 1rem; background: transparent; border: 0; cursor: pointer; float: right; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #000; text-shadow: 0 1px 0 #fff; opacity: .5;">' +
+    '      ×' +
+    '    </button>' +
     '  </div>';
 
   comp['data'] := function(): TJSObject
@@ -35,6 +41,11 @@ begin
     d['visible'] := true;
     Result := d;
   end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('variant');
+  TJSArray(comp['props']).push('dismissible');
+  TJSArray(comp['props']).push('show');
 
   m := TJSObject.new;
   m['close'] := procedure(_this: TJSObject)
@@ -46,6 +57,12 @@ begin
 
   comp['methods'] := m;
 
+  comp['created'] := procedure(_this: TJSObject)
+    begin
+       _this['visible'] := boolean(_this['show']);
+    end;
+
+    ;
 
   RegisterComponent('b-alert', comp);
 end;

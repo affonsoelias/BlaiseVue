@@ -1,41 +1,40 @@
 unit BVComponents;
 
+{
+  BVComponents - Global Component Registry
+  ----------------------------------------
+  Standardizes how components are registered and retrieved by the compiler.
+}
+
 {$mode objfpc}
 
 interface
 
 uses JS, Web, SysUtils;
 
-procedure RegisterComponent(Name: string; Options: TJSObject);
-function GetComponent(Name: string): TJSObject;
+{ Registers a component options object (data, template, methods) under a specific tag name }
+procedure RegisterComponent(AName: string; AOptions: JSValue);
+
+{ Retrieves the options object for a registered component tag }
+function GetComponent(AName: string): JSValue;
 
 implementation
 
-procedure RegisterComponent(Name: string; Options: TJSObject);
+procedure RegisterComponent(AName: string; AOptions: JSValue);
 begin
-  asm
-    let core = window.__BV_CORE__;
-    if (!core.components) core.components = {};
-    core.components[Name.toLowerCase()] = Options;
-  end;
+  asm window.__BV_CORE__.components[AName.toLowerCase()] = AOptions; end;
 end;
 
-function GetComponent(Name: string): TJSObject;
+function GetComponent(AName: string): JSValue;
 begin
-  asm
-    let core = window.__BV_CORE__;
-    if (!core.components) return null;
-    Result = core.components[Name.toLowerCase()] || null;
-  end;
+  asm Result = window.__BV_CORE__.components[AName.toLowerCase()]; end;
 end;
 
 initialization
   asm
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
-    window.__BV_CORE__.getComponent = function(n) {
-      let core = window.__BV_CORE__;
-      return (core.components && core.components[n.toLowerCase()]) || null;
-    };
+    if (!window.__BV_CORE__.components) window.__BV_CORE__.components = {};
+    window.__BV_CORE__.getComponent = (n) => window.__BV_CORE__.components[n.toLowerCase()];
   end;
 
 end.

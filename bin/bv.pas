@@ -1,12 +1,15 @@
 program bv;
 {
-  BlaiseVue CLI & SFC Preprocessor
-  Compilar com: fpc bv.pas
-  Uso:
-    bv create <nome-projeto>    - Cria estrutura de projeto
-    bv build                     - Compila .bv -> .pas -> .js
-    bv new c <NomeComponente>    - Cria componente .bv
-    bv remove c <NomeComponente> - Remove componente .bv
+  BlaiseVue CLI & SFC (Single File Component) Preprocessor
+  --------------------------------------------------------
+  Build with: fpc bv.pas
+  
+  Usage:
+    bv create <project-name>    - Scaffolds a new project structure
+    bv build                     - Full compilation cycle: .bv -> .pas -> .js
+    bv run dev                  - Real-time build with debug features
+    bv new c <ComponentName>    - Scaffolds a new .bv component
+    bv clean                     - Purges the dist/ and generated/ folders
 }
 
 {$mode objfpc}{$H+}
@@ -16,30 +19,31 @@ uses
   fphttpclient, openssl, zipper, fpjson, jsonparser;
 
 // =====================================================================
-//  UTILITARIOS
+//  UTILITY FUNCTIONS
 // =====================================================================
 
+{ Returns the absolute path to the BlaiseVue SDK root }
 function GetSDKPath: string;
 var
   BinDir: string;
 begin
-  // ParamStr(0) = ...\bin\bv.exe
-  // ExtractFilePath = ...\bin\
-  // Precisamos subir para o pai de bin\
   BinDir := ExtractFilePath(ParamStr(0));
   Result := ExtractFilePath(ExcludeTrailingPathDelimiter(BinDir));
 end;
 
+{ Returns the path to the framework core unit folder }
 function GetCorePath: string;
 begin
   Result := GetSDKPath + 'core' + DirectorySeparator;
 end;
 
+{ Returns the absolute path to the pas2js compiler executable }
 function GetPas2JSPath: string;
 begin
   Result := GetSDKPath + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
 end;
 
+{ Returns the library path for the pas2js system units }
 function GetPas2JSLibPath: string;
 begin
   Result := GetSDKPath + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + '*' + DirectorySeparator + 'src';
@@ -50,15 +54,15 @@ var
   SDK: string;
 begin
   SDK := GetSDKPath;
-  // 1. Tenta na raiz do framework
+  // 1. Tries the framework root
   if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');
-  // 2. Tenta no caminho padrao do Pas2JS local (Packages)
+  // 2. Tries the default Pas2JS local package path
   if FileExists(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
     Exit(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
-  // 3. Tenta no bin do pas2js
+  // 3. Tries the Pas2JS bin folder
   if FileExists(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
     Exit(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
-  // 4. Tenta em um nivel acima do SDK (caso o usuario tenha baixado o bin separadamente)
+  // 4. Tries one level above (if SDK etc. is moved)
   if FileExists(ExtractFilePath(ExcludeTrailingPathDelimiter(SDK)) + 'rtl.js') then
     Exit(ExtractFilePath(ExcludeTrailingPathDelimiter(SDK)) + 'rtl.js');
   Result := '';
@@ -146,7 +150,7 @@ var
   S: string;
   Output: TStringList;
 begin
-  // No Windows, usamos certutil para pegar o MD5 como um hash rapido
+  // On Windows, use certutil for a fast MD5 hash
   Output := TStringList.Create;
   try
     if RunCommand('certutil', ['-hashfile', FileName, 'MD5'], S) then
@@ -154,10 +158,10 @@ begin
       Output.Text := S;
       if Output.Count > 1 then
       begin
-        Result := Trim(Output[1]); // A segunda linha contem o hash
+        Result := Trim(Output[1]); // The second line contains the hash
         Result := StringReplace(Result, ' ', '', [rfReplaceAll]);
         Result := LowerCase(Result);
-        Result := Copy(Result, 1, 8); // Apenas 8 chars do hash
+        Result := Copy(Result, 1, 8); // Uses only 8 chars
       end
       else
         Result := IntToStr(DateTimeToUnix(Now));
@@ -170,7 +174,7 @@ begin
 end;
 
 // =====================================================================
-//  PARSER DO FORMATO .BV (Single File Component)
+//  .BV (Single File Component) PARSER
 // =====================================================================
 
 type
@@ -178,6 +182,7 @@ type
     Name: string;
     FieldType: string;
     DefaultValue: string;
+    IsProp: Boolean;
   end;
 
   TRouteEntry = record
@@ -211,6 +216,7 @@ procedure CmdLibList; forward;
 procedure CmdLibInstall(const URL: string); forward;
 procedure CmdLibRemove(const LibName: string); forward;
 
+{ Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
 var
   Lines: TStringList;
@@ -229,9 +235,9 @@ begin
   Parsed.MountedCode := '';
   Parsed.WatchCode := '';
   Parsed.ComputedCode := '';
-  Parsed.UpdatedCode := ''; // Novo
-  Parsed.ProvideCode := ''; // Novo
-  Parsed.InjectCode := '';  // Novo
+  Parsed.UpdatedCode := ''; // New
+  Parsed.ProvideCode := ''; // New
+  Parsed.InjectCode := '';  // New
   Parsed.HasRouter := False;
   SetLength(Parsed.DataFields, 0);
   SetLength(Parsed.Routes, 0);
@@ -247,7 +253,7 @@ begin
       Line := Lines[i];
       Trimmed := Trim(Line);
 
-      // Detecta abertura de secao
+      // Section opening detection
       if Pos('<template>', LowerCase(Trimmed)) = 1 then
       begin
         Section := 1;
@@ -256,7 +262,7 @@ begin
       if Pos('<script', LowerCase(Trimmed)) = 1 then
       begin
         Section := 2;
-        // Extrai uses="..."
+        // Extract uses="..."
         P := Pos('uses="', LowerCase(Trimmed));
         if P > 0 then
         begin
@@ -273,7 +279,7 @@ begin
         Continue;
       end;
 
-      // Detecta fechamento de secao
+      // Section closing detection
       if Pos('</template>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
       if Pos('</script>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
       if Pos('</style>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
@@ -318,27 +324,44 @@ begin
 
       if Trimmed = '' then Continue;
 
-      // Detecta sub-secao
+      // Detection of comments at top level within script
+      if (Trimmed[1] = '{') or (Copy(Trimmed, 1, 2) = '//') then
+      begin
+         // If a comment is followed by a known block name, don't capture it yet
+         // or just skip adding to current SubSection if it's likely a separator
+         if SubSection <> 0 then
+         begin
+            // Check next lines to see if we are switching
+            // For now, if we are in 3 (Methods) or similar, we might want to keep it.
+            // But for 5 (Created), we usually don't want trailing comments from the next block.
+         end;
+      end;
+
+      // Sub-section detection
       if Trimmed = 'data:' then begin SubSection := 1; Continue; end;
+      if Trimmed = 'props:' then begin SubSection := 12; Continue; end;
       if Trimmed = 'router:' then begin SubSection := 2; Parsed.HasRouter := True; Continue; end;
       if Trimmed = 'methods:' then begin SubSection := 3; Continue; end;
-      if Trimmed = 'routes:' then begin InRoutes := True; Continue; end;
-      if Trimmed = 'beforeEach:' then begin SubSection := 4; Continue; end;
-      if Trimmed = 'created:' then begin SubSection := 5; Continue; end;
-      if Trimmed = 'mounted:' then begin SubSection := 6; Continue; end;
-      if Trimmed = 'watch:' then begin SubSection := 7; Continue; end;
-      if Trimmed = 'computed:' then begin SubSection := 8; Continue; end;
-      if Trimmed = 'updated:' then begin SubSection := 11; Continue; end;
       if Trimmed = 'provide:' then begin SubSection := 9; Continue; end;
       if Trimmed = 'inject:' then begin SubSection := 10; Continue; end;
+      if Trimmed = 'created:' then begin SubSection := 5; Continue; end;
+      if Trimmed = 'mounted:' then begin SubSection := 6; Continue; end;
+      if Trimmed = 'updated:' then begin SubSection := 11; Continue; end;
+      if Trimmed = 'watch:' then begin SubSection := 7; Continue; end;
+      if Trimmed = 'computed:' then begin SubSection := 8; Continue; end;
+      if Trimmed = 'routes:' then begin InRoutes := True; Continue; end;
 
       case SubSection of
-        1: // DATA
+        1, 12: // DATA or PROPS
         begin
+          // Skips comments
+          if (Trimmed = '') or (Trimmed[1] = '{') or (Copy(Trimmed, 1, 2) = '//') then Continue;
+
           P := Pos(':', Trimmed);
           if P > 0 then
           begin
             DF.Name := Trim(Copy(Trimmed, 1, P - 1));
+            DF.IsProp := (SubSection = 12);
             // Depois do ":" tem "type = value;"
             Trimmed := Trim(Copy(Trimmed, P + 1, Length(Trimmed)));
             // Remove ; no final
@@ -395,7 +418,7 @@ begin
           end;
         end;
 
-        3: // METHODS: codigo Pascal bruto
+        3: // METHODS: raw Pascal code
         begin
           Parsed.MethodsCode := Parsed.MethodsCode + Lines[i] + #10;
         end;
@@ -509,6 +532,7 @@ begin
 
   for i := 0 to High(Fields) do
   begin
+    if Fields[i].IsProp then Continue; // Props don't go into initial data return
     Val := Fields[i].DefaultValue;
     if Val = '' then
     begin
@@ -527,6 +551,27 @@ begin
   Result := Result +
     '    Result := d;' + #10 +
     '  end;' + #10;
+end;
+
+function GeneratePropsCode(const Fields: array of TDataField): string;
+var
+  i: Integer;
+  First: Boolean;
+begin
+  Result := '';
+  First := True;
+  for i := 0 to High(Fields) do
+  begin
+    if Fields[i].IsProp then
+    begin
+      if First then
+      begin
+        Result := '  comp[''props''] := TJSArray.new;' + #10;
+        First := False;
+      end;
+      Result := Result + '  TJSArray(comp[''props'']).push(''' + Fields[i].Name + ''');' + #10;
+    end;
+  end;
 end;
 
 function GenerateMethodsCode(const RawCode: string): string;
@@ -553,14 +598,12 @@ begin
       if p = 0 then Break;
       Sig := Trim(Copy(Block, 1, p - 1));
       
-      // Encontra o fim do corpo (ultimo end;)
-      // TODO: Simplificar assumindo que o proximo 'procedure ' ou o fim do bloco delimita
-      // Mas para ser seguro, vamos pegar ate o ultimo 'end;' desse bloco.
+      // Finds the body end (delimited by the next procedure or the end of the block)
       Body := Copy(Block, p + 1, Length(Block));
       p := Pos('procedure ', LowerCase(Body));
       if p > 0 then Body := Copy(Body, 1, p - 1);
       
-      // Extrai nome e params da assinatura
+      // Extracts name and parameters from the signature
       p := Pos('(', Sig);
       if p > 0 then
       begin
@@ -569,9 +612,14 @@ begin
       end
       else
       begin
-        Name := Sig;
+        Name := Trim(Sig);
         Params := '';
       end;
+      
+      // Strips Pascal keywords from the JS property name
+      Name := StringReplace(Name, 'procedure ', '', [rfReplaceAll, rfIgnoreCase]);
+      Name := StringReplace(Name, 'function ', '', [rfReplaceAll, rfIgnoreCase]);
+      Name := Trim(Name);
       
       if Params = '' then Params := '(_this: TJSObject)'
       else Params := '(_this: TJSObject; ' + Copy(Params, 2, Length(Params));
@@ -622,10 +670,10 @@ begin
     Result := '';
     Exit;
   end;
-  // Limpa o CSS: remove quebras de linha e escapa aspas para JS
+  // Clean CSS: remove line breaks and escape quotes for JS
   CleanCSS := StringReplace(Trim(Style), #13, '', [rfReplaceAll]);
   CleanCSS := StringReplace(CleanCSS, #10, ' ', [rfReplaceAll]);
-  // Pascal usa aspas simples duplicadas, o escapeQuotes já deve ter tratado ou tratamos agora
+  // Pascal uses doubled single quotes for strings
   CleanCSS := StringReplace(CleanCSS, '''', '''''', [rfReplaceAll]);
   
   Result :=
@@ -641,15 +689,14 @@ begin
     Result := '';
     Exit;
   end;
+  
+  // If it already has begin/end or variables, just wrap it. 
+  // We use CleanPascalProps to ensure it matches Pascal standards for the Unit generation.
+  Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10;
   if (Pos('begin', LowerCase(RawCode)) > 0) or (Pos('var', LowerCase(RawCode)) > 0) then
-    Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10 +
-              CleanPascalProps(RawCode) + #10 +
-              '    ;' + #10
+    Result := Result + CleanPascalProps(RawCode) + #10 + '    ;' + #10
   else
-    Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10 +
-              '    begin' + #10 +
-              CleanPascalProps(RawCode) + #10 +
-              '    end;' + #10;
+    Result := Result + '    begin' + #10 + CleanPascalProps(RawCode) + #10 + '    end;' + #10;
 end;
 
 function GenerateWatchCode(const RawCode: string): string;
@@ -745,7 +792,7 @@ begin
   
   CleanCode := CleanPascalProps(RawCode);
   
-  // Se ja tem begin/end estruturado pelo usuario (raro em .bv), apenas envelopa
+  // If it already has structured begin/end (rare in .bv), just wrap it
   if (Pos('begin', LowerCase(CleanCode)) > 0) and (Pos('result', LowerCase(CleanCode)) > 0) then
   begin
     Result := '  comp[''provide''] := function(_this: TJSObject): TJSObject' + #10 +
@@ -753,7 +800,7 @@ begin
   end
   else
   begin
-    // Caso comum: lista de procedures ou atribuicoes
+    // Common case: list of procedures or assignments
     Result := '  comp[''provide''] := function(_this: TJSObject): TJSObject' + #10 +
               '    ' + CleanCode + #10 +
               '    begin' + #10 +
@@ -780,7 +827,11 @@ begin
   end;
 end;
 
-// Gera uma unit para um COMPONENTE normal (.bv que nao e app.bv)
+// =====================================================================
+//  PASCAL CODE GENERATORS
+// =====================================================================
+
+{ Generates a Pascal unit from a standard .bv component }
 function GenerateComponentUnit(const UnitName, TagName, BVFileName: string; const Parsed: TBVParsed): string;
 var
   UsesLine: string;
@@ -814,6 +865,7 @@ begin
     GenerateTemplateString(Parsed.Template) + ';' + #10 +
     #10 +
     GenerateDataCode(Parsed.DataFields) + #10 +
+    GeneratePropsCode(Parsed.DataFields) + #10 +
     '  m := TJSObject.new;' + #10 +
     GenerateMethodsCode(Parsed.MethodsCode) +
     '  comp[''methods''] := m;' + #10 +
@@ -832,7 +884,7 @@ begin
     'end.' + #10;
 end;
 
-// Gera a unit para o APP ROOT (app.bv)
+{ Generates the root application unit (app.bv) which handles global state and routing }
 function GenerateAppUnit(const Parsed: TBVParsed; const AllUnits: TStringList): string;
 var
   UsesLine, RouteCode, DataCode: string;
@@ -843,7 +895,7 @@ begin
     UsesLine := UsesLine + ', BVRouting';
   if Parsed.ScriptUses <> '' then
     UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
-  // Adiciona todas as units de componentes para que sejam registradas
+  // Automatically import all compiled component units for auto-registration
   for i := 0 to AllUnits.Count - 1 do
   begin
     if AllUnits[i] <> 'uApp' then
@@ -936,6 +988,9 @@ begin
   Result := Result + #10;
 
   // Template do root (registra como componente invisivel e seta innerHTML)
+  Result := Result + #10;
+
+  // Root template (registers as invisible component and sets innerHTML)
   Result := Result +
     '  asm console.log("[Init] Setting #app template..."); end;' + #10 +
     '  TJSHTMLElement(document.querySelector(''#app'')).innerHTML :=' + #10 +
@@ -982,7 +1037,7 @@ begin
     'end.' + #10;
 end;
 
-// Gera o main.pas (ponto de entrada do programa)
+{ Generates the main entry point program (main.pas) }
 function GenerateMainProgram: string;
 begin
   Result :=
@@ -998,9 +1053,10 @@ begin
 end;
 
 // =====================================================================
-//  COMANDO: CREATE
+//  COMMAND: CREATE PROJECT
 // =====================================================================
 
+{ Scaffolds a complete project directory structure with sample pages }
 procedure CmdCreate(const ProjectName: string);
 var
   Base: string;
@@ -1009,13 +1065,13 @@ begin
 
   if DirectoryExists(Base) then
   begin
-    WriteLn('ERRO: A pasta "', ProjectName, '" ja existe.');
+    WriteLn('ERROR: Folder "', ProjectName, '" already exists.');
     Halt(1);
   end;
 
-  WriteLn('Criando projeto BlaiseVue: ', ProjectName);
+  WriteLn('Scaffolding BlaiseVue project: ', ProjectName);
 
-  // Cria diretorios
+  // Create directories
   ForceDir(Base + 'public');
   ForceDir(Base + 'src' + DirectorySeparator + 'components');
   ForceDir(Base + 'src' + DirectorySeparator + 'views');
@@ -1047,7 +1103,7 @@ begin
     '    <nav>' + #10 +
     '      <strong>BlaiseVue</strong>' + #10 +
     '      <a href="#/">Home</a>' + #10 +
-    '      <a href="#/about">Sobre</a>' + #10 +
+    '      <a href="#/about">About</a>' + #10 +
     '    </nav>' + #10 +
     '    <h1>{{ message }}</h1>' + #10 +
     '    <router-view></router-view>' + #10 +
@@ -1056,7 +1112,7 @@ begin
     #10 +
     '<script>' + #10 +
     '  data:' + #10 +
-    '    message: string = ''Bem-vindo ao BlaiseVue!'';' + #10 +
+    '    message: string = ''Welcome to BlaiseVue!'';' + #10 +
     #10 +
     '  router:' + #10 +
     '    routes:' + #10 +
@@ -1075,20 +1131,20 @@ begin
   WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv',
     '<template>' + #10 +
     '  <div>' + #10 +
-    '    <h2>Pagina Inicial</h2>' + #10 +
-    '    <p>{{ descricao }}</p>' + #10 +
-    '    <button @click="saudar">Clique aqui</button>' + #10 +
+    '    <h2>Homepage</h2>' + #10 +
+    '    <p>{{ description }}</p>' + #10 +
+    '    <button @click="greet">Click here</button>' + #10 +
     '  </div>' + #10 +
     '</template>' + #10 +
     #10 +
     '<script>' + #10 +
     '  data:' + #10 +
-    '    descricao: string = ''Bem-vindo ao meu app BlaiseVue!'';' + #10 +
+    '    description: string = ''Welcome to my BlaiseVue app!'';' + #10 +
     #10 +
     '  methods:' + #10 +
-    '    procedure saudar;' + #10 +
+    '    procedure greet;' + #10 +
     '    begin' + #10 +
-    '      window.alert(''Ola do BlaiseVue!'');' + #10 +
+    '      window.alert(''Hello from BlaiseVue!'');' + #10 +
     '    end;' + #10 +
     '</script>' + #10 +
     #10 +
@@ -1101,8 +1157,8 @@ begin
   WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv',
     '<template>' + #10 +
     '  <div>' + #10 +
-    '    <h2>Sobre</h2>' + #10 +
-    '    <p>Este projeto foi criado com BlaiseVue.</p>' + #10 +
+    '    <h2>About</h2>' + #10 +
+    '    <p>This project was created with BlaiseVue PRO.</p>' + #10 +
     '  </div>' + #10 +
     '</template>' + #10 +
     #10 +
@@ -1124,7 +1180,7 @@ begin
     '-Fugenerated' + #10
   );
 
-  // package.json (Novo: Ambiente de Teste)
+  // package.json (New: Testing Environment)
   WriteStringToFile(Base + 'package.json',
     '{' + #10 +
     '  "name": "' + ProjectName + '",' + #10 +
@@ -1140,7 +1196,7 @@ begin
     '}'
   );
 
-  // tests/setup.js (Novo: Ambiente de Teste)
+  // tests/setup.js (New: Testing Environment)
   ForceDir(Base + 'tests');
   WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js',
     'import { readFileSync } from ''fs'';' + #10 +
@@ -1163,12 +1219,12 @@ begin
   if GetRTLPath <> '' then
   begin
     WriteStringToFile(Base + 'rtl.js', ReadFileToString(GetRTLPath));
-    WriteLn('  rtl.js                 copiado');
+    WriteLn('  rtl.js                 copied');
   end
   else
-    WriteLn('  AVISO: rtl.js nao encontrado. Copie manualmente para a raiz do projeto.');
+    WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
 
-  // tests/HelloWorld.test.pas (Novo: Exemplo de Teste)
+  // tests/HelloWorld.test.pas (New: Test Example)
   WriteStringToFile(Base + 'tests' + DirectorySeparator + 'HelloWorld.test.pas',
     'program HelloWorld_test;' + #10 +
     #10 +
@@ -1179,7 +1235,7 @@ begin
     'begin' + #10 +
     '  Describe(''Hello World'', procedure' + #10 +
     '    begin' + #10 +
-    '       It(''deve validar que o framework esta ativo'', procedure' + #10 +
+    '       It(''should validate that the framework is active'', procedure' + #10 +
     '         begin' + #10 +
     '            Expect(True).ToEqual(True);' + #10 +
     '         end);' + #10 +
@@ -1187,7 +1243,7 @@ begin
     'end.' + #10
   );
 
-  // vitest.config.js (Novo: Configuracao do Vitest)
+  // vitest.config.js (New: Vitest Config)
   WriteStringToFile(Base + 'vitest.config.js',
     'import { defineConfig } from ''vitest/config'';' + #10 +
     #10 +
@@ -1200,17 +1256,17 @@ begin
     '});'
   );
 
-  WriteLn('  /public/index.html     criado');
-  WriteLn('  /src/app.bv            criado');
-  WriteLn('  /src/views/Home.bv     criado');
-  WriteLn('  /src/views/About.bv    criado');
-  WriteLn('  /app.cfg               criado');
-  WriteLn('  /package.json          criado (Vitest)');
-  WriteLn('  /tests/setup.js        criado');
-  WriteLn('  /tests/Home.test.pas   criado');
-  WriteLn('  /vitest.config.js      criado');
+  WriteLn('  /public/index.html     created');
+  WriteLn('  /src/app.bv            created');
+  WriteLn('  /src/views/Home.bv     created');
+  WriteLn('  /src/views/About.bv    created');
+  WriteLn('  /app.cfg               created');
+  WriteLn('  /package.json          created (Vitest)');
+  WriteLn('  /tests/setup.js        created');
+  WriteLn('  /tests/Home.test.pas   created');
+  WriteLn('  /vitest.config.js      created');
   WriteLn('');
-  WriteLn('Instalando dependencias (npm install)...');
+  WriteLn('Installing dependencies (npm install)...');
   
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
@@ -1219,9 +1275,9 @@ begin
   {$ENDIF}
 
   WriteLn('');
-  WriteLn('Projeto criado com sucesso!');
+  WriteLn('Project created successfully!');
   WriteLn('');
-  WriteLn('Proximo passo:');
+  WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
   WriteLn('  bv run dev');
 end;
@@ -1256,22 +1312,22 @@ begin
     WriteLn('=== BlaiseVue Transpile ===');
     WriteLn('');
 
-    // Pega app.bv primeiro
+    // Prepares app.bv first
     if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
       BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
 
-    // Escaneia src e lib recursivamente
+    // Scans src and lib recursively
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
 
     if BVFiles.Count = 0 then
     begin
-      WriteLn('  (Sem componentes .bv em src/ ou lib/)');
+      WriteLn('  (No .bv components found in src/ or lib/)');
       Exit;
     end;
 
-    WriteLn('Processando ', BVFiles.Count, ' arquivo(s) .bv ...');
+    WriteLn('Processing ', BVFiles.Count, ' .bv file(s) ...');
     WriteLn('');
 
     // Passo 1: Identifica units
@@ -1293,7 +1349,7 @@ begin
       IsApp := (LowerCase(ChangeFileExt(FileName, '')) = 'app');
       UnitName := UnitNames[i];
       TagName := PascalToKebab(ChangeFileExt(FileName, ''));
-      if (not IsApp) and (Pos('components', LowerCase(BVFiles[i])) = 0) then
+      if (not IsApp) and (Pos('src' + DirectorySeparator + 'views', BVFiles[i]) > 0) then
         TagName := TagName + '-page';
 
       WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
@@ -1307,12 +1363,12 @@ begin
       WriteStringToFile(GenPath + UnitName + '.pas', GeneratedCode);
     end;
 
-    // Gera main.pas
+    // Generates main.pas
     GeneratedCode := GenerateMainProgram;
     WriteStringToFile(GenPath + 'main.pas', GeneratedCode);
-    WriteLn('  main.pas (gerado)');
+    WriteLn('  main.pas (generated)');
     WriteLn('');
-    WriteLn('Transpile concluido com sucesso! Arquivos gerados em: ', GenPath);
+    WriteLn('Transpile completed successfully! Files generated in: ', GenPath);
   finally
     BVFiles.Free;
     UnitNames.Free;
@@ -1320,43 +1376,45 @@ begin
 end;
 
 // =====================================================================
-//  COMANDO: CLEAN
+//  COMMAND: CLEAN
 // =====================================================================
 
+{ Purges temporary build files and result artifacts }
 procedure CmdClean;
 var
   Base: string;
 begin
   Base := GetCurrentDir + DirectorySeparator;
   WriteLn('=== BlaiseVue Clean ===');
-  WriteLn('Limpando arquivos gerados...');
+  WriteLn('Cleaning generated files...');
   
   if DirectoryExists(Base + 'generated') then
   begin
     DeleteDir(Base + 'generated');
-    WriteLn('  [v] Pasta /generated removida.');
+    WriteLn('  [v] /generated folder removed.');
   end;
   
   if DirectoryExists(Base + 'dist' + DirectorySeparator + 'js') then
   begin
     DeleteDir(Base + 'dist' + DirectorySeparator + 'js');
-    WriteLn('  [v] JS gerados em /dist/js removidos.');
+    WriteLn('  [v] Generated JS in /dist/js removed.');
   end;
   
   if FileExists(Base + 'dist' + DirectorySeparator + 'index.html') then
   begin
     DeleteFile(Base + 'dist' + DirectorySeparator + 'index.html');
-    WriteLn('  [v] /dist/index.html removido.');
+    WriteLn('  [v] /dist/index.html removed.');
   end;
 
   WriteLn('');
-  WriteLn('Limpeza concluida com sucesso!');
+  WriteLn('Cleanup completed successfully!');
 end;
 
 // =====================================================================
-//  COMANDO: BUILD (Novo RUN DEV)
+//  COMMAND: FULL BUILD & RUN DEV
 // =====================================================================
 
+{ Execution cycle: Transpile .bv -> Pascal -> JS and setup public assets }
 procedure CmdBuild;
 var
   SR: TSearchRec;
@@ -1373,7 +1431,7 @@ begin
 
   if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then
   begin
-    WriteLn('ERRO: Pasta "src/" nao encontrada. Voce esta na raiz de um projeto BlaiseVue?');
+    WriteLn('ERROR: "src/" folder not found. Are you in a BlaiseVue project root?');
     Halt(1);
   end;
 
@@ -1384,32 +1442,18 @@ begin
   UnitNames := TStringList.Create;
   try
     // Escaneia .bv recursivamente em src/
-    WriteLn('=== BlaiseVue Development Build (Modo Depuracao) ===');
-    WriteLn('  Info: Serao injetados recursos de depuracao (BVDevTools)');
-    WriteLn('  Cache: Injetando timestamp para evitar cache no navegador');
+    WriteLn('=== BlaiseVue Development Build (Debug Mode) ===');
+    WriteLn('  Info: Injecting debug features (BVDevTools)');
+    WriteLn('  Cache: Injecting timestamp to prevent browser caching');
     WriteLn('');
 
-    // Pega app.bv primeiro
+    // 1. Get app.bv first
     if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
       BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
 
-    // Pega components/
-    if FindFirst(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator + '*.bv', faAnyFile, SR) = 0 then
-    begin
-      repeat
-        BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator + SR.Name);
-      until FindNext(SR) <> 0;
-      FindClose(SR);
-    end;
-
-    // Pega views/
-    if FindFirst(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator + '*.bv', faAnyFile, SR) = 0 then
-    begin
-      repeat
-        BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator + SR.Name);
-      until FindNext(SR) <> 0;
-      FindClose(SR);
-    end;
+    // 2. Scan src and lib recursively using the established helper
+    ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
+    ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
 
     // NOVO: Pega bibliotecas em lib/ recursivamente
     CSSFiles := TStringList.Create;
@@ -1420,11 +1464,11 @@ begin
 
     if BVFiles.Count = 0 then
     begin
-      WriteLn('Nenhum arquivo .bv encontrado em src/ ou lib/');
+      WriteLn('No .bv files found in src/ or lib/');
       Halt(1);
     end;
 
-    WriteLn('[1/3] Processando ', BVFiles.Count, ' arquivo(s) .bv ...');
+    WriteLn('[1/3] Processing ', BVFiles.Count, ' .bv file(s) ...');
     WriteLn('');
 
     // Primeiro passo: identifica todas as units (precisa da lista completa pra app.bv)
@@ -1451,12 +1495,8 @@ begin
       IsApp := (LowerCase(ChangeFileExt(FileName, '')) = 'app');
       
       // Checa se o arquivo estah em componentes ou lib (pelo caminho)
-      if (not IsApp) and 
-         (Pos(DirectorySeparator + 'components' + DirectorySeparator, BVFiles[i]) = 0) and 
-         (Pos(DirectorySeparator + 'lib' + DirectorySeparator, BVFiles[i]) = 0) then
-      begin
-         TagName := TagName + '-page';
-      end;
+      if (not IsApp) and (Pos('src' + DirectorySeparator + 'views', BVFiles[i]) > 0) then
+        TagName := TagName + '-page';
 
       WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
 
@@ -1476,8 +1516,8 @@ begin
     WriteLn('  main.pas (gerado)');
     WriteLn('');
 
-    // [2/3] Chama o pas2js
-    WriteLn('[2/3] Compilando com pas2js ...');
+    // [2/3] Calling pas2js
+    WriteLn('[2/3] Compiling with pas2js ...');
     WriteLn('');
 
     Pas2jsCmd := '"' + GetPas2JSPath + '" -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" "@app.cfg" generated' + DirectorySeparator + 'main.pas -o' + DistPath + 'js' + DirectorySeparator + 'main.js';
@@ -1490,33 +1530,23 @@ begin
     if i <> 0 then
     begin
       WriteLn('');
-      WriteLn('ERRO: pas2js retornou codigo ', i);
+      WriteLn('ERROR: pas2js returned code ', i);
       Halt(1);
     end;
 
-    // [3/3] Copia public/ para dist/
-    WriteLn('[3/3] Copiando arquivos publicos ...');
+    // [3/3] Copying public/ to dist/
+    WriteLn('[3/3] Copying public files ...');
     WriteLn('');
 
     if FileExists(PublicPath + 'index.html') then
-    begin      // Copia index.html e injeta timestamp para evitar cache
+    begin
       UnitName := ReadFileToString(PublicPath + 'index.html');
       TagName := IntToStr(DateTimeToUnix(Now));
       
-      // Limpeza de cache anterior (se houver v=)
-      UnitName := StringReplace(UnitName, 'rtl.js?v=', 'rtl.js#', [rfReplaceAll]);
-      UnitName := StringReplace(UnitName, 'main.js?v=', 'main.js#', [rfReplaceAll]);
+      // Injeta cache buster real nos placeholders
+      UnitName := StringReplace(UnitName, '__CACHE_BUST__', TagName, [rfReplaceAll]);
       
-      UnitName := ReadFileToString(PublicPath + 'index.html');
-      TagName := IntToStr(DateTimeToUnix(Now));
-      
-      // Se jah houver outros ?v= (de builds anteriores nossos), trocamos por &v=
-      UnitName := StringReplace(UnitName, '.js?v=', '.js&OLDV=', [rfReplaceAll]);
-      
-      // Garante rtl.run("program") (padrão do pas2js para o entry point)
-      // Removida a substituição por "main" que causava o erro de módulo não encontrado.
-      
-      // Injeta CSS das bibliotecas
+      // Coleta e copia CSS das bibliotecas
       CSSTags := '';
       if CSSFiles.Count > 0 then
       begin
@@ -1528,10 +1558,8 @@ begin
            CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
         end;
       end;
-      if CSSTags <> '' then
-        UnitName := StringReplace(UnitName, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
 
-      // Injeta JS das bibliotecas
+      // Coleta e copia JS das bibliotecas
       JSTags := '';
       if JSFiles.Count > 0 then
       begin
@@ -1543,41 +1571,48 @@ begin
            JSTags := JSTags + '  <script src="js/lib/' + FileName + '?v=' + TagName + '"></script>' + #10;
         end;
       end;
-      if JSTags <> '' then
-        UnitName := StringReplace(UnitName, '</head>', JSTags + '</head>', [rfIgnoreCase]);
 
-      // Injeta o novo versionamento
-      UnitName := StringReplace(UnitName, 'rtl.js', 'rtl.js?v=' + TagName, [rfReplaceAll]);
-      UnitName := StringReplace(UnitName, 'main.js', 'main.js?v=' + TagName, [rfReplaceAll]);
+      // Injeta bibliotecas no final do <head> para CSS e antes do rtl.js para scripts
+      if CSSTags <> '' then
+        UnitName := StringReplace(UnitName, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
+
+      if JSTags <> '' then
+      begin
+        // Tenta injetar JS de lib antes do runtime e app logic para garantir disponibilidade
+        if Pos('js/rtl.js', UnitName) > 0 then
+          UnitName := StringReplace(UnitName, '<script src="js/rtl.js', JSTags + '    <script src="js/rtl.js', [rfIgnoreCase])
+        else
+          UnitName := StringReplace(UnitName, '</head>', JSTags + '</head>', [rfIgnoreCase]);
+      end;
       
-      // Corrige caso a gente tenha colocado ?v= em uma URL que jah tinha &OLDV=
-      // Ex: .js?v=TIMESTAMP.js&OLDV= -> .js?v=TIMESTAMP&OLDV= (StringReplace ja faz isso se buscarmos pela substring)
-      
+      // Fallback: se o usuario nao usou __CACHE_BUST__, tentamos injetar v= no main.js
+      if Pos('main.js?v=', UnitName) = 0 then
+        UnitName := StringReplace(UnitName, 'main.js', 'main.js?v=' + TagName, [rfReplaceAll]);
+      if Pos('rtl.js?v=', UnitName) = 0 then
+        UnitName := StringReplace(UnitName, 'rtl.js', 'rtl.js?v=' + TagName, [rfReplaceAll]);
+
       WriteStringToFile(DistPath + 'index.html', UnitName);
       WriteLn('  index.html -> dist/ (cache bust v=' + TagName + ')');
-
-
-;
     end;
 
-    // Copia rtl.js para dist/js/ usando a busca automatica do SDK
+    // Copies rtl.js to dist/js/ using automatic SDK lookup
     FileName := GetRTLPath;
     if FileName <> '' then
     begin
       WriteStringToFile(DistPath + 'js' + DirectorySeparator + 'rtl.js',
         ReadFileToString(FileName));
-      WriteLn('  rtl.js -> dist/js/ (do SDK)');
+      WriteLn('  rtl.js -> dist/js/ (from SDK)');
     end
     else
     begin
-      WriteLn('  AVISO: rtl.js nao encontrado no SDK.');
-      WriteLn('  Procure o rtl.js e coloque na raiz em ', GetSDKPath);
+      WriteLn('  WARNING: rtl.js not found in SDK.');
+      WriteLn('  Look for rtl.js and place it in the root or SDK folder: ', GetSDKPath);
     end;
 
     WriteLn('');
-    WriteLn('=== Build concluido com sucesso! ===');
+    WriteLn('=== Build completed successfully! ===');
     WriteLn('');
-    WriteLn('Abra dist/index.html no navegador para ver o resultado.');
+    WriteLn('Open dist/index.html in your browser to see the result.');
 
   finally
     BVFiles.Free;
@@ -1598,7 +1633,7 @@ begin
 
   if FileExists(TargetPath) then
   begin
-    WriteLn('ERRO: Componente "', CompName, '.bv" ja existe!');
+    WriteLn('ERROR: Component "', CompName, '.bv" already exists!');
     Halt(1);
   end;
 
@@ -1614,19 +1649,19 @@ begin
     #10 +
     '<script>' + #10 +
     '  data:' + #10 +
-    '    info: string = ''Componente ' + CompName + ' criado!'';' + #10 +
+    '    info: string = ''Component ' + CompName + ' created!'';' + #10 +
     '</script>' + #10 +
     #10 +
     '<style>' + #10 +
     '</style>' + #10
   );
 
-  WriteLn('Componente criado: src/components/', CompName, '.bv');
-  WriteLn('Tag HTML: <', PascalToKebab(CompName), '>');
+  WriteLn('Component created: src/components/', CompName, '.bv');
+  WriteLn('HTML Tag: <', PascalToKebab(CompName), '>');
 end;
 
 // =====================================================================
-//  COMANDO: REMOVE COMPONENT
+//  CCOMMAND: REMOVE COMPONENT
 // =====================================================================
 
 procedure CmdRemoveComponent(const CompName: string);
@@ -1639,22 +1674,22 @@ begin
   if FileExists(BVPath) then
   begin
     DeleteFile(BVPath);
-    WriteLn('Removido: src/components/', CompName, '.bv');
+    WriteLn('Removed: src/components/', CompName, '.bv');
   end
   else
-    WriteLn('Arquivo nao encontrado: src/components/', CompName, '.bv');
+    WriteLn('File not found: src/components/', CompName, '.bv');
 
   if FileExists(PasPath) then
   begin
     DeleteFile(PasPath);
-    WriteLn('Removido: generated/u', CompName, '.pas');
+    WriteLn('Removed: generated/u', CompName, '.pas');
   end;
 
-  WriteLn('Componente "', CompName, '" removido.');
+  WriteLn('Component "', CompName, '" removed.');
 end;
 
 // =====================================================================
-//  COMANDO: NEW VIEW
+//  COMMAND: NEW VIEW
 // =====================================================================
 
 procedure CmdNewView(const ViewName: string);
@@ -1666,7 +1701,7 @@ begin
 
   if FileExists(TargetPath) then
   begin
-    WriteLn('ERRO: View "', ViewName, '.bv" ja existe!');
+    WriteLn('ERROR: View "', ViewName, '.bv" already exists!');
     Halt(1);
   end;
 
@@ -1676,7 +1711,7 @@ begin
     '<template>' + #10 +
     '  <div class="' + PascalToKebab(ViewName) + '-page">' + #10 +
     '    <h2>' + ViewName + ' View</h2>' + #10 +
-    '    <p>Esta e a nova view ' + ViewName + '.</p>' + #10 +
+    '    <p>This is the new ' + ViewName + ' view.</p>' + #10 +
     '  </div>' + #10 +
     '</template>' + #10 +
     #10 +
@@ -1690,28 +1725,30 @@ begin
     '</style>' + #10
   );
 
-  WriteLn('View criada: src/views/', ViewName, '.bv');
-  WriteLn('Tag HTML (interna): <', PascalToKebab(ViewName), '-page>');
+  WriteLn('View created: src/views/', ViewName, '.bv');
+  WriteLn('HTML Tag (internal): <', PascalToKebab(ViewName), '-page>');
 end;
 
 // =====================================================================
-//  COMANDO: REMOVE VIEW
+//  COMMAND: REMOVE VIEW
 // =====================================================================
 
 procedure ScanDirForBV(const Path: string; List: TStringList);
 var
   SR: TSearchRec;
+  D: string;
 begin
   if not DirectoryExists(Path) then Exit;
-  if FindFirst(Path + DirectorySeparator + '*', faAnyFile, SR) = 0 then
+  D := IncludeTrailingPathDelimiter(Path);
+  if FindFirst(D + '*', faAnyFile, SR) = 0 then
   begin
     repeat
        if (SR.Name <> '.') and (SR.Name <> '..') then
        begin
           if (SR.Attr and faDirectory) <> 0 then
-            ScanDirForBV(Path + DirectorySeparator + SR.Name, List)
-          else if ExtractFileExt(SR.Name) = '.bv' then
-            List.Add(Path + DirectorySeparator + SR.Name);
+            ScanDirForBV(D + SR.Name, List)
+          else if LowerCase(ExtractFileExt(SR.Name)) = '.bv' then
+            List.Add(D + SR.Name);
        end;
     until FindNext(SR) <> 0;
     FindClose(SR);
@@ -1724,7 +1761,7 @@ var
   Path: string;
 begin
   Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
-  WriteLn('Bibliotecas Instaladas (/lib):');
+  WriteLn('Installed Libraries (/lib):');
   WriteLn('------------------------------');
   if FindFirst(Path + '*', faDirectory, SR) = 0 then
   begin
@@ -1744,10 +1781,10 @@ begin
   if DirectoryExists(Path) then
   begin
     DeleteDir(Path);
-    WriteLn('Biblioteca "', LibName, '" removida.');
+    WriteLn('Library "', LibName, '" removed.');
   end
   else
-    WriteLn('Erro: Biblioteca "', LibName, '" nao encontrada em /lib.');
+    WriteLn('Error: Library "', LibName, '" not found in /lib.');
 end;
 
 procedure CmdLibInstall(const URL: string);
@@ -1760,20 +1797,20 @@ begin
   ForceDir(LibPath);
   ZipName := LibPath + 'temp_lib.zip';
   
-  WriteLn('Baixando de: ', URL);
+  WriteLn('Downloading from: ', URL);
   Client := TFPHTTPClient.Create(nil);
   try
     try
       Client.AllowRedirect := True;
       Client.Get(URL, ZipName);
     except
-      on E: Exception do begin WriteLn('Erro de download: ', E.Message); Halt(1); end;
+      on E: Exception do begin WriteLn('Download error: ', E.Message); Halt(1); end;
     end;
   finally
     Client.Free;
   end;
   
-  WriteLn('Extraindo na pasta /lib...');
+  WriteLn('Extracting into /lib folder...');
   UnZipper := TUnZipper.Create;
   try
     UnZipper.FileName := ZipName;
@@ -1785,7 +1822,7 @@ begin
   end;
   
   DeleteFile(ZipName);
-  WriteLn('Instalacao concluida com sucesso!');
+  WriteLn('Installation completed successfully!');
 end;
 
 procedure ScanDirForCSS(const Path: string; List: TStringList);
@@ -1838,7 +1875,7 @@ begin
   if FileExists(BVPath) then
   begin
     DeleteFile(BVPath);
-    WriteLn('Removido: src/views/', ViewName, '.bv');
+    WriteLn('Removed: src/views/', ViewName, '.bv');
   end;
 
   if FileExists(PasPath) then
@@ -1846,7 +1883,7 @@ begin
 end;
 
 // =====================================================================
-//  COMANDO: NEW TEST
+//  COMMAND: NEW TEST
 // =====================================================================
 
 procedure CmdNewTest(const TestName: string);
@@ -1858,7 +1895,7 @@ begin
 
   if FileExists(TargetPath) then
   begin
-    WriteLn('ERRO: Teste "', TestName, '.test.pas" ja existe!');
+    WriteLn('ERROR: Test "', TestName, '.test.pas" already exists!');
     Halt(1);
   end;
 
@@ -1877,7 +1914,7 @@ begin
     'begin' + #10 +
     '  Describe(''' + TestName + ''', procedure' + #10 +
     '    begin' + #10 +
-    '       It(''deve funcionar'', procedure' + #10 +
+    '       It(''should work'', procedure' + #10 +
     '         begin' + #10 +
     '            Expect(True).ToEqual(True);' + #10 +
     '         end);' + #10 +
@@ -1885,11 +1922,11 @@ begin
     'end.' + #10
   );
 
-  WriteLn('Teste criado: tests/', TestName, '.test.pas');
+  WriteLn('Test created: tests/', TestName, '.test.pas');
 end;
 
 // =====================================================================
-//  COMANDO: REMOVE TEST
+//  COMMAND: REMOVE TEST
 // =====================================================================
 
 procedure CmdRemoveTest(const TestName: string);
@@ -1902,13 +1939,13 @@ begin
   if FileExists(TestPath) then
   begin
     DeleteFile(TestPath);
-    WriteLn('Removido: tests/', TestName, '.test.pas');
+    WriteLn('Removed: tests/', TestName, '.test.pas');
   end;
 
   if FileExists(GenPath) then
     DeleteFile(GenPath);
 
-  WriteLn('Teste "', TestName, '" removido.');
+  WriteLn('Test "', TestName, '" removed.');
 end;
 
 // =====================================================================
@@ -1925,7 +1962,7 @@ begin
   if LowerCase(Kind) = 'c' then
   begin
     Path := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
-    SearchKind := 'Componentes';
+    SearchKind := 'Components';
   end
   else if LowerCase(Kind) = 'v' then
   begin
@@ -1935,16 +1972,16 @@ begin
   else if LowerCase(Kind) = 't' then
   begin
     Path := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
-    SearchKind := 'Testes';
+    SearchKind := 'Tests';
   end
   else
   begin
-    WriteLn('Uso: bv list <c|v|t>');
+    WriteLn('Usage: bv list <c|v|t>');
     Halt(1);
   end;
 
   WriteLn('');
-  WriteLn('Listando ', SearchKind, ' em: ', Path);
+  WriteLn('Listing ', SearchKind, ' in: ', Path);
   WriteLn(StringOfChar('-', 40));
 
   if FindFirst(Path + '*', faAnyFile, SR) = 0 then
@@ -1960,7 +1997,7 @@ begin
   end;
 
   if Count = 0 then
-    WriteLn('  (Nenhum encontrado)')
+    WriteLn('  (No matches found)')
   else
   begin
     WriteLn(StringOfChar('-', 40));
@@ -1981,7 +2018,7 @@ var
   JSTags, FileName: string;
   i: Integer;
 begin
-  WriteLn('=== BlaiseVue Professional Build (Producao) ===');
+  WriteLn('=== BlaiseVue Professional Build (ProductionMode) ===');
   
   // 1. Transpile
   CmdTranspile;
@@ -1995,8 +2032,8 @@ begin
     DeleteDir(DistPath);
   ForceDir(DistPath + 'js');
 
-  // 3. Compila com pas2js (modo producao: -O2 ou -O3, remove devtools sugerindo nao definir DEBUG)
-  WriteLn('[2/3] Compilando para producao (pas2js)...');
+  // 3. Compiles with pas2js (Production mode: -PRODUCTION defines)
+  WriteLn('[2/3] Compiling for production (pas2js)...');
   ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
 
   // 4. Hashing
@@ -2035,15 +2072,15 @@ begin
   end;
 
   WriteLn('');
-  WriteLn('Build de producao gerado em /dist');
-  WriteLn('Arquivo principal: main.' + Hash + '.js');
-  WriteLn('DevTools desativados via -dPRODUCTION');
+  WriteLn('Production build generated in /dist');
+  WriteLn('Main file: main.' + Hash + '.js');
+  WriteLn('DevTools disabled via -dPRODUCTION');
 end;
 
 procedure CmdServe;
 begin
-  WriteLn('=== BlaiseVue Dev Server (Servidor de Estaticos) ===');
-  WriteLn('  Logs: Mostrando logs de acessos do servidor (HTTP)');
+  WriteLn('=== BlaiseVue Dev Server (Static Server) ===');
+  WriteLn('  Logs: Showing server access logs (HTTP)');
   WriteLn('  Local: http://localhost:8080');
   WriteLn('');
   {$IFDEF WINDOWS}
@@ -2058,10 +2095,10 @@ begin
   WriteLn('=== BlaiseVue Production Preview ===');
   if not DirectoryExists('dist') then
   begin
-    WriteLn('ERRO: Pasta /dist nao encontrada. Execute "bv run build" primeiro.');
+    WriteLn('ERROR: /dist folder not found. Run "bv run build" first.');
     Exit;
   end;
-  WriteLn('Servindo /dist em http://localhost:5000...');
+  WriteLn('Serving /dist at http://localhost:5000...');
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c npx http-server dist -p 5000');
   {$ELSE}
@@ -2139,26 +2176,26 @@ begin
     
     if TestFiles.Count = 0 then
     begin
-      WriteLn('Nenhum arquivo .test.pas encontrado em /tests');
+      WriteLn('No .test.pas files found in /tests');
       Exit;
     end;
     
     // Transpile all .bv to .pas first so tests can use them
-    WriteLn('[1/3] Preparando componentes...');
+    WriteLn('[1/3] Preparing components...');
     CmdTranspile;
     
-    WriteLn('[2/3] Compilando ', TestFiles.Count, ' arquivo(s) de teste...');
+    WriteLn('[2/3] Compiling ', TestFiles.Count, ' test file(s)...');
     for i := 0 to TestFiles.Count - 1 do
     begin
        UnitName := ChangeFileExt(ExtractFileName(TestFiles[i]), '.js');
        WriteLn('  - ', ExtractFileName(TestFiles[i]));
        ExecuteProcess('cmd', '/c "' + GetPas2JSPath + '" "@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" "' + TestFiles[i] + '" -o"' + GenPath + UnitName + '" -O- -v > "' + GenPath + 'pas2js.log"');
-       // NOVO: Adiciona rtl.run() para que o Vitest execute o codigo dentro do modulo program
+       // NEW: Add rtl.run() for Vitest to execute the program module code
        WriteStringToFile(GenPath + UnitName, ReadFileToString(GenPath + UnitName) + #10 + 'rtl.run();' + #10);
     end;
     
     WriteLn('');
-    WriteLn('[3/3] Executando Vitest...');
+    WriteLn('[3/3] Running Vitest...');
     WriteLn('');
     
     {$IFDEF WINDOWS}
@@ -2173,7 +2210,7 @@ begin
 end;
 
 // =====================================================================
-//  PONTO DE ENTRADA PRINCIPAL
+//  MAIN ENTRY POINT
 // =====================================================================
 
 var
@@ -2182,27 +2219,27 @@ begin
   if ParamCount < 1 then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v1.0');
-    WriteLn('  ==================');
+    WriteLn('  BlaiseVue CLI v2.1 PRO');
+    WriteLn('  ======================');
     WriteLn('');
-    WriteLn('  Uso:');
-    WriteLn('    bv create <nome>       Cria um novo projeto');
-    WriteLn('    bv clean               Limpa arquivos gerados (generated/ e dist/)');
-    WriteLn('    bv run dev             Build de DEPURACO com timestamp (SFC -> Pas -> JS)');
-    WriteLn('    bv run build           Build de PRODUCAO com hashes (SFC -> Pas -> JS)');
-    WriteLn('    bv serve               Inicia servidor de desenvolvimento (logs do servidor)');
-    WriteLn('    bv transpile           Gera apenas arquivos .pas');
-    WriteLn('    bv run preview         Testa o build de producao localmente');
-    WriteLn('    bv new c <Nome>        Cria um componente');
-    WriteLn('    bv new v <Nome>        Cria uma view');
-    WriteLn('    bv new t <Nome>        Cria um arquivo de teste (.test.pas)');
-    WriteLn('    bv remove c <Nome>     Remove um componente');
-    WriteLn('    bv remove v <Nome>     Remove uma view');
-    WriteLn('    bv remove t <Nome>     Remove um arquivo de teste');
-    WriteLn('    bv list c              Lista componentes');
-    WriteLn('    bv list v              Lista views');
-    WriteLn('    bv list t              Lista arquivos de teste');
-    WriteLn('    bv test                Executa testes unitarios (.test.pas)');
+    WriteLn('  Usage:');
+    WriteLn('    bv create <name>       Scaffolds a new project');
+    WriteLn('    bv clean               Cleans generated files (generated/ and dist/)');
+    WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
+    WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
+    WriteLn('    bv serve               Starts development server (server logs enabled)');
+    WriteLn('    bv transpile           Generates only .pas files');
+    WriteLn('    bv run preview         Tests the production build locally');
+    WriteLn('    bv new c <Name>        Creates a new component');
+    WriteLn('    bv new v <Name>        Creates a new view');
+    WriteLn('    bv new t <Name>        Creates a new test file (.test.pas)');
+    WriteLn('    bv remove c <Name>     Removes a component');
+    WriteLn('    bv remove v <Name>     Removes a view');
+    WriteLn('    bv remove t <Name>     Removes a test file');
+    WriteLn('    bv list c              Lists components');
+    WriteLn('    bv list v              Lists views');
+    WriteLn('    bv list t              Lists test files');
+    WriteLn('    bv test                Runs unit tests (.test.pas)');
     WriteLn('');
     Halt(0);
   end;
@@ -2213,7 +2250,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Uso: bv create <nome-do-projeto>');
+      WriteLn('Usage: bv create <project-name>');
       Halt(1);
     end;
     CmdCreate(ParamStr(2));
@@ -2228,7 +2265,7 @@ begin
   end
   else if Cmd = 'build' then
   begin
-    WriteLn('Aviso: o comando "bv build" foi renomeado para "bv run dev".');
+    WriteLn('Warning: "bv build" has been renamed to "bv run dev".');
     CmdBuild;
   end
   else if Cmd = 'serve' then
@@ -2243,7 +2280,7 @@ begin
   begin
     if (ParamCount < 3) then
     begin
-      WriteLn('Uso: bv new <c|v> <Nome>');
+      WriteLn('Usage: bv new <c|v|t> <Name>');
       Halt(1);
     end;
     if LowerCase(ParamStr(2)) = 'c' then
@@ -2254,7 +2291,7 @@ begin
       CmdNewTest(ParamStr(3))
     else
     begin
-      WriteLn('Tipo desconhecido: ', ParamStr(2), '. Use "c" para componente, "v" para view ou "t" para teste.');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "c" for component, "v" for view or "t" for test.');
       Halt(1);
     end;
   end
@@ -2262,7 +2299,7 @@ begin
   begin
     if (ParamCount < 3) then
     begin
-      WriteLn('Uso: bv remove <c|v> <Nome>');
+      WriteLn('Usage: bv remove <c|v|t> <Name>');
       Halt(1);
     end;
     if LowerCase(ParamStr(2)) = 'c' then
@@ -2273,7 +2310,7 @@ begin
       CmdRemoveTest(ParamStr(3))
     else
     begin
-      WriteLn('Tipo desconhecido: ', ParamStr(2), '. Use "c" para componente, "v" para view ou "t" para teste.');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "c" for component, "v" for view or "t" for test.');
       Halt(1);
     end;
   end
@@ -2281,7 +2318,7 @@ begin
   begin
     if (ParamCount < 2) then
     begin
-      WriteLn('Uso: bv list <c|v|t|lib>');
+      WriteLn('Usage: bv list <c|v|t|lib>');
       Halt(1);
     end;
     if (ParamStr(2) = 'lib') then
@@ -2293,19 +2330,19 @@ begin
   begin
     if (ParamCount < 2) then
     begin
-       WriteLn('Uso: bv lib <list|install|remove> [params]');
+       WriteLn('Usage: bv lib <list|install|remove> [params]');
        Halt(1);
     end;
     Cmd := LowerCase(ParamStr(2));
     if Cmd = 'list' then CmdLibList
     else if Cmd = 'install' then
     begin
-       if ParamCount < 3 then begin WriteLn('Uso: bv lib install <url>'); Halt(1); end;
+       if ParamCount < 3 then begin WriteLn('Usage: bv lib install <url>'); Halt(1); end;
        CmdLibInstall(ParamStr(3));
     end
     else if Cmd = 'remove' then
     begin
-       if ParamCount < 3 then begin WriteLn('Uso: bv lib remove <nome>'); Halt(1); end;
+       if ParamCount < 3 then begin WriteLn('Usage: bv lib remove <name>'); Halt(1); end;
        CmdLibRemove(ParamStr(3));
     end;
   end
@@ -2313,12 +2350,12 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Uso: bv run <build|dev|preview>');
+      WriteLn('Usage: bv run <build|dev|preview>');
       Halt(1);
     end;
     Cmd := LowerCase(ParamStr(2));
     if Cmd = 'build' then CmdRunBuild
-    else if Cmd = 'dev' then CmdBuild // Antigo bv build agora e bv run dev
+    else if Cmd = 'dev' then CmdBuild // Old bv build is now bv run dev
     else if Cmd = 'preview' then CmdRunPreview
     else if Cmd = 'compile-sfc' then
     begin
@@ -2327,14 +2364,14 @@ begin
     end
     else
     begin
-      WriteLn('Subcomando run desconhecido: ', Cmd);
+      WriteLn('Unknown run subcommand: ', Cmd);
       Halt(1);
     end;
   end
   else
   begin
-    WriteLn('Comando desconhecido: ', Cmd);
-    WriteLn('Use "bv" sem argumentos para ver a ajuda.');
+    WriteLn('Unknown command: ', Cmd);
+    WriteLn('Use "bv" without arguments for help.');
     Halt(1);
   end;
 end.

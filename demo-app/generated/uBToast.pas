@@ -43,6 +43,12 @@ begin
     Result := d;
   end;
 
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('title');
+  TJSArray(comp['props']).push('time');
+  TJSArray(comp['props']).push('variant');
+  TJSArray(comp['props']).push('duration');
+
   m := TJSObject.new;
   m['show'] := procedure(_this: TJSObject)
 

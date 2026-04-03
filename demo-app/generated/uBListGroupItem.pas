@@ -29,6 +29,17 @@ begin
     '    <b-badge v-if="badge" :variant="badgeVariant">{{ badge }}</b-badge>' +
     '  </li>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('active');
+  TJSArray(comp['props']).push('badge');
+  TJSArray(comp['props']).push('badgeVariant');
 
   m := TJSObject.new;
   m['handleClick'] := procedure(_this: TJSObject)

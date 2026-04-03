@@ -80,6 +80,7 @@ begin
     Result := d;
   end;
 
+
   m := TJSObject.new;
   m['initData'] := procedure(_this: TJSObject)
 

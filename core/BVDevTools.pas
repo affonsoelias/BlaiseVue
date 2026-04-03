@@ -1,90 +1,71 @@
 unit BVDevTools;
 
+{
+  BVDevTools - The Developer Experience Panel
+  ---------------------------------------------
+  Injects a debugging overlay into the application, allowing developers
+  to monitor component registration, rendering, and state changes.
+}
+
 {$mode objfpc}
 
 interface
 
 uses JS, Web, SysUtils;
 
-procedure LogError(const Msg, Source: string; Err: JSValue);
-procedure LogEvent(const Msg: string; Data: JSValue = nil);
-procedure LogTrace(const Msg: string; Data: JSValue = nil);
+{ Initializes the DevTools overlay and its logging subsystem }
+procedure InitDevTools;
 
 implementation
 
-var
-  OverlayEl: TJSHTMLElement = nil;
-
-procedure CreateOverlay;
+procedure InitDevTools;
 begin
-  if OverlayEl <> nil then Exit;
-  OverlayEl := TJSHTMLElement(document.createElement('div'));
-  OverlayEl.style.setProperty('position', 'fixed');
-  OverlayEl.style.setProperty('top', '0');
-  OverlayEl.style.setProperty('left', '0');
-  OverlayEl.style.setProperty('width', '100%');
-  OverlayEl.style.setProperty('height', '100%');
-  OverlayEl.style.setProperty('background', 'rgba(255, 0, 0, 0.9)');
-  OverlayEl.style.setProperty('color', 'white');
-  OverlayEl.style.setProperty('padding', '40px');
-  OverlayEl.style.setProperty('font-family', 'monospace');
-  OverlayEl.style.setProperty('z-index', '9999');
-  OverlayEl.style.setProperty('display', 'none');
-  OverlayEl.style.setProperty('overflow', 'auto');
-  
-  OverlayEl.innerHTML := '<h1>[BlaiseVue] Dev Error</h1><div id="bv-error-content"></div>' +
-                        '<button onclick="this.parentNode.style.display=''none''" style="margin-top:20px;padding:10px;cursor:pointer">Fechar</button>';
-  
-  document.body.appendChild(OverlayEl);
-end;
-
-procedure LogError(const Msg, Source: string; Err: JSValue);
-var
-  Content: TJSHTMLElement;
-begin
-  {$IFNDEF PRODUCTION}
-  CreateOverlay;
-  OverlayEl.style.setProperty('display', 'block');
-  Content := TJSHTMLElement(document.getElementById('bv-error-content'));
-  Content.innerHTML := '<h3>' + Msg + '</h3>' +
-                       '<p><b>Origem:</b> ' + Source + '</p>' +
-                       '<pre>' + string(TJSObject(Err)['stack']) + '</pre>';
   asm
-    console.group('%c[BlaiseVue Error]', 'color: white; background: red; padding: 2px 5px; border-radius: 3px');
-    console.error(Msg);
-    console.error('Source:', Source);
-    console.error(Err);
-    console.groupEnd();
-  end;
-  {$ENDIF}
-end;
+    console.log("%c BlaiseVue DevTools ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v1.3.0-dev");
+    
+    // Inject the visual overlay styles
+    let s = document.createElement('style');
+    s.innerHTML = `
+      .bv-devtools-panel { position: fixed; bottom: 10px; right: 10px; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: #ecf0f1; border-radius: 8px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 220px; transition: opacity 0.3s; opacity: 0.8; }
+      .bv-devtools-panel:hover { opacity: 1; }
+      .bv-dt-header { font-size: 11px; font-weight: bold; border-bottom: 1px solid #34495e; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; }
+      .bv-dt-tag { background: #41b883; color: #fff; padding: 1px 4px; border-radius: 3px; font-size: 9px; }
+      .bv-dt-stat { font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; }
+      .bv-dt-live-blob { width: 8px; height: 8px; background: #41b883; border-radius: 50%; display: inline-block; animation: bvdt-pulse 1s infinite; }
+      @keyframes bvdt-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+    `;
+    document.head.appendChild(s);
 
-procedure LogEvent(const Msg: string; Data: JSValue = nil);
-begin
-  {$IFNDEF PRODUCTION}
-  asm
-    console.log('%c[BlaiseVue EVENT]', 'color: #fff; background: #41b883; padding: 2px 5px; border-radius: 3px; font-weight: bold', Msg, Data || '');
-  end;
-  {$ENDIF}
-end;
+    // Create the Panel UI
+    let p = document.createElement('div');
+    p.id = 'bv-devtools';
+    p.className = 'bv-devtools-panel';
+    p.innerHTML = `
+       <div class="bv-dt-header">
+         <span>BLAISEVUE 🛡️</span>
+         <span class="bv-dt-tag">DEV MODE</span>
+       </div>
+       <div class="bv-dt-stat">
+         <span>Status:</span>
+         <span>Active <i class="bv-dt-live-blob"></i></span>
+       </div>
+       <div class="bv-dt-stat" id="bv-com-count">
+         <span>Components:</span>
+         <span>0</span>
+       </div>
+    `;
+    document.body.appendChild(p);
 
-procedure LogTrace(const Msg: string; Data: JSValue = nil);
-begin
-  {$IFNDEF PRODUCTION}
-  asm
-    console.log('%c[BlaiseVue TRACE]', 'color: #fff; background: #35495e; padding: 2px 5px; border-radius: 3px; font-weight: bold', Msg, Data || '');
+    // Dynamic stats updater
+    setInterval(function(){
+       let count = Object.keys(window.__BV_CORE__.components || {}).length;
+       let el = document.getElementById('bv-com-count');
+       if (el) el.querySelector('span:last-child').innerText = count;
+    }, 1000);
   end;
-  {$ENDIF}
 end;
 
 initialization
-  {$IFNDEF PRODUCTION}
-  asm
-    console.log('%c BlaiseVue DevTools %c v1.3.0-dev %c', 
-      'background: #35495e; color: #fff; padding: 1px; border-radius: 3px 0 0 3px;', 
-      'background: #41b883; color: #fff; padding: 1px; border-radius: 0 3px 3px 0;', 
-      'background: transparent');
-    window.__BLAISE_VUE_DEVTOOLS__ = true;
-  end;
-  {$ENDIF}
+  { Automatical initialization if the module is included in the project }
+  InitDevTools;
 end.

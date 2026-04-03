@@ -1,19 +1,36 @@
 unit BVDirectives;
 
+{
+  BVDirectives - Simplified Directive Bindings
+  -------------------------------------------
+  Provides helper procedures to bind specific DOM qualities 
+  (attributes, events, visibility) to reactive data sources.
+}
+
 {$mode objfpc}
 
 interface
 
 uses JS, Web, BVReactivity, SysUtils, BVDevTools;
 
+{ Binds a form input value to a reactive key (two-way binding) }
 procedure BindModel(Input: TJSHTMLInputElement; Data: TBlaiseData);
+
+{ Attaches DOM event listeners based on @event or v-on: directives }
 procedure BindEvents(Element: TJSHTMLElement; Data: TBlaiseData; Methods: TJSObject);
+
+{ Synchronizes DOM attributes with reactive expressions (v-bind:attr or :attr) }
 procedure BindAttributes(Element: TJSHTMLElement; Data: TBlaiseData);
+
+{ Controls display:none based on a reactive expression (v-show or b-show) }
 procedure BindShow(Element: TJSHTMLElement; Data: TBlaiseData);
+
+{ Dynamically updates the class attribute based on a reactive expression or object }
 procedure BindClass(Element: TJSHTMLElement; Data: TBlaiseData);
 
 implementation
 
+{ Implementation of two-way Model binding }
 procedure BindModel(Input: TJSHTMLInputElement; Data: TBlaiseData);
 var
   key: string;
@@ -22,6 +39,7 @@ begin
   if key = '' then key := Input.getAttribute('v-model');
   if key = '' then Exit;
 
+  { Effect: Sync Proxy -> Input value }
   Effect(
     procedure()
     begin
@@ -29,6 +47,7 @@ begin
     end
   );
 
+  { Event: Sync Input value -> Proxy }
   Input.addEventListener('input',
     TJSRawEventHandler(
       procedure(Event: TJSEvent)
@@ -39,6 +58,7 @@ begin
   );
 end;
 
+{ Implementation of Event binding }
 procedure BindEvents(Element: TJSHTMLElement; Data: TBlaiseData; Methods: TJSObject);
 var
   i: Integer;
@@ -54,19 +74,19 @@ var
           expr: string;
         begin
           expr := Trim(mName);
-          // Suporte a métodos simples (ex: "doSomething") e expressões (ex: "clicks++" ou "del(id)")
+          { Smart matching: check if expression is just a method name or a complex code snippet }
           asm
             if (!expr) return;
-            // Se for apenas o nome do método, chama injetando o evento como argumento
+            // Native method name check: execute with Proxy context
             if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(expr)) {
               let fn = Data.FData[expr];
               if (typeof fn === 'function') {
-                fn.call(Data.FData, Event); // Contexto é o Proxy
+                fn.call(Data.FData, Event);
                 return;
               }
             }
           end;
-          // Caso contrário, avalia como expressão completa (ex: removeTask(index))
+          { Fallback: Evaluate as expression }
           Data.Evaluate(expr, Event);
         end
       )
@@ -93,6 +113,7 @@ begin
   end;
 end;
 
+{ Implementation of Attribute binding }
 procedure BindAttributes(Element: TJSHTMLElement; Data: TBlaiseData);
 var
   i: Integer;
@@ -107,6 +128,7 @@ var
         val: JSValue;
       begin
         val := Data.Evaluate(expr);
+        { Handle conditional removal of attributes (e.g. :disabled="false") }
         if isUndefined(val) or (val = False) or (val = Null) then
           Element.removeAttribute(pName)
         else
@@ -142,8 +164,7 @@ begin
   end;
 end;
 
-// ... Rest of BindShow and BindClass as before ...
-
+{ Implementation of Visibility binding (v-show) }
 procedure BindShow(Element: TJSHTMLElement; Data: TBlaiseData);
 var
   attr: JSValue;
@@ -165,6 +186,7 @@ begin
   );
 end;
 
+{ Implementation of Dynamic Class binding }
 procedure BindClass(Element: TJSHTMLElement; Data: TBlaiseData);
 var
   attr: JSValue;
@@ -190,6 +212,7 @@ begin
       val := Data.Evaluate(key);
       finalClass := baseClass;
       
+      { Supports Object-based class binding ({ 'active': isActive }) }
       if (JSTypeOf(val) = 'object') and (val <> null) then
       begin
         obj := TJSObject(val);

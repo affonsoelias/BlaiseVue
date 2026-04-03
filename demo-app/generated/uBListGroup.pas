@@ -23,6 +23,7 @@ begin
     '  </ul>';
 
 
+
   m := TJSObject.new;
   comp['methods'] := m;
 

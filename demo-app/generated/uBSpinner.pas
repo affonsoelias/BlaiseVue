@@ -22,6 +22,15 @@ begin
     '    <span class="visually-hidden">Loading...</span>' +
     '  </div>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('variant');
 
   m := TJSObject.new;
   comp['methods'] := m;

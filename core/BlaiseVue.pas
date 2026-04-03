@@ -1,5 +1,13 @@
 unit BlaiseVue;
 
+{
+  BlaiseVue - Core Framework Entry Point
+  --------------------------------------
+  Main class for initializing a BlaiseVue application. 
+  Responsible for mounting the app, setting up reactivity,
+  injecting styles, and integrating the Router.
+}
+
 {$mode objfpc}
 
 interface
@@ -7,24 +15,37 @@ interface
 uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents;
 
 type
+  { 
+    TBlaiseVue: The main application controller.
+    Manages the root element, global reactive data, methods, and routing.
+  }
   TBlaiseVue = class
   private
-    FRoot: TJSHTMLElement;
-    FData: TBlaiseData;
-    FMethods: JSValue;
-    FRouter: TBVRouter;
-    procedure InjectStyles;
+    FRoot: TJSHTMLElement;   { The DOM element where the app is mounted (e.g. '#app') }
+    FData: TBlaiseData;      { Global reactive storage (Proxied data) }
+    FMethods: JSValue;       { Global methods accessible by the compiler }
+    FRouter: TBVRouter;      { Optional Router instance for SPA navigation }
+    procedure InjectStyles;  { Internal helper to inject framework-level CSS (e.g. fade transitions) }
   public
+    { Standard constructor using explicit element ID and JS values }
     constructor Create(AEl: string; AData, AMethods, AOptions: JSValue); overload;
+    
+    { Advanced constructor using a single Options object (Vue-style) }
     constructor Create(Options: JSValue); overload;
+    
+    { Attaches a router to the application and triggers initial routing }
     procedure UseRouter(ARouter: TBVRouter);
+    
+    { Low-level method to trigger template compilation on a specific root }
     procedure Compile(ARoot: JSValue; AData: TBlaiseData; AMethods: JSValue);
+    
     property Data: TBlaiseData read FData;
     property Router: TBVRouter read FRouter;
   end;
 
 implementation
 
+{ TBlaiseVue.Create (Legacy/Explicit) }
 constructor TBlaiseVue.Create(AEl: string; AData, AMethods, AOptions: JSValue);
 var
   opts: JSValue;
@@ -38,6 +59,7 @@ begin
   Self.Create(opts);
 end;
 
+{ TBlaiseVue.Create (Canonical/Options object) }
 constructor TBlaiseVue.Create(Options: JSValue);
 var
   AData, AMethods, AComputed, JS_rootID: JSValue;
@@ -57,20 +79,27 @@ begin
   rootID := string(JS_rootID);
   FRoot := TJSHTMLElement(document.querySelector(rootID));
 
+  { Create the main reactivity bridge }
   FData := TBlaiseData.Create(AData);
   FMethods := AMethods;
   
   d := FData;
   m := AMethods;
   c := AComputed;
+  
+  { Register app globally in the JS bridge (__BV_CORE__) }
   asm window.__BV_CORE__.initApp(d, m, c); end;
   asm window.__BV_CORE__.rootData = d.FData; end;
+  
+  { Bridge for Pro Features (Global Store integration) }
   asm if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__; end;
 
   asm
+    // Handle Provide/Inject dependency injection
     if (Options.provide) {
       d.FData.$provided = Options.provide.call(d.FData, d.FData);
     }
+    // Execute 'created' lifecycle hook
     if (Options.created) {
       Options.created.call(d.FData, d.FData);
     }
@@ -79,6 +108,7 @@ begin
   asm console.log("[Create] Instance ready."); end;
 end;
 
+{ Injects core framework CSS into the document head }
 procedure TBlaiseVue.InjectStyles;
 begin
   asm
@@ -92,6 +122,7 @@ begin
   end;
 end;
 
+{ Installs and activates the Router module }
 procedure TBlaiseVue.UseRouter(ARouter: TBVRouter);
 begin
   FRouter := ARouter;
@@ -104,6 +135,7 @@ begin
   Compile(FRoot, FData, FMethods);
 end;
 
+{ Internal compile trigger to scan the DOM for directives (b-for, b-if, etc.) }
 procedure TBlaiseVue.Compile(ARoot: JSValue; AData: TBlaiseData; AMethods: JSValue);
 begin
   asm window.__BV_CORE__.compile(ARoot, AData, AMethods); end;

@@ -18,19 +18,28 @@ var
 begin
   comp := TJSObject.new;
   comp['template'] :=
-    '  <button class="btn" :class="''btn-'' + variant" @click="handleClick" style="min-width: 100px; padding: 10px 20px; font-weight: 600;">' +
-    '    <span v-if="label">{{ label }}</span>' +
-    '    <slot v-if="!label"></slot>' +
+    '  <button :type="type" ' +
+    '          class="btn" ' +
+    '          :class="[(outline ? ''btn-outline-'' : ''btn-'') + variant, ''btn-'' + size]"' +
+    '          @click="$emit(''click'', $event)"' +
+    '          style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">' +
+    '    <slot></slot>' +
     '  </button>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('variant');
+  TJSArray(comp['props']).push('outline');
+  TJSArray(comp['props']).push('size');
+  TJSArray(comp['props']).push('type');
 
   m := TJSObject.new;
-  m['handleClick'] := procedure(_this: TJSObject)
-
-    begin
-       asm this.$emit('click'); end;
-    end;
-
   comp['methods'] := m;
 
 

@@ -4,12 +4,12 @@
       <!-- 1. Passando props e escutando eventos -->
       <form-header 
         ref="headerComp"
-        title="Formulario Especial" 
+        title="Formulário Especial" 
         :subtitle="meuSub"
         @header-clicked="onHeaderClick">
       </form-header>
       
-      <p>Este formulario demonstra o <code>b-model</code> (two-way data binding), <code>props</code>, <code>$refs</code> e <code>$emit</code>.</p>
+      <p>Este formulário demonstra o <code>b-model</code> (two-way data binding), <code>props</code>, <code>$refs</code> e <code>$emit</code>.</p>
       <p>Todos os campos abaixo atualizam em tempo real.</p>
       <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>
       <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>
@@ -47,14 +47,14 @@
     nome: string = '';
     email: string = '';
     cidade: string = '';
-    meuSub: string = 'Este subtitulo e reativo do pai!';
-    msgHeader: string = '(clique no titulo do header)';
+    meuSub: string = 'Este subtítulo é reativo do pai!';
+    msgHeader: string = '(clique no título do header)';
 
   methods:
     procedure onHeaderClick(arg: string);
     begin
       this['msgHeader'] := arg;
-      this['meuSub'] := 'O subtitulo mudou reativamente via props!';
+      this['meuSub'] := 'O subtítulo mudou reativamente via props!';
     end;
 
     procedure mudarHeaderRef;
@@ -66,7 +66,7 @@
       begin
         header := TJSObject(refs['headerComp']);
         if Assigned(header) then
-           header['title'] := 'Titulo alterado via $refs!';
+           header['title'] := 'Título alterado via $refs!';
       end;
     end;
 

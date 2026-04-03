@@ -1,5 +1,12 @@
 unit BVRouting;
 
+{
+  BVRouting - The SPA Navigation Engine
+  --------------------------------------
+  This unit implements hash-based routing for BlaiseVue SPAs.
+  Supports dynamic path parameters, query strings, and navigation guards.
+}
+
 {$mode objfpc}
 
 interface
@@ -7,42 +14,45 @@ interface
 uses JS, Web, SysUtils, BVComponents, BVCompiler;
 
 type
+  { Represents a single route mapping }
   TBVRoute = class
   public
-    Path: string;
-    Component: string;
-    BeforeEnter: JSValue;
+    Path: string;      { e.g. '/user/:id' }
+    Component: string; { Registered component tag name }
+    BeforeEnter: JSValue; { Local navigation guard }
     constructor Create;
   end;
 
+  { Context object for the current active route }
   TBVRouteInfo = class
   public
-    FullPath: string;
-    HashPath: string;
-    Params: JSValue;
-    Query: JSValue;
-    Name: string;
+    FullPath: string; { e.g. '/user/123?tab=profile' }
+    HashPath: string; { e.g. '/user/123' }
+    Params: JSValue; { Reactive object containing path params {id: '123'} }
+    Query: JSValue;  { Reactive object containing query params {tab: 'profile'} }
+    Name: string;    { Component name }
     constructor Create;
   end;
 
+  { The main router controller }
   TBVRouter = class
   private
-    FRoutes: JSValue;
-    FBeforeEach: JSValue;
-    FAppRoot: TJSHTMLElement;
-    FRouterViewEl: TJSHTMLElement;
-    FCurrentRoute: TBVRouteInfo;
-    procedure HandleHashChange(Event: TJSEvent);
-    function MatchRoute(APath: string): TBVRoute;
-    function ParseParams(Pattern, Actual: string): JSValue;
-    function ParseQuery(AHash: string): JSValue;
-    function ExtractPath(AHash: string): string;
+    FRoutes: JSValue;    { Store of all defined routes }
+    FBeforeEach: JSValue; { Global navigation guard }
+    FAppRoot: TJSHTMLElement; { The root container of the app }
+    FRouterViewEl: TJSHTMLElement; { Reference to the <router-view> tag }
+    FCurrentRoute: TBVRouteInfo; { Reactive state of the current navigation }
+    procedure HandleHashChange(Event: TJSEvent); { Event listener for window.onhashchange }
+    function MatchRoute(APath: string): TBVRoute; { Regex-based path matcher }
+    function ParseParams(Pattern, Actual: string): JSValue; { Extracts variables from URI }
+    function ParseQuery(AHash: string): JSValue; { Extracts GET parameters from URI }
+    function ExtractPath(AHash: string): string; { Strips query string from hash }
   public
     constructor Create(Options: JSValue);
-    procedure Install(AppRoot: TJSHTMLElement);
-    procedure Push(APath: string);
-    procedure Back;
-    procedure RenderCurrent;
+    procedure Install(AppRoot: TJSHTMLElement); { Mounts the router to the DOM }
+    procedure Push(APath: string); { Navigates to a new path (hash update) }
+    procedure Back; { Navigates back in history }
+    procedure RenderCurrent; { Main logic to mount the component matching the current hash }
     property CurrentRoute: TBVRouteInfo read FCurrentRoute;
   end;
 
@@ -51,6 +61,7 @@ implementation
 constructor TBVRoute.Create; begin end;
 constructor TBVRouteInfo.Create; begin end;
 
+{ TBVRouter Initialization }
 constructor TBVRouter.Create(Options: JSValue);
 var
   routesList: TJSArray;
@@ -79,14 +90,18 @@ begin
     FBeforeEach := TJSObject(Options)['beforeEach']
   else
     FBeforeEach := nil;
+    
   FCurrentRoute := TBVRouteInfo.Create;
+  { Listen to browser navigation events }
   window.addEventListener('hashchange', @HandleHashChange);
 end;
 
+{ Sets up the router into the application context }
 procedure TBVRouter.Install(AppRoot: TJSHTMLElement);
 begin
   FAppRoot := AppRoot;
   FRouterViewEl := TJSHTMLElement(AppRoot.querySelector('router-view'));
+  { Default to home if no hash provided }
   if (window.location.hash = '') or (window.location.hash = '#') then 
     window.location.hash := '#/';
   RenderCurrent;
@@ -95,6 +110,7 @@ end;
 procedure TBVRouter.Push(APath: string); begin window.location.hash := '#' + APath; end;
 procedure TBVRouter.Back; begin window.history.back(); end;
 
+{ Strips the query part for matching }
 function TBVRouter.ExtractPath(AHash: string): string;
 var qIdx: Integer;
 begin
@@ -102,6 +118,7 @@ begin
   if qIdx > 0 then Result := Copy(AHash, 1, qIdx - 1) else Result := AHash;
 end;
 
+{ Converts query strings (?a=1&b=2) into a JS Object }
 function TBVRouter.ParseQuery(AHash: string): JSValue;
 var resObj: TJSObject;
 begin
@@ -119,18 +136,21 @@ begin
   Result := resObj;
 end;
 
+{ Finds the first route matching the current path using Regex }
 function TBVRouter.MatchRoute(APath: string): TBVRoute;
 var counter: Integer; rItem: TBVRoute; rsPat: string; reObj: TJSRegExp;
 begin
   Result := nil;
   for counter := 0 to TJSArray(FRoutes).length - 1 do begin
     rItem := TBVRoute(TJSArray(FRoutes)[counter]);
+    { Convert :param into regex groups (([^/]+)) }
     rsPat := '^' + String(TJSString(rItem.Path).replace(TJSRegExp.new(':[a-zA-Z_]+', 'g'), '([^/]+)')) + '$';
     reObj := TJSRegExp.new(rsPat);
     if reObj.test(APath) then begin Result := rItem; Exit; end;
   end;
 end;
 
+{ Extracts parameter values from the actual path based on the pattern }
 function TBVRouter.ParseParams(Pattern, Actual: string): JSValue;
 var finalRes: TJSObject;
 begin
@@ -156,6 +176,7 @@ end;
 
 procedure TBVRouter.HandleHashChange(Event: TJSEvent); begin RenderCurrent; end;
 
+{ Main navigation and rendering logic for Router pages }
 procedure TBVRouter.RenderCurrent;
 var 
   fullHash, cleanP: string; 
@@ -172,14 +193,23 @@ begin
     
   cleanP := ExtractPath(fullHash);
   matchedRoute := MatchRoute(cleanP);
-  if not Assigned(matchedRoute) then begin FRouterViewEl.innerHTML := '404 - Not Found'; Exit; end;
   
-  FCurrentRoute.FullPath := fullHash; FCurrentRoute.HashPath := cleanP;
-  FCurrentRoute.Params := ParseParams(matchedRoute.Path, cleanP); FCurrentRoute.Query := ParseQuery(fullHash); FCurrentRoute.Name := matchedRoute.Component;
+  if not Assigned(matchedRoute) then begin 
+    FRouterViewEl.innerHTML := '404 - Not Found'; 
+    Exit; 
+  end;
+  
+  { Update current route reactive info }
+  FCurrentRoute.FullPath := fullHash; 
+  FCurrentRoute.HashPath := cleanP;
+  FCurrentRoute.Params := ParseParams(matchedRoute.Path, cleanP); 
+  FCurrentRoute.Query := ParseQuery(fullHash); 
+  FCurrentRoute.Name := matchedRoute.Component;
   
   compOptions := GetComponent(matchedRoute.Component);
   if not Assigned(compOptions) then Exit;
   
+  { Mount the component into the router-view }
   navEl := TJSHTMLElement(document.createElement('div'));
   navEl.innerHTML := string(TJSObject(compOptions)['template']);
   rootPageEl := TJSHTMLElement(navEl.firstElementChild);
@@ -187,6 +217,7 @@ begin
   FRouterViewEl.innerHTML := '';
   FRouterViewEl.appendChild(rootPageEl);
 
+  { Initialize component data and lifecycle hooks }
   if TJSObject(compOptions).hasOwnProperty('data') then 
     pageData := TJSFunction(TJSObject(compOptions)['data']).apply(nil, []) 
   else 
@@ -194,18 +225,16 @@ begin
 
   pParams := FCurrentRoute.Params; 
   asm
+    // Merge Params and Query into the page context
     Object.keys(pParams).forEach(function(k) { pageData[k] = pParams[k]; });
     let q = this.FCurrentRoute.Query;
     Object.keys(q).forEach(function(k) { pageData[k] = q[k]; });
-  end;
-
-  asm
+    
     let pRef = window.__BV_CORE__.defineReactive(pageData);
     
-    // Inject $store
+    // Inject Stores and Providers
     if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
     
-    // Inject from Parent (App)
     if (compOptions.inject) {
        compOptions.inject.forEach(function(k) {
           let val = (window.__BV_CORE__.rootData && window.__BV_CORE__.rootData.$provided) ? window.__BV_CORE__.rootData.$provided[k] : null;
@@ -213,6 +242,7 @@ begin
        });
     }
 
+    // Setup Proxy logic (computed, methods)
     if (compOptions.computed) { 
        Object.keys(compOptions.computed).forEach(function(ck) { 
          window.__BV_CORE__.defineComputed(pRef, ck, compOptions.computed[ck]); 
@@ -239,9 +269,10 @@ begin
       SetValue: function(k, val) { pRef[k] = val; }
     };
     
+    // Compile the newly mounted page template
     window.__BV_CORE__.compile(rootPageEl, cD, compOptions.methods);
 
-    // Lifecycle: updated
+    // Lifecycle: updated monitor
     let stopEffect = window.__BV_CORE__.effect(function() {
        let dummy = JSON.stringify(pRef);
        if (compOptions.updated) compOptions.updated.call(pRef);
@@ -249,7 +280,7 @@ begin
 
     if (compOptions.mounted) compOptions.mounted.call(pRef);
 
-    // Handle Unmount cleanup for routes
+    // Handle Cleanup
     rootPageEl['bvUnmount'] = function() {
        if (stopEffect && typeof stopEffect === 'function') stopEffect();
        if (compOptions.unmounted) compOptions.unmounted.call(pRef);

@@ -44,6 +44,10 @@ begin
     Result := d;
   end;
 
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('items');
+  TJSArray(comp['props']).push('initialActiveId');
+
   m := TJSObject.new;
   m['toggle'] := procedure(_this: TJSObject; id: string)
 

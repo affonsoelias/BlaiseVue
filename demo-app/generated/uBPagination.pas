@@ -37,6 +37,17 @@ begin
     '    </ul>' +
     '  </nav>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('value');
+  TJSArray(comp['props']).push('total');
+  TJSArray(comp['props']).push('perPage');
 
   m := TJSObject.new;
   m['changePage'] := procedure(_this: TJSObject; p: integer)

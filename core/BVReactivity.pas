@@ -1,19 +1,39 @@
 unit BVReactivity;
 
+{
+  BVReactivity - The Reactive Engine
+  ---------------------------------
+  This is the reactive core of BlaiseVue. It implements a dependency tracking
+  system inspired by Vue.js, using JavaScript Proxies to observe data changes
+  and trigger automatic UI updates.
+}
+
 {$mode objfpc}
 
 interface
 
 uses JS, Web, SysUtils;
 
+{ Wraps a function in an effect that tracks its dependencies }
 procedure Effect(fn: JSValue);
+
+{ Manually tracks a dependency for a specific object key }
 procedure Track(target: JSValue; key: JSValue);
+
+{ Manually triggers updates for all effects depending on a key }
 procedure Trigger(target: JSValue; key: JSValue);
+
+{ Creates a reactive proxy for the given object }
 function DefineReactive(target: JSValue): JSValue;
+
+{ Defines a computed property that automatically updates when its dependencies change }
 procedure DefineComputed(target: JSValue; key: JSValue; getter: JSValue);
+
+{ Defers execution to the next microtask (DOM update cycle) }
 procedure NextTick(fn: JSValue);
 
 type
+  { Wrapper for reactive application data }
   TBlaiseData = class
   public
     FRaw: JSValue;  // Original Target
@@ -61,8 +81,13 @@ constructor TBlaiseData.Create(AData: JSValue);
 begin
   if AData = nil then AData := TJSObject.new;
   FRaw := AData;
+  { Initialize refs before proxying to ensure components can register safely }
+  asm 
+     if (!AData['$refs']) AData['$refs'] = {}; 
+  end;
   FData := DefineReactive(AData);
   asm 
+    // Global Store Integration
     if (this && this.FData && window['__BV_PRO_STORE__']) {
       this.FData['$store'] = window['__BV_PRO_STORE__'];
     }
@@ -71,6 +96,7 @@ end;
 
 function TBlaiseData.Evaluate(AExpr: string; AEvent: JSValue = nil): JSValue;
 begin
+  { Evaluates a Pascal/JS expression within the data context }
   asm
     try {
       let f = new Function('data', '$event', 'with(data) { try { return ' + AExpr + '; } catch(e) { return undefined; } }');
@@ -81,6 +107,7 @@ end;
 
 procedure TBlaiseData.SetValue(AKey: string; AVal: JSValue);
 begin
+  { Direct reactive assignment }
   asm this.FData[AKey] = AVal; end;
 end;
 
@@ -91,10 +118,11 @@ initialization
     
     bv.activeEffect = null;
     bv.effectStack = [];
-    bv.targetMap = new WeakMap();
+    bv.targetMap = new WeakMap(); // Dependency graph
     bv.proxyCache = new WeakMap();
-    bv.components = {};
+    if (!bv.components) bv.components = {}; // Safe Component registry
     
+    // Core Effect Wrapper: Tracks deps while running
     bv.effect = function(fn) {
       const e = function() {
          if (e.stopped) return;
@@ -110,6 +138,7 @@ initialization
       return function() { e.stopped = true; };
     };
     
+    // Subscriber: Records that an effect depends on target[key]
     bv.track = function(target, key) {
       if (!bv.activeEffect) return;
       let deps = bv.targetMap.get(target);
@@ -125,6 +154,7 @@ initialization
     let waiting = false;
     let flushCount = 0;
 
+    // Scheduler: Flushes pending updates in the next microtask
     function flushQueue() {
       if (flushCount > 100) {
         console.error('[BlaiseVue] Infinite reactivity loop detected. Aborting flush.');
@@ -144,8 +174,7 @@ initialization
         activeEffects.add(f);
         try { f(); } finally { activeEffects.delete(f); }
         
-        // Time slicing: if this batch is taking too long (> 16ms), 
-        // defer the rest to the next microtask to keep UI responsive.
+        // Time Slicing: Keep UI responsive (16ms budget)
         if (Date.now() - startTime > 16) {
           for (let j = i + 1; j < currentQueue.length; j++) {
             queue.add(currentQueue[j]);
@@ -172,6 +201,7 @@ initialization
       }
     }
 
+    // Proxy Factory: Creates the observable bridge
     bv.defineReactive = function(target) {
       if (!target || typeof target !== 'object' || (target instanceof Node)) return target;
       if (allProxies.has(target)) return target;
@@ -183,6 +213,7 @@ initialization
         get(t, k) {
           if (k === '__bv_raw__') return t;
           bv.track(t, k);
+          // Auto-track Array length
           if (Array.isArray(t) && ['push','pop','splice','shift','unshift'].indexOf(k) !== -1) {
              return function() {
                 let res = Array.prototype[k].apply(t, arguments);
@@ -191,14 +222,15 @@ initialization
              };
           }
           let r = t[k];
+          // Pascal naming convention fallback (FProp)
           if (r === undefined && typeof k === 'string' && !k.startsWith('F')) {
              let fK = 'F' + k;
              r = t[fK] || t['F' + k.charAt(0).toUpperCase() + k.slice(1)];
              if (r !== undefined) bv.track(t, fK);
           }
+          // Recursive reactivity
           if (r !== null && typeof r === 'object' && !(r instanceof Node)) {
-             // Protect private/internal properties from being proxied
-             if (typeof k === 'string' && k.startsWith('_')) return r;
+             if (typeof k === 'string' && k.startsWith('_')) return r; // Skip internals
              return bv.defineReactive(r);
           }
           return r;
@@ -208,6 +240,13 @@ initialization
           t[k] = v;
           bv.trigger(t, k);
           return true;
+        },
+        has(t, k) {
+          if (k in t) return true;
+          if (typeof k === 'string') {
+             if (t['F' + k] !== undefined || t['F' + k.charAt(0).toUpperCase() + k.slice(1)] !== undefined) return true;
+          }
+          return false;
         }
       });
       bv.proxyCache.set(target, p);
@@ -215,6 +254,7 @@ initialization
       return p;
     };
 
+    // Notifier: Executes effects when a dependency changes
     bv.trigger = function(target, key) {
       if (!target) return;
       let deps = bv.targetMap.get(target);
@@ -231,6 +271,7 @@ initialization
       if (Array.isArray(target) && key !== 'length') triggerKey('length');
     };
     
+    // Utility to run code without tracking dependencies
     bv.nonReactive = function(fn) {
       const oldActive = bv.activeEffect;
       bv.activeEffect = null;
@@ -241,6 +282,7 @@ initialization
       }
     };
 
+    // Computed Properties: Lazy, cached results
     bv.defineComputed = function(target, key, getter) {
       let v, dirty = true;
       const cEffect = function() {
@@ -254,7 +296,6 @@ initialization
         get() {
           bv.track(target, key);
           if (dirty) {
-             // Link the getter dependencies to our cEffect
              bv.effectStack.push(cEffect);
              let prev = bv.activeEffect;
              bv.activeEffect = cEffect;
@@ -272,6 +313,7 @@ initialization
       });
     };
 
+    // Component/App Initialization Bridge
     bv.initApp = function(bData, methods, computed) {
       if (computed) {
         for (let ck in computed) {

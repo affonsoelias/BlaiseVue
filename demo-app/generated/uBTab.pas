@@ -30,6 +30,10 @@ begin
     Result := d;
   end;
 
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('id');
+  TJSArray(comp['props']).push('title');
+
   m := TJSObject.new;
   comp['methods'] := m;
 

@@ -129,16 +129,17 @@ begin
   asm console.log("[Init] Registering uCStacked..."); end;
   Register_uCStacked;
 
+
   asm console.log("[Init] Setting #app template..."); end;
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
-    '  <div>' +
+    '  <div translate="no" class="notranslate">' +
     '    <nav class="navbar">' +
     '      <strong class="brand">BlaiseVue Demo 2.0</strong>' +
     '      <div class="nav-links">' +
     '        <a href="#/">Home</a>' +
-    '        <a href="#/about">Sobre</a>' +
+    '        <a href="#/about">About</a>' +
     '        <a href="#/pro">Pro Features 🛡️</a>' +
-    '        <a href="#/form">Formulario</a>' +
+    '        <a href="#/form">Form</a>' +
     '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' +
@@ -146,6 +147,7 @@ begin
     '      <span class="nav-msg">{{ mensagem }}</span>' +
     '    </nav>' +
     '    <div class="container">' +
+    '      <!-- The router-view tag is replaced by the component matching the current hash -->' +
     '      <router-view></router-view>' +
     '    </div>' +
     '    <div class="footer-status">' +
@@ -162,10 +164,10 @@ begin
   comp := opts;
   comp['created'] := procedure(_this: TJSObject)
     begin
-      // Inicializando dados globais com TBVStore
       TJSObject(_this['$store'])['appVersion'] := '2.0.0-PRO';
       TJSObject(_this['$store'])['user'] := 'DevMaster 🏆';
     end;
+  { Router Configuration: Maps URI hashes to Component Tags }
 
     ;
   comp['provide'] := function(_this: TJSObject): TJSObject
@@ -175,9 +177,10 @@ begin
         begin
            Result := TJSObject.new;
            Result['id'] := 42;
-           Result['status'] := 'Produção 🛡️';
+           Result['status'] := 'Production 🛡️';
         end;
     end;
+  { Lifecycle: Initialize global state in the centralized store }
 
 ;
   routerOpts := TJSObject.new;

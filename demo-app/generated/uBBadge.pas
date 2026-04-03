@@ -16,15 +16,24 @@ var
   m: TJSObject;
   _styleEl: TJSHTMLElement;
 begin
-  _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; color: white; display: inline-block; vertical-align: middle; }   .badge-primary { background: #0d6efd; }   .badge-success { background: #198754; }   .badge-danger { background: #dc3545; }   .badge-warning { background: #ffc107; color: #000; }   .badge-info { background: #0dcaf0; color: #000; }';
-  document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
-    '  <span class="badge" :class="''badge-'' + (variant || type || ''primary'')">' +
+    '  <span class="badge" ' +
+    '        :class="[''badge-'' + variant, pill ? ''rounded-pill'' : '''']"' +
+    '        style="display: inline-block; padding: .35em .65em; font-size: .75em; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem;">' +
     '    <slot></slot>' +
     '  </span>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('variant');
+  TJSArray(comp['props']).push('pill');
 
   m := TJSObject.new;
   comp['methods'] := m;

@@ -13,6 +13,20 @@
 </template>
 
 <script>
+  {
+    BInput - Reactive Text Input Field
+    ----------------------------------
+    Supports b-model via internal value tracking and input emission.
+    
+    Props:
+    - label: String (Above the input)
+    - placeholder: String (Inside the input)
+    - value: String (Controlled value from parent)
+    
+    Events:
+    - input: Emitted on every keystroke to sync parent data
+  }
+  
   props:
     label: string = '';
     placeholder: string = '';
@@ -22,6 +36,7 @@
     procedure onInput(ev: JSValue);
     begin
        asm
+         // Emit the current raw input value to the parent context
          this.$emit('input', ev.target.value);
        end;
     end;

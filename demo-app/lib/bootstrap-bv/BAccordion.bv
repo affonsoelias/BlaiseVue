@@ -16,8 +16,16 @@
 </template>
 
 <script>
+  {
+    BAccordion - Interactive Accordion Component
+    -------------------------------------------
+    Props:
+    - items: Array of { id, title, content }
+    - initialActiveId: String (The ID of the item to be open by default)
+  }
+  
   props:
-    items: array of JSValue = [];
+    items: JSValue = nil;
     initialActiveId: string = '';
 
   data:

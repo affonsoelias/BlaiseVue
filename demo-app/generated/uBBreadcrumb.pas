@@ -25,6 +25,7 @@ begin
     '  </nav>';
 
 
+
   m := TJSObject.new;
   comp['methods'] := m;
 

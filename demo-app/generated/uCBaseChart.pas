@@ -33,6 +33,13 @@ begin
     Result := d;
   end;
 
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('type');
+  TJSArray(comp['props']).push('data');
+  TJSArray(comp['props']).push('options');
+  TJSArray(comp['props']).push('width');
+  TJSArray(comp['props']).push('height');
+
   m := TJSObject.new;
   m['initChart'] := procedure(_this: TJSObject)
 

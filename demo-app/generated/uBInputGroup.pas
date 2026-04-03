@@ -34,6 +34,19 @@ begin
     '    </div>' +
     '  </div>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('label');
+  TJSArray(comp['props']).push('placeholder');
+  TJSArray(comp['props']).push('value');
+  TJSArray(comp['props']).push('prepend');
+  TJSArray(comp['props']).push('append');
 
   m := TJSObject.new;
   m['onInput'] := procedure(_this: TJSObject; ev: JSValue)

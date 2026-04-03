@@ -24,20 +24,37 @@
 </template>
 
 <script>
+  {
+    BModal - Interactive Dialog Component
+    --------------------------------------
+    Managed via its internal 'visible' state. Can be opened using component refs.
+    
+    Props:
+    - title: String (Modal header)
+    - okLabel: String (Primary button text)
+    - cancelLabel: String (Secondary button text)
+    
+    Events:
+    - hide: Emitted when the modal closes
+    - ok: Emitted when the primary button is clicked
+  }
+  
   props:
-    title: string = 'Diálogo';
-    okLabel: string = 'Confirmar';
-    cancelLabel: string = 'Cancelar';
+    title: string = 'Dialog';
+    okLabel: string = 'Confirm';
+    cancelLabel: string = 'Cancel';
 
   data:
     visible: boolean = false;
 
   methods:
+    { Opens the modal }
     procedure show;
     begin
        asm this.visible = true; end;
     end;
 
+    { Closes the modal and emits 'hide' }
     procedure close;
     begin
        asm 
@@ -46,6 +63,7 @@
        end;
     end;
 
+    { Emits 'ok' event and closes }
     procedure onOk;
     begin
        asm 

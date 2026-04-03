@@ -2,12 +2,13 @@
   <div class="showcase-container">
     <div class="showcase-header">
       <h1>Showcase: Local Assets 🛡️</h1>
-      <p>Fonte atual: <strong>Inter & Outfit</strong> (100% Local)</p>
+      <p>Current Font: <strong>Inter & Outfit</strong> (100% Local)</p>
     </div>
 
-    <!-- Galeria de Ícones -->
+    <!-- Icon Gallery Demonstration -->
+    <!-- Icons are rendered using the 'b-icon' component with explicit SVG templates -->
     <div class="section-card">
-      <h3>Galeria de Ícones (Inline Local SVGs)</h3>
+      <h3>Icon Gallery (Inline Local SVGs)</h3>
       <div class="icon-grid">
         <div class="icon-box">
           <b-icon name="bootstrap-fill" size="32" class="text-primary" />
@@ -44,17 +45,19 @@
       </div>
     </div>
 
-    <!-- Seletor de Temas -->
+    <!-- Theme Selector Demonstration -->
+    <!-- Dynamically switches global CSS files from the local assets folder -->
     <div class="section-card">
-      <h3>Seletor de Temas (Dynamic CSS)</h3>
+      <h3>Theme Selector (Dynamic CSS)</h3>
+      <p class="text-muted">Click to swap the main Bootstrap CSS file in real-time.</p>
       <div class="theme-buttons d-flex gap-2 flex-wrap">
-        <button class="btn btn-outline-secondary" @click="handleTheme('default')">Padrão</button>
+        <button class="btn btn-outline-secondary" @click="handleTheme('default')">Default</button>
         <button class="btn btn-primary" @click="handleTheme('darkly')">Darkly</button>
         <button class="btn btn-success" @click="handleTheme('flatly')">Flatly</button>
         <button class="btn btn-info" @click="handleTheme('cosmo')">Cosmo</button>
       </div>
       <div class="mt-3">
-         Tema Selecionado: <span class="badge bg-secondary">{{ currentThemeName }}</span>
+         Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>
       </div>
     </div>
   </div>
@@ -62,9 +65,11 @@
 
 <script>
   data:
+    { Active theme name tracker }
     currentThemeName: string = 'default';
 
   methods:
+    { Logic to handle local CSS theme switching }
     procedure handleTheme(ATheme: string);
     begin
       asm
@@ -77,7 +82,7 @@
             }
             document.body.className = 'theme-' + ATheme;
             document.head.appendChild(link);
-            console.log('BlaiseVue: Tema ' + ATheme + ' aplicado.');
+            console.log('BlaiseVue: Theme applied.');
          }
       end;
       this['currentThemeName'] := ATheme;
@@ -85,11 +90,13 @@
 </script>
 
 <style>
+  /* CSS styles for layout and icons */
   .showcase-container { max-width: 1000px; margin: 20px auto; padding: 30px; border-radius: 12px; border-left: 5px solid #2ecc71 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
   .showcase-header { border-bottom: 2px solid #2ecc71; margin-bottom: 25px; padding-bottom: 10px; }
   .section-card { background-color: rgba(128,128,128,0.08); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #3498db; }
   .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }
-  .icon-box { background-color: rgba(128,128,128,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(128,128,128,0.1); }
+  .icon-box { background-color: rgba(128,128,128,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(128,128,128,0.1); transition: transform 0.2s; }
+  .icon-box:hover { transform: translateY(-5px); background-color: rgba(128,128,128,0.1); }
   .text-primary { color: #0d6efd !important; }
   .text-success { color: #198754 !important; }
   .text-warning { color: #ffc107 !important; }

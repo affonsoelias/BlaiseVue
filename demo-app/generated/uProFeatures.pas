@@ -79,6 +79,7 @@ begin
     Result := d;
   end;
 
+
   m := TJSObject.new;
   m['testarSlot'] := procedure(_this: TJSObject)
 

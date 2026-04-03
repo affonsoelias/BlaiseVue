@@ -1,12 +1,22 @@
 unit BVCompiler;
 
+{
+  BVCompiler - The Template Engine
+  ---------------------------------
+  This is the core compiler for BlaiseVue. It scans the DOM, compiles
+  reactive templates, handles directives, and manages component life-cycles.
+}
+
 {$mode objfpc}
 
 interface
 
 uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore;
 
+{ Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
+
+{ Recursively visits nodes to apply directives and reactive expressions }
 procedure Traverse(Node, Data, Methods: JSValue);
 
 implementation
@@ -26,11 +36,12 @@ initialization
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
     const bv = window.__BV_CORE__;
     
+    // Application Entry Point: Mounts a template into the DOM
     bv.compile = function(Root, Data, Methods) {
       if (!Root || Root['bvCompiled']) return;
       Root['bvCompiled'] = true;
 
-      // Injetar Roteador e Store no contexto do App/Pagina
+      // Dependency Injection: Inject Router and Global Store into the data context
       if (Data && Data.FData) {
          if (window.__BV_CORE__.router) {
             Data.FData['Router'] = window.__BV_CORE__.router;
@@ -41,13 +52,13 @@ initialization
 
       console.log("[Compiler] BLAISE v2.0 ENGAGED on <" + Root.tagName + ">");
       bv.traverse(Root, Data, Methods);
-      bv.trigger(Data.FData, ""); 
+      bv.trigger(Data.FData, ""); // Initial trigger for all expressions
     };
 
+    // Safely removes an element while triggering lifecycle hooks
     bv.unmount = function(el) {
        if (!el) return;
        if (el['bvUnmount']) el['bvUnmount']();
-       // Recursivamente limpar filhos que possam ser componentes
        let children = el.querySelectorAll('*');
        for (let i = 0; i < children.length; i++) {
           if (children[i]['bvUnmount']) children[i]['bvUnmount']();
@@ -55,6 +66,7 @@ initialization
        el.remove();
     };
 
+    // Prevent redundant processing on managed nodes
     bv.markManaged = function(node) {
        if (!node) return;
        node['bvManaged'] = true;
@@ -63,6 +75,7 @@ initialization
        }
     };
 
+    // Transition Engine: Coordinates CSS animations
     bv.applyTransition = function(el, type, name, next) {
        const cls = {
          from: name + '-' + type + '-from',
@@ -72,7 +85,7 @@ initialization
        el.classList.add(cls.from);
        el.classList.add(cls.active);
        
-       void el.offsetHeight; // force reflow
+       void el.offsetHeight; // Force reflow
 
        const onEnd = function(e) {
           if (e && e.target !== el) return;
@@ -89,7 +102,7 @@ initialization
           el.classList.remove(cls.from);
           el.classList.add(cls.to);
        });
-       // Fallback for no transition
+       
        setTimeout(function() {
           let s = window.getComputedStyle(el);
           let d = parseFloat(s.transitionDuration) || parseFloat(s.animationDuration);
@@ -97,6 +110,7 @@ initialization
        }, 50);
     };
     
+    // Converts a reactive Proxy to a plain object
     bv.unproxy = function(obj, seen = new WeakMap()) {
        if (!obj || typeof obj !== 'object' || (obj instanceof Node)) return obj;
        let target = obj['__bv_raw__'] || obj;
@@ -112,7 +126,6 @@ initialization
              return res;
           }
 
-          // Handle built-ins
           if (target instanceof Date) return new Date(target);
           if (target instanceof RegExp) return new RegExp(target);
           if (target instanceof Map) return new Map(target);
@@ -133,11 +146,12 @@ initialization
        });
     };
 
+    // Recursive DOM Visitor: The core of the Directive Engine
     bv.traverse = function(Node, Data, Methods) {
       if (!Node || Node['bvTraversed']) return;
       
       try {
-          // 1. Text Interpolation
+          // 1. Text Interpolation {{ expression }}
           if (Node.nodeType === 3) {
             let t = Node['b-orig-tpl'] || Node.nodeValue;
             if (t && t.indexOf('{{') !== -1) {
@@ -164,7 +178,7 @@ initialization
           let tagName = el.tagName.toLowerCase();
           if (tagName === 'script' || tagName === 'style') return;
 
-          // 1.5. Special Wrapper: <transition>
+          // 2. Special tag: <transition>
           if (tagName === 'transition') {
             let tName = el.getAttribute('name') || 'v';
             let child = el.firstElementChild;
@@ -176,10 +190,12 @@ initialization
             }
           }
 
-          // 1.8. Component Discovery
-          let opts = (bv.getComponent ? bv.getComponent(tagName) : null);
+          let opts = (bv.components ? bv.components[tagName] : null);
+          if (tagName.indexOf('-') !== -1) {
+             console.log("[Compiler] Resolving <" + tagName + ">. Found: " + !!opts);
+          }
 
-          // 2. Discover Directives
+          // 3. Directive Collection
           let vmodel = null, vfor = null, vif = null, vshow = null, vref = null;
           let binds = [];
           let events = [];
@@ -199,17 +215,17 @@ initialization
             }
           }
 
-          // 3. Handle Refs (Safe check for Data)
+          // 4. Handle Refs
           if (vref && Data && Data.FData) {
               if (!Data.FData.$refs) Data.FData.$refs = {};
               Data.FData.$refs[vref] = el;
           }
 
-          // 4. b-model
+          // 5. b-model directive
           if (vmodel) {
             el.removeAttribute('b-model'); el.removeAttribute('v-model');
             if (opts) {
-               // Component v-model sugar: handle later during component init
+               // Component v-model (handled logic in step 9)
             } else {
                el.value = Data.Evaluate(vmodel) || '';
                const sync = function() { Data.SetValue(vmodel, this.value); };
@@ -221,7 +237,7 @@ initialization
             }
           }
 
-          // 5. b-for
+          // 6. b-for directive
           if (vfor) {
             el.removeAttribute('b-for'); el.removeAttribute('v-for');
             let ps = vfor.split(' in ');
@@ -266,7 +282,7 @@ initialization
             return;
           }
 
-          // 6. b-if
+          // 7. b-if directive
           if (vif) {
             el.removeAttribute('b-if'); el.removeAttribute('v-if');
             let m = document.createElement('script'); m.type = 'text/if-marker'; m['bvManaged'] = true;
@@ -290,7 +306,7 @@ initialization
             if (!active) return;
           }
 
-          // 7. b-show
+          // 8. b-show directive
           if (vshow) {
             el.removeAttribute('b-show'); el.removeAttribute('v-show');
             let tName = el.getAttribute('bv-transition');
@@ -311,7 +327,7 @@ initialization
             });
           }
 
-          // 8. Dynamic Binding
+          // 9. Attribute Binding (:attr)
           binds.forEach(function(b) {
              bv.effect(function() {
                 let v = Data.Evaluate(b.expr);
@@ -327,15 +343,16 @@ initialization
              });
           });
 
-          // 9. Components & Slots & Provide/Inject
+          // 10. Component Logic, Slots & Provide/Inject
           if (opts) {
-            // Handle Slots (Named and Default)
+            // Manage Slots
             let originalChildren = Array.from(el.childNodes);
-            
             let root_c = document.createElement('div');
             root_c.innerHTML = opts.template;
             let rEl = root_c.firstElementChild;
+            if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
             rEl['bvManaged'] = true;
+            console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
             el.parentNode.replaceChild(rEl, el);
 
             let namedSlotsInChild = rEl.querySelectorAll('slot[name], b-slot[name]');
@@ -346,12 +363,12 @@ initialization
                   if (cn.nodeType === 1 && cn.getAttribute('slot') === sName) {
                      let slotNodes = Array.from(cn.childNodes);
                      slotNodes.forEach(function(sn) {
-                        bv.traverse(sn, Data, Methods); // Parent context
+                        bv.traverse(sn, Data, Methods); // Parent scope
                         bv.markManaged(sn);
                         sNode.parentNode.insertBefore(sn, sNode);
                         foundAny = true;
                      });
-                     cn.remove(); // Remove the wrapper <div slot="...">
+                     cn.remove();
                   }
                });
                if (!foundAny) {
@@ -361,12 +378,11 @@ initialization
                }
             });
 
-            // Handle Default Slot (remaining content)
             let defaultSlot = rEl.querySelector('slot:not([name]), b-slot:not([name])');
             if (defaultSlot) {
                originalChildren.forEach(function(cn) {
-                  if (cn.parentNode === el || !cn.parentNode) { // Still unmanaged or original
-                     bv.traverse(cn, Data, Methods); // Parent context
+                  if (cn.parentNode === el || !cn.parentNode) {
+                     bv.traverse(cn, Data, Methods); // Parent scope
                      bv.markManaged(cn);
                      defaultSlot.parentNode.insertBefore(cn, defaultSlot);
                   }
@@ -383,7 +399,7 @@ initialization
             }
             if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
             
-            // Collect Props from attributes
+            // Props Initialization
             if (el.attributes) {
                for (let i = 0; i < el.attributes.length; i++) {
                   let a = el.attributes[i];
@@ -396,7 +412,6 @@ initialization
                   }
                }
             }
-             // Component v-model implementation
              if (vmodel) {
                 bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
                 pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
@@ -422,12 +437,11 @@ initialization
                }); 
             }
             
-            // Watchers
             if (opts.watch) {
                Object.keys(opts.watch).forEach(function(wk) {
                   let firstRun = true;
                   bv.effect(function() {
-                     let val = pRef[wk]; // Track
+                     let val = pRef[wk];
                      if (firstRun) { firstRun = false; return; }
                      opts.watch[wk].call(pRef, pRef, val);
                   });
@@ -447,6 +461,7 @@ initialization
                   else if (Methods && typeof Methods[expr] === 'function') Methods[expr].call(Data.FData, Data.FData, arg);
                }
             };
+
             let cD = {
               FData: pRef,
               Evaluate: function(expr, ev) { 
@@ -460,7 +475,6 @@ initialization
             
             bv.traverse(rEl, cD, opts.methods);
             let stopEffect = bv.effect(function() {
-               // Removed previous unproxy call that caused infinite loops
                if (opts.updated) opts.updated.call(pRef, pRef);
             });
 
@@ -473,26 +487,21 @@ initialization
             return;
           }
 
-          // 10. Events
+          // 11. Event Listeners (@event)
           events.forEach(function(evt) {
              (function(expr, name) {
                 el.addEventListener(name, function(ev) {
-                   console.log("[Compiler] Event triggered: " + name + " -> " + expr, ev);
                    let r = Data.Evaluate(expr, ev);
                    if (r === undefined && Methods && Methods[expr]) r = Methods[expr];
                    if (typeof r === 'function') {
-                       try { 
-                         console.log("[Compiler] Executing method: " + expr);
-                         r.call(Data.FData || null, Data.FData || null, ev); 
-                       } catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
-                   } else {
-                      console.warn("[Compiler] Method not found or not a function: " + expr, r);
+                       try { r.call(Data.FData || null, Data.FData || null, ev); } 
+                       catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
                    }
                 }, false);
              })(evt.expr, evt.name);
           });
 
-          // 11. Recursive Children Loop 
+          // 12. Recursive Children
           let children = Node.childNodes;
           if (children) {
             for (let j = 0; j < children.length; j++) {
@@ -502,7 +511,7 @@ initialization
           }
           
           Node['bvTraversed'] = true;
-      } catch (ex) { console.error("[Compiler] Error: ", ex); }
+      } catch (ex) { console.error("[Compiler] Fatal Error: ", ex); }
     };
   end;
 

@@ -40,6 +40,7 @@ begin
     Result := d;
   end;
 
+
   m := TJSObject.new;
   comp['methods'] := m;
 

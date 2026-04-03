@@ -33,12 +33,24 @@ begin
     '    >' +
     '  </div>';
 
+  comp['data'] := function(): TJSObject
+  var d: TJSObject;
+  begin
+    d := TJSObject.new;
+    Result := d;
+  end;
+
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('label');
+  TJSArray(comp['props']).push('placeholder');
+  TJSArray(comp['props']).push('value');
 
   m := TJSObject.new;
   m['onInput'] := procedure(_this: TJSObject; ev: JSValue)
 
     begin
        asm
+         // Emit the current raw input value to the parent context
          this.$emit('input', ev.target.value);
        end;
     end;

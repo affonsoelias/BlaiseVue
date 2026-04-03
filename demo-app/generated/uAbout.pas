@@ -23,33 +23,33 @@ begin
   comp['template'] :=
     '  <div>' +
     '    <div class="section main-intro">' +
-    '      <h1 class="section-title">Sobre o BlaiseVue Professional</h1>' +
-    '      <p><strong>Status do Sistema:</strong> <span class="badge badge-green">Rodando via Pascal Power ⚔️</span></p>' +
-    '      <p>Abaixo você encontra o laboratório analítico de todos os recursos implementados no framework.</p>' +
+    '      <h1 class="section-title">About BlaiseVue Professional</h1>' +
+    '      <p><strong>System Status:</strong> <span class="badge badge-green">Running via Pascal Power ⚔️</span></p>' +
+    '      <p>Below you will find the analytical laboratory of all features implemented in the framework.</p>' +
     '      ' +
     '      <div class="action-bar">' +
     '        <button class="btn-primary" @click="toggleDemos">' +
-    '          {{ showDemos ? ''🔐 Fechar Laboratório'' : ''🔓 Abrir Laboratório de Recursos'' }}' +
+    '          {{ showDemos ? ''🔐 Close Laboratory'' : ''🔓 Open Feature Laboratory'' }}' +
     '        </button>' +
-    '        <button class="btn-outline" @click="alertaTecnologia">Versão: {{ versao }}</button>' +
+    '        <button class="btn-outline" @click="alertaTecnologia">Version: {{ versao }}</button>' +
     '      </div>' +
     '    </div>' +
     '' +
-    '    <!-- Tabela de Recursos (Sempre Visível) -->' +
+    '    <!-- Technology Table (Always Visible) -->' +
     '    <div class="section">' +
-    '      <h2 class="section-title">🛡️ Arsenal Technológico</h2>' +
+    '      <h2 class="section-title">🛡️ Technological Arsenal</h2>' +
     '      <div class="resource-grid">' +
     '        <div class="resource-item">' +
-    '          <span class="badge badge-blue">Reatividade</span>' +
-    '          <p>Dependency Tracking via Proxy JS</p>' +
+    '          <span class="badge badge-blue">Reactivity</span>' +
+    '          <p>Dependency Tracking via JS Proxy</p>' +
     '        </div>' +
     '        <div class="resource-item">' +
-    '          <span class="badge badge-green">Compilação</span>' +
-    '          <p>AOT Pascal para JS Otimizado</p>' +
+    '          <span class="badge badge-green">Compilation</span>' +
+    '          <p>AOT Pascal to Optimized JS</p>' +
     '        </div>' +
     '        <div class="resource-item">' +
     '          <span class="badge badge-orange">Routing</span>' +
-    '          <p>SPA Router com History/Hash</p>' +
+    '          <p>SPA Router with History/Hash</p>' +
     '        </div>' +
     '        <div class="resource-item">' +
     '          <span class="badge badge-gray">Store</span>' +
@@ -58,30 +58,30 @@ begin
     '      </div>' +
     '    </div>' +
     '' +
-    '    <!-- Tecnologia VIP Cards -->' +
+    '    <!-- Engine Info Section -->' +
     '    <div class="section engine-section">' +
-    '       <h2 class="section-title">⚙️ Motor de Alta Performance</h2>' +
+    '       <h2 class="section-title">⚙️ High Performance Engine</h2>' +
     '       <div class="tech-card-pair">' +
     '          <div class="tech-card fpc">' +
     '             <div class="card-icon">🏰</div>' +
     '             <h3>Free Pascal</h3>' +
-    '             <p>A segurança da tipagem forte.</p>' +
+    '             <p>The safety of strong typing.</p>' +
     '          </div>' +
     '          <div class="tech-card pas2js">' +
     '             <div class="card-icon">⚡</div>' +
     '             <h3>Pas2JS</h3>' +
-    '             <p>A agilidade do ecossistema Web.</p>' +
+    '             <p>The agility of the Web ecosystem.</p>' +
     '          </div>' +
     '       </div>' +
     '    </div>' +
     '' +
-    '    <!-- O LABORATÓRIO (Onde a mágica acontece) -->' +
+    '    <!-- THE LABORATORY (Feature Demos) -->' +
     '    <transition name="fade">' +
     '      <div v-if="showDemos" class="lab-container">' +
-    '          <!-- 1. Iteração Reativa (b-for) -->' +
+    '          <!-- 1. Reactive Iteration (b-for) -->' +
     '          <div class="section lab-section">' +
-    '            <h2 class="section-title">🔬 Laboratório 01: Iteração Dinâmica (b-for)</h2>' +
-    '            <p>Os itens abaixo são injetados diretamente do Pascal em uma <code>TJSArray</code> reativa.</p>' +
+    '            <h2 class="section-title">🔬 Lab 01: Dynamic Iteration (b-for)</h2>' +
+    '            <p>The items below are injected directly from Pascal into a reactive <code>TJSArray</code>.</p>' +
     '            <ul class="resource-list">' +
     '              <li v-for="item in tecnologias" class="resource-li">' +
     '                <span class="li-icon">🔹</span>' +
@@ -90,43 +90,43 @@ begin
     '              </li>' +
     '            </ul>' +
     '            <div style="margin-top: 15px;">' +
-    '              <button class="btn-primary btn-sm" @click="addTec">➕ Injetar Nova Tecnologia</button>' +
-    '              <button class="btn-danger btn-sm" @click="limparTecs">🗑️ Limpar Tudo</button>' +
+    '              <button class="btn-primary btn-sm" @click="addTec">➕ Inject New Tech</button>' +
+    '              <button class="btn-danger btn-sm" @click="limparTecs">🗑️ Clear All</button>' +
     '            </div>' +
     '          </div>' +
     '' +
-    '          <!-- 2. Two-Way e Computed -->' +
+    '          <!-- 2. Two-Way and Computed -->' +
     '          <div class="section lab-section">' +
-    '            <h2 class="section-title">📊 Laboratório 02: Computed & Two-Way</h2>' +
+    '            <h2 class="section-title">📊 Lab 02: Computed & Two-Way</h2>' +
     '            <div class="form-horizontal">' +
     '              <div class="form-group">' +
-    '                <label>Primeiro Nome:</label>' +
+    '                <label>First Name:</label>' +
     '                <input type="text" b-model="firstName" class="form-control">' +
     '              </div>' +
     '              <div class="form-group">' +
-    '                <label>Último Nome:</label>' +
+    '                <label>Last Name:</label>' +
     '                <input type="text" b-model="lastName" class="form-control">' +
     '              </div>' +
     '            </div>' +
     '            <div class="result-box">' +
-    '              <strong>Resultado Computado:</strong> ' +
+    '              <strong>Computed Result:</strong> ' +
     '              <span class="res-text">{{ perfilInfo }}</span>' +
     '            </div>' +
     '          </div>' +
     '' +
-    '          <!-- 3. Condicional e Estado -->' +
+    '          <!-- 3. Conditional State (b-if) -->' +
     '          <div class="section lab-section">' +
-    '            <h2 class="section-title">🎭 Laboratório 03: Estado Condicional (b-if)</h2>' +
+    '            <h2 class="section-title">🎭 Lab 03: Conditional State (b-if)</h2>' +
     '            <div class="toggle-control">' +
     '              <button class="btn-outline" @click="toggleLogin">' +
-    '                {{ logado ? ''🔓 Deslogar'' : ''🔐 Simular Login'' }}' +
+    '                {{ logado ? ''🔓 Logout'' : ''🔐 Simulate Login'' }}' +
     '              </button>' +
     '            </div>' +
     '            <div v-if="logado" class="alert alert-success">' +
-    '               ✅ Usuário autenticado via Pascal State!' +
+    '               ✅ User authenticated via Pascal State!' +
     '            </div>' +
     '            <div v-if="!logado" class="alert alert-warning">' +
-    '               ⚠️ Aguardando autenticação...' +
+    '               ⚠️ Waiting for authentication...' +
     '            </div>' +
     '          </div>' +
     '      </div>' +
@@ -146,6 +146,7 @@ begin
     Result := d;
   end;
 
+
   m := TJSObject.new;
   m['toggleDemos'] := procedure(_this: TJSObject)
 
@@ -153,19 +154,19 @@ begin
       o1, o2: TJSObject;
     begin
       _this['showDemos'] := not Boolean(_this['showDemos']);
-      // Popular inicial se estiver vazio
       if TJSArray(_this['tecnologias']).length = 0 then
       begin
         o1 := TJSObject.new;
         o1['nome'] := 'Object Pascal';
-        o1['tipo'] := 'Linguagem';
+        o1['tipo'] := 'Language';
         TJSArray(_this['tecnologias']).push(o1);
         o2 := TJSObject.new;
-        o2['nome'] := 'Reatividade Proxy';
+        o2['nome'] := 'Proxy Reactivity';
         o2['tipo'] := 'Core Engine';
         TJSArray(_this['tecnologias']).push(o2);
       end;
     end;
+    { Toggle authentication state using unsafe JS Proxy access (asm) }
     
   m['toggleLogin'] := procedure(_this: TJSObject)
 
@@ -175,6 +176,7 @@ begin
          console.log("[Method] logado toggle: ", this.logado);
        end;
     end;
+    { Adds a dynamic record to the reactive array }
     
   m['addTec'] := procedure(_this: TJSObject)
 
@@ -182,21 +184,23 @@ begin
       o: TJSObject;
     begin
        o := TJSObject.new;
-       o['nome'] := 'Recurso ' + IntToStr(TJSArray(_this['tecnologias']).length + 1);
-       o['tipo'] := 'Gerado Dinamicamente';
+       o['nome'] := 'Feature ' + IntToStr(TJSArray(_this['tecnologias']).length + 1);
+       o['tipo'] := 'Generated Dynamically';
        TJSArray(_this['tecnologias']).push(o);
     end;
+    { Clears the reactive array }
     
   m['limparTecs'] := procedure(_this: TJSObject)
 
     begin
        TJSArray(_this['tecnologias']).length := 0;
     end;
+    { Simple window alert method }
     
   m['alertaTecnologia'] := procedure(_this: TJSObject)
 
     begin
-      window.alert('BlaiseVue v2.1.0 \nOtimizado para alto desempenho!');
+      window.alert('BlaiseVue v2.1.0 \nOptimized for high performance!');
     end;
 
   comp['methods'] := m;
@@ -205,7 +209,7 @@ begin
   TJSObject(comp['computed'])['perfilInfo'] := function(_this: TJSObject): JSValue
 
     begin
-      Result := 'Mestre ' + string(_this['firstName']) + ' ' + string(_this['lastName']);
+      Result := 'Master ' + string(_this['firstName']) + ' ' + string(_this['lastName']);
     end;
 
 ;

@@ -1,5 +1,12 @@
 unit BVTestUtils;
 
+{
+  BVTestUtils - Unit Testing Framework for BlaiseVue
+  --------------------------------------------------
+  Integrates Vitest with Pascal, providing a familiar API for
+  mounting components, triggering events, and asserting values.
+}
+
 {$mode objfpc}
 
 interface
@@ -7,19 +14,21 @@ interface
 uses JS, Web, BVReactivity, BVCompiler;
 
 type
+  { Wrapper around a DOM element for test inspections }
   TWrapper = class
   private
     FEl: TJSHTMLElement;
   public
     constructor Create(AEl: TJSHTMLElement);
-    function HTML: string;
-    function Text: string;
-    function Find(Selector: string): TJSHTMLElement;
-    procedure Click;
-    procedure SetValue(AVal: string);
-    procedure Trigger(EventName: string);
+    function HTML: string; { Returns innerHTML of the component }
+    function Text: string; { Returns textContent of the component }
+    function Find(Selector: string): TJSHTMLElement; { Queries a sub-element }
+    procedure Click; { Simulates a mouse click }
+    procedure SetValue(AVal: string); { Simulates an input change + event dispatch }
+    procedure Trigger(EventName: string); { Dispatches a custom JS event }
   end;
 
+  { Assertion proxy that calls Vitest 'expect' functions }
   TExpectProxy = class
   private
     FVal: JSValue;
@@ -36,15 +45,21 @@ type
     procedure ToBeNull;
   end;
 
+{ Groups related tests together }
 procedure Describe(const Msg: string; Fn: JSValue);
+
+{ Defines a single test case }
 procedure It(const Msg: string; Fn: JSValue);
+
+{ Creates an assertion for a specific value }
 function Expect(Val: JSValue): TExpectProxy;
+
+{ Mounts a component by tag name into the test document body }
 function Mount(const TagName: string; Props: TJSObject = nil): TWrapper;
 
 implementation
 
-{ TWrapper }
-
+{ TWrapper Implementation }
 constructor TWrapper.Create(AEl: TJSHTMLElement);
 begin
   FEl := AEl;
@@ -85,8 +100,7 @@ begin
   end;
 end;
 
-{ TExpectProxy }
-
+{ TExpectProxy Implementation }
 constructor TExpectProxy.Create(AVal: JSValue);
 begin
   FVal := AVal;
@@ -137,6 +151,8 @@ begin
   asm expect(this.FVal).toBeNull(); end;
 end;
 
+{ Higher-level test functions calling global JS test context }
+
 procedure Describe(const Msg: string; Fn: JSValue);
 begin
   asm describe(Msg, Fn); end;
@@ -152,6 +168,7 @@ begin
   Result := TExpectProxy.Create(Val);
 end;
 
+{ Mocks a component environment for testing }
 function Mount(const TagName: string; Props: TJSObject = nil): TWrapper;
 var
   El: TJSHTMLElement;
@@ -168,9 +185,10 @@ begin
   
   document.body.appendChild(El);
   
-  // Use Pascal objects to force dependency inclusion
+  { Initialize reactive data for the test context }
   Data := TBlaiseData.Create(Props);
-  // Compile the element with the data
+  
+  { Trigger compilation on the target element }
   Compile(El, Data, TJSObject.new);
   
   Result := TWrapper.Create(El);
@@ -179,6 +197,7 @@ end;
 procedure ForceInclude;
 var d: TBlaiseData;
 begin
+  { Ensures compiler doesn't strip important reactivity units during optimization }
   d := nil;
 end;
 

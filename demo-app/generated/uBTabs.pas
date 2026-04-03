@@ -44,6 +44,7 @@ begin
     Result := d;
   end;
 
+
   m := TJSObject.new;
   m['selectTab'] := procedure(_this: TJSObject; id: string)
 

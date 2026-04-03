@@ -52,12 +52,18 @@ begin
     Result := d;
   end;
 
+  comp['props'] := TJSArray.new;
+  TJSArray(comp['props']).push('title');
+  TJSArray(comp['props']).push('okLabel');
+  TJSArray(comp['props']).push('cancelLabel');
+
   m := TJSObject.new;
   m['show'] := procedure(_this: TJSObject)
 
     begin
        asm this.visible = true; end;
     end;
+    { Closes the modal and emits 'hide' }
     
   m['close'] := procedure(_this: TJSObject)
 
@@ -67,6 +73,7 @@ begin
           this.$emit('hide');
        end;
     end;
+    { Emits 'ok' event and closes }
     
   m['onOk'] := procedure(_this: TJSObject)
 

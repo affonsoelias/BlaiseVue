@@ -12,7 +12,7 @@
   props:
     label: string = '';
     value: string = '';
-    options: array of JSValue = [];
+    options: JSValue = nil;
 
   methods:
     procedure onChange(ev: JSValue);
