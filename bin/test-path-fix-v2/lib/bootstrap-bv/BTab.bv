@@ -1,0 +1,38 @@
+<template>
+  <div class="tab-pane" b-show="active" v-if="render">
+     <slot></slot>
+  </div>
+</template>
+
+<script>
+  props:
+    id: string = '';
+    title: string = 'Tab';
+
+  inject:
+    registerTab: pointer;
+    isActive: pointer;
+
+  data:
+    render: boolean = true;
+
+  created:
+    begin
+       if Assigned(this['registerTab']) then
+       begin
+         asm 
+           const t = { id: this.id, title: this.title };
+           this.registerTab(t);
+         end;
+       end;
+    end;
+
+  computed:
+    procedure active: boolean;
+    begin
+       if Assigned(this['isActive']) then
+         Result := boolean(asm return this.isActive(this.id); end;)
+       else
+         Result := true;
+    end;
+</script>

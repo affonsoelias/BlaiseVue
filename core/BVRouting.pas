@@ -204,10 +204,10 @@ begin
   begin
     asm
       let toR = { path: cleanP, fullPath: fullHash, params: this.FCurrentRoute.Params, query: this.FCurrentRoute.Query };
-      let fromR = this.FCurrentRoute; { Basic transition info }
+      let fromR = this.FCurrentRoute; // Basic transition info
       let res = this.FBeforeEach.call(null, toR, fromR);
       
-      if (res === false) return; { Navigation Aborted }
+      if (res === false) return; // Navigation Aborted
       if (typeof res === 'string') {
         window.location.hash = '#' + res;
         return;

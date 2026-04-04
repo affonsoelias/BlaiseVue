@@ -1,0 +1,9 @@
+<template>
+  <ul class="list-group" style="list-style: none; padding: 0; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden;">
+    <slot></slot>
+  </ul>
+</template>
+
+<script>
+  // Simple container for BListGroupItem
+</script>

@@ -1,0 +1,11 @@
+<template>
+  <c-base-chart type="mixed" :data="data" :options="options" :width="width" :height="height"></c-base-chart>
+</template>
+
+<script>
+  props:
+    data: JSValue = null;
+    options: JSValue = null;
+    width: string = '100%';
+    height: string = '400px';
+</script>

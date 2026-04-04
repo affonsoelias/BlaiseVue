@@ -1,0 +1,30 @@
+<template>
+  <button :type="type" 
+          class="btn" 
+          :class="[(outline ? 'btn-outline-' : 'btn-') + variant, 'btn-' + size]"
+          @click="$emit('click', $event)"
+          style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">
+    <slot></slot>
+  </button>
+</template>
+
+<script>
+  {
+    BBtn - Actionable Button Component
+    ----------------------------------
+    Props:
+    - variant: String (primary, secondary, success, danger, warning, etc.)
+    - outline: Boolean (Uses outline styling instead of solid color)
+    - size: String (sm, md, lg)
+    - type: String (button, submit, reset)
+    
+    Events:
+    - click: Emitted when the user interact with the button
+  }
+  
+  props:
+    variant: string = 'primary';
+    outline: boolean = false;
+    size: string = 'md';
+    type: string = 'button';
+</script>

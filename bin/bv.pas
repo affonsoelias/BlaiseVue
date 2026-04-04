@@ -25,10 +25,17 @@ uses
 { Returns the absolute path to the BlaiseVue SDK root }
 function GetSDKPath: string;
 var
-  BinDir: string;
+  ExeDir, Parent: string;
 begin
-  BinDir := ExtractFilePath(ParamStr(0));
-  Result := ExtractFilePath(ExcludeTrailingPathDelimiter(BinDir));
+  ExeDir := ExtractFilePath(ParamStr(0));
+  Parent := ExtractFilePath(ExcludeTrailingPathDelimiter(ExeDir));
+  
+  // If we are running inside the 'bin' directory, the SDK root is one level up.
+  // Otherwise, we assume we are running from the project root.
+  if LowerCase(ExtractFileName(ExcludeTrailingPathDelimiter(ExeDir))) = 'bin' then
+    Result := Parent
+  else
+    Result := ExeDir;
 end;
 
 { Returns the path to the framework core unit folder }
@@ -87,14 +94,17 @@ begin
     {$ENDIF}
   {$ENDIF}
   
-  // 1. Tries the framework root
-  if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');
-  // 2. Tries the default Pas2JS local package path
+  // 1. Prioritize the platform-specific RTL bundled with the transpiler
   if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
     Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
-  // 3. Tries the Pas2JS bin folder
+  
+  // 2. Fallback to the Pas2JS bin folder
   if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
     Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
+    
+  // 3. Last fallback: check the SDK root if a standalone version was placed there
+  if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');
+
   Result := '';
 end;
 

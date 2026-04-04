@@ -1,0 +1,227 @@
+<template>
+  <div>
+    <div class="section main-intro">
+      <h1 class="section-title">About BlaiseVue Professional</h1>
+      <p><strong>System Status:</strong> <span class="badge badge-green">Running via Pascal Power ⚔️</span></p>
+      <p>Below you will find the analytical laboratory of all features implemented in the framework.</p>
+      
+      <div class="action-bar">
+        <button class="btn-primary" @click="toggleDemos">
+          {{ showDemos ? '🔐 Close Laboratory' : '🔓 Open Feature Laboratory' }}
+        </button>
+        <button class="btn-outline" @click="alertaTecnologia">Version: {{ versao }}</button>
+      </div>
+    </div>
+
+    <!-- Technology Table (Always Visible) -->
+    <div class="section">
+      <h2 class="section-title">🛡️ Technological Arsenal</h2>
+      <div class="resource-grid">
+        <div class="resource-item">
+          <span class="badge badge-blue">Reactivity</span>
+          <p>Dependency Tracking via JS Proxy</p>
+        </div>
+        <div class="resource-item">
+          <span class="badge badge-green">Compilation</span>
+          <p>AOT Pascal to Optimized JS</p>
+        </div>
+        <div class="resource-item">
+          <span class="badge badge-orange">Routing</span>
+          <p>SPA Router with History/Hash</p>
+        </div>
+        <div class="resource-item">
+          <span class="badge badge-gray">Store</span>
+          <p>Global State Management (TBVStore)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Engine Info Section -->
+    <div class="section engine-section">
+       <h2 class="section-title">⚙️ High Performance Engine</h2>
+       <div class="tech-card-pair">
+          <div class="tech-card fpc">
+             <div class="card-icon">🏰</div>
+             <h3>Free Pascal</h3>
+             <p>The safety of strong typing.</p>
+          </div>
+          <div class="tech-card pas2js">
+             <div class="card-icon">⚡</div>
+             <h3>Pas2JS</h3>
+             <p>The agility of the Web ecosystem.</p>
+          </div>
+       </div>
+    </div>
+
+    <!-- THE LABORATORY (Feature Demos) -->
+    <transition name="fade">
+      <div v-if="showDemos" class="lab-container">
+          <!-- 1. Reactive Iteration (b-for) -->
+          <div class="section lab-section">
+            <h2 class="section-title">🔬 Lab 01: Dynamic Iteration (b-for)</h2>
+            <p>The items below are injected directly from Pascal into a reactive <code>TJSArray</code>.</p>
+            <ul class="resource-list">
+              <li v-for="item in tecnologias" class="resource-li">
+                <span class="li-icon">🔹</span>
+                <strong>{{ item.nome }}</strong> 
+                <span class="li-tag">{{ item.tipo }}</span>
+              </li>
+            </ul>
+            <div style="margin-top: 15px;">
+              <button class="btn-primary btn-sm" @click="addTec">➕ Inject New Tech</button>
+              <button class="btn-danger btn-sm" @click="limparTecs">🗑️ Clear All</button>
+            </div>
+          </div>
+
+          <!-- 2. Two-Way and Computed -->
+          <div class="section lab-section">
+            <h2 class="section-title">📊 Lab 02: Computed & Two-Way</h2>
+            <div class="form-horizontal">
+              <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" b-model="firstName" class="form-control">
+              </div>
+              <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" b-model="lastName" class="form-control">
+              </div>
+            </div>
+            <div class="result-box">
+              <strong>Computed Result:</strong> 
+              <span class="res-text">{{ perfilInfo }}</span>
+            </div>
+          </div>
+
+          <!-- 3. Conditional State (b-if) -->
+          <div class="section lab-section">
+            <h2 class="section-title">🎭 Lab 03: Conditional State (b-if)</h2>
+            <div class="toggle-control">
+              <button class="btn-outline" @click="toggleLogin">
+                {{ logado ? '🔓 Logout' : '🔐 Simulate Login' }}
+              </button>
+            </div>
+            <div v-if="logado" class="alert alert-success">
+               ✅ User authenticated via Pascal State!
+            </div>
+            <div v-if="!logado" class="alert alert-warning">
+               ⚠️ Waiting for authentication...
+            </div>
+          </div>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<script>
+  {
+    About.bv - Complex Feature Laboratory
+    -------------------------------------
+    This view serves as a technical showcase for b-for, b-if, and Computed properties.
+  }
+
+  data:
+    versao: string = '2.1.0-PRO';
+    showDemos: boolean = false;
+    logado: boolean = false;
+    tecnologias: TJSArray = TJSArray.new;
+    firstName: string = 'Blaise';
+    lastName: string = 'Pascal';
+
+  { Computed Property: Automatically updates when firstName or lastName changes }
+  computed:
+    function perfilInfo: string;
+    begin
+      Result := 'Master ' + string(this['firstName']) + ' ' + string(this['lastName']);
+    end;
+
+  methods:
+    { Toggles the lab section and populates initial data if empty }
+    procedure toggleDemos;
+    var
+      o1, o2: TJSObject;
+    begin
+      this['showDemos'] := not Boolean(this['showDemos']);
+      
+      if TJSArray(this['tecnologias']).length = 0 then
+      begin
+        o1 := TJSObject.new;
+        o1['nome'] := 'Object Pascal';
+        o1['tipo'] := 'Language';
+        TJSArray(this['tecnologias']).push(o1);
+
+        o2 := TJSObject.new;
+        o2['nome'] := 'Proxy Reactivity';
+        o2['tipo'] := 'Core Engine';
+        TJSArray(this['tecnologias']).push(o2);
+      end;
+    end;
+
+    { Toggle authentication state using unsafe JS Proxy access (asm) }
+    procedure toggleLogin;
+    begin
+       asm 
+         this.logado = !this.logado; 
+         console.log("[Method] logado toggle: ", this.logado);
+       end;
+    end;
+
+    { Adds a dynamic record to the reactive array }
+    procedure addTec;
+    var
+      o: TJSObject;
+    begin
+       o := TJSObject.new;
+       o['nome'] := 'Feature ' + IntToStr(TJSArray(this['tecnologias']).length + 1);
+       o['tipo'] := 'Generated Dynamically';
+       TJSArray(this['tecnologias']).push(o);
+    end;
+
+    { Clears the reactive array }
+    procedure limparTecs;
+    begin
+       TJSArray(this['tecnologias']).length := 0;
+    end;
+
+    { Simple window alert method }
+    procedure alertaTecnologia;
+    begin
+      window.alert('BlaiseVue v2.1.0 \nOptimized for high performance!');
+    end;
+</script>
+
+<style>
+  .main-intro { text-align: center; background: #f8fafc; border-bottom: 2px solid #e2e8f0; }
+  .action-bar { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+  
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+  .resource-item { padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; }
+  .resource-item p { font-size: 12px; margin-top: 8px; color: #64748b; }
+
+  .tech-card-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .tech-card { padding: 20px; border-radius: 12px; color: white; display: flex; flex-direction: column; align-items: center; }
+  .fpc { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+  .pas2js { background: linear-gradient(135deg, #42b883 0%, #35495e 100%); }
+  .card-icon { font-size: 40px; margin-bottom: 10px; }
+
+  .lab-container { margin-top: 30px; border-top: 4px dashed #cbd5e1; padding-top: 20px; }
+  .lab-section { background: white; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
+
+  .resource-list { list-style: none; padding: 0; margin-top: 15px; }
+  .resource-li { padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+  .li-tag { font-size: 11px; padding: 2px 8px; background: #f1f5f9; border-radius: 10px; color: #64748b; margin-left: auto; }
+
+  .form-horizontal { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+  .result-box { padding: 15px; background: #f0fdf4; border-left: 4px solid #42b883; border-radius: 4px; }
+  .res-text { color: #166534; font-weight: bold; margin-left: 10px; }
+
+  .alert { padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: 500; }
+  .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .alert-warning { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  @media (max-width: 600px) {
+    .tech-card-pair, .form-horizontal { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,28 @@
+<template>
+  <div class="bv-card">
+    <div class="bv-card-header">
+       <slot name="header"><strong>{{ titulo }}</strong></slot>
+    </div>
+    <div class="bv-card-body">
+       <!-- SLOT: O buraco mágico para conteúdo externo -->
+       <slot></slot>
+    </div>
+    <div class="bv-card-footer">
+       <slot name="footer"></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    titulo: string = 'Título do Card';
+    temFooter: boolean = false;
+    footerTexto: string = 'Rodapé Padrão';
+</script>
+
+<style>
+  .bv-card { border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; border: 1px solid #eee; }
+  .bv-card-header { background: #f8f9fa; padding: 12px 20px; border-bottom: 1px solid #eee; color: #2c3e50; font-size: 16px; }
+  .bv-card-body { padding: 20px; color: #444; }
+  .bv-card-footer { background: #fdfdfd; padding: 10px 20px; font-size: 12px; color: #95a5a6; border-top: 1px solid #f0f0f0; }
+</style>

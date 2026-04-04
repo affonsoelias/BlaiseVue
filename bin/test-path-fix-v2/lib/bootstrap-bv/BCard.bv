@@ -1,0 +1,26 @@
+<template>
+  <div class="card" style="position: relative; display: flex; flex-direction: column; min-width: 0; word-wrap: break-word; background-color: #fff; background-clip: border-box; border: 1px solid rgba(0,0,0,.125); border-radius: .25rem;">
+    <div class="card-header" b-if="title" style="padding: .5rem 1rem; margin-bottom: 0; background-color: rgba(0,0,0,.03); border-bottom: 1px solid rgba(0,0,0,.125);">
+      <slot name="header">{{ title }}</slot>
+    </div>
+    <div class="card-body" style="flex: 1 1 auto; padding: 1rem 1rem;">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BCard - Structural Content Container
+    ------------------------------------
+    Props:
+    - title: String (Optional header text)
+    
+    Slots:
+    - default: Main content of the card
+    - header: Custom content for the card header (overrides title prop)
+  }
+  
+  props:
+    title: string = '';
+</script>

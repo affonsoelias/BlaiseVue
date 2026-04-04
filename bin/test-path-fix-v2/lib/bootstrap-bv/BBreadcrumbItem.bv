@@ -1,0 +1,28 @@
+<template>
+  <li class="breadcrumb-item" :class="{ active: active }" :aria-current="active ? 'page' : null" style="padding-left: .5rem;">
+    <span v-if="!active" style="margin-right: .5rem; color: #6c757d;">/</span>
+    <a v-if="href && !active" :href="href" @click="handleClick" style="color: #0d6efd; text-decoration: none;">
+      <slot></slot>
+    </a>
+    <span v-else style="color: #6c757d;">
+      <slot></slot>
+    </span>
+  </li>
+</template>
+
+<script>
+  props:
+    active: boolean = false;
+    href: string = '#';
+
+  methods:
+    procedure handleClick(ev: TJSEvent);
+    begin
+       asm this.$emit('click', ev); end;
+    end;
+</script>
+
+<style>
+  .breadcrumb-item + .breadcrumb-item::before { content: ""; }
+  .breadcrumb-item.active { font-weight: 700; color: #1e293b; }
+</style>

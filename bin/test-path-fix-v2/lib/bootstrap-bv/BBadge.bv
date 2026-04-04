@@ -1,0 +1,21 @@
+<template>
+  <span class="badge" 
+        :class="['badge-' + variant, pill ? 'rounded-pill' : '']"
+        style="display: inline-block; padding: .35em .65em; font-size: .75em; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem;">
+    <slot></slot>
+  </span>
+</template>
+
+<script>
+  {
+    BBadge - Visual Label Component
+    -------------------------------
+    Props:
+    - variant: String (primary, secondary, success, danger, etc.)
+    - pill: Boolean (Rounded corners)
+  }
+  
+  props:
+    variant: string = 'primary';
+    pill: boolean = false;
+</script>
