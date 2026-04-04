@@ -37,34 +37,64 @@ begin
   Result := GetSDKPath + 'core' + DirectorySeparator;
 end;
 
-{ Returns the absolute path to the pas2js compiler executable }
+{ Returns the absolute path to the pas2js compiler executable based on OS }
 function GetPas2JSPath: string;
+var
+  OSFolder: string;
 begin
-  Result := GetSDKPath + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
+  {$IFDEF WINDOWS}
+    OSFolder := 'pas2js-win64-x86_64-3.2.0';
+    Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
+  {$ELSE}
+    {$IFDEF LINUX}
+      OSFolder := 'pas2js-linux-x86_64-3.2.0'; // Default to x64
+    {$ELSE}
+      OSFolder := 'pas2js-darwin-x86_64-3.2.0'; // Default to x64
+    {$ENDIF}
+    Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js';
+  {$ENDIF}
 end;
 
 { Returns the library path for the pas2js system units }
 function GetPas2JSLibPath: string;
+var
+  OSFolder: string;
 begin
-  Result := GetSDKPath + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + '*' + DirectorySeparator + 'src';
+  {$IFDEF WINDOWS}
+    OSFolder := 'pas2js-win64-x86_64-3.2.0';
+  {$ELSE}
+    {$IFDEF LINUX}
+      OSFolder := 'pas2js-linux-x86_64-3.2.0';
+    {$ELSE}
+      OSFolder := 'pas2js-darwin-x86_64-3.2.0';
+    {$ENDIF}
+  {$ENDIF}
+  Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + '*' + DirectorySeparator + 'src';
 end;
 
 function GetRTLPath: string;
 var
-  SDK: string;
+  SDK, OSFolder: string;
 begin
   SDK := GetSDKPath;
+  {$IFDEF WINDOWS}
+    OSFolder := 'pas2js-win64-x86_64-3.2.0';
+  {$ELSE}
+    {$IFDEF LINUX}
+      OSFolder := 'pas2js-linux-x86_64-3.2.0';
+    {$ELSE}
+      OSFolder := 'pas2js-darwin-x86_64-3.2.0';
+    {$ENDIF}
+  {$ENDIF}
+  
   // 1. Tries the framework root
   if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');
   // 2. Tries the default Pas2JS local package path
-  if FileExists(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
-    Exit(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
+  if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
+    Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
   // 3. Tries the Pas2JS bin folder
-  if FileExists(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
-    Exit(SDK + 'pas2js-win64-x86_64-3.2.0' + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
-  // 4. Tries one level above (if SDK etc. is moved)
-  if FileExists(ExtractFilePath(ExcludeTrailingPathDelimiter(SDK)) + 'rtl.js') then
-    Exit(ExtractFilePath(ExcludeTrailingPathDelimiter(SDK)) + 'rtl.js');
+  if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
+    Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
   Result := '';
 end;
 

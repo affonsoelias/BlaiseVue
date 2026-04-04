@@ -1,0 +1,83 @@
+:root {
+  --light-bg-color: rgb(237 238 242);
+  font-family: sans-serif;
+}
+
+/* 
+ * 
+ * Object Tree
+ * 
+ */
+
+.zft-caption {
+  padding: 1px;
+  font-size: 1rem;
+  font-weight: 500;
+  background-color: rgb(237 238 242);
+  display: flex;
+  align-items: center;  
+  justify-content: space-between;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+
+.zft-caption-lbl {
+  flex-grow: 1;
+  text-align: center;
+}
+
+/* Object tree caption button */
+.zft-icon-btn {
+  padding: 1px 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+
+.zft-hidden {
+  display: none;
+}
+
+ul.zft-tree-nested {
+ list-style-type: none;
+ font-size: 10pt;
+ padding-left: 2em;
+}
+
+li.zft-collapsed ul.zft-tree-nested {
+ display: none
+}
+.zft-tree-item-caption {
+   user-select: none;
+   padding-right: 2em;
+   padding-left: 0.5em;
+}
+
+li.zft-selected > .zft-tree-item-caption {
+   background-color: blue;
+   color: white;
+}
+
+.zft-tree-item-caption::before {
+ color: black;
+ display: inline-block;
+ margin-right: 4px;
+}
+
+li.xzft-collapsed > span.zft-tree-item-caption::before {
+  content: "\27A4";
+}
+
+li.xzft-expanded > span.zft-tree-item-caption::before {
+  content: "\2B9F";
+}
+
+li.zft-collapsed::before {
+  content: "\27A4";
+}
+
+li.zft-expanded::before {
+  content: "\2B9F";
+}
+
+

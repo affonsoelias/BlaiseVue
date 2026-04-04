@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Compiler Value="/usr/lib/fpc/3.3.1/ppcx64" Date="1704828686"/>
+  <Params Value="-MObjFPC -Scghi -Cg -CirotR -O1 -g -gl -gt -l -vewnhibq -Fi/home/mattias/pascal/pas2js/trunk/tools/createconfig/lib/x86_64-linux -Fu/home/mattias/pascal/pas2js/trunk/tools/createconfig/ -FU/home/mattias/pascal/pas2js/trunk/tools/createconfig/lib/x86_64-linux/ -FE/home/mattias/pascal/pas2js/trunk/tools/createconfig/ -o/home/mattias/pascal/pas2js/trunk/tools/createconfig/createconfig createconfig.pp"/>
+</CONFIG>

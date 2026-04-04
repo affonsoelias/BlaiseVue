@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Compiler Value="/home/mattias/pascal/pas2js/my/utils/pas2js/pas2js" Date="1666713009"/>
+  <Params Value=" -Tbrowser -Pecmascript5 -MObjFPC -Sc -O1 -l -vewnhibq -Fi/home/mattias/pascal/pas2js/trunk/demo/wasienv/canvas/js -Fu/home/mattias/pascal/pas2js/trunk/demo/wasienv/canvas/ -FU/home/mattias/pascal/pas2js/trunk/demo/wasienv/canvas/js/ -FE/home/mattias/pascal/pas2js/trunk/demo/wasienv/canvas/ -o/home/mattias/pascal/pas2js/trunk/demo/wasienv/canvas/demowasicanvas.js -Jeutf-8 -Jirtl.js -Jc -Jminclude demowasicanvas.lpr"/>
+</CONFIG>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FPC-Webassembly and Pas2JS Filesystem Demo</title>
+  <link href="bulma.min.css" rel="stylesheet">
+  <script src="browser.min.js"></script>
+  <script src="browser.dom.js"></script>
+  <script src="filesystemhost.js"></script>
+  <style>
+  </style>
+</head>
+<body>
+  <div class="section pb-4">
+    <h1 class="title is-3">Webassembly filesystem support demo</h1>
+    <p>This demo demonstrates a webassembly program creating a directory and a file (if they do not exist yet) and read data from that file.</p>
+    <p>The filesystem is provided in the browser using <a href="https://zen-fs.github.io/">ZenFS</a>, the successor of BrowserFS.</p>
+    <p class="pb-2">The Pascal I/O and the WASI API are synchronous, so only a synchronous filesystem can be used.</p>
+    <h1 class="title is-5">Webassembly console output:</h1>
+    <div class="box" id="pasjsconsole"></div>
+  </div>
+  <!-- <hr> -->
+  <div class="section">
+    <div class="source">
+      <div class="source-inner">
+        <div>
+          <p>Created using &nbsp; <a target="_blank" href="https://wiki.freepascal.org/pas2js">pas2js.</a> </p>
+          <p>Pas2JS Sources: &nbsp; <a target="new" href="filesystemhost.lpr">Pas2JS loader Program</a></p>
+          <p>Webassembly Sources: &nbsp; <a target="new" href="fsdemo.pp">fsdemo.lpr</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    rtl.run();
+  </script>
+</body>
+</html>

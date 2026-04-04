@@ -1,0 +1,185 @@
+:root {
+  --light-bg-color: rgb(237 238 242);
+  font-family: sans-serif;
+}
+
+/* 
+ * 
+ * Object Tree
+ * 
+ */
+
+.ot-caption {
+  padding: 1px;
+  font-size: 1rem;
+  font-weight: 500;
+  background-color: rgb(237 238 242);
+  display: flex;
+  align-items: center;  
+  justify-content: space-between;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+
+.ot-caption-lbl {
+  flex-grow: 1;
+  text-align: center;
+}
+
+/* Object tree caption button */
+.ot-icon-btn {
+  padding: 1px 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+
+ot-hidden {
+  display: none;
+}
+
+ul.ot-tree-nested {
+ list-style-type: none;
+ font-size: 10pt;
+ padding-left: 2em;
+}
+
+li.ot-collapsed ul.ot-tree-nested {
+ display: none
+}
+.ot-tree-item-caption {
+   user-select: none;
+   padding-right: 2em;
+}
+
+li.ot-selected > .ot-tree-item-caption {
+   background-color: blue;
+   color: white;
+}
+
+.ot-tree-item-caption::before {
+ color: black;
+ display: inline-block;
+ margin-right: 4px;
+}
+
+li.ot-collapsed > span.ot-tree-item-caption::before {
+  content: "\27A4";
+}
+
+li.ot-expanded > span.ot-tree-item-caption::before {
+  content: "\2B9F";
+}
+
+
+/* 
+ * 
+ * Object Inspector
+ * 
+ */
+ 
+.oi-caption {
+  padding: 1px;
+  font-size: 1rem;
+/*  font-weight: 500; */
+  background-color: rgb(237 238 242);
+  display: flex;
+  align-items: center;  
+  justify-content: space-between;
+}
+
+.oi-caption-lbl {
+  flex-grow: 1;
+  text-align: center;
+}
+/* Object inspector caption button */
+.oi-icon-btn {
+  padding: 1px 10px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* Object inspector config panel */
+
+.oi-config-panel {
+  border-top: 1px solid rgb(189, 192, 194);
+  background-color: rgb(237, 240, 248);
+  overflow-y: hidden;
+  max-height: 0px;
+  transition: max-height 0.5s ease-out;
+}
+.oi-config-panel-open {
+  max-height: 250px;
+}
+
+.oi-config-panel-closed {
+  display: none;
+}
+
+.oi-config-panel-desc {
+  font-weight: 400;
+  padding: 10px;
+  margin: 0;
+}
+/*  Object inspector table */
+.oi-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid rgb(140 140 140);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.oi-table thead {
+  background-color: rgb(228 240 245);
+}
+
+.oi-table th,
+td {
+  border: 1px solid rgb(160 160 160);
+  padding: 0px 10px;
+  text-align: left;
+}
+
+.oi-table tbody > tr:nth-of-type(even) {
+  background-color: rgb(237 238 242);
+}
+
+.oi-checkbox-div {
+  /* margin: 5px 20px; */
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.oi-checkbox-div label {
+  margin-left: 0.8em;
+}
+
+.oi-checkbox-col {
+  display: inline-block;
+}
+
+.oi-checkbox-col:last-child {
+  margin-left: 2em;
+}
+
+.oi-checkbox-header {
+  display: flex;
+  font-weight: 600;
+}
+
+.oi-checkbox-row {
+  display: flex;
+  margin: 5px 0;
+}
+
+.oi-checkbox-last {
+  font-size: 0.8rem;
+  margin: 15px 0;
+}
+
+.oi-checkbox-last label {
+  margin-left: 0.8em;
+}
+
+

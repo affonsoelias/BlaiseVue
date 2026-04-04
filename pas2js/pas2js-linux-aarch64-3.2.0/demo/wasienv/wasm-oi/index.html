@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Project1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="bulma.min.css" rel="stylesheet">
+  <link href="oistyles.css" rel="stylesheet">
+  <script src="wasmhost.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title is-3">WebAssembly Object Inspector Demo</h1>
+    <div class="columns">
+      <div class="column">
+        <h1 class="title is-5">Webassembly console:</h1>
+        <div id="pasjsconsole" style="min-height: 480px; min-width: 640px;">
+        </div>
+        <div class="control">
+          <label class="checkbox">
+            <input id="cbconsole" type="checkbox" autocomplete="off" checked>Show console output
+          </label>
+        </div>
+      </div>
+      <div class="column" id="divInspector">
+        <h1 class="title is-5">Object inspector:</h1>
+        <div class="box  columns">
+           <div class="column">
+             <div id="Tree"></div>
+           </div>
+           <div class="column">
+             <div id="Inspector"></div>
+           </div>
+         </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

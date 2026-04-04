@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="demofullcalendar.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <CursorPos X="57" Y="6"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="demofullcalendar.html"/>
+        <IsPartOfProject Value="True"/>
+        <CustomData Count="1">
+          <Item0 Name="PasJSIsProjectHTMLFile" Value="1"/>
+        </CustomData>
+        <UsageCount Value="20"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../packages/libfullcalendar/libfullcalendar.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UsageCount Value="20"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../packages/rtl/web.pas"/>
+        <UnitName Value="Web"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="66"/>
+        <CursorPos X="3" Y="64"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="3">
+      <Position>
+        <Filename Value="demofullcalendar.lpr"/>
+        <Caret Line="6" Column="57"/>
+      </Position>
+      <Position>
+        <Filename Value="../../packages/rtl/web.pas"/>
+        <Caret Line="35" Column="4"/>
+      </Position>
+      <Position>
+        <Filename Value="../../packages/rtl/web.pas"/>
+        <Caret Line="2661" Column="62" TopLine="2630"/>
+      </Position>
+      <Position>
+        <Filename Value="../../packages/rtl/web.pas"/>
+        <Caret Line="2650" Column="54" TopLine="2630"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>

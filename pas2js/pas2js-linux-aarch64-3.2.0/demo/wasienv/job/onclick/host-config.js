@@ -1,0 +1,2 @@
+var 
+  wasmFilename = "wasmdemo.wasm";

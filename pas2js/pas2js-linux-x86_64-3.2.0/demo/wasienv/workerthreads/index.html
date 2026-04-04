@@ -1,0 +1,69 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FPC-Webassembly and Pas2JS Demo</title>
+  <link href="bulma.min.css" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"> -->
+  <style>
+
+  .source {
+    /* width: 730px; */
+    margin: -45px auto;
+    font-size: 0.9em;
+  }
+
+  .source-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* width: 482px; */
+  }
+  </style>
+</head>
+<body>
+
+  <div class="section pb-4">
+    <h1 class="title is-4">FPC compiled Browser Host/Webassembly programs console output:</h1>
+    <div class="box" id="display"></div>
+  </div>
+  <div class="section pb-4">
+    <button id="btnStart" class="button is-primary"  >Start program</button>
+  </div>
+  <!-- <hr> -->
+  <div class="section">
+    <div class="source">
+      <div class="source-inner">
+        <div>
+          <p>Webassembly Sources: &nbsp; <a target="new" href="threadedapp.pp">FPC Program</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var display = document.getElementById("display");
+    function handleControllerMessage (event) {
+      if (!event.data) return;
+      if (event.data.command=="console")	{
+      	console.log(event.data.ConsoleMessage);
+      	var el = document.createElement('div');
+      	el.innerText = event.data.ConsoleMessage;
+      	display.appendChild(el);
+      } else {
+      	console.log("Unknown command : ",JSON.stringify(event.data));
+      }
+    }
+    var controller = new Worker("wasmthreadcontroller.js")
+    controller.addEventListener('message',handleControllerMessage);
+    var consolechannel = new BroadcastChannel('console_output');
+    consolechannel.addEventListener('message',handleControllerMessage);
+    
+    function handleStart() {
+      controller.postMessage({"command" : "execute", "Url" : "threadapp.wasm"});
+    }
+    document.getElementById("btnStart").addEventListener("click",handleStart);
+  </script>
+</body>
+</html>

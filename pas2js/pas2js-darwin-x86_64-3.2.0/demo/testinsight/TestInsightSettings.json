@@ -1,0 +1,6 @@
+{
+  "BaseUrl" : "http://127.0.0.1:6789/tests",
+  "ExecuteTests" : true,
+  "ShowProgress" : true,
+  "Suite" : ""
+}

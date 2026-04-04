@@ -48,28 +48,25 @@ While v1.0 is stable, our vision for the future is even more ambitious. The foll
 
 ## 🏁 Quick Start
 
-### 1. Compile the CLI
+### 1. Compile the BlaiseVue CLI
 Ensure you have **FPC (Free Pascal Compiler)** installed.
 ```bash
 cd bin
 fpc bv.pas
+# Move bv or bv.exe to root
 ```
 
-### 2. Scaffold a Project
-```bash
-./bv create my-app
-cd my-app
-```
+### 2. Set Up Pas2JS (Multi-platform)
+Download the [Pas2JS 3.2.0](https://getpas2js.freepascal.org) archive for your OS (Windows, Linux, or macOS). Extract it into a `pas2js/` folder at the project root following this naming convention:
+- `/pas2js/pas2js-win64-x86_64-3.2.0/`
+- `/pas2js/pas2js-linux-x86_64-3.2.0/`
+- `/pas2js/pas2js-darwin-x86_64-3.2.0/`
 
-### 3. Run Development Server
-```bash
-./bv run dev
-./bv serve
-```
+**The CLI now automatically detects your OS and uses the correct path!** 🛡️✨🚀
 
 ---
 
-## 🧪 Architecture & Contributions
+## 🏗️ Project Structure
 
 If you want to contribute to the core or understand how the reactivity engine works, check out our **Architecture Course** at:
 `doc/Course/Architecture-and-Internals/`

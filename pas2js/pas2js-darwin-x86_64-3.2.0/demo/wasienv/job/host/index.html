@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wasm Javascript Object Bindings - Test bed</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"> <!-- Prevents caching -->
+    <meta http-equiv="Pragma" content="no-cache"> <!-- Legacy HTTP 1.0 backward compatibility -->
+    <meta http-equiv="Expires" content="0"> <!-- Proxies -->
+    <!-- In this file you can specify easily which .wasm file to load, 
+         no need to recompile the pas2js loader-->
+    <script src="host-config.js"></script>
+    <script src="wasmjobhost.js"></script>
+</head>
+<body>
+    <div>
+      <h3 >Webassembly JOB bindings test bed</h3>
+      <p>Console output:</p>
+      <div id="pasjsconsole">
+      </div>
+    </div>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    rtl.run();
+  </script>
+</body>
+</html>

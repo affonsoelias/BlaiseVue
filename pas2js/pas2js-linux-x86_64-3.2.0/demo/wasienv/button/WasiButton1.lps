@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="WasiButton1.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="45" Y="19"/>
+        <UsageCount Value="201"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../dom/job_web.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Web"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="14807"/>
+        <CursorPos X="34" Y="14829"/>
+        <UsageCount Value="217"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../dom/job_js.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_JS"/>
+        <EditorIndex Value="5"/>
+        <TopLine Value="155"/>
+        <CursorPos X="60" Y="182"/>
+        <UsageCount Value="206"/>
+        <Bookmarks Count="2">
+          <Item0 X="17" Y="1135" ID="2"/>
+          <Item1 X="17" Y="830" ID="1"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Shared"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="48"/>
+        <CursorPos Y="111"/>
+        <UsageCount Value="143"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../dom/job_wasm.pas"/>
+        <UnitName Value="JOB_WAsm"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1889"/>
+        <CursorPos Y="1953"/>
+        <UsageCount Value="189"/>
+        <Bookmarks Count="3">
+          <Item0 Y="1560" ID="3"/>
+          <Item1 X="3" Y="568" ID="2"/>
+          <Item2 Y="1808" ID="1"/>
+        </Bookmarks>
+      </Unit>
+      <Unit>
+        <Filename Value="../dom/job_shared.pp"/>
+        <UnitName Value="JOB_Shared"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="19" Y="50"/>
+        <UsageCount Value="120"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/web.pas"/>
+        <UnitName Value="Web"/>
+        <EditorIndex Value="7"/>
+        <CursorPos Y="13"/>
+        <UsageCount Value="105"/>
+        <Bookmarks Count="1">
+          <Item0 Y="859" ID="4"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/js.pas"/>
+        <UnitName Value="JS"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="813"/>
+        <CursorPos X="21" Y="841"/>
+        <UsageCount Value="120"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../../../fpc_sources/3.3.1/rtl/objpas/types.pp"/>
+        <UnitName Value="Types"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="28"/>
+        <CursorPos X="22" Y="41"/>
+        <UsageCount Value="120"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../../../wasm/wasmjob/web.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="20536"/>
+        <CursorPos X="5" Y="20602"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../../../wasm/wasmjob/job_web.pas"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="20796"/>
+        <CursorPos X="5" Y="20862"/>
+        <UsageCount Value="63"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../../../wasm/wasmjob/job_web.webidl"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="7484"/>
+        <CursorPos Y="7543"/>
+        <UsageCount Value="62"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="None"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="548"/>
+        <CursorPos X="11" Y="581"/>
+        <UsageCount Value="58"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <OtherDefines Count="1">
+      <Define0 Value="VerboseInvokeJSArgs"/>
+    </OtherDefines>
+    <JumpHistory HistoryIndex="29">
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="5649" Column="15" TopLine="5613"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6144" Column="40" TopLine="6085"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6246" Column="116" TopLine="6188"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6321" Column="36" TopLine="6263"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6514" Column="40" TopLine="6454"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6622" Column="116" TopLine="6563"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="6698" Column="36" TopLine="6640"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="8774" Column="42" TopLine="8714"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="8806" Column="38" TopLine="8746"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="8827" Column="42" TopLine="8767"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="8861" Column="38" TopLine="8801"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="10374" Column="71" TopLine="10314"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="10403" Column="63" TopLine="10344"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="20869" Column="5" TopLine="20804"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="9998" Column="21" TopLine="9965"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="4839" TopLine="4818"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_web.pas"/>
+        <Caret Line="5205" Column="14" TopLine="5151"/>
+      </Position>
+      <Position>
+        <Filename Value="../dom/job_js.pas"/>
+        <Caret Line="988" Column="72" TopLine="958"/>
+      </Position>
+      <Position>
+        <Filename Value="WasiButton1.lpr"/>
+        <Caret Line="30" Column="41" TopLine="7"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="371" Column="14" TopLine="339"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="301" Column="31" TopLine="268"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="372" Column="18" TopLine="339"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="373" Column="18" TopLine="340"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="926" Column="13" TopLine="923"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="679" Column="27" TopLine="644"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="677" Column="35" TopLine="644"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="663" TopLine="644"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <Caret Line="15"/>
+      </Position>
+      <Position>
+        <Filename Value="WasiButton1.lpr"/>
+        <Caret Line="17" TopLine="7"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>

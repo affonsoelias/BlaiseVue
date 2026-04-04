@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="BrowserDomTest1.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <TopLine Value="99"/>
+        <CursorPos X="71" Y="130"/>
+        <UsageCount Value="108"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="index.html"/>
+        <IsPartOfProject Value="True"/>
+        <CustomData Count="1">
+          <Item0 Name="PasJSIsProjectHTMLFile" Value="1"/>
+        </CustomData>
+        <EditorIndex Value="5"/>
+        <CursorPos X="41" Y="29"/>
+        <UsageCount Value="108"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="HTML"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Browser"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="567"/>
+        <CursorPos X="40" Y="583"/>
+        <UsageCount Value="58"/>
+        <Bookmarks Count="2">
+          <Item0 Y="800" ID="2"/>
+          <Item1 X="13" Y="519" ID="4"/>
+        </Bookmarks>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Shared"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="35"/>
+        <CursorPos X="3" Y="68"/>
+        <UsageCount Value="58"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_browser.pp"/>
+        <UnitName Value="JOB_Browser"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="506"/>
+        <CursorPos X="7" Y="543"/>
+        <UsageCount Value="66"/>
+        <Bookmarks Count="4">
+          <Item0 Y="406" ID="3"/>
+          <Item1 X="7" Y="744"/>
+          <Item2 Y="517" ID="1"/>
+          <Item3 X="43" Y="543" ID="2"/>
+        </Bookmarks>
+      </Unit>
+      <Unit>
+        <Filename Value="wadom_shared.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="9"/>
+        <CursorPos X="29" Y="54"/>
+        <UsageCount Value="16"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../terminal/demowasiterm.lpr"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="142"/>
+        <CursorPos Y="179"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/wasi/wasienv.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="339"/>
+        <CursorPos X="23" Y="378"/>
+        <UsageCount Value="11"/>
+        <Bookmarks Count="1">
+          <Item0 Y="864" ID="4"/>
+        </Bookmarks>
+      </Unit>
+      <Unit>
+        <Filename Value="../simple/demowasienv.lpr"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="51"/>
+        <CursorPos Y="89"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../simple/helloworld.pp"/>
+        <UnitName Value="HelloWorld"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/js.pas"/>
+        <UnitName Value="JS"/>
+        <EditorIndex Value="6"/>
+        <TopLine Value="271"/>
+        <CursorPos X="20" Y="303"/>
+        <UsageCount Value="52"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/webassembly.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="5"/>
+        <CursorPos X="63" Y="38"/>
+        <UsageCount Value="11"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/fcl-base/browserapp.pas"/>
+        <UnitName Value="BrowserApp"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="15" Y="19"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/classes.pas"/>
+        <UnitName Value="Classes"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1704"/>
+        <CursorPos X="19" Y="1734"/>
+        <UsageCount Value="2"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/web.pas"/>
+        <UnitName Value="Web"/>
+        <EditorIndex Value="7"/>
+        <TopLine Value="1421"/>
+        <CursorPos X="31" Y="1478"/>
+        <UsageCount Value="49"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/types.pas"/>
+        <UnitName Value="Types"/>
+        <EditorIndex Value="8"/>
+        <CursorPos X="3" Y="34"/>
+        <UsageCount Value="50"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/system.pas"/>
+        <UnitName Value="System"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="578"/>
+        <CursorPos X="51" Y="602"/>
+        <UsageCount Value="4"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_shared.pp"/>
+        <UnitName Value="JOB_Shared"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="14"/>
+        <CursorPos X="3" Y="73"/>
+        <UsageCount Value="17"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_wasm.pas"/>
+        <UnitName Value="JOB_WAsm"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="358"/>
+        <CursorPos X="10" Y="409"/>
+        <UsageCount Value="5"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/rtl/weborworker.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="84"/>
+        <CursorPos X="15" Y="117"/>
+        <UsageCount Value="12"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../button/BrowserButton1.lpr"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="53" Y="12"/>
+        <UsageCount Value="7"/>
+      </Unit>
+      <Unit>
+        <Filename Value="WasiDomTest1.lpr"/>
+        <EditorIndex Value="2"/>
+        <CursorPos Y="46"/>
+        <UsageCount Value="28"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../fpmake.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="151"/>
+        <CursorPos X="20" Y="160"/>
+        <UsageCount Value="8"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../../../fpc_sources/3.3.1/packages/webidl/src/webidlparser.pp"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="8" Y="20"/>
+        <UsageCount Value="18"/>
+        <Loaded Value="True"/>
+      </Unit>
+    </Units>
+    <OtherDefines Count="1">
+      <Define0 Value="VerboseJOB"/>
+    </OtherDefines>
+    <JumpHistory HistoryIndex="10">
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="33" Column="14"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="600" Column="8" TopLine="565"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="622" Column="18" TopLine="565"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="524" Column="12" TopLine="492"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="33" Column="14"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="660" Column="24" TopLine="599"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="600" Column="7" TopLine="557"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="622" Column="22" TopLine="568"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="530" Column="12" TopLine="494"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="33" Column="14"/>
+      </Position>
+      <Position>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
+        <Caret Line="598" Column="7" TopLine="567"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>

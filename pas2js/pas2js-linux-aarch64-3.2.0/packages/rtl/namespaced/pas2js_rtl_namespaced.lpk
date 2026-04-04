@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="pas2js_rtl_namespaced"/>
+    <Type Value="RunTimeOnly"/>
+    <Author Value="Mattias Gaertner"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <IncludeFiles Value="../src"/>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <AllowLabel Value="False"/>
+          <UseAnsiStrings Value="False"/>
+          <CPPInline Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="0"/>
+        </Optimizations>
+      </CodeGeneration>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+      <Other>
+        <CustomOptions Value="-dPas2js -O- -Jc"/>
+        <CompilerPath Value="$MakeExe(IDE,pas2js)"/>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_rtl_namespaced.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Description Value="pas2js RTL - Run Time Library"/>
+    <License Value="Modified LGPL2 as the FPC packages."/>
+    <Version Major="1"/>
+    <Files Count="46">
+      <Item1>
+        <HasRegisterProc Value="True"/>
+      </Item1>
+      <Item2>
+        <Filename Value="System.Classes.pas"/>
+        <UnitName Value="System.Classes"/>
+      </Item2>
+      <Item3>
+        <Filename Value="JSApi.JS.pas"/>
+        <UnitName Value="JSApi.JS"/>
+      </Item3>
+      <Item4>
+        <Filename Value="System.Math.pas"/>
+        <UnitName Value="System.Math"/>
+      </Item4>
+      <Item5>
+        <Filename Value="NodeApi.JS.pas"/>
+        <UnitName Value="NodeApi.JS"/>
+      </Item5>
+      <Item6>
+        <Filename Value="../src/objpas.pas"/>
+        <UnitName Value="ObjPas"/>
+      </Item6>
+      <Item7>
+        <Filename Value="System.RTLConsts.pas"/>
+        <UnitName Value="System.RTLConsts"/>
+      </Item7>
+      <Item8>
+        <Filename Value="../src/system.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="System"/>
+      </Item8>
+      <Item9>
+        <Filename Value="System.SysUtils.pas"/>
+        <UnitName Value="System.SysUtils"/>
+      </Item9>
+      <Item10>
+        <Filename Value="System.Types.pas"/>
+        <UnitName Value="System.Types"/>
+      </Item10>
+      <Item11>
+        <Filename Value="System.TypInfo.pas"/>
+        <UnitName Value="System.TypInfo"/>
+      </Item11>
+      <Item12>
+        <Filename Value="BrowserApi.Web.pas"/>
+        <UnitName Value="BrowserApi.Web"/>
+      </Item12>
+      <Item13>
+        <Filename Value="System.HotReload.pas"/>
+        <UnitName Value="System.HotReload"/>
+      </Item13>
+      <Item14>
+        <Filename Value="System.DateUtils.pas"/>
+        <UnitName Value="System.DateUtils"/>
+      </Item14>
+      <Item15>
+        <Filename Value="System.StrUtils.pas"/>
+        <UnitName Value="System.StrUtils"/>
+      </Item15>
+      <Item16>
+        <Filename Value="System.Contnrs.pas"/>
+        <UnitName Value="System.Contnrs"/>
+      </Item16>
+      <Item17>
+        <Filename Value="Browser.Console.pas"/>
+        <UnitName Value="Browser.Console"/>
+      </Item17>
+      <Item18>
+        <Filename Value="System.Router.pas"/>
+        <UnitName Value="System.Router"/>
+      </Item18>
+      <Item19>
+        <Filename Value="System.Rtti.pas"/>
+        <UnitName Value="System.Rtti"/>
+      </Item19>
+      <Item20>
+        <Filename Value="BrowserApi.WebGL.pas"/>
+        <UnitName Value="BrowserApi.WebGL"/>
+      </Item20>
+      <Item21>
+        <Filename Value="System.Class2Pas.pas"/>
+        <UnitName Value="System.Class2Pas"/>
+      </Item21>
+      <Item22>
+        <Filename Value="Api.JQuery.pas"/>
+        <UnitName Value="Api.JQuery"/>
+      </Item22>
+      <Item23>
+        <Filename Value="System.Timer.pas"/>
+        <UnitName Value="System.Timer"/>
+      </Item23>
+      <Item24>
+        <Filename Value="BrowserApi.Audio.pas"/>
+        <UnitName Value="BrowserApi.Audio"/>
+      </Item24>
+      <Item25>
+        <Filename Value="BrowserApi.BlueTooth.pas"/>
+        <UnitName Value="BrowserApi.BlueTooth"/>
+      </Item25>
+      <Item26>
+        <Filename Value="BrowserApi.SVG.pas"/>
+        <UnitName Value="BrowserApi.SVG"/>
+      </Item26>
+      <Item27>
+        <Filename Value="Browser.ScriptLoader.pas"/>
+        <UnitName Value="Browser.ScriptLoader"/>
+      </Item27>
+      <Item28>
+        <Filename Value="Browser.TemplateLoader.pas"/>
+        <UnitName Value="Browser.TemplateLoader"/>
+      </Item28>
+      <Item29>
+        <Filename Value="Browser.UnitLoader.pas"/>
+        <UnitName Value="Browser.UnitLoader"/>
+      </Item29>
+      <Item30>
+        <Filename Value="BrowserApi.RTC.pas"/>
+        <UnitName Value="BrowserApi.RTC"/>
+      </Item30>
+      <Item31>
+        <Filename Value="BrowserApi.WebAssembly.pas"/>
+        <UnitName Value="BrowserApi.WebAssembly"/>
+      </Item31>
+      <Item32>
+        <Filename Value="BrowserApi.WebOrWorker.pas"/>
+        <UnitName Value="BrowserApi.WebOrWorker"/>
+      </Item32>
+      <Item33>
+        <Filename Value="BrowserApi.Worker.pas"/>
+        <UnitName Value="BrowserApi.Worker"/>
+      </Item33>
+      <Item34>
+        <Filename Value="BrowserApi.LoadHelper.pas"/>
+        <UnitName Value="BrowserApi.LoadHelper"/>
+      </Item34>
+      <Item35>
+        <Filename Value="HTML.Actions.pas"/>
+        <UnitName Value="HTML.Actions"/>
+      </Item35>
+      <Item36>
+        <Filename Value="HTML.EventNames.pas"/>
+        <UnitName Value="HTML.EventNames"/>
+      </Item36>
+      <Item37>
+        <Filename Value="HTML.Translate.pas"/>
+        <UnitName Value="HTML.Translate"/>
+      </Item37>
+      <Item38>
+        <Filename Value="HTML.Utils.pas"/>
+        <UnitName Value="HTML.Utils"/>
+      </Item38>
+      <Item39>
+        <Filename Value="System.ArrayUtils.pas"/>
+        <UnitName Value="System.ArrayUtils"/>
+      </Item39>
+      <Item40>
+        <Filename Value="System.Generics.Collections.pas"/>
+        <UnitName Value="System.Generics.Collections"/>
+      </Item40>
+      <Item41>
+        <Filename Value="System.Generics.Defaults.pas"/>
+        <UnitName Value="System.Generics.Defaults"/>
+      </Item41>
+      <Item42>
+        <Filename Value="System.Generics.Strings.pas"/>
+        <UnitName Value="System.Generics.Strings"/>
+      </Item42>
+      <Item43>
+        <Filename Value="System.Res.pas"/>
+        <UnitName Value="System.Res"/>
+      </Item43>
+      <Item44>
+        <Filename Value="System.ResourceTranslate.pas"/>
+        <UnitName Value="System.ResourceTranslate"/>
+      </Item44>
+      <Item45>
+        <Filename Value="System.SimpleLinkedList.pas"/>
+        <UnitName Value="System.SimpleLinkedList"/>
+      </Item45>
+      <Item46>
+        <Filename Value="System.WebUtils.pas"/>
+        <UnitName Value="System.WebUtils"/>
+      </Item46>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <UsageOptions>
+      <CustomOptions Value="-dPas2js"/>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

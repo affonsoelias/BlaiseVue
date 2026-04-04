@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Project1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="bulma.min.css" rel="stylesheet">
+  <script src="exceptdemo.js"></script>
+  <style>
+
+  .source {
+    /* width: 730px; */
+    margin: -45px auto;
+    font-size: 0.9em;
+  }
+
+  .source-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* width: 482px; */
+  }
+  </style>
+
+</head>
+<body>
+  <div class="section pb-4">
+    <h1 class="title is-4">Exceptions: Getting webassembly Pascal exception info</h1>
+    <p>The <em>wasm.exceptions</em> unit in FPC exposes 2 functions which allow you to retrieve exception information from the free pascal RTL.
+    You can use this to check if a <em>Webassembly.Exception</em> exception is the result of a Free Pascal exception and retrieve the classname and message from the exception.
+    </p>
+    <p>
+    The output below shows the result of this.
+    </p>
+    <div class="box" id="pasjsconsole"></div>
+  </div>
+  <div class="section">
+    <div class="source">
+      <div class="source-inner">
+        <div>
+          <p>Created using &nbsp; <a target="_blank" href="https://wiki.freepascal.org/pas2js">pas2js.</a> </p>
+          <p>Pas2JS Sources: &nbsp; <a target="new" href="exceptdemo.lpr">Pas2JS Program</a></p>
+          <p>Webassembly Sources: &nbsp; <a target="new" href="demolib.lpr">FPC Program</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

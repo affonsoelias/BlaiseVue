@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Compiler Value="/home/mattias/pascal/pas2js/my/utils/pas2js/pas2js" Date="1659091553"/>
+  <Params Value=" -Tbrowser -Pecmascript5 -MObjFPC -Sc -O1 -l -vewnhibq -Fi/home/mattias/pascal/pas2js/trunk/demo/wasienv/fetch/js -Fu/home/mattias/pascal/pas2js/trunk/packages/job -Fu/home/mattias/pascal/pas2js/trunk/demo/wasienv/fetch/ -FU/home/mattias/pascal/pas2js/trunk/demo/wasienv/fetch/js/ -FE/home/mattias/pascal/pas2js/trunk/demo/wasienv/fetch/ -o/home/mattias/pascal/pas2js/trunk/demo/wasienv/fetch/BrowserFetch1.js -Jeutf-8 -Jirtl.js -Jc -Jminclude -dVerboseJOB -dVerboseJOBCallback BrowserFetch1.lpr"/>
+</CONFIG>
