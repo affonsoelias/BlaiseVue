@@ -1,66 +1,66 @@
 # 🧠 B-Store (Global Store / $store)
 
-O BlaiseVue PRO resolve o problema de "prop drilling" (passar dados por múltiplos níveis de componentes) com a **B-Store**: um sistema de gerenciamento de estado global reativo, acessível de qualquer ponto da aplicação.
+BlaiseVue PRO resolves the "prop drilling" problem (passing data through multiple component levels) with **B-Store**: a reactive global state management system accessible from any point in the application.
 
 ---
 
-## 🏛️ Arquitetura da B-Store
-A B-Store é implementada como um **Singleton** reativo baseado em **JS Proxy**. Isso significa que qualquer alteração em uma propriedade da store dispara uma re-renderização em todos os componentes que dependem daquele dado específico.
+## 🏛️ B-Store Architecture
+The B-Store is implemented as a reactive **Singleton** based on **JS Proxy**. This means that any change to a store property triggers a re-render in all components that depend on that specific data.
 
-### 🔥 Vantagens Técnicas:
-1.  **Reatividade Global**: Diferente do `data:` (privado), a `$store` é pública para todos os componentes.
-2.  **Proxy Mapping**: O BlaiseVue intercepta acessos à store para rastrear dependências automaticamente.
-3.  **Persistência SPA**: O estado é mantido durante toda a navegação do roteador, limpando apenas no F5.
+### 🔥 Technical Advantages:
+1.  **Global Reactivity**: Unlike `data:` (private), `$store` is public for all components.
+2.  **Proxy Mapping**: BlaiseVue intercepts store accesses to automatically track dependencies.
+3.  **SPA Persistence**: The state is maintained throughout the router's navigation, only clearing on a page refresh (F5).
 
 ---
 
-## 🛠️ Como Utilizar
+## 🛠️ How to Use
 
-### 1. Inicializando Dados no App Root (`app.bv`)
-Você deve popular a store no hook `created` ou no bloco `provide` do seu componente raiz.
+### 1. Initializing Data in App Root (`app.bv`)
+You should populate the store in the `created` hook or the `provide` block of your root component.
 
 ```pascal
 { app.bv }
 <script>
   created:
     begin
-       { Inicializa chaves globais que serão usadas por toda a UI }
-       TJSObject(this['$store'])['appVersion'] := '2.1.0-PRO';
+       { Initialize global keys that will be used by the entire UI }
+       TJSObject(this['$store'])['appVersion'] := '1.0.0';
        TJSObject(this['$store'])['user'] := 'Pascal Master 🏆';
     end;
 </script>
 ```
 
-### 2. Acessando na Interface (`<template>`)
-Qualquer componente `.bv` pode ler a store diretamente usando o prefixo `$store`:
+### 2. Accessing in the Interface (`<template>`)
+Any `.bv` component can read the store directly using the `$store` prefix:
 
 ```html
 <template>
   <div class="user-info">
-    <p>Bem-vindo, 👤 <strong>{{ $store.user }}</strong></p>
+    <p>Welcome, 👤 <strong>{{ $store.user }}</strong></p>
     <p>Build: <code>{{ $store.appVersion }}</code></p>
   </div>
 </template>
 ```
 
-### 3. Modificando o Estado via Pascal
-As mutações são síncronas e refletem instantaneamente em todos os componentes.
+### 3. Modifying State via Pascal
+Mutations are synchronous and instantly reflect in all components.
 
 ```pascal
 methods:
-  procedure atualizarPerfil;
+  procedure updateProfile;
   begin
-     { Atualizando o estado global: a UI de outros componentes mudará na hora! }
-     TJSObject(this['$store'])['user'] := 'Mestre Blaise ⚔️';
+     { Updating the global state: other components' UI will change instantly! }
+     TJSObject(this['$store'])['user'] := 'Master Blaise ⚔️';
   end;
 ```
 
 ---
 
-## 💡 Boas Práticas
-- **Centralização**: Use a B-Store para dados compartilhados (user info, configurações de tema, flags de autenticação).
-- **Namespacing**: Se sua app for grande, prefira agrupar dados em objetos, ex: `$store.config.tema`.
-- **Performance**: Evite colocar objetos pesados (blobs, buffers grandes) na store reativa para não sobrecarregar o ciclo de re-renderização.
+## 💡 Best Practices
+- **Centralization**: Use B-Store for shared data (user info, theme settings, authentication flags).
+- **Namespacing**: If your app is large, prefer grouping data into objects, e.g., `$store.config.theme`.
+- **Performance**: Avoid putting heavy objects (blobs, large buffers) in the reactive store to not overload the re-render cycle.
 
 ---
 _"BlaiseVue: Global State, Local Syntax."_ 🛡️✨🏆

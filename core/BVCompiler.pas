@@ -146,6 +146,49 @@ initialization
        });
     };
 
+    // Merges two options objects (used for Mixins)
+    bv.mergeOptions = function(to, from) {
+       if (!from) return to;
+       const res = Object.assign({}, to);
+       
+       if (from.data) {
+          const toData = to.data;
+          const fromData = from.data;
+          res.data = function() {
+             const d1 = typeof toData === 'function' ? toData.call(this, this) : (toData || {});
+             const d2 = typeof fromData === 'function' ? fromData.call(this, this) : (fromData || {});
+             return Object.assign({}, d2, d1); // Component data (d1) overrides mixin (d2)
+          };
+       }
+
+       ['methods', 'computed', 'watch', 'inject'].forEach(k => {
+          if (from[k]) res[k] = Object.assign({}, from[k], to[k] || {}); // to overrides from
+       });
+
+       ['created', 'mounted', 'updated', 'unmounted'].forEach(k => {
+          if (from[k]) {
+             const toHook = to[k];
+             const fromHook = from[k];
+             res[k] = function() {
+                fromHook.apply(this, arguments);
+                if (toHook) toHook.apply(this, arguments);
+             };
+          }
+       });
+
+       if (from.template && !to.template) res.template = from.template;
+       if (from.provide) {
+          const toProv = to.provide;
+          const fromProv = from.provide;
+          res.provide = function() {
+             const p1 = typeof toProv === 'function' ? toProv.call(this, this) : (toProv || {});
+             const p2 = typeof fromProv === 'function' ? fromProv.call(this, this) : (fromProv || {});
+             return Object.assign({}, p2, p1);
+          };
+       }
+       return res;
+    };
+
     // Recursive DOM Visitor: The core of the Directive Engine
     bv.traverse = function(Node, Data, Methods) {
       if (!Node || Node['bvTraversed']) return;
@@ -345,6 +388,14 @@ initialization
 
           // 10. Component Logic, Slots & Provide/Inject
           if (opts) {
+            if (window.__BV_CORE__.mixins && window.__BV_CORE__.mixins.length > 0) {
+               let merged = opts;
+               window.__BV_CORE__.mixins.forEach(m => {
+                  merged = bv.mergeOptions(merged, m);
+               });
+               opts = merged;
+            }
+
             // Manage Slots
             let originalChildren = Array.from(el.childNodes);
             let root_c = document.createElement('div');

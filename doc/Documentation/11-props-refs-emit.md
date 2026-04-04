@@ -1,48 +1,48 @@
-# Comunicação: Props, $refs e $emit
+# Communication: Props, $refs, and $emit
 
-A partir da v1.1.0, o BlaiseVue suporta comunicação avançada entre componentes, seguindo os padrões do VueJS, mas mantendo a tipagem e a sintaxe do Object Pascal.
+As of v1.1.0, BlaiseVue supports advanced component communication following Vue.js patterns, while maintaining Object Pascal typing and syntax.
 
-## Props (Pai -> Filho)
-Utilizadas para passar dados do componente pai para o filho.
+## Props (Parent -> Child)
+Used to pass data from the parent component to the child.
 
-- **Props Estáticas:** Atributos comuns.
-- **Props Dinâmicas:** Prefixo `:` ou `b-bind:`.
+- **Static Props:** Regular attributes.
+- **Dynamic Props:** Prefix `:` or `b-bind:`.
 
 ```html
 <user-card name="Blaise" :id="userId"></user-card>
 ```
 
-## $refs (Acesso Direto)
-Permite ao pai chamar métodos que estão dentro do componente filho.
+## $refs (Direct Access)
+Allows the parent to call methods that are inside the child component.
 
-1. Adicione `ref="nome"` na tag.
-2. No Pascal, use `TJSObject(this['$refs'])['nome']`.
+1. Add `b-ref="name"` to the tag.
+2. In Pascal, use `TJSObject(this['$refs'])['name']`.
 
 ```pascal
-procedure ResetarFilho;
+procedure ResetChild;
 var
-  filho: TJSObject;
+  child: TJSObject;
 begin
-  filho := TJSObject(TJSObject(this['$refs'])['meuComp']);
-  TJSFunction(filho['metodoDoFilho']).apply(filho['$data'], []);
+  child := TJSObject(TJSObject(this['$refs'])['myComp']);
+  TJSFunction(child['childMethod']).apply(child['$data'], []);
 end;
 ```
 
-## $emit (Filho -> Pai)
-Permite ao filho notificar o pai sobre eventos.
+## $emit (Child -> Parent)
+Allows the child to notify the parent about events.
 
-1. No filho, chame `this['$emit']('nome-evento', dado)`.
-2. No pai, escute com `@nome-evento="metodoNoPai"`.
+1. In the child, call `this['$emit']('event-name', data)`.
+2. In the parent, listen with `@event-name="methodInParent"`.
 
 ```html
-<!-- No Pai -->
-<child-comp @clique-no-filho="OnChildClick"></child-comp>
+<!-- In Parent -->
+<child-comp @child-click="OnChildClick"></child-comp>
 ```
 
 ```pascal
-// No Filho
-procedure Clicado;
+// In Child
+procedure Clicked;
 begin
-  this['$emit']('clique-no-filho', 'Olá pai!');
+  this['$emit']('child-click', 'Hello parent!');
 end;
 ```

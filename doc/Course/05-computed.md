@@ -1,44 +1,44 @@
-# 🧠 Módulo 05: Projeto 03 - Perfil Automático
-**Faça o BlaiseVue Pensar por Você!**
+# 🧠 Module 05: Project 03 - Automatic Profile
+**Make BlaiseVue think for you!**
 
-Propriedades Computadas (Computed) são o cérebro da sua aplicação. Elas evitam que você escreva o mesmo código várias vezes e garantem que cálculos complexos só aconteçam quando necessário.
+Computed Properties (Computed) are the brain of your application. They prevent you from writing the same code multiple times and ensure that complex calculations only happen when necessary.
 
 ---
 
-## 🛠️ O Que Vamos Construir?
-Um formulário de perfil onde o "Nome Completo" e o "Status de Idade" se atualizam sozinhos enquanto você digita!
+## 🛠️ What are we building?
+A profile form where the "Full Name" and "Age Status" update themselves as you type!
 
-### 1. Definindo o Cérebro (Computed)
-Abra o seu arquivo `.bv` e adicione este bloco no script:
+### 1. Defining the Brain (Computed)
+Open your `.bv` file and add this block to the script:
 ```pascal
   computed:
-    function nomeCompleto: string;
+    function fullName: string;
     begin
-      // O Pascal soma as strings e o BlaiseVue cuida do resto!
-      Result := string(this['nome']) + ' ' + string(this['sobrenome']);
+      // Pascal joins the strings and BlaiseVue handles the rest!
+      Result := string(this['firstName']) + ' ' + string(this['lastName']);
     end;
 
-    function statusSocial: string;
+    function socialStatus: string;
     begin
-      if Integer(this['idade']) >= 18 then Result := 'Adulto 🛡️'
-      else Result := 'Jovem Iniciante ⚔️';
+      if Integer(this['age']) >= 18 then Result := 'Adult 🛡️'
+      else Result := 'Young Beginner ⚔️';
     end;
 ```
 
-### 2. Exibindo na Tela
-No seu template, use as propriedades como se fossem variáveis comuns:
+### 2. Displaying on Screen
+In your template, use the properties as if they were common variables:
 ```html
-<p>Nome Completo: <strong>{{ nomeCompleto }}</strong></p>
-<p>Nível: <span class="badge">{{ statusSocial }}</span></p>
+<p>Full Name: <strong>{{ fullName }}</strong></p>
+<p>Level: <span class="badge">{{ socialStatus }}</span></p>
 ```
 
 ---
 
-## 👁️ O Que Você Aprendeu Hoje:
-- **`computed`**: Como criar variáveis que dependem de outras.
-- **Cache Inteligente**: O BlaiseVue só re-calcula o nome se o nome ou sobrenome mudar!
-- **Lógica Pascal**: Como usar `if/then` para mudar o que aparece na tela. 🛡️✨🏆
+## 👁️ What You Learned Today:
+- **`computed`**: How to create variables that depend on others.
+- **Smart Cache**: BlaiseVue only recalculates the name if the first or last name changes!
+- **Pascal Logic**: How to use `if/then` to change what appears on the screen. 🛡️✨🏆
 
 ---
 
-**Próximo Passo: Aprenda a criar seu exército de mini-apps com Componentes no Módulo 06!** ⚔️
+**Next Step: Learn to create your army of mini-apps with Components in Module 06!** ⚔️

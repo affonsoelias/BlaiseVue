@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="lazwebwidgets_namespaced"/>
+    <Type Value="RunTimeOnly"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Other>
+        <ConfigFile>
+          <WriteConfigFilePath Value="$(PkgOutDir)\fpclaz.cfg"/>
+        </ConfigFile>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq lazwebwidgets_namespaced.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Files Count="5">
+      <Item1>
+        <Filename Value="Widget.Web.pas"/>
+        <UnitName Value="Widget.Web"/>
+      </Item1>
+      <Item2>
+        <Filename Value="Widget.DB.pas"/>
+        <UnitName Value="Widget.DB"/>
+      </Item2>
+      <Item3>
+        <Filename Value="Widget.HTML.DB.pas"/>
+        <UnitName Value="Widget.HTML.DB"/>
+      </Item3>
+      <Item4>
+        <Filename Value="Widget.HTML.pas"/>
+        <UnitName Value="Widget.HTML"/>
+      </Item4>
+      <Item5>
+        <Filename Value="Widget.PropertyGrid.pas"/>
+        <UnitName Value="Widget.PropertyGrid"/>
+      </Item5>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="3">
+      <Item1>
+        <PackageName Value="pas2js_rtl_namespaced"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="fcl_base_pas2js_namespaced"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="pas2js_fcldb_namespaced"/>
+      </Item3>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

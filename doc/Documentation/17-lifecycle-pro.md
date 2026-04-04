@@ -1,75 +1,75 @@
-# 🔄 Ciclo de Vida Avançado (Pro Lifecycle)
+# 🔄 Advanced Lifecycle (Pro Lifecycle)
 
-O BlaiseVue PRO oferece controle total sobre a existência de um componente, do nascimento (inicialização) à morte (destruição), através de hooks de ciclo de vida síncronos e assíncronos.
+BlaiseVue PRO offers full control over a component's existence, from birth (initialization) to death (destruction), through synchronous and asynchronous lifecycle hooks.
 
 ---
 
-## 🏛️ A Batida do Motor (Hooks em Ordem)
+## 🏛️ The Engine Beat (Hooks in Order)
 
-| Hook | Quando Ocorre? | Estado do DOM | Uso Típico |
+| Hook | When It Occurs? | DOM State | Typical Usage |
 | :--- | :--- | :--- | :--- |
-| **`created`** | Dados e reatividade injetados. | ❌ Inexistente | Configurar B-Store, formatar arrays iniciais. |
-| **`mounted`** | Componente inserido no documento. | ✅ Pronto | Inicializar Chart.js, Mapas ou acessar `$refs`. |
-| **`updated`** | Após o DOM ser alterado por um dado. | ✅ Atualizado | Registrar logs de auditoria ou sincronizar estados complexos. |
-| **`unmounted`** | Componente removido via `b-if` ou Route. | ❌ Destruído | Limpar `setInterval`, remover `window` listeners. |
+| **`created`** | Data and reactivity injected. | ❌ Non-existent | Set up B-Store, format initial arrays. |
+| **`mounted`** | Component inserted into the document. | ✅ Ready | Initialize Chart.js, Maps, or access `$refs`. |
+| **`updated`** | After the DOM is altered by data. | ✅ Updated | Record audit logs or synchronize complex states. |
+| **`unmounted`** | Component removed via `b-if` or Route. | ❌ Destroyed | Clear `setInterval`, remove `window` listeners. |
 
 ---
 
-## ⚙️ Detalhamento por Hook
+## ⚙️ Hook Details
 
-### 1. Hook `created`: O Primeiro Suspiro
-Neste estágio, o compilador já hidratou o objeto `data:`, mas o HTML ainda não foi gerado. **Nunca tente acessar o DOM aqui!**
+### 1. `created` Hook: The First Breath
+At this stage, the compiler has already hydrated the `data:` object, but the HTML has not yet been generated. **Never try to access the DOM here!**
 
 ```pascal
 created:
   begin
-     { Perfeito para buscar dados iniciais ou configurar a Store }
+     { Perfect for fetching initial data or configuring the Store }
      TJSObject(this['$store'])['lastVisit'] := Date.now();
   end;
 ```
 
-### 2. Hook `mounted`: Acesso Total ao DOM
-Quando este hook é chamado, o componente já está renderizado. É o momento seguro para interagir com o elemento HTML real através das referências (`$refs`).
+### 2. `mounted` Hook: Full DOM Access
+When this hook is called, the component is already rendered. It is the safe moment to interact with the real HTML element through references (`$refs`).
 
 ```pascal
 mounted:
   begin
-     { Acesse o elemento nativo por trás do b-ref }
+     { Access the native element behind the b-ref }
      asm 
        const ctx = this.$refs.canvasElement.getContext('2d');
-       // Inicialize sua biblioteca JS favorita aqui!
+       // Initialize your favorite JS library here!
      end;
   end;
 ```
 
-### 3. Hook `updated`: Reatividade em Ação
-Chamado sempre que o motor de reatividade detecta uma mudança e finaliza a atualização visual na tela.
+### 3. `updated` Hook: Reactivity in Action
+Called whenever the reactivity engine detects a change and finishes the visual update on the screen.
 
 ```pascal
 updated:
   begin
-     asm console.log("[Lifecycle] UI Refletiu a nova mudança de estado."); end;
+     asm console.log("[Lifecycle] UI reflected the new state change."); end;
   end;
 ```
 
-### 4. Hook `unmounted`: Limpeza e Despedida
-O BlaiseVue PRO destrói automaticamente todos os observadores de reatividade (`Effects`) e remove o componente da árvore. **Use este hook para evitar vazamentos de memória.**
+### 4. `unmounted` Hook: Cleanup and Farewell
+BlaiseVue PRO automatically destroys all reactivity watchers (`Effects`) and removes the component from the tree. **Use this hook to avoid memory leaks.**
 
 ```pascal
 unmounted:
   begin
-     { Pare timers que o componente criou }
+     { Stop timers created by the component }
      asm clearInterval(this.myTimerId); end;
-     asm console.log("[Lifecycle] Componente desmontado com sucesso."); end;
+     asm console.log("[Lifecycle] Component unmounted successfully."); end;
   end;
 ```
 
 ---
 
-## 🛡️ Gestão Automática do BlaiseVue PRO
-Diferente da versão Standard, o **Pro Engine** realiza a limpeza profunda (Deep Cleanup) ao desmontar:
-- **Detecção de Leak**: Interrompe efeitos reativos órfãos.
-- **Auto-Reference Wipe**: Limpa o dicionário `$refs` para liberar memória RAM no navegador.
+## 🛡️ BlaiseVue PRO Automatic Management
+Unlike the Standard version, the **Pro Engine** performs a Deep Cleanup when unmounting:
+- **Leak Detection**: Stops orphaned reactive effects.
+- **Auto-Reference Wipe**: Clears the `$refs` dictionary to free up RAM in the browser.
 
 ---
 _"BlaiseVue: Robustness from spawn to despawn."_ 🛡️✨🔄🏆

@@ -1,165 +1,170 @@
 # 6. Data Binding
 
-O BlaiseVue suporta três formas de data binding:
+BlaiseVue supports three forms of data binding:
 
-## 1. Interpolação de Texto `{{ }}`
+## 1. Text Interpolation `{{ }}`
 
-Exibe o valor de uma variável reativa no HTML.
+Displays the value of a reactive variable in the HTML.
 
 ```html
 <template>
-  <h1>{{ titulo }}</h1>
-  <p>Bem-vindo, {{ nome }}!</p>
+  <h1>{{ title }}</h1>
+  <p>Welcome, {{ name }}!</p>
 </template>
 
 <script>
   data:
-    titulo: string = 'Minha App';
-    nome: string = 'Usuario';
+    title: string = 'My App';
+    name: string = 'User';
 </script>
 ```
 
-**Resultado:** O texto é atualizado automaticamente quando o valor muda.
+**Result:** The text is automatically updated when the value changes.
 
 ---
 
 ## 2. Two-Way Binding `b-model`
 
-Liga um input ao dado reativo em duas direções:
-- **Input → Dado:** Quando o usuário digita, o dado atualiza
-- **Dado → Input:** Quando o dado muda por código, o input atualiza
+Links an input to reactive data in two directions:
+- **Input → Data:** When the user types, the data updates.
+- **Data → Input:** When the data changes by code, the input updates.
 
-```html
-<template>
-  <input type="text" b-model="nome">
-  <p>Voce digitou: {{ nome }}</p>
-</template>
-
-<script>
-  data:
-    nome: string = '';
-</script>
-```
-
-**Funciona com:** `<input>`, `<textarea>`, `<select>`
-
-### Exemplo Prático
+> [!NOTE]
+> **Alias Support:** You can also use `v-model` (Vue compatibility). Both `b-model` and `v-model` are handled identically by the compiler.
 
 ```html
 <template>
   <div>
-    <label>Nome:</label>
-    <input type="text" b-model="nome">
+    <input type="text" v-model="username">
+    <p>Output: {{ username }}</p>
+  </div>
+</template>
+
+<script>
+  data:
+    username: string = '';
+</script>
+```
+
+**Works with:** `<input>`, `<textarea>`, `<select>`
+
+### Practical Example
+
+```html
+<template>
+  <div>
+    <label>Name:</label>
+    <input type="text" b-model="name">
 
     <label>Email:</label>
     <input type="text" b-model="email">
 
-    <h3>Resumo:</h3>
-    <p>Nome: {{ nome }}</p>
+    <h3>Summary:</h3>
+    <p>Name: {{ name }}</p>
     <p>Email: {{ email }}</p>
   </div>
 </template>
 
 <script>
   data:
-    nome: string = '';
+    name: string = '';
     email: string = '';
 </script>
 ```
 
 ---
 
-## 3. One-Way Attribute Binding `:attr` ou `b-bind:attr`
+## 3. One-Way Attribute Binding `:attr` or `b-bind:attr`
 
-Liga um atributo HTML a um dado reativo (somente leitura).
+Links an HTML attribute to a reactive data (read-only).
 
 ```html
 <template>
-  <a :href="link">Visitar</a>
-  <div :class="classeAtiva">Conteudo</div>
-  <img :src="imagemUrl">
+  <a :href="link">Visit</a>
+  <div :class="activeClass">Content</div>
+  <img :src="imageUrl">
 </template>
 
 <script>
   data:
     link: string = 'https://example.com';
-    classeAtiva: string = 'destaque';
-    imagemUrl: string = 'foto.png';
+    activeClass: string = 'highlight';
+    imageUrl: string = 'photo.png';
 </script>
 ```
 
-**Sintaxe curta:** `:href="campo"` (equivale a `b-bind:href="campo"`)
+**Short syntax:** `:href="field"` (equivalent to `b-bind:href="field"`)
 
 ---
 
-## Comparação de Bindings
+## Binding Comparison
 
-| Tipo | Diretiva | Direção | Uso |
+| Type | Directive | Direction | Usage |
 |------|----------|---------|-----|
-| Interpolação | `{{ }}` | Dado → DOM | Exibir textos |
-| Two-Way | `b-model` | Dado ↔ DOM | Inputs/forms |
-| One-Way | `:attr` | Dado → Atributo | Links, src, etc |
+| Interpolation | `{{ }}` | Data → DOM | Display text |
+| Two-Way | `b-model` | Data ↔ DOM | Inputs/forms |
+| One-Way | `:attr` | Data → Attribute | Links, src, etc. |
 
 ---
 
-# 7. Diretivas Estruturais e de Estilo (v1.1.0)
+# 7. Structural and Style Directives (v1.1.0)
 
-O BlaiseVue oferece diretivas para controle de fluxo e manipulação dinâmica do DOM.
+BlaiseVue offers directives for flow control and dynamic DOM manipulation.
 
-## 1. Condicional `v-if` e `v-else`
+## 1. Conditional `b-if` and `b-else`
 
-Renderiza ou remove elementos do DOM baseados em uma condição.
+Renders or removes elements from the DOM based on a condition.
 
 ```html
 <template>
-  <div v-if="logado" class="badge">Usuário Ativo</div>
-  <div v-else class="badge-red">Efetue login</div>
+  <div b-if="loggedIn" class="badge">Active User</div>
+  <div b-else class="badge-red">Please log in</div>
 </template>
 ```
 
-## 2. Visibilidade `v-show`
+## 2. Visibility `b-show`
 
-Alterna a visibilidade via CSS `display: none`. O elemento permanece no DOM.
+Toggles visibility via CSS `display: none`. The element remains in the DOM.
 
 ```html
-<div v-show="carregando">Processando...</div>
+<div b-show="loading">Processing...</div>
 ```
 
-## 3. Listas `v-for`
+## 3. Lists `b-for`
 
-Renderiza múltiplos elementos a partir de um array reativo.
+Renders multiple elements from a reactive array.
 
 ```html
 <template>
   <ul>
-    <li v-for="item in lista">
-      {{ item.nome }}
+    <li b-for="item in list">
+      {{ item.name }}
     </li>
   </ul>
 </template>
 
 <script>
   data:
-    lista: TJSArray = TJSArray.new;
+    list: TJSArray = TJSArray.new;
 </script>
 ```
 
-> **Dica Reativa:** Ao adicionar itens via `.push()`, para garantir a atualização da UI, você deve re-atribuir o array: `this['lista'] := arr;`.
+> **Reactive Tip:** When adding items via `.push()`, to ensure UI update, you must re-assign the array: `this['list'] := arr;`.
 
-## 4. Classes Dinâmicas `:class`
+## 4. Dynamic Classes `:class`
 
-Sincroniza classes CSS dinamicamente usando objetos ou strings.
+Synchronizes CSS classes dynamically using objects or strings.
 
 ```html
-<!-- Objeto: { "nome-da-classe": condicao_booleana } -->
-<div :class="{ 'bg-success': ativo, 'border-error': erro }">
-  Status do Componente
+<!-- Object: { "class-name": boolean_condition } -->
+<div :class="{ 'bg-success': active, 'border-error': error }">
+  Component Status
 </div>
 ```
 
 ```pascal
-// No script
+// In the script
 data:
-  ativo: boolean = true;
-  erro: boolean = false;
+  active: boolean = true;
+  error: boolean = false;
 ```

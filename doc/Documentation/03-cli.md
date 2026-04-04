@@ -1,60 +1,63 @@
-# 🛡️ Manual Técnico do BlaiseCLI (bv.exe)
+# 🛡️ BlaiseCLI Technical Manual (bv.exe)
 
-O `bv.exe` é o orquestrador nativo do BlaiseVue, responsável pela transpilação de componentes SFC, gerenciamento de bibliotecas e orquestração do ciclo de build.
-
----
-
-## 🏗️ Comandos de Desenvolvimento e Build
-
-### `bv run dev` (Desenvolvimento Express)
-Executa o build completo e ativa recursos de depuração em tempo real.
-- **Cache Busting (v=123...)**: Re-escreve todos os links de scripts e estilos no `index.html` injetando um parâmetro de versão baseado em timestamp para contornar o cache do navegador.
-- **Unit DevTools**: Injeta e ativa automaticamente a barra lateral de diagnóstico (`BVDevTools`).
-- **Debugging Flags**: Compila o Pascal com símbolos de depuração e saída verbosa no console do browser.
-
-### `bv run build` (Produção Otimizada)
-Gera o bundle final para deploy.
-- **Purge Artifacts**: Limpa arquivos de depuração e unidades experimentais.
-- **Optimized RTL**: Vincula apenas as units necessárias.
+The `bv.exe` is the native orchestrator of BlaiseVue, responsible for transpiling SFC components, managing libraries, and orchestrating the build cycle.
 
 ---
 
-## 🧪 Arsenal de Testes Unitários
+## 🏗️ Development and Build Commands
 
-O comando `bv test` centraliza a execução de testes unitários automatizados suportados pela unit `BVTestUtils.pas`.
+### `bv run dev` (Express Development)
+Executes a full build and activates real-time debugging features.
+- **Cache Busting (v=123...)**: Rewrites all script and style links in `index.html` by injecting a timestamp-based version parameter to bypass browser caching.
+- **Unit DevTools**: Automatically injects and activates the diagnostic sidebar (`BVDevTools`).
+- **Debugging Flags**: Compiles Pascal with debug symbols and verbose output in the browser console.
+
+### `bv run build` (Optimized Production)
+Generates the final bundle for deployment.
+- **Purge Artifacts**: Cleans up debug files and experimental units.
+- **Optimized RTL**: Links only the necessary units.
+
+---
+
+## 🧪 Unit Testing Arsenal
+
+The `bv test` command centralizes the execution of automated unit tests supported by the `BVTestUtils.pas` unit.
 
 ### `bv test`
-Realiza o transpile de todos os componentes, compila as units de teste `.pas` em `tests/` para JS e executa a suíte via **Vitest**.
+Transpiles all components, compiles the `.pas` test units in `tests/` to JS, and executes the suite via **Vitest**.
 
-### `bv new t <Nome>`
-Scaffolding instantâneo para arquivos de teste unitário.
-- **Exemplo**: `bv new t User` cria o arquivo `tests/User.test.pas` com o template correto.
+### `bv new t <Name>`
+Instant scaffolding for unit test files.
+- **Example**: `bv new t User` creates the `tests/User.test.pas` file with the correct template.
 
 ### `bv list t`
-Enumera todos os testes unitários atualmente cadastrados na pasta `tests/`.
+Lists all unit tests currently registered in the `tests/` folder.
 
-### `bv remove t <Nome>`
-Remove com segurança um arquivo de teste e seus artefatos transpilados.
-
----
-
-## 📦 Gerenciamento da Pasta /lib
-
-O BlaiseVue PRO 2.1 introduz o gerenciamento inteligente de bibliotecas externas:
-- **Auto-Autoload**: Quaisquer arquivos `.bv` dentro da pasta `lib/` (ou subdiretórios) são registrados como componentes globais no projeto.
-- **Injeção de Assets**: Arquivos `.css` e `.js` detectados na pasta `lib/` são injetados automaticamente no `<head>` do `index.html` gerado no `dist/`, sem necessidade de importação manual no seu `app.bv`.
+### `bv remove t <Name>`
+Safely removes a test file and its transpiled artifacts.
 
 ---
 
-## 🛠️ Comandos de Manutenção
+## 📦 /lib Folder Management
+
+BlaiseVue PRO 1.0 introduces intelligent management of external libraries:
+- **Auto-Autoload**: Any `.bv` files within the `lib/` folder (or subdirectories) are registered as global components in the project.
+- **Asset Injection**: `.css` and `.js` files detected in the `lib/` folder are automatically injected into the `<head>` of the generated `index.html` in `dist/`.
+- **Interactive Setup (`bv s <name>`)**: Triggers an interactive installation/cleanup menu for libraries that follow the **[setup.pas standard](18-external-libraries.md)**.
+
+---
+
+---
+
+## 🛠️ Maintenance Commands
 
 ### `bv clean`
-Limpeza completa do ambiente de build:
-1.  Purga a pasta `generated/`.
-2.  Purga a pasta `dist/js/` e `dist/css/`.
-3.  Reseta o `index.html` no `dist/` para o estado original em `public/`.
+Complete cleanup of the build environment:
+1. Purges the `generated/` folder.
+2. Purges the `dist/js/` and `dist/css/` folders.
+3. Resets the `index.html` in `dist/` to the original state in `public/`.
 
 ---
 
-## ⚡ Performance do CLI
-O compilador CLI é escrito inteiramente em **Pascal Nativo**, garantindo uma velocidade de processamento de componentes SFC até **50x mais rápida** que ferramentas concorrentes baseadas em Node.js ou bundlers tradicionais. 🛡️✨🏆
+## ⚡ CLI Performance
+The CLI compiler is written entirely in **Native Pascal**, ensuring an SFC component processing speed up to **50x faster** than competing tools based on Node.js or traditional bundlers. 🛡️✨🏆

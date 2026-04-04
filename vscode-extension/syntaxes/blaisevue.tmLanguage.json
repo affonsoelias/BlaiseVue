@@ -1,0 +1,78 @@
+{
+    "scopeName": "text.html.blaisevue",
+    "name": "BlaiseVue",
+    "fileTypes": [ "bv" ],
+    "patterns": [
+        {
+            "begin": "(<)(template)([^>]*)(>)",
+            "end": "(</)(template)(>)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "meta.tag.attributes.html" },
+                "4": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "contentName": "text.html.basic",
+            "patterns": [
+                { "include": "text.html.basic" }
+            ]
+        },
+        {
+            "begin": "(<)(script)([^>]*)(>)",
+            "end": "(</)(script)(>)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "meta.tag.attributes.html" },
+                "4": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "patterns": [
+                {
+                    "begin": "(?i:\\basm\\b)",
+                    "end": "(?i:\\bend\\b)",
+                    "beginCaptures": { "0": { "name": "keyword.control.pascal.blaisevue" } },
+                    "endCaptures": { "0": { "name": "keyword.control.pascal.blaisevue" } },
+                    "contentName": "source.js",
+                    "patterns": [
+                        { "include": "source.js" },
+                        { "include": "source.javascript" }
+                    ]
+                },
+                {
+                    "name": "keyword.control.pascal.blaisevue",
+                    "match": "\\b(props|data|methods|computed|watch|created|mounted|updated|provide|inject|components|router)(?=\\s*:)"
+                },
+                { "include": "source.pascal" }
+            ]
+        },
+        {
+            "begin": "(<)(style)([^>]*)(>)",
+            "end": "(</)(style)(>)",
+            "beginCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "meta.tag.attributes.html" },
+                "4": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "endCaptures": {
+                "1": { "name": "punctuation.definition.tag.begin.html" },
+                "2": { "name": "entity.name.tag.html" },
+                "3": { "name": "punctuation.definition.tag.end.html" }
+            },
+            "contentName": "source.css",
+            "patterns": [
+                { "include": "source.css" }
+            ]
+        }
+    ]
+}

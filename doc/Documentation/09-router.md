@@ -1,17 +1,17 @@
-# 9. Router SPA
+# 9. SPA Router
 
-O BlaiseVue inclui um router SPA baseado em **hash** (`#/rota`).
+BlaiseVue includes an SPA router based on **hash** (`#/route`).
 
-## Configuração Básica
+## Basic Configuration
 
-No `app.bv`, defina as rotas na seção `router:`:
+In `app.bv`, define the routes in the `router:` section:
 
 ```html
 <template>
   <div>
     <nav>
       <a href="#/">Home</a>
-      <a href="#/about">Sobre</a>
+      <a href="#/about">About</a>
     </nav>
     <router-view></router-view>
   </div>
@@ -25,30 +25,30 @@ No `app.bv`, defina as rotas na seção `router:`:
 </script>
 ```
 
-A tag `<router-view></router-view>` é onde o conteúdo da página ativa é renderizado.
+The `<router-view></router-view>` tag is where the active page content is rendered.
 
-## Navegação
+## Navigation
 
-Use links com `href="#/rota"`:
+Use links with `href="#/route"`:
 
 ```html
 <a href="#/">Home</a>
-<a href="#/about">Sobre</a>
+<a href="#/about">About</a>
 <a href="#/user/42">User 42</a>
 ```
 
-Ou navegue via Pascal:
+Or navigate via Pascal:
  ```pascal
  methods:
-   procedure irParaHome;
+   procedure goToHome;
    begin
      window.location.hash := '#/';
    end;
  ```
  
- ## Params Dinâmicos
+ ## Dynamic Params
  
- Defina segmentos dinâmicos com `:nome`:
+ Define dynamic segments with `:name`:
  
  ```
  router:
@@ -56,13 +56,13 @@ Ou navegue via Pascal:
      '/user/:id': 'user-profile-page';
  ```
  
- O valor do param é injetado automaticamente nos dados do componente pelo compilador:
+ The param value is automatically injected into the component data by the compiler:
  
  ```html
  <!-- src/views/UserProfile.bv -->
  <template>
    <div>
-     <h1>Usuario #{{ id }}</h1>
+     <h1>User #{{ id }}</h1>
    </div>
  </template>
  
@@ -72,24 +72,24 @@ Ou navegue via Pascal:
  </script>
  ```
  
- Ao navegar para `#/user/42`, o `{{ id }}` exibe `42`.
+ When navigating to `#/user/42`, `{{ id }}` displays `42`.
  
  ## Query Strings
  
- Query strings são parseadas automaticamente:
+ Query strings are automatically parsed:
  
  ```
- URL: #/user/7?tab=config&tema=dark
+ URL: #/user/7?tab=config&theme=dark
  ```
  
- Os valores são injetados nos dados do componente se as chaves existirem no `data:`:
+ Values are injected into the component data if the keys exist in `data:`:
  
  ```html
  <template>
    <div>
      <p>ID: {{ id }}</p>
      <p>Tab: {{ tab }}</p>
-     <p>Tema: {{ tema }}</p>
+     <p>Theme: {{ theme }}</p>
    </div>
  </template>
  
@@ -97,62 +97,81 @@ Ou navegue via Pascal:
    data:
      id: string = '';
      tab: string = '';
-     tema: string = '';
+     theme: string = '';
  </script>
  ```
  
- ## Acessando Dados da Rota em Pascal
+ ## Accessing Route Data in Pascal
  
- Como o BlaiseVue injeta params e query strings diretamente no objeto de dados, você pode acessá-los em qualquer método usando o `this` (ou `State`) em Pascal puro:
+ Since BlaiseVue injects params and query strings directly into the data object, you can access them in any method using `this` (or `State`) in pure Pascal:
  
  ```pascal
  methods:
-   procedure checarPerfil;
+   procedure checkProfile;
    var
      userId: string;
    begin
      userId := string(this['id']);
-     console.log('Visualizando perfil do usuario: ' + userId);
+     console.log('Viewing user profile: ' + userId);
    end;
  ```
  
- ## Guards (Proteção de Rotas)
+ ## Navigation Guards (Route Protection)
  
- > **Nota:** Guards avançados (beforeEach, beforeEnter) são funcionalidades para usuários experientes. O formato `.bv` suporta o mapeamento básico, mas lógica de proteção complexa deve ser implementada nos arquivos Pascal gerados ou estendendo o core.
+ You can protect routes by defining global or local guards. These guards are executed **before** the new component is mounted.
  
- ### Guard Global (via Pascal)
+ ### 📜 Return Values
+ - **`true`** (or undefined): Allow navigation.
+ - **`false`**: Cancel navigation (the user stays on the current page).
+ - **`'/path'`** (string): Redirect to another route.
  
- Para guards avançados, você pode assinar eventos no objeto `router` no arquivo gerado `uApp.pas`.
+ ### Global Guard: `beforeEach`
+ Define a global guard in the `router:` section of your `app.bv`:
  
  ```pascal
- // No app code manual:
- router.BeforeEach := function(toRoute: TJSObject): JSValue
- begin
-   if not isLoggedIn then Result := '/login' else Result := True;
- end;
+ router:
+   beforeEach: function(to, from)
+     begin
+       if (to.path = '/admin') and not isLoggedIn then
+         Result := '/login'
+       else
+         Result := true;
+     end;
+   routes:
+     '/': 'home';
+     '/login': 'login';
  ```
-
-## Exemplo Completo
-
-```html
-<template>
-  <div>
-    <nav>
-      <a href="#/">Home</a>
-      <a href="#/user/1">User 1</a>
-      <a href="#/user/42?tab=posts">User 42</a>
-    </nav>
-    <router-view></router-view>
-  </div>
-</template>
-
-<script>
-  data:
-    titulo: string = 'Minha App SPA';
-
-  router:
-    routes:
-      '/': 'home-page';
-      '/user/:id': 'user-profile-page';
-</script>
-```
+ 
+ ### Local Guard: `beforeEnter`
+ You can also protect a specific route in the route definition:
+ 
+ ```pascal
+ router:
+   routes:
+     '/dashboard': { component: 'dash', beforeEnter: checkAuth };
+ ```
+ 
+ ## Full Example
+ 
+ ```html
+ <template>
+   <div>
+     <nav>
+       <a href="#/">Home</a>
+       <a href="#/user/1">User 1</a>
+       <a href="#/user/42?tab=posts">User 42</a>
+     </nav>
+     <router-view></router-view>
+   </div>
+ </template>
+ 
+ <script>
+   data:
+     title: string = 'My SPA App';
+ 
+   router:
+     routes:
+       '/': 'home-page';
+       '/user/:id': 'user-profile-page';
+ </script>
+ ```

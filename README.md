@@ -14,6 +14,25 @@
 - **🧪 Unit Testing**: Native Vitest integration for Pascal-based testing.
 - **📦 Lib Manager**: Zero-config autoloading for external CSS, JS, and UI Kits.
 
+## 🌟 Version 1.0 PRO: Officially Released!
+
+We are proud to announce the official launch of **BlaiseVue 1.0 PRO**. This version establishes a stable, production-ready foundation for professional Pascal-based web development, featuring complete routing, reactivity, and a fully documented core.
+
+---
+
+## 🗺️ Roadmap to BlaiseVue 2.0
+
+While v1.0 is stable, our vision for the future is even more ambitious. The following features are planned for the next major evolution of the framework:
+
+1.  **⚡ HMR (Hot Module Replacement)**: Selective component injection without page reloads or state loss.
+2.  **🛣️ History Mode & Nested Routes**: Support for HTML5 clean URLs and sub-layouts (`children` routes).
+3.  **🧩 Scoped Slots**: Dynamic data passing from children back to parent templates for advanced UI logic.
+4.  **🚀 Teleport & Suspense**: Rendering modals outside the app root and standardizing async loading states.
+5.  **🏗️ Static Template Hoisting**: Compiler-level optimizations to ignore non-reactive DOM nodes.
+6.  **📦 Code Splitting**: Automatic lazy loading of routes to minimize initial bundle size.
+7.  **🕵️ DevTools Browser Extension**: A dedicated Chrome/Edge extension for real-time component and state inspection.
+8.  **🛡️ BlaiseUI Library**: An official ecosystem of pre-styled, high-performance UI components.
+
 ---
 
 ## 🛠️ Project Structure
@@ -21,9 +40,9 @@
 - **`/bin`**: The BlaiseVue CLI (`bv.pas`). The brain of the project.
 - **`/core`**: Framework internals (Reactivity, Compiler, Directives, Store).
 - **`/doc`**:
-  - `Documentation/`: Comprehensive technical manuals.
+  - `Documentation/`: Comprehensive technical manuals (20+ chapters).
   - `Course/`: Step-by-step guides, including an **Internals & Architecture** course for contributors.
-- **`/demo-app`**: A full showcase application featuring all core features.
+- **`/demo-app`**: A full showcase application featuring all core features and UI libraries.
 
 ---
 
@@ -56,4 +75,15 @@ If you want to contribute to the core or understand how the reactivity engine wo
 `doc/Course/Architecture-and-Internals/`
 
 ---
-🛡️ **"BlaiseVue: Bringing Pascal to the modern Web, and the Web to Pascal."** ✨🏆🚀
+
+## ⚖️ Licensing
+
+BlaiseVue is open-source and follows the **Lazarus / Free Pascal** licensing model:
+- **The BlaiseCLI tool (`bin/`):** Licensed under the **GNU GPL v2**.
+- **The BlaiseVue Core (`core/`):** Licensed under the **Modified GNU LGPL v2.1** with a **Static Linking Exception**.
+
+This allows you to create **commercial and proprietary applications** without having to open-source your own code, while maintaining the open-source nature of the framework itself. See the [LICENSE](LICENSE) file for more details.
+
+---
+
+ 🛡️ **"BlaiseVue: Bringing Pascal to the modern Web, and the Web to Pascal."** ✨🏆🚀

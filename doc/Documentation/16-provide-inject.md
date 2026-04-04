@@ -1,16 +1,16 @@
-# 🔗 Elo Sagrado (Provide/Inject)
+# 🔗 Sacred Link (Provide/Inject)
 
-O BlaiseVue PRO oferece suporte nativo para **Provide/Inject**, uma técnica avançada de injeção de dependências para componentes profundamente aninhados, eliminando a necessidade de passar props manualmente por múltiplos níveis (prop drilling).
+BlaiseVue PRO offers native support for **Provide/Inject**, an advanced dependency injection technique for deeply nested components, eliminating the need to pass props manually through multiple levels (prop drilling).
 
 ---
 
-## 🏗️ Como Funciona o Provide/Inject
+## 🏗️ How Provide/Inject Works
 
-- **O Ancestral PROVÊ**: Um componente de nível superior (como o `app.bv`) define dados, objetos ou funções que deseja disponibilizar para sua árvore descendente.
-- **O Descendente INJETA**: Qualquer componente filho, neto ou bisneto pode declarar que deseja "injetar" essas dependências.
+- **The Ancestor PROVIDES**: A top-level component (such as `app.bv`) defines data, objects, or functions that it wants to make available to its descendant tree.
+- **The Descendant INJECTS**: Any child, grandchild, or great-grandchild component can declare that it wants to "inject" these dependencies.
 
-### 1. Provendo Dados (Componente Pai/Root)
-No componente que detém o dado (usualmente o `app.bv`), utilize o bloco `provide`. O retorno deve ser um objeto `TJSObject` contendo as chaves que você deseja expor.
+### 1. Providing Data (Parent/Root Component)
+In the component that holds the data (usually `app.bv`), use the `provide` block. The return must be a `TJSObject` containing the keys you want to expose.
 
 ```pascal
 { app.bv }
@@ -20,11 +20,11 @@ No componente que detém o dado (usualmente o `app.bv`), utilize o bloco `provid
       env: TJSObject;
     begin
        env := TJSObject.new;
-       env['status'] := 'Produção 🛡️';
+       env['status'] := 'Production 🛡️';
        env['id'] := 42;
        
        Result := TJSObject.new;
-       Result['getAmbiente'] := function(): TJSObject
+       Result['getEnvironment'] := function(): TJSObject
          begin
             Result := env;
          end;
@@ -32,41 +32,41 @@ No componente que detém o dado (usualmente o `app.bv`), utilize o bloco `provid
 </script>
 ```
 
-### 2. Injetando Dependências (Componente Descendente)
-No componente que precisa dos dados, liste as chaves desejadas no bloco `inject`. O BlaiseVue PRO as tornará disponíveis reativamente.
+### 2. Injecting Dependencies (Descendant Component)
+In the component that needs the data, list the desired keys in the `inject` block. BlaiseVue PRO will make them available reactively.
 
 ```pascal
-{ MeuWidget.bv }
+{ MyWidget.bv }
 <script>
   inject:
-    getAmbiente;
+    getEnvironment;
 
   methods:
-    procedure logAmbiente;
+    procedure logEnvironment;
     begin
-       { Acesso via Pascal: use o prefixo 'this' }
-       console.log('Ambiente Injetado: ' + string(this['getAmbiente']().status));
+       { Access via Pascal: use the 'this' prefix }
+       console.log('Injected Environment: ' + string(this['getEnvironment']().status));
     end;
 </script>
 ```
 
-### 3. Acesso na Interface (Template)
-O valor injetado se comporta como um dado do componente e pode ser usado diretamente nas chaves `{{ }}` ou diretivas.
+### 3. Access in the Interface (Template)
+The injected value behaves like component data and can be used directly in `{{ }}` curly braces or directives.
 
 ```html
 <template>
   <div class="footer">
-    Status: <strong>{{ getAmbiente().status }}</strong> (ID: {{ getAmbiente().id }})
+    Status: <strong>{{ getEnvironment().status }}</strong> (ID: {{ getEnvironment().id }})
   </div>
 </template>
 ```
 
 ---
 
-## 🛡️ Benefícios Técnicos
-1.  **Desacoplamento Profundo**: O filho não precisa saber a estrutura do pai, apenas que o ID da dependência existe.
-2.  **Injeção de Serviços (Plugins)**: Ideal para injetar sistemas de tradução (i18n), motores de log ou configurações de API.
-3.  **Prioridade Hierárquica**: Se múltiplos pais fornecerem a mesma chave, o componente filho injetará o valor do precursor mais próximo na árvore DOM.
+## 🛡️ Technical Benefits
+1.  **Deep Decoupling**: The child does not need to know the parent's structure, only that the dependency ID exists.
+2.  **Service Injection (Plugins)**: Ideal for injecting translation systems (i18n), logging engines, or API configurations.
+3.  **Hierarchical Priority**: If multiple parents provide the same key, the child component will inject the value from the nearest ancestor in the DOM tree.
 
 ---
 _"BlaiseVue: Vertical DI with Pascal Safety."_ 🛡️✨🏆

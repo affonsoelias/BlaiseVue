@@ -1056,12 +1056,68 @@ end;
 //  COMMAND: CREATE PROJECT
 // =====================================================================
 
+procedure CopyFile(const Src, Dest: string);
+var
+  SrcStream, DestStream: TFileStream;
+begin
+  SrcStream := TFileStream.Create(Src, fmOpenRead or fmShareDenyWrite);
+  try
+    DestStream := TFileStream.Create(Dest, fmCreate);
+    try
+      DestStream.CopyFrom(SrcStream, SrcStream.Size);
+    finally
+      DestStream.Free;
+    end;
+  finally
+    SrcStream.Free;
+  end;
+end;
+
+procedure CopyDir(const Source, Dest: string; const ExcludeList: array of string);
+var
+  SR: TSearchRec;
+  i: Integer;
+  IsExcluded: Boolean;
+  SrcPath, DestPath: string;
+begin
+  SrcPath := IncludeTrailingPathDelimiter(Source);
+  DestPath := IncludeTrailingPathDelimiter(Dest);
+  ForceDir(DestPath);
+  
+  if FindFirst(SrcPath + '*', faAnyFile, SR) = 0 then
+  begin
+    repeat
+      if (SR.Name <> '.') and (SR.Name <> '..') then
+      begin
+        IsExcluded := False;
+        for i := 0 to High(ExcludeList) do
+          if LowerCase(SR.Name) = LowerCase(ExcludeList[i]) then
+          begin
+            IsExcluded := True;
+            Break;
+          end;
+
+        if not IsExcluded then
+        begin
+          if (SR.Attr and faDirectory) <> 0 then
+            CopyDir(SrcPath + SR.Name, DestPath + SR.Name, ExcludeList)
+          else
+            CopyFile(SrcPath + SR.Name, DestPath + SR.Name);
+        end;
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+end;
+
 { Scaffolds a complete project directory structure with sample pages }
 procedure CmdCreate(const ProjectName: string);
 var
-  Base: string;
+  Base, TemplatePath: string;
+  Content: string;
 begin
   Base := GetCurrentDir + DirectorySeparator + ProjectName + DirectorySeparator;
+  TemplatePath := GetSDKPath + 'demo-app' + DirectorySeparator;
 
   if DirectoryExists(Base) then
   begin
@@ -1069,202 +1125,213 @@ begin
     Halt(1);
   end;
 
-  WriteLn('Scaffolding BlaiseVue project: ', ProjectName);
-
-  // Create directories
-  ForceDir(Base + 'public');
-  ForceDir(Base + 'src' + DirectorySeparator + 'components');
-  ForceDir(Base + 'src' + DirectorySeparator + 'views');
-  ForceDir(Base + 'generated');
-  ForceDir(Base + 'dist' + DirectorySeparator + 'js');
-  ForceDir(Base + 'tests');
-
-  // public/index.html
-  WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html',
-    '<!DOCTYPE html>' + #10 +
-    '<html>' + #10 +
-    '<head>' + #10 +
-    '  <meta charset="utf-8"/>' + #10 +
-    '  <title>' + ProjectName + '</title>' + #10 +
-    '  <script type="application/javascript" src="js/rtl.js"></script>' + #10 +
-    '  <script type="application/javascript" src="js/main.js"></script>' + #10 +
-    '</head>' + #10 +
-    '<body>' + #10 +
-    '  <div id="app"></div>' + #10 +
-    '  <script>rtl.run("program");</script>' + #10 +
-    '</body>' + #10 +
-    '</html>' + #10
-  );
-
-  // src/app.bv
-  WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv',
-    '<template>' + #10 +
-    '  <div>' + #10 +
-    '    <nav>' + #10 +
-    '      <strong>BlaiseVue</strong>' + #10 +
-    '      <a href="#/">Home</a>' + #10 +
-    '      <a href="#/about">About</a>' + #10 +
-    '    </nav>' + #10 +
-    '    <h1>{{ message }}</h1>' + #10 +
-    '    <router-view></router-view>' + #10 +
-    '  </div>' + #10 +
-    '</template>' + #10 +
-    #10 +
-    '<script>' + #10 +
-    '  data:' + #10 +
-    '    message: string = ''Welcome to BlaiseVue!'';' + #10 +
-    #10 +
-    '  router:' + #10 +
-    '    routes:' + #10 +
-    '      ''/'': ''home-page'';' + #10 +
-    '      ''/about'': ''about-page'';' + #10 +
-    '</script>' + #10 +
-    #10 +
-    '<style>' + #10 +
-    '  nav { background: #2c3e50; padding: 10px 20px; }' + #10 +
-    '  nav a { color: #ecf0f1; text-decoration: none; margin-left: 15px; }' + #10 +
-    '  nav strong { color: #42b883; font-size: 18px; }' + #10 +
-    '</style>' + #10
-  );
-
-  // src/views/Home.bv
-  WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv',
-    '<template>' + #10 +
-    '  <div>' + #10 +
-    '    <h2>Homepage</h2>' + #10 +
-    '    <p>{{ description }}</p>' + #10 +
-    '    <button @click="greet">Click here</button>' + #10 +
-    '  </div>' + #10 +
-    '</template>' + #10 +
-    #10 +
-    '<script>' + #10 +
-    '  data:' + #10 +
-    '    description: string = ''Welcome to my BlaiseVue app!'';' + #10 +
-    #10 +
-    '  methods:' + #10 +
-    '    procedure greet;' + #10 +
-    '    begin' + #10 +
-    '      window.alert(''Hello from BlaiseVue!'');' + #10 +
-    '    end;' + #10 +
-    '</script>' + #10 +
-    #10 +
-    '<style>' + #10 +
-    '  h2 { color: #3498db; }' + #10 +
-    '</style>' + #10
-  );
-
-  // src/views/About.bv
-  WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv',
-    '<template>' + #10 +
-    '  <div>' + #10 +
-    '    <h2>About</h2>' + #10 +
-    '    <p>This project was created with BlaiseVue PRO.</p>' + #10 +
-    '  </div>' + #10 +
-    '</template>' + #10 +
-    #10 +
-    '<script>' + #10 +
-    '</script>' + #10 +
-    #10 +
-    '<style>' + #10 +
-    '  h2 { color: #27ae60; }' + #10 +
-    '</style>' + #10
-  );
-
-  // app.cfg
-  WriteStringToFile(Base + 'app.cfg',
-    '-l' + #10 +
-    '-vwnh' + #10 +
-    '-Sc' + #10 +
-    '-Tbrowser' + #10 +
-    '-Jc' + #10 +
-    '-Fugenerated' + #10
-  );
-
-  // package.json (New: Testing Environment)
-  WriteStringToFile(Base + 'package.json',
-    '{' + #10 +
-    '  "name": "' + ProjectName + '",' + #10 +
-    '  "version": "1.0.0",' + #10 +
-    '  "type": "module",' + #10 +
-    '  "scripts": {' + #10 +
-    '    "test": "vitest"' + #10 +
-    '  },' + #10 +
-    '  "devDependencies": {' + #10 +
-    '    "vitest": "^3.0.0",' + #10 +
-    '    "jsdom": "^26.0.0"' + #10 +
-    '  }' + #10 +
-    '}'
-  );
-
-  // tests/setup.js (New: Testing Environment)
-  ForceDir(Base + 'tests');
-  WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js',
-    'import { readFileSync } from ''fs'';' + #10 +
-    'import { resolve } from ''path'';' + #10 +
-    #10 +
-    '// Mock environment' + #10 +
-    'globalThis.window = globalThis;' + #10 +
-    'if (typeof document !== ''undefined'') globalThis.document = document;' + #10 +
-    'if (typeof navigator !== ''undefined'') globalThis.navigator = navigator;' + #10 +
-    #10 +
-    '// Load Pascal RTL' + #10 +
-    'const rtlContent = readFileSync(resolve(process.cwd(), ''rtl.js''), ''utf8'');' + #10 +
-    '// Use global eval to let ''var pas'' and ''var rtl'' become globals' + #10 +
-    '(0, eval)(rtlContent);' + #10 +
-    #10 +
-    'if (!globalThis.__BV_CORE__) globalThis.__BV_CORE__ = {};' + #10
-  );
-
-  // Copy rtl.js
-  if GetRTLPath <> '' then
+  if DirectoryExists(TemplatePath) then
   begin
-    WriteStringToFile(Base + 'rtl.js', ReadFileToString(GetRTLPath));
-    WriteLn('  rtl.js                 copied');
+    WriteLn('Scaffolding BlaiseVue project from demo-app template: ', ProjectName);
+    CopyDir(TemplatePath, Base, ['.git', '.github', 'node_modules', 'dist', 'generated']);
+    
+    // Customize project name in package.json if it was copied
+    if FileExists(Base + 'package.json') then
+    begin
+      Content := ReadFileToString(Base + 'package.json');
+      Content := StringReplace(Content, '"name": "demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
+      WriteStringToFile(Base + 'package.json', Content);
+    end;
+    
+    // Customize title in index.html if it was copied
+    if FileExists(Base + 'public' + DirectorySeparator + 'index.html') then
+    begin
+      Content := ReadFileToString(Base + 'public' + DirectorySeparator + 'index.html');
+      Content := StringReplace(Content, '<title>BlaiseVue Demo 2.0</title>', '<title>' + ProjectName + '</title>', [rfReplaceAll]);
+      Content := StringReplace(Content, '<title>BlaiseVue Demo</title>', '<title>' + ProjectName + '</title>', [rfReplaceAll]);
+      WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html', Content);
+    end;
+    
+    WriteLn('  Project cloned from demo-app successfully.');
   end
   else
-    WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
+  begin
+    WriteLn('WARNING: demo-app template not found in SDK root. Falling back to minimal scaffolding.');
+    WriteLn('Scaffolding BlaiseVue project: ', ProjectName);
 
-  // tests/HelloWorld.test.pas (New: Test Example)
-  WriteStringToFile(Base + 'tests' + DirectorySeparator + 'HelloWorld.test.pas',
-    'program HelloWorld_test;' + #10 +
-    #10 +
-    '{$mode objfpc}' + #10 +
-    #10 +
-    'uses JS, Web, BVTestUtils;' + #10 +
-    #10 +
-    'begin' + #10 +
-    '  Describe(''Hello World'', procedure' + #10 +
-    '    begin' + #10 +
-    '       It(''should validate that the framework is active'', procedure' + #10 +
-    '         begin' + #10 +
-    '            Expect(True).ToEqual(True);' + #10 +
-    '         end);' + #10 +
-    '    end);' + #10 +
-    'end.' + #10
-  );
+    // Create directories
+    ForceDir(Base + 'public');
+    ForceDir(Base + 'src' + DirectorySeparator + 'components');
+    ForceDir(Base + 'src' + DirectorySeparator + 'views');
+    ForceDir(Base + 'generated');
+    ForceDir(Base + 'dist' + DirectorySeparator + 'js');
+    ForceDir(Base + 'tests');
 
-  // vitest.config.js (New: Vitest Config)
-  WriteStringToFile(Base + 'vitest.config.js',
-    'import { defineConfig } from ''vitest/config'';' + #10 +
-    #10 +
-    'export default defineConfig({' + #10 +
-    '  test: {' + #10 +
-    '    globals: true,' + #10 +
-    '    environment: ''jsdom'',' + #10 +
-    '    setupFiles: [''./tests/setup.js''],' + #10 +
-    '  },' + #10 +
-    '});'
-  );
+    // Minimal public/index.html
+    WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html',
+      '<!DOCTYPE html>' + #10 +
+      '<html>' + #10 +
+      '<head>' + #10 +
+      '  <meta charset="utf-8"/>' + #10 +
+      '  <title>' + ProjectName + '</title>' + #10 +
+      '  <script type="application/javascript" src="js/rtl.js"></script>' + #10 +
+      '  <script type="application/javascript" src="js/main.js"></script>' + #10 +
+      '</head>' + #10 +
+      '<body>' + #10 +
+      '  <div id="app"></div>' + #10 +
+      '  <script>rtl.run("program");</script>' + #10 +
+      '</body>' + #10 +
+      '</html>' + #10
+    );
 
-  WriteLn('  /public/index.html     created');
-  WriteLn('  /src/app.bv            created');
-  WriteLn('  /src/views/Home.bv     created');
-  WriteLn('  /src/views/About.bv    created');
-  WriteLn('  /app.cfg               created');
-  WriteLn('  /package.json          created (Vitest)');
-  WriteLn('  /tests/setup.js        created');
-  WriteLn('  /tests/Home.test.pas   created');
-  WriteLn('  /vitest.config.js      created');
+    // Minimal src/app.bv
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv',
+      '<template>' + #10 +
+      '  <div>' + #10 +
+      '    <nav>' + #10 +
+      '      <strong>BlaiseVue</strong>' + #10 +
+      '      <a href="#/">Home</a>' + #10 +
+      '      <a href="#/about">About</a>' + #10 +
+      '    </nav>' + #10 +
+      '    <h1>{{ message }}</h1>' + #10 +
+      '    <router-view></router-view>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10 +
+      #10 +
+      '<script>' + #10 +
+      '  data:' + #10 +
+      '    message: string = ''Welcome to BlaiseVue!'';' + #10 +
+      #10 +
+      '  router:' + #10 +
+      '    routes:' + #10 +
+      '      ''/'': ''home-page'';' + #10 +
+      '      ''/about'': ''about-page'';' + #10 +
+      '</script>' + #10 +
+      #10 +
+      '<style>' + #10 +
+      '  nav { background: #2c3e50; padding: 10px 20px; }' + #10 +
+      '  nav a { color: #ecf0f1; text-decoration: none; margin-left: 15px; }' + #10 +
+      '  nav strong { color: #42b883; font-size: 18px; }' + #10 +
+      '</style>' + #10
+    );
+
+    // Minimal src/views/Home.bv
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv',
+      '<template>' + #10 +
+      '  <div>' + #10 +
+      '    <h2>Homepage</h2>' + #10 +
+      '    <p>{{ description }}</p>' + #10 +
+      '    <button @click="greet">Click here</button>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10 +
+      #10 +
+      '<script>' + #10 +
+      '  data:' + #10 +
+      '    description: string = ''Welcome to my BlaiseVue app!'';' + #10 +
+      #10 +
+      '  methods:' + #10 +
+      '    procedure greet;' + #10 +
+      '    begin' + #10 +
+      '      window.alert(''Hello from BlaiseVue!'');' + #10 +
+      '    end;' + #10 +
+      '</script>' + #10 +
+      #10 +
+      '<style>' + #10 +
+      '  h2 { color: #3498db; }' + #10 +
+      '</style>' + #10
+    );
+
+    // Minimal src/views/About.bv
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv',
+      '<template>' + #10 +
+      '  <div>' + #10 +
+      '    <h2>About</h2>' + #10 +
+      '    <p>This project was created with BlaiseVue PRO.</p>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10 +
+      #10 +
+      '<script>' + #10 +
+      '</script>' + #10 +
+      #10 +
+      '<style>' + #10 +
+      '  h2 { color: #27ae60; }' + #10 +
+      '</style>' + #10
+    );
+  end;
+
+  // --- Ensure Standalone Infrastructure Files ---
+
+  // Ensure app.cfg exists
+  if not FileExists(Base + 'app.cfg') then
+    WriteStringToFile(Base + 'app.cfg',
+      '-l' + #10 +
+      '-vwnh' + #10 +
+      '-Sc' + #10 +
+      '-Tbrowser' + #10 +
+      '-Jc' + #10 +
+      '-Fugenerated' + #10
+    );
+
+  // Ensure package.json exists
+  if not FileExists(Base + 'package.json') then
+    WriteStringToFile(Base + 'package.json',
+      '{' + #10 +
+      '  "name": "' + ProjectName + '",' + #10 +
+      '  "version": "1.0.0",' + #10 +
+      '  "type": "module",' + #10 +
+      '  "scripts": {' + #10 +
+      '    "test": "vitest"' + #10 +
+      '  },' + #10 +
+      '  "devDependencies": {' + #10 +
+      '    "vitest": "^3.0.0",' + #10 +
+      '    "jsdom": "^26.0.0"' + #10 +
+      '  }' + #10 +
+      '}'
+    );
+
+  // Ensure tests/setup.js exists
+  if not FileExists(Base + 'tests' + DirectorySeparator + 'setup.js') then
+  begin
+    ForceDir(Base + 'tests');
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js',
+      'import { readFileSync } from ''fs'';' + #10 +
+      'import { resolve } from ''path'';' + #10 +
+      #10 +
+      '// Mock environment' + #10 +
+      'globalThis.window = globalThis;' + #10 +
+      'if (typeof document !== ''undefined'') globalThis.document = document;' + #10 +
+      'if (typeof navigator !== ''undefined'') globalThis.navigator = navigator;' + #10 +
+      #10 +
+      '// Load Pascal RTL' + #10 +
+      'const rtlContent = readFileSync(resolve(process.cwd(), ''rtl.js''), ''utf8'');' + #10 +
+      '// Use global eval to let ''var pas'' and ''var rtl'' become globals' + #10 +
+      '(0, eval)(rtlContent);' + #10 +
+      #10 +
+      'if (!globalThis.__BV_CORE__) globalThis.__BV_CORE__ = {};' + #10
+    );
+  end;
+
+  // Ensure vitest.config.js exists
+  if not FileExists(Base + 'vitest.config.js') then
+    WriteStringToFile(Base + 'vitest.config.js',
+      'import { defineConfig } from ''vitest/config'';' + #10 +
+      #10 +
+      'export default defineConfig({' + #10 +
+      '  test: {' + #10 +
+      '    globals: true,' + #10 +
+      '    environment: ''jsdom'',' + #10 +
+      '    setupFiles: [''./tests/setup.js''],' + #10 +
+      '  },' + #10 +
+      '});'
+    );
+
+  // Always ensure rtl.js exists
+  if not FileExists(Base + 'rtl.js') then
+  begin
+    if GetRTLPath <> '' then
+    begin
+      CopyFile(GetRTLPath, Base + 'rtl.js');
+      WriteLn('  rtl.js                 copied');
+    end
+    else
+      WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
+  end;
+
   WriteLn('');
   WriteLn('Installing dependencies (npm install)...');
   
@@ -1554,7 +1621,11 @@ begin
         for i := 0 to CSSFiles.Count - 1 do
         begin
            FileName := ExtractFileName(CSSFiles[i]);
-           WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
+           try
+             WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
+           except
+             WriteLn('  WARNING: Could not update ', FileName, ' (locked). Skipping.');
+           end;
            CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
         end;
       end;
@@ -1593,6 +1664,13 @@ begin
 
       WriteStringToFile(DistPath + 'index.html', UnitName);
       WriteLn('  index.html -> dist/ (cache bust v=' + TagName + ')');
+    end;
+
+    // NOVO: Copia o restante da pasta public/ (assets, etc) recursivamente
+    if DirectoryExists(PublicPath) then
+    begin
+       WriteLn('  Copying assets from /public to /dist...');
+       CopyDir(PublicPath, DistPath, ['index.html']); // Pula index.html pois ja processamos acima
     end;
 
     // Copies rtl.js to dist/js/ using automatic SDK lookup
@@ -1755,22 +1833,108 @@ begin
   end;
 end;
 
+function RunSetupScript(const LibName, Action: string): Boolean;
+var
+  LibPath, ScriptPath, ExecPath: string;
+  ExitCode: Integer;
+begin
+  Result := False;
+  LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + LibName + DirectorySeparator;
+  ScriptPath := LibPath + 'setup.pas';
+  
+  if not FileExists(ScriptPath) then Exit(True); // No script = success (nothing to do)
+
+  WriteLn('Preparing setup script for "' + LibName + '"...');
+  
+  {$IFDEF WINDOWS}
+  ExecPath := LibPath + 'setup.exe';
+  ExitCode := ExecuteProcess('cmd', '/c fpc "' + ScriptPath + '" -o"' + ExecPath + '" > nul');
+  {$ELSE}
+  ExecPath := LibPath + 'setup';
+  ExitCode := ExecuteProcess('fpc', '-o' + ExecPath + ' ' + ScriptPath);
+  {$ENDIF}
+
+  if (ExitCode <> 0) or not FileExists(ExecPath) then
+  begin
+    WriteLn('ERROR: Failed to compile setup script for ' + LibName);
+    Exit(False);
+  end;
+
+  WriteLn('Executing action: ' + Action);
+  ExitCode := ExecuteProcess(ExecPath, Action);
+  
+  // Cleanup
+  DeleteFile(ExecPath);
+  if FileExists(ChangeFileExt(ExecPath, '.o')) then DeleteFile(ChangeFileExt(ExecPath, '.o'));
+  if FileExists(ChangeFileExt(ExecPath, '.ppu')) then DeleteFile(ChangeFileExt(ExecPath, '.ppu'));
+  
+  Result := (ExitCode = 0);
+end;
+
+procedure CmdSetup(const LibName: string);
+var
+  Path, Choice: string;
+begin
+  Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + LibName + DirectorySeparator;
+  if not DirectoryExists(Path) then
+  begin
+    WriteLn('Error: Library "' + LibName + '" not found in /lib.');
+    Exit;
+  end;
+
+  if not FileExists(Path + 'setup.pas') then
+  begin
+    WriteLn('The library "' + LibName + '" does not have a setup script (setup.pas).');
+    Exit;
+  end;
+
+  WriteLn('');
+  WriteLn('--- Component Setup: ' + LibName + ' ---');
+  WriteLn('1. Install (Create folders and configurations)');
+  WriteLn('2. Reinstall (Perform updates)');
+  WriteLn('3. Delete (Cleanup actions)');
+  WriteLn('0. Cancel');
+  WriteLn('');
+  Write('Select an option: ');
+  ReadLn(Choice);
+
+  if Choice = '1' then RunSetupScript(LibName, 'install')
+  else if Choice = '2' then RunSetupScript(LibName, 'reinstall')
+  else if Choice = '3' then 
+  begin
+    if RunSetupScript(LibName, 'remove') then
+       WriteLn('Cleanup completed.')
+    else
+       WriteLn('Cleanup finished with issues.');
+  end
+  else WriteLn('Action cancelled.');
+end;
+
+
 procedure CmdLibList;
 var
   SR: TSearchRec;
   Path: string;
+  Extra: string;
 begin
   Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
-  WriteLn('Installed Libraries (/lib):');
-  WriteLn('------------------------------');
+  WriteLn('');
+  WriteLn('Installed Libs in /lib:');
+  WriteLn(StringOfChar('-', 40));
   if FindFirst(Path + '*', faDirectory, SR) = 0 then
   begin
     repeat
       if (SR.Name <> '.') and (SR.Name <> '..') then
-        WriteLn('  - ', SR.Name);
+      begin
+        Extra := '';
+        if FileExists(Path + SR.Name + DirectorySeparator + 'setup.pas') then
+          Extra := ' [Scripted]';
+        WriteLn('  - ', SR.Name, Extra);
+      end;
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;
+  WriteLn(StringOfChar('-', 40));
 end;
 
 procedure CmdLibRemove(const LibName: string);
@@ -1780,6 +1944,11 @@ begin
   Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + LibName;
   if DirectoryExists(Path) then
   begin
+    if FileExists(Path + DirectorySeparator + 'setup.pas') then
+    begin
+       WriteLn('Detected setup script. Running cleanup...');
+       RunSetupScript(LibName, 'remove');
+    end;
     DeleteDir(Path);
     WriteLn('Library "', LibName, '" removed.');
   end
@@ -2071,6 +2240,13 @@ begin
     WriteStringToFile(DistPath + 'index.html', IndexHTML);
   end;
 
+  // NOVO: Copia ativos em producao
+  if DirectoryExists(PublicPath) then
+  begin
+     WriteLn('[3/3] Copying production assets (public/assets/)...');
+     CopyDir(PublicPath, DistPath, ['index.html']);
+  end;
+
   WriteLn('');
   WriteLn('Production build generated in /dist');
   WriteLn('Main file: main.' + Hash + '.js');
@@ -2219,7 +2395,7 @@ begin
   if ParamCount < 1 then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v2.1 PRO');
+    WriteLn('  BlaiseVue CLI v1.0 PRO');
     WriteLn('  ======================');
     WriteLn('');
     WriteLn('  Usage:');
@@ -2239,6 +2415,10 @@ begin
     WriteLn('    bv list c              Lists components');
     WriteLn('    bv list v              Lists views');
     WriteLn('    bv list t              Lists test files');
+    WriteLn('    bv lib list            Lists all installed components in lib/');
+    WriteLn('    bv lib install <url>   Downloads and installs a component from a URL');
+    WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
+    WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test                Runs unit tests (.test.pas)');
     WriteLn('');
     Halt(0);
@@ -2325,6 +2505,15 @@ begin
       CmdLibList
     else
       CmdList(ParamStr(2));
+  end
+  else if Cmd = 's' then
+  begin
+    if ParamCount < 2 then
+    begin
+       WriteLn('Usage: bv s <nome-do-componente>');
+       Halt(1);
+    end;
+    CmdSetup(ParamStr(2));
   end
   else if Cmd = 'lib' then
   begin

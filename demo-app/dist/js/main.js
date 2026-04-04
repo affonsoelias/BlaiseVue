@@ -485,6 +485,49 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            });
         };
     
+        // Merges two options objects (used for Mixins)
+        bv.mergeOptions = function(to, from) {
+           if (!from) return to;
+           const res = Object.assign({}, to);
+           
+           if (from.data) {
+              const toData = to.data;
+              const fromData = from.data;
+              res.data = function() {
+                 const d1 = typeof toData === 'function' ? toData.call(this, this) : (toData || {});
+                 const d2 = typeof fromData === 'function' ? fromData.call(this, this) : (fromData || {});
+                 return Object.assign({}, d2, d1); // Component data (d1) overrides mixin (d2)
+              };
+           }
+    
+           ['methods', 'computed', 'watch', 'inject'].forEach(k => {
+              if (from[k]) res[k] = Object.assign({}, from[k], to[k] || {}); // to overrides from
+           });
+    
+           ['created', 'mounted', 'updated', 'unmounted'].forEach(k => {
+              if (from[k]) {
+                 const toHook = to[k];
+                 const fromHook = from[k];
+                 res[k] = function() {
+                    fromHook.apply(this, arguments);
+                    if (toHook) toHook.apply(this, arguments);
+                 };
+              }
+           });
+    
+           if (from.template && !to.template) res.template = from.template;
+           if (from.provide) {
+              const toProv = to.provide;
+              const fromProv = from.provide;
+              res.provide = function() {
+                 const p1 = typeof toProv === 'function' ? toProv.call(this, this) : (toProv || {});
+                 const p2 = typeof fromProv === 'function' ? fromProv.call(this, this) : (fromProv || {});
+                 return Object.assign({}, p2, p1);
+              };
+           }
+           return res;
+        };
+    
         // Recursive DOM Visitor: The core of the Directive Engine
         bv.traverse = function(Node, Data, Methods) {
           if (!Node || Node['bvTraversed']) return;
@@ -684,6 +727,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
               // 10. Component Logic, Slots & Provide/Inject
               if (opts) {
+                if (window.__BV_CORE__.mixins && window.__BV_CORE__.mixins.length > 0) {
+                   let merged = opts;
+                   window.__BV_CORE__.mixins.forEach(m => {
+                      merged = bv.mergeOptions(merged, m);
+                   });
+                   opts = merged;
+                }
+    
                 // Manage Slots
                 let originalChildren = Array.from(el.childNodes);
                 let root_c = document.createElement('div');
@@ -1140,7 +1191,13 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       var d = undefined;
       var m = undefined;
       var c = undefined;
-      console.log("[Init] Initing App...");
+      console.log("[Init] Initing App with Global Mixins...");
+      // Apply global mixins to the root instance options
+      if (window.__BV_CORE__.mixins && window.__BV_CORE__.mixins.length > 0) {
+        window.__BV_CORE__.mixins.forEach(function(mix) {
+          Options = window.__BV_CORE__.mergeOptions(Options, mix);
+        });
+      };
       this.InjectStyles();
       JS_rootID = Options.el || '#app';
       AData = Options.data || {};
@@ -1164,6 +1221,12 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       if (Options.created) {
         Options.created.call(d.FData, d.FData);
       };
+      setTimeout(() => {
+        if (!this.FRouter) {
+          console.log("[Create] No router detected. Auto-compiling root...");
+          window.__BV_CORE__.compile(this.FRoot, this.FData, this.FMethods);
+        }
+      }, 0);
       console.log("[Create] Instance ready.");
       return this;
     };
@@ -1179,6 +1242,25 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       window.__BV_CORE__.compile(ARoot, AData, AMethods);
     };
   });
+  $mod.$init = function () {
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+    if (!window.__BV_CORE__.mixins) window.__BV_CORE__.mixins = [];
+    if (!window.__BV_CORE__.plugins) window.__BV_CORE__.plugins = new Set();
+    
+    // Explicitly expose Mixin and Use to ensure they are available from JavaScript context
+    // even if they were stripped during optimization.
+    pas.BlaiseVue.TBlaiseVue.Mixin = function(m) { 
+      if (!window.__BV_CORE__.mixins) window.__BV_CORE__.mixins = [];
+      window.__BV_CORE__.mixins.push(m);
+    };
+    pas.BlaiseVue.TBlaiseVue.Use = function(p, o) {
+      if (!window.__BV_CORE__.plugins) window.__BV_CORE__.plugins = new Set();
+      if (window.__BV_CORE__.plugins.has(p)) return;
+      window.__BV_CORE__.plugins.add(p);
+      if (typeof p.install === 'function') p.install(pas.BlaiseVue.TBlaiseVue, o);
+      else if (typeof p === 'function') p(pas.BlaiseVue.TBlaiseVue, o);
+    };
+  };
 });
 rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
   "use strict";

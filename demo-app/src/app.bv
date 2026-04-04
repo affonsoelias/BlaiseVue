@@ -1,7 +1,7 @@
 <template>
   <div translate="no" class="notranslate">
     <nav class="navbar">
-      <strong class="brand">BlaiseVue Demo 2.0</strong>
+      <strong class="brand">BlaiseVue Demo 1.0</strong>
       <div class="nav-links">
         <a href="#/">Home</a>
         <a href="#/about">About</a>
@@ -31,7 +31,7 @@
   }
 
   data:
-    mensagem: string = 'BlaiseVue SPA v2.0 PRO';
+    mensagem: string = 'BlaiseVue SPA v1.0 PRO';
 
   { Dependency Injection: Provides a context object to all descendants }
   provide:
@@ -48,7 +48,7 @@
   { Lifecycle: Initialize global state in the centralized store }
   created:
     begin
-      TJSObject(this['$store'])['appVersion'] := '2.0.0-PRO';
+      TJSObject(this['$store'])['appVersion'] := '1.0.0-PRO';
       TJSObject(this['$store'])['user'] := 'DevMaster 🏆';
     end;
 

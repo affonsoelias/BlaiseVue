@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Project1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="bulma.min.css">
+  <link rel="stylesheet" type="text/css" href="zfsstyles.css">
+  <script src="browser.min.js"></script>
+  <script src="browser.dom.js"></script>
+  <script src="treedemo.js"></script>
+</head>
+<body>
+  <div class="box">
+    <p class="title is-3">ZenFS demo</p>
+    <p>This page demonstrates a utilty for the <a href="ZenFS">ZenFS Api</a>, a browser filesystem simulation.</p>
+    <p>The backend is using local storage. This means that the files do not actually exist on disk, but their
+       contents are saved across page loads in the browser local storage.</p>
+    <p>
+    You can use the utility to construct a file tree of the ZenFS filesystem. At the same time, you can
+    use the helper routines to create a download link and to download the (virtual) files from browser to disk.
+    You can use the "Reset" button to clear the filesystem and re-populate it.
+    </p>
+  </div> <!-- .box -->
+  <div class="box columns" style="min-height: 400px;">
+    <div class="column">
+      <div id="treeFiles" style="min-height: 300px;">
+      </div>
+      <div>
+      <button class="button is-small" id="btnReset">Reset</button>
+      </div>
+      <div class="field is-horizontal">
+        <div class="field-label is-normal">
+          <label class="label">File</label>
+        </div>
+        <div class="field-body">
+          <div class="field has-addons">
+            <div class="control">
+              <input id="edtFilename" type="text" class="input is-link" placeholder="Type filename or select file in tree">
+            </div>
+            <div class="control">
+              <button class="button" id="btnDownload">Download</button>
+            </div> <!-- .control -->
+          </div> <!-- .field.has-addons -->
+        </div> <!-- .field-body -->
+      </div> <!-- field-body -->
+      <div id="divDownloads">
+      </div>
+    </div>
+    <div class="column">
+      <p class="title is-5">Program output</p>
+      <div id="pasjsconsole"></div>
+    </div>
+  </div> <!-- .box .columns -->
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>
+      Created using &nbsp; <a target="_blank" href="https://wiki.freepascal.org/pas2js">pas2js.</a>
+      &nbsp;&nbsp;Sources: &nbsp; <a target="new" href="treedemo.lpr">Program</a>
+      </p>
+    </div>
+  </footer>
+  <script>
+    rtl.run();
+  </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+	"BlaiseVue Component": {
+		"prefix": "bvapp",
+		"body": [
+			"<template>",
+			"\t<div>",
+			"\t\t<h2>${1:New Component}</h2>",
+			"\t\t<p>{{ message }}</p>",
+			"\t</div>",
+			"</template>",
+			"",
+			"<script>",
+			"\tdata:",
+			"\t\tmessage: string = 'Hello from BlaiseVue!';",
+			"",
+			"\tmethods:",
+			"\t\tprocedure greet;",
+			"\t\tbegin",
+			"\t\t\twindow.alert('Action triggered!');",
+			"\t\tend;",
+			"</script>",
+			"",
+			"<style>",
+			"\th2 { color: #3498db; }",
+			"</style>"
+		],
+		"description": "Scaffold a new BlaiseVue Single File Component (.bv)"
+	}
+}

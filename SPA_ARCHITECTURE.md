@@ -36,4 +36,4 @@ The Theme Selector uses an `asm` (inline assembly) block to manipulate the DOM's
 By using `v=TIMESTAMP` in the `index.html` and ensuring all paths are relative, this architectural approach guarantees that the project runs perfectly from a local folder without requiring a permanent web server.
 
 ---
-*Created for study purposes - BlaiseVue v1.3.0-dev*
+*Created for study purposes - BlaiseVue v1.0.0*

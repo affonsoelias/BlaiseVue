@@ -33,6 +33,12 @@ type
     { Advanced constructor using a single Options object (Vue-style) }
     constructor Create(Options: JSValue); overload;
     
+    { Installs a global plugin }
+    class procedure Use(APlugin: JSValue; AOptions: JSValue = nil);
+    
+    { Registers a global mixin for all components }
+    class procedure Mixin(AMixin: JSValue);
+    
     { Attaches a router to the application and triggers initial routing }
     procedure UseRouter(ARouter: TBVRouter);
     
@@ -66,7 +72,16 @@ var
   rootID: string;
   d, m, c: JSValue;
 begin
-  asm console.log("[Init] Initing App..."); end;
+  asm
+    console.log("[Init] Initing App with Global Mixins...");
+    // Apply global mixins to the root instance options
+    if (window.__BV_CORE__.mixins && window.__BV_CORE__.mixins.length > 0) {
+      window.__BV_CORE__.mixins.forEach(function(mix) {
+        Options = window.__BV_CORE__.mergeOptions(Options, mix);
+      });
+    }
+  end;
+
   InjectStyles;
   
   asm
@@ -104,6 +119,17 @@ begin
       Options.created.call(d.FData, d.FData);
     }
   end;
+  
+  { If no router is detected after a short delay (allowing for .UseRouter calls), 
+    we must compile the root template manually. }
+  asm
+    setTimeout(() => {
+      if (!this.FRouter) {
+        console.log("[Create] No router detected. Auto-compiling root...");
+        window.__BV_CORE__.compile(this.FRoot, this.FData, this.FMethods);
+      }
+    }, 0);
+  end;
     
   asm console.log("[Create] Instance ready."); end;
 end;
@@ -140,5 +166,50 @@ procedure TBlaiseVue.Compile(ARoot: JSValue; AData: TBlaiseData; AMethods: JSVal
 begin
   asm window.__BV_CORE__.compile(ARoot, AData, AMethods); end;
 end;
+
+class procedure TBlaiseVue.Use(APlugin: JSValue; AOptions: JSValue);
+begin
+  asm
+    if (!window.__BV_CORE__.plugins) window.__BV_CORE__.plugins = new Set();
+    if (window.__BV_CORE__.plugins.has(APlugin)) return;
+    
+    window.__BV_CORE__.plugins.add(APlugin);
+    
+    if (typeof APlugin.install === 'function') {
+      APlugin.install(TBlaiseVue, AOptions);
+    } else if (typeof APlugin === 'function') {
+      APlugin(TBlaiseVue, AOptions);
+    }
+  end;
+end;
+
+class procedure TBlaiseVue.Mixin(AMixin: JSValue);
+begin
+  asm
+    if (!window.__BV_CORE__.mixins) window.__BV_CORE__.mixins = [];
+    window.__BV_CORE__.mixins.push(AMixin);
+  end;
+end;
+
+initialization
+  asm
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+    if (!window.__BV_CORE__.mixins) window.__BV_CORE__.mixins = [];
+    if (!window.__BV_CORE__.plugins) window.__BV_CORE__.plugins = new Set();
+    
+    // Explicitly expose Mixin and Use to ensure they are available from JavaScript context
+    // even if they were stripped during optimization.
+    pas.BlaiseVue.TBlaiseVue.Mixin = function(m) { 
+      if (!window.__BV_CORE__.mixins) window.__BV_CORE__.mixins = [];
+      window.__BV_CORE__.mixins.push(m);
+    };
+    pas.BlaiseVue.TBlaiseVue.Use = function(p, o) {
+      if (!window.__BV_CORE__.plugins) window.__BV_CORE__.plugins = new Set();
+      if (window.__BV_CORE__.plugins.has(p)) return;
+      window.__BV_CORE__.plugins.add(p);
+      if (typeof p.install === 'function') p.install(pas.BlaiseVue.TBlaiseVue, o);
+      else if (typeof p === 'function') p(pas.BlaiseVue.TBlaiseVue, o);
+    };
+  end;
 
 end.

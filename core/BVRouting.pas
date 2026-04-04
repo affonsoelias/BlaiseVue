@@ -199,7 +199,35 @@ begin
     Exit; 
   end;
   
-  { Update current route reactive info }
+  { Global Guard: beforeEach }
+  if Assigned(FBeforeEach) then
+  begin
+    asm
+      let toR = { path: cleanP, fullPath: fullHash, params: this.FCurrentRoute.Params, query: this.FCurrentRoute.Query };
+      let fromR = this.FCurrentRoute; { Basic transition info }
+      let res = this.FBeforeEach.call(null, toR, fromR);
+      
+      if (res === false) return; { Navigation Aborted }
+      if (typeof res === 'string') {
+        window.location.hash = '#' + res;
+        return;
+      }
+    end;
+  end;
+
+  { Local Guard: beforeEnter }
+  if Assigned(matchedRoute.BeforeEnter) then
+  begin
+    asm
+      let r = matchedRoute.BeforeEnter.call(null);
+      if (r === false) return;
+      if (typeof r === 'string') {
+        window.location.hash = '#' + r;
+        return;
+      }
+    end;
+  end;
+
   FCurrentRoute.FullPath := fullHash; 
   FCurrentRoute.HashPath := cleanP;
   FCurrentRoute.Params := ParseParams(matchedRoute.Path, cleanP); 

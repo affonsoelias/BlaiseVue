@@ -1,1 +1,49 @@
-# No moment, no files are ignored.
+# BlaiseVue .gitignore - Professional Clean State 🛡️
+
+# 🌍 Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🛡️ BlaiseCLI Artifacts (bin/)
+bin/*.exe
+bin/*.o
+bin/*.ppu
+bin/*.dcu
+bin/*.rsj
+bin/lib/
+
+# 🏰 Pascal Build Artifacts (Global)
+*.o
+*.ppu
+*.ppu.js
+*.rsj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ⚙️ Embedded Tools & Resources
+temp/
+obj/
+
+# Ensure essential tools in pas2js/ are tracked!
+!pas2js/
+!pas2js/**
+
+# 📊 Local Logs & Trace
+compile_log.txt
+compile_err.txt
+file_list.txt
+.vscode/
+
+# 📦 Generated Application Bundles
+demo-app/dist/js/*.js
+demo-app/generated/
+my-app/
+
+# 🍎 OS Files
+.DS_Store
+Thumbs.db

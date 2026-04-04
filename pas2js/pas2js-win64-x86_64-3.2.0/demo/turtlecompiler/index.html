@@ -1,0 +1,57 @@
+ 
+<HTML>
+  <head>
+  <meta charset="UTF-8"> 
+  <Title>Pas2JS web compiler demo</Title>
+  <link href="bulma.min.css" rel="stylesheet">
+  <script SRC="turtlecompile.js" type="application/javascript"></script>
+  <!-- We use bulma for the GUI -->
+  </head>
+<body>
+<div class="container is-fluid">
+  <div class="columns">
+    <div class="column is-half">
+      <h1 class="is-title is-6">Your program</h1>
+      <div class="block">
+        <textarea id="memSource" rows="24" cols="80">
+program main;
+
+begin
+  // Some example code. Replace with your code...
+  blank(red);
+  point;
+  forward(100);
+  point;
+  right(90);
+  forward(100);
+  point;
+  right(90);
+  forward(100);
+  point;
+  right(90);
+  forward(100);
+end.
+</textarea>
+      </div>
+      <div class="block">
+        <button id="btnRun" class="button is-primary is-loading" disabled >Run</button>
+      </div>
+      <div class="notification is-danger is-hidden" id="pnlLog">
+        <button class="delete" id="btnCloseNotification"></button>
+        <span id="lblCompilerOutput">
+          compiler error output
+        </span>
+      </div> <!-- .notification -->
+    </div> <!-- .column -->
+    <div class="column is-half">
+      <div class="block">
+        <iframe id="runarea" src="run.html" height="100%" width="100%"></iframe>
+      </div>
+    </div> <!-- /column -->
+  </div> <!-- .columns -->
+</div> <!-- .container -->
+<script>
+  rtl.run();
+</script>
+</body>
+</HTML>

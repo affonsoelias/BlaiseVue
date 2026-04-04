@@ -1,51 +1,52 @@
-# 🛡️ BlaiseVue Framework v2.1.0 PRO
+# 🛡️ BlaiseVue Framework v1.0.0 PRO
 **The Power of Pascal, the Soul of Vue.**
 
-BlaiseVue é um framework SPA (Single Page Application) reativo e moderno que traz o poder da tipagem forte do **Object Pascal** para o ecossistema Web, inspirado na simplicidade e elegância do Vue.js.
+BlaiseVue is a modern, reactive SPA (Single Page Application) framework that brings the power of strong typing from **Object Pascal** to the Web ecosystem, inspired by the simplicity and elegance of Vue.js.
 
 ---
 
-## ⚔️ O Padrão B (v2.1 PRO)
-Nesta versão Pro, o BlaiseVue atinge sua maturidade com recursos de arquitetura de nível corporativo e ferramentas de produtividade avançadas.
+## ⚔️ The B Standard (v1.0 PRO)
+In this Pro version, BlaiseVue reaches maturity with enterprise-level architecture features and advanced productivity tools.
 
-### 🔥 Novidades da Versão 2.1:
-- **Arsenal de Testes (`bv test`)**: Suite nativa para TDD (Test Driven Development) em Pascal.
-- **Cache Busting Inteligente**: O build de desenvolvimento injeta timestamps (`v=123...`) automaticamente para evitar problemas de cache no navegador.
-- **Roteamento Dinâmico Avançado**: Suporte total a parâmetros de URL (`:id`) e Query Strings integradas ao `data:`.
-- **Global Store ($store)**: Gerenciamento de estado compartilhado via `TBVStore` (Singleton).
-- **Slots Nomeados & Transições**: Composição flexível e animações CSS nativas de entrada/saída.
-- **Provide/Inject**: Comunicação entre componentes distantes sem "prop drilling".
-- **Bibliotecas Externas (/lib)**: Autoload de assets (CSS/JS) e componentes `.bv` externos.
-
----
-
-## 📦 Bibliotecas Externas (/lib)
-O BlaiseVue PRO permite integrar componentes e CSS de terceiros com facilidade:
-- **Auto-Link**: Arquivos `.css` na pasta `lib/` são injetados automaticamente no `index.html` durante o build.
-- **Auto-Registro**: Qualquer `.bv` dentro de `lib/` (ou subpastas) é registrado globalmente.
-- **External JS**: Arquivos `.js` em `lib/` são incluídos como scripts no cabeçalho.
+### 🔥 New in Version 1.0:
+- **Testing Arsenal (`bv test`)**: Native suite for TDD (Test Driven Development) in Pascal.
+- **Intelligent Cache Busting**: The development build automatically injects timestamps (`v=123...`) to avoid browser cache issues.
+- **Advanced Dynamic Routing**: Full support for URL parameters (`:id`) and integrated Query Strings in `data:`.
+- **Global Store ($store)**: Shared state management via `TBVStore` (Singleton).
+- **Named Slots & Transitions**: Flexible composition and native CSS enter/exit animations.
+- **Provide/Inject**: Communication between distant components without "prop drilling".
+- **External Libraries (/lib)**: Autoloading of assets (CSS/JS) and external `.bv` components.
 
 ---
 
-## 🧠 Estado Global ($store)
-Centralize seus dados com a **B-Store**, acessível em qualquer componente via `$store` no template ou `this['$store']` no Pascal.
+## 📦 External Libraries (/lib)
+BlaiseVue PRO allows you to easily integrate third-party components and CSS:
+- **Auto-Link**: `.css` files in the `lib/` folder are automatically injected into `index.html` during build.
+- **Auto-Registration**: Any `.bv` within `lib/` (or subfolders) is globally registered.
+- **External JS**: `.js` files in `lib/` are included as scripts in the header.
+
+---
+
+## 🧠 Global State ($store)
+Centralize your data with **B-Store**, accessible in any component via `$store` in the template or `this['$store']` in Pascal.
 
 ```html
 <template>
-  <div>Versão do App: {{ $store.appVersion }}</div>
+  <div>App Version: {{ $store.appVersion }}</div>
 </template>
 ```
 
 ---
 
-## 🧪 Unit Testing (Pascal TDD)
-Escreva testes para seus componentes e lógica de negócio diretamente em Pascal:
+## 🧪19. [Unit Testing (Vitest)](19-unit-testing.md)
+20. [Extra-Official Libraries (Bootstrap & Charts)](20-extra-libraries.md)
+s for your components and business logic directly in Pascal:
 
 ```pascal
 begin
-  Describe('Meu Componente', procedure
+  Describe('My Component', procedure
     begin
-       It('deve validar o estado inicial', procedure
+       It('should validate the initial state', procedure
          begin
             Expect(myVar).ToEqual(True);
          end);
@@ -55,22 +56,22 @@ end.
 
 ---
 
-## 🛠️ Ferramentas CLI (bv.exe)
-- **`bv run dev`**: Build rápido com depuração ativa e injeção de timestamp.
-- **`bv test`**: Executa a suíte de testes com integração **Vitest**.
-- **`bv new t <Nome>`**: Cria um novo template de arquivo de teste unitário.
-- **`bv clean`**: Purga as pastas `dist/` e `generated/` para uma build limpa.
+## 🛠️ CLI Tools (bv.exe)
+- **`bv run dev`**: Fast build with active debugging and timestamp injection.
+- **`bv test`**: Runs the test suite with **Vitest** integration.
+- **`bv new t <Name>`**: Creates a new unit test file template.
+- **`bv clean`**: Purges the `dist/` and `generated/` folders for a clean build.
 
 ---
 
-## 🚀 Como Iniciar
+## 🚀 How to Start
 
-1.  Clone o repositório.
-2.  Navegue até a pasta `demo-app`.
-3.  Execute `..\bin\bv.exe run dev`.
-4.  Abra o `dist/index.html` no seu navegador.
+1.  Clone the repository.
+2.  Navigate to the `demo-app` folder.
+3.  Run `..\bin\bv.exe run dev`.
+4.  Open `dist/index.html` in your browser.
 
 ---
 
-**BlaiseVue: Estabilidade, Tipagem e Reatividade.**  
-Desenvolvido por você e estabilizado pela IA. _"In Pascal we trust."_ 🛡️✨
+**BlaiseVue: Stability, Typing, and Reactivity.**  
+Developed by you and stabilized by AI. _"In Pascal we trust."_ 🛡️✨

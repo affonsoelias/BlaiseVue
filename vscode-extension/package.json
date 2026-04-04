@@ -1,0 +1,46 @@
+{
+    "name": "blaisevue-vscode",
+    "displayName": "BlaiseVue Support",
+    "description": "Syntax highlighting and language support for BlaiseVue SFC (.bv) files.",
+    "version": "1.0.0",
+    "publisher": "blaisevue",
+    "engines": {
+        "vscode": "*"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "blaisevue",
+                "aliases": [
+                    "BlaiseVue",
+                    "blaisevue"
+                ],
+                "extensions": [
+                    ".bv"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "blaisevue",
+                "scopeName": "text.html.blaisevue",
+                "path": "./syntaxes/blaisevue.tmLanguage.json",
+                "embeddedLanguages": {
+                    "text.html.basic": "html",
+                    "source.pascal": "pascal",
+                    "source.css": "css"
+                }
+            }
+        ],
+        "snippets": [
+            {
+                "language": "blaisevue",
+                "path": "./snippets/snippets.json"
+            }
+        ]
+    }
+}

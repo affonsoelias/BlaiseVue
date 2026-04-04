@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="pas2js_fcldb_namespaced"/>
+    <Type Value="RunTimeOnly"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
+      <Other>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_fcldb_namespaced.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Files Count="9">
+      <Item1>
+        <Filename Value="Data.Db.pas"/>
+        <UnitName Value="Data.Db"/>
+      </Item1>
+      <Item2>
+        <Filename Value="Data.Consts.pas"/>
+        <UnitName Value="Data.Consts"/>
+      </Item2>
+      <Item3>
+        <Filename Value="Data.JsonDataset.pas"/>
+        <UnitName Value="Data.JsonDataset"/>
+      </Item3>
+      <Item4>
+        <Filename Value="Data.Rest.Connection.pas"/>
+        <UnitName Value="Data.Rest.Connection"/>
+      </Item4>
+      <Item5>
+        <Filename Value="Data.ExtJS.pas"/>
+        <UnitName Value="Data.ExtJS"/>
+      </Item5>
+      <Item6>
+        <Filename Value="Data.FieldMap.pas"/>
+        <UnitName Value="Data.FieldMap"/>
+      </Item6>
+      <Item7>
+        <Filename Value="Data.HTML.Actions.pas"/>
+        <UnitName Value="Data.HTML.Actions"/>
+      </Item7>
+      <Item8>
+        <Filename Value="Data.LocalDataset.pas"/>
+        <UnitName Value="Data.LocalDataset"/>
+      </Item8>
+      <Item9>
+        <Filename Value="Data.Rest.SqlDb.pas"/>
+        <UnitName Value="Data.Rest.SqlDb"/>
+      </Item9>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="1">
+      <Item1>
+        <PackageName Value="pas2js_rtl"/>
+      </Item1>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

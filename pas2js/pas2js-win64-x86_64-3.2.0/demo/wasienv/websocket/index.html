@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Project1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="bulma.min.css" rel="stylesheet">
+  <script src="hostconfig.js"></script>
+  <script src="wasmwebsocket.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h3 class="title is-3">Webassembly Websocket-based chat demo</h3>
+    <hr>
+    <div class="box">
+    
+      <div class="field is-horizontal">
+        <div class="field-label is-small">
+          <label class="label is-small" for="edtMessage" >
+            From:
+          </label>
+        </div> 
+        <div class="field-body"> 
+          <div class="control">
+            <input class="input is-small" type="text" id="edtFrom" >
+          </div>
+        </div>
+      </div> <!-- .field -->
+      
+      <div class="field is-horizontal">
+        <div class="field-label is-small">
+          <label class="label is-small" for="edtTo">
+            To:
+          </label>
+        </div>
+        <div class="field-body">
+          <div class="control">
+            <input class="input is-small" type="text" id="edtTo" autocomplete="off">
+          </div>
+        </div> 
+      </div> <!-- .field -->  
+      
+      <div class="field is-horizontal">
+        <div class="field-label is-small">
+          <label class="label is-small" for="edtMessage" >
+            Message:
+          </label>
+        </div>  
+        <div class="field-body">
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input class="input is-small" type="text" id="edtMessage">
+            </div>
+            <div class="control">
+              <button class="button is-small" id="btnSend">Send</button>
+            </div>
+          </div>  
+        </div>  
+      </div> <!-- .field -->
+    </div> <!-- .box -->
+    
+    <div class="box">
+    
+      <div><p>Chat history:</p></div>
+      <div id="pasjsconsole" style="min-height: 75vh;"></div>
+      <div class="field">
+        <label class="checkbox" for="cbLog">
+          <input id="cbLog" type="checkbox" checked autocomplete="off">
+          Show API log
+        </label>
+      </div> <!-- .field -->
+    </div> <!-- .box -->   
+  </div> <!-- .container -->  
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

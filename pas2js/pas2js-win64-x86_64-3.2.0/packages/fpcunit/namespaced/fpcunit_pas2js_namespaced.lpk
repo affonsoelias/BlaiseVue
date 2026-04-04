@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <Name Value="fpcunit_pas2js_namespaced"/>
+    <Type Value="RunTimeOnly"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="js"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <AllowLabel Value="False"/>
+          <UseAnsiStrings Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+      <Other>
+        <CustomOptions Value="-Jc"/>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(IDE,pas2js) -O- fpcunit_pas2js_namespaced.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Version Major="1"/>
+    <Files Count="8">
+      <Item1>
+        <Filename Value="FpcUnit.Test.pas"/>
+        <UnitName Value="FpcUnit.Test"/>
+      </Item1>
+      <Item2>
+        <Filename Value="FpcUnit.Registry.pas"/>
+        <UnitName Value="FpcUnit.Registry"/>
+      </Item2>
+      <Item3>
+        <Filename Value="FpcUnit.Decorator.pas"/>
+        <UnitName Value="FpcUnit.Decorator"/>
+      </Item3>
+      <Item4>
+        <Filename Value="FpcUnit.Runners.Console.pas"/>
+        <UnitName Value="FpcUnit.Runners.Console"/>
+      </Item4>
+      <Item5>
+        <Filename Value="FpcUnit.Report.pas"/>
+        <UnitName Value="FpcUnit.Report"/>
+      </Item5>
+      <Item6>
+        <Filename Value="FpcUnit.Reports.Plain.pas"/>
+        <UnitName Value="FpcUnit.Reports.Plain"/>
+      </Item6>
+      <Item7>
+        <Filename Value="FpcUnit.Runners.Browser.pas"/>
+        <UnitName Value="FpcUnit.Runners.Browser"/>
+      </Item7>
+      <Item8>
+        <Filename Value="FpcUnit.Reports.HTML.pas"/>
+        <UnitName Value="FpcUnit.Reports.HTML"/>
+      </Item8>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="1">
+      <Item1>
+        <PackageName Value="fcl_base_pas2js_namespaced"/>
+      </Item1>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="."/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

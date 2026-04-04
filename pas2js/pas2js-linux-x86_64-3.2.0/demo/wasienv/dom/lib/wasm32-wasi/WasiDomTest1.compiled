@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Compiler Value="/usr/lib/fpc/3.3.1/ppcrosswasm32" Date="1659197024"/>
+  <Params Value=" -Twasi -Pwasm32 -MObjFPC -Scghi -O1 -l -vewnhibq -Fi/home/mattias/pascal/pas2js/trunk/demo/wasienv/dom/lib/wasm32-wasi -Fu/home/mattias/pascal/pas2js/trunk/packages/job -Fu/home/mattias/pascal/pas2js/trunk/demo/wasienv/dom/ -FU/home/mattias/pascal/pas2js/trunk/demo/wasienv/dom/lib/wasm32-wasi/ -FE/home/mattias/pascal/pas2js/trunk/demo/wasienv/dom/ -o/home/mattias/pascal/pas2js/trunk/demo/wasienv/dom/WasiDomTest1.wasm WasiDomTest1.lpr"/>
+</CONFIG>

@@ -1,38 +1,38 @@
-# 🎓 Curso Completo BlaiseVue Framework
-**De Iniciante ao Nível Ninja em Object Pascal Moderno.**
+# 🎓 BlaiseVue Framework Complete Course
+**From Beginner to Ninja Level in Modern Object Pascal.**
 
-Bem-vindo ao curso oficial do BlaiseVue! Aqui você vai aprender como construir aplicações Web SPA ultra-reativas usando o poder e a clareza do Object Pascal.
-
----
-
-### 🗺️ O Mapa da Jornada:
-
-1.  **[Módulo 01: O Início da Jornada](01-introducao.md)**  
-    O que é o BlaiseVue e como configurar o seu ambiente.
-2.  **[Módulo 02: O Motor Reativo](02-reatividade.md)**  
-    Como os dados fluem e como funcionam os Proxies.
-3.  **[Módulo 03: As Diretivas Oficiais (Padrão B)](03-diretivas.md)**  
-    Dominando `b-if`, `b-for` e `b-show`.
-4.  **[Módulo 04: Sincronização com b-model](04-sincronizacao.md)**  
-    Formulários e binding de duas vias.
-5.  **[Módulo 05: O Poder do Cérebro (Computed)](05-computed.md)**  
-    Propriedades derivadas e lógica de cache.
-6.  **[Módulo 06: A Arte dos Componentes (.bv)](06-componentes.md)**  
-    Arquivos de Componente Único (SFC) e organização de código.
-7.  **[Módulo 07: Comunicação e Eventos](07-eventos.md)**  
-    Usando `@click`, `@input` e disparando `$emit`.
-8.  **[Módulo 08: Navegação de Outro Mundo (SPA)](08-roteamento.md)**  
-    Como o roteador do BlaiseVue cria SPAs fluidas.
-9.  **[Módulo 09: Maestria com $refs](09-refs.md)**  
-    Acessando elementos diretamente e ciclos de vida (`mounted`).
-10. **[Módulo 10: O Mestre do Comando (CLI)](10-cli.md)**  
-    Usando o `bv.exe` para build, clean e run dev.
-
-11. **[Módulo 11: Recursos Pro (Arquitetura Mestre)](11-pro-features.md)**  
-    Slots Nomeados, B-Store, Transitions e Provide/Inject.
-12. **[Módulo 12: Qualidade Marcial (Testes Unitários)](12-testes.md)**  
-    Validando seu código com Pascal, Vitest e JSDOM.
+Welcome to the official BlaiseVue course! Here you will learn how to build ultra-reactive SPA Web applications using the power and clarity of Object Pascal.
 
 ---
 
-**Vamos começar! Abra o Módulo 01 e prepare seu compilador!** 🛡️✨🚀
+### 🗺️ The Journey Map:
+
+1.  **[Module 01: The Beginning of the Journey](01-introduction.md)**  
+    What is BlaiseVue and how to set up your environment.
+2.  **[Module 02: The Reactive Engine](02-reactivity.md)**  
+    How data flows and how Proxies work.
+3.  **[Module 03: The Official Directives (B-Standard)](03-directives.md)**  
+    Mastering `b-if`, `b-for`, and `b-show`.
+4.  **[Module 04: Synchronization with b-model](04-synchronization.md)**  
+    Forms and two-way binding.
+5.  **[Module 05: The Power of the Brain (Computed)](05-computed.md)**  
+    Derived properties and cache logic.
+6.  **[Module 06: The Art of Components (.bv)](06-components.md)**  
+    Single File Components (SFC) and code organization.
+7.  **[Module 07: Communication and Events](07-events.md)**  
+    Using `@click`, `@input`, and triggering `$emit`.
+8.  **[Module 08: Out-of-This-World Navigation (SPA)](08-routing.md)**  
+    How the BlaiseVue router creates fluid SPAs.
+9.  **[Module 09: Mastery with $refs](09-refs.md)**  
+    Accessing elements directly and lifecycles (`mounted`).
+10. **[Module 10: The Command Master (CLI)](10-cli.md)**  
+    Using `bv.exe` for build, clean, and run dev.
+
+11. **[Module 11: Pro Features (Master Architecture)](11-pro-features.md)**  
+    Named Slots, B-Store, Transitions, and Provide/Inject.
+12. **[Module 12: Martial Quality (Unit Testing)](12-tests.md)**  
+    Validating your code with Pascal, Vitest, and JSDOM.
+
+---
+
+**Let's get started! Open Module 01 and prepare your compiler!** 🛡️✨🚀

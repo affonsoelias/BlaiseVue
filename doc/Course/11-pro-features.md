@@ -1,52 +1,61 @@
-# 🛡️ Módulo 11: Recursos Pro (Arquitetura Mestre)
+# 🛡️ Module 11: Pro Features (Master Architecture)
 
-Chegamos ao último nível da jornada! O BlaiseVue Pro não é apenas sobre exibir dados, é sobre criar arquiteturas escaláveis. Neste módulo, você vai aprender a lidar com as ferramentas que os grandes frameworks modernos (como Vue e React) usam para manter aplicações gigantes.
+We've reached the last level of the journey! BlaiseVue Pro is not just about displaying data; it's about creating scalable architectures. In this module, you will learn how to handle the tools that major modern frameworks (like Vue and React) use to maintain giant applications.
 
 ---
 
-## 1. 🏛️ Composição com Slots
-Componentes não servem apenas para lógica, servem para criar "molduras".
-Use `<slot>` para deixar buracos e preenchê-los do componente pai. Se tiver muitos buracos, use **Named Slots** (`slot="header"`, `slot="footer"`).
+## 1. 🏛️ Composition with Slots
+Components are not just for logic; they are for creating "templates".
+Use `<slot>` to leave holes and fill them from the parent component. If you have many holes, use **Named Slots** (`slot="header"`, `slot="footer"`).
 
-> **Moral da História:** O Pai manda o conteúdo, o Filho manda a estrutura (CSS).
+> **Moral of the Story:** The Parent sends the content, the Child sends the structure (CSS).
 
 ---
 
 ## 2. ✨ Visual Experience (Transitions)
-Interfacem que pulam na tela sem suavidade parecem amadoras. O BlaiseVue Pro automatiza animações com a tag `<transition>`.
-Basta envolver o seu `b-if` com ela, e o motor vai injetar classes CSS como `-enter-active` e `-leave-to` para você.
+Interfaces that jump on the screen without smoothness look amateur. BlaiseVue Pro automates animations with the `<transition>` tag.
+Just wrap your `b-if` with it, and the engine will inject CSS classes like `-enter-active` and `-leave-to` for you.
 
 ---
 
-## 3. 🧠 Inteligência Central (B-Store)
-Pare de passar props (dados) por 10 níveis de componentes. Use o `$store`.
-Qualquer componente pode ler e escrever nele. É o **Cérebro Digital** da sua aplicação.
+## 3. 🧠 Central Intelligence (B-Store)
+Stop passing props (data) through 10 levels of components. Use the `$store`.
+Any component can read and write to it. It is the **Digital Brain** of your application.
 
 ---
 
-## 4. 🧬 Transmissão Silenciosa (Provide/Inject)
-Precisa passar um "Serviço de Log" ou "Configuração de API" para todos os componentes lá no fundo?
-Use `provide` no Root (App) e `inject` naqueles que precisarem. É limpo, é rápido, é tipado.
+## 4. 🧬 Silent Transmission (Provide/Inject)
+Need to pass a "Log Service" or "API Configuration" to all components deep down?
+Use `provide` at the Root (App) and `inject` in those that need it. It's clean, it's fast, it's typed.
 
 ---
 
-## 5. 🛡️ Controle de Ciclo de Vida Pró
-- **`updated`**: Saiba quando qualquer coisa mudou. Extremamente útil para logs de auditoria em tempo real.
-- **`unmounted`**: A hora da limpeza. Use para desligar processos que não são mais necessários.
+## 5. 🛡️ Pro Lifecycle Control
+- **`updated`**: Know when anything has changed. Extremely useful for real-time audit logs.
+- **`unmounted`**: Cleanup time. Use to shut down processes that are no longer needed.
 
 ---
 
-## 6. 📦 Ecossistema de Bibliotecas (/lib)
-O BlaiseVue PRO permite carregar bibliotecas externas (como o nosso **Bootstrap-BV**) apenas jogando os componentes na pasta `/lib`.
-- **Auto-Link**: O CSS da lib é linkado sozinho.
-- **Auto-Registro**: O componente `<b-btn-page>` já sai funcionando sem nenhuma linha de `import`.
+## 6. 📦 Library Ecosystem (/lib)
+BlaiseVue PRO allows loading external libraries (like our **Bootstrap-BV**) just by dropping the components in the `/lib` folder.
+- **Auto-Link**: The library CSS is automatically linked.
+- **Auto-Registration**: The `<b-btn-page>` component already works without any `import` line.
 
 ---
 
-### 🎉 Parabéns, Mestre do BlaiseVue!
-Você concluiu os módulos core e pro. Agora você tem o poder do **Object Pascal** rodando a 100% no seu navegador com a flexibilidade moderna do **Vue.js**.
+## 7. ⚙️ Advanced Component Setup
 
-**Desafio Pro:** Refatore sua aplicação atual para usar pelo menos um **Slot Nomeado** e mova um dado importante para a **B-Store**.
+Components in the `/lib` folder can now be much more than just sets of `.bv` files. They can include a **Life-cycle Setup Script**.
+- **`setup.pas`**: An optional script that handles folder creation, configuration, and dependency registration.
+- **`bv s <name>`**: The interactive command to trigger the setup menu (Install, Reinstall, Delete).
+- **Auto-Cleanup**: When you remove a component via `bv lib remove`, the cleanup script is automatically executed to leave your project clean.
 
 ---
-**BlaiseVue: Estabilidade, Tipagem e Reatividade.** 🛡️✨🚀
+
+### 🎉 Congratulations, BlaiseVue Master!
+You have completed the core and pro modules. Now you have the power of **Object Pascal** running at 100% in your browser with the modern flexibility of **Vue.js**.
+
+**Pro Challenge:** Refactor your current application to use at least one **Named Slot** and move some important data to the **B-Store**.
+
+---
+**BlaiseVue: Stability, Typing, and Reactivity.** 🛡️✨🚀
