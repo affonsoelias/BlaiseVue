@@ -9,7 +9,7 @@ The `.bv` file is the SFC format for BlaiseVue, inspired by Vue.js's `.vue` file
   <!-- Component HTML -->
 </template>
 
-<script uses="Unit1, Unit2">
+<script uses="MyCustomUnit, MyHelpers">
   <!-- Pascal Logic -->
 </script>
 
@@ -45,12 +45,15 @@ Contains the component's HTML. It supports:
 
 Contains the component's logic in a declarative format.
 
-### `uses` Attribute
+### `uses` Attribute (Optional)
 
-Imports additional Pascal units:
+Imports additional **Custom Pascal Units** that are not part of the core framework.
 ```html
-<script uses="BVRouting, MyUnit">
+<script uses="MyBusinessLogic, DataModels">
 ```
+
+> [!NOTE]
+> **Automatic Units**: BlaiseVue automatically includes core units like `JS`, `Web`, `BVComponents`, `BVReactivity`, `BVStore`, `SysUtils`, and `BVRouting` (when local routes are detected). You only need the `uses` attribute for your own external `.pas` files.
 
 ### `data:` Sub-section
 

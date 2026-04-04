@@ -877,6 +877,8 @@ var
   UsesLine: string;
 begin
   UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils';
+  if Parsed.HasRouter then
+    UsesLine := UsesLine + ', BVRouting';
   if Parsed.ScriptUses <> '' then
     UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
 
