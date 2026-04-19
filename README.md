@@ -28,10 +28,13 @@ While v1.0 is stable, our vision for the future is even more ambitious. The foll
 2.  **🛣️ History Mode & Nested Routes**: Support for HTML5 clean URLs and sub-layouts (`children` routes).
 3.  **🧩 Scoped Slots**: Dynamic data passing from children back to parent templates for advanced UI logic.
 4.  **🚀 Teleport & Suspense**: Rendering modals outside the app root and standardizing async loading states.
-5.  **🏗️ Static Template Hoisting**: Compiler-level optimizations to ignore non-reactive DOM nodes.
+5.  **🏗️ Static Template Booting**: Compiler-level optimizations to ignore non-reactive DOM nodes.
 6.  **📦 Code Splitting**: Automatic lazy loading of routes to minimize initial bundle size.
 7.  **🕵️ DevTools Browser Extension**: A dedicated Chrome/Edge extension for real-time component and state inspection.
 8.  **🛡️ BlaiseUI Library**: An official ecosystem of pre-styled, high-performance UI components.
+
+> [!TIP]
+> **Detailed Engineering Plan**: For a deep dive into the technical architecture of these features, check out our [Technical Roadmap v2.0](doc/Documentation/99-roadmap-v2.md).
 
 ---
 
