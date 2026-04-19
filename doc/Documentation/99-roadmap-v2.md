@@ -43,6 +43,11 @@ This document outlines the engineering strategy and architectural goals for the 
 **The Goal**: A standardized, high-performance UI ecosystem.
 - **Library**: A set of production-ready components (Buttons, Modals, DataGrids, Charts) optimized for the BlaiseVue reactivity core, eliminating the need for external CSS frameworks like Bootstrap in most projects.
 
+## 🏗️ 9. CLI Architectural Refactoring (Native Resources)
+**The Goal**: Clean the `bv.pas` source code by removing massive hardcoded template strings.
+- **Implementation**: Move project scaffolding templates (index.html, app.bv, etc.) to a separate `templates/` directory.
+- **Pascal Power**: Use the `{$R ...}` resource directive to embed these files at compile-time into the `bv.exe` binary, keeping the distribution to a single, clean executable.
+
 ---
 
 🛡️ **"Architecture is the art of making the impossible inevitable."** ✨🏆🚀
