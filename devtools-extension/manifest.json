@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "BlaiseVue DevTools",
+  "version": "2.0.0",
+  "description": "Developer tools extension for debugging BlaiseVue 2.0 applications.",
+  "devtools_page": "devtools.html",
+  "permissions": [
+    "activeTab"
+  ]
+}

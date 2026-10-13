@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBAccordion, uBAlert, uBBadge, uBBreadcrumb, uBBreadcrumbItem, uBBtn, uBCard, uBFormSelect, uBIcon, uBInput, uBInputGroup, uBListGroup, uBListGroupItem, uBModal, uBNavbar, uBNavItem, uBPagination, uBProgress, uBSpinner, uBTab, uBTabs, uBToast, uCArea, uCBar, uCBaseChart, uCBubble, uCDoughnut, uCLine, uCMixed, uCPie, uCPolarArea, uCRadar, uCScatter, uCStacked;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVBtn, uBVCard, uBVDataGrid, uBVInput, uBVModal, uBVToast, uBAccordion, uBAlert, uBBadge, uBBreadcrumb, uBBreadcrumbItem, uBBtn, uBCard, uBFormSelect, uBIcon, uBInput, uBInputGroup, uBListGroup, uBListGroupItem, uBModal, uBNavbar, uBNavItem, uBPagination, uBProgress, uBSpinner, uBTab, uBTabs, uBToast, uCArea, uCBar, uCBaseChart, uCBubble, uCDoughnut, uCLine, uCMixed, uCPie, uCPolarArea, uCRadar, uCScatter, uCStacked;
 
 procedure Init_App;
 
@@ -60,6 +60,18 @@ begin
   Register_uShowcase;
   asm console.log("[Init] Registering uUserProfile..."); end;
   Register_uUserProfile;
+  asm console.log("[Init] Registering uBVBtn..."); end;
+  Register_uBVBtn;
+  asm console.log("[Init] Registering uBVCard..."); end;
+  Register_uBVCard;
+  asm console.log("[Init] Registering uBVDataGrid..."); end;
+  Register_uBVDataGrid;
+  asm console.log("[Init] Registering uBVInput..."); end;
+  Register_uBVInput;
+  asm console.log("[Init] Registering uBVModal..."); end;
+  Register_uBVModal;
+  asm console.log("[Init] Registering uBVToast..."); end;
+  Register_uBVToast;
   asm console.log("[Init] Registering uBAccordion..."); end;
   Register_uBAccordion;
   asm console.log("[Init] Registering uBAlert..."); end;
@@ -134,7 +146,7 @@ begin
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
     '  <div translate="no" class="notranslate">' +
     '    <nav class="navbar">' +
-    '      <strong class="brand">BlaiseVue Demo 2.0</strong>' +
+    '      <strong class="brand">BlaiseVue Demo 1.0</strong>' +
     '      <div class="nav-links">' +
     '        <a href="#/">Home</a>' +
     '        <a href="#/about">About</a>' +
@@ -156,7 +168,7 @@ begin
     '  </div>';
 
   data := TJSObject.new;
-  data['mensagem'] := 'BlaiseVue SPA v2.0 PRO';
+  data['mensagem'] := 'BlaiseVue SPA v1.0 PRO';
 
   methods := TJSObject.new;
 
@@ -164,7 +176,7 @@ begin
   comp := opts;
   comp['created'] := procedure(_this: TJSObject)
     begin
-      TJSObject(_this['$store'])['appVersion'] := '2.0.0-PRO';
+      TJSObject(_this['$store'])['appVersion'] := '1.0.0-PRO';
       TJSObject(_this['$store'])['user'] := 'DevMaster 🏆';
     end;
   { Router Configuration: Maps URI hashes to Component Tags }

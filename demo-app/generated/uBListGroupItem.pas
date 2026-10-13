@@ -50,7 +50,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('b-list-group-item', comp);
 end;
 

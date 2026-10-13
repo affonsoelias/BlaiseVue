@@ -55,7 +55,6 @@ begin
   TJSArray(comp['inject']).push('pointer');
   TJSArray(comp['inject']).push('isActive:');
   TJSArray(comp['inject']).push('pointer');
-
   RegisterComponent('b-tab', comp);
 end;
 

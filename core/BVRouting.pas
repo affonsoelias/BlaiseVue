@@ -3,8 +3,12 @@ unit BVRouting;
 {
   BVRouting - The SPA Navigation Engine
   --------------------------------------
-  This unit implements hash-based routing for BlaiseVue SPAs.
-  Supports dynamic path parameters, query strings, and navigation guards.
+  This unit implements advanced SPA routing for BlaiseVue SPAs:
+  - Hash Mode (#/) and HTML5 History API Mode (/path)
+  - Dynamic path parameters and query strings
+  - Navigation guards: beforeEach, beforeEnter, afterEach
+  - Nested routes and recursive <router-view>
+  - Dynamic code splitting (lazy loading via dynamic import/async components)
 }
 
 {$mode objfpc}
@@ -17,9 +21,13 @@ type
   { Represents a single route mapping }
   TBVRoute = class
   public
-    Path: string;      { e.g. '/user/:id' }
-    Component: string; { Registered component tag name }
-    BeforeEnter: JSValue; { Local navigation guard }
+    Path: string;            { e.g. '/user/:id' }
+    Component: string;       { Registered component tag name }
+    BeforeEnter: JSValue;    { Local navigation guard }
+    Children: JSValue;       { Nested child routes array }
+    AsyncComponent: JSValue; { Function returning Promise for lazy loading }
+    Meta: JSValue;           { Route metadata }
+    ParentRoute: TBVRoute;   { Reference to parent route if nested }
     constructor Create;
   end;
 
@@ -28,32 +36,42 @@ type
   public
     FullPath: string; { e.g. '/user/123?tab=profile' }
     HashPath: string; { e.g. '/user/123' }
-    Params: JSValue; { Reactive object containing path params {id: '123'} }
-    Query: JSValue;  { Reactive object containing query params {tab: 'profile'} }
-    Name: string;    { Component name }
+    Params: JSValue;  { Reactive object containing path params {id: '123'} }
+    Query: JSValue;   { Reactive object containing query params {tab: 'profile'} }
+    Name: string;     { Component name }
+    Meta: JSValue;    { Route metadata }
     constructor Create;
   end;
 
   { The main router controller }
   TBVRouter = class
   private
-    FRoutes: JSValue;    { Store of all defined routes }
-    FBeforeEach: JSValue; { Global navigation guard }
+    FMode: string;            { 'hash' (default) or 'history' }
+    FRoutes: JSValue;         { Store of all defined routes }
+    FBeforeEach: JSValue;     { Global navigation guard }
+    FAfterEach: JSValue;      { Global post-navigation hook }
     FAppRoot: TJSHTMLElement; { The root container of the app }
-    FRouterViewEl: TJSHTMLElement; { Reference to the <router-view> tag }
+    FRouterViewEl: TJSHTMLElement; { Reference to the root <router-view> tag }
     FCurrentRoute: TBVRouteInfo; { Reactive state of the current navigation }
-    procedure HandleHashChange(Event: TJSEvent); { Event listener for window.onhashchange }
-    function MatchRoute(APath: string): TBVRoute; { Regex-based path matcher }
-    function ParseParams(Pattern, Actual: string): JSValue; { Extracts variables from URI }
-    function ParseQuery(AHash: string): JSValue; { Extracts GET parameters from URI }
-    function ExtractPath(AHash: string): string; { Strips query string from hash }
+    procedure HandleHashChange(Event: TJSEvent);
+    procedure HandlePopState(Event: TJSEvent);
+    function MatchRoute(APath: string): TBVRoute;
+    function MatchChildRoute(ParentRoute: TBVRoute; APath: string): TBVRoute;
+    function ParseParams(Pattern, Actual: string): JSValue;
+    function ParseQuery(AHash: string): JSValue;
+    function ExtractPath(AHash: string): string;
+    procedure MountRoute(RouteToMount, ChildRouteToMount: TBVRoute; const CleanPath, FullHashPath: string);
+    procedure MountComponentIntoView(ViewEl: TJSHTMLElement; CompTag: string; CompOpt: JSValue; RouteParams, RouteQuery: JSValue);
   public
     constructor Create(Options: JSValue);
-    procedure Install(AppRoot: TJSHTMLElement); { Mounts the router to the DOM }
-    procedure Push(APath: string); { Navigates to a new path (hash update) }
-    procedure Back; { Navigates back in history }
-    procedure RenderCurrent; { Main logic to mount the component matching the current hash }
+    procedure Install(AppRoot: TJSHTMLElement);
+    procedure Push(APath: string);
+    procedure Replace(APath: string);
+    procedure Back;
+    procedure Forward;
+    procedure RenderCurrent;
     property CurrentRoute: TBVRouteInfo read FCurrentRoute;
+    property Mode: string read FMode;
   end;
 
 implementation
@@ -70,6 +88,11 @@ var
   newRoute: TBVRoute;
 begin
   FRoutes := TJSArray.new;
+  if TJSObject(Options).hasOwnProperty('mode') then
+    FMode := LowerCase(string(TJSObject(Options)['mode']))
+  else
+    FMode := 'hash';
+
   routesList := TJSArray(TJSObject(Options)['routes']);
   if Assigned(routesList) then
   begin
@@ -78,11 +101,31 @@ begin
       itemObj := routesList[idx];
       newRoute := TBVRoute.Create;
       newRoute.Path := string(TJSObject(itemObj)['path']);
-      newRoute.Component := string(TJSObject(itemObj)['component']);
+      if TJSObject(itemObj).hasOwnProperty('component') then
+      begin
+        asm
+          if (typeof itemObj.component === 'function') {
+            newRoute.AsyncComponent = itemObj.component;
+            newRoute.Component = '';
+          } else {
+            newRoute.Component = String(itemObj.component);
+          }
+        end;
+      end;
+      if TJSObject(itemObj).hasOwnProperty('asyncComponent') then
+        newRoute.AsyncComponent := TJSObject(itemObj)['asyncComponent'];
       if TJSObject(itemObj).hasOwnProperty('beforeEnter') then
         newRoute.BeforeEnter := TJSObject(itemObj)['beforeEnter']
       else
         newRoute.BeforeEnter := nil;
+      if TJSObject(itemObj).hasOwnProperty('children') then
+        newRoute.Children := TJSObject(itemObj)['children']
+      else
+        newRoute.Children := nil;
+      if TJSObject(itemObj).hasOwnProperty('meta') then
+        newRoute.Meta := TJSObject(itemObj)['meta']
+      else
+        newRoute.Meta := TJSObject.new;
       TJSArray(FRoutes).push(newRoute);
     end;
   end;
@@ -90,10 +133,33 @@ begin
     FBeforeEach := TJSObject(Options)['beforeEach']
   else
     FBeforeEach := nil;
+  if TJSObject(Options).hasOwnProperty('afterEach') then
+    FAfterEach := TJSObject(Options)['afterEach']
+  else
+    FAfterEach := nil;
     
   FCurrentRoute := TBVRouteInfo.Create;
-  { Listen to browser navigation events }
-  window.addEventListener('hashchange', @HandleHashChange);
+  
+  if FMode = 'history' then
+  begin
+    window.addEventListener('popstate', @HandlePopState);
+    asm
+      let self = this;
+      document.addEventListener('click', function(ev) {
+        let t = ev.target;
+        while (t && t.tagName !== 'A') t = t.parentElement;
+        if (t && (t.hasAttribute('to') || t.hasAttribute('bv-link') || (t.getAttribute('href') && t.getAttribute('href').startsWith('/')))) {
+          let targetPath = t.getAttribute('to') || t.getAttribute('href');
+          if (targetPath && !targetPath.startsWith('http://') && !targetPath.startsWith('https://') && !targetPath.startsWith('//')) {
+            ev.preventDefault();
+            self.Push(targetPath);
+          }
+        }
+      });
+    end;
+  end
+  else
+    window.addEventListener('hashchange', @HandleHashChange);
 end;
 
 { Sets up the router into the application context }
@@ -101,14 +167,54 @@ procedure TBVRouter.Install(AppRoot: TJSHTMLElement);
 begin
   FAppRoot := AppRoot;
   FRouterViewEl := TJSHTMLElement(AppRoot.querySelector('router-view'));
-  { Default to home if no hash provided }
-  if (window.location.hash = '') or (window.location.hash = '#') then 
-    window.location.hash := '#/';
-  RenderCurrent;
+  if FMode = 'history' then
+  begin
+    if (window.location.pathname = '') then
+      Push('/')
+    else
+      RenderCurrent;
+  end
+  else
+  begin
+    if (window.location.hash = '') or (window.location.hash = '#') then 
+      window.location.hash := '#/';
+    RenderCurrent;
+  end;
 end;
 
-procedure TBVRouter.Push(APath: string); begin window.location.hash := '#' + APath; end;
+procedure TBVRouter.Push(APath: string);
+begin
+  if FMode = 'history' then
+  begin
+    asm
+      window.history.pushState(null, '', APath);
+    end;
+    RenderCurrent;
+  end
+  else
+    window.location.hash := '#' + APath;
+end;
+
+procedure TBVRouter.Replace(APath: string);
+begin
+  if FMode = 'history' then
+  begin
+    asm
+      window.history.replaceState(null, '', APath);
+    end;
+    RenderCurrent;
+  end
+  else
+  begin
+    asm
+      let l = window.location.href.replace(/#(.*)$/, '') + '#' + APath;
+      window.location.replace(l);
+    end;
+  end;
+end;
+
 procedure TBVRouter.Back; begin window.history.back(); end;
+procedure TBVRouter.Forward; begin window.history.forward(); end;
 
 { Strips the query part for matching }
 function TBVRouter.ExtractPath(AHash: string): string;
@@ -147,6 +253,55 @@ begin
     rsPat := '^' + String(TJSString(rItem.Path).replace(TJSRegExp.new(':[a-zA-Z_]+', 'g'), '([^/]+)')) + '$';
     reObj := TJSRegExp.new(rsPat);
     if reObj.test(APath) then begin Result := rItem; Exit; end;
+    if Assigned(rItem.Children) then
+    begin
+      rsPat := '^' + String(TJSString(rItem.Path).replace(TJSRegExp.new(':[a-zA-Z_]+', 'g'), '([^/]+)')) + '(/.*)?$';
+      reObj := TJSRegExp.new(rsPat);
+      if reObj.test(APath) then begin Result := rItem; Exit; end;
+    end;
+  end;
+end;
+
+function TBVRouter.MatchChildRoute(ParentRoute: TBVRoute; APath: string): TBVRoute;
+var
+  childrenList: TJSArray;
+  i: Integer;
+  childObj: JSValue;
+  childRoute: TBVRoute;
+  fullChildPath, parentPrefix, rsPat: string;
+  reObj: TJSRegExp;
+begin
+  Result := nil;
+  if not Assigned(ParentRoute) or not Assigned(ParentRoute.Children) then Exit;
+  childrenList := TJSArray(ParentRoute.Children);
+  parentPrefix := ParentRoute.Path;
+  if (parentPrefix <> '') and (parentPrefix[Length(parentPrefix)] = '/') then
+    parentPrefix := Copy(parentPrefix, 1, Length(parentPrefix) - 1);
+
+  for i := 0 to childrenList.length - 1 do
+  begin
+    childObj := childrenList[i];
+    fullChildPath := string(TJSObject(childObj)['path']);
+    if not ((fullChildPath <> '') and (fullChildPath[1] = '/')) then
+      fullChildPath := parentPrefix + '/' + fullChildPath;
+    rsPat := '^' + String(TJSString(fullChildPath).replace(TJSRegExp.new(':[a-zA-Z_]+', 'g'), '([^/]+)')) + '$';
+    reObj := TJSRegExp.new(rsPat);
+    if reObj.test(APath) then
+    begin
+      childRoute := TBVRoute.Create;
+      childRoute.Path := fullChildPath;
+      if TJSObject(childObj).hasOwnProperty('component') then
+        childRoute.Component := string(TJSObject(childObj)['component']);
+      if TJSObject(childObj).hasOwnProperty('asyncComponent') then
+        childRoute.AsyncComponent := TJSObject(childObj)['asyncComponent'];
+      if TJSObject(childObj).hasOwnProperty('beforeEnter') then
+        childRoute.BeforeEnter := TJSObject(childObj)['beforeEnter']
+      else
+        childRoute.BeforeEnter := nil;
+      childRoute.ParentRoute := ParentRoute;
+      Result := childRoute;
+      Exit;
+    end;
   end;
 end;
 
@@ -175,116 +330,59 @@ begin
 end;
 
 procedure TBVRouter.HandleHashChange(Event: TJSEvent); begin RenderCurrent; end;
+procedure TBVRouter.HandlePopState(Event: TJSEvent); begin RenderCurrent; end;
 
-{ Main navigation and rendering logic for Router pages }
-procedure TBVRouter.RenderCurrent;
-var 
-  fullHash, cleanP: string; 
-  matchedRoute: TBVRoute; 
-  compOptions, pageData, pParams, qQuery: JSValue; 
-  navEl, rootPageEl: TJSHTMLElement; 
+procedure TBVRouter.MountComponentIntoView(ViewEl: TJSHTMLElement; CompTag: string; CompOpt: JSValue; RouteParams, RouteQuery: JSValue);
+var
+  navEl, rootPageEl: TJSHTMLElement;
+  pageData: JSValue;
 begin
-  if not Assigned(FRouterViewEl) then Exit;
-  fullHash := string(window.location.hash);
-  if fullHash <> '' then 
-    fullHash := Copy(fullHash, 2, Length(fullHash)) 
-  else 
-    fullHash := '/';
-    
-  cleanP := ExtractPath(fullHash);
-  matchedRoute := MatchRoute(cleanP);
-  
-  if not Assigned(matchedRoute) then begin 
-    FRouterViewEl.innerHTML := '404 - Not Found'; 
-    Exit; 
-  end;
-  
-  { Global Guard: beforeEach }
-  if Assigned(FBeforeEach) then
-  begin
-    asm
-      let toR = { path: cleanP, fullPath: fullHash, params: this.FCurrentRoute.Params, query: this.FCurrentRoute.Query };
-      let fromR = this.FCurrentRoute; // Basic transition info
-      let res = this.FBeforeEach.call(null, toR, fromR);
-      
-      if (res === false) return; // Navigation Aborted
-      if (typeof res === 'string') {
-        window.location.hash = '#' + res;
-        return;
-      }
-    end;
-  end;
-
-  { Local Guard: beforeEnter }
-  if Assigned(matchedRoute.BeforeEnter) then
-  begin
-    asm
-      let r = matchedRoute.BeforeEnter.call(null);
-      if (r === false) return;
-      if (typeof r === 'string') {
-        window.location.hash = '#' + r;
-        return;
-      }
-    end;
-  end;
-
-  FCurrentRoute.FullPath := fullHash; 
-  FCurrentRoute.HashPath := cleanP;
-  FCurrentRoute.Params := ParseParams(matchedRoute.Path, cleanP); 
-  FCurrentRoute.Query := ParseQuery(fullHash); 
-  FCurrentRoute.Name := matchedRoute.Component;
-  
-  compOptions := GetComponent(matchedRoute.Component);
-  if not Assigned(compOptions) then Exit;
-  
-  { Mount the component into the router-view }
+  if not Assigned(ViewEl) or not Assigned(CompOpt) then Exit;
   navEl := TJSHTMLElement(document.createElement('div'));
-  navEl.innerHTML := string(TJSObject(compOptions)['template']);
+  navEl.innerHTML := string(TJSObject(CompOpt)['template']);
   rootPageEl := TJSHTMLElement(navEl.firstElementChild);
-  asm rootPageEl['bvManaged'] = true; end; 
-  FRouterViewEl.innerHTML := '';
-  FRouterViewEl.appendChild(rootPageEl);
+  if not Assigned(rootPageEl) then Exit;
+  asm rootPageEl['bvManaged'] = true; end;
+  ViewEl.innerHTML := '';
+  ViewEl.appendChild(rootPageEl);
 
-  { Initialize component data and lifecycle hooks }
-  if TJSObject(compOptions).hasOwnProperty('data') then 
-    pageData := TJSFunction(TJSObject(compOptions)['data']).apply(nil, []) 
+  if TJSObject(CompOpt).hasOwnProperty('data') then 
+    pageData := TJSFunction(TJSObject(CompOpt)['data']).apply(nil, []) 
   else 
     pageData := TJSObject.new;
 
-  pParams := FCurrentRoute.Params; 
   asm
-    // Merge Params and Query into the page context
+    let pParams = RouteParams || {};
     Object.keys(pParams).forEach(function(k) { pageData[k] = pParams[k]; });
-    let q = this.FCurrentRoute.Query;
+    let q = RouteQuery || {};
     Object.keys(q).forEach(function(k) { pageData[k] = q[k]; });
-    
+
     let pRef = window.__BV_CORE__.defineReactive(pageData);
-    
-    // Inject Stores and Providers
+    pRef['Router'] = this;
+    pRef['$router'] = this;
     if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
-    
-    if (compOptions.inject) {
-       compOptions.inject.forEach(function(k) {
+
+    if (CompOpt.inject) {
+       CompOpt.inject.forEach(function(k) {
           let val = (window.__BV_CORE__.rootData && window.__BV_CORE__.rootData.$provided) ? window.__BV_CORE__.rootData.$provided[k] : null;
           if (val) pRef[k] = val;
        });
     }
 
-    // Setup Proxy logic (computed, methods)
-    if (compOptions.computed) { 
-       Object.keys(compOptions.computed).forEach(function(ck) { 
-         window.__BV_CORE__.defineComputed(pRef, ck, compOptions.computed[ck]); 
+    if (CompOpt.computed) { 
+       Object.keys(CompOpt.computed).forEach(function(ck) { 
+         window.__BV_CORE__.defineComputed(pRef, ck, CompOpt.computed[ck]); 
        }); 
     }
     
-    if (compOptions.methods) { 
-       Object.keys(compOptions.methods).forEach(function(k) { 
-         let rM = compOptions.methods[k];
+    if (CompOpt.methods) { 
+       Object.keys(CompOpt.methods).forEach(function(k) { 
+         let rM = CompOpt.methods[k];
          pageData[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
        }); 
     }
 
-    if (compOptions.created) compOptions.created.call(pRef);
+    if (CompOpt.created) CompOpt.created.call(pRef);
     
     let cD = {
       FData: pRef,
@@ -297,22 +395,162 @@ begin
       SetValue: function(k, val) { pRef[k] = val; }
     };
     
-    // Compile the newly mounted page template
-    window.__BV_CORE__.compile(rootPageEl, cD, compOptions.methods);
+    window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
 
-    // Lifecycle: updated monitor
     let stopEffect = window.__BV_CORE__.effect(function() {
        let dummy = JSON.stringify(pRef);
-       if (compOptions.updated) compOptions.updated.call(pRef);
+       if (CompOpt.updated) CompOpt.updated.call(pRef);
     });
 
-    if (compOptions.mounted) compOptions.mounted.call(pRef);
+    if (CompOpt.mounted) CompOpt.mounted.call(pRef);
 
-    // Handle Cleanup
     rootPageEl['bvUnmount'] = function() {
        if (stopEffect && typeof stopEffect === 'function') stopEffect();
-       if (compOptions.unmounted) compOptions.unmounted.call(pRef);
+       if (CompOpt.unmounted) CompOpt.unmounted.call(pRef);
     };
+  end;
+end;
+
+{ Main navigation and rendering logic for Router pages }
+procedure TBVRouter.RenderCurrent;
+var 
+  fullHash, cleanP: string; 
+  matchedRoute, matchedChild: TBVRoute; 
+begin
+  if not Assigned(FRouterViewEl) then Exit;
+
+  if FMode = 'history' then
+  begin
+    fullHash := string(window.location.pathname) + string(window.location.search);
+    cleanP := ExtractPath(string(window.location.pathname));
+  end
+  else
+  begin
+    fullHash := string(window.location.hash);
+    if fullHash <> '' then 
+      fullHash := Copy(fullHash, 2, Length(fullHash)) 
+    else 
+      fullHash := '/';
+    cleanP := ExtractPath(fullHash);
+  end;
+
+  matchedRoute := MatchRoute(cleanP);
+  if not Assigned(matchedRoute) then begin 
+    FRouterViewEl.innerHTML := '404 - Not Found'; 
+    Exit; 
+  end;
+
+  matchedChild := nil;
+  if Assigned(matchedRoute.Children) then
+    matchedChild := MatchChildRoute(matchedRoute, cleanP);
+  
+  { Global Guard: beforeEach }
+  if Assigned(FBeforeEach) then
+  begin
+    asm
+      let toR = { path: cleanP, fullPath: fullHash, params: this.ParseParams(matchedRoute.Path, cleanP), query: this.ParseQuery(fullHash), meta: matchedRoute.Meta };
+      let fromR = this.FCurrentRoute;
+      let res = this.FBeforeEach.call(null, toR, fromR);
+      
+      if (res === false) return; // Navigation Aborted
+      if (typeof res === 'string') {
+        this.Push(res);
+        return;
+      }
+    end;
+  end;
+
+  { Local Guard: beforeEnter }
+  if Assigned(matchedRoute.BeforeEnter) then
+  begin
+    asm
+      let r = matchedRoute.BeforeEnter.call(null);
+      if (r === false) return;
+      if (typeof r === 'string') {
+        this.Push(r);
+        return;
+      }
+    end;
+  end;
+
+  FCurrentRoute.FullPath := fullHash; 
+  FCurrentRoute.HashPath := cleanP;
+  FCurrentRoute.Params := ParseParams(matchedRoute.Path, cleanP); 
+  FCurrentRoute.Query := ParseQuery(fullHash); 
+  FCurrentRoute.Name := matchedRoute.Component;
+  FCurrentRoute.Meta := matchedRoute.Meta;
+
+  if Assigned(matchedRoute.AsyncComponent) then
+  begin
+    asm
+      let self = this;
+      let mRoute = matchedRoute;
+      let mChild = matchedChild;
+      let cP = cleanP;
+      let fH = fullHash;
+      Promise.resolve(mRoute.AsyncComponent()).then(function(mod) {
+        let comp = (mod && mod.default) ? mod.default : mod;
+        if (typeof comp === 'object') {
+          let tName = comp.name || ('async-' + Math.random().toString(36).substr(2, 6));
+          if (!window.__BV_CORE__.components) window.__BV_CORE__.components = {};
+          window.__BV_CORE__.components[tName.toLowerCase()] = comp;
+          mRoute.Component = tName;
+        }
+        self.MountRoute(mRoute, mChild, cP, fH);
+      });
+    end;
+  end
+  else
+    MountRoute(matchedRoute, matchedChild, cleanP, fullHash);
+end;
+
+procedure TBVRouter.MountRoute(RouteToMount, ChildRouteToMount: TBVRoute; const CleanPath, FullHashPath: string);
+var
+  cOpt, childOpt, childParams: JSValue;
+  nestedView: TJSHTMLElement;
+begin
+  cOpt := nil;
+  if RouteToMount.Component <> '' then
+  begin
+    asm
+      cOpt = (window.__BV_CORE__ && window.__BV_CORE__.components) ? window.__BV_CORE__.components[RouteToMount.Component.toLowerCase()] : null;
+    end;
+  end;
+
+  if Assigned(cOpt) then
+    MountComponentIntoView(FRouterViewEl, RouteToMount.Component, cOpt, FCurrentRoute.Params, FCurrentRoute.Query);
+
+  if Assigned(ChildRouteToMount) and (FRouterViewEl <> nil) then
+  begin
+    nestedView := TJSHTMLElement(FRouterViewEl.querySelector('router-view'));
+    if nestedView <> nil then
+    begin
+      childOpt := nil;
+      if ChildRouteToMount.Component <> '' then
+      begin
+        asm
+          childOpt = (window.__BV_CORE__ && window.__BV_CORE__.components) ? window.__BV_CORE__.components[ChildRouteToMount.Component.toLowerCase()] : null;
+        end;
+      end;
+      childParams := ParseParams(ChildRouteToMount.Path, CleanPath);
+      if Assigned(childOpt) then
+        MountComponentIntoView(nestedView, ChildRouteToMount.Component, childOpt, childParams, FCurrentRoute.Query);
+    end;
+  end;
+
+  if Assigned(FAfterEach) then
+  begin
+    asm
+      let toR = { path: CleanPath, fullPath: FullHashPath, params: this.FCurrentRoute.Params, query: this.FCurrentRoute.Query, meta: RouteToMount.Meta };
+      let fromR = this.FCurrentRoute;
+      this.FAfterEach.call(null, toR, fromR);
+    end;
+  end;
+
+  asm
+    if (window.__BV_DEVTOOLS_HOOK__) {
+      window.__BV_DEVTOOLS_HOOK__.emit('route:change', { path: CleanPath, component: RouteToMount.Component });
+    }
   end;
 end;
 

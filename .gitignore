@@ -17,6 +17,7 @@ bin/lib/
 
 # 🏰 Pascal Build Artifacts (Global)
 *.o
+*.obj
 *.ppu
 *.ppu.js
 *.rsj

@@ -83,7 +83,6 @@ begin
        Result := TJSObject.new;
     end;
 ;
-
   RegisterComponent('b-tabs', comp);
 end;
 

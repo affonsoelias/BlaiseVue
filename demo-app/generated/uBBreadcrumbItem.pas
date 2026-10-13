@@ -51,7 +51,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('b-breadcrumb-item', comp);
 end;
 

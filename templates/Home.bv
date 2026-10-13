@@ -1,0 +1,22 @@
+<template>
+  <div>
+    <h2>Homepage</h2>
+    <p>{{ description }}</p>
+    <button @click="greet">Click here</button>
+  </div>
+</template>
+
+<script>
+  data:
+    description: string = 'Welcome to my BlaiseVue app!';
+
+  methods:
+    procedure greet;
+    begin
+      window.alert('Hello from BlaiseVue!');
+    end;
+</script>
+
+<style>
+  h2 { color: #3498db; }
+</style>

@@ -63,7 +63,6 @@ begin
     end;
 
     ;
-
   RegisterComponent('b-alert', comp);
 end;
 

@@ -53,7 +53,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('form-header', comp);
 end;
 

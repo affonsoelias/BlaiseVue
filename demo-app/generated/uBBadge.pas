@@ -38,7 +38,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-badge', comp);
 end;
 

@@ -42,7 +42,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-navbar', comp);
 end;
 

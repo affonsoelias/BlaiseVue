@@ -1,0 +1,33 @@
+<template>
+  <button 
+    class="bui-btn" 
+    :class="btnClass" 
+    :disabled="disabled"
+    @click="handleClick">
+    <slot></slot>
+  </button>
+</template>
+
+<script>
+  data:
+    variant: string = 'primary';
+    size: string = 'md';
+    disabled: boolean = false;
+
+  computed:
+    function btnClass: string;
+    begin
+      Result := 'bui-btn-' + string(this['variant']) + ' bui-btn-' + string(this['size']);
+    end;
+
+  methods:
+    procedure handleClick;
+    begin
+      if not Boolean(this['disabled']) then
+      begin
+        asm
+          _this.$emit('click');
+        end;
+      end;
+    end;
+</script>

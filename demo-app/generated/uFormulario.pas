@@ -116,7 +116,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('formulario-page', comp);
 end;
 

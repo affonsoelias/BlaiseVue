@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BlaiseVue DevTools</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <div class="bv-dt-container">
+    <header class="bv-dt-nav">
+      <div class="bv-dt-brand">
+        <span class="bv-dt-logo">🛡️ BlaiseVue</span>
+        <span class="bv-dt-badge">v2.0</span>
+      </div>
+      <div class="bv-dt-tabs">
+        <button class="bv-dt-tab active" data-tab="components">Components</button>
+        <button class="bv-dt-tab" data-tab="timeline">Timeline</button>
+        <button class="bv-dt-tab" data-tab="snapshots">Time Travel</button>
+      </div>
+      <div class="bv-dt-actions">
+        <button id="btn-refresh" title="Refresh state">🔄 Refresh</button>
+      </div>
+    </header>
+
+    <main class="bv-dt-main">
+      <!-- Tab 1: Components Tree & State Editor -->
+      <section id="tab-components" class="bv-dt-view active">
+        <div class="bv-dt-split">
+          <div class="bv-dt-tree-pane">
+            <div class="bv-dt-pane-title">Component Hierarchy</div>
+            <div id="tree-list" class="bv-dt-tree">
+              <div class="bv-dt-empty">Scanning for components...</div>
+            </div>
+          </div>
+          <div class="bv-dt-state-pane">
+            <div class="bv-dt-pane-title">
+              <span>Component State</span>
+              <span id="selected-comp-name" class="bv-dt-highlight">none</span>
+            </div>
+            <div id="state-editor" class="bv-dt-state-content">
+              <div class="bv-dt-empty">Select a component to inspect its reactive state.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Timeline Events -->
+      <section id="tab-timeline" class="bv-dt-view">
+        <div class="bv-dt-timeline-controls">
+          <button id="btn-clear-timeline">Clear Timeline</button>
+        </div>
+        <div id="timeline-list" class="bv-dt-timeline-entries">
+          <div class="bv-dt-empty">No events captured yet.</div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Time Travel Snapshots -->
+      <section id="tab-snapshots" class="bv-dt-view">
+        <div class="bv-dt-snapshot-controls">
+          <button id="btn-take-snapshot">📸 Capture State Snapshot</button>
+        </div>
+        <div id="snapshots-list" class="bv-dt-snapshot-entries">
+          <div class="bv-dt-empty">No snapshots captured. Take a snapshot to enable Time Travel.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="panel.js"></script>
+</body>
+</html>

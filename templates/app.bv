@@ -1,0 +1,27 @@
+<template>
+  <div>
+    <nav>
+      <strong>BlaiseVue</strong>
+      <a href="#/">Home</a>
+      <a href="#/about">About</a>
+    </nav>
+    <h1>{{ message }}</h1>
+    <router-view></router-view>
+  </div>
+</template>
+
+<script>
+  data:
+    message: string = 'Welcome to BlaiseVue!';
+
+  router:
+    routes:
+      '/': 'home-page';
+      '/about': 'about-page';
+</script>
+
+<style>
+  nav { background: #2c3e50; padding: 10px 20px; }
+  nav a { color: #ecf0f1; text-decoration: none; margin-left: 15px; }
+  nav strong { color: #42b883; font-size: 18px; }
+</style>

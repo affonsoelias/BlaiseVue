@@ -37,7 +37,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-nav-item', comp);
 end;
 

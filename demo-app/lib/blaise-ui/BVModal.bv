@@ -1,0 +1,42 @@
+<template>
+  <teleport to="body">
+    <div class="bui-modal-backdrop" b-if="show" @click="handleBackdropClick">
+      <div class="bui-modal-content" @click.stop="">
+        <div class="bui-modal-header">
+          <span>{{ title }}</span>
+          <button class="bui-modal-close" @click="close">&times;</button>
+        </div>
+        <div class="bui-modal-body">
+          <slot></slot>
+        </div>
+        <div class="bui-modal-footer">
+          <slot name="footer">
+            <button class="bui-btn bui-btn-secondary" @click="close">Fechar</button>
+          </slot>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<script>
+  data:
+    show: boolean = false;
+    title: string = 'Modal';
+
+  methods:
+    procedure close;
+    begin
+      this['show'] := false;
+      asm
+        _this.$emit('close');
+      end;
+    end;
+
+    procedure handleBackdropClick;
+    begin
+      asm
+        _this.close();
+      end;
+    end;
+</script>

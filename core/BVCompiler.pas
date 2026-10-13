@@ -189,11 +189,138 @@ initialization
        return res;
     };
 
+    // Static Hoisting & Compiler Pruning: identifies static trees
+    bv.isStatic = function(node) {
+       if (!node) return true;
+       if (node.nodeType === 3) {
+          return (node.nodeValue.indexOf('{{') === -1);
+       }
+       if (node.nodeType === 1) {
+          let tag = node.tagName.toLowerCase();
+          if (tag.indexOf('-') !== -1 || (bv.components && bv.components[tag])) return false;
+          if (tag === 'router-view' || tag === 'transition' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
+          if (node.attributes) {
+             for (let i = 0; i < node.attributes.length; i++) {
+                let n = node.attributes[i].name.toLowerCase();
+                if (n.startsWith('@') || n.startsWith(':') || n.startsWith('b-') || n.startsWith('v-') || n === 'ref' || n === 'slot' || n === 'slot-scope') return false;
+             }
+          }
+          let children = node.childNodes;
+          for (let j = 0; j < children.length; j++) {
+             if (!bv.isStatic(children[j])) return false;
+          }
+          return true;
+       }
+       return true;
+    };
+
+    // Hot Module Replacement (HMR): patches live component instances preserving reactive state
+    bv.patchComponent = function(tagName, newOptions) {
+       if (!tagName) return;
+       tagName = tagName.toLowerCase();
+       console.log("[HMR] Patching component <" + tagName + ">...");
+       if (!bv.components) bv.components = {};
+       bv.components[tagName] = newOptions;
+
+       let instances = Array.from(document.querySelectorAll('[data-bv-component="' + tagName + '"]'));
+       if (instances.length === 0) {
+          instances = Array.from(document.querySelectorAll('*')).filter(function(el) {
+             return el['__bv_component_tag__'] === tagName;
+          });
+       }
+
+       instances.forEach(function(instEl) {
+          let existingData = instEl['__bv_instance_data__'];
+          let parentData = instEl['__bv_parent_data__'];
+          let parentMethods = instEl['__bv_parent_methods__'];
+          if (existingData && newOptions.template) {
+             let temp = document.createElement('div');
+             temp.innerHTML = newOptions.template;
+             let newEl = temp.firstElementChild;
+             if (newEl) {
+                newEl['bvManaged'] = true;
+                newEl.setAttribute('data-bv-component', tagName);
+                newEl['__bv_component_tag__'] = tagName;
+                newEl['__bv_instance_data__'] = existingData;
+                newEl['__bv_instance_opts__'] = newOptions;
+                newEl['__bv_parent_data__'] = parentData;
+                newEl['__bv_parent_methods__'] = parentMethods;
+
+                if (newOptions.methods) {
+                   Object.keys(newOptions.methods).forEach(function(k) {
+                      existingData[k] = function() { return newOptions.methods[k].apply(this, [this, ...arguments]); };
+                   });
+                }
+                if (newOptions.computed) {
+                   Object.keys(newOptions.computed).forEach(function(ck) {
+                      bv.defineComputed(existingData, ck, newOptions.computed[ck]);
+                   });
+                }
+
+                let cD = {
+                   FData: existingData,
+                   Evaluate: function(expr, ev) {
+                      try {
+                         let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
+                         return f(this.FData, ev);
+                      } catch(ex) { return undefined; }
+                   },
+                   SetValue: function(k, val) { this.FData[k] = val; }
+                };
+
+                instEl.parentNode.replaceChild(newEl, instEl);
+                bv.traverse(newEl, cD, newOptions.methods);
+                if (newOptions.updated) newOptions.updated.call(existingData, existingData);
+                console.log("[HMR] Component <" + tagName + "> patched in-place!");
+             }
+          }
+       });
+
+       if (window.__BV_DEVTOOLS_HOOK__) {
+          window.__BV_DEVTOOLS_HOOK__.emit('component:hmr', { tag: tagName });
+       }
+    };
+
+    // HMR WebSocket Client Bridge
+    bv.initHMR = function(wsPort) {
+       try {
+          let port = wsPort || 8081;
+          let host = window.location.hostname || 'localhost';
+          let proto = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
+          let ws = new WebSocket(proto + host + ':' + port);
+          ws.onopen = function() {
+             console.log("%c[BlaiseVue HMR] Connected to live reload server", "color: #42b883; font-weight: bold;");
+          };
+          ws.onmessage = function(ev) {
+             try {
+                let msg = JSON.parse(ev.data);
+                if (msg.type === 'patch' && msg.component && msg.options) {
+                   bv.patchComponent(msg.component, msg.options);
+                } else if (msg.type === 'reload') {
+                   console.log("[HMR] Triggering page reload...");
+                   window.location.reload();
+                }
+             } catch(err) { console.warn("[HMR] Message processing error:", err); }
+          };
+       } catch(e) { console.warn("[HMR] Unable to connect:", e); }
+    };
+
     // Recursive DOM Visitor: The core of the Directive Engine
     bv.traverse = function(Node, Data, Methods) {
-      if (!Node || Node['bvTraversed']) return;
+      if (!Node || Node['bvTraversed'] || Node['bvStatic']) return;
       
       try {
+          // Static Hoisting: hoist pure static elements out of reactivity cycle
+          if (Node.nodeType === 1 && !Node['bvStaticChecked']) {
+             Node['bvStaticChecked'] = true;
+             if (bv.isStatic(Node)) {
+                Node['bvStatic'] = true;
+                Node['bvTraversed'] = true;
+                bv.hoistedCount = (bv.hoistedCount || 0) + 1;
+                return;
+             }
+          }
+
           // 1. Text Interpolation {{ expression }}
           if (Node.nodeType === 3) {
             let t = Node['b-orig-tpl'] || Node.nodeValue;
@@ -221,7 +348,7 @@ initialization
           let tagName = el.tagName.toLowerCase();
           if (tagName === 'script' || tagName === 'style') return;
 
-          // 2. Special tag: <transition>
+          // 2. Special tags: <transition>, <teleport>, <suspense>
           if (tagName === 'transition') {
             let tName = el.getAttribute('name') || 'v';
             let child = el.firstElementChild;
@@ -231,6 +358,50 @@ initialization
                bv.traverse(child, Data, Methods);
                return;
             }
+          }
+
+          if (tagName === 'teleport' || tagName === 'b-teleport') {
+            let toTarget = el.getAttribute('to') || 'body';
+            let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
+            if (!targetEl) targetEl = document.body;
+            let anchor = document.createComment('teleport-anchor');
+            el.parentNode.replaceChild(anchor, el);
+            let fragment = document.createDocumentFragment();
+            let teleportedNodes = Array.from(el.childNodes);
+            teleportedNodes.forEach(function(cNode) { fragment.appendChild(cNode); });
+            targetEl.appendChild(fragment);
+            teleportedNodes.forEach(function(cNode) { bv.traverse(cNode, Data, Methods); });
+            anchor['bvUnmount'] = function() {
+               teleportedNodes.forEach(function(cNode) { bv.unmount(cNode); });
+            };
+            return;
+          }
+
+          if (tagName === 'suspense' || tagName === 'b-suspense') {
+            let fallbackTpl = el.querySelector('[slot="fallback"], template[#fallback], template[slot="fallback"]');
+            let fallbackEl = null;
+            if (fallbackTpl) {
+               fallbackEl = (fallbackTpl.tagName.toLowerCase() === 'template') ?
+                  (fallbackTpl.content ? fallbackTpl.content.cloneNode(true) : fallbackTpl.cloneNode(true)) :
+                  fallbackTpl.cloneNode(true);
+               fallbackTpl.remove();
+            }
+            let anchor = document.createComment('suspense-anchor');
+            el.parentNode.insertBefore(anchor, el);
+            let pending = (Data && Data.FData && Data.FData.$pendingPromises && Data.FData.$pendingPromises.length > 0);
+            if (pending && fallbackEl) {
+               let fbNode = fallbackEl.firstElementChild || fallbackEl;
+               anchor.parentNode.insertBefore(fbNode, anchor.nextSibling);
+               el.style.display = 'none';
+               Promise.all(Data.FData.$pendingPromises).then(function() {
+                  if (fbNode.parentNode) fbNode.remove();
+                  el.style.display = '';
+                  bv.traverse(el, Data, Methods);
+               });
+            } else {
+               bv.traverse(el, Data, Methods);
+            }
+            return;
           }
 
           let opts = (bv.components ? bv.components[tagName] : null);
@@ -396,51 +567,6 @@ initialization
                opts = merged;
             }
 
-            // Manage Slots
-            let originalChildren = Array.from(el.childNodes);
-            let root_c = document.createElement('div');
-            root_c.innerHTML = opts.template;
-            let rEl = root_c.firstElementChild;
-            if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
-            rEl['bvManaged'] = true;
-            console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
-            el.parentNode.replaceChild(rEl, el);
-
-            let namedSlotsInChild = rEl.querySelectorAll('slot[name], b-slot[name]');
-            namedSlotsInChild.forEach(function(sNode) {
-               let sName = sNode.getAttribute('name');
-               let foundAny = false;
-               originalChildren.forEach(function(cn) {
-                  if (cn.nodeType === 1 && cn.getAttribute('slot') === sName) {
-                     let slotNodes = Array.from(cn.childNodes);
-                     slotNodes.forEach(function(sn) {
-                        bv.traverse(sn, Data, Methods); // Parent scope
-                        bv.markManaged(sn);
-                        sNode.parentNode.insertBefore(sn, sNode);
-                        foundAny = true;
-                     });
-                     cn.remove();
-                  }
-               });
-               if (!foundAny) {
-                  if (sNode.innerHTML === "") sNode.remove();
-               } else {
-                  sNode.remove();
-               }
-            });
-
-            let defaultSlot = rEl.querySelector('slot:not([name]), b-slot:not([name])');
-            if (defaultSlot) {
-               originalChildren.forEach(function(cn) {
-                  if (cn.parentNode === el || !cn.parentNode) {
-                     bv.traverse(cn, Data, Methods); // Parent scope
-                     bv.markManaged(cn);
-                     defaultSlot.parentNode.insertBefore(cn, defaultSlot);
-                  }
-               });
-               defaultSlot.remove();
-            }
-
             let dRaw = opts.data ? opts.data.call(null) : {};
             let pRef = bv.defineReactive(dRaw);
             
@@ -463,6 +589,135 @@ initialization
                   }
                }
             }
+
+            // Manage Slots (Standard & Scoped Slots)
+            let originalChildren = Array.from(el.childNodes);
+            let root_c = document.createElement('div');
+            root_c.innerHTML = opts.template;
+            let rEl = root_c.firstElementChild;
+            if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
+            rEl['bvManaged'] = true;
+            rEl.setAttribute('data-bv-component', tagName);
+            rEl['__bv_component_tag__'] = tagName;
+            rEl['__bv_instance_data__'] = pRef;
+            rEl['__bv_instance_opts__'] = opts;
+            rEl['__bv_parent_data__'] = Data;
+            rEl['__bv_parent_methods__'] = Methods;
+            console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
+            el.parentNode.replaceChild(rEl, el);
+            el['__bv_replacement__'] = rEl;
+
+            let slotElements = Array.from(rEl.querySelectorAll('slot, b-slot'));
+            slotElements.forEach(function(sNode) {
+               let sName = sNode.getAttribute('name') || 'default';
+               
+               // Collect slot props bound on sNode (Scoped Slots child -> parent)
+               let slotProps = {};
+               if (sNode.attributes) {
+                  for (let i = 0; i < sNode.attributes.length; i++) {
+                     let attr = sNode.attributes[i];
+                     let an = attr.name;
+                     if (an === 'name') continue;
+                     if (an.startsWith(':') || an.startsWith('b-bind:')) {
+                        let propKey = an.replace('b-bind:', '').replace(':', '');
+                        try {
+                           let f = new Function('data', 'with(data) { try { return ' + attr.value + '; } catch(e) { return undefined; } }');
+                           slotProps[propKey] = f(pRef);
+                        } catch(ex) { slotProps[propKey] = undefined; }
+                     } else {
+                        slotProps[an] = attr.value;
+                     }
+                  }
+               }
+
+               // Match parent template/node for this slot
+               let matchedParentNode = null;
+               let scopeVarName = null;
+               for (let i = 0; i < originalChildren.length; i++) {
+                  let cn = originalChildren[i];
+                  if (cn.nodeType !== 1) continue;
+                  let cnSlot = cn.getAttribute('slot');
+                  if (!cnSlot) {
+                     if (cn.hasAttribute('#' + sName)) cnSlot = sName;
+                     else if (cn.hasAttribute('v-slot:' + sName)) cnSlot = sName;
+                     else if (cn.hasAttribute('b-slot:' + sName)) cnSlot = sName;
+                  }
+                  if (sName === 'default' && !cnSlot) {
+                     if (cn.hasAttribute('slot-scope') || cn.hasAttribute('v-slot') || cn.hasAttribute('b-slot') || cn.tagName.toLowerCase() === 'template') {
+                        cnSlot = 'default';
+                     }
+                  }
+                  if (cnSlot === sName) {
+                     matchedParentNode = cn;
+                     scopeVarName = cn.getAttribute('slot-scope') || cn.getAttribute('b-slot-scope') || cn.getAttribute('v-slot-scope');
+                     if (!scopeVarName) {
+                        if (cn.getAttribute('#' + sName)) scopeVarName = cn.getAttribute('#' + sName);
+                        else if (cn.getAttribute('v-slot:' + sName)) scopeVarName = cn.getAttribute('v-slot:' + sName);
+                        else if (cn.getAttribute('v-slot')) scopeVarName = cn.getAttribute('v-slot');
+                        else if (cn.getAttribute('b-slot')) scopeVarName = cn.getAttribute('b-slot');
+                     }
+                     break;
+                  }
+               }
+
+               if (matchedParentNode) {
+                  let parentData = (Data && Data.FData) ? Data.FData : {};
+                  let scopedProxy = new Proxy(slotProps, {
+                     get(t, k) {
+                        if (scopeVarName && k === scopeVarName) return slotProps;
+                        if (k in t) return t[k];
+                        return parentData[k];
+                     },
+                     has(t, k) {
+                        return (scopeVarName && k === scopeVarName) || (k in t) || (k in parentData);
+                     }
+                  });
+                  let scopedData = {
+                     FData: scopedProxy,
+                     Evaluate: function(expr, ev) {
+                        try {
+                           let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
+                           return f(this.FData, ev);
+                        } catch(ex) { return undefined; }
+                     },
+                     SetValue: function(k, val) {
+                        if (scopeVarName && k === scopeVarName) Object.assign(slotProps, val);
+                        else if (k in slotProps) slotProps[k] = val;
+                        else Data.SetValue(k, val);
+                     }
+                  };
+
+                  let nodesToInsert = [];
+                  if (matchedParentNode.tagName.toLowerCase() === 'template') {
+                     let tplChildren = (matchedParentNode.content) ? matchedParentNode.content.childNodes : matchedParentNode.childNodes;
+                     Array.from(tplChildren).forEach(function(tc) { nodesToInsert.push(tc.cloneNode(true)); });
+                  } else {
+                     nodesToInsert.push(matchedParentNode.cloneNode(true));
+                  }
+
+                  nodesToInsert.forEach(function(inNode) {
+                     bv.traverse(inNode, scopedData, Methods);
+                     bv.markManaged(inNode);
+                     sNode.parentNode.insertBefore(inNode, sNode);
+                  });
+                  sNode.remove();
+               } else if (sName === 'default') {
+                  let hasBareNodes = false;
+                  originalChildren.forEach(function(cn) {
+                     if (!cn.getAttribute || !cn.getAttribute('slot')) {
+                        let cnClone = cn.cloneNode(true);
+                        bv.traverse(cnClone, Data, Methods);
+                        bv.markManaged(cnClone);
+                        sNode.parentNode.insertBefore(cnClone, sNode);
+                        hasBareNodes = true;
+                     }
+                  });
+                  if (hasBareNodes) sNode.remove();
+               } else {
+                  if (sNode.innerHTML === '') sNode.remove();
+               }
+            });
+
              if (vmodel) {
                 bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
                 pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
@@ -511,6 +766,9 @@ initialization
                   if (typeof r === 'function') r.call(Data.FData, Data.FData, arg);
                   else if (Methods && typeof Methods[expr] === 'function') Methods[expr].call(Data.FData, Data.FData, arg);
                }
+               if (window.__BV_DEVTOOLS_HOOK__) {
+                  window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
+               }
             };
 
             let cD = {
@@ -530,9 +788,15 @@ initialization
             });
 
             if (opts.mounted) opts.mounted.call(pRef, pRef);
+            if (window.__BV_DEVTOOLS_HOOK__) {
+               window.__BV_DEVTOOLS_HOOK__.emit('component:mount', { tag: tagName, instance: pRef });
+            }
             rEl['bvUnmount'] = function() {
                if (stopEffect && typeof stopEffect === 'function') stopEffect();
                if (opts.unmounted) opts.unmounted.call(pRef, pRef);
+               if (window.__BV_DEVTOOLS_HOOK__) {
+                  window.__BV_DEVTOOLS_HOOK__.emit('component:unmount', { tag: tagName, instance: pRef });
+               }
             };
 
             return;

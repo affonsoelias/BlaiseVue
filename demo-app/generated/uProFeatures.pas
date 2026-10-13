@@ -22,7 +22,7 @@ begin
   comp := TJSObject.new;
   comp['template'] :=
     '  <div class="pro-features">' +
-    '    <h2 class="section-title">🛡️ BlaiseVue 2.0 Pro: Novas Fronteiras</h2>' +
+    '    <h2 class="section-title">🛡️ BlaiseVue 1.0 Pro: Novas Fronteiras</h2>' +
     '    ' +
     '    <!-- 1. Teste de Slots -->' +
     '    <card titulo="Demonstração de Slot">' +
@@ -116,7 +116,6 @@ begin
     ;
   comp['inject'] := TJSArray.new;
   TJSArray(comp['inject']).push('getAmbiente');
-
   RegisterComponent('pro-features-page', comp);
 end;
 

@@ -57,7 +57,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('b-input-group', comp);
 end;
 

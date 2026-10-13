@@ -36,7 +36,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('c-area', comp);
 end;
 

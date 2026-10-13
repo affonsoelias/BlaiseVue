@@ -1,0 +1,118 @@
+<template>
+  <div class="bui-datagrid-container">
+    <div class="bui-datagrid-toolbar">
+      <input 
+        type="text" 
+        class="bui-datagrid-search" 
+        placeholder="Buscar..." 
+        b-model="searchQuery" 
+        @input="handleSearch"
+      />
+      <span>Total: {{ totalItems }}</span>
+    </div>
+
+    <table class="bui-datagrid-table">
+      <thead>
+        <tr>
+          <th b-for="col in columns" @click="sortBy(col.key)">
+            {{ col.label }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr b-for="row in pagedItems">
+          <td b-for="col in columns">
+            <slot name="cell" :row="row" :column="col" :value="row[col.key]">
+              {{ row[col.key] }}
+            </slot>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="bui-datagrid-pagination">
+      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>
+      <span>Página {{ currentPage }} de {{ totalPages }}</span>
+      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    items: JSValue = [];
+    columns: JSValue = [];
+    searchQuery: string = '';
+    sortKey: string = '';
+    sortAsc: boolean = true;
+    currentPage: integer = 1;
+    pageSize: integer = 5;
+
+  computed:
+    function totalItems: integer;
+    begin
+      asm
+        Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      end;
+    end;
+
+    function filteredItems: JSValue;
+    begin
+      asm
+        let list = this.items || [];
+        let q = (this.searchQuery || '').toLowerCase();
+        if (!q) return list;
+        return list.filter(function(item) {
+          return Object.values(item).some(function(v) {
+            return String(v).toLowerCase().indexOf(q) !== -1;
+          });
+        });
+      end;
+    end;
+
+    function totalPages: integer;
+    begin
+      asm
+        let count = this.filteredItems.length;
+        Result = Math.max(1, Math.ceil(count / this.pageSize));
+      end;
+    end;
+
+    function pagedItems: JSValue;
+    begin
+      asm
+        let list = this.filteredItems || [];
+        let start = (this.currentPage - 1) * this.pageSize;
+        return list.slice(start, start + this.pageSize);
+      end;
+    end;
+
+  methods:
+    procedure handleSearch;
+    begin
+      this['currentPage'] := 1;
+    end;
+
+    procedure sortBy(key: string);
+    begin
+      if this['sortKey'] = key then
+        this['sortAsc'] := not Boolean(this['sortAsc'])
+      else
+      begin
+        this['sortKey'] := key;
+        this['sortAsc'] := true;
+      end;
+    end;
+
+    procedure prevPage;
+    begin
+      if Integer(this['currentPage']) > 1 then
+        this['currentPage'] := Integer(this['currentPage']) - 1;
+    end;
+
+    procedure nextPage;
+    begin
+      if Integer(this['currentPage']) < Integer(this['totalPages']) then
+        this['currentPage'] := Integer(this['currentPage']) + 1;
+    end;
+</script>

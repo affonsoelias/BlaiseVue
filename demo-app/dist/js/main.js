@@ -57,6 +57,9 @@ rtl.module("SysUtils",["System","JS"],function () {
   });
   rtl.createClass(this,"EAbstractError",this.Exception,function () {
   });
+  this.LowerCase = function (s) {
+    return s.toLowerCase();
+  };
   this.IntToStr = function (Value) {
     var Result = "";
     Result = "" + Value;
@@ -262,7 +265,11 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
           const triggerKey = function(k) {
             let depSet = deps.get(k);
             if (depSet) {
-              depSet.forEach(queueEffect);
+              Array.from(depSet).forEach(function(f) {
+                if (activeEffects.has(f)) return;
+                activeEffects.add(f);
+                try { f(); } finally { activeEffects.delete(f); }
+              });
             }
           };
           
@@ -334,11 +341,6 @@ rtl.module("BVComponents",["System","JS","Web","SysUtils"],function () {
   var $mod = this;
   this.RegisterComponent = function (AName, AOptions) {
     window.__BV_CORE__.components[AName.toLowerCase()] = AOptions;
-  };
-  this.GetComponent = function (AName) {
-    var Result = undefined;
-    Result = window.__BV_CORE__.components[AName.toLowerCase()];
-    return Result;
   };
   $mod.$init = function () {
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
@@ -528,11 +530,138 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            return res;
         };
     
+        // Static Hoisting & Compiler Pruning: identifies static trees
+        bv.isStatic = function(node) {
+           if (!node) return true;
+           if (node.nodeType === 3) {
+              return (node.nodeValue.indexOf('{{') === -1);
+           }
+           if (node.nodeType === 1) {
+              let tag = node.tagName.toLowerCase();
+              if (tag.indexOf('-') !== -1 || (bv.components && bv.components[tag])) return false;
+              if (tag === 'router-view' || tag === 'transition' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
+              if (node.attributes) {
+                 for (let i = 0; i < node.attributes.length; i++) {
+                    let n = node.attributes[i].name.toLowerCase();
+                    if (n.startsWith('@') || n.startsWith(':') || n.startsWith('b-') || n.startsWith('v-') || n === 'ref' || n === 'slot' || n === 'slot-scope') return false;
+                 }
+              }
+              let children = node.childNodes;
+              for (let j = 0; j < children.length; j++) {
+                 if (!bv.isStatic(children[j])) return false;
+              }
+              return true;
+           }
+           return true;
+        };
+    
+        // Hot Module Replacement (HMR): patches live component instances preserving reactive state
+        bv.patchComponent = function(tagName, newOptions) {
+           if (!tagName) return;
+           tagName = tagName.toLowerCase();
+           console.log("[HMR] Patching component <" + tagName + ">...");
+           if (!bv.components) bv.components = {};
+           bv.components[tagName] = newOptions;
+    
+           let instances = Array.from(document.querySelectorAll('[data-bv-component="' + tagName + '"]'));
+           if (instances.length === 0) {
+              instances = Array.from(document.querySelectorAll('*')).filter(function(el) {
+                 return el['__bv_component_tag__'] === tagName;
+              });
+           }
+    
+           instances.forEach(function(instEl) {
+              let existingData = instEl['__bv_instance_data__'];
+              let parentData = instEl['__bv_parent_data__'];
+              let parentMethods = instEl['__bv_parent_methods__'];
+              if (existingData && newOptions.template) {
+                 let temp = document.createElement('div');
+                 temp.innerHTML = newOptions.template;
+                 let newEl = temp.firstElementChild;
+                 if (newEl) {
+                    newEl['bvManaged'] = true;
+                    newEl.setAttribute('data-bv-component', tagName);
+                    newEl['__bv_component_tag__'] = tagName;
+                    newEl['__bv_instance_data__'] = existingData;
+                    newEl['__bv_instance_opts__'] = newOptions;
+                    newEl['__bv_parent_data__'] = parentData;
+                    newEl['__bv_parent_methods__'] = parentMethods;
+    
+                    if (newOptions.methods) {
+                       Object.keys(newOptions.methods).forEach(function(k) {
+                          existingData[k] = function() { return newOptions.methods[k].apply(this, [this, ...arguments]); };
+                       });
+                    }
+                    if (newOptions.computed) {
+                       Object.keys(newOptions.computed).forEach(function(ck) {
+                          bv.defineComputed(existingData, ck, newOptions.computed[ck]);
+                       });
+                    }
+    
+                    let cD = {
+                       FData: existingData,
+                       Evaluate: function(expr, ev) {
+                          try {
+                             let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
+                             return f(this.FData, ev);
+                          } catch(ex) { return undefined; }
+                       },
+                       SetValue: function(k, val) { this.FData[k] = val; }
+                    };
+    
+                    instEl.parentNode.replaceChild(newEl, instEl);
+                    bv.traverse(newEl, cD, newOptions.methods);
+                    if (newOptions.updated) newOptions.updated.call(existingData, existingData);
+                    console.log("[HMR] Component <" + tagName + "> patched in-place!");
+                 }
+              }
+           });
+    
+           if (window.__BV_DEVTOOLS_HOOK__) {
+              window.__BV_DEVTOOLS_HOOK__.emit('component:hmr', { tag: tagName });
+           }
+        };
+    
+        // HMR WebSocket Client Bridge
+        bv.initHMR = function(wsPort) {
+           try {
+              let port = wsPort || 8081;
+              let host = window.location.hostname || 'localhost';
+              let proto = (window.location.protocol === 'https:') ? 'wss://' : 'ws://';
+              let ws = new WebSocket(proto + host + ':' + port);
+              ws.onopen = function() {
+                 console.log("%c[BlaiseVue HMR] Connected to live reload server", "color: #42b883; font-weight: bold;");
+              };
+              ws.onmessage = function(ev) {
+                 try {
+                    let msg = JSON.parse(ev.data);
+                    if (msg.type === 'patch' && msg.component && msg.options) {
+                       bv.patchComponent(msg.component, msg.options);
+                    } else if (msg.type === 'reload') {
+                       console.log("[HMR] Triggering page reload...");
+                       window.location.reload();
+                    }
+                 } catch(err) { console.warn("[HMR] Message processing error:", err); }
+              };
+           } catch(e) { console.warn("[HMR] Unable to connect:", e); }
+        };
+    
         // Recursive DOM Visitor: The core of the Directive Engine
         bv.traverse = function(Node, Data, Methods) {
-          if (!Node || Node['bvTraversed']) return;
+          if (!Node || Node['bvTraversed'] || Node['bvStatic']) return;
           
           try {
+              // Static Hoisting: hoist pure static elements out of reactivity cycle
+              if (Node.nodeType === 1 && !Node['bvStaticChecked']) {
+                 Node['bvStaticChecked'] = true;
+                 if (bv.isStatic(Node)) {
+                    Node['bvStatic'] = true;
+                    Node['bvTraversed'] = true;
+                    bv.hoistedCount = (bv.hoistedCount || 0) + 1;
+                    return;
+                 }
+              }
+    
               // 1. Text Interpolation {{ expression }}
               if (Node.nodeType === 3) {
                 let t = Node['b-orig-tpl'] || Node.nodeValue;
@@ -560,7 +689,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               let tagName = el.tagName.toLowerCase();
               if (tagName === 'script' || tagName === 'style') return;
     
-              // 2. Special tag: <transition>
+              // 2. Special tags: <transition>, <teleport>, <suspense>
               if (tagName === 'transition') {
                 let tName = el.getAttribute('name') || 'v';
                 let child = el.firstElementChild;
@@ -570,6 +699,50 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    bv.traverse(child, Data, Methods);
                    return;
                 }
+              }
+    
+              if (tagName === 'teleport' || tagName === 'b-teleport') {
+                let toTarget = el.getAttribute('to') || 'body';
+                let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
+                if (!targetEl) targetEl = document.body;
+                let anchor = document.createComment('teleport-anchor');
+                el.parentNode.replaceChild(anchor, el);
+                let fragment = document.createDocumentFragment();
+                let teleportedNodes = Array.from(el.childNodes);
+                teleportedNodes.forEach(function(cNode) { fragment.appendChild(cNode); });
+                targetEl.appendChild(fragment);
+                teleportedNodes.forEach(function(cNode) { bv.traverse(cNode, Data, Methods); });
+                anchor['bvUnmount'] = function() {
+                   teleportedNodes.forEach(function(cNode) { bv.unmount(cNode); });
+                };
+                return;
+              }
+    
+              if (tagName === 'suspense' || tagName === 'b-suspense') {
+                let fallbackTpl = el.querySelector('[slot="fallback"], template[#fallback], template[slot="fallback"]');
+                let fallbackEl = null;
+                if (fallbackTpl) {
+                   fallbackEl = (fallbackTpl.tagName.toLowerCase() === 'template') ?
+                      (fallbackTpl.content ? fallbackTpl.content.cloneNode(true) : fallbackTpl.cloneNode(true)) :
+                      fallbackTpl.cloneNode(true);
+                   fallbackTpl.remove();
+                }
+                let anchor = document.createComment('suspense-anchor');
+                el.parentNode.insertBefore(anchor, el);
+                let pending = (Data && Data.FData && Data.FData.$pendingPromises && Data.FData.$pendingPromises.length > 0);
+                if (pending && fallbackEl) {
+                   let fbNode = fallbackEl.firstElementChild || fallbackEl;
+                   anchor.parentNode.insertBefore(fbNode, anchor.nextSibling);
+                   el.style.display = 'none';
+                   Promise.all(Data.FData.$pendingPromises).then(function() {
+                      if (fbNode.parentNode) fbNode.remove();
+                      el.style.display = '';
+                      bv.traverse(el, Data, Methods);
+                   });
+                } else {
+                   bv.traverse(el, Data, Methods);
+                }
+                return;
               }
     
               let opts = (bv.components ? bv.components[tagName] : null);
@@ -735,51 +908,6 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    opts = merged;
                 }
     
-                // Manage Slots
-                let originalChildren = Array.from(el.childNodes);
-                let root_c = document.createElement('div');
-                root_c.innerHTML = opts.template;
-                let rEl = root_c.firstElementChild;
-                if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
-                rEl['bvManaged'] = true;
-                console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
-                el.parentNode.replaceChild(rEl, el);
-    
-                let namedSlotsInChild = rEl.querySelectorAll('slot[name], b-slot[name]');
-                namedSlotsInChild.forEach(function(sNode) {
-                   let sName = sNode.getAttribute('name');
-                   let foundAny = false;
-                   originalChildren.forEach(function(cn) {
-                      if (cn.nodeType === 1 && cn.getAttribute('slot') === sName) {
-                         let slotNodes = Array.from(cn.childNodes);
-                         slotNodes.forEach(function(sn) {
-                            bv.traverse(sn, Data, Methods); // Parent scope
-                            bv.markManaged(sn);
-                            sNode.parentNode.insertBefore(sn, sNode);
-                            foundAny = true;
-                         });
-                         cn.remove();
-                      }
-                   });
-                   if (!foundAny) {
-                      if (sNode.innerHTML === "") sNode.remove();
-                   } else {
-                      sNode.remove();
-                   }
-                });
-    
-                let defaultSlot = rEl.querySelector('slot:not([name]), b-slot:not([name])');
-                if (defaultSlot) {
-                   originalChildren.forEach(function(cn) {
-                      if (cn.parentNode === el || !cn.parentNode) {
-                         bv.traverse(cn, Data, Methods); // Parent scope
-                         bv.markManaged(cn);
-                         defaultSlot.parentNode.insertBefore(cn, defaultSlot);
-                      }
-                   });
-                   defaultSlot.remove();
-                }
-    
                 let dRaw = opts.data ? opts.data.call(null) : {};
                 let pRef = bv.defineReactive(dRaw);
                 
@@ -802,6 +930,135 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       }
                    }
                 }
+    
+                // Manage Slots (Standard & Scoped Slots)
+                let originalChildren = Array.from(el.childNodes);
+                let root_c = document.createElement('div');
+                root_c.innerHTML = opts.template;
+                let rEl = root_c.firstElementChild;
+                if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
+                rEl['bvManaged'] = true;
+                rEl.setAttribute('data-bv-component', tagName);
+                rEl['__bv_component_tag__'] = tagName;
+                rEl['__bv_instance_data__'] = pRef;
+                rEl['__bv_instance_opts__'] = opts;
+                rEl['__bv_parent_data__'] = Data;
+                rEl['__bv_parent_methods__'] = Methods;
+                console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
+                el.parentNode.replaceChild(rEl, el);
+                el['__bv_replacement__'] = rEl;
+    
+                let slotElements = Array.from(rEl.querySelectorAll('slot, b-slot'));
+                slotElements.forEach(function(sNode) {
+                   let sName = sNode.getAttribute('name') || 'default';
+                   
+                   // Collect slot props bound on sNode (Scoped Slots child -> parent)
+                   let slotProps = {};
+                   if (sNode.attributes) {
+                      for (let i = 0; i < sNode.attributes.length; i++) {
+                         let attr = sNode.attributes[i];
+                         let an = attr.name;
+                         if (an === 'name') continue;
+                         if (an.startsWith(':') || an.startsWith('b-bind:')) {
+                            let propKey = an.replace('b-bind:', '').replace(':', '');
+                            try {
+                               let f = new Function('data', 'with(data) { try { return ' + attr.value + '; } catch(e) { return undefined; } }');
+                               slotProps[propKey] = f(pRef);
+                            } catch(ex) { slotProps[propKey] = undefined; }
+                         } else {
+                            slotProps[an] = attr.value;
+                         }
+                      }
+                   }
+    
+                   // Match parent template/node for this slot
+                   let matchedParentNode = null;
+                   let scopeVarName = null;
+                   for (let i = 0; i < originalChildren.length; i++) {
+                      let cn = originalChildren[i];
+                      if (cn.nodeType !== 1) continue;
+                      let cnSlot = cn.getAttribute('slot');
+                      if (!cnSlot) {
+                         if (cn.hasAttribute('#' + sName)) cnSlot = sName;
+                         else if (cn.hasAttribute('v-slot:' + sName)) cnSlot = sName;
+                         else if (cn.hasAttribute('b-slot:' + sName)) cnSlot = sName;
+                      }
+                      if (sName === 'default' && !cnSlot) {
+                         if (cn.hasAttribute('slot-scope') || cn.hasAttribute('v-slot') || cn.hasAttribute('b-slot') || cn.tagName.toLowerCase() === 'template') {
+                            cnSlot = 'default';
+                         }
+                      }
+                      if (cnSlot === sName) {
+                         matchedParentNode = cn;
+                         scopeVarName = cn.getAttribute('slot-scope') || cn.getAttribute('b-slot-scope') || cn.getAttribute('v-slot-scope');
+                         if (!scopeVarName) {
+                            if (cn.getAttribute('#' + sName)) scopeVarName = cn.getAttribute('#' + sName);
+                            else if (cn.getAttribute('v-slot:' + sName)) scopeVarName = cn.getAttribute('v-slot:' + sName);
+                            else if (cn.getAttribute('v-slot')) scopeVarName = cn.getAttribute('v-slot');
+                            else if (cn.getAttribute('b-slot')) scopeVarName = cn.getAttribute('b-slot');
+                         }
+                         break;
+                      }
+                   }
+    
+                   if (matchedParentNode) {
+                      let parentData = (Data && Data.FData) ? Data.FData : {};
+                      let scopedProxy = new Proxy(slotProps, {
+                         get(t, k) {
+                            if (scopeVarName && k === scopeVarName) return slotProps;
+                            if (k in t) return t[k];
+                            return parentData[k];
+                         },
+                         has(t, k) {
+                            return (scopeVarName && k === scopeVarName) || (k in t) || (k in parentData);
+                         }
+                      });
+                      let scopedData = {
+                         FData: scopedProxy,
+                         Evaluate: function(expr, ev) {
+                            try {
+                               let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
+                               return f(this.FData, ev);
+                            } catch(ex) { return undefined; }
+                         },
+                         SetValue: function(k, val) {
+                            if (scopeVarName && k === scopeVarName) Object.assign(slotProps, val);
+                            else if (k in slotProps) slotProps[k] = val;
+                            else Data.SetValue(k, val);
+                         }
+                      };
+    
+                      let nodesToInsert = [];
+                      if (matchedParentNode.tagName.toLowerCase() === 'template') {
+                         let tplChildren = (matchedParentNode.content) ? matchedParentNode.content.childNodes : matchedParentNode.childNodes;
+                         Array.from(tplChildren).forEach(function(tc) { nodesToInsert.push(tc.cloneNode(true)); });
+                      } else {
+                         nodesToInsert.push(matchedParentNode.cloneNode(true));
+                      }
+    
+                      nodesToInsert.forEach(function(inNode) {
+                         bv.traverse(inNode, scopedData, Methods);
+                         bv.markManaged(inNode);
+                         sNode.parentNode.insertBefore(inNode, sNode);
+                      });
+                      sNode.remove();
+                   } else if (sName === 'default') {
+                      let hasBareNodes = false;
+                      originalChildren.forEach(function(cn) {
+                         if (!cn.getAttribute || !cn.getAttribute('slot')) {
+                            let cnClone = cn.cloneNode(true);
+                            bv.traverse(cnClone, Data, Methods);
+                            bv.markManaged(cnClone);
+                            sNode.parentNode.insertBefore(cnClone, sNode);
+                            hasBareNodes = true;
+                         }
+                      });
+                      if (hasBareNodes) sNode.remove();
+                   } else {
+                      if (sNode.innerHTML === '') sNode.remove();
+                   }
+                });
+    
                  if (vmodel) {
                     bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
                     pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
@@ -850,6 +1107,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       if (typeof r === 'function') r.call(Data.FData, Data.FData, arg);
                       else if (Methods && typeof Methods[expr] === 'function') Methods[expr].call(Data.FData, Data.FData, arg);
                    }
+                   if (window.__BV_DEVTOOLS_HOOK__) {
+                      window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
+                   }
                 };
     
                 let cD = {
@@ -869,9 +1129,15 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 });
     
                 if (opts.mounted) opts.mounted.call(pRef, pRef);
+                if (window.__BV_DEVTOOLS_HOOK__) {
+                   window.__BV_DEVTOOLS_HOOK__.emit('component:mount', { tag: tagName, instance: pRef });
+                }
                 rEl['bvUnmount'] = function() {
                    if (stopEffect && typeof stopEffect === 'function') stopEffect();
                    if (opts.unmounted) opts.unmounted.call(pRef, pRef);
+                   if (window.__BV_DEVTOOLS_HOOK__) {
+                      window.__BV_DEVTOOLS_HOOK__.emit('component:unmount', { tag: tagName, instance: pRef });
+                   }
                 };
     
                 return;
@@ -914,6 +1180,14 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
       this.Path = "";
       this.Component = "";
       this.BeforeEnter = undefined;
+      this.Children = undefined;
+      this.AsyncComponent = undefined;
+      this.Meta = undefined;
+      this.ParentRoute = null;
+    };
+    this.$final = function () {
+      this.ParentRoute = undefined;
+      pas.System.TObject.$final.call(this);
     };
     this.Create$1 = function () {
       return this;
@@ -927,6 +1201,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
       this.Params = undefined;
       this.Query = undefined;
       this.Name = "";
+      this.Meta = undefined;
     };
     this.Create$1 = function () {
       return this;
@@ -935,8 +1210,10 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
   rtl.createClass(this,"TBVRouter",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
+      this.FMode = "";
       this.FRoutes = undefined;
       this.FBeforeEach = undefined;
+      this.FAfterEach = undefined;
       this.FAppRoot = null;
       this.FRouterViewEl = null;
       this.FCurrentRoute = null;
@@ -948,6 +1225,9 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
       pas.System.TObject.$final.call(this);
     };
     this.HandleHashChange = function (Event) {
+      this.RenderCurrent();
+    };
+    this.HandlePopState = function (Event) {
       this.RenderCurrent();
     };
     this.MatchRoute = function (APath) {
@@ -964,6 +1244,51 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
         reObj = new RegExp(rsPat);
         if (reObj.test(APath)) {
           Result = rItem;
+          return Result;
+        };
+        if (pas.System.Assigned(rItem.Children)) {
+          rsPat = "^" + rItem.Path.replace(new RegExp(":[a-zA-Z_]+","g"),"([^/]+)") + "(/.*)?$";
+          reObj = new RegExp(rsPat);
+          if (reObj.test(APath)) {
+            Result = rItem;
+            return Result;
+          };
+        };
+      };
+      return Result;
+    };
+    this.MatchChildRoute = function (ParentRoute, APath) {
+      var Result = null;
+      var childrenList = null;
+      var i = 0;
+      var childObj = undefined;
+      var childRoute = null;
+      var fullChildPath = "";
+      var parentPrefix = "";
+      var rsPat = "";
+      var reObj = null;
+      Result = null;
+      if (!(ParentRoute != null) || !pas.System.Assigned(ParentRoute.Children)) return Result;
+      childrenList = ParentRoute.Children;
+      parentPrefix = ParentRoute.Path;
+      if ((parentPrefix !== "") && (parentPrefix.charAt(parentPrefix.length - 1) === "/")) parentPrefix = pas.System.Copy(parentPrefix,1,parentPrefix.length - 1);
+      for (var $l = 0, $end = childrenList.length - 1; $l <= $end; $l++) {
+        i = $l;
+        childObj = childrenList[i];
+        fullChildPath = "" + childObj["path"];
+        if (!((fullChildPath !== "") && (fullChildPath.charAt(0) === "/"))) fullChildPath = parentPrefix + "/" + fullChildPath;
+        rsPat = "^" + fullChildPath.replace(new RegExp(":[a-zA-Z_]+","g"),"([^/]+)") + "$";
+        reObj = new RegExp(rsPat);
+        if (reObj.test(APath)) {
+          childRoute = $mod.TBVRoute.$create("Create$1");
+          childRoute.Path = fullChildPath;
+          if (childObj.hasOwnProperty("component")) childRoute.Component = "" + childObj["component"];
+          if (childObj.hasOwnProperty("asyncComponent")) childRoute.AsyncComponent = childObj["asyncComponent"];
+          if (childObj.hasOwnProperty("beforeEnter")) {
+            childRoute.BeforeEnter = childObj["beforeEnter"]}
+           else childRoute.BeforeEnter = null;
+          childRoute.ParentRoute = ParentRoute;
+          Result = childRoute;
           return Result;
         };
       };
@@ -1014,108 +1339,82 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
        else Result = AHash;
       return Result;
     };
-    this.Create$1 = function (Options) {
-      var routesList = null;
-      var idx = 0;
-      var itemObj = undefined;
-      var newRoute = null;
-      this.FRoutes = new Array();
-      routesList = Options["routes"];
-      if (routesList != null) {
-        for (var $l = 0, $end = routesList.length - 1; $l <= $end; $l++) {
-          idx = $l;
-          itemObj = routesList[idx];
-          newRoute = $mod.TBVRoute.$create("Create$1");
-          newRoute.Path = "" + itemObj["path"];
-          newRoute.Component = "" + itemObj["component"];
-          if (itemObj.hasOwnProperty("beforeEnter")) {
-            newRoute.BeforeEnter = itemObj["beforeEnter"]}
-           else newRoute.BeforeEnter = null;
-          this.FRoutes.push(newRoute);
+    this.MountRoute = function (RouteToMount, ChildRouteToMount, CleanPath, FullHashPath) {
+      var cOpt = undefined;
+      var childOpt = undefined;
+      var childParams = undefined;
+      var nestedView = null;
+      cOpt = null;
+      if (RouteToMount.Component !== "") {
+        cOpt = (window.__BV_CORE__ && window.__BV_CORE__.components) ? window.__BV_CORE__.components[RouteToMount.Component.toLowerCase()] : null;
+      };
+      if (pas.System.Assigned(cOpt)) this.MountComponentIntoView(this.FRouterViewEl,RouteToMount.Component,cOpt,this.FCurrentRoute.Params,this.FCurrentRoute.Query);
+      if ((ChildRouteToMount != null) && (this.FRouterViewEl !== null)) {
+        nestedView = this.FRouterViewEl.querySelector("router-view");
+        if (nestedView !== null) {
+          childOpt = null;
+          if (ChildRouteToMount.Component !== "") {
+            childOpt = (window.__BV_CORE__ && window.__BV_CORE__.components) ? window.__BV_CORE__.components[ChildRouteToMount.Component.toLowerCase()] : null;
+          };
+          childParams = this.ParseParams(ChildRouteToMount.Path,CleanPath);
+          if (pas.System.Assigned(childOpt)) this.MountComponentIntoView(nestedView,ChildRouteToMount.Component,childOpt,childParams,this.FCurrentRoute.Query);
         };
       };
-      if (Options.hasOwnProperty("beforeEach")) {
-        this.FBeforeEach = Options["beforeEach"]}
-       else this.FBeforeEach = null;
-      this.FCurrentRoute = $mod.TBVRouteInfo.$create("Create$1");
-      window.addEventListener("hashchange",rtl.createSafeCallback(this,"HandleHashChange"));
-      return this;
+      if (pas.System.Assigned(this.FAfterEach)) {
+        let toR = { path: CleanPath, fullPath: FullHashPath, params: this.FCurrentRoute.Params, query: this.FCurrentRoute.Query, meta: RouteToMount.Meta };
+        let fromR = this.FCurrentRoute;
+        this.FAfterEach.call(null, toR, fromR);
+      };
+      if (window.__BV_DEVTOOLS_HOOK__) {
+        window.__BV_DEVTOOLS_HOOK__.emit('route:change', { path: CleanPath, component: RouteToMount.Component });
+      };
     };
-    this.Install = function (AppRoot) {
-      this.FAppRoot = AppRoot;
-      this.FRouterViewEl = AppRoot.querySelector("router-view");
-      if ((window.location.hash === "") || (window.location.hash === "#")) window.location.hash = "#/";
-      this.RenderCurrent();
-    };
-    this.RenderCurrent = function () {
-      var fullHash = "";
-      var cleanP = "";
-      var matchedRoute = null;
-      var compOptions = undefined;
-      var pageData = undefined;
-      var pParams = undefined;
+    this.MountComponentIntoView = function (ViewEl, CompTag, CompOpt, RouteParams, RouteQuery) {
       var navEl = null;
       var rootPageEl = null;
-      if (!(this.FRouterViewEl != null)) return;
-      fullHash = window.location.hash;
-      if (fullHash !== "") {
-        fullHash = pas.System.Copy(fullHash,2,fullHash.length)}
-       else fullHash = "/";
-      cleanP = this.ExtractPath(fullHash);
-      matchedRoute = this.MatchRoute(cleanP);
-      if (!(matchedRoute != null)) {
-        this.FRouterViewEl.innerHTML = "404 - Not Found";
-        return;
-      };
-      this.FCurrentRoute.FullPath = fullHash;
-      this.FCurrentRoute.HashPath = cleanP;
-      this.FCurrentRoute.Params = this.ParseParams(matchedRoute.Path,cleanP);
-      this.FCurrentRoute.Query = this.ParseQuery(fullHash);
-      this.FCurrentRoute.Name = matchedRoute.Component;
-      compOptions = pas.BVComponents.GetComponent(matchedRoute.Component);
-      if (!pas.System.Assigned(compOptions)) return;
+      var pageData = undefined;
+      if (!(ViewEl != null) || !pas.System.Assigned(CompOpt)) return;
       navEl = document.createElement("div");
-      navEl.innerHTML = "" + compOptions["template"];
+      navEl.innerHTML = "" + CompOpt["template"];
       rootPageEl = navEl.firstElementChild;
+      if (!(rootPageEl != null)) return;
       rootPageEl['bvManaged'] = true;
-      this.FRouterViewEl.innerHTML = "";
-      this.FRouterViewEl.appendChild(rootPageEl);
-      if (compOptions.hasOwnProperty("data")) {
-        pageData = compOptions["data"].apply(null,[])}
+      ViewEl.innerHTML = "";
+      ViewEl.appendChild(rootPageEl);
+      if (CompOpt.hasOwnProperty("data")) {
+        pageData = CompOpt["data"].apply(null,[])}
        else pageData = new Object();
-      pParams = this.FCurrentRoute.Params;
-      // Merge Params and Query into the page context
+      let pParams = RouteParams || {};
           Object.keys(pParams).forEach(function(k) { pageData[k] = pParams[k]; });
-          let q = this.FCurrentRoute.Query;
+          let q = RouteQuery || {};
           Object.keys(q).forEach(function(k) { pageData[k] = q[k]; });
-          
+      
           let pRef = window.__BV_CORE__.defineReactive(pageData);
-          
-          // Inject Stores and Providers
+          pRef['Router'] = this;
+          pRef['$router'] = this;
           if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
-          
-          if (compOptions.inject) {
-             compOptions.inject.forEach(function(k) {
+      
+          if (CompOpt.inject) {
+             CompOpt.inject.forEach(function(k) {
                 let val = (window.__BV_CORE__.rootData && window.__BV_CORE__.rootData.$provided) ? window.__BV_CORE__.rootData.$provided[k] : null;
                 if (val) pRef[k] = val;
              });
           }
       
-          // Setup Proxy logic (computed, methods)
-          if (compOptions.computed) { 
-             Object.keys(compOptions.computed).forEach(function(ck) { 
-               window.__BV_CORE__.defineComputed(pRef, ck, compOptions.computed[ck]); 
+          if (CompOpt.computed) { 
+             Object.keys(CompOpt.computed).forEach(function(ck) { 
+               window.__BV_CORE__.defineComputed(pRef, ck, CompOpt.computed[ck]); 
              }); 
           }
           
-          if (compOptions.methods) { 
-             Object.keys(compOptions.methods).forEach(function(k) { 
-               let rM = compOptions.methods[k];
+          if (CompOpt.methods) { 
+             Object.keys(CompOpt.methods).forEach(function(k) { 
+               let rM = CompOpt.methods[k];
                pageData[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
              }); 
           }
       
-          if (compOptions.created) compOptions.created.call(pRef);
+          if (CompOpt.created) CompOpt.created.call(pRef);
           
           let cD = {
             FData: pRef,
@@ -1128,22 +1427,164 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
             SetValue: function(k, val) { pRef[k] = val; }
           };
           
-          // Compile the newly mounted page template
-          window.__BV_CORE__.compile(rootPageEl, cD, compOptions.methods);
+          window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
       
-          // Lifecycle: updated monitor
           let stopEffect = window.__BV_CORE__.effect(function() {
              let dummy = JSON.stringify(pRef);
-             if (compOptions.updated) compOptions.updated.call(pRef);
+             if (CompOpt.updated) CompOpt.updated.call(pRef);
           });
       
-          if (compOptions.mounted) compOptions.mounted.call(pRef);
+          if (CompOpt.mounted) CompOpt.mounted.call(pRef);
       
-          // Handle Cleanup
           rootPageEl['bvUnmount'] = function() {
              if (stopEffect && typeof stopEffect === 'function') stopEffect();
-             if (compOptions.unmounted) compOptions.unmounted.call(pRef);
+             if (CompOpt.unmounted) CompOpt.unmounted.call(pRef);
           };
+    };
+    this.Create$1 = function (Options) {
+      var routesList = null;
+      var idx = 0;
+      var itemObj = undefined;
+      var newRoute = null;
+      this.FRoutes = new Array();
+      if (Options.hasOwnProperty("mode")) {
+        this.FMode = pas.SysUtils.LowerCase("" + Options["mode"])}
+       else this.FMode = "hash";
+      routesList = Options["routes"];
+      if (routesList != null) {
+        for (var $l = 0, $end = routesList.length - 1; $l <= $end; $l++) {
+          idx = $l;
+          itemObj = routesList[idx];
+          newRoute = $mod.TBVRoute.$create("Create$1");
+          newRoute.Path = "" + itemObj["path"];
+          if (itemObj.hasOwnProperty("component")) {
+            if (typeof itemObj.component === 'function') {
+              newRoute.AsyncComponent = itemObj.component;
+              newRoute.Component = '';
+            } else {
+              newRoute.Component = String(itemObj.component);
+            };
+          };
+          if (itemObj.hasOwnProperty("asyncComponent")) newRoute.AsyncComponent = itemObj["asyncComponent"];
+          if (itemObj.hasOwnProperty("beforeEnter")) {
+            newRoute.BeforeEnter = itemObj["beforeEnter"]}
+           else newRoute.BeforeEnter = null;
+          if (itemObj.hasOwnProperty("children")) {
+            newRoute.Children = itemObj["children"]}
+           else newRoute.Children = null;
+          if (itemObj.hasOwnProperty("meta")) {
+            newRoute.Meta = itemObj["meta"]}
+           else newRoute.Meta = new Object();
+          this.FRoutes.push(newRoute);
+        };
+      };
+      if (Options.hasOwnProperty("beforeEach")) {
+        this.FBeforeEach = Options["beforeEach"]}
+       else this.FBeforeEach = null;
+      if (Options.hasOwnProperty("afterEach")) {
+        this.FAfterEach = Options["afterEach"]}
+       else this.FAfterEach = null;
+      this.FCurrentRoute = $mod.TBVRouteInfo.$create("Create$1");
+      if (this.FMode === "history") {
+        window.addEventListener("popstate",rtl.createSafeCallback(this,"HandlePopState"));
+        let self = this;
+        document.addEventListener('click', function(ev) {
+          let t = ev.target;
+          while (t && t.tagName !== 'A') t = t.parentElement;
+          if (t && (t.hasAttribute('to') || t.hasAttribute('bv-link') || (t.getAttribute('href') && t.getAttribute('href').startsWith('/')))) {
+            let targetPath = t.getAttribute('to') || t.getAttribute('href');
+            if (targetPath && !targetPath.startsWith('http://') && !targetPath.startsWith('https://') && !targetPath.startsWith('//')) {
+              ev.preventDefault();
+              self.Push(targetPath);
+            }
+          }
+        });
+      } else window.addEventListener("hashchange",rtl.createSafeCallback(this,"HandleHashChange"));
+      return this;
+    };
+    this.Install = function (AppRoot) {
+      this.FAppRoot = AppRoot;
+      this.FRouterViewEl = AppRoot.querySelector("router-view");
+      if (this.FMode === "history") {
+        if (window.location.pathname === "") {
+          this.Push("/")}
+         else this.RenderCurrent();
+      } else {
+        if ((window.location.hash === "") || (window.location.hash === "#")) window.location.hash = "#/";
+        this.RenderCurrent();
+      };
+    };
+    this.Push = function (APath) {
+      if (this.FMode === "history") {
+        window.history.pushState(null, '', APath);
+        this.RenderCurrent();
+      } else window.location.hash = "#" + APath;
+    };
+    this.RenderCurrent = function () {
+      var fullHash = "";
+      var cleanP = "";
+      var matchedRoute = null;
+      var matchedChild = null;
+      if (!(this.FRouterViewEl != null)) return;
+      if (this.FMode === "history") {
+        fullHash = window.location.pathname + window.location.search;
+        cleanP = this.ExtractPath(window.location.pathname);
+      } else {
+        fullHash = window.location.hash;
+        if (fullHash !== "") {
+          fullHash = pas.System.Copy(fullHash,2,fullHash.length)}
+         else fullHash = "/";
+        cleanP = this.ExtractPath(fullHash);
+      };
+      matchedRoute = this.MatchRoute(cleanP);
+      if (!(matchedRoute != null)) {
+        this.FRouterViewEl.innerHTML = "404 - Not Found";
+        return;
+      };
+      matchedChild = null;
+      if (pas.System.Assigned(matchedRoute.Children)) matchedChild = this.MatchChildRoute(matchedRoute,cleanP);
+      if (pas.System.Assigned(this.FBeforeEach)) {
+        let toR = { path: cleanP, fullPath: fullHash, params: this.ParseParams(matchedRoute.Path, cleanP), query: this.ParseQuery(fullHash), meta: matchedRoute.Meta };
+        let fromR = this.FCurrentRoute;
+        let res = this.FBeforeEach.call(null, toR, fromR);
+        
+        if (res === false) return; // Navigation Aborted
+        if (typeof res === 'string') {
+          this.Push(res);
+          return;
+        };
+      };
+      if (pas.System.Assigned(matchedRoute.BeforeEnter)) {
+        let r = matchedRoute.BeforeEnter.call(null);
+        if (r === false) return;
+        if (typeof r === 'string') {
+          this.Push(r);
+          return;
+        };
+      };
+      this.FCurrentRoute.FullPath = fullHash;
+      this.FCurrentRoute.HashPath = cleanP;
+      this.FCurrentRoute.Params = this.ParseParams(matchedRoute.Path,cleanP);
+      this.FCurrentRoute.Query = this.ParseQuery(fullHash);
+      this.FCurrentRoute.Name = matchedRoute.Component;
+      this.FCurrentRoute.Meta = matchedRoute.Meta;
+      if (pas.System.Assigned(matchedRoute.AsyncComponent)) {
+        let self = this;
+        let mRoute = matchedRoute;
+        let mChild = matchedChild;
+        let cP = cleanP;
+        let fH = fullHash;
+        Promise.resolve(mRoute.AsyncComponent()).then(function(mod) {
+          let comp = (mod && mod.default) ? mod.default : mod;
+          if (typeof comp === 'object') {
+            let tName = comp.name || ('async-' + Math.random().toString(36).substr(2, 6));
+            if (!window.__BV_CORE__.components) window.__BV_CORE__.components = {};
+            window.__BV_CORE__.components[tName.toLowerCase()] = comp;
+            mRoute.Component = tName;
+          }
+          self.MountRoute(mRoute, mChild, cP, fH);
+        });
+      } else this.MountRoute(matchedRoute,matchedChild,cleanP,fullHash);
     };
   });
 });
@@ -1266,18 +1707,59 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
   "use strict";
   var $mod = this;
   this.InitDevTools = function () {
-    console.log("%c BlaiseVue DevTools ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v1.3.0-dev");
+    console.log("%c BlaiseVue DevTools 2.0 ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v2.0-pro");
+    
+        // Initialize global DevTools Hook for browser extensions and external inspectors
+        if (!window.__BV_DEVTOOLS_HOOK__) {
+          window.__BV_DEVTOOLS_HOOK__ = {
+            version: "2.0.0",
+            listeners: {},
+            events: [],
+            snapshots: [],
+            on: function(event, fn) {
+              if (!this.listeners[event]) this.listeners[event] = [];
+              this.listeners[event].push(fn);
+            },
+            emit: function(event, data) {
+              let entry = { time: new Date().toLocaleTimeString(), type: event, data: data };
+              this.events.push(entry);
+              if (this.events.length > 200) this.events.shift();
+              if (this.listeners[event]) {
+                this.listeners[event].forEach(function(fn) { try { fn(entry); } catch(e){} });
+              }
+              if (this.listeners['*']) {
+                this.listeners['*'].forEach(function(fn) { try { fn(entry); } catch(e){} });
+              }
+            },
+            getComponentTree: function() {
+              let roots = [];
+              let els = document.querySelectorAll('[data-bv-component]');
+              els.forEach(function(el) {
+                roots.push({
+                  tag: el.getAttribute('data-bv-component'),
+                  state: el['__bv_instance_data__'] ? Object.assign({}, el['__bv_instance_data__']) : {}
+                });
+              });
+              return roots;
+            },
+            recordSnapshot: function(label) {
+              let snap = { label: label || ('Snapshot ' + (this.snapshots.length + 1)), time: Date.now(), tree: this.getComponentTree() };
+              this.snapshots.push(snap);
+              return snap;
+            }
+          };
+        }
         
         // Inject the visual overlay styles
         let s = document.createElement('style');
         s.innerHTML = `
-          .bv-devtools-panel { position: fixed; bottom: 10px; right: 10px; z-index: 9999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: #ecf0f1; border-radius: 8px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 220px; transition: opacity 0.3s; opacity: 0.8; }
-          .bv-devtools-panel:hover { opacity: 1; }
-          .bv-dt-header { font-size: 11px; font-weight: bold; border-bottom: 1px solid #34495e; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; }
-          .bv-dt-tag { background: #41b883; color: #fff; padding: 1px 4px; border-radius: 3px; font-size: 9px; }
-          .bv-dt-stat { font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; }
-          .bv-dt-live-blob { width: 8px; height: 8px; background: #41b883; border-radius: 50%; display: inline-block; animation: bvdt-pulse 1s infinite; }
-          @keyframes bvdt-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+          .bv-devtools-panel { position: fixed; bottom: 10px; right: 10px; z-index: 9999; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e293b; color: #f8fafc; border-radius: 10px; padding: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); width: 260px; font-size: 12px; border: 1px solid #334155; }
+          .bv-dt-header { font-weight: bold; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+          .bv-dt-tag { background: #10b981; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+          .bv-dt-stat { margin-top: 5px; display: flex; justify-content: space-between; color: #cbd5e1; }
+          .bv-dt-live-blob { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: bvdt-pulse 1s infinite; vertical-align: middle; }
+          .bv-dt-timeline { max-height: 80px; overflow-y: auto; margin-top: 8px; border-top: 1px solid #334155; padding-top: 5px; font-family: monospace; font-size: 10px; color: #94a3b8; }
+          @keyframes bvdt-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
         `;
         document.head.appendChild(s);
     
@@ -1287,16 +1769,23 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
         p.className = 'bv-devtools-panel';
         p.innerHTML = `
            <div class="bv-dt-header">
-             <span>BLAISEVUE 🛡️</span>
-             <span class="bv-dt-tag">DEV MODE</span>
+             <span>BlaiseVue 🛡️</span>
+             <span class="bv-dt-tag">v2.0 DEV</span>
            </div>
            <div class="bv-dt-stat">
-             <span>Status:</span>
+             <span>Reactivity:</span>
              <span>Active <i class="bv-dt-live-blob"></i></span>
            </div>
            <div class="bv-dt-stat" id="bv-com-count">
              <span>Components:</span>
              <span>0</span>
+           </div>
+           <div class="bv-dt-stat" id="bv-hoisted-count">
+             <span>Static Hoisted:</span>
+             <span>0</span>
+           </div>
+           <div class="bv-dt-timeline" id="bv-dt-events">
+             <div>[Ready] DevTools hook listening</div>
            </div>
         `;
         document.body.appendChild(p);
@@ -1306,7 +1795,20 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
            let count = Object.keys(window.__BV_CORE__.components || {}).length;
            let el = document.getElementById('bv-com-count');
            if (el) el.querySelector('span:last-child').innerText = count;
+           let hEl = document.getElementById('bv-hoisted-count');
+           if (hEl) hEl.querySelector('span:last-child').innerText = window.__BV_CORE__.hoistedCount || 0;
         }, 1000);
+    
+        // Timeline event logger
+        window.__BV_DEVTOOLS_HOOK__.on('*', function(ev) {
+           let list = document.getElementById('bv-dt-events');
+           if (list) {
+              let line = document.createElement('div');
+              line.innerText = '[' + ev.time.split(' ')[0] + '] ' + ev.type;
+              list.prepend(line);
+              while (list.children.length > 8) list.removeChild(list.lastChild);
+           }
+        });
   };
   $mod.$init = function () {
     $mod.InitDevTools();
@@ -1744,7 +2246,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">🛡️ BlaiseVue 2.0 Pro: Novas Fronteiras</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">🛡️ BlaiseVue 1.0 Pro: Novas Fronteiras</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -1850,6 +2352,222 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
+  };
+});
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBtn = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot></slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["variant"] = "primary";
+      d["size"] = "md";
+      d["disabled"] = false;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["handleClick"] = function (_this) {
+      if (!!(_this["disabled"] == false)) {
+        _this.$emit('click');
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      Result = "bui-btn-" + ("" + _this["variant"]) + " bui-btn-" + ("" + _this["size"]);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-btn",comp);
+  };
+});
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-card">' + '    <div class="bui-card-header" b-if="title">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="bui-card-body">' + "      <slot></slot>" + "    </div>" + '    <div class="bui-card-footer" b-if="hasFooter">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["title"] = "";
+      d["hasFooter"] = false;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-card",comp);
+  };
+});
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDataGrid = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in columns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems">' + '          <td b-for="col in columns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["items"] = new Array();
+      d["columns"] = new Array();
+      d["searchQuery"] = "";
+      d["sortKey"] = "";
+      d["sortAsc"] = true;
+      d["currentPage"] = 1;
+      d["pageSize"] = 5;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["handleSearch"] = function (_this) {
+      _this["currentPage"] = 1;
+    };
+    m["sortBy"] = function (_this, key) {
+      if (_this["sortKey"] == key) {
+        _this["sortAsc"] = !!(_this["sortAsc"] == false)}
+       else {
+        _this["sortKey"] = key;
+        _this["sortAsc"] = true;
+      };
+    };
+    m["prevPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
+    };
+    m["nextPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["totalItems"] = function (_this) {
+      var Result = undefined;
+      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      return Result;
+    };
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      let list = this.items || [];
+      let q = (this.searchQuery || '').toLowerCase();
+      if (!q) return list;
+      return list.filter(function(item) {
+        return Object.values(item).some(function(v) {
+          return String(v).toLowerCase().indexOf(q) !== -1;
+        });
+      });
+      return Result;
+    };
+    comp["computed"]["totalPages"] = function (_this) {
+      var Result = undefined;
+      let count = this.filteredItems.length;
+      Result = Math.max(1, Math.ceil(count / this.pageSize));
+      return Result;
+    };
+    comp["computed"]["pagedItems"] = function (_this) {
+      var Result = undefined;
+      let list = this.filteredItems || [];
+      let start = (this.currentPage - 1) * this.pageSize;
+      return list.slice(start, start + this.pageSize);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-data-grid",comp);
+    pas.BVComponents.RegisterComponent("bv-datagrid",comp);
+  };
+});
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVInput = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" b-if="label">{{ label }}</label>' + "    <input " + '      :type="type" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder"' + '      :value="value"' + '      @input="handleInput"' + "    />" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["label"] = "";
+      d["placeholder"] = "";
+      d["type"] = "text";
+      d["value"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      let val = (ev && ev.target) ? ev.target.value : '';
+      this.value = val;
+      this.$emit('input', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-input",comp);
+  };
+});
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVModal = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-if="show" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" @click="close">Fechar</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["show"] = false;
+      d["title"] = "Modal";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["close"] = function (_this) {
+      _this["show"] = false;
+      _this.$emit('close');
+    };
+    m["handleBackdropClick"] = function (_this) {
+      _this.close();
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-modal",comp);
+  };
+});
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVToast = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-toast" b-if="show">' + "    <span>{{ message }}</span>" + '    <button class="bui-btn bui-btn-sm" @click="dismiss">OK</button>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["show"] = false;
+      d["message"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["dismiss"] = function (_this) {
+      _this["show"] = false;
+      _this.$emit('dismiss');
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
 rtl.module("uBAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -2853,7 +3571,7 @@ rtl.module("uCStacked",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("c-stacked",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBAccordion","uBAlert","uBBadge","uBBreadcrumb","uBBreadcrumbItem","uBBtn","uBCard","uBFormSelect","uBIcon","uBInput","uBInputGroup","uBListGroup","uBListGroupItem","uBModal","uBNavbar","uBNavItem","uBPagination","uBProgress","uBSpinner","uBTab","uBTabs","uBToast","uCArea","uCBar","uCBaseChart","uCBubble","uCDoughnut","uCLine","uCMixed","uCPie","uCPolarArea","uCRadar","uCScatter","uCStacked"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVBtn","uBVCard","uBVDataGrid","uBVInput","uBVModal","uBVToast","uBAccordion","uBAlert","uBBadge","uBBreadcrumb","uBBreadcrumbItem","uBBtn","uBCard","uBFormSelect","uBIcon","uBInput","uBInputGroup","uBListGroup","uBListGroupItem","uBModal","uBNavbar","uBNavItem","uBPagination","uBProgress","uBSpinner","uBTab","uBTabs","uBToast","uCArea","uCBar","uCBaseChart","uCBubble","uCDoughnut","uCLine","uCMixed","uCPie","uCPolarArea","uCRadar","uCScatter","uCStacked"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -2903,6 +3621,18 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uShowcase.Register_uShowcase();
     console.log("[Init] Registering uUserProfile...");
     pas.uUserProfile.Register_uUserProfile();
+    console.log("[Init] Registering uBVBtn...");
+    pas.uBVBtn.Register_uBVBtn();
+    console.log("[Init] Registering uBVCard...");
+    pas.uBVCard.Register_uBVCard();
+    console.log("[Init] Registering uBVDataGrid...");
+    pas.uBVDataGrid.Register_uBVDataGrid();
+    console.log("[Init] Registering uBVInput...");
+    pas.uBVInput.Register_uBVInput();
+    console.log("[Init] Registering uBVModal...");
+    pas.uBVModal.Register_uBVModal();
+    console.log("[Init] Registering uBVToast...");
+    pas.uBVToast.Register_uBVToast();
     console.log("[Init] Registering uBAccordion...");
     pas.uBAccordion.Register_uBAccordion();
     console.log("[Init] Registering uBAlert...");
@@ -2972,14 +3702,14 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uCStacked...");
     pas.uCStacked.Register_uCStacked();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.0</strong>' + '      <div class="nav-links">' + '        <a href="#/">Home</a>' + '        <a href="#/about">About</a>' + '        <a href="#/pro">Pro Features 🛡️</a>' + '        <a href="#/form">Form</a>' + '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 1.0</strong>' + '      <div class="nav-links">' + '        <a href="#/">Home</a>' + '        <a href="#/about">About</a>' + '        <a href="#/pro">Pro Features 🛡️</a>' + '        <a href="#/form">Form</a>' + '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
-    data["mensagem"] = "BlaiseVue SPA v2.0 PRO";
+    data["mensagem"] = "BlaiseVue SPA v1.0 PRO";
     methods = new Object();
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
-      _this["$store"]["appVersion"] = "2.0.0-PRO";
+      _this["$store"]["appVersion"] = "1.0.0-PRO";
       _this["$store"]["user"] = "DevMaster 🏆";
     };
     comp["provide"] = function (_this) {

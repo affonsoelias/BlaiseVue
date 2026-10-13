@@ -138,7 +138,6 @@ begin
     end;
 
 ;
-
   RegisterComponent('c-base-chart', comp);
 end;
 

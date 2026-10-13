@@ -115,7 +115,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('showcase-page', comp);
 end;
 

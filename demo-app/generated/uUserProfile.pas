@@ -77,7 +77,6 @@ begin
     end;
 
 ;
-
   RegisterComponent('user-profile-page', comp);
 end;
 

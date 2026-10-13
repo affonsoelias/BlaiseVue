@@ -214,7 +214,6 @@ begin
     end;
 
     ;
-
   RegisterComponent('lib-bootstrap-page', comp);
 end;
 

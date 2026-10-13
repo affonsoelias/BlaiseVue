@@ -13,30 +13,77 @@ program bv;
 }
 
 {$mode objfpc}{$H+}
+{$IFDEF MSWINDOWS}
+{$R templates.res}
+{$ENDIF}
 
 uses
   SysUtils, Classes, StrUtils, DateUtils, Process, Sockets,
   fphttpclient, openssl, zipper, fpjson, jsonparser;
 
 // =====================================================================
-//  UTILITY FUNCTIONS
+function ReadFileToString(const FileName: string): string; forward;
+
+//  NATIVE RESOURCE & TEMPLATE ENGINE
 // =====================================================================
+
+{ Loads an embedded binary string resource by name (Windows RCDATA) }
+function LoadResourceString(const ResName: string): string;
+var
+  RS: TResourceStream;
+  SS: TStringStream;
+begin
+  Result := '';
+  try
+    RS := TResourceStream.Create(HInstance, ResName, PChar(10));
+    try
+      SS := TStringStream.Create('');
+      try
+        SS.CopyFrom(RS, RS.Size);
+        Result := SS.DataString;
+      finally
+        SS.Free;
+      end;
+    finally
+      RS.Free;
+    end;
+  except
+    Result := '';
+  end;
+end;
 
 { Returns the absolute path to the BlaiseVue SDK root }
 function GetSDKPath: string;
 var
-  ExeDir, Parent: string;
+  ExePath, ExeDir, Parent: string;
 begin
-  ExeDir := ExtractFilePath(ParamStr(0));
+  ExePath := ExpandFileName(ParamStr(0));
+  ExeDir := ExtractFilePath(ExePath);
   Parent := ExtractFilePath(ExcludeTrailingPathDelimiter(ExeDir));
   
-  // If we are running inside the 'bin' directory, the SDK root is one level up.
-  // Otherwise, we assume we are running from the project root.
   if LowerCase(ExtractFileName(ExcludeTrailingPathDelimiter(ExeDir))) = 'bin' then
     Result := Parent
   else
     Result := ExeDir;
 end;
+
+{ Loads scaffolding template from native resources or fallback templates/ folder }
+function GetTemplate(const ResName, FileName: string): string;
+var
+  DiskFile: string;
+begin
+  Result := LoadResourceString(ResName);
+  if Result = '' then
+  begin
+    DiskFile := GetSDKPath + 'templates' + DirectorySeparator + FileName;
+    if FileExists(DiskFile) then
+      Result := ReadFileToString(DiskFile);
+  end;
+end;
+
+// =====================================================================
+//  UTILITY FUNCTIONS
+// =====================================================================
 
 { Returns the path to the framework core unit folder }
 function GetCorePath: string;
@@ -76,7 +123,7 @@ begin
       OSFolder := 'pas2js-darwin-x86_64-3.2.0';
     {$ENDIF}
   {$ENDIF}
-  Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + '*' + DirectorySeparator + 'src';
+  Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
 end;
 
 function GetRTLPath: string;
@@ -112,6 +159,18 @@ function PascalToKebab(const S: string): string;
 var
   i: Integer;
 begin
+  if (Length(S) >= 2) and (Copy(S, 1, 2) = 'BV') then
+  begin
+    Result := 'bv';
+    for i := 3 to Length(S) do
+    begin
+      if (S[i] >= 'A') and (S[i] <= 'Z') then
+        Result := Result + '-';
+      Result := Result + LowerCase(S[i]);
+    end;
+    Exit;
+  end;
+
   Result := '';
   for i := 1 to Length(S) do
   begin
@@ -584,6 +643,11 @@ begin
         Val := 'False'
       else
         Val := '''''';
+    end
+    else
+    begin
+      if Trim(Val) = '[]' then Val := 'TJSArray.new'
+      else if Trim(Val) = '{}' then Val := 'TJSObject.new';
     end;
     Result := Result + '    d[''' + Fields[i].Name + '''] := ' + Val + ';' + #10;
   end;
@@ -919,8 +983,10 @@ begin
     GenerateComputedCode(Parsed.ComputedCode) +
     GenerateProvideCode(Parsed.ProvideCode) +
     GenerateInjectCode(Parsed.InjectCode) +
-    #10 +
-    '  RegisterComponent(''' + TagName + ''', comp);' + #10 +
+    '  RegisterComponent(''' + TagName + ''', comp);' + #10;
+  if TagName = 'bv-data-grid' then
+    Result := Result + '  RegisterComponent(''bv-datagrid'', comp);' + #10;
+  Result := Result +
     'end;' + #10 +
     #10 +
     'end.' + #10;
@@ -929,7 +995,7 @@ end;
 { Generates the root application unit (app.bv) which handles global state and routing }
 function GenerateAppUnit(const Parsed: TBVParsed; const AllUnits: TStringList): string;
 var
-  UsesLine, RouteCode, DataCode: string;
+  UsesLine, RouteCode, DataCode, Val: string;
   i: Integer;
 begin
   UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools';
@@ -950,8 +1016,13 @@ begin
   begin
     DataCode := '  data := TJSObject.new;' + #10;
     for i := 0 to High(Parsed.DataFields) do
+    begin
+      Val := Parsed.DataFields[i].DefaultValue;
+      if Trim(Val) = '[]' then Val := 'TJSArray.new'
+      else if Trim(Val) = '{}' then Val := 'TJSObject.new';
       DataCode := DataCode + '  data[''' + Parsed.DataFields[i].Name + '''] := ' +
-        Parsed.DataFields[i].DefaultValue + ';' + #10;
+        Val + ';' + #10;
+    end;
   end
   else
     DataCode := '  data := TJSObject.new;' + #10;
@@ -1205,147 +1276,46 @@ begin
     ForceDir(Base + 'tests');
 
     // Minimal public/index.html
-    WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html',
-      '<!DOCTYPE html>' + #10 +
-      '<html>' + #10 +
-      '<head>' + #10 +
-      '  <meta charset="utf-8"/>' + #10 +
-      '  <title>' + ProjectName + '</title>' + #10 +
-      '  <script type="application/javascript" src="js/rtl.js"></script>' + #10 +
-      '  <script type="application/javascript" src="js/main.js"></script>' + #10 +
-      '</head>' + #10 +
-      '<body>' + #10 +
-      '  <div id="app"></div>' + #10 +
-      '  <script>rtl.run("program");</script>' + #10 +
-      '</body>' + #10 +
-      '</html>' + #10
-    );
+    Content := GetTemplate('TPL_INDEX_HTML', 'index.html');
+    Content := StringReplace(Content, '{{PROJECT_NAME}}', ProjectName, [rfReplaceAll]);
+    WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html', Content);
 
     // Minimal src/app.bv
-    WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv',
-      '<template>' + #10 +
-      '  <div>' + #10 +
-      '    <nav>' + #10 +
-      '      <strong>BlaiseVue</strong>' + #10 +
-      '      <a href="#/">Home</a>' + #10 +
-      '      <a href="#/about">About</a>' + #10 +
-      '    </nav>' + #10 +
-      '    <h1>{{ message }}</h1>' + #10 +
-      '    <router-view></router-view>' + #10 +
-      '  </div>' + #10 +
-      '</template>' + #10 +
-      #10 +
-      '<script>' + #10 +
-      '  data:' + #10 +
-      '    message: string = ''Welcome to BlaiseVue!'';' + #10 +
-      #10 +
-      '  router:' + #10 +
-      '    routes:' + #10 +
-      '      ''/'': ''home-page'';' + #10 +
-      '      ''/about'': ''about-page'';' + #10 +
-      '</script>' + #10 +
-      #10 +
-      '<style>' + #10 +
-      '  nav { background: #2c3e50; padding: 10px 20px; }' + #10 +
-      '  nav a { color: #ecf0f1; text-decoration: none; margin-left: 15px; }' + #10 +
-      '  nav strong { color: #42b883; font-size: 18px; }' + #10 +
-      '</style>' + #10
-    );
+    Content := GetTemplate('TPL_APP_BV', 'app.bv');
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv', Content);
 
     // Minimal src/views/Home.bv
-    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv',
-      '<template>' + #10 +
-      '  <div>' + #10 +
-      '    <h2>Homepage</h2>' + #10 +
-      '    <p>{{ description }}</p>' + #10 +
-      '    <button @click="greet">Click here</button>' + #10 +
-      '  </div>' + #10 +
-      '</template>' + #10 +
-      #10 +
-      '<script>' + #10 +
-      '  data:' + #10 +
-      '    description: string = ''Welcome to my BlaiseVue app!'';' + #10 +
-      #10 +
-      '  methods:' + #10 +
-      '    procedure greet;' + #10 +
-      '    begin' + #10 +
-      '      window.alert(''Hello from BlaiseVue!'');' + #10 +
-      '    end;' + #10 +
-      '</script>' + #10 +
-      #10 +
-      '<style>' + #10 +
-      '  h2 { color: #3498db; }' + #10 +
-      '</style>' + #10
-    );
+    Content := GetTemplate('TPL_HOME_BV', 'Home.bv');
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv', Content);
 
     // Minimal src/views/About.bv
-    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv',
-      '<template>' + #10 +
-      '  <div>' + #10 +
-      '    <h2>About</h2>' + #10 +
-      '    <p>This project was created with BlaiseVue PRO.</p>' + #10 +
-      '  </div>' + #10 +
-      '</template>' + #10 +
-      #10 +
-      '<script>' + #10 +
-      '</script>' + #10 +
-      #10 +
-      '<style>' + #10 +
-      '  h2 { color: #27ae60; }' + #10 +
-      '</style>' + #10
-    );
+    Content := GetTemplate('TPL_ABOUT_BV', 'About.bv');
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv', Content);
   end;
 
   // --- Ensure Standalone Infrastructure Files ---
 
   // Ensure app.cfg exists
   if not FileExists(Base + 'app.cfg') then
-    WriteStringToFile(Base + 'app.cfg',
-      '-l' + #10 +
-      '-vwnh' + #10 +
-      '-Sc' + #10 +
-      '-Tbrowser' + #10 +
-      '-Jc' + #10 +
-      '-Fugenerated' + #10
-    );
+  begin
+    Content := GetTemplate('TPL_APP_CFG', 'app.cfg');
+    WriteStringToFile(Base + 'app.cfg', Content);
+  end;
 
   // Ensure package.json exists
   if not FileExists(Base + 'package.json') then
-    WriteStringToFile(Base + 'package.json',
-      '{' + #10 +
-      '  "name": "' + ProjectName + '",' + #10 +
-      '  "version": "1.0.0",' + #10 +
-      '  "type": "module",' + #10 +
-      '  "scripts": {' + #10 +
-      '    "test": "vitest"' + #10 +
-      '  },' + #10 +
-      '  "devDependencies": {' + #10 +
-      '    "vitest": "^3.0.0",' + #10 +
-      '    "jsdom": "^26.0.0"' + #10 +
-      '  }' + #10 +
-      '}'
-    );
+  begin
+    Content := GetTemplate('TPL_PACKAGE_JSON', 'package.json');
+    Content := StringReplace(Content, '{{PROJECT_NAME}}', ProjectName, [rfReplaceAll]);
+    WriteStringToFile(Base + 'package.json', Content);
+  end;
 
   // Ensure tests/setup.js exists
   if not FileExists(Base + 'tests' + DirectorySeparator + 'setup.js') then
   begin
     ForceDir(Base + 'tests');
-    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js',
-      'import { readFileSync } from ''fs'';' + #10 +
-      'import { resolve } from ''path'';' + #10 +
-      #10 +
-      '// Mock environment' + #10 +
-      'globalThis.window = globalThis;' + #10 +
-      'if (typeof document !== ''undefined'') globalThis.document = document;' + #10 +
-      'if (typeof navigator !== ''undefined'') globalThis.navigator = navigator;' + #10 +
-      #10 +
-      '// Load Pascal RTL' + #10 +
-      'const rtlContent = readFileSync(resolve(process.cwd(), ''rtl.js''), ''utf8'');' + #10 +
-      '// Use global eval to let ''var pas'' and ''var rtl'' become globals' + #10 +
-      '(0, eval)(rtlContent);' + #10 +
-      #10 +
-      'if (!globalThis.__BV_CORE__) globalThis.__BV_CORE__ = {};' + #10
-    );
+    Content := GetTemplate('TPL_SETUP_JS', 'setup.js');
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js', Content);
   end;
 
   // Ensure vitest.config.js exists
@@ -1746,7 +1716,7 @@ end;
 
 procedure CmdNewComponent(const CompName: string);
 var
-  CompPath, TargetPath: string;
+  CompPath, TargetPath, Content: string;
 begin
   CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
   TargetPath := CompPath + CompName + '.bv';
@@ -1759,22 +1729,9 @@ begin
 
   ForceDir(CompPath);
 
-  WriteStringToFile(TargetPath,
-    '<template>' + #10 +
-    '  <div>' + #10 +
-    '    <h3>' + CompName + '</h3>' + #10 +
-    '    <p>{{ info }}</p>' + #10 +
-    '  </div>' + #10 +
-    '</template>' + #10 +
-    #10 +
-    '<script>' + #10 +
-    '  data:' + #10 +
-    '    info: string = ''Component ' + CompName + ' created!'';' + #10 +
-    '</script>' + #10 +
-    #10 +
-    '<style>' + #10 +
-    '</style>' + #10
-  );
+  Content := GetTemplate('TPL_COMPONENT_BV', 'component.bv');
+  Content := StringReplace(Content, '{{COMP_NAME}}', CompName, [rfReplaceAll]);
+  WriteStringToFile(TargetPath, Content);
 
   WriteLn('Component created: src/components/', CompName, '.bv');
   WriteLn('HTML Tag: <', PascalToKebab(CompName), '>');
@@ -1814,7 +1771,7 @@ end;
 
 procedure CmdNewView(const ViewName: string);
 var
-  ViewPath, TargetPath: string;
+  ViewPath, TargetPath, Content: string;
 begin
   ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
   TargetPath := ViewPath + ViewName + '.bv';
@@ -1827,23 +1784,10 @@ begin
 
   ForceDir(ViewPath);
 
-  WriteStringToFile(TargetPath,
-    '<template>' + #10 +
-    '  <div class="' + PascalToKebab(ViewName) + '-page">' + #10 +
-    '    <h2>' + ViewName + ' View</h2>' + #10 +
-    '    <p>This is the new ' + ViewName + ' view.</p>' + #10 +
-    '  </div>' + #10 +
-    '</template>' + #10 +
-    #10 +
-    '<script>' + #10 +
-    '  data:' + #10 +
-    '    title: string = ''' + ViewName + ''';' + #10 +
-    '</script>' + #10 +
-    #10 +
-    '<style>' + #10 +
-    '  .' + PascalToKebab(ViewName) + '-page { padding: 20px; }' + #10 +
-    '</style>' + #10
-  );
+  Content := GetTemplate('TPL_VIEW_BV', 'view.bv');
+  Content := StringReplace(Content, '{{VIEW_NAME}}', ViewName, [rfReplaceAll]);
+  Content := StringReplace(Content, '{{VIEW_KEBAB}}', PascalToKebab(ViewName), [rfReplaceAll]);
+  WriteStringToFile(TargetPath, Content);
 
   WriteLn('View created: src/views/', ViewName, '.bv');
   WriteLn('HTML Tag (internal): <', PascalToKebab(ViewName), '-page>');
@@ -2099,7 +2043,7 @@ end;
 
 procedure CmdNewTest(const TestName: string);
 var
-  TestPath, TargetPath: string;
+  TestPath, TargetPath, Content: string;
 begin
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
   TargetPath := TestPath + TestName + '.test.pas';
@@ -2112,26 +2056,9 @@ begin
 
   ForceDir(TestPath);
 
-  WriteStringToFile(TargetPath,
-    'program ' + TestName + '_test;' + #10 +
-    #10 +
-    '{$mode objfpc}' + #10 +
-    #10 +
-    'uses JS, Web, BVTestUtils;' + #10 +
-    #10 +
-    'var' + #10 +
-    '  Wrapper: TWrapper;' + #10 +
-    #10 +
-    'begin' + #10 +
-    '  Describe(''' + TestName + ''', procedure' + #10 +
-    '    begin' + #10 +
-    '       It(''should work'', procedure' + #10 +
-    '         begin' + #10 +
-    '            Expect(True).ToEqual(True);' + #10 +
-    '         end);' + #10 +
-    '    end);' + #10 +
-    'end.' + #10
-  );
+  Content := GetTemplate('TPL_TEST_PAS', 'test.pas');
+  Content := StringReplace(Content, '{{TEST_NAME}}', TestName, [rfReplaceAll]);
+  WriteStringToFile(TargetPath, Content);
 
   WriteLn('Test created: tests/', TestName, '.test.pas');
 end;
@@ -2297,15 +2224,28 @@ end;
 
 procedure CmdServe;
 begin
-  WriteLn('=== BlaiseVue Dev Server (Static Server) ===');
-  WriteLn('  Logs: Showing server access logs (HTTP)');
-  WriteLn('  Local: http://localhost:8080');
-  WriteLn('');
-  {$IFDEF WINDOWS}
-  ExecuteProcess('cmd', '/c npx http-server dist -p 8080 -c-1');
-  {$ELSE}
-  ExecuteProcess('npx', 'http-server dist -p 8080 -c-1');
-  {$ENDIF}
+  WriteLn('=== BlaiseVue 2.0 Dev Server (HMR Enabled) ===');
+  if FileExists(GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js') then
+  begin
+    WriteLn('  HMR WebSocket: ws://localhost:8081');
+    WriteLn('  Local HTTP:    http://localhost:8080');
+    WriteLn('');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c node "' + GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js"');
+    {$ELSE}
+    ExecuteProcess('node', '"' + GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('  Local: http://localhost:8080');
+    WriteLn('');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx http-server dist -p 8080 -c-1');
+    {$ELSE}
+    ExecuteProcess('npx', 'http-server dist -p 8080 -c-1');
+    {$ENDIF}
+  end;
 end;
 
 procedure CmdRunPreview;
@@ -2326,7 +2266,7 @@ end;
 
 function GenerateComponentJS(const UnitName, TagName: string; const Parsed: TBVParsed): string;
 var
-  Tpl, Style, DataCode, MethodsCode, CreatedCode, MountedCode, UpdatedCode, WatchCode, ComputedCode, ProvideCode, InjectCode: string;
+  Tpl, Style, DataCode: string;
   i: Integer;
 begin
   Tpl := StringReplace(Parsed.Template, #10, ' ', [rfReplaceAll]);
@@ -2342,14 +2282,6 @@ begin
   end;
   DataCode := DataCode + ' }; }';
 
-  // Note: Standard methods implementation for JS transformer is tricky because they are written in Pascal.
-  // HOWEVER, for Vitest to work with .bv imports, we either:
-  // A) Need to transpile the whole thing through pas2js (Slow)
-  // B) Just provide the structure and let the transformer handle the script separately.
-  // The user wanted a transformer that uses the compiler.
-
-  // Let's stick to the .pas -> .js pipeline for tests for now as it's more robust,
-  // but I'll add the 'compile-sfc' to help the transformer if they want to go that way.
   Result := '/* Generated by BlaiseVue CLI */' + #10 +
             'export default {' + #10 +
             '  template: `' + Parsed.Template + '`,' + #10 +
@@ -2373,7 +2305,7 @@ var
   SR: TSearchRec;
   TestFiles: TStringList;
   i: Integer;
-  GenPath, TestPath, UnitName, CorePath: string;
+  GenPath, TestPath, UnitName, CorePath, RTLFile: string;
 begin
   WriteLn('=== BlaiseVue Unit Testing ===');
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator;
@@ -2381,6 +2313,11 @@ begin
   CorePath := GetCorePath;
   
   ForceDir(GenPath);
+
+  // Ensure rtl.js is accessible in project root for test runner
+  RTLFile := GetRTLPath;
+  if (RTLFile <> '') and not FileExists(GetCurrentDir + DirectorySeparator + 'rtl.js') then
+    WriteStringToFile(GetCurrentDir + DirectorySeparator + 'rtl.js', ReadFileToString(RTLFile));
   
   TestFiles := TStringList.Create;
   try
@@ -2407,9 +2344,10 @@ begin
     begin
        UnitName := ChangeFileExt(ExtractFileName(TestFiles[i]), '.js');
        WriteLn('  - ', ExtractFileName(TestFiles[i]));
-       ExecuteProcess('cmd', '/c "' + GetPas2JSPath + '" "@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" "' + TestFiles[i] + '" -o"' + GenPath + UnitName + '" -O- -v > "' + GenPath + 'pas2js.log"');
-       // NEW: Add rtl.run() for Vitest to execute the program module code
-       WriteStringToFile(GenPath + UnitName, ReadFileToString(GenPath + UnitName) + #10 + 'rtl.run();' + #10);
+       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" "' + TestFiles[i] + '" -o"' + GenPath + UnitName + '" -O-');
+       // Add rtl.run() for Vitest to execute the program module code
+       if FileExists(GenPath + UnitName) then
+         WriteStringToFile(GenPath + UnitName, ReadFileToString(GenPath + UnitName) + #10 + 'rtl.run();' + #10);
     end;
     
     WriteLn('');
@@ -2417,9 +2355,9 @@ begin
     WriteLn('');
     
     {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c npm test');
+    ExecuteProcess('cmd', '/c npx vitest run');
     {$ELSE}
-    ExecuteProcess('npm', 'test');
+    ExecuteProcess('npx', 'vitest run');
     {$ENDIF}
     
   finally
@@ -2437,7 +2375,7 @@ begin
   if ParamCount < 1 then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v1.0 PRO');
+    WriteLn('  BlaiseVue CLI v2.0 PRO');
     WriteLn('  ======================');
     WriteLn('');
     WriteLn('  Usage:');
@@ -2445,7 +2383,7 @@ begin
     WriteLn('    bv clean               Cleans generated files (generated/ and dist/)');
     WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
     WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
-    WriteLn('    bv serve               Starts development server (server logs enabled)');
+    WriteLn('    bv serve               Starts development server with HMR');
     WriteLn('    bv transpile           Generates only .pas files');
     WriteLn('    bv run preview         Tests the production build locally');
     WriteLn('    bv new c <Name>        Creates a new component');

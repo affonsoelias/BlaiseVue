@@ -15,14 +15,16 @@ begin
        It('deve renderizar o valor inicial', procedure
          begin
             Wrapper := Mount('counter');
-            Expect(Wrapper.Text).ToContain('Count: 0');
+            Expect(Wrapper.Text).ToContain('Contador');
+            Expect(Wrapper.Find('.counter-value').textContent).ToBe('0');
          end);
          
        It('deve incrementar o valor ao clicar no botao', procedure
          begin
             Wrapper := Mount('counter');
-            Wrapper.Find('button').click();
-            Expect(Wrapper.Text).ToContain('Count: 1');
+            // Clica no botao de incrementar (+) que e o segundo botao
+            Wrapper.Find('.counter-controls button:last-child').click();
+            Expect(Wrapper.Find('.counter-value').textContent).ToBe('1');
          end);
     end);
 end.

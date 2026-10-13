@@ -68,7 +68,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('b-toast', comp);
 end;
 

@@ -62,7 +62,6 @@ begin
   comp['methods'] := m;
 
   comp['computed'] := TJSObject.new;
-
   RegisterComponent('b-pagination', comp);
 end;
 

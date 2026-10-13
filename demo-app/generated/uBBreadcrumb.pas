@@ -29,7 +29,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-breadcrumb', comp);
 end;
 

@@ -27,7 +27,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-list-group', comp);
 end;
 

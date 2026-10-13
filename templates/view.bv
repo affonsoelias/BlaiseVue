@@ -1,0 +1,15 @@
+<template>
+  <div class="{{VIEW_KEBAB}}-page">
+    <h2>{{VIEW_NAME}} View</h2>
+    <p>This is the new {{VIEW_NAME}} view.</p>
+  </div>
+</template>
+
+<script>
+  data:
+    title: string = '{{VIEW_NAME}}';
+</script>
+
+<style>
+  .{{VIEW_KEBAB}}-page { padding: 20px; }
+</style>

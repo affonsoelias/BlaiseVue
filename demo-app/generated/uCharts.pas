@@ -162,7 +162,6 @@ begin
     end;
 
     ;
-
   RegisterComponent('charts-page', comp);
 end;
 

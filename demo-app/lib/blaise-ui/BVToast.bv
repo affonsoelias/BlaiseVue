@@ -1,0 +1,21 @@
+<template>
+  <div class="bui-toast" b-if="show">
+    <span>{{ message }}</span>
+    <button class="bui-btn bui-btn-sm" @click="dismiss">OK</button>
+  </div>
+</template>
+
+<script>
+  data:
+    show: boolean = false;
+    message: string = '';
+
+  methods:
+    procedure dismiss;
+    begin
+      this['show'] := false;
+      asm
+        _this.$emit('dismiss');
+      end;
+    end;
+</script>

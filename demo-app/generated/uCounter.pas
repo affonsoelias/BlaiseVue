@@ -62,7 +62,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('counter', comp);
 end;
 

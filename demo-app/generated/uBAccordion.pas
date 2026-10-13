@@ -63,7 +63,6 @@ begin
     end;
 
     ;
-
   RegisterComponent('b-accordion', comp);
 end;
 

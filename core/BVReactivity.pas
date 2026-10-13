@@ -263,7 +263,11 @@ initialization
       const triggerKey = function(k) {
         let depSet = deps.get(k);
         if (depSet) {
-          depSet.forEach(queueEffect);
+          Array.from(depSet).forEach(function(f) {
+            if (activeEffects.has(f)) return;
+            activeEffects.add(f);
+            try { f(); } finally { activeEffects.delete(f); }
+          });
         }
       };
       

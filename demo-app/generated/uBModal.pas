@@ -86,7 +86,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('b-modal', comp);
 end;
 

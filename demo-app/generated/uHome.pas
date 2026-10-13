@@ -83,7 +83,6 @@ begin
 
   comp['methods'] := m;
 
-
   RegisterComponent('home-page', comp);
 end;
 

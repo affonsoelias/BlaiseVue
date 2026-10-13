@@ -1,0 +1,141 @@
+// BlaiseVue 2.0 HMR & Development Server
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { WebSocketServer } from 'ws';
+import { execSync } from 'child_process';
+
+const PORT = parseInt(process.env.PORT || '8080', 10);
+const WS_PORT = parseInt(process.env.WS_PORT || '8081', 10);
+const ROOT_DIR = process.cwd();
+const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
+const SRC_DIR = path.resolve(ROOT_DIR, 'src');
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
+};
+
+// 1. Static HTTP Server
+const server = http.createServer((req, res) => {
+  let reqPath = req.url.split('?')[0];
+  if (reqPath === '/' || reqPath === '') reqPath = '/index.html';
+  let filePath = path.join(DIST_DIR, reqPath);
+
+  // Security check
+  if (!filePath.startsWith(DIST_DIR)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
+  // Fallback for SPA routing
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(DIST_DIR, 'index.html');
+  }
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    let content = fs.readFileSync(filePath);
+
+    // Auto-inject HMR script in index.html during development
+    if (ext === '.html') {
+      let htmlStr = content.toString('utf8');
+      if (!htmlStr.includes('__BV_HMR_CLIENT__')) {
+        const hmrScript = `
+        <script id="__BV_HMR_CLIENT__">
+          (function() {
+            if (window.__BV_CORE__ && window.__BV_CORE__.initHMR) {
+              window.__BV_CORE__.initHMR(${WS_PORT});
+            } else {
+              try {
+                let ws = new WebSocket('ws://' + window.location.hostname + ':${WS_PORT}');
+                ws.onmessage = function(e) {
+                  let d = JSON.parse(e.data);
+                  if (d.type === 'reload') window.location.reload();
+                  else if (d.type === 'patch' && window.__BV_CORE__ && window.__BV_CORE__.patchComponent) {
+                    window.__BV_CORE__.patchComponent(d.component, d.options);
+                  }
+                };
+              } catch(err) {}
+            }
+          })();
+        </script>
+        `;
+        htmlStr = htmlStr.replace('</body>', hmrScript + '</body>');
+        content = Buffer.from(htmlStr, 'utf8');
+      }
+    }
+
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
+  } else {
+    res.writeHead(404);
+    res.end('Not Found');
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`\x1b[32m🛡️  BlaiseVue 2.0 Dev Server running at http://localhost:${PORT}/\x1b[0m`);
+});
+
+// 2. WebSocket Server for HMR
+const wss = new WebSocketServer({ port: WS_PORT });
+console.log(`\x1b[36m⚡ HMR WebSocket service listening on port ${WS_PORT}\x1b[0m`);
+
+function broadcast(msg) {
+  const data = JSON.stringify(msg);
+  wss.clients.forEach(client => {
+    if (client.readyState === 1) client.send(data);
+  });
+}
+
+// 3. File Watcher
+let debounceTimer = null;
+function watchDir(dir) {
+  if (!fs.existsSync(dir)) return;
+  fs.watch(dir, { recursive: true }, (eventType, filename) => {
+    if (!filename || filename.includes('node_modules') || filename.includes('dist') || filename.includes('generated')) return;
+    
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      console.log(`\x1b[33m[Watcher] File modified: ${filename}\x1b[0m`);
+      const ext = path.extname(filename).toLowerCase();
+      
+      if (ext === '.bv') {
+        const basename = path.basename(filename, '.bv');
+        const tag = basename.toLowerCase();
+        console.log(`\x1b[36m[HMR] Triggering recompilation for <${tag}>...\x1b[0m`);
+        try {
+          // Re-transpile and build
+          const bvExe = fs.existsSync(path.resolve(ROOT_DIR, 'bv.exe')) ? 
+            path.resolve(ROOT_DIR, 'bv.exe') : 
+            path.resolve(ROOT_DIR, '..', 'bv.exe');
+          if (fs.existsSync(bvExe)) {
+            execSync(`"${bvExe}" run dev`, { stdio: 'pipe' });
+            console.log(`\x1b[32m[HMR] Dev build refreshed. Broadcasting update...\x1b[0m`);
+            broadcast({ type: 'reload' });
+          } else {
+            broadcast({ type: 'reload' });
+          }
+        } catch(e) {
+          console.error(`[HMR] Build error:`, e.message);
+        }
+      } else {
+        broadcast({ type: 'reload' });
+      }
+    }, 150);
+  });
+}
+
+watchDir(SRC_DIR);
+if (fs.existsSync(path.resolve(ROOT_DIR, 'lib'))) {
+  watchDir(path.resolve(ROOT_DIR, 'lib'));
+}

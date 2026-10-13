@@ -18,11 +18,13 @@ type
   TWrapper = class
   private
     FEl: TJSHTMLElement;
+    function GetElement: TJSHTMLElement;
   public
     constructor Create(AEl: TJSHTMLElement);
     function HTML: string; { Returns innerHTML of the component }
     function Text: string; { Returns textContent of the component }
     function Find(Selector: string): TJSHTMLElement; { Queries a sub-element }
+    function Element: TJSHTMLElement; { Returns the underlying DOM element }
     procedure Click; { Simulates a mouse click }
     procedure SetValue(AVal: string); { Simulates an input change + event dispatch }
     procedure Trigger(EventName: string); { Dispatches a custom JS event }
@@ -65,38 +67,88 @@ begin
   FEl := AEl;
 end;
 
-function TWrapper.HTML: string;
+function TWrapper.GetElement: TJSHTMLElement;
 begin
-  Result := string(FEl.innerHTML);
+  Result := FEl;
+  asm
+    while (Result && Result['__bv_replacement__']) {
+      Result = Result['__bv_replacement__'];
+    }
+  end;
+end;
+
+function TWrapper.HTML: string;
+var
+  El: TJSHTMLElement;
+begin
+  El := GetElement;
+  if El <> nil then
+    Result := string(El.innerHTML)
+  else
+    Result := '';
 end;
 
 function TWrapper.Text: string;
+var
+  El: TJSHTMLElement;
 begin
-  Result := string(FEl.textContent);
+  El := GetElement;
+  if El <> nil then
+    Result := string(El.textContent)
+  else
+    Result := '';
 end;
 
 function TWrapper.Find(Selector: string): TJSHTMLElement;
+var
+  El: TJSHTMLElement;
 begin
-  Result := TJSHTMLElement(FEl.querySelector(Selector));
+  El := GetElement;
+  if El <> nil then
+  begin
+    asm
+      if (El.matches && El.matches(Selector)) {
+        return El;
+      }
+    end;
+    Result := TJSHTMLElement(El.querySelector(Selector));
+  end
+  else
+    Result := nil;
+end;
+
+function TWrapper.Element: TJSHTMLElement;
+begin
+  Result := GetElement;
 end;
 
 procedure TWrapper.Click;
+var
+  El: TJSHTMLElement;
 begin
-  FEl.click();
+  El := GetElement;
+  if El <> nil then
+    El.click();
 end;
 
 procedure TWrapper.SetValue(AVal: string);
 begin
   asm
-    this.FEl.value = AVal;
-    this.FEl.dispatchEvent(new Event('input'));
+    let el = this.GetElement();
+    if (el) {
+      el.value = AVal;
+      el.dispatchEvent(new Event('input'));
+    }
   end;
 end;
 
 procedure TWrapper.Trigger(EventName: string);
 begin
   asm
-    this.FEl.dispatchEvent(new Event(EventName));
+    let el = this.GetElement();
+    if (el) {
+      el.dispatchEvent(new Event(EventName));
+    }
   end;
 end;
 
@@ -171,7 +223,7 @@ end;
 { Mocks a component environment for testing }
 function Mount(const TagName: string; Props: TJSObject = nil): TWrapper;
 var
-  El: TJSHTMLElement;
+  El, TargetEl: TJSHTMLElement;
   Data: TBlaiseData;
 begin
   El := TJSHTMLElement(document.createElement(TagName));
@@ -191,7 +243,14 @@ begin
   { Trigger compilation on the target element }
   Compile(El, Data, TJSObject.new);
   
-  Result := TWrapper.Create(El);
+  TargetEl := El;
+  asm
+    while (TargetEl && TargetEl['__bv_replacement__']) {
+      TargetEl = TargetEl['__bv_replacement__'];
+    }
+  end;
+  
+  Result := TWrapper.Create(TargetEl);
 end;
 
 procedure ForceInclude;

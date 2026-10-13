@@ -1,0 +1,14 @@
+<template>
+  <div>
+    <h3>{{COMP_NAME}}</h3>
+    <p>{{ info }}</p>
+  </div>
+</template>
+
+<script>
+  data:
+    info: string = 'Component {{COMP_NAME}} created!';
+</script>
+
+<style>
+</style>

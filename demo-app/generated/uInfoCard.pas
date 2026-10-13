@@ -44,7 +44,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('info-card', comp);
 end;
 

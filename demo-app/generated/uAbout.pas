@@ -213,7 +213,6 @@ begin
     end;
 
 ;
-
   RegisterComponent('about-page', comp);
 end;
 

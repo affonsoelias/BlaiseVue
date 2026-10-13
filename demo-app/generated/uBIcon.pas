@@ -75,7 +75,6 @@ begin
   m := TJSObject.new;
   comp['methods'] := m;
 
-
   RegisterComponent('b-icon', comp);
 end;
 
