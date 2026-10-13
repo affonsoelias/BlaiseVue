@@ -1,77 +1,124 @@
-# 🛡️ BlaiseVue Framework v1.0.0 PRO
+# 🛡️ BlaiseVue Framework v2.0
 **The Power of Pascal, the Soul of Vue.**
 
-BlaiseVue is a modern, reactive SPA (Single Page Application) framework that brings the power of strong typing from **Object Pascal** to the Web ecosystem, inspired by the simplicity and elegance of Vue.js.
+BlaiseVue is an enterprise-grade, reactive SPA (Single Page Application) framework that combines the strong typing and architectural robustness of **Object Pascal** with the simplicity, ergonomics, and reactivity of **Vue.js**.
 
 ---
 
-## ⚔️ The B Standard (v1.0 PRO)
-In this Pro version, BlaiseVue reaches maturity with enterprise-level architecture features and advanced productivity tools.
+## ⚔️ What's New in Version 2.0
 
-### 🔥 New in Version 1.0:
-- **Testing Arsenal (`bv test`)**: Native suite for TDD (Test Driven Development) in Pascal.
-- **Intelligent Cache Busting**: The development build automatically injects timestamps (`v=123...`) to avoid browser cache issues.
-- **Advanced Dynamic Routing**: Full support for URL parameters (`:id`) and integrated Query Strings in `data:`.
-- **Global Store ($store)**: Shared state management via `TBVStore` (Singleton).
-- **Named Slots & Transitions**: Flexible composition and native CSS enter/exit animations.
-- **Provide/Inject**: Communication between distant components without "prop drilling".
-- **External Libraries (/lib)**: Autoloading of assets (CSS/JS) and external `.bv` components.
+BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 
----
-
-## 📦 External Libraries (/lib)
-BlaiseVue PRO allows you to easily integrate third-party components and CSS:
-- **Auto-Link**: `.css` files in the `lib/` folder are automatically injected into `index.html` during build.
-- **Auto-Registration**: Any `.bv` within `lib/` (or subfolders) is globally registered.
-- **External JS**: `.js` files in `lib/` are included as scripts in the header.
+- ⚡ **Hot Module Replacement (HMR)**: Instant component recompilation and in-place DOM patching via WebSockets (`:8081`) while preserving component reactive state (`this['State']`).
+- 🛣️ **Advanced Routing**: Support for clean URLs via **HTML5 History Mode**, recursive **Nested Routes** with `<router-view>`, dynamic code-splitting (`import()`), and **Navigation Guards** (`beforeEach`, `beforeEnter`, `afterEach`).
+- 🧩 **Scoped Slots**: Pass child component data back to parent templates with `#slot="props"`, `b-slot`, and `slot-scope`.
+- 🚀 **Teleport & Suspense**: Move DOM nodes to target containers (`<teleport to="body">`) and orchestrate asynchronous dependencies with loading fallbacks (`<suspense>`).
+- 🏎️ **Static Hoisting**: The compiler automatically identifies static template nodes and hoists them out of the patch cycle, bypassing diffing for $O(1)$ reconciliation.
+- 🕵️ **Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge featuring Component Tree inspection, real-time reactive state editing, and timeline logging.
+- 🎨 **BlaiseUI Official Component Kit**: Production-ready, native component library (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-toast`, `bv-datagrid`) with pure CSS.
+- 🏗️ **CLI Native Resource Scaffolding**: All scaffolding templates are embedded into `bv.exe` at compile-time via `{$R templates.res}`, providing a single, zero-dependency binary.
+- 🧪 **Vitest Pascal Test Suite**: Automated TDD in Pascal with JSDOM runner via `bv test`.
 
 ---
 
-## 🧠 Global State ($store)
-Centralize your data with **B-Store**, accessible in any component via `$store` in the template or `this['$store']` in Pascal.
+## 📚 Complete Documentation Index
+
+### 🏁 Getting Started & Core Fundamentals
+1. [01. Architecture and Mission](01-introduction.md)
+2. [02. Installation & SDK Setup](02-installation.md)
+3. [03. BlaiseCLI Technical Manual (bv.exe)](03-cli.md)
+4. [04. Single File Component (.bv) Format](04-bv-format.md)
+5. [05. The Reactive Engine & Proxies](05-reactivity.md)
+6. [06. Data Binding & Interpolation](06-data-binding.md)
+7. [07. Methods & Event Handling](07-methods-events.md)
+8. [08. Component Basics & SFC](08-components.md)
+
+### 🧭 Navigation & Project Organization
+9. [09. Advanced SPA Router (History & Nested)](09-router.md)
+10. [10. Standard Project Structure](10-project-structure.md)
+11. [11. Props, Refs, and Custom Events ($emit)](11-props-refs-emit.md)
+12. [12. Debugging & Error Handling](12-debugging.md)
+
+### 💎 Advanced Composition & Enterprise Architecture
+13. [13. Advanced Slots & Scoped Slots](13-advanced-slots.md)
+14. [14. CSS Transitions & Animations](14-css-transitions.md)
+15. [15. Global State Management ($store)](15-global-store.md)
+16. [16. Dependency Injection (Provide / Inject)](16-provide-inject.md)
+17. [17. Advanced Component Lifecycle Hooks](17-lifecycle-pro.md)
+18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md)
+
+### 🚀 BlaiseVue 2.0 Features & Tooling
+19. [19. Unit Testing with Vitest](19-unit-testing.md)
+20. [20. Extra-Official Libraries (Bootstrap & Charts)](20-extra-libraries.md)
+21. [21. Teleport & Suspense](21-teleport-suspense.md)
+22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md)
+23. [23. Hot Module Replacement (HMR) & DevTools](23-hmr-devtools.md)
+24. [24. BlaiseUI (Official Component Kit)](24-blaise-ui.md)
+
+### 📖 References & Roadmaps
+- [API Technical Reference](api-reference.md)
+- [Technical Roadmap 2.0 (Milestone Status)](99-roadmap-v2.md)
+
+---
+
+## 🛠️ CLI Quick Reference
+
+```bash
+# Start development server with instant HMR and WebSocket
+bv serve
+
+# Run express development build with cache busting
+bv run dev
+
+# Run automated unit test suite with Vitest
+bv test
+
+# Scaffold a new unit test in tests/
+bv new t MyComponent
+
+# Build optimized production bundle
+bv run build
+
+# Clean build artifacts (dist/ and generated/)
+bv clean
+```
+
+---
+
+## 🚀 Quick Start Example
 
 ```html
+<!-- src/views/Home.bv -->
 <template>
-  <div>App Version: {{ $store.appVersion }}</div>
+  <div class="welcome-box">
+    <h1>{{ greeting }}</h1>
+    <bv-btn variant="primary" @click="incrementCount">
+      Clicked {{ counter }} times
+    </bv-btn>
+  </div>
 </template>
-```
 
----
+<script>
+  data:
+    greeting: string = 'Welcome to BlaiseVue 2.0!';
+    counter: integer = 0;
 
-## 🧪19. [Unit Testing (Vitest)](19-unit-testing.md)
-20. [Extra-Official Libraries (Bootstrap & Charts)](20-extra-libraries.md)
-s for your components and business logic directly in Pascal:
-
-```pascal
-begin
-  Describe('My Component', procedure
+  methods:
+    procedure incrementCount;
     begin
-       It('should validate the initial state', procedure
-         begin
-            Expect(myVar).ToEqual(True);
-         end);
-    end);
-end.
+      Inc(counter);
+    end;
+</script>
+
+<style>
+  .welcome-box {
+    padding: 32px;
+    text-align: center;
+  }
+</style>
 ```
 
 ---
 
-## 🛠️ CLI Tools (bv.exe)
-- **`bv run dev`**: Fast build with active debugging and timestamp injection.
-- **`bv test`**: Runs the test suite with **Vitest** integration.
-- **`bv new t <Name>`**: Creates a new unit test file template.
-- **`bv clean`**: Purges the `dist/` and `generated/` folders for a clean build.
-
----
-
-## 🚀 How to Start
-
-1.  Clone the repository.
-2.  Navigate to the `demo-app` folder.
-3.  Run `..\bin\bv.exe run dev`.
-4.  Open `dist/index.html` in your browser.
-
----
-
-**BlaiseVue: Stability, Typing, and Reactivity.**  
-Developed by you and stabilized by AI. _"In Pascal we trust."_ 🛡️✨
+🛡️ **"BlaiseVue: Stability, Typing, and Reactivity."**  
+_In Pascal we trust._ 🛡️✨🏆

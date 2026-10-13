@@ -27,11 +27,21 @@ Welcome to the official BlaiseVue course! Here you will learn how to build ultra
     Accessing elements directly and lifecycles (`mounted`).
 10. **[Module 10: The Command Master (CLI)](10-cli.md)**  
     Using `bv.exe` for build, clean, and run dev.
-
 11. **[Module 11: Pro Features (Master Architecture)](11-pro-features.md)**  
     Named Slots, B-Store, Transitions, and Provide/Inject.
 12. **[Module 12: Martial Quality (Unit Testing)](12-tests.md)**  
     Validating your code with Pascal, Vitest, and JSDOM.
+
+---
+
+### 🚀 BlaiseVue 2.0 Advanced Engineering:
+Explore the advanced architectural modules in the **[Official Technical Documentation](../Documentation/README.md)**:
+- **Module 13**: [Scoped Slots & Advanced Composition](../Documentation/13-advanced-slots.md)
+- **Module 14**: [HTML5 History Mode & Nested Sub-Routes](../Documentation/09-router.md)
+- **Module 15**: [Teleport & Suspense](../Documentation/21-teleport-suspense.md)
+- **Module 16**: [Static Hoisting & Compiler Optimization](../Documentation/22-static-hoisting.md)
+- **Module 17**: [Hot Module Replacement (HMR) & DevTools Extension](../Documentation/23-hmr-devtools.md)
+- **Module 18**: [BlaiseUI (Official Component Kit)](../Documentation/24-blaise-ui.md)
 
 ---
 

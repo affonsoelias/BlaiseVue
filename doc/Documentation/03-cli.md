@@ -1,63 +1,91 @@
 # 🛡️ BlaiseCLI Technical Manual (bv.exe)
 
-The `bv.exe` is the native orchestrator of BlaiseVue, responsible for transpiling SFC components, managing libraries, and orchestrating the build cycle.
+The `bv.exe` is the native command-line orchestrator of BlaiseVue, responsible for transpiling SFC components, managing libraries, running tests, scaffolding projects, and serving development builds with Hot Module Replacement (HMR).
 
 ---
 
-## 🏗️ Development and Build Commands
+## 🏗️ Development and Serving Commands
 
-### `bv run dev` (Express Development)
-Executes a full build and activates real-time debugging features.
-- **Cache Busting (v=123...)**: Rewrites all script and style links in `index.html` by injecting a timestamp-based version parameter to bypass browser caching.
-- **Unit DevTools**: Automatically injects and activates the diagnostic sidebar (`BVDevTools`).
-- **Debugging Flags**: Compiles Pascal with debug symbols and verbose output in the browser console.
+### 1. `bv serve` (Development Server with Instant HMR)
+Launches the integrated development server with live Hot Module Replacement:
+- **HTTP Server**: Serves your application bundle locally at `http://localhost:8080`.
+- **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
+- **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and sends an in-place patch to the browser without reloading the page or losing state.
 
-### `bv run build` (Optimized Production)
-Generates the final bundle for deployment.
-- **Purge Artifacts**: Cleans up debug files and experimental units.
-- **Optimized RTL**: Links only the necessary units.
+### 2. `bv run dev` (Express Development Build)
+Executes a full development build with cache busting:
+- **Cache Busting (`v=123...`)**: Injects timestamps into script and link tags in `index.html` to prevent stale browser caches.
+- **Diagnostic DevTools**: Injects diagnostic symbols and runtime hooks for browser extensions.
+- **Verbose Console Output**: Generates human-readable debug logs.
+
+### 3. `bv run build` (Optimized Production)
+Generates the production-ready distribution in `dist/`:
+- **Purge Artifacts**: Removes development scaffolding, debug symbols, and experimental units.
+- **Tree-Shaking & Minification**: Links only the required runtime units from Pas2JS RTL.
+- **Static Assets**: Bundles and hashes scripts for long-term caching.
 
 ---
 
-## 🧪 Unit Testing Arsenal
+## 🏛️ Native Resource Scaffolding (`templates.res`)
 
-The `bv test` command centralizes the execution of automated unit tests supported by the `BVTestUtils.pas` unit.
+In BlaiseVue 2.0, the CLI's internal architecture was completely refactored to eliminate hardcoded template strings from the Pascal source code:
+
+1. **Templates Directory**: All initial project files reside in [`bin/templates/`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/templates/):
+   - `index.html` — Base HTML entry point.
+   - `app.bv` — Root component layout.
+   - `Home.bv` & `Counter.bv` — Starter page and component.
+   - `app.cfg` — Preconfigured Pas2JS transpiler configuration.
+   - `bootstrap.css` — Base styles.
+2. **Resource Embedding (`{$R templates.res}`)**:
+   - Templates are compiled into a binary resource file (`templates.res`) via `windres` / FPC.
+   - Embedded directly into the `bv.exe` executable at compile-time.
+3. **Standalone Binary**:
+   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream`.
+   - The compiled `bv.exe` requires zero external template files to generate new projects.
+
+---
+
+## 🧪 Unit Testing Arsenal (`bv test`)
+
+BlaiseVue integrates automated testing using Pascal test specifications compiled to JavaScript and executed with **Vitest**:
 
 ### `bv test`
-Transpiles all components, compiles the `.pas` test units in `tests/` to JS, and executes the suite via **Vitest**.
+Transpiles all components, builds the test units in `tests/`, and executes the full suite in headless Node.js via Vitest.
 
 ### `bv new t <Name>`
-Instant scaffolding for unit test files.
-- **Example**: `bv new t User` creates the `tests/User.test.pas` file with the correct template.
+Instantly scaffolds a new unit test file.
+```bash
+bv new t UserProfile
+```
+Generates `tests/UserProfile.test.pas` pre-filled with the `Describe`, `It`, and `Expect` assertions template.
 
 ### `bv list t`
-Lists all unit tests currently registered in the `tests/` folder.
+Lists all unit test suites currently registered in the `tests/` folder.
 
 ### `bv remove t <Name>`
-Safely removes a test file and its transpiled artifacts.
+Safely removes a test file and any corresponding compiled artifacts.
 
 ---
 
-## 📦 /lib Folder Management
+## 📦 Library Management (`/lib`)
 
-BlaiseVue PRO 1.0 introduces intelligent management of external libraries:
-- **Auto-Autoload**: Any `.bv` files within the `lib/` folder (or subdirectories) are registered as global components in the project.
-- **Asset Injection**: `.css` and `.js` files detected in the `lib/` folder are automatically injected into the `<head>` of the generated `index.html` in `dist/`.
-- **Interactive Setup (`bv s <name>`)**: Triggers an interactive installation/cleanup menu for libraries that follow the **[setup.pas standard](18-external-libraries.md)**.
-
----
+BlaiseVue automatically manages libraries placed in the `lib/` directory:
+- **Auto-Autoload**: Any `.bv` files within `lib/` (or subdirectories) are automatically registered as global components.
+- **Auto-Asset Injection**: `.css` and `.js` files found in `lib/` are automatically injected into the `<head>` of `dist/index.html`.
+- **Interactive Library Setup (`bv s <name>`)**: Triggers an interactive installation and configuration menu for modular libraries following the **[setup.pas standard](18-external-libraries.md)**.
 
 ---
 
-## 🛠️ Maintenance Commands
+## 🧹 Maintenance Commands
 
 ### `bv clean`
-Complete cleanup of the build environment:
-1. Purges the `generated/` folder.
-2. Purges the `dist/js/` and `dist/css/` folders.
-3. Resets the `index.html` in `dist/` to the original state in `public/`.
+Performs a complete purge of the build workspace:
+1. Purges the `generated/` directory.
+2. Purges compiled scripts in `dist/js/` and styles in `dist/css/`.
+3. Resets `dist/index.html` back to the template state.
 
 ---
 
-## ⚡ CLI Performance
-The CLI compiler is written entirely in **Native Pascal**, ensuring an SFC component processing speed up to **50x faster** than competing tools based on Node.js or traditional bundlers. 🛡️✨🏆
+## ⚡ CLI Performance Benchmark
+
+Written 100% in **Native Object Pascal (FreePascal)**, the `bv.exe` CLI transpiles and orchestrates SFC components up to **50x faster** than Node.js-based alternatives, delivering instant feedback on enterprise codebases. 🛡️✨🏆
