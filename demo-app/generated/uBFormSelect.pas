@@ -45,7 +45,11 @@ begin
   m['onChange'] := procedure(_this: TJSObject; ev: JSValue)
 
     begin
-       asm this.$emit('input', ev.target.value); this.$emit('change', ev.target.value); end;
+       asm 
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val); 
+         this.$emit('change', val); 
+       end;
     end;
 
   comp['methods'] := m;

@@ -27,6 +27,9 @@
   methods:
     procedure onInput(ev: JSValue);
     begin
-       asm this.$emit('input', ev.target.value); end;
+       asm 
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val); 
+       end;
     end;
 </script>

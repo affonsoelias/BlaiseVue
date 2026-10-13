@@ -50,8 +50,8 @@ begin
 
     begin
        asm
-         // Emit the current raw input value to the parent context
-         this.$emit('input', ev.target.value);
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val);
        end;
     end;
 

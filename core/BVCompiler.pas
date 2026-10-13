@@ -767,7 +767,12 @@ initialization
             if (opts.methods) { 
                Object.keys(opts.methods).forEach(function(k) { 
                  let rM = opts.methods[k];
-                 dRaw[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
+                 dRaw[k] = function() { 
+                   if (arguments.length > 0 && arguments[0] === this) {
+                     return rM.apply(this, arguments);
+                   }
+                   return rM.apply(this, [this, ...arguments]); 
+                 }; 
                }); 
             }
             
@@ -835,10 +840,12 @@ initialization
              (function(expr, name) {
                 el.addEventListener(name, function(ev) {
                    let r = Data.Evaluate(expr, ev);
-                   if (r === undefined && Methods && Methods[expr]) r = Methods[expr];
-                   if (typeof r === 'function') {
-                       try { r.call(Data.FData || null, Data.FData || null, ev); } 
-                       catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
+                   if (r === undefined && Methods && Methods[expr]) {
+                      try { Methods[expr].call(Data.FData || null, Data.FData || null, ev); }
+                      catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
+                   } else if (typeof r === 'function') {
+                      try { r.call(Data.FData || null, ev); }
+                      catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
                    }
                 }, false);
              })(evt.expr, evt.name);

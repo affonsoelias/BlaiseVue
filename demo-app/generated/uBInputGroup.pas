@@ -52,7 +52,10 @@ begin
   m['onInput'] := procedure(_this: TJSObject; ev: JSValue)
 
     begin
-       asm this.$emit('input', ev.target.value); end;
+       asm 
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val); 
+       end;
     end;
 
   comp['methods'] := m;

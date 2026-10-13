@@ -1,10 +1,10 @@
 <template>
   <button :type="type" 
           class="btn" 
-          :class="[(outline ? 'btn-outline-' : 'btn-') + variant, 'btn-' + size]"
+          :class="btnClass"
           @click="$emit('click', $event)"
           style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">
-    <slot></slot>
+    <slot>{{ label }}</slot>
   </button>
 </template>
 
@@ -13,6 +13,7 @@
     BBtn - Actionable Button Component
     ----------------------------------
     Props:
+    - label: String (Text label if no slot provided)
     - variant: String (primary, secondary, success, danger, warning, etc.)
     - outline: Boolean (Uses outline styling instead of solid color)
     - size: String (sm, md, lg)
@@ -23,8 +24,21 @@
   }
   
   props:
+    label: string = '';
     variant: string = 'primary';
     outline: boolean = false;
     size: string = 'md';
     type: string = 'button';
+
+  computed:
+    function btnClass: string;
+    begin
+       asm
+         let v = this.variant || 'primary';
+         let isOut = Boolean(this.outline) || v.startsWith('outline-');
+         let cleanV = v.replace('outline-', '');
+         let s = this.size ? (' btn-' + this.size) : '';
+         return (isOut ? ('btn-outline-' + cleanV) : ('btn-' + cleanV)) + s;
+       end;
+    end;
 </script>

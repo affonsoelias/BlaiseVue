@@ -1108,7 +1108,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (opts.methods) { 
                    Object.keys(opts.methods).forEach(function(k) { 
                      let rM = opts.methods[k];
-                     dRaw[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
+                     dRaw[k] = function() { 
+                       if (arguments.length > 0 && arguments[0] === this) {
+                         return rM.apply(this, arguments);
+                       }
+                       return rM.apply(this, [this, ...arguments]); 
+                     }; 
                    }); 
                 }
                 
@@ -1176,10 +1181,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                  (function(expr, name) {
                     el.addEventListener(name, function(ev) {
                        let r = Data.Evaluate(expr, ev);
-                       if (r === undefined && Methods && Methods[expr]) r = Methods[expr];
-                       if (typeof r === 'function') {
-                           try { r.call(Data.FData || null, Data.FData || null, ev); } 
-                           catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
+                       if (r === undefined && Methods && Methods[expr]) {
+                          try { Methods[expr].call(Data.FData || null, Data.FData || null, ev); }
+                          catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
+                       } else if (typeof r === 'function') {
+                          try { r.call(Data.FData || null, ev); }
+                          catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
                        }
                     }, false);
                  })(evt.expr, evt.name);
@@ -2737,7 +2744,7 @@ rtl.module("uBBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <button :type="type" ' + '          class="btn" ' + '          :class="[(outline ? \'btn-outline-\' : \'btn-\') + variant, \'btn-\' + size]"' + '          @click="$emit(\'click\', $event)"' + '          style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">' + "    <slot></slot>" + "  </button>";
+    comp["template"] = '  <button :type="type" ' + '          class="btn" ' + '          :class="btnClass"' + '          @click="$emit(\'click\', $event)"' + '          style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">' + "    <slot>{{ label }}</slot>" + "  </button>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2746,12 +2753,23 @@ rtl.module("uBBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore",
       return Result;
     };
     comp["props"] = new Array();
+    comp["props"].push("label");
     comp["props"].push("variant");
     comp["props"].push("outline");
     comp["props"].push("size");
     comp["props"].push("type");
     m = new Object();
     comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      let v = this.variant || 'primary';
+      let isOut = Boolean(this.outline) || v.startsWith('outline-');
+      let cleanV = v.replace('outline-', '');
+      let s = this.size ? (' btn-' + this.size) : '';
+      return (isOut ? ('btn-outline-' + cleanV) : ('btn-' + cleanV)) + s;
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("b-btn",comp);
   };
 });
@@ -2802,7 +2820,9 @@ rtl.module("uBFormSelect",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["props"].push("options");
     m = new Object();
     m["onChange"] = function (_this, ev) {
-      this.$emit('input', ev.target.value); this.$emit('change', ev.target.value);
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val); 
+      this.$emit('change', val);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("b-form-select",comp);
@@ -2860,8 +2880,8 @@ rtl.module("uBInput",["System","JS","Web","BVComponents","BVReactivity","BVStore
     comp["props"].push("value");
     m = new Object();
     m["onInput"] = function (_this, ev) {
-      // Emit the current raw input value to the parent context
-      this.$emit('input', ev.target.value);
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("b-input",comp);
@@ -2890,7 +2910,8 @@ rtl.module("uBInputGroup",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["props"].push("append");
     m = new Object();
     m["onInput"] = function (_this, ev) {
-      this.$emit('input', ev.target.value);
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("b-input-group",comp);
