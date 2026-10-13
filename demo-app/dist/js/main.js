@@ -1443,7 +1443,12 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           if (CompOpt.methods) { 
              Object.keys(CompOpt.methods).forEach(function(k) { 
                let rM = CompOpt.methods[k];
-               pageData[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
+               pageData[k] = function() { 
+                 if (arguments.length > 0 && arguments[0] === this) {
+                   return rM.apply(this, arguments);
+                 }
+                 return rM.apply(this, [this, ...arguments]); 
+               }; 
              }); 
           }
       
@@ -2294,8 +2299,23 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       console.log("[Slot Test] O pai está falando!");
     };
     m["mudarVersao"] = function (_this) {
-      _this["$store"]["appVersion"] = "2.1.0-ULTRA-PRO";
-      _this["$store"]["user"] = "Pascal King 👑";
+      var currentVer = "";
+      var newVer = "";
+      var newUser = "";
+      currentVer = "" + _this["$store"]["appVersion"];
+      if (currentVer === "2.1.0-ULTRA-PRO") {
+        newVer = "3.0.0-TURBO-HYPER";
+        newUser = "Blaise Visionary 🚀";
+      } else if (currentVer === "3.0.0-TURBO-HYPER") {
+        newVer = "1.0.0-PRO";
+        newUser = "DevMaster 🏆";
+      } else {
+        newVer = "2.1.0-ULTRA-PRO";
+        newUser = "Pascal King 👑";
+      };
+      _this["$store"]["appVersion"] = newVer;
+      _this["$store"]["user"] = newUser;
+      console.log("%c[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser, "color: #10b981; font-weight: bold; font-size: 13px;");
     };
     m["incrementar"] = function (_this) {
       _this["contador"] = rtl.trunc(_this["contador"]) + 1;

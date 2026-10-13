@@ -64,9 +64,33 @@
     end;
 
     procedure mudarVersao;
+    var
+      currentVer: string;
+      newVer, newUser: string;
     begin
-      TJSObject(this['$store'])['appVersion'] := '2.1.0-ULTRA-PRO';
-      TJSObject(this['$store'])['user'] := 'Pascal King 👑';
+      currentVer := string(TJSObject(this['$store'])['appVersion']);
+      if currentVer = '2.1.0-ULTRA-PRO' then
+      begin
+        newVer := '3.0.0-TURBO-HYPER';
+        newUser := 'Blaise Visionary 🚀';
+      end
+      else if currentVer = '3.0.0-TURBO-HYPER' then
+      begin
+        newVer := '1.0.0-PRO';
+        newUser := 'DevMaster 🏆';
+      end
+      else
+      begin
+        newVer := '2.1.0-ULTRA-PRO';
+        newUser := 'Pascal King 👑';
+      end;
+
+      TJSObject(this['$store'])['appVersion'] := newVer;
+      TJSObject(this['$store'])['user'] := newUser;
+
+      asm
+        console.log("%c[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser, "color: #10b981; font-weight: bold; font-size: 13px;");
+      end;
     end;
 
     procedure incrementar;

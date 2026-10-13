@@ -378,7 +378,12 @@ begin
     if (CompOpt.methods) { 
        Object.keys(CompOpt.methods).forEach(function(k) { 
          let rM = CompOpt.methods[k];
-         pageData[k] = function() { return rM.apply(this, [this, ...arguments]); }; 
+         pageData[k] = function() { 
+           if (arguments.length > 0 && arguments[0] === this) {
+             return rM.apply(this, arguments);
+           }
+           return rM.apply(this, [this, ...arguments]); 
+         }; 
        }); 
     }
 
