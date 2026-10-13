@@ -44,6 +44,28 @@ begin
     Result := d;
   end;
   RegisterComponent('slot-parent', ParentComp);
+
+  // Componentes para testar aninhamento em slots
+  ChildComp := TJSObject.new;
+  ChildComp['template'] := '<div class="nested-card-body"><slot></slot></div>';
+  ChildComp['data'] := function(): TJSObject begin Result := TJSObject.new; end;
+  RegisterComponent('nested-card', ChildComp);
+
+  ChildComp := TJSObject.new;
+  ChildComp['template'] := '<div class="inner-badge">Badge: {{ label }}</div>';
+  ChildComp['data'] := function(): TJSObject 
+  var d: TJSObject;
+  begin 
+    d := TJSObject.new;
+    d['label'] := '';
+    Result := d; 
+  end;
+  RegisterComponent('inner-badge', ChildComp);
+
+  ParentComp := TJSObject.new;
+  ParentComp['template'] := '<div class="test-wrapper"><nested-card><inner-badge label="Active"></inner-badge></nested-card></div>';
+  ParentComp['data'] := function(): TJSObject begin Result := TJSObject.new; end;
+  RegisterComponent('nested-test', ParentComp);
 end;
 
 begin
@@ -56,6 +78,14 @@ begin
             Wrapper := Mount('slot-parent');
             Expect(Wrapper.Find('.custom-render')).ToBeDefined;
             Expect(Wrapper.Find('.custom-render').textContent).ToContain('Hello from child - Val: 42');
+         end);
+
+       It('deve suportar componentes aninhados dentro de slots padrao sem erro de parentNode', procedure
+         begin
+            Wrapper := Mount('nested-test');
+            Expect(Wrapper.Find('.nested-card-body')).ToBeDefined;
+            Expect(Wrapper.Find('.inner-badge')).ToBeDefined;
+            Expect(Wrapper.Find('.inner-badge').textContent).ToContain('Badge: Active');
          end);
     end);
 end.

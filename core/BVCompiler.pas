@@ -354,7 +354,7 @@ initialization
             let child = el.firstElementChild;
             if (child) {
                child.setAttribute('bv-transition', tName);
-               el.parentNode.replaceChild(child, el);
+               if (el.parentNode) el.parentNode.replaceChild(child, el);
                bv.traverse(child, Data, Methods);
                return;
             }
@@ -365,7 +365,7 @@ initialization
             let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
             if (!targetEl) targetEl = document.body;
             let anchor = document.createComment('teleport-anchor');
-            el.parentNode.replaceChild(anchor, el);
+            if (el.parentNode) el.parentNode.replaceChild(anchor, el);
             let fragment = document.createDocumentFragment();
             let teleportedNodes = Array.from(el.childNodes);
             teleportedNodes.forEach(function(cNode) { fragment.appendChild(cNode); });
@@ -604,8 +604,24 @@ initialization
             rEl['__bv_parent_data__'] = Data;
             rEl['__bv_parent_methods__'] = Methods;
             console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
-            el.parentNode.replaceChild(rEl, el);
+            if (el.parentNode) {
+               el.parentNode.replaceChild(rEl, el);
+            }
             el['__bv_replacement__'] = rEl;
+
+            function isNamedSlotNode(node) {
+               if (!node || node.nodeType !== 1) return false;
+               if (node.getAttribute && node.getAttribute('slot')) return true;
+               if (node.attributes) {
+                  for (let i = 0; i < node.attributes.length; i++) {
+                     let an = node.attributes[i].name;
+                     if (an.startsWith('#') && an !== '#default') return true;
+                     if (an.startsWith('v-slot:') && an !== 'v-slot:default') return true;
+                     if (an.startsWith('b-slot:') && an !== 'b-slot:default') return true;
+                  }
+               }
+               return false;
+            }
 
             let slotElements = Array.from(rEl.querySelectorAll('slot, b-slot'));
             slotElements.forEach(function(sNode) {
@@ -696,25 +712,27 @@ initialization
                   }
 
                   nodesToInsert.forEach(function(inNode) {
+                     if (sNode.parentNode) sNode.parentNode.insertBefore(inNode, sNode);
                      bv.traverse(inNode, scopedData, Methods);
-                     bv.markManaged(inNode);
-                     sNode.parentNode.insertBefore(inNode, sNode);
+                     let finalInNode = inNode['__bv_replacement__'] || inNode;
+                     bv.markManaged(finalInNode);
                   });
-                  sNode.remove();
+                  if (sNode.parentNode) sNode.remove();
                } else if (sName === 'default') {
                   let hasBareNodes = false;
                   originalChildren.forEach(function(cn) {
-                     if (!cn.getAttribute || !cn.getAttribute('slot')) {
+                     if (!isNamedSlotNode(cn)) {
                         let cnClone = cn.cloneNode(true);
+                        if (sNode.parentNode) sNode.parentNode.insertBefore(cnClone, sNode);
                         bv.traverse(cnClone, Data, Methods);
-                        bv.markManaged(cnClone);
-                        sNode.parentNode.insertBefore(cnClone, sNode);
+                        let finalCnClone = cnClone['__bv_replacement__'] || cnClone;
+                        bv.markManaged(finalCnClone);
                         hasBareNodes = true;
                      }
                   });
-                  if (hasBareNodes) sNode.remove();
+                  if (hasBareNodes && sNode.parentNode) sNode.remove();
                } else {
-                  if (sNode.innerHTML === '') sNode.remove();
+                  if (sNode.innerHTML === '' && sNode.parentNode) sNode.remove();
                }
             });
 
@@ -728,6 +746,16 @@ initialization
             if (opts.inject) {
                opts.inject.forEach(function(k) {
                   let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
+                  if (!val && rEl && rEl.parentElement) {
+                     let curr = rEl.parentElement;
+                     while (curr && !val) {
+                        if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
+                           val = curr['__bv_instance_data__']['$provided'][k];
+                           break;
+                        }
+                        curr = curr.parentElement;
+                     }
+                  }
                   if (val) pRef[k] = val;
                });
             }
@@ -817,12 +845,10 @@ initialization
           });
 
           // 12. Recursive Children
-          let children = Node.childNodes;
-          if (children) {
-            for (let j = 0; j < children.length; j++) {
-              let child = children[j];
-              if (child && !child['bvManaged']) bv.traverse(child, Data, Methods);
-            }
+          let children = Array.from(Node.childNodes || []);
+          for (let j = 0; j < children.length; j++) {
+            let child = children[j];
+            if (child && !child['bvManaged'] && !child['bvTraversed']) bv.traverse(child, Data, Methods);
           }
           
           Node['bvTraversed'] = true;
