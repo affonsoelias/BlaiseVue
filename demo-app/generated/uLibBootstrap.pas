@@ -27,7 +27,7 @@ begin
     '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' +
     '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' +
     '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' +
-    '       <bv-nav-item href="#" label="⚙️ Settings" @click="clickNotif(''Global Settings'')"></bv-nav-item>' +
+    '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(''Global Settings'')"></bv-nav-item>' +
     '    </bv-navbar>' +
     '' +
     '    <!-- CONTENT CONTAINER -->' +

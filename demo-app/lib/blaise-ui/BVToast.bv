@@ -1,5 +1,5 @@
 <template>
-  <div class="bui-toast" b-if="show">
+  <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="show">
     <div class="bui-toast-content">
       <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>
       <slot>{{ message }}</slot>
@@ -38,6 +38,11 @@
           this.show = false;
         }, dur);
       end;
+    end;
+
+    procedure show;
+    begin
+      asm this.showToast(); end;
     end;
 
     procedure dismiss;

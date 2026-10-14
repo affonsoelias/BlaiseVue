@@ -887,11 +887,22 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                  bv.effect(function() {
                     let v = Data.Evaluate(b.expr);
                     if (b.name === 'class') {
+                      if (el['_bv_static_class'] === undefined) el['_bv_static_class'] = el.getAttribute('class') || '';
                       if (typeof v === 'object' && !Array.isArray(v)) {
+                        el.className = el['_bv_static_class'];
                         Object.keys(v).forEach(function(ck) { if (v[ck]) el.classList.add(ck); else el.classList.remove(ck); });
-                      } else el.className = (Array.isArray(v) ? v.join(' ') : String(v));
+                      } else {
+                        let dyn = Array.isArray(v) ? v.filter(Boolean).join(' ') : (v || '');
+                        el.className = (el['_bv_static_class'] ? (el['_bv_static_class'] + ' ' + dyn) : dyn).trim();
+                      }
                     } else if (b.name === 'style') {
-                      if (typeof v === 'object') Object.assign(el.style, v); else el.style.cssText = String(v);
+                      if (el['_bv_static_style'] === undefined) el['_bv_static_style'] = el.getAttribute('style') || '';
+                      if (typeof v === 'object') {
+                        if (el['_bv_static_style']) el.style.cssText = el['_bv_static_style'];
+                        Object.assign(el.style, v);
+                      } else {
+                        el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
+                      }
                     } else {
                        if (v !== null && typeof v !== 'object') el.setAttribute(b.name, v);
                     }
@@ -2223,7 +2234,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2490,7 +2501,7 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <span class="bui-badge" ' + '        :class="[\'bui-badge-\' + variant, pill ? \'bui-badge-pill\' : \'\']">' + "    <slot></slot>" + "  </span>";
+    comp["template"] = '  <span class="bui-badge" ' + '        :class="badgeClass">' + "    <slot></slot>" + "  </span>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2503,6 +2514,14 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     comp["props"].push("pill");
     m = new Object();
     comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["badgeClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
+      return 'bui-badge bui-badge-' + v + p;
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
@@ -2551,7 +2570,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <span v-if="!active" class="bui-breadcrumb-separator">/</span>' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
+    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2577,28 +2596,36 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot></slot>" + "  </button>";
+    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["variant"] = "primary";
-      d["size"] = "md";
-      d["disabled"] = false;
       Result = d;
       return Result;
     };
+    comp["props"] = new Array();
+    comp["props"].push("label");
+    comp["props"].push("variant");
+    comp["props"].push("size");
+    comp["props"].push("disabled");
+    comp["props"].push("outline");
     m = new Object();
-    m["handleClick"] = function (_this) {
+    m["handleClick"] = function (_this, ev) {
       if (!!(_this["disabled"] == false)) {
-        _this.$emit('click');
+        this.$emit('click', ev);
       };
     };
     comp["methods"] = m;
     comp["computed"] = new Object();
     comp["computed"]["btnClass"] = function (_this) {
       var Result = undefined;
-      Result = "bui-btn-" + ("" + _this["variant"]) + " bui-btn-" + ("" + _this["size"]);
+      var v = this.variant || 'primary';
+      var isOut = Boolean(this.outline) || v.startsWith('outline-');
+      var cleanV = v.replace('outline-', '');
+      var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
+      var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
+      return 'bui-btn ' + variantClass + s;
       return Result;
     };
     pas.BVComponents.RegisterComponent("bv-btn",comp);
@@ -2616,11 +2643,12 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
       var Result = null;
       var d = null;
       d = new Object();
-      d["title"] = "";
-      d["hasFooter"] = false;
       Result = d;
       return Result;
     };
+    comp["props"] = new Array();
+    comp["props"].push("title");
+    comp["props"].push("hasFooter");
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-card",comp);
@@ -2892,21 +2920,23 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" b-if="label">{{ label }}</label>' + "    <input " + '      :type="type" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder"' + '      :value="value"' + '      @input="handleInput"' + "    />" + "  </div>";
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + "    <input " + '      :type="type || \'text\'" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder || \'\'"' + '      :value="value !== undefined && value !== null ? value : \'\'"' + '      :readonly="readonly && readonly !== \'false\'"' + '      @input="handleInput"' + "    />" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["label"] = "";
-      d["placeholder"] = "";
-      d["type"] = "text";
-      d["value"] = "";
       Result = d;
       return Result;
     };
+    comp["props"] = new Array();
+    comp["props"].push("label");
+    comp["props"].push("placeholder");
+    comp["props"].push("type");
+    comp["props"].push("value");
+    comp["props"].push("readonly");
     m = new Object();
     m["handleInput"] = function (_this, ev) {
-      let val = (ev && ev.target) ? ev.target.value : '';
+      let val = (ev && ev.target) ? ev.target.value : (ev || '');
       this.value = val;
       this.$emit('input', val);
     };
@@ -2921,7 +2951,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <input " + '         type="text" ' + '         class="bui-input-group-field" ' + '         :placeholder="placeholder" ' + '         :value="value"' + '         @input="onInput"' + "       >" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <slot>" + "         <input " + '           type="text" ' + '           class="bui-input-group-field" ' + '           :placeholder="placeholder || \'\'" ' + '           :value="value !== undefined && value !== null ? value : \'\'"' + '           @input="onInput"' + "         >" + "       </slot>" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2937,7 +2967,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     comp["props"].push("append");
     m = new Object();
     m["onInput"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : ev;
+      var val = (ev && ev.target) ? ev.target.value : (ev || '');
       this.$emit('input', val);
     };
     comp["methods"] = m;
@@ -2989,7 +3019,7 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <slot></slot>" + '    <bv-badge v-if="badge" :variant="badgeVariant">{{ badge }}</bv-badge>' + "  </li>";
+    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <span><slot></slot></span>" + '    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>' + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3001,11 +3031,18 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     comp["props"].push("active");
     comp["props"].push("badge");
     comp["props"].push("badgeVariant");
+    comp["props"].push("badgevariant");
     m = new Object();
     m["handleClick"] = function (_this) {
       this.$emit('click');
     };
     comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedBadgeVariant"] = function (_this) {
+      var Result = undefined;
+      return this.badgeVariant || this.badgevariant || 'primary';
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
@@ -3033,6 +3070,9 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     m["showModal"] = function (_this) {
       _this["show"] = true;
     };
+    m["show"] = function (_this) {
+      _this["show"] = true;
+    };
     m["close"] = function (_this) {
       _this["show"] = false;
       this.$emit('close');
@@ -3055,7 +3095,7 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
+    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3104,7 +3144,7 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in totalPages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= totalPages }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
+    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= total }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3123,6 +3163,14 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     };
     comp["methods"] = m;
     comp["computed"] = new Object();
+    comp["computed"]["pages"] = function (_this) {
+      var Result = undefined;
+      var arr = [];
+      var tot = parseInt(this.total) || 1;
+      for (var i = 1; i <= tot; i++) arr.push(i);
+      return arr;
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
@@ -3183,7 +3231,7 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="\'bui-progress-\' + variant"' + '         :style="{ width: value + \'%\' }">' + '       <span v-if="label">{{ value }}%</span>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="barClass"' + '         :style="barStyle">' + '       <span v-if="showText">{{ value }}%</span>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3197,6 +3245,24 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     comp["props"].push("label");
     m = new Object();
     comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["barClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      return 'bui-progress-bar bui-progress-' + v;
+      return Result;
+    };
+    comp["computed"]["barStyle"] = function (_this) {
+      var Result = undefined;
+      var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
+      return 'width: ' + pct + '%;';
+      return Result;
+    };
+    comp["computed"]["showText"] = function (_this) {
+      var Result = undefined;
+      return this.label !== false && this.label !== 'false';
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
@@ -3232,7 +3298,7 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner-\' + variant, small ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
+    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner\', \'bui-spinner-\' + (variant || \'primary\'), (small && small !== \'false\') ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3255,32 +3321,44 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-tab-pane" b-show="active" v-if="render">' + "     <slot></slot>" + "  </div>";
+    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["render"] = true;
       Result = d;
       return Result;
     };
     comp["props"] = new Array();
     comp["props"].push("id");
     comp["props"].push("title");
+    comp["props"].push("active");
     m = new Object();
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      if (pas.System.Assigned(_this["registerTab"])) {
-        const t = { id: this.id, title: this.title };
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+        this.registerTab(t);
+      };
+    };
+    comp["mounted"] = function (_this) {
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
         this.registerTab(t);
       };
     };
     comp["computed"] = new Object();
+    comp["computed"]["active"] = function (_this) {
+      var Result = undefined;
+      if (typeof this.isActive === 'function') {
+        return Boolean(this.isActive(this.id));
+      }
+      return true;
+      return Result;
+    };
     comp["inject"] = new Array();
-    comp["inject"].push("registerTab:");
-    comp["inject"].push("pointer");
-    comp["inject"].push("isActive:");
-    comp["inject"].push("pointer");
+    comp["inject"].push("registerTab");
+    comp["inject"].push("isActive");
     pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
@@ -3291,7 +3369,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="#">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3308,11 +3386,36 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      _this["tabs"] = new Array();
+      this.tabs = [];
     };
     comp["provide"] = function (_this) {
       var Result = null;
       Result = new Object();
+      var self = this;
+      Result.registerTab = function(tab) {
+        if (!self.tabs) self.tabs = [];
+        var exists = false;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === tab.id) { exists = true; break; }
+        }
+        if (!exists) {
+          self.tabs.push(tab);
+          if (tab.active || !self.activeTabId || self.activeTabId === '') {
+            self.activeTabId = tab.id;
+          }
+        }
+      };
+      Result.unregisterTab = function(id) {
+        if (!self.tabs) return;
+        var idx = -1;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === id) { idx = i; break; }
+        }
+        if (idx !== -1) self.tabs.splice(idx, 1);
+      };
+      Result.isActive = function(id) {
+        return self.activeTabId === id;
+      };
       return Result;
     };
     pas.BVComponents.RegisterComponent("bv-tabs",comp);
@@ -3325,7 +3428,7 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-toast" b-if="show">' + '    <div class="bui-toast-content">' + '      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "      <slot>{{ message }}</slot>" + "    </div>" + '    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "  </div>";
+    comp["template"] = '  <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="show">' + '    <div class="bui-toast-content">' + '      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "      <slot>{{ message }}</slot>" + "    </div>" + '    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3346,6 +3449,9 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
       setTimeout(() => {
         this.show = false;
       }, dur);
+    };
+    m["show"] = function (_this) {
+      this.showToast();
     };
     m["dismiss"] = function (_this) {
       _this["show"] = false;

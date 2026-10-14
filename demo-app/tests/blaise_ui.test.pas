@@ -2,11 +2,11 @@ program blaise_ui_test;
 
 {$mode objfpc}
 
-uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVChart;
+uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVChart, uBVInput, uBVPagination, uBVListGroup, uBVListGroupItem;
 
 var
   Wrapper: TWrapper;
-  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, ChartProps: TJSObject;
+  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, ChartProps, InputProps, PagProps, ItemProps: TJSObject;
 
 begin
   Register_uBVBtn;
@@ -18,6 +18,10 @@ begin
   Register_uBVProgress;
   Register_uBVSpinner;
   Register_uBVChart;
+  Register_uBVInput;
+  Register_uBVPagination;
+  Register_uBVListGroup;
+  Register_uBVListGroupItem;
 
   Describe('BlaiseUI Official Component Kit', procedure
     begin
@@ -28,6 +32,17 @@ begin
             Expect(Wrapper.Find('button').className).ToContain('bui-btn');
             Expect(Wrapper.Find('button').className).ToContain('bui-btn-primary');
             Expect(Wrapper.Find('button').className).ToContain('bui-btn-md');
+         end);
+
+       It('deve renderizar bv-btn com label passada como prop', procedure
+         begin
+            BtnProps := TJSObject.new;
+            BtnProps['label'] := 'Open Modal';
+            BtnProps['variant'] := 'info';
+            Wrapper := Mount('bv-btn', BtnProps);
+            Expect(Wrapper.Find('button')).toBeDefined;
+            Expect(Wrapper.Find('button').textContent).ToContain('Open Modal');
+            Expect(Wrapper.Find('button').className).ToContain('bui-btn-info');
          end);
 
        It('deve renderizar bv-btn com estado desabilitado', procedure
@@ -96,6 +111,40 @@ begin
             Wrapper := Mount('bv-chart', ChartProps);
             Expect(Wrapper.Find('.bui-chart-wrapper')).toBeDefined;
             Expect(Wrapper.Find('canvas')).toBeDefined;
+         end);
+
+       It('deve renderizar bv-input com valor e label', procedure
+         begin
+            InputProps := TJSObject.new;
+            InputProps['label'] := 'Username';
+            InputProps['value'] := 'Turbo_Node';
+            Wrapper := Mount('bv-input', InputProps);
+            Expect(Wrapper.Find('.bui-input-group')).toBeDefined;
+            Expect(Wrapper.Find('.bui-input-label')).toBeDefined;
+            Expect(Wrapper.Find('.bui-input-label').textContent).ToContain('Username');
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).value).toBe('Turbo_Node');
+         end);
+
+       It('deve renderizar bv-pagination com total de paginas', procedure
+         begin
+            PagProps := TJSObject.new;
+            PagProps['total'] := 5;
+            PagProps['value'] := 2;
+            Wrapper := Mount('bv-pagination', PagProps);
+            Expect(Wrapper.Find('.bui-pagination')).toBeDefined;
+            Expect(Wrapper.FindAll('.bui-page-item').length).toBe(7); { 5 pages + 2 arrows }
+         end);
+
+       It('deve renderizar bv-list-group-item com badge estilizado', procedure
+         begin
+            ItemProps := TJSObject.new;
+            ItemProps['badge'] := '5';
+            ItemProps['badgeVariant'] := 'danger';
+            Wrapper := Mount('bv-list-group-item', ItemProps);
+            Expect(Wrapper.Find('.bui-list-group-item')).toBeDefined;
+            Expect(Wrapper.Find('.bui-badge')).toBeDefined;
+            Expect(Wrapper.Find('.bui-badge').textContent).ToContain('5');
+            Expect(Wrapper.Find('.bui-badge').className).ToContain('bui-badge-danger');
          end);
     end);
 end.

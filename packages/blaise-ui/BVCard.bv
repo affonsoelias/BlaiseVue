@@ -13,7 +13,15 @@
 </template>
 
 <script>
-  data:
+  {
+    BVCard - Container Card
+    -----------------------
+    Props:
+    - title: String card header title
+    - hasFooter: Boolean toggle footer container
+  }
+
+  props:
     title: string = '';
     hasFooter: boolean = false;
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <div class="bui-spinner" :class="['bui-spinner-' + variant, small ? 'bui-spinner-sm' : '']" role="status"></div>
+  <div class="bui-spinner" :class="['bui-spinner', 'bui-spinner-' + (variant || 'primary'), (small && small !== 'false') ? 'bui-spinner-sm' : '']" role="status"></div>
 </template>
 
 <script>

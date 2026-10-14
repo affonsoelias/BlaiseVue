@@ -3,13 +3,15 @@
     <label class="bui-input-label" v-if="label">{{ label }}</label>
     <div class="bui-input-group-row">
        <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>
-       <input 
-         type="text" 
-         class="bui-input-group-field" 
-         :placeholder="placeholder" 
-         :value="value"
-         @input="onInput"
-       >
+       <slot>
+         <input 
+           type="text" 
+           class="bui-input-group-field" 
+           :placeholder="placeholder || ''" 
+           :value="value !== undefined && value !== null ? value : ''"
+           @input="onInput"
+         >
+       </slot>
        <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>
     </div>
   </div>
@@ -38,7 +40,7 @@
     procedure onInput(ev: JSValue);
     begin
        asm 
-         var val = (ev && ev.target) ? ev.target.value : ev;
+         var val = (ev && ev.target) ? ev.target.value : (ev || '');
          this.$emit('input', val); 
        end;
     end;

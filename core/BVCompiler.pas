@@ -546,11 +546,22 @@ initialization
              bv.effect(function() {
                 let v = Data.Evaluate(b.expr);
                 if (b.name === 'class') {
+                  if (el['_bv_static_class'] === undefined) el['_bv_static_class'] = el.getAttribute('class') || '';
                   if (typeof v === 'object' && !Array.isArray(v)) {
+                    el.className = el['_bv_static_class'];
                     Object.keys(v).forEach(function(ck) { if (v[ck]) el.classList.add(ck); else el.classList.remove(ck); });
-                  } else el.className = (Array.isArray(v) ? v.join(' ') : String(v));
+                  } else {
+                    let dyn = Array.isArray(v) ? v.filter(Boolean).join(' ') : (v || '');
+                    el.className = (el['_bv_static_class'] ? (el['_bv_static_class'] + ' ' + dyn) : dyn).trim();
+                  }
                 } else if (b.name === 'style') {
-                  if (typeof v === 'object') Object.assign(el.style, v); else el.style.cssText = String(v);
+                  if (el['_bv_static_style'] === undefined) el['_bv_static_style'] = el.getAttribute('style') || '';
+                  if (typeof v === 'object') {
+                    if (el['_bv_static_style']) el.style.cssText = el['_bv_static_style'];
+                    Object.assign(el.style, v);
+                  } else {
+                    el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
+                  }
                 } else {
                    if (v !== null && typeof v !== 'object') el.setAttribute(b.name, v);
                 }

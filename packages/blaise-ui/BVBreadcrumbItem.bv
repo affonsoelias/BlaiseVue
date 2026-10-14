@@ -1,6 +1,5 @@
 <template>
   <li class="bui-breadcrumb-item" :class="{ active: active }">
-    <span v-if="!active" class="bui-breadcrumb-separator">/</span>
     <a v-if="href && !active" :href="href" @click="handleClick">
       <slot></slot>
     </a>

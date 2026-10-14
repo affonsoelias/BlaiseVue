@@ -1,6 +1,6 @@
 <template>
   <nav class="bui-navbar">
-    <a class="bui-navbar-brand" href="#">{{ brand }}</a>
+    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>
     <ul class="bui-navbar-nav">
       <slot></slot>
     </ul>

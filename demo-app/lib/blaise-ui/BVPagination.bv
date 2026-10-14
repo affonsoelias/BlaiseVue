@@ -5,11 +5,11 @@
          <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>
        </li>
        
-       <li class="bui-page-item" b-for="p in totalPages" :class="{ active: p == value }">
+       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">
          <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>
        </li>
 
-       <li class="bui-page-item" :class="{ disabled: value >= totalPages }">
+       <li class="bui-page-item" :class="{ disabled: value >= total }">
          <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>
        </li>
     </ul>
@@ -30,9 +30,14 @@
     total: integer = 10;
 
   computed:
-    procedure totalPages: integer;
+    function pages: JSValue;
     begin
-       Result := total;
+       asm
+         var arr = [];
+         var tot = parseInt(this.total) || 1;
+         for (var i = 1; i <= tot; i++) arr.push(i);
+         return arr;
+       end;
     end;
 
   methods:

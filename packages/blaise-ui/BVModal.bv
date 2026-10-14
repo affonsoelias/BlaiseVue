@@ -44,6 +44,11 @@
       this['show'] := true;
     end;
 
+    procedure show;
+    begin
+      this['show'] := true;
+    end;
+
     procedure close;
     begin
       this['show'] := false;
