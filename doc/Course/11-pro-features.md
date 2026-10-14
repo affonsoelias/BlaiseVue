@@ -37,9 +37,9 @@ Use `provide` at the Root (App) and `inject` in those that need it. It's clean, 
 ---
 
 ## 6. 📦 Library Ecosystem (/lib)
-BlaiseVue PRO allows loading external libraries (like our **Bootstrap-BV**) just by dropping the components in the `/lib` folder.
-- **Auto-Link**: The library CSS is automatically linked.
-- **Auto-Registration**: The `<b-btn-page>` component already works without any `import` line.
+BlaiseVue PRO allows loading external libraries and UI kits (like **BlaiseUI**) simply by placing components inside the `/lib` folder.
+- **Auto-Link**: Any library CSS (like `blaise-ui.css`) is automatically linked into `index.html`.
+- **Auto-Registration**: Library components like `<bv-btn>`, `<bv-modal>`, and `<bv-card>` are registered globally without needing manual `import` statements.
 
 ---
 

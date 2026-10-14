@@ -1,48 +1,113 @@
 # Communication: Props, $refs, and $emit
 
-As of v1.1.0, BlaiseVue supports advanced component communication following Vue.js patterns, while maintaining Object Pascal typing and syntax.
+BlaiseVue supports comprehensive component communication patterns aligned with Vue.js, maintaining complete Object Pascal typing and syntax.
 
-## Props (Parent -> Child)
-Used to pass data from the parent component to the child.
+---
 
-- **Static Props:** Regular attributes.
-- **Dynamic Props:** Prefix `:` or `b-bind:`.
+## 📥 Props (Parent -> Child)
+Used to pass data from a parent component down to a child.
 
-```html
-<user-card name="Blaise" :id="userId"></user-card>
-```
-
-## $refs (Direct Access)
-Allows the parent to call methods that are inside the child component.
-
-1. Add `b-ref="name"` to the tag.
-2. In Pascal, use `TJSObject(this['$refs'])['name']`.
-
-```pascal
-procedure ResetChild;
-var
-  child: TJSObject;
-begin
-  child := TJSObject(TJSObject(this['$refs'])['myComp']);
-  TJSFunction(child['childMethod']).apply(child['$data'], []);
-end;
-```
-
-## $emit (Child -> Parent)
-Allows the child to notify the parent about events.
-
-1. In the child, call `this['$emit']('event-name', data)`.
-2. In the parent, listen with `@event-name="methodInParent"`.
+- **Static Props:** Plain HTML attributes: `label="Save"`, `variant="primary"`.
+- **Dynamic Props:** Prefixed with `:` or `b-bind:`: `:value="count"`, `b-bind:items="userList"`.
+- **Case-Insensitive & Kebab-to-Camel Auto-Mapping:** Because browser DOM normalizes HTML attributes to lowercase, the BlaiseVue compiler automatically maps attributes (`initialactiveid`, `initial-active-id`) to the component's declared Pascal/JS prop name (`initialActiveId`).
 
 ```html
+<!-- In Child (BVCard.bv) -->
+<script>
+  props:
+    title: string = 'Default Title';
+    userCount: integer = 0;
+</script>
+
 <!-- In Parent -->
-<child-comp @child-click="OnChildClick"></child-comp>
+<template>
+  <bv-card title="System Status" :user-count="totalUsers"></bv-card>
+</template>
 ```
 
-```pascal
-// In Child
-procedure Clicked;
-begin
-  this['$emit']('child-click', 'Hello parent!');
-end;
+---
+
+## 🎯 $refs (Direct Component & DOM Access)
+Allows parent components to programmatically access child components or DOM elements.
+
+1. Add `b-ref="identifier"` (or `ref="identifier"`) to any component or element in the template.
+2. In Pascal, access the reference dictionary via `this['$refs']` or `this.$refs` (in `asm` blocks):
+
+```html
+<template>
+  <bv-btn variant="primary" @click="openConfirmModal">Open Confirmation</bv-btn>
+  <bv-modal b-ref="mainModal" title="Confirm" @ok="processData">
+    <p>Are you sure you want to proceed?</p>
+  </bv-modal>
+</template>
+
+<script>
+  methods:
+    procedure openConfirmModal;
+    begin
+      asm
+        if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
+          this.$refs.mainModal.showModal();
+        }
+      end;
+    end;
+</script>
+```
+
+> [!NOTE]
+> When `b-ref` is applied to a custom component, `$refs[name]` resolves to the **reactive proxy instance** of that component, allowing direct invocation of its declared `methods`.
+
+---
+
+## 📤 $emit (Child -> Parent)
+Allows child components to trigger custom events and pass payloads upward to the parent.
+
+1. **In the Child:** Call `this['$emit']('event-name', payload)` or `this.$emit('event-name', payload)`.
+2. **In the Parent:** Listen to the event using `@event-name="handler"`, `v-on:event-name`, or `b-on:event-name`.
+
+```html
+<!-- Child: FormHeader.bv -->
+<template>
+  <header class="header-box">
+    <h3>{{ title }}</h3>
+    <button @click="notifyParent">Refresh Data</button>
+  </header>
+</template>
+
+<script>
+  props:
+    title: string = '';
+
+  methods:
+    procedure notifyParent;
+    begin
+      asm
+        this.$emit('refresh', { timestamp: Date.now() });
+      end;
+    end;
+</script>
+```
+
+```html
+<!-- Parent Component -->
+<template>
+  <div>
+    <!-- Method handler with payload -->
+    <form-header title="Dashboard" @refresh="onRefresh"></form-header>
+
+    <!-- Inline expression mutation -->
+    <form-header title="Compact" @refresh="lastSync = $event.timestamp"></form-header>
+
+    <!-- Event modifiers -->
+    <form-header title="Stop Bubbling" @refresh.stop="onRefresh"></form-header>
+  </div>
+</template>
+
+<script>
+  methods:
+    procedure onRefresh(data: JSValue);
+    begin
+      console.log('Parent received refresh event:', data);
+    end;
+</script>
 ```

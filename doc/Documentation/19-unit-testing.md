@@ -54,23 +54,33 @@ end.
 ### 🧩 Mounting and Selection
 | Method | Description |
 |--------|-----------|
-| `Mount(TagName)` | Creates the component in JSDOM and returns a `TWrapper`. |
-| `Wrapper.Find(Selector)` | Returns the first `TJSHTMLElement` matching the selector. |
-| `Wrapper.FindAll(Selector)` | Returns an array of elements. |
+| `Mount(TagName, Props = nil)` | Creates the component in JSDOM, compiles reactive bindings, and returns a `TWrapper`. |
+| `Wrapper.Find(Selector)` | Returns the matching `TJSHTMLElement` (or child node) matching the CSS selector. |
+| `Wrapper.Element` | Returns the underlying root `TJSHTMLElement` of the mounted component. |
+| `Wrapper.HTML` | Returns the `innerHTML` string of the component. |
+| `Wrapper.Text` | Returns the `textContent` string of the component. |
 
 ### ⌨️ Interaction
 | Method | Description |
 |--------|-----------|
-| `Wrapper.Click(Selector)` | Shortcut to trigger the click event on an element. |
-| `Wrapper.Fill(Selector, Val)` | Fills an input and triggers the reactive `input` event. |
-| `WaitTick` | Pauses test execution until the reactivity engine processes pending jobs. |
+| `Wrapper.Click` | Simulates a native mouse click on the wrapper element. |
+| `Wrapper.Find(sel).click()` | Triggers a native click on a queried sub-element. |
+| `Wrapper.SetValue(Val)` | Sets an input's `value` and dispatches the reactive `'input'` DOM event. |
+| `Wrapper.Trigger(EventName)` | Dispatches a custom DOM event (`'click'`, `'change'`, `'blur'`, etc.) on the element. |
+| `WaitTick` | Pauses test execution until the microtask reactivity queue processes pending jobs. |
 
 ### ⚖️ Assertions (Expect)
 | Assertion | Description |
 |----------|-----------|
-| `.ToEqual(val)` | Strict equality (JS ===). |
-| `.ToContain(str)` | Checks if the string or HTML contains the fragment. |
-| `.ToBeTrue / .ToBeFalse` | Fast boolean validations. |
+| `.ToBe(val)` | Strict equality assertion (`expect(a).toBe(b)`). |
+| `.ToEqual(val)` | Deep value equality assertion (`expect(a).toEqual(b)`). |
+| `.ToContain(str)` | Checks if the string, array, or HTML contains the fragment. |
+| `.ToHaveLength(len)` | Validates string or array length. |
+| `.ToBeTruthy` | Asserts value is truthy. |
+| `.ToBeFalsy` | Asserts value is falsy. |
+| `.ToBeDefined` | Asserts value is defined. |
+| `.ToBeUndefined` | Asserts value is undefined. |
+| `.ToBeNull` | Asserts value is null. |
 
 ---
 

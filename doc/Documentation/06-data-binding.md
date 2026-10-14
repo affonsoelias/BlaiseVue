@@ -138,7 +138,8 @@ Renders multiple elements from a reactive array.
 <template>
   <ul>
     <li b-for="item in list">
-      {{ item.name }}
+      #{{ $index }}: {{ item.name }}
+      <button @click="toggleItem(item.id)">Toggle</button>
     </li>
   </ul>
 </template>
@@ -146,9 +147,20 @@ Renders multiple elements from a reactive array.
 <script>
   data:
     list: TJSArray = TJSArray.new;
+
+  methods:
+    procedure toggleItem(id: string);
+    begin
+      // Methods invoked within b-for scope have direct access to component state
+    end;
 </script>
 ```
 
+> [!TIP]
+> **Special Variable `$index`**: Each iteration injects a zero-based index variable `$index` into the loop template scope.
+>
+> **Scoped Proxy Set Trap**: Event listeners and methods invoked within a `b-for` loop can directly read iteration variables (`item`) and modify parent component reactive state seamlessly.
+>
 > **Reactive Tip:** When adding items via `.push()`, to ensure UI update, you must re-assign the array: `this['list'] := arr;`.
 
 ## 4. Dynamic Classes `:class`
@@ -168,3 +180,20 @@ data:
   active: boolean = true;
   error: boolean = false;
 ```
+
+## 5. Dynamic Styles `:style`
+
+Binds inline styles dynamically using objects or strings.
+
+```html
+<div :style="{ width: progress + '%', backgroundColor: activeColor }">
+  Dynamic Bar
+</div>
+```
+
+```pascal
+data:
+  progress: integer = 65;
+  activeColor: string = '#42b883';
+```
+

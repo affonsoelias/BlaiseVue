@@ -14,15 +14,27 @@ Methods are defined in the `methods:` section of the `<script>`:
 </script>
 ```
 
-## Events with `@click`
+## Events and Syntax (`@`, `v-on:`, `b-on:`)
 
-Use `@click="methodName"` to call a method on click:
+BlaiseVue supports multiple syntax conventions for listening to DOM and component events:
+- **Shorthand:** `@click="greet"`
+- **Standard Vue:** `v-on:click="greet"`
+- **Blaise Standard:** `b-on:click="greet"`
 
 ```html
 <template>
   <button @click="greet">Click here</button>
   <button @click="increment">+1</button>
   <button @click="decrement">-1</button>
+  
+  <!-- Inline expressions and mutations -->
+  <button @click="counter = (counter + 10) % 105">+10 (Inline)</button>
+
+  <!-- Passing arguments -->
+  <button @click="selectItem('item-1')">Select</button>
+
+  <!-- Accessing the native DOM event -->
+  <button @click="handleClick($event)">Click with Event</button>
 </template>
 
 <script>
@@ -44,8 +56,28 @@ Use `@click="methodName"` to call a method on click:
     begin
       this['counter'] := Integer(this['counter']) - 1;
     end;
+
+    procedure selectItem(id: string);
+    begin
+      console.log('Selected item:', id);
+    end;
+
+    procedure handleClick(ev: TJSEvent);
+    begin
+      console.log('Clicked at coordinates:', ev.clientX, ev.clientY);
+    end;
 </script>
 ```
+
+## Event Modifiers
+
+BlaiseVue includes built-in support for event modifiers:
+
+| Modifier | Description | Example |
+|---|---|---|
+| `.stop` | Calls `ev.stopPropagation()` to prevent event bubbling up the DOM tree. | `<button @click.stop="deleteItem">Delete</button>` |
+| `.prevent` | Calls `ev.preventDefault()` to cancel the default browser action (e.g., form submit). | `<form @submit.prevent="onSubmit">...</form>` |
+| Combinations | Modifiers can be combined or chained on both native tags and custom components. | `<a href="#" @click.stop.prevent="navigate">Link</a>` |
 
 ## Accessing Reactive Data in Pascal
 

@@ -10,11 +10,11 @@ The `/lib/` folder at the root of your project is automatically monitored by Bla
 ### Standard Library Structure:
 ```text
 /lib
-  /bootstrap-bv/
-    - BBtn.bv       (Reactive Component)
-    - BCard.bv
-    - style.css     (Injected into Header)
-    - vendor.js     (Injected into Header)
+  /blaise-ui/
+    - BVBtn.bv          (Reactive Component -> <bv-btn>)
+    - BVCard.bv         (Reactive Component -> <bv-card>)
+    - blaise-ui.css     (Injected into Header)
+    - chart.min.js      (Injected into Header)
 ```
 
 ---
@@ -25,7 +25,7 @@ The `/lib/` folder at the root of your project is automatically monitored by Bla
 `.bv` files found at any level within `/lib/` are registered as **Global Components**.
 - **Mapping**: The filename determines the tag (kebab-case).
 - **No Suffix**: Unlike views in `src/views/`, library components **DO NOT** receive the `-page` suffix.
-- **Example**: `BBtn.bv` -> usable as `<b-btn>` in any application template.
+- **Example**: `BVBtn.bv` -> usable as `<bv-btn>` in any application template.
 
 ### 2. Automatic Asset Injection (CSS/JS)
 BlaiseCLI detects style and script files within the `lib` folder and performs the following workflow during `bv run dev` or `bv run build`:

@@ -18,6 +18,12 @@ my-app/
 │       ├── Home.bv
 │       └── About.bv
 │
+├── lib/                   # Component Libraries & Add-ons
+│   └── blaise-ui/         # Official BlaiseUI component kit & CSS
+│
+├── tests/                 # Automated Unit Tests (Pascal + Vitest)
+│   └── counter.test.pas   # Test suites run via bv test
+│
 ├── generated/             # Generated Pascal (DO NOT EDIT!)
 │   ├── main.pas           # Entry point
 │   ├── uApp.pas           # app.bv → Pascal
@@ -40,6 +46,14 @@ my-app/
 - `app.bv` — Root component. Defines the global layout, app data, and route configuration.
 - `views/` — Pages that correspond to routes. Each file generates a tag with the `-page` suffix.
 - `components/` — Reusable blocks. Each file generates a tag with its natural name (kebab-case).
+
+### `lib/` - Component Libraries
+
+Contains standalone or vendor component libraries (such as official **BlaiseUI** in `lib/blaise-ui/`). All `.bv` components are auto-registered globally, and any `.css` or `.js` files are automatically injected into `index.html`.
+
+### `tests/` - Automated Unit Tests
+
+Pascal unit tests powered by Vitest and JSDOM (`BVTestUtils`). Run with `bv test` or `bv test --watch`.
 
 ### `generated/` - Generated Pascal
 

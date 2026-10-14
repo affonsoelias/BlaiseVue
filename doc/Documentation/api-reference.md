@@ -32,16 +32,18 @@ This document is the official technical reference for all directives, components
 
 ---
 
-## ⚡ Events and Modifiers
+## ⚡ Events, Directives & Modifiers
 
-Events use the `@` prefix and execute Pascal procedures directly or evaluate inline expressions.
+Events can be declared using `@`, `v-on:`, or `b-on:`. Handlers can be Pascal procedure identifiers, function calls with parameters (including `$event`), or inline expressions / statements.
 
-| Event | Modifiers | Description |
-|---|---|---|
-| `@click` | `.stop`, `.prevent` | Triggered on mouse click with optional propagation stopping. |
-| `@input` | - | Continuous text input update event. |
-| `@change` | - | Form control value change confirmed (on blur or selection change). |
-| `@custom` | - | Custom component events triggered via `$emit('custom', payload)`. |
+| Event Directive | Modifiers | Description | Example |
+|---|:---:|---|---|
+| `@click` / `v-on:click` | `.stop`, `.prevent` | Triggered on mouse click with optional propagation stopping. | `<button @click.stop="doAction">` |
+| `@input` / `v-on:input` | - | Continuous text or value update event. | `<input @input="onInput">` |
+| `@change` / `v-on:change` | - | Form control value change confirmed. | `<select @change="onChange">` |
+| `@submit` / `v-on:submit` | `.prevent` | Form submission event (can prevent default page reload). | `<form @submit.prevent="onSave">` |
+| `@custom` / `v-on:custom` | `.stop`, `.prevent` | Custom component events triggered via child `$emit('custom', payload)`. | `<modal @ok="onConfirm">` |
+| Inline Mutation | - | Directly mutate reactive properties inside template expressions. | `<button @click="count = (count + 1) % 100">` |
 
 ---
 
@@ -73,7 +75,7 @@ Available directly in template expressions (`{{ $obj }}`) or via `this['$obj']` 
 |---|---|---|
 | `$store` | `TBVStore` | The singleton application store for global reactive state. |
 | `$router` | `TBVRouter` | The SPA router instance for programmatic navigation and route metadata. |
-| `$refs` | `TJSObject` | Map of DOM elements registered with `b-ref`. |
+| `$refs` | `TJSObject` | Map of DOM elements or child component reactive instances registered with `b-ref`. |
 | `$emit` | `procedure` | Dispatches custom events up to the parent component. |
 
 ---
