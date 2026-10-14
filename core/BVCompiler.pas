@@ -563,7 +563,23 @@ initialization
                     el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
                   }
                 } else {
-                   if (v !== null && typeof v !== 'object') el.setAttribute(b.name, v);
+                   let isBoolAttr = ['disabled', 'readonly', 'checked', 'required', 'hidden', 'selected', 'multiple', 'autofocus'].indexOf(b.name) !== -1;
+                   if (isBoolAttr) {
+                      let isTrue = (v === true || v === 'true' || v === '');
+                      if (isTrue) {
+                         el.setAttribute(b.name, '');
+                         try { el[b.name] = true; } catch(e) {}
+                      } else {
+                         el.removeAttribute(b.name);
+                         try { el[b.name] = false; } catch(e) {}
+                      }
+                   } else {
+                      if (v === null || v === undefined || v === false) {
+                         el.removeAttribute(b.name);
+                      } else if (typeof v !== 'object') {
+                         el.setAttribute(b.name, v);
+                      }
+                   }
                 }
              });
           });

@@ -1,5 +1,5 @@
 <template>
-  <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="show">
+  <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="isVisible">
     <div class="bui-toast-content">
       <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>
       <slot>{{ message }}</slot>
@@ -26,16 +26,16 @@
     variant: string = 'success';
 
   data:
-    show: boolean = false;
+    isVisible: boolean = false;
 
   methods:
     procedure showToast;
     begin
-      this['show'] := true;
+      this['isVisible'] := true;
       asm
         const dur = this.duration || 3000;
         setTimeout(() => {
-          this.show = false;
+          this.isVisible = false;
         }, dur);
       end;
     end;
@@ -47,7 +47,7 @@
 
     procedure dismiss;
     begin
-      this['show'] := false;
+      this['isVisible'] := false;
       asm this.$emit('dismiss'); end;
     end;
 </script>

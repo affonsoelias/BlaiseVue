@@ -904,7 +904,23 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                         el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
                       }
                     } else {
-                       if (v !== null && typeof v !== 'object') el.setAttribute(b.name, v);
+                       let isBoolAttr = ['disabled', 'readonly', 'checked', 'required', 'hidden', 'selected', 'multiple', 'autofocus'].indexOf(b.name) !== -1;
+                       if (isBoolAttr) {
+                          let isTrue = (v === true || v === 'true' || v === '');
+                          if (isTrue) {
+                             el.setAttribute(b.name, '');
+                             try { el[b.name] = true; } catch(e) {}
+                          } else {
+                             el.removeAttribute(b.name);
+                             try { el[b.name] = false; } catch(e) {}
+                          }
+                       } else {
+                          if (v === null || v === undefined || v === false) {
+                             el.removeAttribute(b.name);
+                          } else if (typeof v !== 'object') {
+                             el.setAttribute(b.name, v);
+                          }
+                       }
                     }
                  });
               });
@@ -3053,31 +3069,38 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-if="show" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" @click="close">{{ cancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" @click="confirm">{{ okLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-if="isVisible" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" @click="close">{{ computedCancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" @click="confirm">{{ computedOkLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["show"] = false;
+      d["isOpen"] = false;
       Result = d;
       return Result;
     };
     comp["props"] = new Array();
     comp["props"].push("title");
     comp["props"].push("okLabel");
+    comp["props"].push("oklabel");
     comp["props"].push("cancelLabel");
+    comp["props"].push("cancellabel");
+    comp["props"].push("show");
     m = new Object();
     m["showModal"] = function (_this) {
+      _this["isOpen"] = true;
       _this["show"] = true;
     };
     m["show"] = function (_this) {
+      _this["isOpen"] = true;
       _this["show"] = true;
     };
     m["close"] = function (_this) {
+      _this["isOpen"] = false;
       _this["show"] = false;
       this.$emit('close');
     };
     m["confirm"] = function (_this) {
+      _this["isOpen"] = false;
       _this["show"] = false;
       this.$emit('ok');
     };
@@ -3085,6 +3108,25 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
       this.close();
     };
     comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!(_this["show"] == false)) _this["isOpen"] = true;
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["isVisible"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.isOpen || (this.show && this.show !== 'false'));
+      return Result;
+    };
+    comp["computed"]["computedOkLabel"] = function (_this) {
+      var Result = undefined;
+      return this.okLabel || this.oklabel || 'Process';
+      return Result;
+    };
+    comp["computed"]["computedCancelLabel"] = function (_this) {
+      var Result = undefined;
+      return this.cancelLabel || this.cancellabel || 'Close';
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
@@ -3428,12 +3470,12 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="show">' + '    <div class="bui-toast-content">' + '      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "      <slot>{{ message }}</slot>" + "    </div>" + '    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "  </div>";
+    comp["template"] = '  <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="isVisible">' + '    <div class="bui-toast-content">' + '      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "      <slot>{{ message }}</slot>" + "    </div>" + '    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["show"] = false;
+      d["isVisible"] = false;
       Result = d;
       return Result;
     };
@@ -3444,17 +3486,17 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     comp["props"].push("variant");
     m = new Object();
     m["showToast"] = function (_this) {
-      _this["show"] = true;
+      _this["isVisible"] = true;
       const dur = this.duration || 3000;
       setTimeout(() => {
-        this.show = false;
+        this.isVisible = false;
       }, dur);
     };
     m["show"] = function (_this) {
       this.showToast();
     };
     m["dismiss"] = function (_this) {
-      _this["show"] = false;
+      _this["isVisible"] = false;
       this.$emit('dismiss');
     };
     comp["methods"] = m;
