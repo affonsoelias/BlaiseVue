@@ -1,63 +1,86 @@
 # 🛡️ BlaiseVue: The Modern Pascal SPA Framework
 
-**BlaiseVue** is a professional-grade Single Page Application (SPA) framework for **Object Pascal**, designed to bring the power of modern reactivity, routing, and state management to the web using Pascal's type safety and performance.
+**BlaiseVue** is a high-performance, enterprise-grade Single Page Application (SPA) framework for **Object Pascal**. It combines the type safety, architectural robustness, and raw compilation speed of Pascal with the elegance, ergonomics, and reactivity of **Vue.js**.
 
 ---
 
-## 🚀 Key Features
+## 🌟 Version 2.0: The Enterprise Release
 
-- **⚡ Reactive Proxy Core**: Automatic dependency tracking and batch updates, similar to Vue.js 3.
-- **📦 SFC (Single File Components)**: Unified `.bv` files separating `Template`, `Script`, and `Style`.
-- **🛤️ SPA Routing**: Built-in hash-based router with hooks, dynamic parameters, and guards.
-- **🧠 B-Store**: Global state management with a Proxy-based singleton pattern.
-- **🔗 DI Engine**: Support for `Provide/Inject` to handle deep component communication.
-- **🧪 Unit Testing**: Native Vitest integration for Pascal-based testing.
-- **📦 Lib Manager**: Zero-config autoloading for external CSS, JS, and UI Kits.
+BlaiseVue 2.0 represents a monumental leap forward, establishing a complete enterprise frontend ecosystem:
 
-## 🌟 Version 1.0 PRO: Officially Released!
-
-We are proud to announce the official launch of **BlaiseVue 1.0 PRO**. This version establishes a stable, production-ready foundation for professional Pascal-based web development, featuring complete routing, reactivity, and a fully documented core.
+- **⚡ Hot Module Replacement (HMR)**: Instant component recompilation and in-place DOM patching via WebSockets (`:8081`) while preserving active reactive state (`this['State']`).
+- **🛣️ Advanced SPA Routing**: Clean URLs via **HTML5 History API**, recursive **Nested Routes** with `<router-view>`, dynamic code-splitting (`import()`), and **Navigation Guards** (`beforeEach`, `beforeEnter`, `afterEach`).
+- **🧩 Scoped Slots**: Seamless two-way data passing from child components back to parent templates (`#name="slotProps"`, `b-slot`, `slot-scope`).
+- **🚀 Teleport & Suspense**: Mount elements into remote DOM targets (`<teleport to="body">`) and orchestrate asynchronous loading dependencies (`<suspense>`).
+- **🏎️ Static Hoisting & Compiler Pruning**: Compiler-level static analysis tags invariant nodes (`bvStatic = true`), bypassing diff comparisons for $O(1)$ reconciliation.
+- **🕵️ Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge with Component Tree inspection, real-time reactive state editing, and timeline logging.
+- **🎨 BlaiseUI Official Component Kit**: Production-ready, native UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-toast`, `bv-datagrid`) with pure modern CSS variables.
+- **🏗️ Native Resource Scaffolding**: CLI templates embedded at compile-time via `{$R templates.res}`, providing a portable, zero-dependency executable (`bv.exe`).
+- **🧪 Automated Unit Testing (Vitest)**: TDD engine in Pascal with headless JSDOM verification via `bv test`.
 
 ---
 
-## 🗺️ Roadmap to BlaiseVue 2.0
+## 🔮 The Next Frontier: Roadmap to BlaiseVue 2.5 & 3.0
 
-While v1.0 is stable, our vision for the future is even more ambitious. The following features are planned for the next major evolution of the framework:
+Our architectural vision continues to expand. The next cycle focuses on enterprise tooling, form engineering, and high-performance computing:
 
-1.  **⚡ HMR (Hot Module Replacement)**: Selective component injection without page reloads or state loss.
-2.  **🛣️ History Mode & Nested Routes**: Support for HTML5 clean URLs and sub-layouts (`children` routes).
-3.  **🧩 Scoped Slots**: Dynamic data passing from children back to parent templates for advanced UI logic.
-4.  **🚀 Teleport & Suspense**: Rendering modals outside the app root and standardizing async loading states.
-5.  **🏗️ Static Template Booting**: Compiler-level optimizations to ignore non-reactive DOM nodes.
-6.  **📦 Code Splitting**: Automatic lazy loading of routes to minimize initial bundle size.
-7.  **🕵️ DevTools Browser Extension**: A dedicated Chrome/Edge extension for real-time component and state inspection.
-8.  **🛡️ BlaiseUI Library**: An official ecosystem of pre-styled, high-performance UI components.
-9.  **🏗️ Native Resource Scaffolding**: Move hardcoded templates to `.res` files for a cleaner CLI source code.
+1. **📋 Typed Form Engine (`b-validate`)**: Declarative validations with reactive `$errors` tracking.
+2. **🎬 List Transitions (`<transition-group>`)**: Smooth collection animations powered by the FLIP algorithm.
+3. **🌐 Native i18n (Blaise-i18n)**: Multi-locale support with `$t()` and dynamic language switching.
+4. **📚 Automatic Documentation (`bv doc`)**: Component catalog and interactive playground generator.
+5. **⚡ WebAssembly Acceleration**: Direct FPC Wasm compilation for compute-intensive routines.
+6. **🚀 SSG & Static Pre-rendering**: Static HTML pre-rendering with client hydration for instant FCP and SEO.
 
 > [!TIP]
-> **Detailed Engineering Plan**: For a deep dive into the technical architecture of upcoming features, check out our [Technical Roadmap](doc/Documentation/99-roadmap-v3.md).
+> **Detailed Engineering Plan**: For a deep dive into the technical architecture of upcoming features, check out our [Technical Roadmap (v2.5 & v3.0)](doc/Documentation/99-roadmap-v3.md).
 
 ---
 
-## 🛠️ Project Structure
+## 🛠️ CLI Quick Reference (`bv.exe`)
 
-- **`/bin`**: The BlaiseVue CLI (`bv.pas`). The brain of the project.
-- **`/core`**: Framework internals (Reactivity, Compiler, Directives, Store).
+```bash
+# Start development server with instant HMR and WebSocket
+bv serve
+
+# Run express development build with cache busting
+bv run dev
+
+# Run automated unit test suite with Vitest
+bv test
+
+# Scaffold a new unit test in tests/
+bv new t MyComponent
+
+# Build optimized production bundle
+bv run build
+
+# Clean build artifacts (dist/ and generated/)
+bv clean
+```
+
+---
+
+## 📂 Project Structure
+
+- **`/bin`**: The BlaiseVue CLI (`bv.pas`). The native compiler and orchestrator.
+- **`/core`**: Framework runtime internals (Reactivity Proxy, Compiler, Directives, Store, Router).
+- **`/packages/blaise-ui`**: Official native component library and stylesheets.
+- **`/devtools`**: Manifest V3 browser extension for Chrome and Edge.
 - **`/doc`**:
-  - `Documentation/`: Comprehensive technical manuals (20+ chapters).
+  - `Documentation/`: Comprehensive technical manuals (24 chapters + API Reference).
   - `Course/`: Step-by-step guides, including an **Internals & Architecture** course for contributors.
-- **`/demo-app`**: A full showcase application featuring all core features and UI libraries.
+- **`/demo-app`**: Showcase application featuring all 2.0 features, router views, and UI kits.
 
 ---
 
 ## 🏁 Quick Start
 
 ### 1. Compile the BlaiseVue CLI
-Ensure you have **FPC (Free Pascal Compiler)** installed.
+Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed:
 ```bash
 cd bin
 fpc bv.pas
-# Move bv or bv.exe to root
+# Move bv or bv.exe to root or add bin/ to your PATH
 ```
 
 ### 2. Set Up Pas2JS (Multi-platform)
@@ -66,14 +89,14 @@ Download the [Pas2JS 3.2.0](https://getpas2js.freepascal.org) archive for your O
 - `/pas2js/pas2js-linux-x86_64-3.2.0/`
 - `/pas2js/pas2js-darwin-x86_64-3.2.0/`
 
-**The CLI now automatically detects your OS and uses the correct path!** 🛡️✨🚀
+The CLI automatically detects your OS and uses the correct binary path!
 
----
-
-## 🏗️ Project Structure
-
-If you want to contribute to the core or understand how the reactivity engine works, check out our **Architecture Course** at:
-`doc/Course/Architecture-and-Internals/`
+### 3. Launch the Demo App
+```bash
+cd demo-app
+..\bin\bv serve
+# Open http://localhost:8080 in your browser
+```
 
 ---
 
@@ -87,4 +110,4 @@ This allows you to create **commercial and proprietary applications** without ha
 
 ---
 
- 🛡️ **"BlaiseVue: Bringing Pascal to the modern Web, and the Web to Pascal."** ✨🏆🚀
+🛡️ **"BlaiseVue: Bringing Pascal to the modern Web, and the Web to Pascal."** ✨🏆🚀
