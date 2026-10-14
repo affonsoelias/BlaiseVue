@@ -99,9 +99,14 @@ begin
   { Evaluates a Pascal/JS expression within the data context }
   asm
     try {
-      let f = new Function('data', '$event', 'with(data) { try { return ' + AExpr + '; } catch(e) { return undefined; } }');
+      let f = new Function('data', '$event', 'with(data) { try { return (' + AExpr + '); } catch(e1) { try { ' + AExpr + '; } catch(e2) { return undefined; } } }');
       return f(this.FData, AEvent);
-    } catch(e) { return undefined; }
+    } catch(ex) {
+      try {
+        let f2 = new Function('data', '$event', 'with(data) { ' + AExpr + '; }');
+        return f2(this.FData, AEvent);
+      } catch(e3) { return undefined; }
+    }
   end;
 end;
 

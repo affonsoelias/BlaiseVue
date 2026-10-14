@@ -763,7 +763,13 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    else if (n === 'b-if' || n === 'v-if') vif = a.value;
                    else if (n === 'b-show' || n === 'v-show') vshow = a.value;
                    else if (n === 'b-ref' || n === 'ref') vref = a.value; 
-                   else if (n.startsWith('@')) events.push({ name: n.substring(1), expr: a.value });
+                   else if (n.startsWith('@') || n.startsWith('v-on:') || n.startsWith('b-on:')) {
+                      let rawName = n.startsWith('@') ? n.substring(1) : (n.startsWith('v-on:') ? n.substring(5) : n.substring(5));
+                      let parts = rawName.split('.');
+                      let evName = parts[0];
+                      let mods = parts.slice(1);
+                      events.push({ name: evName, expr: a.value, modifiers: mods });
+                   }
                    else if (n.startsWith(':') || n.startsWith('b-bind:')) {
                       binds.push({ name: n.replace('b-bind:', '').replace(':', ''), expr: a.value });
                    }
@@ -822,11 +828,26 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                         let pData = Data.FData;
                         let scp = new Proxy({}, {
                           get(t, k) { if (k === itN) return item; if (k === '$index') return idx; return pData[k]; },
-                          has(t, k) { return (k === itN || k === '$index' || k in pData); }
+                          has(t, k) { return (k === itN || k === '$index' || k in pData); },
+                          set(t, k, v) {
+                            if (k === itN) { item = v; return true; }
+                            pData[k] = v;
+                            return true;
+                          }
                         });
                         let ld = {
                           FData: scp,
-                          Evaluate: function(expr, ev) { try { let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }'); return f(this.FData, ev); } catch(ex) { return undefined; } },
+                          Evaluate: function(expr, ev) {
+                            try {
+                              let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
+                              return f(this.FData, ev);
+                            } catch(ex) {
+                              try {
+                                let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+                                return f2(this.FData, ev);
+                              } catch(e3) { return undefined; }
+                            }
+                          },
                           SetValue: function(k, val) { this.FData[k] = val; }
                         };
                         bv.traverse(cl, ld, Methods);
@@ -951,9 +972,24 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       let n = a.name;
                       if (n.startsWith(':') || n.startsWith('b-bind:')) {
                          let pn = n.replace('b-bind:', '').replace(':', '');
-                         bv.effect(function() { pRef[pn] = Data.Evaluate(a.value); });
+                         let targetProp = pn;
+                         if (opts.props && Array.isArray(opts.props)) {
+                            let found = opts.props.find(p => p.toLowerCase() === pn.toLowerCase() || p.toLowerCase() === pn.replace(/-/g, '').toLowerCase());
+                            if (found) targetProp = found;
+                         }
+                         bv.effect(function() {
+                            let val = Data.Evaluate(a.value);
+                            pRef[targetProp] = val;
+                            if (targetProp !== pn) pRef[pn] = val;
+                         });
                       } else if (!n.startsWith('@') && !n.startsWith('b-') && !n.startsWith('v-')) {
-                         pRef[n] = a.value;
+                         let targetProp = n;
+                         if (opts.props && Array.isArray(opts.props)) {
+                            let found = opts.props.find(p => p.toLowerCase() === n.toLowerCase() || p.toLowerCase() === n.replace(/-/g, '').toLowerCase());
+                            if (found) targetProp = found;
+                         }
+                         pRef[targetProp] = a.value;
+                         if (targetProp !== n) pRef[n] = a.value;
                       }
                    }
                 }
@@ -1109,7 +1145,10 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                     pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
                  }
     
-                 if (vref && Data && Data.FData) { Data.FData.$refs[vref] = pRef; }
+                 if (vref && Data && Data.FData) {
+                    if (!Data.FData.$refs) Data.FData.$refs = {};
+                    Data.FData.$refs[vref] = pRef;
+                 }
                 
                 if (opts.inject) {
                    opts.inject.forEach(function(k) {
@@ -1161,12 +1200,26 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    if (ev === 'input' || ev === 'change') {
                       if (pRef['$onInput']) pRef['$onInput'](arg);
                    }
-                   if (el.hasAttribute('@' + ev)) {
-                      let expr = el.getAttribute('@' + ev);
-                      let r = Data.Evaluate(expr, arg);
-                      if (typeof r === 'function') r.call(Data.FData, Data.FData, arg);
-                      else if (Methods && typeof Methods[expr] === 'function') Methods[expr].call(Data.FData, Data.FData, arg);
-                   }
+                   let targetEv = (ev || '').toLowerCase();
+                   events.forEach(function(evt) {
+                      if (evt.name.toLowerCase() === targetEv) {
+                         if (evt.modifiers && arg && typeof arg === 'object') {
+                            if (evt.modifiers.indexOf('stop') !== -1 && arg.stopPropagation) arg.stopPropagation();
+                            if (evt.modifiers.indexOf('prevent') !== -1 && arg.preventDefault) arg.preventDefault();
+                         }
+                         let expr = evt.expr;
+                         if (expr) {
+                            let r = Data.Evaluate(expr, arg);
+                            if (typeof r === 'function') {
+                               try { r.call(Data.FData, Data.FData, arg); }
+                               catch(e) { console.error("[Compiler] Event handler error:", e); }
+                            } else if (Methods && typeof Methods[expr] === 'function') {
+                               try { Methods[expr].call(Data.FData, Data.FData, arg); }
+                               catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
+                            }
+                         }
+                      }
+                   });
                    if (window.__BV_DEVTOOLS_HOOK__) {
                       window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
                    }
@@ -1176,9 +1229,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   FData: pRef,
                   Evaluate: function(expr, ev) { 
                     try { 
-                      let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }'); 
+                      let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }'); 
                       return f(this.FData, ev); 
-                    } catch(ex) { return undefined; } 
+                    } catch(ex) {
+                      try {
+                        let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+                        return f2(this.FData, ev);
+                      } catch(e3) { return undefined; }
+                    } 
                   },
                   SetValue: function(k, val) { this.FData[k] = val; }
                 };
@@ -1205,8 +1263,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
               // 11. Event Listeners (@event)
               events.forEach(function(evt) {
-                 (function(expr, name) {
+                 (function(expr, name, mods) {
                     el.addEventListener(name, function(ev) {
+                       if (mods) {
+                          if (mods.indexOf('stop') !== -1 && ev.stopPropagation) ev.stopPropagation();
+                          if (mods.indexOf('prevent') !== -1 && ev.preventDefault) ev.preventDefault();
+                       }
                        let r = Data.Evaluate(expr, ev);
                        if (r === undefined && Methods && Methods[expr]) {
                           try { Methods[expr].call(Data.FData || null, Data.FData || null, ev); }
@@ -1216,7 +1278,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           catch(ex) { console.error("[Compiler] Method " + expr + " error:", ex); }
                        }
                     }, false);
-                 })(evt.expr, evt.name);
+                 })(evt.expr, evt.name, evt.modifiers);
               });
     
               // 12. Recursive Children
@@ -1452,6 +1514,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           let pRef = window.__BV_CORE__.defineReactive(pageData);
           pRef['Router'] = this;
           pRef['$router'] = this;
+          if (!pRef['$refs']) pRef['$refs'] = {};
           if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
       
           if (CompOpt.inject) {
@@ -1485,9 +1548,14 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
             FData: pRef,
             Evaluate: function(expr, ev) {
               try {
-                let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
+                let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
                 return f(pRef, ev);
-              } catch(ex) { return undefined; }
+              } catch(ex) {
+                try {
+                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+                  return f2(pRef, ev);
+                } catch(e3) { return undefined; }
+              }
             },
             SetValue: function(k, val) { pRef[k] = val; }
           };
@@ -2465,15 +2533,18 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["props"] = new Array();
     comp["props"].push("items");
     comp["props"].push("initialActiveId");
+    comp["props"].push("initialactiveid");
     m = new Object();
     m["toggle"] = function (_this, id) {
-      if (_this["activeId"] == id) {
-        _this["activeId"] = ""}
-       else _this["activeId"] = id;
+      if (this.activeId === id) {
+        this.activeId = '';
+      } else {
+        this.activeId = id;
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      _this["activeId"] = "" + _this["initialActiveId"];
+      this.activeId = String(this.initialActiveId || this.initialactiveid || '');
     };
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
   };
@@ -2628,7 +2699,8 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     comp["props"].push("outline");
     m = new Object();
     m["handleClick"] = function (_this, ev) {
-      if (!!(_this["disabled"] == false)) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
         this.$emit('click', ev);
       };
     };

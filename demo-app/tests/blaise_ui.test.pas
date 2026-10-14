@@ -2,11 +2,11 @@ program blaise_ui_test;
 
 {$mode objfpc}
 
-uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVChart, uBVInput, uBVPagination, uBVListGroup, uBVListGroupItem;
+uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVChart, uBVInput, uBVPagination, uBVListGroup, uBVListGroupItem, uBVAccordion;
 
 var
   Wrapper: TWrapper;
-  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, ChartProps, InputProps, PagProps, ItemProps: TJSObject;
+  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, ChartProps, InputProps, PagProps, ItemProps, AccordionProps: TJSObject;
 
 begin
   Register_uBVBtn;
@@ -22,6 +22,7 @@ begin
   Register_uBVPagination;
   Register_uBVListGroup;
   Register_uBVListGroupItem;
+  Register_uBVAccordion;
 
   Describe('BlaiseUI Official Component Kit', procedure
     begin
@@ -145,6 +146,46 @@ begin
             Expect(Wrapper.Find('.bui-badge')).toBeDefined;
             Expect(Wrapper.Find('.bui-badge').textContent).ToContain('5');
             Expect(Wrapper.Find('.bui-badge').className).ToContain('bui-badge-danger');
+         end);
+
+       It('deve disparar evento click em bv-btn quando habilitado', procedure
+         begin
+            BtnProps := TJSObject.new;
+            BtnProps['label'] := 'Click Me';
+            Wrapper := Mount('bv-btn', BtnProps);
+            Wrapper.Find('button').click;
+            Expect(Wrapper.Emitted('click')).toBe(True);
+         end);
+
+       It('nao deve disparar evento click em bv-btn quando desabilitado', procedure
+         begin
+            BtnProps := TJSObject.new;
+            BtnProps['label'] := 'Disabled Btn';
+            BtnProps['disabled'] := true;
+            Wrapper := Mount('bv-btn', BtnProps);
+            Wrapper.Find('button').click;
+            Expect(Wrapper.Emitted('click')).toBe(False);
+         end);
+
+       It('deve renderizar bv-accordion e alternar estado ativo no clique', procedure
+         begin
+            AccordionProps := TJSObject.new;
+            asm
+              AccordionProps.items = [
+                { id: 'q1', title: 'Question 1', content: 'Answer 1' },
+                { id: 'q2', title: 'Question 2', content: 'Answer 2' }
+              ];
+              AccordionProps.initialActiveId = 'q1';
+            end;
+            Wrapper := Mount('bv-accordion', AccordionProps);
+            Expect(Wrapper.Find('.bui-accordion')).toBeDefined;
+            Expect(Wrapper.FindAll('.bui-accordion-item').length).toBe(2);
+            Expect(Wrapper.Find('.bui-accordion-button').className).ToContain('active');
+            
+            { Click second accordion button to toggle }
+            Wrapper.FindAll('.bui-accordion-button')[1].click;
+            Expect(Wrapper.FindAll('.bui-accordion-button')[1].className).ToContain('active');
+            Expect(Wrapper.FindAll('.bui-accordion-button')[0].className).NotToContain('active');
          end);
     end);
 end.

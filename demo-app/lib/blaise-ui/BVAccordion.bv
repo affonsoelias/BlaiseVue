@@ -26,18 +26,27 @@
   props:
     items: JSValue = nil;
     initialActiveId: string = '';
+    initialactiveid: string = '';
 
   data:
     activeId: string = '';
 
   created:
     begin
-       this['activeId'] := string(this['initialActiveId']);
+       asm
+         this.activeId = String(this.initialActiveId || this.initialactiveid || '');
+       end;
     end;
 
   methods:
     procedure toggle(id: string);
     begin
-       if this['activeId'] = id then this['activeId'] := '' else this['activeId'] := id;
+       asm
+         if (this.activeId === id) {
+           this.activeId = '';
+         } else {
+           this.activeId = id;
+         }
+       end;
     end;
 </script>
