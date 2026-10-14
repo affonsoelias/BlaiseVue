@@ -35,7 +35,7 @@ While v1.0 is stable, our vision for the future is even more ambitious. The foll
 9.  **🏗️ Native Resource Scaffolding**: Move hardcoded templates to `.res` files for a cleaner CLI source code.
 
 > [!TIP]
-> **Detailed Engineering Plan**: For a deep dive into the technical architecture of these features, check out our [Technical Roadmap v2.0](doc/Documentation/99-roadmap-v2.md).
+> **Detailed Engineering Plan**: For a deep dive into the technical architecture of upcoming features, check out our [Technical Roadmap](doc/Documentation/99-roadmap-v3.md).
 
 ---
 

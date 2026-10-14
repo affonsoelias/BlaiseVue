@@ -57,7 +57,7 @@ BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
-- [Technical Roadmap 2.0 (Milestone Status)](99-roadmap-v2.md)
+- [Technical Roadmap (v2.5 & v3.0)](99-roadmap-v3.md)
 
 ---
 
