@@ -1,206 +1,194 @@
 # 24. BlaiseUI (Official Component Kit)
 
-**BlaiseUI** is the official component library designed natively for BlaiseVue 2.0. Written in Object Pascal and `.bv` Single File Components, it provides a cohesive design system and high-performance UI widgets with zero external CSS dependencies.
+**BlaiseUI** é a biblioteca de componentes oficial, unificada e nativa do BlaiseVue 2.0. Desenvolvida 100% em Object Pascal e Single File Components (`.bv`), ela reúne todo o sistema de design visual, controles de formulário, navegação, overlays e gráficos reativos em um único pacote coeso e com zero dependências externas de CSS.
 
 ---
 
-## 📦 Architecture & Location
+## 📦 Arquitetura Unificada
 
-BlaiseUI is distributed in two locations:
-- **Source Package**: [`packages/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/)
-- **Application Integration**: [`demo-app/lib/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/lib/blaise-ui/)
+O BlaiseUI substitui antigas bibliotecas fragmentadas (como `bootstrap-bv` e `chart-bv`) por uma **única pasta**:
+- **Pacote Fonte**: [`packages/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/)
+- **Integração na Aplicação**: [`demo-app/lib/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/lib/blaise-ui/)
 
-Because BlaiseVue automatically scans the `lib/` directory:
-1. All `.bv` components are **globally registered** (no manual import statements needed).
-2. The unified stylesheet [`blaise-ui.css`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/blaise-ui.css) is automatically injected into the `<head>` of your `index.html`.
+Graças ao mecanismo de autoloading da pasta `lib/` do BlaiseVue:
+1. Todos os componentes com prefixo `bv-*` são **registrados globalmente** sem necessidade de `import`.
+2. O stylesheet [`blaise-ui.css`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/blaise-ui.css) é injetado automaticamente no `<head>`.
+3. O script [`chart.min.js`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/chart.min.js) incluído no pacote é injetado automaticamente no cabeçalho.
 
 ---
 
-## 🎨 Design System & Theming
+## 🎨 Sistema de Design & Variáveis CSS
 
-BlaiseUI uses modern CSS variables for rapid theme customization:
+O BlaiseUI utiliza variáveis CSS customizáveis (`--bui-*`):
 
 ```css
 :root {
-  --bv-primary: #3b82f6;
-  --bv-primary-hover: #2563eb;
-  --bv-success: #10b981;
-  --bv-danger: #ef4444;
-  --bv-warning: #f59e0b;
-  --bv-bg: #ffffff;
-  --bv-surface: #f8fafc;
-  --bv-border: #e2e8f0;
-  --bv-text: #1e293b;
-  --bv-radius: 8px;
+  --bui-primary: #42b883;
+  --bui-primary-hover: #33a06f;
+  --bui-secondary: #64748b;
+  --bui-success: #10b981;
+  --bui-danger: #ef4444;
+  --bui-warning: #f59e0b;
+  --bui-info: #0ea5e9;
+  --bui-bg: #ffffff;
+  --bui-card-bg: #ffffff;
+  --bui-border: #e2e8f0;
+  --bui-text: #1e293b;
+  --bui-text-muted: #64748b;
+  --bui-radius: 6px;
 }
 ```
 
 ---
 
-## 🧩 Component Catalog
+## 🧩 Catálogo Completo de Componentes
 
-### 1. `<bv-btn>` (Button)
-A flexible button supporting variants, sizes, and loading states.
+### 1. Ações e Estrutura Básica
+- **`<bv-btn>`**: Botão padronizado com variantes (`primary`, `secondary`, `success`, `danger`, `outline`), tamanhos (`sm`, `md`, `lg`) e estado `disabled`.
+  ```html
+  <bv-btn variant="primary" size="md" @click="salvar">Salvar Registro</bv-btn>
+  ```
+- **`<bv-card>`**: Container de superfície estruturado com slots `header`, padrão (corpo) e `footer`.
+  ```html
+  <bv-card title="Métricas do Sistema">
+    <p>Conteúdo do Card</p>
+    <template b-slot:footer>
+      <bv-btn size="sm" variant="secondary">Atualizar</bv-btn>
+    </template>
+  </bv-card>
+  ```
+- **`<bv-badge>`**: Rótulos e marcadores visuais coloridos com opção `pill`.
+  ```html
+  <bv-badge variant="success" :pill="true">Ativo</bv-badge>
+  ```
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `variant` | `string` | `'primary'` | `'primary'`, `'secondary'`, `'success'`, `'danger'`, `'warning'`, `'outline'`, `'ghost'` |
-| `size` | `string` | `'md'` | `'sm'`, `'md'`, `'lg'` |
-| `disabled`| `boolean` | `false` | Disables interaction and dims appearance |
-| `loading` | `boolean` | `false` | Displays an animated loading spinner |
-| `label` | `string` | `''` | Text label (fallback for slot) |
+---
 
-**Usage Example:**
+### 2. Feedback, Overlays e Notificações
+- **`<bv-modal>`**: Diálogo modal interativo renderizado via `<teleport to="body">` para evitar problemas de `z-index` e `overflow`.
+  ```html
+  <bv-modal b-ref="meuModal" title="Confirmar Operação" okLabel="Confirmar" cancelLabel="Cancelar" @ok="aoConfirmar">
+    <p>Tem certeza de que deseja continuar?</p>
+  </bv-modal>
+  ```
+- **`<bv-toast>`**: Notificações flutuantes com auto-dismiss temporizado.
+  ```html
+  <bv-toast b-ref="meuToast" title="Sucesso" variant="success" :duration="3000">
+    Registro atualizado com sucesso!
+  </bv-toast>
+  ```
+- **`<bv-alert>`**: Alertas com variantes de status e opção `dismissible`.
+  ```html
+  <bv-alert variant="warning" :dismissible="true">Atenção aos dados informados.</bv-alert>
+  ```
+- **`<bv-progress>`**: Barra de progresso reativa com animação suave e label percentual.
+  ```html
+  <bv-progress :value="porcentagem" variant="success"></bv-progress>
+  ```
+- **`<bv-spinner>`**: Indicador giratório de carregamento com opção `small`.
+  ```html
+  <bv-spinner variant="primary" :small="true"></bv-spinner>
+  ```
+
+---
+
+### 3. Navegação e Coleções
+- **`<bv-navbar>` & `<bv-nav-item>`**: Barra de navegação superior com branding e links reativos.
+  ```html
+  <bv-navbar brand="Meu Sistema">
+    <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>
+    <bv-nav-item href="#/relatorios" label="Relatórios"></bv-nav-item>
+  </bv-navbar>
+  ```
+- **`<bv-breadcrumb>` & `<bv-breadcrumb-item>`**: Trilhas de navegação hierárquica.
+  ```html
+  <bv-breadcrumb>
+    <bv-breadcrumb-item href="#/">Início</bv-breadcrumb-item>
+    <bv-breadcrumb-item active="true">Detalhes</bv-breadcrumb-item>
+  </bv-breadcrumb>
+  ```
+- **`<bv-tabs>` & `<bv-tab>`**: Sistema dinâmico de abas com registro automático via provide/inject.
+  ```html
+  <bv-tabs @change="abaMudou">
+    <bv-tab id="tab1" title="Visão Geral" active="true">Conteúdo 1</bv-tab>
+    <bv-tab id="tab2" title="Configurações">Conteúdo 2</bv-tab>
+  </bv-tabs>
+  ```
+- **`<bv-accordion>`**: Sanfona interativa para seções expansíveis / FAQ.
+  ```html
+  <bv-accordion :items="listaFaq" initialActiveId="q1"></bv-accordion>
+  ```
+- **`<bv-pagination>`**: Navegador de páginas numérico com eventos `input` e `change`.
+  ```html
+  <bv-pagination :value="paginaAtual" :total="10" @input="mudarPagina"></bv-pagination>
+  ```
+- **`<bv-list-group>` & `<bv-list-group-item>`**: Listas estruturadas com suporte a badges e estado ativo.
+  ```html
+  <bv-list-group>
+    <bv-list-group-item badge="3" badgeVariant="danger">Mensagens</bv-list-group-item>
+  </bv-list-group>
+  ```
+- **`<bv-icon>`**: Ícones SVG vetoriais embutidos locais (`check-circle`, `warning`, `gear-fill`, `heart-fill`, `weather`, `code-slash`, `cpu`).
+  ```html
+  <bv-icon name="check-circle" size="24" class="text-success" />
+  ```
+
+---
+
+### 4. Controles de Formulário
+- **`<bv-input>`**: Campo de texto com `b-model`, label e feedback de erro.
+  ```html
+  <bv-input label="Nome Completo" b-model="nome" placeholder="Digite seu nome"></bv-input>
+  ```
+- **`<bv-form-select>`**: Dropdown de seleção reativa vinculado a opções dinâmicas.
+  ```html
+  <bv-form-select label="Prioridade" b-model="prioridade" :options="opcoes"></bv-form-select>
+  ```
+- **`<bv-input-group>`**: Campo de entrada com prefixos e sufixos visuais (`prepend` / `append`).
+  ```html
+  <bv-input-group label="Valor" prepend="R$" append=",00" b-model="valor"></bv-input-group>
+  ```
+
+---
+
+### 5. Tabelas e Dados Complexos
+- **`<bv-datagrid>`**: Tabela de dados de alta performance com busca, ordenação, paginação e suporte a **Scoped Slots**.
+  ```html
+  <bv-datagrid :columns="colunas" :items="usuarios">
+    <template b-slot:cell(status)="scope">
+      <bv-badge :variant="scope.row.ativo ? 'success' : 'danger'">
+        {{ scope.row.ativo ? 'Ativo' : 'Inativo' }}
+      </bv-badge>
+    </template>
+  </bv-datagrid>
+  ```
+
+---
+
+### 6. Gráficos Reativos (`Chart.js`)
+O BlaiseUI integra a visualização de dados diretamente no kit:
+- **`<bv-chart>`**: Componente master de gráfico que aceita `:type="bar|line|pie|doughnut|radar|polarArea"`, `:data` e `:options`.
+- **Atalhos Dedicados**:
+  - `<bv-bar :data="dados" :options="opcoes"></bv-bar>`
+  - `<bv-line :data="dados" :options="opcoes"></bv-line>`
+  - `<bv-pie :data="dados" :options="opcoes"></bv-pie>`
+  - `<bv-doughnut :data="dados" :options="opcoes"></bv-doughnut>`
+  - `<bv-polar-area :data="dados" :options="opcoes"></bv-polar-area>`
+  - `<bv-radar :data="dados" :options="opcoes"></bv-radar>`
+
 ```html
-<bv-btn variant="primary" @click="saveRecord">Save Record</bv-btn>
-<bv-btn variant="danger" :loading="isDeleting" @click="deleteRecord">Delete</bv-btn>
-<bv-btn variant="outline" size="sm" @click="cancel">Cancel</bv-btn>
+<template>
+  <bv-bar :data="vendasData" :options="chartOptions"></bv-bar>
+</template>
 ```
 
 ---
 
-### 2. `<bv-card>` (Card Container)
-A structured surface component with dedicated header, body, and footer sections.
+## 🛡️ Vantagens da Unificação
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `title` | `string` | `''` | Header card title |
-| `subtitle`| `string` | `''` | Header secondary subtitle |
-| `shadow` | `boolean` | `true` | Enables subtle box-shadow |
-
-**Slots:**
-- `header` — Custom header markup.
-- `default` — Card main body.
-- `footer` — Action bar or card footer.
-
-**Usage Example:**
-```html
-<bv-card title="System Health" subtitle="Real-time Node Telemetry">
-  <p>CPU Utilization: 24%</p>
-  <p>Memory Free: 12.4 GB</p>
-
-  <template b-slot:footer>
-    <bv-btn size="sm" variant="secondary" @click="refreshStats">Refresh</bv-btn>
-  </template>
-</bv-card>
-```
-
----
-
-### 3. `<bv-input>` (Form Input)
-A validated form input with reactive two-way binding.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `modelValue` / `value` | `string` | `''` | Two-way binding value (`b-model`) |
-| `label` | `string` | `''` | Field label displayed above input |
-| `placeholder` | `string` | `''` | Placeholder text |
-| `type` | `string` | `'text'` | HTML input type (`'text'`, `'password'`, `'email'`, `'number'`) |
-| `error` | `string` | `''` | Validation error message displayed below input |
-| `disabled` | `boolean` | `false` | Disables user input |
-
-**Usage Example:**
-```html
-<bv-input
-  b-model="username"
-  label="Username"
-  placeholder="Enter your username"
-  :error="userError"
-></bv-input>
-```
-
----
-
-### 4. `<bv-modal>` (Teleport Dialog)
-A modal dialog powered by `<teleport to="body">` that avoids CSS overflow issues.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `modelValue` / `isOpen` | `boolean` | `false` | Controls modal visibility (`b-model`) |
-| `title` | `string` | `''` | Dialog header title |
-| `size` | `string` | `'md'` | `'sm'`, `'md'`, `'lg'`, `'xl'` |
-
-**Slots:**
-- `header` — Custom dialog header.
-- `default` — Modal body content.
-- `footer` — Dialog action buttons.
-
-**Usage Example:**
-```html
-<bv-modal b-model="showConfirmDialog" title="Confirm Transaction">
-  <p>Are you sure you want to transfer $500.00?</p>
-
-  <template b-slot:footer>
-    <bv-btn variant="secondary" @click="showConfirmDialog = false">Cancel</bv-btn>
-    <bv-btn variant="primary" @click="executeTransfer">Confirm</bv-btn>
-  </template>
-</bv-modal>
-```
-
----
-
-### 5. `<bv-toast>` (Notification Toast)
-Auto-expiring toast alerts for user feedback.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `visible` | `boolean` | `false` | Toast visibility toggle |
-| `title` | `string` | `''` | Toast heading |
-| `message` | `string` | `''` | Main notification text |
-| `variant` | `string` | `'info'` | `'info'`, `'success'`, `'warning'`, `'danger'` |
-| `duration`| `number` | `3000` | Auto-dismiss duration in milliseconds |
-
-**Usage Example:**
-```html
-<bv-toast
-  :visible="toastVisible"
-  variant="success"
-  title="Saved!"
-  message="Your settings have been updated successfully."
-  @close="toastVisible = false"
-></bv-toast>
-```
-
----
-
-### 6. `<bv-datagrid>` (Data Table with Scoped Slots)
-A reactive table supporting column definitions, sorting, pagination, and **Scoped Slots** for custom cell rendering.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `columns` | `array` | `[]` | Array of column definitions: `{ key: 'id', label: 'ID', sortable: true }` |
-| `items` | `array` | `[]` | Array of row data objects |
-| `pageSize`| `number` | `10` | Rows to display per page |
-
-**Scoped Slot Customization:**
-You can override any cell's presentation using scoped slots:
-```html
-<bv-datagrid :columns="cols" :items="users">
-  <!-- Customize the 'status' column using a scoped slot -->
-  <template b-slot:cell(status)="slotProps">
-    <span class="badge" :class="slotProps.row.active ? 'badge-success' : 'badge-danger'">
-      {{ slotProps.row.active ? 'Active' : 'Suspended' }}
-    </span>
-  </template>
-
-  <!-- Add an actions column -->
-  <template b-slot:actions="slotProps">
-    <bv-btn size="sm" variant="ghost" @click="editUser(slotProps.row)">Edit</bv-btn>
-  </template>
-</bv-datagrid>
-```
-
----
-
-## 🚀 Adding BlaiseUI to a New Project
-
-To use BlaiseUI in any new BlaiseVue application:
-1. Copy the `packages/blaise-ui` folder into your project's `lib/` directory:
-   ```bash
-   cp -r packages/blaise-ui my-project/lib/blaise-ui
-   ```
-2. Run your application:
-   ```bash
-   bv serve
-   ```
-3. Use `<bv-btn>`, `<bv-card>`, `<bv-input>`, `<bv-modal>`, `<bv-toast>`, and `<bv-datagrid>` anywhere in your `.bv` templates immediately!
+| Antes (Fragmentado) | Agora (BlaiseUI Unificado) |
+|---|---|
+| Três pastas separadas (`bootstrap-bv`, `chart-bv`, `blaise-ui`) | **Apenas uma pasta**: `lib/blaise-ui/` |
+| Prefixos concorrentes (`b-btn`, `bv-btn`, `c-line`) | **Prefixo universal padronizado**: `bv-*` |
+| Inclusão pesada do `bootstrap.css` (~230KB) | **CSS leve e customizável** (`blaise-ui.css`) |
+| Conflitos conceituais (`BModal` vs `BVModal`) | **Componente único e definitivo com Teleport** |

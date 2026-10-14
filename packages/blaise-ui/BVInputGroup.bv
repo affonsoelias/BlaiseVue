@@ -1,0 +1,45 @@
+<template>
+  <div class="bui-input-group">
+    <label class="bui-input-label" v-if="label">{{ label }}</label>
+    <div class="bui-input-group-row">
+       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>
+       <input 
+         type="text" 
+         class="bui-input-group-field" 
+         :placeholder="placeholder" 
+         :value="value"
+         @input="onInput"
+       >
+       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVInputGroup - Text Field with Prepend/Append Addons
+    ---------------------------------------------------
+    Props:
+    - label: String
+    - placeholder: String
+    - value: String
+    - prepend: String
+    - append: String
+  }
+  
+  props:
+    label: string = '';
+    placeholder: string = '';
+    value: string = '';
+    prepend: string = '';
+    append: string = '';
+  
+  methods:
+    procedure onInput(ev: JSValue);
+    begin
+       asm 
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val); 
+       end;
+    end;
+</script>

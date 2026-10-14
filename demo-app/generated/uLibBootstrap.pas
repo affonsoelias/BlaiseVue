@@ -17,126 +17,126 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .navbar-dark { background: #1e293b; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .gap-2 { gap: 10px; }';
+  _styleEl.textContent := '.mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
     '  <div class="lib-bootstrap-page">' +
     '    <!-- INTERNAL NAVIGATION (DEMO) -->' +
-    '    <b-navbar brand="BlaiseVue UI" variant="dark" sticky="true" style="margin-bottom: 25px; border-radius: 8px;">' +
-    '       <b-nav-item href="#/" active="true">Home</b-nav-item>' +
-    '       <b-nav-item href="#/charts">Charts</b-nav-item>' +
-    '       <b-nav-item href="#/pro">Pro Features</b-nav-item>' +
-    '       <b-nav-item href="#" @click="clickNotif(''Global Settings'')">⚙️ Settings</b-nav-item>' +
-    '    </b-navbar>' +
+    '    <bv-navbar brand="BlaiseVue UI">' +
+    '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' +
+    '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' +
+    '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' +
+    '       <bv-nav-item href="#" label="⚙️ Settings" @click="clickNotif(''Global Settings'')"></bv-nav-item>' +
+    '    </bv-navbar>' +
     '' +
     '    <!-- CONTENT CONTAINER -->' +
     '    <div class="container-fluid p-0">' +
     '      <div class="row mb-5">' +
     '         <div class="col-8">' +
-    '            <h1 class="mb-2">🚀 BlaiseVue Pro UI Kit</h1>' +
-    '            <p class="text-muted mb-4">Demonstration of 45+ reactive components built 100% in Pascal.</p>' +
+    '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' +
+    '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' +
     '            ' +
-    '            <b-breadcrumb>' +
-    '               <b-breadcrumb-item href="#/">Home</b-breadcrumb-item>' +
-    '               <b-breadcrumb-item href="#">Components</b-breadcrumb-item>' +
-    '               <b-breadcrumb-item active="true">Bootstrap-BV</b-breadcrumb-item>' +
-    '            </b-breadcrumb>' +
+    '            <bv-breadcrumb>' +
+    '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' +
+    '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' +
+    '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' +
+    '            </bv-breadcrumb>' +
     '         </div>' +
     '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' +
-    '            <b-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></b-btn>' +
-    '            <b-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(''Manual Toast Trigger'')"></b-btn>' +
+    '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' +
+    '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(''Manual Toast Trigger'')"></bv-btn>' +
     '         </div>' +
     '      </div>' +
     '' +
     '      <div class="row">' +
     '         <!-- LEFT COLUMN: Feedback & Status -->' +
     '         <div class="col-4">' +
-    '            <b-card title="📊 System Status">' +
+    '            <bv-card title="📊 System Status">' +
     '               <div class="mb-3">' +
     '                  <small>Engine Load (Reactivity)</small>' +
-    '                  <b-progress :value="count" variant="success" animated="true"></b-progress>' +
+    '                  <bv-progress :value="count" variant="success"></bv-progress>' +
     '               </div>' +
     '               <div class="mb-3">' +
     '                  <small>Memory Usage ($Store)</small>' +
-    '                  <b-progress :value="35" variant="info"></b-progress>' +
+    '                  <bv-progress :value="35" variant="info"></bv-progress>' +
     '               </div>' +
     '               <div class="d-flex gap-2">' +
-    '                  <b-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></b-btn>' +
-    '                  <b-spinner variant="primary" small="true" v-if="count > 80"></b-spinner>' +
+    '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' +
+    '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' +
     '               </div>' +
-    '            </b-card>' +
+    '            </bv-card>' +
     '' +
-    '            <b-card title="📋 Notification Center" class="mt-4">' +
-    '               <b-list-group>' +
-    '                  <b-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(''New Emails'')">📨 Inbox Messages</b-list-group-item>' +
-    '                  <b-list-group-item active="true" @click="clickNotif(''Highlight'')">🌟 Weekly Highlight</b-list-group-item>' +
-    '                  <b-list-group-item badge="OFFLINE" badgeVariant="secondary" @click="clickNotif(''Legacy Sys'')">💾 Legacy v1.0</b-list-group-item>' +
-    '                  <b-list-group-item @click="clickNotif(''Cloud Sync'')">☁️ Cloud Synchronization</b-list-group-item>' +
-    '               </b-list-group>' +
-    '            </b-card>' +
+    '            <bv-card title="📋 Notification Center" class="mt-4">' +
+    '               <bv-list-group>' +
+    '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(''New Emails'')">📨 Inbox Messages</bv-list-group-item>' +
+    '                  <bv-list-group-item active="true" @click="clickNotif(''Highlight'')">🌟 Weekly Highlight</bv-list-group-item>' +
+    '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(''BlaiseUI Kit'')">💎 BlaiseUI v2.0</bv-list-group-item>' +
+    '                  <bv-list-group-item @click="clickNotif(''Cloud Sync'')">☁️ Cloud Synchronization</bv-list-group-item>' +
+    '               </bv-list-group>' +
+    '            </bv-card>' +
     '         </div>' +
     '' +
     '         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->' +
     '         <div class="col-8">' +
-    '            <b-card no-body style="height: 100%;">' +
-    '               <b-tabs @change="tabChanged">' +
-    '                  <b-tab id="forms" title="📝 Forms" active="true">' +
+    '            <bv-card style="height: 100%;">' +
+    '               <bv-tabs @change="tabChanged">' +
+    '                  <bv-tab id="forms" title="📝 Forms" active="true">' +
     '                     <div class="p-4">' +
     '                        <h4>Input Controls</h4>' +
     '                        <div class="row mt-4">' +
     '                           <div class="col-6">' +
-    '                              <b-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></b-input>' +
-    '                              <b-form-select label="Priority" b-model="category" :options="catOptions"></b-form-select>' +
+    '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' +
+    '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' +
     '                           </div>' +
     '                           <div class="col-6">' +
-    '                              <b-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></b-input-group>' +
-    '                              <b-input-group label="API Key" append="Regenerate">' +
-    '                                 <b-input b-model="libName" readonly="true"></b-input>' +
-    '                              </b-input-group>' +
+    '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' +
+    '                              <bv-input-group label="API Key" append="Regenerate">' +
+    '                                 <bv-input b-model="libName" readonly="true"></bv-input>' +
+    '                              </bv-input-group>' +
     '                           </div>' +
     '                        </div>' +
-    '                        <div class="alert alert-info mt-3" style="border-radius: 8px;">' +
+    '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' +
     '                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state.' +
     '                        </div>' +
     '                     </div>' +
-    '                  </b-tab>' +
+    '                  </bv-tab>' +
     '' +
-    '                  <b-tab id="nav" title="📍 Pagination">' +
+    '                  <bv-tab id="nav" title="📍 Pagination">' +
     '                     <div class="p-4 text-center">' +
     '                        <h5 class="mb-4">Atomic Data Navigation</h5>' +
-    '                        <b-pagination :value="currentPage" :total="10" @input="updatePage"></b-pagination>' +
+    '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' +
     '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' +
-    '                        <b-alert variant="warning" dismissible="true" class="mt-4">' +
+    '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' +
     '                           Attention: Segment 7 contains simulated network instabilities.' +
-    '                        </b-alert>' +
+    '                        </bv-alert>' +
     '                     </div>' +
-    '                  </b-tab>' +
+    '                  </bv-tab>' +
     '' +
-    '                  <b-tab id="extras" title="🔥 Accordions">' +
+    '                  <bv-tab id="extras" title="🔥 Accordions">' +
     '                     <div class="p-4">' +
-    '                        <b-accordion :items="faqItems" initialActiveId="q1"></b-accordion>' +
+    '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' +
     '                     </div>' +
-    '                  </b-tab>' +
-    '               </b-tabs>' +
-    '            </b-card>' +
+    '                  </bv-tab>' +
+    '               </bv-tabs>' +
+    '            </bv-card>' +
     '         </div>' +
     '      </div>' +
     '    </div>' +
     '' +
     '    <!-- OVERLAYS: Programmatically triggered via $ref -->' +
-    '    <b-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' +
+    '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' +
     '       <p>You are about to process a state update via Pascal.</p>' +
-    '       <div class="p-3 bg-light rounded text-center">' +
+    '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' +
     '          <p>Current Values:</p>' +
-    '          <b-badge variant="info">{{ libName }}</b-badge>' +
-    '          <b-badge variant="success">{{ count }}%</b-badge>' +
+    '          <bv-badge variant="info">{{ libName }}</bv-badge>' +
+    '          <bv-badge variant="success">{{ count }}%</bv-badge>' +
     '       </div>' +
-    '    </b-modal>' +
+    '    </bv-modal>' +
     '' +
-    '    <b-toast b-ref="mainToast" title="Global Notification" variant="success" duration="4000">' +
+    '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' +
     '       Action performed: <strong>{{ lastAction }}</strong>' +
-    '    </b-toast>' +
+    '    </bv-toast>' +
     '  </div>';
 
   comp['data'] := function(): TJSObject
@@ -160,7 +160,11 @@ begin
     begin
        asm 
           this.lastAction = info;
-          this.$refs.mainToast.show();
+          if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
+            this.$refs.mainToast.showToast();
+          } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
+            this.$refs.mainToast.show();
+          }
        end;
     end;
     { Opens the modal using the component reference }
@@ -168,7 +172,13 @@ begin
   m['showModal'] := procedure(_this: TJSObject)
 
     begin
-       asm this.$refs.mainModal.show(); end;
+       asm 
+          if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
+            this.$refs.mainModal.showModal();
+          } else if (this.$refs.mainModal && this.$refs.mainModal.show) {
+            this.$refs.mainModal.show();
+          }
+       end;
     end;
     { Callback executed when the modal OK button is clicked }
     
@@ -178,7 +188,11 @@ begin
        asm 
           this.libName = 'SYNC_' + Date.now();
           this.lastAction = 'Modal Confirmed';
-          this.$refs.mainToast.show();
+          if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
+            this.$refs.mainToast.showToast();
+          } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
+            this.$refs.mainToast.show();
+          }
        end;
     end;
     { Updates the current page index from the pagination component }
@@ -202,7 +216,7 @@ begin
        asm
          this.faqItems = [
            { id: 'q1', title: 'How does Shared State work?', content: 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.' },
-           { id: 'q2', title: 'Bootstrap Integration?', content: 'Our component library wraps native CSS in reactive directives friendly to Pascal developers.' },
+           { id: 'q2', title: 'Unified Design System?', content: 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.' },
            { id: 'q3', title: 'JIT Optimization?', content: 'The compiler generates minimalist JavaScript bundles, resulting in instant load times.' }
          ];
          this.catOptions = [

@@ -11,7 +11,8 @@
         </div>
         <div class="bui-modal-footer">
           <slot name="footer">
-            <button class="bui-btn bui-btn-secondary" @click="close">Fechar</button>
+            <button class="bui-btn bui-btn-secondary" @click="close">{{ cancelLabel }}</button>
+            <button class="bui-btn bui-btn-primary" @click="confirm">{{ okLabel }}</button>
           </slot>
         </div>
       </div>
@@ -20,23 +21,43 @@
 </template>
 
 <script>
+  {
+    BVModal - Teleported Interactive Dialog
+    ----------------------------------------
+    Props:
+    - title: String modal title
+    - okLabel: String confirmation label
+    - cancelLabel: String cancellation label
+  }
+
+  props:
+    title: string = 'Modal';
+    okLabel: string = 'Process';
+    cancelLabel: string = 'Close';
+
   data:
     show: boolean = false;
-    title: string = 'Modal';
 
   methods:
+    procedure showModal;
+    begin
+      this['show'] := true;
+    end;
+
     procedure close;
     begin
       this['show'] := false;
-      asm
-        _this.$emit('close');
-      end;
+      asm this.$emit('close'); end;
+    end;
+
+    procedure confirm;
+    begin
+      this['show'] := false;
+      asm this.$emit('ok'); end;
     end;
 
     procedure handleBackdropClick;
     begin
-      asm
-        _this.close();
-      end;
+      asm this.close(); end;
     end;
 </script>

@@ -6,40 +6,40 @@
     </div>
 
     <!-- Icon Gallery Demonstration -->
-    <!-- Icons are rendered using the 'b-icon' component with explicit SVG templates -->
+    <!-- Icons are rendered using the 'bv-icon' component with explicit SVG templates -->
     <div class="section-card">
       <h3>Icon Gallery (Inline Local SVGs)</h3>
       <div class="icon-grid">
         <div class="icon-box">
-          <b-icon name="bootstrap-fill" size="32" class="text-primary" />
+          <bv-icon name="bootstrap-fill" size="32" class="text-primary" />
           <div class="small mt-1">bootstrap-fill</div>
         </div>
         <div class="icon-box">
-          <b-icon name="check-circle" size="32" class="text-success" />
+          <bv-icon name="check-circle" size="32" class="text-success" />
           <div class="small mt-1">check-circle</div>
         </div>
         <div class="icon-box">
-          <b-icon name="warning" size="32" class="text-warning" />
+          <bv-icon name="warning" size="32" class="text-warning" />
           <div class="small mt-1">warning</div>
         </div>
         <div class="icon-box">
-          <b-icon name="gear-fill" size="32" class="text-secondary" />
+          <bv-icon name="gear-fill" size="32" class="text-secondary" />
           <div class="small mt-1">gear-fill</div>
         </div>
         <div class="icon-box">
-          <b-icon name="heart-fill" size="32" class="text-danger" />
+          <bv-icon name="heart-fill" size="32" class="text-danger" />
           <div class="small mt-1">heart-fill</div>
         </div>
         <div class="icon-box">
-          <b-icon name="weather" size="32" class="text-info" />
+          <bv-icon name="weather" size="32" class="text-info" />
           <div class="small mt-1">weather</div>
         </div>
         <div class="icon-box">
-          <b-icon name="code-slash" size="32" class="text-dark" />
+          <bv-icon name="code-slash" size="32" class="text-dark" />
           <div class="small mt-1">code-slash</div>
         </div>
         <div class="icon-box">
-          <b-icon name="cpu" size="32" class="text-primary" />
+          <bv-icon name="cpu" size="32" class="text-primary" />
           <div class="small mt-1">cpu</div>
         </div>
       </div>
@@ -49,7 +49,7 @@
     <!-- Dynamically switches global CSS files from the local assets folder -->
     <div class="section-card">
       <h3>Theme Selector (Dynamic CSS)</h3>
-      <p class="text-muted">Click to swap the main Bootstrap CSS file in real-time.</p>
+      <p class="text-muted">Click to swap the main CSS theme in real-time.</p>
       <div class="theme-buttons d-flex gap-2 flex-wrap">
         <button class="btn btn-outline-secondary" @click="handleTheme('default')">Default</button>
         <button class="btn btn-primary" @click="handleTheme('darkly')">Darkly</button>
@@ -76,7 +76,7 @@
          var link = document.getElementById('theme-link');
          if (link) {
             if (ATheme === 'default') {
-              link.href = 'css/lib/bootstrap.css';
+              link.href = 'css/lib/blaise-ui.css';
             } else {
               link.href = 'assets/themes/' + ATheme + '.min.css';
             }

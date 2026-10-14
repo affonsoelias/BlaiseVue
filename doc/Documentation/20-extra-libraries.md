@@ -1,70 +1,43 @@
-# 20. Extra-Official Libraries
+# 20. Extra-Official Libraries & BlaiseUI Evolution
 
-BlaiseVue includes two major "extra-official" libraries in the `demo-app` that serve as a foundation for building professional UIs and data visualizations. These libraries are portable and can be added to any project by copying their folders into your `/lib` directory.
+Nas versões iniciais do BlaiseVue, foram desenvolvidas duas bibliotecas auxiliares na pasta `lib/` para demonstrar o ecossistema de componentes externos: `bootstrap-bv` (wrapper do Bootstrap 5) e `chart-bv` (wrapper do Chart.js).
 
----
-
-## 🎨 bootstrap-bv (UI Toolkit)
-
-The `bootstrap-bv` library provides a collection of Pascal-wrapped Bootstrap 5 components. It automatically injects `bootstrap.css` into your project without extra configuration.
-
-### 🚀 Common Components:
-
-| Component | Usage | Description |
-|-----------|-------|-------------|
-| `<b-btn>` | `<b-btn variant="primary" @click="doIt">Click</b-btn>` | Standardized button with variants. |
-| `<b-alert>` | `<b-alert v-if="show" variant="danger">Error!</b-alert>` | Reactive alert messages. |
-| `<b-modal>` | `<b-modal v-model="visible" title="Title">Content</b-modal>` | Overlay modal controlled by a boolean. |
-| `<b-card>` | `<b-card title="My Card">...</b-card>` | Content container with header/body/footer. |
-| `<b-icon>` | `<b-icon icon="home"></b-icon>` | Integrated Bootstrap Icons. |
-| `<b-tabs>` | `<b-tabs><b-tab title="One">...</b-tab></b-tabs>` | Tabbed navigation system. |
-
-### 🛠️ Example: Creating a Modal
-```html
-<template>
-  <div>
-    <b-btn @click="openModal">Open Modal 🛡️</b-btn>
-    
-    <b-modal v-model="showModal" title="Security Alert">
-      <p>Permission granted via Pascal Logic!</p>
-      <template b-slot:footer>
-         <b-btn variant="secondary" @click="closeModal">Dismiss</b-btn>
-      </template>
-    </b-modal>
-  </div>
-</template>
-
-<script>
-  data:
-    showModal: boolean = false;
-
-  methods:
-    procedure openModal; begin showModal := true; end;
-    procedure closeModal; begin showModal := false; end;
-</script>
-```
+Com a evolução para o **BlaiseVue 2.0**, esses componentes foram consolidados e unificados sob a biblioteca oficial **[BlaiseUI](24-blaise-ui.md)**, eliminando redundâncias de prefixos e a dependência pesada de frameworks CSS externos.
 
 ---
 
-## 📊 chart-bv (Data Visualization)
+## 🏛️ A Evolução para o BlaiseUI Unificado
 
-The `chart-bv` library is a powerful wrapper for **Chart.js**. It allows you to create reactive charts using Pascal data structures.
+| Biblioteca Antiga | Nova Estrutura Unificada | Motivo da Migração |
+|---|---|---|
+| `bootstrap-bv/` | **`packages/blaise-ui/`** | Eliminação do `bootstrap.css` (~230KB) em favor de CSS leve nativo com variáveis (`blaise-ui.css`). |
+| `chart-bv/` | **`packages/blaise-ui/`** | Inclusão do `<bv-chart>` e wrappers diretamente no kit oficial de componentes. |
+| Prefixos `b-*` e `c-*` | **Prefixo Padronizado `bv-*`** | Fim da ambiguidade entre componentes (`BBtn` vs `BVBtn`, `BToast` vs `BVToast`). |
 
-### 📈 Available Chart Types:
-- **`CLine`**: Line Charts.
-- **`CBar`**: Bar Charts.
-- **`CPie` / `CDoughnut`**: Circular Charts.
-- **`CRadar`**: Radar Charts.
-- **`CPolarArea`**: Polar Area Charts.
+---
 
-### 🛠️ Example: A Reactive Bar Chart
-To use a chart, pass the `data` and `options` props (usually `TJSValue` or `TJSObject` in Pascal):
+## 📦 Como Criar Suas Próprias Bibliotecas em `/lib`
+
+O ecossistema do BlaiseVue continua oferecendo suporte completo a bibliotecas externas e módulos de terceiros colocados na pasta `lib/`.
+
+Qualquer pasta dentro de `lib/` desfruta dos seguintes recursos automáticos do CLI (`bv.exe`):
+1. **Auto-Registro de Componentes**: Qualquer arquivo `.bv` dentro de `lib/<sua-lib>/` é transpilado e registrado globalmente na aplicação.
+2. **Auto-Injeção de CSS**: Arquivos `.css` presentes em `lib/<sua-lib>/` são copiados para `dist/css/lib/` e injetados via `<link>` no `index.html`.
+3. **Auto-Injeção de Scripts JS**: Arquivos `.js` presentes em `lib/<sua-lib>/` (como drivers de gráficos ou utilitários) são copiados para `dist/js/lib/` e incluídos via `<script>` antes da inicialização do app.
+4. **Lifecycle Setup (`setup.pas`)**: Bibliotecas podem incluir um script `setup.pas` interativo executável via `bv s <nome-da-lib>`.
+
+---
+
+## 📊 Gráficos no BlaiseUI Unificado
+
+Para utilizar gráficos reativos em qualquer projeto, basta utilizar os componentes unificados do BlaiseUI:
 
 ```html
 <template>
-  <div style="height: 300px;">
-    <c-bar :data="chartData" :options="chartOptions"></c-bar>
-    <b-btn @click="updateData">Randomize Data ⚡</b-btn>
+  <div style="height: 350px;">
+    <!-- Master component ou atalho direto -->
+    <bv-bar :data="chartData" :options="chartOptions"></bv-bar>
+    <bv-btn variant="primary" @click="updateData">Randomize Data ⚡</bv-btn>
   </div>
 </template>
 
@@ -75,26 +48,28 @@ To use a chart, pass the `data` and `options` props (usually `TJSValue` or `TJSO
 
   created:
     begin
-      chartData := TJSObject.new;
-      TJSObject(chartData)['labels'] := TJSArray.new('Jan', 'Feb', 'Mar');
-      // Initialize with more complex JSValue structures...
+       asm
+         this.chartOptions = { responsive: true, maintainAspectRatio: false };
+         this.chartData = {
+           labels: ['Jan', 'Fev', 'Mar'],
+           datasets: [{ label: 'Vendas', data: [10, 25, 42], backgroundColor: '#42b883' }]
+         };
+       end;
     end;
-    
+
   methods:
     procedure updateData;
     begin
-       // Logic to modify chartData and see the chart animate!
+       asm
+         this.chartData = {
+           ...this.chartData,
+           datasets: [{ ...this.chartData.datasets[0], data: [35, 12, 58] }]
+         };
+       end;
     end;
 </script>
 ```
 
-> [!TIP]
-> **Automatic Injection:** The `chart-bv` library automatically injects `chart.min.js` into your production bundle's `<head>`, so you don't need to import external CDN scripts manually.
-
 ---
 
-## 📥 How to Install
-These libraries are currently located in the `demo-app/lib/` folder. To use them in a new project:
-1. Create a `lib/` directory in your project root.
-2. Copy the `bootstrap-bv` or `chart-bv` folders into that directory.
-3. The BlaiseCLI will automatically detect them on the next `bv run dev`. 🛡️✨🚀
+🛡️ Para a lista completa de componentes, consulte o capítulo oficial **[24. BlaiseUI (Official Component Kit)](24-blaise-ui.md)**.

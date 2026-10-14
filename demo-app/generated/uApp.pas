@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVBtn, uBVCard, uBVDataGrid, uBVInput, uBVModal, uBVToast, uBAccordion, uBAlert, uBBadge, uBBreadcrumb, uBBreadcrumbItem, uBBtn, uBCard, uBFormSelect, uBIcon, uBInput, uBInputGroup, uBListGroup, uBListGroupItem, uBModal, uBNavbar, uBNavItem, uBPagination, uBProgress, uBSpinner, uBTab, uBTabs, uBToast, uCArea, uCBar, uCBaseChart, uCBubble, uCDoughnut, uCLine, uCMixed, uCPie, uCPolarArea, uCRadar, uCScatter, uCStacked;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVDataGrid, uBVDoughnut, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVSpinner, uBVTab, uBVTabs, uBVToast;
 
 procedure Init_App;
 
@@ -60,99 +60,79 @@ begin
   Register_uShowcase;
   asm console.log("[Init] Registering uUserProfile..."); end;
   Register_uUserProfile;
+  asm console.log("[Init] Registering uBVAccordion..."); end;
+  Register_uBVAccordion;
+  asm console.log("[Init] Registering uBVAlert..."); end;
+  Register_uBVAlert;
+  asm console.log("[Init] Registering uBVBadge..."); end;
+  Register_uBVBadge;
+  asm console.log("[Init] Registering uBVBar..."); end;
+  Register_uBVBar;
+  asm console.log("[Init] Registering uBVBreadcrumb..."); end;
+  Register_uBVBreadcrumb;
+  asm console.log("[Init] Registering uBVBreadcrumbItem..."); end;
+  Register_uBVBreadcrumbItem;
   asm console.log("[Init] Registering uBVBtn..."); end;
   Register_uBVBtn;
   asm console.log("[Init] Registering uBVCard..."); end;
   Register_uBVCard;
+  asm console.log("[Init] Registering uBVChart..."); end;
+  Register_uBVChart;
   asm console.log("[Init] Registering uBVDataGrid..."); end;
   Register_uBVDataGrid;
+  asm console.log("[Init] Registering uBVDoughnut..."); end;
+  Register_uBVDoughnut;
+  asm console.log("[Init] Registering uBVFormSelect..."); end;
+  Register_uBVFormSelect;
+  asm console.log("[Init] Registering uBVIcon..."); end;
+  Register_uBVIcon;
   asm console.log("[Init] Registering uBVInput..."); end;
   Register_uBVInput;
+  asm console.log("[Init] Registering uBVInputGroup..."); end;
+  Register_uBVInputGroup;
+  asm console.log("[Init] Registering uBVLine..."); end;
+  Register_uBVLine;
+  asm console.log("[Init] Registering uBVListGroup..."); end;
+  Register_uBVListGroup;
+  asm console.log("[Init] Registering uBVListGroupItem..."); end;
+  Register_uBVListGroupItem;
   asm console.log("[Init] Registering uBVModal..."); end;
   Register_uBVModal;
+  asm console.log("[Init] Registering uBVNavbar..."); end;
+  Register_uBVNavbar;
+  asm console.log("[Init] Registering uBVNavItem..."); end;
+  Register_uBVNavItem;
+  asm console.log("[Init] Registering uBVPagination..."); end;
+  Register_uBVPagination;
+  asm console.log("[Init] Registering uBVPie..."); end;
+  Register_uBVPie;
+  asm console.log("[Init] Registering uBVPolarArea..."); end;
+  Register_uBVPolarArea;
+  asm console.log("[Init] Registering uBVProgress..."); end;
+  Register_uBVProgress;
+  asm console.log("[Init] Registering uBVRadar..."); end;
+  Register_uBVRadar;
+  asm console.log("[Init] Registering uBVSpinner..."); end;
+  Register_uBVSpinner;
+  asm console.log("[Init] Registering uBVTab..."); end;
+  Register_uBVTab;
+  asm console.log("[Init] Registering uBVTabs..."); end;
+  Register_uBVTabs;
   asm console.log("[Init] Registering uBVToast..."); end;
   Register_uBVToast;
-  asm console.log("[Init] Registering uBAccordion..."); end;
-  Register_uBAccordion;
-  asm console.log("[Init] Registering uBAlert..."); end;
-  Register_uBAlert;
-  asm console.log("[Init] Registering uBBadge..."); end;
-  Register_uBBadge;
-  asm console.log("[Init] Registering uBBreadcrumb..."); end;
-  Register_uBBreadcrumb;
-  asm console.log("[Init] Registering uBBreadcrumbItem..."); end;
-  Register_uBBreadcrumbItem;
-  asm console.log("[Init] Registering uBBtn..."); end;
-  Register_uBBtn;
-  asm console.log("[Init] Registering uBCard..."); end;
-  Register_uBCard;
-  asm console.log("[Init] Registering uBFormSelect..."); end;
-  Register_uBFormSelect;
-  asm console.log("[Init] Registering uBIcon..."); end;
-  Register_uBIcon;
-  asm console.log("[Init] Registering uBInput..."); end;
-  Register_uBInput;
-  asm console.log("[Init] Registering uBInputGroup..."); end;
-  Register_uBInputGroup;
-  asm console.log("[Init] Registering uBListGroup..."); end;
-  Register_uBListGroup;
-  asm console.log("[Init] Registering uBListGroupItem..."); end;
-  Register_uBListGroupItem;
-  asm console.log("[Init] Registering uBModal..."); end;
-  Register_uBModal;
-  asm console.log("[Init] Registering uBNavbar..."); end;
-  Register_uBNavbar;
-  asm console.log("[Init] Registering uBNavItem..."); end;
-  Register_uBNavItem;
-  asm console.log("[Init] Registering uBPagination..."); end;
-  Register_uBPagination;
-  asm console.log("[Init] Registering uBProgress..."); end;
-  Register_uBProgress;
-  asm console.log("[Init] Registering uBSpinner..."); end;
-  Register_uBSpinner;
-  asm console.log("[Init] Registering uBTab..."); end;
-  Register_uBTab;
-  asm console.log("[Init] Registering uBTabs..."); end;
-  Register_uBTabs;
-  asm console.log("[Init] Registering uBToast..."); end;
-  Register_uBToast;
-  asm console.log("[Init] Registering uCArea..."); end;
-  Register_uCArea;
-  asm console.log("[Init] Registering uCBar..."); end;
-  Register_uCBar;
-  asm console.log("[Init] Registering uCBaseChart..."); end;
-  Register_uCBaseChart;
-  asm console.log("[Init] Registering uCBubble..."); end;
-  Register_uCBubble;
-  asm console.log("[Init] Registering uCDoughnut..."); end;
-  Register_uCDoughnut;
-  asm console.log("[Init] Registering uCLine..."); end;
-  Register_uCLine;
-  asm console.log("[Init] Registering uCMixed..."); end;
-  Register_uCMixed;
-  asm console.log("[Init] Registering uCPie..."); end;
-  Register_uCPie;
-  asm console.log("[Init] Registering uCPolarArea..."); end;
-  Register_uCPolarArea;
-  asm console.log("[Init] Registering uCRadar..."); end;
-  Register_uCRadar;
-  asm console.log("[Init] Registering uCScatter..."); end;
-  Register_uCScatter;
-  asm console.log("[Init] Registering uCStacked..."); end;
-  Register_uCStacked;
 
 
   asm console.log("[Init] Setting #app template..."); end;
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
     '  <div translate="no" class="notranslate">' +
     '    <nav class="navbar">' +
-    '      <strong class="brand">BlaiseVue Demo 1.0</strong>' +
+    '      <strong class="brand">BlaiseVue Demo 2.0</strong>' +
     '      <div class="nav-links">' +
     '        <a href="#/">Home</a>' +
     '        <a href="#/about">About</a>' +
     '        <a href="#/pro">Pro Features 🛡️</a>' +
     '        <a href="#/form">Form</a>' +
-    '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' +
+    '        <a href="#/bootstrap">BlaiseUI Kit 🎨</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' +
     '      </div>' +

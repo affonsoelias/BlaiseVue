@@ -1,0 +1,20 @@
+<template>
+  <span class="bui-badge" 
+        :class="['bui-badge-' + variant, pill ? 'bui-badge-pill' : '']">
+    <slot></slot>
+  </span>
+</template>
+
+<script>
+  {
+    BVBadge - Visual Label Component
+    --------------------------------
+    Props:
+    - variant: String (primary, secondary, success, danger, warning, info)
+    - pill: Boolean (Rounded pill corners)
+  }
+  
+  props:
+    variant: string = 'primary';
+    pill: boolean = false;
+</script>

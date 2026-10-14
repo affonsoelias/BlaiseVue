@@ -1,0 +1,51 @@
+<template>
+  <div class="bui-alert" 
+       :class="'bui-alert-' + variant" 
+       role="alert"
+       b-if="visible">
+    <div class="bui-alert-content">
+      <slot></slot>
+    </div>
+    <button type="button" 
+            class="bui-alert-close" 
+            b-if="dismissible" 
+            @click="close" 
+            aria-label="Close">
+      ×
+    </button>
+  </div>
+</template>
+
+<script>
+  {
+    BVAlert - Notification/Feedback Component
+    -----------------------------------------
+    Props:
+    - variant: String (primary, success, danger, warning, info)
+    - dismissible: Boolean (Shows close button)
+    - show: Boolean (Initial visibility)
+    
+    Events:
+    - close: Emitted when the user closes the alert
+  }
+  
+  props:
+    variant: string = 'primary';
+    dismissible: boolean = false;
+    show: boolean = true;
+
+  data:
+    visible: boolean = true;
+
+  created:
+    begin
+       this['visible'] := boolean(this['show']);
+    end;
+
+  methods:
+    procedure close;
+    begin
+       this['visible'] := false;
+       asm this.$emit('close'); end;
+    end;
+</script>

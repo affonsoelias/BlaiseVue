@@ -1,0 +1,53 @@
+<template>
+  <div class="bui-tabs-container">
+    <ul class="bui-tabs-nav">
+       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">
+         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="#">
+            {{ tab.title }}
+         </a>
+       </li>
+    </ul>
+
+    <div class="bui-tab-content">
+       <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    tabs: JSValue;
+    activeTabId: string = '';
+
+  created:
+    begin
+       this['tabs'] := TJSArray.new;
+    end;
+
+  provide:
+    procedure registerTab(tab: JSValue);
+    begin
+       asm 
+          this.tabs.push(tab); 
+          if (this.activeTabId === '') this.activeTabId = tab.id;
+       end;
+    end;
+
+    procedure unregisterTab(id: string);
+    begin
+    end;
+
+    function isActive(id: string): boolean;
+    begin
+       asm return this.activeTabId === id; end;
+    end;
+
+  methods:
+    procedure selectTab(id: string);
+    begin
+       asm 
+         this.activeTabId = id; 
+         this.$emit('change', id); 
+       end;
+    end;
+</script>

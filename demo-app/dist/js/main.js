@@ -2046,10 +2046,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 20px;     background: #f8f9fa;     min-height: 100vh;   }   .header-card {     background: white;     padding: 30px;     border-radius: 12px;     box-shadow: 0 4px 6px rgba(0,0,0,0.05);     margin-bottom: 30px;     text-align: center;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));     gap: 20px;   }   .chart-item {     background: white;     padding: 20px;     border-radius: 12px;     box-shadow: 0 2px 8px rgba(0,0,0,0.05);     display: flex;     flex-direction: column;     align-items: center;   }   .chart-item h3 {     margin-bottom: 20px;     color: #333;     width: 100%;     border-bottom: 1px solid #eee;     padding-bottom: 10px;   }   .btn-primary {     margin-top: 15px;     background: #007bff;     color: white;     border: none;     padding: 8px 16px;     border-radius: 6px;     cursor: pointer;   }";
+    _styleEl.textContent = ".chart-dashboard {     padding: 20px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: white;     padding: 30px;     border-radius: 12px;     box-shadow: 0 4px 6px rgba(0,0,0,0.05);     margin-bottom: 30px;     text-align: center;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));     gap: 20px;   }   .chart-item {     background: white;     padding: 20px;     border-radius: 12px;     box-shadow: 0 2px 8px rgba(0,0,0,0.05);     display: flex;     flex-direction: column;     align-items: center;   }   .chart-item h3 {     margin-bottom: 20px;     color: #1e293b;     width: 100%;     border-bottom: 1px solid #e2e8f0;     padding-bottom: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + "      <h1>Dashboard de Gráficos (Chart.js)</h1>" + "      <p>Todos os componentes abaixo são wrappers BlaiseVue para a biblioteca Chart.js.</p>" + "    </div>" + "" + '    <div class="chart-grid">' + "      <!-- 1. Barras -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Barras</h3>" + '        <c-bar :data="barData" :options="chartOptions"></c-bar>' + '        <button class="btn-primary" @click="randomizeData">Randomizar Dados</button>' + "      </div>" + "" + "      <!-- 2. Linhas -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Linha</h3>" + '        <c-line :data="lineData" :options="chartOptions"></c-line>' + "      </div>" + "" + "      <!-- 3. Pizza -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Pizza</h3>" + '        <c-pie :data="pieData" :options="pieOptions"></c-pie>' + "      </div>" + "" + "      <!-- 4. Rosca -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Rosca (Doughnut)</h3>" + '        <c-doughnut :data="pieData" :options="pieOptions"></c-doughnut>' + "      </div>" + "" + "      <!-- 5. Área Polar -->" + '      <div class="chart-item">' + "        <h3>Área Polar</h3>" + '        <c-polar-area :data="pieData" :options="pieOptions"></c-polar-area>' + "      </div>" + "" + "      <!-- 6. Radar -->" + '      <div class="chart-item">' + "        <h3>Gráfico Radar</h3>" + '        <c-radar :data="radarData" :options="chartOptions"></c-radar>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + "      <h1>Dashboard de Gráficos (BlaiseUI Chart)</h1>" + "      <p>Todos os componentes abaixo são componentes reativos nativos do BlaiseUI alimentados por Chart.js.</p>" + "    </div>" + "" + '    <div class="chart-grid">' + "      <!-- 1. Barras -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Barras</h3>" + '        <bv-bar :data="barData" :options="chartOptions"></bv-bar>' + '        <bv-btn variant="primary" @click="randomizeData">Randomizar Dados</bv-btn>' + "      </div>" + "" + "      <!-- 2. Linhas -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Linha</h3>" + '        <bv-line :data="lineData" :options="chartOptions"></bv-line>' + "      </div>" + "" + "      <!-- 3. Pizza -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Pizza</h3>" + '        <bv-pie :data="pieData" :options="pieOptions"></bv-pie>' + "      </div>" + "" + "      <!-- 4. Rosca -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Rosca (Doughnut)</h3>" + '        <bv-doughnut :data="pieData" :options="pieOptions"></bv-doughnut>' + "      </div>" + "" + "      <!-- 5. Área Polar -->" + '      <div class="chart-item">' + "        <h3>Área Polar</h3>" + '        <bv-polar-area :data="pieData" :options="pieOptions"></bv-polar-area>' + "      </div>" + "" + "      <!-- 6. Radar -->" + '      <div class="chart-item">' + "        <h3>Gráfico Radar</h3>" + '        <bv-radar :data="radarData" :options="chartOptions"></bv-radar>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2077,14 +2077,13 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
         responsive: true,
         maintainAspectRatio: false
       };
-      // Dados de Exemplo
       this.barData = {
         labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
         datasets: [{
-          label: 'Vendas 2025',
+          label: 'Vendas 2026',
           data: [12, 19, 3, 5, 2, 3],
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(66, 184, 131, 0.5)',
+          borderColor: '#42b883',
           borderWidth: 1
         }]
       };
@@ -2094,15 +2093,16 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
           label: 'Usuários Ativos',
           data: [65, 59, 80, 81, 56, 55],
           fill: true,
-          borderColor: 'rgb(75, 192, 192)',
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
           tension: 0.1
         }]
       };
       this.pieData = {
-        labels: ['Red', 'Blue', 'Yellow'],
+        labels: ['Red', 'Blue', 'Green'],
         datasets: [{
           data: [300, 50, 100],
-          backgroundColor: ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)']
+          backgroundColor: ['#ef4444', '#3b82f6', '#10b981']
         }]
       };
       this.radarData = {
@@ -2111,8 +2111,8 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
           label: 'Dev A',
           data: [65, 59, 90, 81, 56, 55, 40],
           fill: true,
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgb(255, 99, 132)'
+          backgroundColor: 'rgba(66, 184, 131, 0.2)',
+          borderColor: '#42b883'
         }]
       };
     };
@@ -2220,10 +2220,10 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .navbar-dark { background: #1e293b; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .gap-2 { gap: 10px; }";
+    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <b-navbar brand="BlaiseVue UI" variant="dark" sticky="true" style="margin-bottom: 25px; border-radius: 8px;">' + '       <b-nav-item href="#/" active="true">Home</b-nav-item>' + '       <b-nav-item href="#/charts">Charts</b-nav-item>' + '       <b-nav-item href="#/pro">Pro Features</b-nav-item>' + '       <b-nav-item href="#" @click="clickNotif(\'Global Settings\')">⚙️ Settings</b-nav-item>' + "    </b-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🚀 BlaiseVue Pro UI Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of 45+ reactive components built 100% in Pascal.</p>' + "            " + "            <b-breadcrumb>" + '               <b-breadcrumb-item href="#/">Home</b-breadcrumb-item>' + '               <b-breadcrumb-item href="#">Components</b-breadcrumb-item>' + '               <b-breadcrumb-item active="true">Bootstrap-BV</b-breadcrumb-item>' + "            </b-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <b-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></b-btn>' + '            <b-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></b-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <b-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <b-progress :value="count" variant="success" animated="true"></b-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <b-progress :value="35" variant="info"></b-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <b-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></b-btn>' + '                  <b-spinner variant="primary" small="true" v-if="count > 80"></b-spinner>' + "               </div>" + "            </b-card>" + "" + '            <b-card title="📋 Notification Center" class="mt-4">' + "               <b-list-group>" + '                  <b-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</b-list-group-item>' + '                  <b-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</b-list-group-item>' + '                  <b-list-group-item badge="OFFLINE" badgeVariant="secondary" @click="clickNotif(\'Legacy Sys\')">💾 Legacy v1.0</b-list-group-item>' + '                  <b-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</b-list-group-item>' + "               </b-list-group>" + "            </b-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <b-card no-body style="height: 100%;">' + '               <b-tabs @change="tabChanged">' + '                  <b-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <b-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></b-input>' + '                              <b-form-select label="Priority" b-model="category" :options="catOptions"></b-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <b-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></b-input-group>' + '                              <b-input-group label="API Key" append="Regenerate">' + '                                 <b-input b-model="libName" readonly="true"></b-input>' + "                              </b-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="alert alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </b-tab>" + "" + '                  <b-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <b-pagination :value="currentPage" :total="10" @input="updatePage"></b-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <b-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </b-alert>" + "                     </div>" + "                  </b-tab>" + "" + '                  <b-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <b-accordion :items="faqItems" initialActiveId="q1"></b-accordion>' + "                     </div>" + "                  </b-tab>" + "               </b-tabs>" + "            </b-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <b-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center">' + "          <p>Current Values:</p>" + '          <b-badge variant="info">{{ libName }}</b-badge>' + '          <b-badge variant="success">{{ count }}%</b-badge>' + "       </div>" + "    </b-modal>" + "" + '    <b-toast b-ref="mainToast" title="Global Notification" variant="success" duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </b-toast>" + "  </div>";
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2241,15 +2241,27 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     m = new Object();
     m["clickNotif"] = function (_this, info) {
       this.lastAction = info;
-      this.$refs.mainToast.show();
+      if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
+        this.$refs.mainToast.showToast();
+      } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
+        this.$refs.mainToast.show();
+      };
     };
     m["showModal"] = function (_this) {
-      this.$refs.mainModal.show();
+      if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
+        this.$refs.mainModal.showModal();
+      } else if (this.$refs.mainModal && this.$refs.mainModal.show) {
+        this.$refs.mainModal.show();
+      };
     };
     m["modalConfirm"] = function (_this) {
       this.libName = 'SYNC_' + Date.now();
       this.lastAction = 'Modal Confirmed';
-      this.$refs.mainToast.show();
+      if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
+        this.$refs.mainToast.showToast();
+      } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
+        this.$refs.mainToast.show();
+      };
     };
     m["updatePage"] = function (_this, p) {
       this.currentPage = p;
@@ -2261,7 +2273,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     comp["created"] = function (_this) {
       this.faqItems = [
         { id: 'q1', title: 'How does Shared State work?', content: 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.' },
-        { id: 'q2', title: 'Bootstrap Integration?', content: 'Our component library wraps native CSS in reactive directives friendly to Pascal developers.' },
+        { id: 'q2', title: 'Unified Design System?', content: 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.' },
         { id: 'q3', title: 'JIT Optimization?', content: 'The compiler generates minimalist JavaScript bundles, resulting in instant load times.' }
       ];
       this.catOptions = [
@@ -2343,7 +2355,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     _styleEl.textContent = "/* CSS styles for layout and icons */   .showcase-container { max-width: 1000px; margin: 20px auto; padding: 30px; border-radius: 12px; border-left: 5px solid #2ecc71 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }   .showcase-header { border-bottom: 2px solid #2ecc71; margin-bottom: 25px; padding-bottom: 10px; }   .section-card { background-color: rgba(128,128,128,0.08); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #3498db; }   .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }   .icon-box { background-color: rgba(128,128,128,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(128,128,128,0.1); transition: transform 0.2s; }   .icon-box:hover { transform: translateY(-5px); background-color: rgba(128,128,128,0.1); }   .text-primary { color: #0d6efd !important; }   .text-success { color: #198754 !important; }   .text-warning { color: #ffc107 !important; }   .text-danger { color: #dc3545 !important; }   .text-info { color: #0dcaf0 !important; }   .text-secondary { color: #6c757d !important; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="showcase-container">' + '    <div class="showcase-header">' + "      <h1>Showcase: Local Assets 🛡️</h1>" + "      <p>Current Font: <strong>Inter & Outfit</strong> (100% Local)</p>" + "    </div>" + "" + "    <!-- Icon Gallery Demonstration -->" + "    <!-- Icons are rendered using the 'b-icon' component with explicit SVG templates -->" + '    <div class="section-card">' + "      <h3>Icon Gallery (Inline Local SVGs)</h3>" + '      <div class="icon-grid">' + '        <div class="icon-box">' + '          <b-icon name="bootstrap-fill" size="32" class="text-primary" />' + '          <div class="small mt-1">bootstrap-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="check-circle" size="32" class="text-success" />' + '          <div class="small mt-1">check-circle</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="warning" size="32" class="text-warning" />' + '          <div class="small mt-1">warning</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="gear-fill" size="32" class="text-secondary" />' + '          <div class="small mt-1">gear-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="heart-fill" size="32" class="text-danger" />' + '          <div class="small mt-1">heart-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="weather" size="32" class="text-info" />' + '          <div class="small mt-1">weather</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="code-slash" size="32" class="text-dark" />' + '          <div class="small mt-1">code-slash</div>' + "        </div>" + '        <div class="icon-box">' + '          <b-icon name="cpu" size="32" class="text-primary" />' + '          <div class="small mt-1">cpu</div>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Theme Selector Demonstration -->" + "    <!-- Dynamically switches global CSS files from the local assets folder -->" + '    <div class="section-card">' + "      <h3>Theme Selector (Dynamic CSS)</h3>" + '      <p class="text-muted">Click to swap the main Bootstrap CSS file in real-time.</p>' + '      <div class="theme-buttons d-flex gap-2 flex-wrap">' + '        <button class="btn btn-outline-secondary" @click="handleTheme(\'default\')">Default</button>' + '        <button class="btn btn-primary" @click="handleTheme(\'darkly\')">Darkly</button>' + '        <button class="btn btn-success" @click="handleTheme(\'flatly\')">Flatly</button>' + '        <button class="btn btn-info" @click="handleTheme(\'cosmo\')">Cosmo</button>' + "      </div>" + '      <div class="mt-3">' + '         Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="showcase-container">' + '    <div class="showcase-header">' + "      <h1>Showcase: Local Assets 🛡️</h1>" + "      <p>Current Font: <strong>Inter & Outfit</strong> (100% Local)</p>" + "    </div>" + "" + "    <!-- Icon Gallery Demonstration -->" + "    <!-- Icons are rendered using the 'bv-icon' component with explicit SVG templates -->" + '    <div class="section-card">' + "      <h3>Icon Gallery (Inline Local SVGs)</h3>" + '      <div class="icon-grid">' + '        <div class="icon-box">' + '          <bv-icon name="bootstrap-fill" size="32" class="text-primary" />' + '          <div class="small mt-1">bootstrap-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="check-circle" size="32" class="text-success" />' + '          <div class="small mt-1">check-circle</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="warning" size="32" class="text-warning" />' + '          <div class="small mt-1">warning</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="gear-fill" size="32" class="text-secondary" />' + '          <div class="small mt-1">gear-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="heart-fill" size="32" class="text-danger" />' + '          <div class="small mt-1">heart-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="weather" size="32" class="text-info" />' + '          <div class="small mt-1">weather</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="code-slash" size="32" class="text-dark" />' + '          <div class="small mt-1">code-slash</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="cpu" size="32" class="text-primary" />' + '          <div class="small mt-1">cpu</div>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Theme Selector Demonstration -->" + "    <!-- Dynamically switches global CSS files from the local assets folder -->" + '    <div class="section-card">' + "      <h3>Theme Selector (Dynamic CSS)</h3>" + '      <p class="text-muted">Click to swap the main CSS theme in real-time.</p>' + '      <div class="theme-buttons d-flex gap-2 flex-wrap">' + '        <button class="btn btn-outline-secondary" @click="handleTheme(\'default\')">Default</button>' + '        <button class="btn btn-primary" @click="handleTheme(\'darkly\')">Darkly</button>' + '        <button class="btn btn-success" @click="handleTheme(\'flatly\')">Flatly</button>' + '        <button class="btn btn-info" @click="handleTheme(\'cosmo\')">Cosmo</button>' + "      </div>" + '      <div class="mt-3">' + '         Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2357,7 +2369,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
       var link = document.getElementById('theme-link');
       if (link) {
          if (ATheme === 'default') {
-           link.href = 'css/lib/bootstrap.css';
+           link.href = 'css/lib/blaise-ui.css';
          } else {
            link.href = 'assets/themes/' + ATheme + '.min.css';
          }
@@ -2405,6 +2417,157 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
+  };
+});
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAccordion = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-accordion">' + '    <div class="bui-accordion-item" b-for="item in items">' + '      <h3 class="bui-accordion-header">' + '        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ active: activeId == item.id }">' + "          {{ item.title }}" + "        </button>" + "      </h3>" + '      <div class="bui-accordion-body" b-show="activeId == item.id">' + "        {{ item.content }}" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["activeId"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("items");
+    comp["props"].push("initialActiveId");
+    m = new Object();
+    m["toggle"] = function (_this, id) {
+      if (_this["activeId"] == id) {
+        _this["activeId"] = ""}
+       else _this["activeId"] = id;
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      _this["activeId"] = "" + _this["initialActiveId"];
+    };
+    pas.BVComponents.RegisterComponent("bv-accordion",comp);
+  };
+});
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAlert = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-alert" ' + '       :class="\'bui-alert-\' + variant" ' + '       role="alert"' + '       b-if="visible">' + '    <div class="bui-alert-content">' + "      <slot></slot>" + "    </div>" + '    <button type="button" ' + '            class="bui-alert-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close">' + "      ×" + "    </button>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["visible"] = true;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("variant");
+    comp["props"].push("dismissible");
+    comp["props"].push("show");
+    m = new Object();
+    m["close"] = function (_this) {
+      _this["visible"] = false;
+      this.$emit('close');
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      _this["visible"] = !(_this["show"] == false);
+    };
+    pas.BVComponents.RegisterComponent("bv-alert",comp);
+  };
+});
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-badge" ' + '        :class="[\'bui-badge-\' + variant, pill ? \'bui-badge-pill\' : \'\']">' + "    <slot></slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("variant");
+    comp["props"].push("pill");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-badge",comp);
+  };
+});
+rtl.module("uBVBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="bar" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bar",comp);
+  };
+});
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumb = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="bui-breadcrumb">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
+  };
+});
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumbItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <span v-if="!active" class="bui-breadcrumb-separator">/</span>' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("active");
+    comp["props"].push("href");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
   };
 });
 rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -2461,6 +2624,112 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-card",comp);
+  };
+});
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVChart = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: var(--bui-radius);     border: 1px solid var(--bui-border);     box-shadow: 0 2px 10px rgba(0,0,0,0.04);   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["_dummy"] = 0;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("type");
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    m["initChart"] = function (_this) {
+      if (this._initPending) return;
+      this._initPending = true;
+      requestAnimationFrame(() => {
+        const canvas = this.$refs.chartCanvas;
+        if (!canvas) { this._initPending = false; return; }
+        if (typeof Chart === 'undefined') {
+          console.warn('[BVChart] Chart.js is not loaded.');
+          this._initPending = false;
+          return;
+        }
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+          try { existingChart.destroy(); } catch(e) {}
+        }
+        this._chart = null;
+        if (!this.data || !this.data.datasets) { this._initPending = false; return; }
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { this._initPending = false; return; }
+        try {
+          const chartData = window.__BV_CORE__.unproxy(this.data);
+          const chartOptions = this.options ? window.__BV_CORE__.unproxy(this.options) : {
+            responsive: true,
+            maintainAspectRatio: false
+          };
+          this._chart = new Chart(ctx, {
+            type: this.type,
+            data: chartData,
+            options: chartOptions
+          });
+        } catch (e) {
+          console.error('[BVChart] Failed to initialize chart:', e);
+        } finally {
+          this._initPending = false;
+        }
+      });
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
+    };
+    comp["mounted"] = function (_this) {
+      this.initChart();
+    };
+    comp["watch"] = new Object();
+    comp["watch"]["data"] = function (_this, newVal) {
+      this._pendingData = newVal;
+      if (this._updatePending) return;
+      this._updatePending = true;
+      const delay = 50 + Math.random() * 100;
+      setTimeout(() => {
+        this._updatePending = false;
+        const dataToUse = this._pendingData;
+        if (this._chart && dataToUse && dataToUse.datasets) {
+          try {
+            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
+            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
+               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
+               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
+               this._chart.update();
+            } else {
+               this._chart.data = rawNewData;
+               this._chart.update('none');
+            }
+          } catch (e) {
+            console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
+            this.initChart();
+          }
+        } else {
+          this.initChart();
+        }
+      }, delay);
+    };
+    comp["watch"]["type"] = function (_this, newVal) {
+      this.initChart();
+    };
+    pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
 rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -2539,6 +2808,83 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
 });
+rtl.module("uBVDoughnut",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDoughnut = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="doughnut" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-doughnut",comp);
+  };
+});
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVFormSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <select class="bui-select" :value="value" @change="onChange">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("label");
+    comp["props"].push("value");
+    comp["props"].push("options");
+    m = new Object();
+    m["onChange"] = function (_this, ev) {
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val); 
+      this.$emit('change', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-form-select",comp);
+  };
+});
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIcon = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("name");
+    comp["props"].push("size");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-icon",comp);
+  };
+});
 rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -2568,353 +2914,14 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-input",comp);
   };
 });
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBVModal = function () {
+  this.Register_uBVInputGroup = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-if="show" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" @click="close">Fechar</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["show"] = false;
-      d["title"] = "Modal";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["close"] = function (_this) {
-      _this["show"] = false;
-      _this.$emit('close');
-    };
-    m["handleBackdropClick"] = function (_this) {
-      _this.close();
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-modal",comp);
-  };
-});
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVToast = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-toast" b-if="show">' + "    <span>{{ message }}</span>" + '    <button class="bui-btn bui-btn-sm" @click="dismiss">OK</button>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["show"] = false;
-      d["message"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["dismiss"] = function (_this) {
-      _this["show"] = false;
-      _this.$emit('dismiss');
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-toast",comp);
-  };
-});
-rtl.module("uBAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBAccordion = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = '.accordion-button.collapsed { color: #212529; background: #fff; }   .accordion-button:not(.collapsed) { background-color: #e7f1ff; color: #0c63e4; }   .accordion-button::after {     content: "▼";     float: right;     transition: transform 0.2s;   }   .accordion-button:not(.collapsed)::after { transform: rotate(180deg); }';
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="accordion" id="accordionExample">' + '    <div class="accordion-item" b-for="item in items" style="margin-bottom: 5px; border: 1px solid #dee2e6; border-radius: 4px; overflow: hidden;">' + '      <h2 class="accordion-header" style="margin: 0;">' + '        <button class="accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ collapsed: activeId != item.id }"' + '                style="width: 100%; text-align: left; padding: 12px 20px; border: none; background: #f8f9fa; cursor: pointer; font-weight: 500; font-size: 1rem;">' + "          {{ item.title }}" + "        </button>" + "      </h2>" + '      <div class="accordion-collapse collapse" b-show="activeId == item.id" style="padding: 20px; background: white; border-top: 1px solid #dee2e6;">' + '        <div class="accordion-body">{{ item.content }}</div>' + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["activeId"] = "";
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("items");
-    comp["props"].push("initialActiveId");
-    m = new Object();
-    m["toggle"] = function (_this, id) {
-      if (_this["activeId"] == id) {
-        _this["activeId"] = ""}
-       else _this["activeId"] = id;
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      _this["activeId"] = "" + _this["initialActiveId"];
-    };
-    pas.BVComponents.RegisterComponent("b-accordion",comp);
-  };
-});
-rtl.module("uBAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBAlert = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="alert" ' + '       :class="[\'alert-\' + variant, dismissible ? \'alert-dismissible fade show\' : \'\']" ' + '       role="alert"' + '       b-if="visible"' + '       style="padding: 1rem 1.25rem; margin-bottom: 1rem; border: 1px solid transparent; border-radius: 0.375rem; position: relative;">' + "    <slot></slot>" + '    <button type="button" ' + '            class="btn-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close"' + '            style="position: absolute; top: 0; right: 0; z-index: 2; padding: 1.25rem 1rem; background: transparent; border: 0; cursor: pointer; float: right; font-size: 1.5rem; font-weight: 700; line-height: 1; color: #000; text-shadow: 0 1px 0 #fff; opacity: .5;">' + "      ×" + "    </button>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["visible"] = true;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("variant");
-    comp["props"].push("dismissible");
-    comp["props"].push("show");
-    m = new Object();
-    m["close"] = function (_this) {
-      _this["visible"] = false;
-      this.$emit('close');
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      _this["visible"] = !(_this["show"] == false);
-    };
-    pas.BVComponents.RegisterComponent("b-alert",comp);
-  };
-});
-rtl.module("uBBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBBadge = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="badge" ' + '        :class="[\'badge-\' + variant, pill ? \'rounded-pill\' : \'\']"' + '        style="display: inline-block; padding: .35em .65em; font-size: .75em; font-weight: 700; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem;">' + "    <slot></slot>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("variant");
-    comp["props"].push("pill");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-badge",comp);
-  };
-});
-rtl.module("uBBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBBreadcrumb = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="breadcrumb" style="display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin-bottom: 1rem; border-radius: .25rem; background: transparent;">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-breadcrumb",comp);
-  };
-});
-rtl.module("uBBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBBreadcrumbItem = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = '.breadcrumb-item + .breadcrumb-item::before { content: ""; }   .breadcrumb-item.active { font-weight: 700; color: #1e293b; }';
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <li class="breadcrumb-item" :class="{ active: active }" :aria-current="active ? \'page\' : null" style="padding-left: .5rem;">' + '    <span v-if="!active" style="margin-right: .5rem; color: #6c757d;">/</span>' + '    <a v-if="href && !active" :href="href" @click="handleClick" style="color: #0d6efd; text-decoration: none;">' + "      <slot></slot>" + "    </a>" + '    <span v-else style="color: #6c757d;">' + "      <slot></slot>" + "    </span>" + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("active");
-    comp["props"].push("href");
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-breadcrumb-item",comp);
-  };
-});
-rtl.module("uBBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBBtn = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <button :type="type" ' + '          class="btn" ' + '          :class="btnClass"' + '          @click="$emit(\'click\', $event)"' + '          style="display: inline-block; font-weight: 400; line-height: 1.5; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; border: 1px solid transparent; padding: .375rem .75rem; font-size: 1rem; border-radius: .25rem; transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;">' + "    <slot>{{ label }}</slot>" + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("label");
-    comp["props"].push("variant");
-    comp["props"].push("outline");
-    comp["props"].push("size");
-    comp["props"].push("type");
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["btnClass"] = function (_this) {
-      var Result = undefined;
-      let v = this.variant || 'primary';
-      let isOut = Boolean(this.outline) || v.startsWith('outline-');
-      let cleanV = v.replace('outline-', '');
-      let s = this.size ? (' btn-' + this.size) : '';
-      return (isOut ? ('btn-outline-' + cleanV) : ('btn-' + cleanV)) + s;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("b-btn",comp);
-  };
-});
-rtl.module("uBCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBCard = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="card" style="position: relative; display: flex; flex-direction: column; min-width: 0; word-wrap: break-word; background-color: #fff; background-clip: border-box; border: 1px solid rgba(0,0,0,.125); border-radius: .25rem;">' + '    <div class="card-header" b-if="title" style="padding: .5rem 1rem; margin-bottom: 0; background-color: rgba(0,0,0,.03); border-bottom: 1px solid rgba(0,0,0,.125);">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="card-body" style="flex: 1 1 auto; padding: 1rem 1rem;">' + "      <slot></slot>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("title");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-card",comp);
-  };
-});
-rtl.module("uBFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBFormSelect = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".form-select:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); outline: 0; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="mb-3">' + '    <label class="form-label" v-if="label" style="font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">{{ label }}</label>' + '    <select class="form-select" :value="value" @change="onChange" ' + '            style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background-color: #fff;">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("label");
-    comp["props"].push("value");
-    comp["props"].push("options");
-    m = new Object();
-    m["onChange"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : ev;
-      this.$emit('input', val); 
-      this.$emit('change', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-form-select",comp);
-  };
-});
-rtl.module("uBIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBIcon = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bi-icon-wrapper { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = "  <!-- Main wrapper for the icon using inline-flex for alignment -->" + '  <span class="bi-icon-wrapper" :style="\'display: inline-flex; width: \' + size + \'px; height: \' + size + \'px;\'">' + "    " + "    <!-- Render specific SVG based on the 'name' property -->" + "    <!-- We use direct V-IF here to avoid the need for external sprite files which are often blocked in local environments -->" + "    " + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("name");
-    comp["props"].push("size");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-icon",comp);
-  };
-});
-rtl.module("uBInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBInput = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".form-control:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="mb-3">' + '    <label class="form-label" v-if="label" style="font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">{{ label }}</label>' + "    <input " + '      type="text" ' + '      class="form-control" ' + '      :placeholder="placeholder" ' + '      :value="value"' + '      @input="onInput"' + '      style="padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; width: 100%; transition: border-color 0.2s;"' + "    >" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("label");
-    comp["props"].push("placeholder");
-    comp["props"].push("value");
-    m = new Object();
-    m["onInput"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : ev;
-      this.$emit('input', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-input",comp);
-  };
-});
-rtl.module("uBInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBInputGroup = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="row mb-3">' + '    <label class="form-label" v-if="label" style="font-weight: 600; color: #475569; display: block; margin-bottom: 8px;">{{ label }}</label>' + '    <div class="input-group" style="display: flex; align-items: stretch; width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; overflow: hidden; transition: border-color 0.2s;">' + '       <span class="input-group-text" v-if="prepend" style="padding: 10px 15px; background: #f1f5f9; border-right: 1px solid #e2e8f0; color: #64748b; font-weight: 500;">{{ prepend }}</span>' + "       <input " + '         type="text" ' + '         class="form-control flex-grow-1" ' + '         :placeholder="placeholder" ' + '         :value="value"' + '         @input="onInput"' + '         style="padding: 12px; border: none; outline: none; width: 100%;"' + "       >" + '       <span class="input-group-text" v-if="append" style="padding: 10px 15px; background: #f1f5f9; border-left: 1px solid #e2e8f0; color: #64748b; font-weight: 500;">{{ append }}</span>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <input " + '         type="text" ' + '         class="bui-input-group-field" ' + '         :placeholder="placeholder" ' + '         :value="value"' + '         @input="onInput"' + "       >" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2934,34 +2941,55 @@ rtl.module("uBInputGroup",["System","JS","Web","BVComponents","BVReactivity","BV
       this.$emit('input', val);
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-input-group",comp);
+    pas.BVComponents.RegisterComponent("bv-input-group",comp);
   };
 });
-rtl.module("uBListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVLine",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBListGroup = function () {
+  this.Register_uBVLine = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <ul class="list-group" style="list-style: none; padding: 0; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden;">' + "    <slot></slot>" + "  </ul>";
+    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
     m = new Object();
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-list-group",comp);
+    pas.BVComponents.RegisterComponent("bv-line",comp);
   };
 });
-rtl.module("uBListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBListGroupItem = function () {
+  this.Register_uBVListGroup = function () {
     var comp = null;
     var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".list-group-item:last-child { border-bottom: none; }   .list-group-item.active { background-color: #0d6efd; color: white; border-color: #0d6efd; }   .list-group-item.active:hover { background-color: #0b5ed7; }";
-    document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <li class="list-group-item d-flex justify-content-between align-items-center" ' + '      :class="{ active: active }"' + '      @click="handleClick"' + '      style="padding: 12px 20px; border-bottom: 1px dashed #eee; transition: background 0.2s; cursor: pointer;">' + "    <slot></slot>" + '    <b-badge v-if="badge" :variant="badgeVariant">{{ badge }}</b-badge>' + "  </li>";
+    comp["template"] = '  <ul class="bui-list-group">' + "    <slot></slot>" + "  </ul>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-list-group",comp);
+  };
+});
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVListGroupItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <slot></slot>" + '    <bv-badge v-if="badge" :variant="badgeVariant">{{ badge }}</bv-badge>' + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2978,26 +3006,22 @@ rtl.module("uBListGroupItem",["System","JS","Web","BVComponents","BVReactivity",
       this.$emit('click');
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-list-group-item",comp);
+    pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
-rtl.module("uBModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBModal = function () {
+  this.Register_uBVModal = function () {
     var comp = null;
     var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "@keyframes modalBounce {     0% { transform: scale(0.85); opacity: 0; }     100% { transform: scale(1); opacity: 1; }   }   .modal-dialog { transform: translateZ(0); }";
-    document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="modal-backdrop fade show" v-if="visible" @click="close"' + '       style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1050; display: flex; align-items: center; justify-content: center;">' + "    " + '    <div class="modal-dialog" @click.stop=""' + '         style="background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); min-width: 400px; max-width: 800px; overflow: hidden; animation: modalBounce 0.3s ease-out;">' + "      " + '      <div class="modal-header d-flex justify-content-between align-items-center" ' + '           style="padding: 15px 25px; border-bottom: 1px solid #e9ecef; background: #f8f9fa;">' + '        <h5 class="modal-title" style="margin: 0; font-weight: 700;">{{ title }}</h5>' + '        <button type="button" class="btn-close" @click="close" style="border: none; background: none; cursor: pointer; font-size: 1.5rem;">&times;</button>' + "      </div>" + "" + '      <div class="modal-body" style="padding: 25px; min-height: 100px;">' + "        <slot></slot>" + "      </div>" + "" + '      <div class="modal-footer" style="padding: 15px 25px; border-top: 1px solid #e9ecef; display: flex; justify-content: flex-end; gap: 10px;">' + '        <button v-if="cancelLabel" type="button" class="btn btn-secondary" @click="close">{{ cancelLabel }}</button>' + '        <button v-if="okLabel" type="button" class="btn btn-primary" @click="onOk">{{ okLabel }}</button>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-if="show" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" @click="close">{{ cancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" @click="confirm">{{ okLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["visible"] = false;
+      d["show"] = false;
       Result = d;
       return Result;
     };
@@ -3006,29 +3030,32 @@ rtl.module("uBModal",["System","JS","Web","BVComponents","BVReactivity","BVStore
     comp["props"].push("okLabel");
     comp["props"].push("cancelLabel");
     m = new Object();
-    m["show"] = function (_this) {
-      this.visible = true;
+    m["showModal"] = function (_this) {
+      _this["show"] = true;
     };
     m["close"] = function (_this) {
-      this.visible = false;
-      this.$emit('hide');
+      _this["show"] = false;
+      this.$emit('close');
     };
-    m["onOk"] = function (_this) {
+    m["confirm"] = function (_this) {
+      _this["show"] = false;
       this.$emit('ok');
+    };
+    m["handleBackdropClick"] = function (_this) {
       this.close();
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-modal",comp);
+    pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
-rtl.module("uBNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBNavbar = function () {
+  this.Register_uBVNavbar = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <nav class="navbar navbar-expand-lg navbar-dark bg-dark rounded-3 mb-4" style="padding: 0.5rem 1rem;">' + '    <div class="container-fluid d-flex">' + '      <a class="navbar-brand" href="#" style="font-weight: 700; color: #42b883;">{{ brand }}</a>' + '      <div class="collapse navbar-collapse d-flex">' + '        <ul class="navbar-nav me-auto mb-2 mb-lg-0 flex-row gap-3" style="list-style: none; margin: 0; padding-left: 20px;">' + "          <slot></slot>" + "        </ul>" + "      </div>" + "    </div>" + "  </nav>";
+    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3040,17 +3067,17 @@ rtl.module("uBNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStor
     comp["props"].push("brand");
     m = new Object();
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-navbar",comp);
+    pas.BVComponents.RegisterComponent("bv-navbar",comp);
   };
 });
-rtl.module("uBNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBNavItem = function () {
+  this.Register_uBVNavItem = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <li class="nav-item">' + '     <a class="nav-link" style="color: inherit; text-decoration: none;" href="#" @click="$emit(\'click\')">' + "        {{ label }}" + "     </a>" + "  </li>";
+    comp["template"] = '  <li class="bui-nav-item">' + '     <a class="bui-nav-link" :class="{ active: active }" :href="href" @click="handleClick">' + "        <slot>{{ label }}</slot>" + "     </a>" + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3059,24 +3086,25 @@ rtl.module("uBNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["props"].push("href");
     comp["props"].push("label");
+    comp["props"].push("active");
     m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('click', ev);
+    };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-nav-item",comp);
+    pas.BVComponents.RegisterComponent("bv-nav-item",comp);
   };
 });
-rtl.module("uBPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBPagination = function () {
+  this.Register_uBVPagination = function () {
     var comp = null;
     var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".page-link {     padding: 8px 16px;     border: 1px solid #dee2e6;     background: white;     color: #0d6efd;     cursor: pointer;     border-radius: 4px;     transition: all 0.2s;   }   .page-item.active .page-link {     background: #0d6efd;     color: white;     border-color: #0d6efd;   }   .page-item.disabled .page-link {     color: #6c757d;     pointer-events: none;     background: #f8f9fa;   }   .page-link:hover:not(.disabled) {     background: #e9ecef;   }";
-    document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <nav aria-label="Page navigation" style="margin: 20px 0;">' + '    <ul class="pagination" style="display: flex; list-style: none; padding: 0; gap: 5px;">' + '       <li class="page-item" :class="{ disabled: value <= 1 }">' + '         <button class="page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="page-item" b-for="p in totalPages" :class="{ active: p == value }">' + '         <button class="page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="page-item" :class="{ disabled: value >= totalPages }">' + '         <button class="page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
+    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in totalPages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= totalPages }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3087,7 +3115,6 @@ rtl.module("uBPagination",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["props"] = new Array();
     comp["props"].push("value");
     comp["props"].push("total");
-    comp["props"].push("perPage");
     m = new Object();
     m["changePage"] = function (_this, p) {
       if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
@@ -3096,17 +3123,67 @@ rtl.module("uBPagination",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     comp["methods"] = m;
     comp["computed"] = new Object();
-    pas.BVComponents.RegisterComponent("b-pagination",comp);
+    pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVPie",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBProgress = function () {
+  this.Register_uBVPie = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="progress" style="margin-top: 15px; margin-bottom: 20px; background: #e2e8f0; border-radius: 8px; height: 1.5rem; overflow: hidden;">' + '    <div class="progress-bar-fill" ' + '         :style="{ width: value + \'%\', backgroundColor: (variant == \'success\' ? \'#10b981\' : \'#3b82f6\') }"' + '         style="height: 100%; display: flex; align-items: center; justify-content: center; color: white; transition: width 0.4s ease-in-out; font-weight: 600; font-size: 0.8rem;">' + "       {{ value }}%" + "    </div>" + "  </div>";
+    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-pie",comp);
+  };
+});
+rtl.module("uBVPolarArea",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVPolarArea = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-polar-area",comp);
+  };
+});
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVProgress = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="\'bui-progress-\' + variant"' + '         :style="{ width: value + \'%\' }">' + '       <span v-if="label">{{ value }}%</span>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3120,17 +3197,42 @@ rtl.module("uBProgress",["System","JS","Web","BVComponents","BVReactivity","BVSt
     comp["props"].push("label");
     m = new Object();
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-progress",comp);
+    pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
-rtl.module("uBSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVRadar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBSpinner = function () {
+  this.Register_uBVRadar = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="spinner-border" :class="\'text-\' + variant" role="status" style="width: 2rem; height: 2rem;">' + '    <span class="visually-hidden">Loading...</span>' + "  </div>";
+    comp["template"] = '  <bv-chart type="radar" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-radar",comp);
+  };
+});
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSpinner = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner-\' + variant, small ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3140,19 +3242,20 @@ rtl.module("uBSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSto
     };
     comp["props"] = new Array();
     comp["props"].push("variant");
+    comp["props"].push("small");
     m = new Object();
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-spinner",comp);
+    pas.BVComponents.RegisterComponent("bv-spinner",comp);
   };
 });
-rtl.module("uBTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBTab = function () {
+  this.Register_uBVTab = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="tab-pane" b-show="active" v-if="render">' + "     <slot></slot>" + "  </div>";
+    comp["template"] = '  <div class="bui-tab-pane" b-show="active" v-if="render">' + "     <slot></slot>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3178,21 +3281,17 @@ rtl.module("uBTab",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     comp["inject"].push("pointer");
     comp["inject"].push("isActive:");
     comp["inject"].push("pointer");
-    pas.BVComponents.RegisterComponent("b-tab",comp);
+    pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
-rtl.module("uBTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBTabs = function () {
+  this.Register_uBVTabs = function () {
     var comp = null;
     var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".nav-link {     display: block;     padding: 10px 20px;     color: #6c757d;     text-decoration: none;     border: 1px solid transparent;     border-bottom: 2px solid transparent;     margin-bottom: -2px;     font-weight: 500;     transition: all 0.2s;   }   .nav-link:hover { color: #0d6efd; background: #f8f9fa; }   .nav-link.active {     color: #0d6efd;     border-bottom: 2px solid #0d6efd;     background: #eef6ff;   }";
-    document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="tabs-container">' + '    <ul class="nav nav-tabs mb-3" style="display: flex; list-style: none; border-bottom: 2px solid #dee2e6; padding: 0; gap: 10px;">' + '       <li class="nav-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="nav-link" :class="{ active: activeTabId == tab.id }" href="#">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="tab-content" style="padding: 15px; background: white; border-radius: 4px;">' + "       <slot></slot>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="#">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3216,429 +3315,47 @@ rtl.module("uBTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       Result = new Object();
       return Result;
     };
-    pas.BVComponents.RegisterComponent("b-tabs",comp);
+    pas.BVComponents.RegisterComponent("bv-tabs",comp);
   };
 });
-rtl.module("uBToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBToast = function () {
+  this.Register_uBVToast = function () {
     var comp = null;
     var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".toast-info { border-left-color: #0dcaf0; }   .toast-success { border-left-color: #198754; }   .toast-danger { border-left-color: #dc3545; }   .toast-warning { border-left-color: #ffc107; }";
-    document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1060; right: 20px; bottom: 20px;">' + '    <div class="toast show" v-if="visible" :class="\'toast-\' + variant" ' + '         style="min-width: 250px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-left: 5px solid transparent;">' + '       <div class="toast-header" style="padding: 10px 15px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">' + '          <strong class="me-auto">{{ title }}</strong>' + '          <small class="text-muted">{{ time }}</small>' + '          <button type="button" class="btn-close" @click="hide" style="border: none; background: none; cursor: pointer; font-weight: bold;">&times;</button>' + "       </div>" + '       <div class="toast-body" style="padding: 15px;">' + "          <slot></slot>" + "       </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-toast" b-if="show">' + '    <div class="bui-toast-content">' + '      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "      <slot>{{ message }}</slot>" + "    </div>" + '    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["visible"] = false;
+      d["show"] = false;
       Result = d;
       return Result;
     };
     comp["props"] = new Array();
     comp["props"].push("title");
-    comp["props"].push("time");
-    comp["props"].push("variant");
+    comp["props"].push("message");
     comp["props"].push("duration");
+    comp["props"].push("variant");
     m = new Object();
-    m["show"] = function (_this) {
-      _this["visible"] = true;
-      if (rtl.trunc(_this["duration"]) > 0) {
-        setTimeout(() => { this.visible = false; }, parseInt(this.duration));
-      };
-    };
-    m["hide"] = function (_this) {
-      _this["visible"] = false;
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("b-toast",comp);
-  };
-});
-rtl.module("uCArea",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCArea = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="area" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-area",comp);
-  };
-});
-rtl.module("uCBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCBar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="bar" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-bar",comp);
-  };
-});
-rtl.module("uCBaseChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCBaseChart = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: 8px;     box-shadow: 0 2px 10px rgba(0,0,0,0.05);   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["_dummy"] = 0;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("type");
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    m["initChart"] = function (_this) {
-      if (this._initPending) return;
-      this._initPending = true;
-      requestAnimationFrame(() => {
-        const canvas = this.$refs.chartCanvas;
-        if (!canvas) { this._initPending = false; return; }
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-          try { existingChart.destroy(); } catch(e) {}
-        }
-        this._chart = null;
-        if (!this.data || !this.data.datasets) { this._initPending = false; return; }
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { this._initPending = false; return; }
-        try {
-          const chartData = window.__BV_CORE__.unproxy(this.data);
-          const chartOptions = this.options ? window.__BV_CORE__.unproxy(this.options) : {
-            responsive: true,
-            maintainAspectRatio: false
-          };
-          this._chart = new Chart(ctx, {
-            type: this.type,
-            data: chartData,
-            options: chartOptions
-          });
-        } catch (e) {
-          console.error('[CBaseChart] Failed to initialize chart:', e);
-        } finally {
-          this._initPending = false;
-        }
-      });
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
-    };
-    comp["mounted"] = function (_this) {
-      this.initChart();
-    };
-    comp["watch"] = new Object();
-    comp["watch"]["data"] = function (_this, newVal) {
-      this._pendingData = newVal;
-      if (this._updatePending) return;
-      this._updatePending = true;
-      const delay = 50 + Math.random() * 150;
+    m["showToast"] = function (_this) {
+      _this["show"] = true;
+      const dur = this.duration || 3000;
       setTimeout(() => {
-        this._updatePending = false;
-        const dataToUse = this._pendingData;
-        if (this._chart && dataToUse && dataToUse.datasets) {
-          try {
-            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
-            // Performance Optimization: Instead of replacing the whole .data object
-            // we surgically update the dataset values. This allows Chart.js to 
-            // perform highly optimized incremental updates and animations.
-            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
-               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
-               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-               this._chart.update();
-            } else {
-               // Fallback for structure changes
-               this._chart.data = rawNewData;
-               this._chart.update('none');
-            }
-          } catch (e) {
-            console.warn('[CBaseChart] Hot update failed, falling back to full re-init:', e);
-            this.initChart();
-          }
-        } else {
-          this.initChart();
-        }
-      }, delay);
+        this.show = false;
+      }, dur);
     };
-    comp["watch"]["type"] = function (_this, newVal) {
-      this.initChart();
+    m["dismiss"] = function (_this) {
+      _this["show"] = false;
+      this.$emit('dismiss');
     };
-    pas.BVComponents.RegisterComponent("c-base-chart",comp);
-  };
-});
-rtl.module("uCBubble",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCBubble = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="bubble" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-bubble",comp);
+    pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uCDoughnut",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCDoughnut = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="doughnut" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-doughnut",comp);
-  };
-});
-rtl.module("uCLine",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCLine = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="line" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-line",comp);
-  };
-});
-rtl.module("uCMixed",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCMixed = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="mixed" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-mixed",comp);
-  };
-});
-rtl.module("uCPie",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCPie = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="pie" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-pie",comp);
-  };
-});
-rtl.module("uCPolarArea",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCPolarArea = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="polarArea" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-polar-area",comp);
-  };
-});
-rtl.module("uCRadar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCRadar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="radar" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-radar",comp);
-  };
-});
-rtl.module("uCScatter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCScatter = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="scatter" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-scatter",comp);
-  };
-});
-rtl.module("uCStacked",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCStacked = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <c-base-chart type="stacked" :data="data" :options="options" :width="width" :height="height"></c-base-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("c-stacked",comp);
-  };
-});
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVBtn","uBVCard","uBVDataGrid","uBVInput","uBVModal","uBVToast","uBAccordion","uBAlert","uBBadge","uBBreadcrumb","uBBreadcrumbItem","uBBtn","uBCard","uBFormSelect","uBIcon","uBInput","uBInputGroup","uBListGroup","uBListGroupItem","uBModal","uBNavbar","uBNavItem","uBPagination","uBProgress","uBSpinner","uBTab","uBTabs","uBToast","uCArea","uCBar","uCBaseChart","uCBubble","uCDoughnut","uCLine","uCMixed","uCPie","uCPolarArea","uCRadar","uCScatter","uCStacked"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVDataGrid","uBVDoughnut","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVSpinner","uBVTab","uBVTabs","uBVToast"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -3688,88 +3405,68 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uShowcase.Register_uShowcase();
     console.log("[Init] Registering uUserProfile...");
     pas.uUserProfile.Register_uUserProfile();
+    console.log("[Init] Registering uBVAccordion...");
+    pas.uBVAccordion.Register_uBVAccordion();
+    console.log("[Init] Registering uBVAlert...");
+    pas.uBVAlert.Register_uBVAlert();
+    console.log("[Init] Registering uBVBadge...");
+    pas.uBVBadge.Register_uBVBadge();
+    console.log("[Init] Registering uBVBar...");
+    pas.uBVBar.Register_uBVBar();
+    console.log("[Init] Registering uBVBreadcrumb...");
+    pas.uBVBreadcrumb.Register_uBVBreadcrumb();
+    console.log("[Init] Registering uBVBreadcrumbItem...");
+    pas.uBVBreadcrumbItem.Register_uBVBreadcrumbItem();
     console.log("[Init] Registering uBVBtn...");
     pas.uBVBtn.Register_uBVBtn();
     console.log("[Init] Registering uBVCard...");
     pas.uBVCard.Register_uBVCard();
+    console.log("[Init] Registering uBVChart...");
+    pas.uBVChart.Register_uBVChart();
     console.log("[Init] Registering uBVDataGrid...");
     pas.uBVDataGrid.Register_uBVDataGrid();
+    console.log("[Init] Registering uBVDoughnut...");
+    pas.uBVDoughnut.Register_uBVDoughnut();
+    console.log("[Init] Registering uBVFormSelect...");
+    pas.uBVFormSelect.Register_uBVFormSelect();
+    console.log("[Init] Registering uBVIcon...");
+    pas.uBVIcon.Register_uBVIcon();
     console.log("[Init] Registering uBVInput...");
     pas.uBVInput.Register_uBVInput();
+    console.log("[Init] Registering uBVInputGroup...");
+    pas.uBVInputGroup.Register_uBVInputGroup();
+    console.log("[Init] Registering uBVLine...");
+    pas.uBVLine.Register_uBVLine();
+    console.log("[Init] Registering uBVListGroup...");
+    pas.uBVListGroup.Register_uBVListGroup();
+    console.log("[Init] Registering uBVListGroupItem...");
+    pas.uBVListGroupItem.Register_uBVListGroupItem();
     console.log("[Init] Registering uBVModal...");
     pas.uBVModal.Register_uBVModal();
+    console.log("[Init] Registering uBVNavbar...");
+    pas.uBVNavbar.Register_uBVNavbar();
+    console.log("[Init] Registering uBVNavItem...");
+    pas.uBVNavItem.Register_uBVNavItem();
+    console.log("[Init] Registering uBVPagination...");
+    pas.uBVPagination.Register_uBVPagination();
+    console.log("[Init] Registering uBVPie...");
+    pas.uBVPie.Register_uBVPie();
+    console.log("[Init] Registering uBVPolarArea...");
+    pas.uBVPolarArea.Register_uBVPolarArea();
+    console.log("[Init] Registering uBVProgress...");
+    pas.uBVProgress.Register_uBVProgress();
+    console.log("[Init] Registering uBVRadar...");
+    pas.uBVRadar.Register_uBVRadar();
+    console.log("[Init] Registering uBVSpinner...");
+    pas.uBVSpinner.Register_uBVSpinner();
+    console.log("[Init] Registering uBVTab...");
+    pas.uBVTab.Register_uBVTab();
+    console.log("[Init] Registering uBVTabs...");
+    pas.uBVTabs.Register_uBVTabs();
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
-    console.log("[Init] Registering uBAccordion...");
-    pas.uBAccordion.Register_uBAccordion();
-    console.log("[Init] Registering uBAlert...");
-    pas.uBAlert.Register_uBAlert();
-    console.log("[Init] Registering uBBadge...");
-    pas.uBBadge.Register_uBBadge();
-    console.log("[Init] Registering uBBreadcrumb...");
-    pas.uBBreadcrumb.Register_uBBreadcrumb();
-    console.log("[Init] Registering uBBreadcrumbItem...");
-    pas.uBBreadcrumbItem.Register_uBBreadcrumbItem();
-    console.log("[Init] Registering uBBtn...");
-    pas.uBBtn.Register_uBBtn();
-    console.log("[Init] Registering uBCard...");
-    pas.uBCard.Register_uBCard();
-    console.log("[Init] Registering uBFormSelect...");
-    pas.uBFormSelect.Register_uBFormSelect();
-    console.log("[Init] Registering uBIcon...");
-    pas.uBIcon.Register_uBIcon();
-    console.log("[Init] Registering uBInput...");
-    pas.uBInput.Register_uBInput();
-    console.log("[Init] Registering uBInputGroup...");
-    pas.uBInputGroup.Register_uBInputGroup();
-    console.log("[Init] Registering uBListGroup...");
-    pas.uBListGroup.Register_uBListGroup();
-    console.log("[Init] Registering uBListGroupItem...");
-    pas.uBListGroupItem.Register_uBListGroupItem();
-    console.log("[Init] Registering uBModal...");
-    pas.uBModal.Register_uBModal();
-    console.log("[Init] Registering uBNavbar...");
-    pas.uBNavbar.Register_uBNavbar();
-    console.log("[Init] Registering uBNavItem...");
-    pas.uBNavItem.Register_uBNavItem();
-    console.log("[Init] Registering uBPagination...");
-    pas.uBPagination.Register_uBPagination();
-    console.log("[Init] Registering uBProgress...");
-    pas.uBProgress.Register_uBProgress();
-    console.log("[Init] Registering uBSpinner...");
-    pas.uBSpinner.Register_uBSpinner();
-    console.log("[Init] Registering uBTab...");
-    pas.uBTab.Register_uBTab();
-    console.log("[Init] Registering uBTabs...");
-    pas.uBTabs.Register_uBTabs();
-    console.log("[Init] Registering uBToast...");
-    pas.uBToast.Register_uBToast();
-    console.log("[Init] Registering uCArea...");
-    pas.uCArea.Register_uCArea();
-    console.log("[Init] Registering uCBar...");
-    pas.uCBar.Register_uCBar();
-    console.log("[Init] Registering uCBaseChart...");
-    pas.uCBaseChart.Register_uCBaseChart();
-    console.log("[Init] Registering uCBubble...");
-    pas.uCBubble.Register_uCBubble();
-    console.log("[Init] Registering uCDoughnut...");
-    pas.uCDoughnut.Register_uCDoughnut();
-    console.log("[Init] Registering uCLine...");
-    pas.uCLine.Register_uCLine();
-    console.log("[Init] Registering uCMixed...");
-    pas.uCMixed.Register_uCMixed();
-    console.log("[Init] Registering uCPie...");
-    pas.uCPie.Register_uCPie();
-    console.log("[Init] Registering uCPolarArea...");
-    pas.uCPolarArea.Register_uCPolarArea();
-    console.log("[Init] Registering uCRadar...");
-    pas.uCRadar.Register_uCRadar();
-    console.log("[Init] Registering uCScatter...");
-    pas.uCScatter.Register_uCScatter();
-    console.log("[Init] Registering uCStacked...");
-    pas.uCStacked.Register_uCStacked();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 1.0</strong>' + '      <div class="nav-links">' + '        <a href="#/">Home</a>' + '        <a href="#/about">About</a>' + '        <a href="#/pro">Pro Features 🛡️</a>' + '        <a href="#/form">Form</a>' + '        <a href="#/bootstrap">Bootstrap Lib 📦</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.0</strong>' + '      <div class="nav-links">' + '        <a href="#/">Home</a>' + '        <a href="#/about">About</a>' + '        <a href="#/pro">Pro Features 🛡️</a>' + '        <a href="#/form">Form</a>' + '        <a href="#/bootstrap">BlaiseUI Kit 🎨</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v1.0 PRO";
     methods = new Object();

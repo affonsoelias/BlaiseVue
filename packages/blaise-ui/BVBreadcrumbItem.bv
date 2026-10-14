@@ -1,0 +1,31 @@
+<template>
+  <li class="bui-breadcrumb-item" :class="{ active: active }">
+    <span v-if="!active" class="bui-breadcrumb-separator">/</span>
+    <a v-if="href && !active" :href="href" @click="handleClick">
+      <slot></slot>
+    </a>
+    <span v-else>
+      <slot></slot>
+    </span>
+  </li>
+</template>
+
+<script>
+  {
+    BVBreadcrumbItem - Path Trail Step
+    ----------------------------------
+    Props:
+    - active: boolean
+    - href: string
+  }
+  
+  props:
+    active: boolean = false;
+    href: string = '#';
+
+  methods:
+    procedure handleClick(ev: TJSEvent);
+    begin
+       asm this.$emit('click', ev); end;
+    end;
+</script>
