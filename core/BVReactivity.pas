@@ -98,6 +98,22 @@ begin
       if (window.__BV_CORE__.validation) {
         window.__BV_CORE__.validation.initDataValidation(this.FData);
       }
+      this.Evaluate = function(expr, ev) {
+        let d = this.FData || this;
+        try {
+          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
+          return f(d, ev);
+        } catch(e1) {
+          try {
+            let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+            return f2(d, ev);
+          } catch(e2) { return undefined; }
+        }
+      };
+      this.SetValue = function(k, val) {
+        let d = this.FData || this;
+        d[k] = val;
+      };
     }
   end;
 end;
@@ -107,13 +123,13 @@ begin
   { Evaluates a Pascal/JS expression within the data context }
   asm
     try {
-      let f = new Function('data', '$event', 'with(data) { try { return (' + AExpr + '); } catch(e1) { try { ' + AExpr + '; } catch(e2) { return undefined; } } }');
+      let f = new Function('data', '$event', 'with(data) { return (' + AExpr + '); }');
       return f(this.FData, AEvent);
-    } catch(ex) {
+    } catch(e1) {
       try {
         let f2 = new Function('data', '$event', 'with(data) { ' + AExpr + '; }');
         return f2(this.FData, AEvent);
-      } catch(e3) { return undefined; }
+      } catch(e2) { return undefined; }
     }
   end;
 end;

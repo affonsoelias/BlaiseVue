@@ -118,6 +118,22 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         if (window.__BV_CORE__.validation) {
           window.__BV_CORE__.validation.initDataValidation(this.FData);
         }
+        this.Evaluate = function(expr, ev) {
+          let d = this.FData || this;
+          try {
+            let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
+            return f(d, ev);
+          } catch(e1) {
+            try {
+              let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+              return f2(d, ev);
+            } catch(e2) { return undefined; }
+          }
+        };
+        this.SetValue = function(k, val) {
+          let d = this.FData || this;
+          d[k] = val;
+        };
       };
       return this;
     };
@@ -589,6 +605,10 @@ rtl.module("BVI18n",["System","JS","Web","SysUtils","BVReactivity"],function () 
           setLocale: function(loc) {
             if (!loc) return;
             i18n.state.locale = String(loc);
+            if (bv.trigger) {
+              bv.trigger(i18n.state, 'locale');
+              bv.trigger(i18n, 'locale');
+            }
           },
     
           getLocale: function() {
@@ -658,6 +678,13 @@ rtl.module("BVI18n",["System","JS","Web","SysUtils","BVReactivity"],function () 
           }
         };
     
+        Object.defineProperty(i18n, 'locale', {
+          get: function() { return i18n.state.locale; },
+          set: function(v) { i18n.setLocale(v); },
+          enumerable: true,
+          configurable: true
+        });
+    
         bv.i18n = i18n;
         bv.t = function(key, params) {
           return i18n.translate(key, params);
@@ -683,6 +710,32 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 Data.FData['$router'] = window.__BV_CORE__.router;
              }
              if (window.__BV_PRO_STORE__) Data.FData['$store'] = window.__BV_PRO_STORE__;
+             if (window.__BV_CORE__.i18n && !Data.FData['$t']) {
+                Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+                Data.FData['$i18n'] = window.__BV_CORE__.i18n;
+                Data.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+             }
+          }
+    
+          if (Data && !Data.Evaluate) {
+            Data.Evaluate = function(expr, ev) {
+              let d = (Data && Data.FData) ? Data.FData : Data;
+              try {
+                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
+                return f(d, ev);
+              } catch(e1) {
+                try {
+                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+                  return f2(d, ev);
+                } catch(e2) { return undefined; }
+              }
+            };
+          }
+          if (Data && !Data.SetValue) {
+            Data.SetValue = function(k, val) {
+              let d = (Data && Data.FData) ? Data.FData : Data;
+              d[k] = val;
+            };
           }
     
           console.log("[Compiler] BLAISE v2.0 ENGAGED on <" + Root.tagName + ">");
@@ -1036,7 +1089,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   if (!Node['b-orig-tpl']) Node['b-orig-tpl'] = t;
                   Node['bvTraversed'] = true; 
                   bv.effect(function() {
-                    let d = (Data && Data.FData) ? Data.FData : {};
+                    let d = (Data && Data.FData) ? Data.FData : Data || {};
+                    if (window.__BV_CORE__.i18n && !d.$t) {
+                       d.$t = function(k, p) { return window.__BV_CORE__.t(k, p); };
+                       d.$i18n = window.__BV_CORE__.i18n;
+                       d.$setLocale = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+                    }
                     let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                        try {
                          let expr = e.trim();
@@ -1272,13 +1330,13 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           FData: scp,
                           Evaluate: function(expr, ev) {
                             try {
-                              let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
+                              let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
                               return f(this.FData, ev);
-                            } catch(ex) {
+                            } catch(e1) {
                               try {
                                 let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
                                 return f2(this.FData, ev);
-                              } catch(e3) { return undefined; }
+                              } catch(e2) { return undefined; }
                             }
                           },
                           SetValue: function(k, val) { this.FData[k] = val; }
@@ -1683,13 +1741,13 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   FData: pRef,
                   Evaluate: function(expr, ev) { 
                     try { 
-                      let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }'); 
+                      let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }'); 
                       return f(this.FData, ev); 
-                    } catch(ex) {
+                    } catch(e1) {
                       try {
                         let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
                         return f2(this.FData, ev);
-                      } catch(e3) { return undefined; }
+                      } catch(e2) { return undefined; }
                     } 
                   },
                   SetValue: function(k, val) { this.FData[k] = val; }
@@ -1970,6 +2028,14 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           pRef['$router'] = this;
           if (!pRef['$refs']) pRef['$refs'] = {};
           if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+          if (window.__BV_CORE__.i18n) {
+             pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+             pRef['$i18n'] = window.__BV_CORE__.i18n;
+             pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+          }
+          if (window.__BV_CORE__.validation) {
+             window.__BV_CORE__.validation.initDataValidation(pRef);
+          }
       
           if (CompOpt.inject) {
              CompOpt.inject.forEach(function(k) {
@@ -2002,13 +2068,13 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
             FData: pRef,
             Evaluate: function(expr, ev) {
               try {
-                let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
+                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
                 return f(pRef, ev);
-              } catch(ex) {
+              } catch(e1) {
                 try {
                   let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
                   return f2(pRef, ev);
-                } catch(e3) { return undefined; }
+                } catch(e2) { return undefined; }
               }
             },
             SetValue: function(k, val) { pRef[k] = val; }

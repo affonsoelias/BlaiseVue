@@ -48,6 +48,32 @@ initialization
             Data.FData['$router'] = window.__BV_CORE__.router;
          }
          if (window.__BV_PRO_STORE__) Data.FData['$store'] = window.__BV_PRO_STORE__;
+         if (window.__BV_CORE__.i18n && !Data.FData['$t']) {
+            Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+            Data.FData['$i18n'] = window.__BV_CORE__.i18n;
+            Data.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+         }
+      }
+
+      if (Data && !Data.Evaluate) {
+        Data.Evaluate = function(expr, ev) {
+          let d = (Data && Data.FData) ? Data.FData : Data;
+          try {
+            let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
+            return f(d, ev);
+          } catch(e1) {
+            try {
+              let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
+              return f2(d, ev);
+            } catch(e2) { return undefined; }
+          }
+        };
+      }
+      if (Data && !Data.SetValue) {
+        Data.SetValue = function(k, val) {
+          let d = (Data && Data.FData) ? Data.FData : Data;
+          d[k] = val;
+        };
       }
 
       console.log("[Compiler] BLAISE v2.0 ENGAGED on <" + Root.tagName + ">");
@@ -401,7 +427,12 @@ initialization
               if (!Node['b-orig-tpl']) Node['b-orig-tpl'] = t;
               Node['bvTraversed'] = true; 
               bv.effect(function() {
-                let d = (Data && Data.FData) ? Data.FData : {};
+                let d = (Data && Data.FData) ? Data.FData : Data || {};
+                if (window.__BV_CORE__.i18n && !d.$t) {
+                   d.$t = function(k, p) { return window.__BV_CORE__.t(k, p); };
+                   d.$i18n = window.__BV_CORE__.i18n;
+                   d.$setLocale = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+                }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -637,13 +668,13 @@ initialization
                       FData: scp,
                       Evaluate: function(expr, ev) {
                         try {
-                          let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
+                          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
                           return f(this.FData, ev);
-                        } catch(ex) {
+                        } catch(e1) {
                           try {
                             let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
                             return f2(this.FData, ev);
-                          } catch(e3) { return undefined; }
+                          } catch(e2) { return undefined; }
                         }
                       },
                       SetValue: function(k, val) { this.FData[k] = val; }
@@ -1048,13 +1079,13 @@ initialization
               FData: pRef,
               Evaluate: function(expr, ev) { 
                 try { 
-                  let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }'); 
+                  let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }'); 
                   return f(this.FData, ev); 
-                } catch(ex) {
+                } catch(e1) {
                   try {
                     let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
                     return f2(this.FData, ev);
-                  } catch(e3) { return undefined; }
+                  } catch(e2) { return undefined; }
                 } 
               },
               SetValue: function(k, val) { this.FData[k] = val; }

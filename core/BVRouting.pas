@@ -362,6 +362,14 @@ begin
     pRef['$router'] = this;
     if (!pRef['$refs']) pRef['$refs'] = {};
     if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+    if (window.__BV_CORE__.i18n) {
+       pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+       pRef['$i18n'] = window.__BV_CORE__.i18n;
+       pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+    }
+    if (window.__BV_CORE__.validation) {
+       window.__BV_CORE__.validation.initDataValidation(pRef);
+    }
 
     if (CompOpt.inject) {
        CompOpt.inject.forEach(function(k) {
@@ -394,13 +402,13 @@ begin
       FData: pRef,
       Evaluate: function(expr, ev) {
         try {
-          let f = new Function('data', '$event', 'with(data) { try { return (' + expr + '); } catch(e1) { try { ' + expr + '; } catch(e2) { return undefined; } } }');
+          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
           return f(pRef, ev);
-        } catch(ex) {
+        } catch(e1) {
           try {
             let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
             return f2(pRef, ev);
-          } catch(e3) { return undefined; }
+          } catch(e2) { return undefined; }
         }
       },
       SetValue: function(k, val) { pRef[k] = val; }

@@ -102,6 +102,10 @@ initialization
       setLocale: function(loc) {
         if (!loc) return;
         i18n.state.locale = String(loc);
+        if (bv.trigger) {
+          bv.trigger(i18n.state, 'locale');
+          bv.trigger(i18n, 'locale');
+        }
       },
 
       getLocale: function() {
@@ -170,6 +174,13 @@ initialization
         return i18n.interpolate(val, params);
       }
     };
+
+    Object.defineProperty(i18n, 'locale', {
+      get: function() { return i18n.state.locale; },
+      set: function(v) { i18n.setLocale(v); },
+      enumerable: true,
+      configurable: true
+    });
 
     bv.i18n = i18n;
     bv.t = function(key, params) {
