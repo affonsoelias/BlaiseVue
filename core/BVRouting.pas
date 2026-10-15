@@ -367,6 +367,9 @@ begin
        pRef['$i18n'] = window.__BV_CORE__.i18n;
        pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
     }
+    if (window.__BV_CORE__.theme) {
+       pRef['$theme'] = window.__BV_CORE__.theme;
+    }
     if (window.__BV_CORE__.validation) {
        window.__BV_CORE__.validation.initDataValidation(pRef);
     }

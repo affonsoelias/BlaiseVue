@@ -3,13 +3,13 @@
 This document defines the technical strategy, architectural goals, and specifications for the next major evolution of the framework: **BlaiseVue 2.5 and 3.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 2.5 Delivered (✅ Completed)**. Architectural goals for Version 2.5 are fully implemented and verified with 73 unit tests. Version 3.0 is currently under specification.
+> **Current Status**: 🚀 **BlaiseVue 2.6 Delivered (✅ Completed)**. Architectural goals for Version 2.6 (`blaise-themes`, `blaise-icons`, `$theme` reactive engine, CLI theme switcher) are fully implemented and verified with 99 unit tests. Version 3.0 is currently under specification.
 
 ---
 
-## 🏆 Delivery Record: BlaiseVue 2.0 & 2.5 (✅ 100% Completed)
+## 🏆 Delivery Record: BlaiseVue 2.0, 2.5 & 2.6 (✅ 100% Completed)
 
-BlaiseVue has reached enterprise maturity with all goals for versions 2.0 and 2.5 fully implemented and covered by 73 automated unit tests across 10 test suites:
+BlaiseVue has reached enterprise maturity with all goals for versions 2.0, 2.5, and 2.6 fully implemented and covered by 99 automated unit tests across 11 test suites:
 
 ### BlaiseVue 2.0 Enterprise Release
 | 2.0 Goal | Status | Implementation Files |
@@ -30,6 +30,14 @@ BlaiseVue has reached enterprise maturity with all goals for versions 2.0 and 2.
 | **1. Form Validation Engine (`b-validate`)** | ✅ Completed | [`core/BVValidation.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVValidation.pas), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`demo-app/tests/validation.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/validation.test.pas) |
 | **2. List Transitions (`<transition-group>`)** | ✅ Completed | [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`core/BlaiseVue.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BlaiseVue.pas), [`demo-app/tests/transition_group.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/transition_group.test.pas) |
 | **3. Integrated Internationalization (`Blaise-i18n`)** | ✅ Completed | [`core/BVI18n.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVI18n.pas), [`core/BVReactivity.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVReactivity.pas), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`demo-app/tests/i18n.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/i18n.test.pas) |
+
+### BlaiseVue 2.6 Release (✅ Completed)
+| 2.6 Goal | Status | Implementation Files |
+|---|:---:|---|
+| **1. Bootswatch Themes Integration (`blaise-themes`)** | ✅ Completed | [`packages/blaise-themes/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-themes/), [`core/BVTheme.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVTheme.pas), `$theme.setTheme`, `$theme.toggle`, `localStorage` persistence |
+| **2. Bootstrap Icons Suite (`blaise-icons`)** | ✅ Completed | [`packages/blaise-icons/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-icons/), 1800+ icons, updated [`BVIcon.bv`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/BVIcon.bv) |
+| **3. Package Registry & Theme CLI** | ✅ Completed | [`bin/bv.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/bv.pas), `bv lib install themes`, `bv lib install icons`, `bv theme list`, `bv theme use <name>` |
+| **4. Automated Test Suite (99/99 Passing)** | ✅ Completed | [`demo-app/tests/theme.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/theme.test.pas), 99/99 tests passing across 11 suites |
 
 ---
 

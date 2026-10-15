@@ -1,0 +1,34 @@
+<template>
+  <div class="bui-input-group">
+    <label class="bui-input-label" v-if="label">{{ label }}</label>
+    <select class="bui-select" :value="value" @change="onChange">
+       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>
+    </select>
+  </div>
+</template>
+
+<script>
+  {
+    BVFormSelect - Dropdown Selection Control
+    ----------------------------------------
+    Props:
+    - label: String
+    - value: Current selected value
+    - options: Array of { value, text }
+  }
+  
+  props:
+    label: string = '';
+    value: string = '';
+    options: JSValue = nil;
+
+  methods:
+    procedure onChange(ev: JSValue);
+    begin
+       asm 
+         var val = (ev && ev.target) ? ev.target.value : ev;
+         this.$emit('input', val); 
+         this.$emit('change', val); 
+       end;
+    end;
+</script>

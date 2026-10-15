@@ -1,0 +1,39 @@
+<template>
+  <li class="bui-list-group-item" 
+      :class="{ active: active }"
+      @click="handleClick">
+    <span><slot></slot></span>
+    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>
+  </li>
+</template>
+
+<script>
+  {
+    BVListGroupItem - Item within List Group
+    ----------------------------------------
+    Props:
+    - active: boolean
+    - badge: string
+    - badgeVariant: string
+  }
+  
+  props:
+    active: boolean = false;
+    badge: string = '';
+    badgeVariant: string = 'primary';
+    badgevariant: string = 'primary';
+
+  computed:
+    function resolvedBadgeVariant: string;
+    begin
+       asm
+         return this.badgeVariant || this.badgevariant || 'primary';
+       end;
+    end;
+
+  methods:
+    procedure handleClick;
+    begin
+       asm this.$emit('click'); end;
+    end;
+</script>

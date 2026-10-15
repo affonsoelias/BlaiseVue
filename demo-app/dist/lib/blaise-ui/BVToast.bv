@@ -1,0 +1,53 @@
+<template>
+  <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="isVisible">
+    <div class="bui-toast-content">
+      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>
+      <slot>{{ message }}</slot>
+    </div>
+    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>
+  </div>
+</template>
+
+<script>
+  {
+    BVToast - Animated Notification Toast
+    --------------------------------------
+    Props:
+    - title: String notification header
+    - message: String notification body
+    - duration: Integer auto-dismiss time in ms (default: 3000)
+    - variant: String color theme
+  }
+
+  props:
+    title: string = '';
+    message: string = '';
+    duration: integer = 3000;
+    variant: string = 'success';
+
+  data:
+    isVisible: boolean = false;
+
+  methods:
+    procedure showToast;
+    begin
+      this['isVisible'] := true;
+      asm
+        const dur = this.duration || 3000;
+        setTimeout(() => {
+          this.isVisible = false;
+        }, dur);
+      end;
+    end;
+
+    procedure show;
+    begin
+      asm this.showToast(); end;
+    end;
+
+    procedure dismiss;
+    begin
+      this['isVisible'] := false;
+      asm this.$emit('dismiss'); end;
+    end;
+</script>

@@ -57,6 +57,8 @@ BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 25. [25. Form Validation Engine (b-validate)](25-form-validation.md)
 26. [26. List Transitions (<transition-group>)](26-transition-group.md)
 27. [27. Integrated Internationalization (Blaise-i18n)](27-i18n.md)
+28. [28. Themes & Bootswatch Integration ($theme)](28-themes.md)
+29. [29. Blaise Icons & Bootstrap Icons (bv-icon)](29-icons.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)

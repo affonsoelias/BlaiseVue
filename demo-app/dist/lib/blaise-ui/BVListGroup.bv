@@ -1,0 +1,11 @@
+<template>
+  <ul class="bui-list-group">
+    <slot></slot>
+  </ul>
+</template>
+
+<script>
+  {
+    BVListGroup - List Group Container
+  }
+</script>

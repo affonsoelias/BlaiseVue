@@ -691,7 +691,124 @@ rtl.module("BVI18n",["System","JS","Web","SysUtils","BVReactivity"],function () 
         };
   };
 });
-rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore","BVValidation","BVI18n"],function () {
+rtl.module("BVTheme",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+        const bv = window.__BV_CORE__;
+    
+        // Dark themes list for auto-detection of isDark
+        const darkThemes = ['darkly', 'cyborg', 'solar', 'vapor'];
+    
+        // Reactive state for theme tracking
+        const themeState = bv.defineReactive ? 
+          bv.defineReactive({ current: 'flatly', isDark: false }) : 
+          { current: 'flatly', isDark: false };
+    
+        function applyThemeDOM(themeName) {
+          if (typeof document === 'undefined') return;
+          let link = document.getElementById('bv-theme');
+          if (!link) {
+            link = document.createElement('link');
+            link.id = 'bv-theme';
+            link.rel = 'stylesheet';
+            if (document.head) document.head.appendChild(link);
+          }
+          link.href = 'lib/themes/' + themeName + '.min.css';
+    
+          const isD = darkThemes.indexOf(themeName.toLowerCase()) >= 0;
+          themeState.isDark = isD;
+    
+          if (document.documentElement) {
+            document.documentElement.setAttribute('data-bs-theme', isD ? 'dark' : 'light');
+            if (isD) {
+              document.documentElement.classList.add('theme-dark');
+              document.documentElement.classList.remove('theme-light');
+            } else {
+              document.documentElement.classList.add('theme-light');
+              document.documentElement.classList.remove('theme-dark');
+            }
+          }
+    
+          try {
+            if (window.localStorage) {
+              window.localStorage.setItem('bv_theme', themeName);
+            }
+          } catch(e) {}
+        }
+    
+        const theme = {
+          state: themeState,
+          darkThemes: darkThemes,
+          available: ['flatly', 'darkly', 'cosmo', 'cyborg', 'lux', 'pulse', 'solar', 'vapor', 'zephyr'],
+    
+          setTheme: function(name) {
+            if (!name) return;
+            const lower = String(name).toLowerCase().trim();
+            themeState.current = lower;
+            themeState.isDark = (darkThemes.indexOf(lower) >= 0);
+            applyThemeDOM(lower);
+            if (bv.trigger) {
+              bv.trigger(themeState, 'current');
+              bv.trigger(themeState, 'isDark');
+              bv.trigger(theme, 'current');
+              bv.trigger(theme, 'isDark');
+            }
+          },
+    
+          getTheme: function() {
+            return themeState.current;
+          },
+    
+          isDarkTheme: function() {
+            return !!themeState.isDark;
+          },
+    
+          toggleDarkLight: function() {
+            if (themeState.isDark) {
+              theme.setTheme('flatly');
+            } else {
+              theme.setTheme('darkly');
+            }
+          },
+    
+          toggle: function() {
+            theme.toggleDarkLight();
+          },
+    
+          init: function(defaultTheme) {
+            let saved = null;
+            try {
+              if (typeof window !== 'undefined' && window.localStorage) {
+                saved = window.localStorage.getItem('bv_theme');
+              }
+            } catch(e) {}
+            const initial = saved || defaultTheme || 'flatly';
+            theme.setTheme(initial);
+          }
+        };
+    
+        Object.defineProperty(theme, 'current', {
+          get: function() { return themeState.current; },
+          set: function(v) { theme.setTheme(v); },
+          enumerable: true,
+          configurable: true
+        });
+    
+        Object.defineProperty(theme, 'isDark', {
+          get: function() { return themeState.isDark; },
+          enumerable: true,
+          configurable: true
+        });
+    
+        bv.theme = theme;
+        if (typeof window !== 'undefined') {
+          window.$theme = theme;
+        };
+  };
+});
+rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore","BVValidation","BVI18n","BVTheme"],function () {
   "use strict";
   var $mod = this;
   $mod.$init = function () {
@@ -714,6 +831,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                 Data.FData['$i18n'] = window.__BV_CORE__.i18n;
                 Data.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+             }
+             if (window.__BV_CORE__.theme && !Data.FData['$theme']) {
+                Data.FData['$theme'] = window.__BV_CORE__.theme;
              }
           }
     
@@ -1095,6 +1215,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                        d.$i18n = window.__BV_CORE__.i18n;
                        d.$setLocale = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
                     }
+                    if (window.__BV_CORE__.theme && !d.$theme) {
+                       d.$theme = window.__BV_CORE__.theme;
+                    }
                     let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                        try {
                          let expr = e.trim();
@@ -1459,6 +1582,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                    pRef['$i18n'] = window.__BV_CORE__.i18n;
                    pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+                }
+                if (window.__BV_CORE__.theme) {
+                   pRef['$theme'] = window.__BV_CORE__.theme;
                 }
                 if (window.__BV_CORE__.validation) {
                    window.__BV_CORE__.validation.initDataValidation(pRef);
@@ -2032,6 +2158,9 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
              pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
              pRef['$i18n'] = window.__BV_CORE__.i18n;
              pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+          }
+          if (window.__BV_CORE__.theme) {
+             pRef['$theme'] = window.__BV_CORE__.theme;
           }
           if (window.__BV_CORE__.validation) {
              window.__BV_CORE__.validation.initDataValidation(pRef);
@@ -2870,7 +2999,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -4151,7 +4280,47 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVDataGrid","uBVDoughnut","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVSpinner","uBVTab","uBVTabs","uBVToast"],function () {
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bv-theme-select-wrapper d-inline-block">' + '    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">' + '      <option value="flatly">Flatly (Claro)</option>' + '      <option value="cosmo">Cosmo (Claro)</option>' + '      <option value="lux">Lux (Claro)</option>' + '      <option value="zephyr">Zephyr (Claro)</option>' + '      <option value="darkly">Darkly (Escuro)</option>' + '      <option value="cyborg">Cyborg (Escuro)</option>' + '      <option value="solar">Solar (Escuro)</option>' + '      <option value="vapor">Vapor (Neon)</option>' + '      <option value="pulse">Pulse (Roxo)</option>' + "    </select>" + "  </div>";
+    m = new Object();
+    m["onThemeChange"] = function (_this, e) {
+      var sel = "";
+      sel = "" + e["target"]["value"];
+      if (sel !== "") {
+        if (window.$theme) {
+          window.$theme.setTheme(sel);
+        };
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-select",comp);
+  };
+});
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeToggle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    type="button"' + '    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"' + '    :title="$theme.isDark ? \'Tema Claro\' : \'Tema Escuro\'"' + '    @click="toggleTheme">' + '    <span v-if="$theme.isDark">☀️ Claro</span>' + '    <span v-if="!$theme.isDark">🌙 Escuro</span>' + "  </button>";
+    m = new Object();
+    m["toggleTheme"] = function (_this) {
+      if (window.$theme) {
+        window.$theme.toggleDarkLight();
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
+  };
+});
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVDataGrid","uBVDoughnut","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -4160,6 +4329,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     var opts = null;
     var app = null;
     var comp = null;
+    var m = null;
     var _styleEl = null;
     var routerOpts = null;
     var routesArr = null;
@@ -4175,7 +4345,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     console.log("[Init] Injecting Styles...");
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
+    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
     document.head.appendChild(_styleEl);
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
@@ -4261,11 +4431,22 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVTabs.Register_uBVTabs();
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVThemeSelect...");
+    pas.uBVThemeSelect.Register_uBVThemeSelect();
+    console.log("[Init] Registering uBVThemeToggle...");
+    pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.5</strong>' + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro">{{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.5</strong>' + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro">{{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v2.5 ENTERPRISE";
     methods = new Object();
+    m["onThemeSelect"] = function (_this, e) {
+      var sel = "";
+      sel = "" + e["target"]["value"];
+      if (sel !== "") {
+        if (window.$theme) window.$theme.setTheme(sel);
+      };
+    };
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
@@ -4284,7 +4465,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
           },
           status: {
             globalStore: 'Memória Global',
-            localeActive: 'Idioma Ativo'
+            localeActive: 'Idioma Ativo',
+            theme: 'Tema'
           },
           form: {
             title: 'Formulário de Validação Reativa',
@@ -4320,7 +4502,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
           },
           status: {
             globalStore: 'Global Store',
-            localeActive: 'Active Locale'
+            localeActive: 'Active Locale',
+            theme: 'Theme'
           },
           form: {
             title: 'Reactive Form Validation',

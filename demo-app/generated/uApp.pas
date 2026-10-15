@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVDataGrid, uBVDoughnut, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVSpinner, uBVTab, uBVTabs, uBVToast;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVDataGrid, uBVDoughnut, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -34,7 +34,7 @@ begin
   end;
   asm console.log("[Init] Injecting Styles..."); end;
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: ''Segoe UI'', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: ''Consolas'', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
+  _styleEl.textContent := '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: ''Segoe UI'', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: ''Consolas'', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
   document.head.appendChild(_styleEl);
   asm console.log("[Init] Registering uCard..."); end;
   Register_uCard;
@@ -120,6 +120,10 @@ begin
   Register_uBVTabs;
   asm console.log("[Init] Registering uBVToast..."); end;
   Register_uBVToast;
+  asm console.log("[Init] Registering uBVThemeSelect..."); end;
+  Register_uBVThemeSelect;
+  asm console.log("[Init] Registering uBVThemeToggle..."); end;
+  Register_uBVThemeToggle;
 
 
   asm console.log("[Init] Setting #app template..."); end;
@@ -140,6 +144,23 @@ begin
     '        <button class="lang-btn" :class="{ ''active-lang'': $i18n.locale === ''pt'' }" @click="$setLocale(''pt'')">🇧🇷 PT</button>' +
     '        <button class="lang-btn" :class="{ ''active-lang'': $i18n.locale === ''en'' }" @click="$setLocale(''en'')">🇺🇸 EN</button>' +
     '      </div>' +
+    '      <div class="theme-switcher">' +
+    '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? ''Modo Claro'' : ''Modo Escuro''">' +
+    '          <span v-if="$theme.isDark">☀️</span>' +
+    '          <span v-if="!$theme.isDark">🌙</span>' +
+    '        </button>' +
+    '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' +
+    '          <option value="flatly">Flatly</option>' +
+    '          <option value="cosmo">Cosmo</option>' +
+    '          <option value="lux">Lux</option>' +
+    '          <option value="zephyr">Zephyr</option>' +
+    '          <option value="darkly">Darkly</option>' +
+    '          <option value="cyborg">Cyborg</option>' +
+    '          <option value="solar">Solar</option>' +
+    '          <option value="vapor">Vapor</option>' +
+    '          <option value="pulse">Pulse</option>' +
+    '        </select>' +
+    '      </div>' +
     '      <span class="nav-msg">{{ mensagem }}</span>' +
     '    </nav>' +
     '    <div class="container">' +
@@ -147,7 +168,7 @@ begin
     '      <router-view></router-view>' +
     '    </div>' +
     '    <div class="footer-status">' +
-    '       {{ $t(''status.globalStore'') }}: {{ $store.appVersion }} | {{ $t(''status.localeActive'') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | Dev: {{ $store.user }}' +
+    '       {{ $t(''status.globalStore'') }}: {{ $store.appVersion }} | {{ $t(''status.localeActive'') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t(''status.theme'') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | Dev: {{ $store.user }}' +
     '    </div>' +
     '  </div>';
 
@@ -155,6 +176,21 @@ begin
   data['mensagem'] := 'BlaiseVue SPA v2.5 ENTERPRISE';
 
   methods := TJSObject.new;
+  m['onThemeSelect'] := procedure(_this: TJSObject; e: JSValue)
+
+    var
+      sel: string;
+    begin
+      sel := string(TJSObject(TJSObject(e)['target'])['value']);
+      if sel <> '' then
+      begin
+        asm
+          if (window.$theme) window.$theme.setTheme(sel);
+        end;
+      end;
+    end;
+  { Router Configuration: Maps URI hashes to Component Tags }
+
 
   opts := TJSObject.new;
   comp := opts;
@@ -176,7 +212,8 @@ begin
             },
             status: {
               globalStore: 'Memória Global',
-              localeActive: 'Idioma Ativo'
+              localeActive: 'Idioma Ativo',
+              theme: 'Tema'
             },
             form: {
               title: 'Formulário de Validação Reativa',
@@ -212,7 +249,8 @@ begin
             },
             status: {
               globalStore: 'Global Store',
-              localeActive: 'Active Locale'
+              localeActive: 'Active Locale',
+              theme: 'Theme'
             },
             form: {
               title: 'Reactive Form Validation',
@@ -240,7 +278,6 @@ begin
         }
       end;
     end;
-  { Router Configuration: Maps URI hashes to Component Tags }
 
     ;
   comp['provide'] := function(_this: TJSObject): TJSObject

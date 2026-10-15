@@ -1,0 +1,30 @@
+<template>
+  <span class="bui-badge" 
+        :class="badgeClass">
+    <slot></slot>
+  </span>
+</template>
+
+<script>
+  {
+    BVBadge - Visual Label Component
+    --------------------------------
+    Props:
+    - variant: String (primary, secondary, success, danger, warning, info)
+    - pill: Boolean (Rounded pill corners)
+  }
+  
+  props:
+    variant: string = 'primary';
+    pill: boolean = false;
+
+  computed:
+    function badgeClass: string;
+    begin
+       asm
+         var v = this.variant || 'primary';
+         var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
+         return 'bui-badge bui-badge-' + v + p;
+       end;
+    end;
+</script>

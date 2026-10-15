@@ -1,0 +1,43 @@
+<template>
+  <div class="bui-input-group">
+    <label class="bui-input-label" v-if="label">{{ label }}</label>
+    <input 
+      :type="type || 'text'" 
+      class="bui-input-field" 
+      :placeholder="placeholder || ''"
+      :value="value !== undefined && value !== null ? value : ''"
+      :readonly="readonly && readonly !== 'false'"
+      @input="handleInput"
+    />
+  </div>
+</template>
+
+<script>
+  {
+    BVInput - Reactive Text Input Field
+    -----------------------------------
+    Props:
+    - label: String
+    - placeholder: String
+    - type: String
+    - value: String
+    - readonly: Boolean
+  }
+
+  props:
+    label: string = '';
+    placeholder: string = '';
+    type: string = 'text';
+    value: string = '';
+    readonly: boolean = false;
+
+  methods:
+    procedure handleInput(ev: JSValue);
+    begin
+      asm
+        let val = (ev && ev.target) ? ev.target.value : (ev || '');
+        this.value = val;
+        this.$emit('input', val);
+      end;
+    end;
+</script>

@@ -1,0 +1,103 @@
+<template>
+  <teleport to="body">
+    <div class="bui-modal-backdrop" b-if="isVisible" @click="handleBackdropClick">
+      <div class="bui-modal-content" @click.stop="">
+        <div class="bui-modal-header">
+          <span>{{ title }}</span>
+          <button class="bui-modal-close" @click="close">&times;</button>
+        </div>
+        <div class="bui-modal-body">
+          <slot></slot>
+        </div>
+        <div class="bui-modal-footer">
+          <slot name="footer">
+            <button class="bui-btn bui-btn-secondary" @click="close">{{ computedCancelLabel }}</button>
+            <button class="bui-btn bui-btn-primary" @click="confirm">{{ computedOkLabel }}</button>
+          </slot>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<script>
+  {
+    BVModal - Teleported Interactive Dialog
+    ----------------------------------------
+    Props:
+    - title: String modal title
+    - okLabel: String confirmation label
+    - cancelLabel: String cancellation label
+    - show: Boolean initial visibility
+  }
+
+  props:
+    title: string = 'Modal';
+    okLabel: string = 'Process';
+    oklabel: string = 'Process';
+    cancelLabel: string = 'Close';
+    cancellabel: string = 'Close';
+    show: boolean = false;
+
+  data:
+    isOpen: boolean = false;
+
+  created:
+    begin
+       if Boolean(this['show']) then this['isOpen'] := true;
+    end;
+
+  computed:
+    function isVisible: boolean;
+    begin
+       asm
+         return Boolean(this.isOpen || (this.show && this.show !== 'false'));
+       end;
+    end;
+
+    function computedOkLabel: string;
+    begin
+       asm
+         return this.okLabel || this.oklabel || 'Process';
+       end;
+    end;
+
+    function computedCancelLabel: string;
+    begin
+       asm
+         return this.cancelLabel || this.cancellabel || 'Close';
+       end;
+    end;
+
+  methods:
+    procedure showModal;
+    begin
+      this['isOpen'] := true;
+      this['show'] := true;
+    end;
+
+    procedure show;
+    begin
+      this['isOpen'] := true;
+      this['show'] := true;
+    end;
+
+    procedure close;
+    begin
+      this['isOpen'] := false;
+      this['show'] := false;
+      asm this.$emit('close'); end;
+    end;
+
+    procedure confirm;
+    begin
+      this['isOpen'] := false;
+      this['show'] := false;
+      asm this.$emit('ok'); end;
+    end;
+
+    procedure handleBackdropClick;
+    begin
+      asm this.close(); end;
+    end;
+</script>

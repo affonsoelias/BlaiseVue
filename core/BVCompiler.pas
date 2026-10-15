@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
@@ -52,6 +52,9 @@ initialization
             Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
             Data.FData['$i18n'] = window.__BV_CORE__.i18n;
             Data.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+         }
+         if (window.__BV_CORE__.theme && !Data.FData['$theme']) {
+            Data.FData['$theme'] = window.__BV_CORE__.theme;
          }
       }
 
@@ -433,6 +436,9 @@ initialization
                    d.$i18n = window.__BV_CORE__.i18n;
                    d.$setLocale = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
                 }
+                if (window.__BV_CORE__.theme && !d.$theme) {
+                   d.$theme = window.__BV_CORE__.theme;
+                }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -797,6 +803,9 @@ initialization
                pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                pRef['$i18n'] = window.__BV_CORE__.i18n;
                pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+            }
+            if (window.__BV_CORE__.theme) {
+               pRef['$theme'] = window.__BV_CORE__.theme;
             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);

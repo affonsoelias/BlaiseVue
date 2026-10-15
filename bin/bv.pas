@@ -91,6 +91,12 @@ begin
   Result := GetSDKPath + 'core' + DirectorySeparator;
 end;
 
+{ Returns the path to the framework official packages folder }
+function GetPackagesPath: string;
+begin
+  Result := GetSDKPath + 'packages' + DirectorySeparator;
+end;
+
 { Returns the absolute path to the pas2js compiler executable based on OS }
 function GetPas2JSPath: string;
 var
@@ -314,6 +320,8 @@ procedure ScanDirForJS(const Path: string; List: TStringList); forward;
 procedure CmdLibList; forward;
 procedure CmdLibInstall(const URL: string); forward;
 procedure CmdLibRemove(const LibName: string); forward;
+procedure CmdThemeList; forward;
+procedure CmdThemeUse(const ThemeName: string); forward;
 
 { Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
@@ -1685,6 +1693,13 @@ begin
        CopyDir(PublicPath, DistPath, ['index.html']); // Pula index.html pois ja processamos acima
     end;
 
+    // Copia bibliotecas instaladas (/lib) para /dist/lib
+    if DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib') then
+    begin
+       WriteLn('  Copying installed libraries from /lib to /dist/lib...');
+       CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
+    end;
+
     // Copies rtl.js to dist/js/ using automatic SDK lookup
     FileName := GetRTLPath;
     if FileName <> '' then
@@ -1944,20 +1959,69 @@ end;
 
 procedure CmdLibInstall(const URL: string);
 var
-  LibPath, ZipName: string;
+  LibPath, ZipName, AliasLower: string;
+  PkgSource, DownloadURL: string;
   Client: TFPHTTPClient;
   UnZipper: TUnZipper;
 begin
+  AliasLower := LowerCase(Trim(URL));
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
   ForceDir(LibPath);
+
+  // Check official package aliases
+  if (AliasLower = 'themes') or (AliasLower = 'blaise-themes') then
+  begin
+    WriteLn('Installing official package: blaise-themes ...');
+    PkgSource := GetPackagesPath + 'blaise-themes';
+    if DirectoryExists(PkgSource) then
+    begin
+      CopyDir(PkgSource + DirectorySeparator + 'themes', LibPath + 'themes', []);
+      if FileExists(PkgSource + DirectorySeparator + 'BVThemeSelect.bv') then
+        WriteStringToFile(LibPath + 'themes' + DirectorySeparator + 'BVThemeSelect.bv', ReadFileToString(PkgSource + DirectorySeparator + 'BVThemeSelect.bv'));
+      if FileExists(PkgSource + DirectorySeparator + 'BVThemeToggle.bv') then
+        WriteStringToFile(LibPath + 'themes' + DirectorySeparator + 'BVThemeToggle.bv', ReadFileToString(PkgSource + DirectorySeparator + 'BVThemeToggle.bv'));
+      WriteLn('Package "blaise-themes" installed successfully in lib/themes/.');
+      Exit;
+    end
+    else
+      DownloadURL := 'https://github.com/blaisevue/blaise-themes/releases/latest/download/blaise-themes.zip';
+  end
+  else if (AliasLower = 'icons') or (AliasLower = 'blaise-icons') then
+  begin
+    WriteLn('Installing official package: blaise-icons ...');
+    PkgSource := GetPackagesPath + 'blaise-icons';
+    if DirectoryExists(PkgSource) then
+    begin
+      CopyDir(PkgSource + DirectorySeparator + 'css', LibPath + 'icons', []);
+      WriteLn('Package "blaise-icons" installed successfully in lib/icons/.');
+      Exit;
+    end
+    else
+      DownloadURL := 'https://github.com/blaisevue/blaise-icons/releases/latest/download/blaise-icons.zip';
+  end
+  else if (AliasLower = 'ui') or (AliasLower = 'blaise-ui') then
+  begin
+    WriteLn('Installing official package: blaise-ui ...');
+    PkgSource := GetPackagesPath + 'blaise-ui';
+    if DirectoryExists(PkgSource) then
+    begin
+      CopyDir(PkgSource, LibPath + 'blaise-ui', []);
+      WriteLn('Package "blaise-ui" installed successfully in lib/blaise-ui/.');
+      Exit;
+    end
+    else
+      DownloadURL := 'https://github.com/blaisevue/blaise-ui/releases/latest/download/blaise-ui.zip';
+  end
+  else
+    DownloadURL := URL;
+
   ZipName := LibPath + 'temp_lib.zip';
-  
-  WriteLn('Downloading from: ', URL);
+  WriteLn('Downloading from: ', DownloadURL);
   Client := TFPHTTPClient.Create(nil);
   try
     try
       Client.AllowRedirect := True;
-      Client.Get(URL, ZipName);
+      Client.Get(DownloadURL, ZipName);
     except
       on E: Exception do begin WriteLn('Download error: ', E.Message); Halt(1); end;
     end;
@@ -1980,6 +2044,80 @@ begin
   WriteLn('Installation completed successfully!');
 end;
 
+procedure CmdThemeList;
+var
+  SR: TSearchRec;
+  Path: string;
+  Count: Integer;
+begin
+  Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes' + DirectorySeparator;
+  WriteLn('');
+  WriteLn('Available Themes in lib/themes/:');
+  WriteLn(StringOfChar('-', 40));
+  Count := 0;
+  if DirectoryExists(Path) and (FindFirst(Path + '*.min.css', faAnyFile, SR) = 0) then
+  begin
+    repeat
+      WriteLn('  - ', StringReplace(SR.Name, '.min.css', '', [rfIgnoreCase]));
+      Inc(Count);
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+  if Count = 0 then
+  begin
+    WriteLn('  (No themes installed in lib/themes/)');
+    WriteLn('  Run "bv lib install themes" to install the Bootswatch suite.');
+  end;
+  WriteLn(StringOfChar('-', 40));
+end;
+
+procedure CmdThemeUse(const ThemeName: string);
+var
+  IndexPath, Content, CleanName, NewLink: string;
+  PStart, PEnd: Integer;
+begin
+  CleanName := LowerCase(Trim(ThemeName));
+  IndexPath := GetCurrentDir + DirectorySeparator + 'public' + DirectorySeparator + 'index.html';
+  if not FileExists(IndexPath) then
+    IndexPath := GetCurrentDir + DirectorySeparator + 'index.html';
+
+  if not FileExists(IndexPath) then
+  begin
+    WriteLn('Error: index.html not found.');
+    Exit;
+  end;
+
+  Content := ReadFileToString(IndexPath);
+  NewLink := '<link id="bv-theme" rel="stylesheet" href="lib/themes/' + CleanName + '.min.css">';
+
+  // If <link id="bv-theme" already exists, replace it
+  PStart := Pos('id="bv-theme"', Content);
+  if PStart = 0 then
+    PStart := Pos('id=''bv-theme''', Content);
+
+  if PStart > 0 then
+  begin
+    while (PStart > 1) and (Content[PStart] <> '<') do Dec(PStart);
+    PEnd := PStart;
+    while (PEnd <= Length(Content)) and (Content[PEnd] <> '>') do Inc(PEnd);
+    Delete(Content, PStart, PEnd - PStart + 1);
+    Insert(NewLink, Content, PStart);
+  end
+  else
+  begin
+    PStart := Pos('</head>', Content);
+    if PStart = 0 then
+      PStart := Pos('</HEAD>', Content);
+    if PStart > 0 then
+      Insert('    ' + NewLink + #10, Content, PStart)
+    else
+      Content := Content + #10 + NewLink;
+  end;
+
+  WriteStringToFile(IndexPath, Content);
+  WriteLn('Theme successfully set to "', CleanName, '" in ', ExtractFileName(IndexPath));
+end;
+
 procedure ScanDirForCSS(const Path: string; List: TStringList);
 var
   SR: TSearchRec;
@@ -1991,7 +2129,10 @@ begin
        if (SR.Name <> '.') and (SR.Name <> '..') then
        begin
           if (SR.Attr and faDirectory) <> 0 then
-            ScanDirForCSS(Path + DirectorySeparator + SR.Name, List)
+          begin
+            if LowerCase(SR.Name) <> 'themes' then
+              ScanDirForCSS(Path + DirectorySeparator + SR.Name, List);
+          end
           else if ExtractFileExt(SR.Name) = '.css' then
             List.Add(Path + DirectorySeparator + SR.Name);
        end;
@@ -2216,6 +2357,12 @@ begin
      CopyDir(PublicPath, DistPath, ['index.html']);
   end;
 
+  if DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib') then
+  begin
+     WriteLn('  Copying installed libraries (/lib) to /dist/lib...');
+     CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
+  end;
+
   WriteLn('');
   WriteLn('Production build generated in /dist');
   WriteLn('Main file: main.' + Hash + '.js');
@@ -2396,8 +2543,10 @@ begin
     WriteLn('    bv list v              Lists views');
     WriteLn('    bv list t              Lists test files');
     WriteLn('    bv lib list            Lists all installed components in lib/');
-    WriteLn('    bv lib install <url>   Downloads and installs a component from a URL');
+    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui) or from URL');
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
+    WriteLn('    bv theme list          Lists available installed themes');
+    WriteLn('    bv theme use <name>    Switches active project theme in index.html');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test                Runs unit tests (.test.pas)');
     WriteLn('');
@@ -2513,6 +2662,26 @@ begin
     begin
        if ParamCount < 3 then begin WriteLn('Usage: bv lib remove <name>'); Halt(1); end;
        CmdLibRemove(ParamStr(3));
+    end;
+  end
+  else if Cmd = 'theme' then
+  begin
+    if ParamCount < 2 then
+    begin
+       WriteLn('Usage: bv theme <list|use <name>>');
+       Halt(1);
+    end;
+    Cmd := LowerCase(ParamStr(2));
+    if Cmd = 'list' then CmdThemeList
+    else if Cmd = 'use' then
+    begin
+       if ParamCount < 3 then begin WriteLn('Usage: bv theme use <name>'); Halt(1); end;
+       CmdThemeUse(ParamStr(3));
+    end
+    else
+    begin
+       WriteLn('Unknown theme subcommand: ', Cmd);
+       Halt(1);
     end;
   end
   else if Cmd = 'run' then
