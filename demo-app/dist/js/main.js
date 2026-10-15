@@ -108,8 +108,16 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
       if (!AData['$refs']) AData['$refs'] = {};
       this.FData = $mod.DefineReactive(AData);
       // Global Store Integration
-      if (this && this.FData && window['__BV_PRO_STORE__']) {
-        this.FData['$store'] = window['__BV_PRO_STORE__'];
+      if (this && this.FData) {
+        if (window['__BV_PRO_STORE__']) this.FData['$store'] = window['__BV_PRO_STORE__'];
+        if (window.__BV_CORE__.i18n) {
+          this.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+          this.FData['$i18n'] = window.__BV_CORE__.i18n;
+          this.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+        }
+        if (window.__BV_CORE__.validation) {
+          window.__BV_CORE__.validation.initDataValidation(this.FData);
+        }
       };
       return this;
     };
@@ -370,7 +378,293 @@ rtl.module("BVStore",["System","JS","Web","SysUtils","BVReactivity"],function ()
     window["__BV_PRO_STORE__"] = $impl.GStore.FState;
   };
 },[]);
-rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore"],function () {
+rtl.module("BVValidation",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+        const bv = window.__BV_CORE__;
+    
+        const validation = {
+          rules: {
+            required: function(val) {
+              if (val === null || val === undefined) return false;
+              if (typeof val === 'string') return val.trim().length > 0;
+              if (typeof val === 'boolean') return val === true;
+              if (Array.isArray(val)) return val.length > 0;
+              if (typeof val === 'number') return !isNaN(val);
+              return true;
+            },
+            email: function(val) {
+              if (!val && val !== 0) return true; // optional unless 'required'
+              const s = String(val).trim();
+              if (s.length === 0) return true;
+              return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+            },
+            min: function(val, param) {
+              if (!val && val !== 0) return true;
+              const limit = parseFloat(param);
+              if (isNaN(limit)) return true;
+              if (typeof val === 'number') return val >= limit;
+              return String(val).length >= limit;
+            },
+            max: function(val, param) {
+              if (!val && val !== 0) return true;
+              const limit = parseFloat(param);
+              if (isNaN(limit)) return true;
+              if (typeof val === 'number') return val <= limit;
+              return String(val).length <= limit;
+            },
+            numeric: function(val) {
+              if (!val && val !== 0) return true;
+              return /^-?\d+(\.\d+)?$/.test(String(val).trim());
+            },
+            alpha: function(val) {
+              if (!val && val !== 0) return true;
+              return /^[a-zA-Z]+$/.test(String(val).trim());
+            },
+            alphanumeric: function(val) {
+              if (!val && val !== 0) return true;
+              return /^[a-zA-Z0-9]+$/.test(String(val).trim());
+            },
+            url: function(val) {
+              if (!val && val !== 0) return true;
+              return /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/.test(String(val).trim());
+            },
+            sameAs: function(val, param, field, ctx) {
+              if (!ctx) return true;
+              return val === ctx[param];
+            }
+          },
+    
+          messages: {
+            required: '{field} is required',
+            email: '{field} must be a valid email',
+            min: '{field} must be at least {param} characters',
+            max: '{field} must not exceed {param} characters',
+            numeric: '{field} must be numeric',
+            alpha: '{field} must contain only letters',
+            alphanumeric: '{field} must contain only letters and numbers',
+            url: '{field} must be a valid URL',
+            sameAs: '{field} must match {param}'
+          },
+    
+          formatMessage: function(rule, field, param) {
+            let tmpl = validation.messages[rule] || ('{field} is invalid (' + rule + ')');
+            return tmpl.replace('{field}', field || 'Field').replace('{param}', param || '');
+          },
+    
+          validateRule: function(ruleName, val, param, field, ctx) {
+            let fn = validation.rules[ruleName];
+            if (!fn) return '';
+            let ok = fn(val, param, field, ctx);
+            if (!ok) {
+              return validation.formatMessage(ruleName, field, param);
+            }
+            return '';
+          },
+    
+          validateField: function(rulesStr, val, field, ctx) {
+            if (!rulesStr) return '';
+            let parts = rulesStr.split('|');
+            for (let i = 0; i < parts.length; i++) {
+              let part = parts[i].trim();
+              if (!part) continue;
+              let rParts = part.split(':');
+              let rName = rParts[0].trim();
+              let rParam = rParts.length > 1 ? rParts[1].trim() : '';
+              let err = validation.validateRule(rName, val, rParam, field, ctx);
+              if (err) return err;
+            }
+            return '';
+          },
+    
+          initDataValidation: function(dataObj) {
+            if (!dataObj) return;
+            if (!dataObj.$errors) dataObj.$errors = bv.defineReactive ? bv.defineReactive({}) : {};
+            if (!dataObj.$v) {
+              let vState = {
+                $dirty: false,
+                $invalid: false,
+                $fields: {},
+                $touch: function() {
+                  this.$dirty = true;
+                  let anyInv = false;
+                  Object.keys(this.$fields).forEach(f => {
+                    let fObj = this.$fields[f];
+                    fObj.$dirty = true;
+                    let err = validation.validateField(fObj.$rules, dataObj[f], f, dataObj);
+                    fObj.$error = err;
+                    fObj.$invalid = !!err;
+                    dataObj.$errors[f] = err;
+                    if (fObj.$invalid) anyInv = true;
+                  });
+                  this.$invalid = anyInv;
+                  return !anyInv;
+                },
+                $reset: function() {
+                  this.$dirty = false;
+                  this.$invalid = false;
+                  Object.keys(this.$fields).forEach(f => {
+                    let fObj = this.$fields[f];
+                    fObj.$dirty = false;
+                    fObj.$error = '';
+                    fObj.$invalid = false;
+                    dataObj.$errors[f] = '';
+                  });
+                },
+                $validate: function() {
+                  return this.$touch();
+                }
+              };
+              dataObj.$v = bv.defineReactive ? bv.defineReactive(vState) : vState;
+            }
+            if (!dataObj.$validate) {
+              dataObj.$validate = function() {
+                return dataObj.$v ? dataObj.$v.$validate() : true;
+              };
+            }
+          },
+    
+          setupField: function(dataObj, fieldName, rulesStr) {
+            validation.initDataValidation(dataObj);
+            if (!dataObj.$v.$fields[fieldName]) {
+              dataObj.$v.$fields[fieldName] = {
+                $rules: rulesStr,
+                $dirty: false,
+                $error: '',
+                $invalid: false,
+                $touch: function() {
+                  this.$dirty = true;
+                  let err = validation.validateField(rulesStr, dataObj[fieldName], fieldName, dataObj);
+                  this.$error = err;
+                  this.$invalid = !!err;
+                  dataObj.$errors[fieldName] = err;
+                  validation.recomputeInvalid(dataObj);
+                  return !this.$invalid;
+                },
+                $reset: function() {
+                  this.$dirty = false;
+                  this.$error = '';
+                  this.$invalid = false;
+                  dataObj.$errors[fieldName] = '';
+                  validation.recomputeInvalid(dataObj);
+                }
+              };
+              dataObj.$errors[fieldName] = '';
+              dataObj.$v[fieldName] = dataObj.$v.$fields[fieldName];
+            } else {
+              dataObj.$v.$fields[fieldName].$rules = rulesStr;
+            }
+          },
+    
+          recomputeInvalid: function(dataObj) {
+            if (!dataObj || !dataObj.$v || !dataObj.$v.$fields) return;
+            let anyInv = false;
+            Object.keys(dataObj.$v.$fields).forEach(k => {
+              if (dataObj.$v.$fields[k].$invalid) anyInv = true;
+            });
+            dataObj.$v.$invalid = anyInv;
+          }
+        };
+    
+        bv.validation = validation;
+  };
+});
+rtl.module("BVI18n",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+        const bv = window.__BV_CORE__;
+    
+        // Reactive State for locale tracking
+        const i18nState = bv.defineReactive ? bv.defineReactive({ locale: 'en' }) : { locale: 'en' };
+    
+        const i18n = {
+          state: i18nState,
+          fallbackLocale: 'en',
+          messages: {},
+    
+          setLocale: function(loc) {
+            if (!loc) return;
+            i18n.state.locale = String(loc);
+          },
+    
+          getLocale: function() {
+            return i18n.state.locale;
+          },
+    
+          addMessages: function(loc, msgs) {
+            if (!i18n.messages[loc]) i18n.messages[loc] = {};
+            i18n.mergeDeep(i18n.messages[loc], msgs);
+          },
+    
+          mergeDeep: function(target, source) {
+            if (!source || typeof source !== 'object') return target;
+            Object.keys(source).forEach(function(k) {
+              if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
+                if (!target[k]) target[k] = {};
+                i18n.mergeDeep(target[k], source[k]);
+              } else {
+                target[k] = source[k];
+              }
+            });
+            return target;
+          },
+    
+          resolvePath: function(obj, path) {
+            if (!obj || !path) return undefined;
+            let parts = path.split('.');
+            let curr = obj;
+            for (let i = 0; i < parts.length; i++) {
+              if (curr === null || curr === undefined) return undefined;
+              curr = curr[parts[i]];
+            }
+            return curr;
+          },
+    
+          has: function(key, loc) {
+            let l = loc || i18n.state.locale;
+            let dict = i18n.messages[l];
+            return (i18n.resolvePath(dict, key) !== undefined);
+          },
+    
+          interpolate: function(tmpl, params) {
+            if (typeof tmpl !== 'string') return String(tmpl);
+            if (!params) return tmpl;
+            return tmpl.replace(/\{(\w+)\}/g, function(match, paramKey) {
+              if (params[paramKey] !== undefined) return String(params[paramKey]);
+              return match;
+            });
+          },
+    
+          translate: function(key, params) {
+            // Read reactive locale to trigger dependency tracking in active effect
+            let currentLoc = i18n.state.locale;
+            let dict = i18n.messages[currentLoc];
+            let val = i18n.resolvePath(dict, key);
+    
+            if (val === undefined && i18n.fallbackLocale && i18n.fallbackLocale !== currentLoc) {
+              let fbDict = i18n.messages[i18n.fallbackLocale];
+              val = i18n.resolvePath(fbDict, key);
+            }
+    
+            if (val === undefined) {
+              return key;
+            }
+    
+            return i18n.interpolate(val, params);
+          }
+        };
+    
+        bv.i18n = i18n;
+        bv.t = function(key, params) {
+          return i18n.translate(key, params);
+        };
+  };
+});
+rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore","BVValidation","BVI18n"],function () {
   "use strict";
   var $mod = this;
   $mod.$init = function () {
@@ -539,7 +833,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            if (node.nodeType === 1) {
               let tag = node.tagName.toLowerCase();
               if (tag.indexOf('-') !== -1 || (bv.components && bv.components[tag])) return false;
-              if (tag === 'router-view' || tag === 'transition' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
+              if (tag === 'router-view' || tag === 'transition' || tag === 'transition-group' || tag === 'b-transition-group' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
               if (node.attributes) {
                  for (let i = 0; i < node.attributes.length; i++) {
                     let n = node.attributes[i].name.toLowerCase();
@@ -646,6 +940,79 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            } catch(e) { console.warn("[HMR] Unable to connect:", e); }
         };
     
+        // Transition Group FLIP Animation Handler
+        bv.setupTransitionGroup = function(wrapperEl, tName) {
+           if (!wrapperEl || wrapperEl['__bv_transition_group_init__']) return;
+           wrapperEl['__bv_transition_group_init__'] = true;
+           let prefix = tName || 'v';
+           let prevPositions = new Map();
+    
+           function getPositions() {
+              let posMap = new Map();
+              if (wrapperEl.children) {
+                 Array.from(wrapperEl.children).forEach(function(c) {
+                    if (c && c.getBoundingClientRect) {
+                       posMap.set(c, c.getBoundingClientRect());
+                    }
+                 });
+              }
+              return posMap;
+           }
+    
+           prevPositions = getPositions();
+    
+           if (typeof MutationObserver !== 'undefined') {
+              let observer = new MutationObserver(function(mutations) {
+                 let newPositions = getPositions();
+                 Array.from(wrapperEl.children).forEach(function(child) {
+                    if (!child || !child.getBoundingClientRect) return;
+                    let first = prevPositions.get(child);
+                    let last = newPositions.get(child);
+                    if (first && last) {
+                       let dx = first.left - last.left;
+                       let dy = first.top - last.top;
+                       if (dx !== 0 || dy !== 0) {
+                          child.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+                          child.style.transition = 'transform 0s';
+                          child.classList.add(prefix + '-move');
+    
+                          if (typeof requestAnimationFrame !== 'undefined') {
+                             requestAnimationFrame(function() {
+                                child.style.transform = '';
+                                child.style.transition = '';
+                                let onEnd = function(e) {
+                                   if (e.target === child) {
+                                      child.classList.remove(prefix + '-move');
+                                      child.removeEventListener('transitionend', onEnd);
+                                   }
+                                };
+                                child.addEventListener('transitionend', onEnd);
+                             });
+                          }
+                       }
+                    } else if (!first && last) {
+                       child.classList.add(prefix + '-enter-from', prefix + '-enter-active');
+                       if (typeof requestAnimationFrame !== 'undefined') {
+                          requestAnimationFrame(function() {
+                             child.classList.remove(prefix + '-enter-from');
+                             let onEnterEnd = function(e) {
+                                if (e.target === child) {
+                                   child.classList.remove(prefix + '-enter-active');
+                                   child.removeEventListener('transitionend', onEnterEnd);
+                                }
+                             };
+                             child.addEventListener('transitionend', onEnterEnd);
+                          });
+                       }
+                    }
+                 });
+                 prevPositions = newPositions;
+              });
+              observer.observe(wrapperEl, { childList: true });
+              wrapperEl['__bv_transition_observer__'] = observer;
+           }
+        };
+    
         // Recursive DOM Visitor: The core of the Directive Engine
         bv.traverse = function(Node, Data, Methods) {
           if (!Node || Node['bvTraversed'] || Node['bvStatic']) return;
@@ -701,6 +1068,28 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 }
               }
     
+              if (tagName === 'transition-group' || tagName === 'b-transition-group') {
+                let wrapperTag = el.getAttribute('tag') || 'div';
+                let tName = el.getAttribute('name') || 'v';
+                let wrapperEl = document.createElement(wrapperTag);
+                for (let i = 0; i < el.attributes.length; i++) {
+                   let a = el.attributes[i];
+                   if (a.name !== 'tag' && a.name !== 'name') {
+                      wrapperEl.setAttribute(a.name, a.value);
+                   }
+                }
+                wrapperEl.classList.add('bv-transition-group');
+                while (el.firstChild) {
+                   wrapperEl.appendChild(el.firstChild);
+                }
+                if (el.parentNode) {
+                   el.parentNode.replaceChild(wrapperEl, el);
+                }
+                bv.setupTransitionGroup(wrapperEl, tName);
+                bv.traverse(wrapperEl, Data, Methods);
+                return;
+              }
+    
               if (tagName === 'teleport' || tagName === 'b-teleport') {
                 let toTarget = el.getAttribute('to') || 'body';
                 let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
@@ -751,7 +1140,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               }
     
               // 3. Directive Collection
-              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null;
+              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null;
               let binds = [];
               let events = [];
               if (el.attributes) {
@@ -759,6 +1148,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    let a = el.attributes[i];
                    let n = a.name.toLowerCase();
                    if (n === 'b-model' || n === 'v-model') vmodel = a.value;
+                   else if (n === 'b-validate' || n === 'v-validate') vvalidate = a.value;
+                   else if (n.startsWith('b-validate:') || n.startsWith('v-validate:')) {
+                      vvalidateField = n.startsWith('b-validate:') ? n.substring(11) : n.substring(11);
+                      vvalidate = a.value;
+                   }
                    else if (n === 'b-for' || n === 'v-for') vfor = a.value;
                    else if (n === 'b-if' || n === 'v-if') vif = a.value;
                    else if (n === 'b-show' || n === 'v-show') vshow = a.value;
@@ -794,6 +1188,45 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    bv.effect(function() {
                      let v = Data.Evaluate(vmodel);
                      if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   });
+                }
+              }
+    
+              // 5.5. b-validate directive (native elements)
+              if (vvalidate && !opts) {
+                el.removeAttribute('b-validate'); el.removeAttribute('v-validate');
+                if (vvalidateField) el.removeAttribute('b-validate:' + vvalidateField);
+                let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+                if (targetField && Data && Data.FData && window.__BV_CORE__.validation) {
+                   window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+                   
+                   let runValidation = function() {
+                      let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[targetField];
+                      if (fObj) {
+                         fObj.$touch();
+                         if (fObj.$invalid) {
+                            el.classList.add('is-invalid');
+                            el.classList.add('bv-invalid');
+                            el.classList.remove('is-valid');
+                            el.classList.remove('bv-valid');
+                         } else {
+                            el.classList.add('is-valid');
+                            el.classList.add('bv-valid');
+                            el.classList.remove('is-invalid');
+                            el.classList.remove('bv-invalid');
+                         }
+                      }
+                   };
+    
+                   el.addEventListener('blur', function() {
+                      runValidation();
+                   });
+    
+                   el.addEventListener('input', function() {
+                      let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[targetField];
+                      if (fObj && fObj.$dirty) {
+                         runValidation();
+                      }
                    });
                 }
               }
@@ -964,6 +1397,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    pRef['$router'] = window.__BV_CORE__.router;
                 }
                 if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+                if (window.__BV_CORE__.i18n) {
+                   pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+                   pRef['$i18n'] = window.__BV_CORE__.i18n;
+                   pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+                }
+                if (window.__BV_CORE__.validation) {
+                   window.__BV_CORE__.validation.initDataValidation(pRef);
+                }
                 
                 // Props Initialization
                 if (el.attributes) {
@@ -1142,7 +1583,20 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
                  if (vmodel) {
                     bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
-                    pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
+                    pRef['$onInput'] = function(val) { 
+                       Data.SetValue(vmodel, val); 
+                       if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                          let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
+                          if (fObj && fObj.$dirty) fObj.$touch();
+                       }
+                    };
+                 }
+    
+                 if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                    let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+                    if (targetField) {
+                       window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+                    }
                  }
     
                  if (vref && Data && Data.FData) {
@@ -1721,7 +2175,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
     };
   });
 });
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents"],function () {
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -1744,6 +2198,14 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       s.innerHTML = `
         .bv-fade-enter-active { transition: opacity .5s; }
         .bv-fade-enter { opacity: 0; }
+        .v-move, .list-move { transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+        .v-enter-active, .list-enter-active { transition: all 0.4s ease; }
+        .v-enter-from, .list-enter-from { opacity: 0; transform: translateY(15px); }
+        .v-leave-active, .list-leave-active { transition: all 0.4s ease; position: absolute; }
+        .v-leave-to, .list-leave-to { opacity: 0; transform: translateY(-15px); }
+        .is-invalid, .bv-invalid { border-color: #ef4444 !important; }
+        .is-valid, .bv-valid { border-color: #10b981 !important; }
+        .bv-error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 4px; display: block; }
       `;
       document.head.appendChild(s);
     };
@@ -1787,6 +2249,16 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       window.__BV_CORE__.initApp(d, m, c);
       window.__BV_CORE__.rootData = d.FData;
       if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__;
+      // Initialize i18n configuration if passed in root options
+      if (Options.i18n && window.__BV_CORE__.i18n) {
+        if (Options.i18n.locale) window.__BV_CORE__.i18n.setLocale(Options.i18n.locale);
+        if (Options.i18n.fallbackLocale) window.__BV_CORE__.i18n.fallbackLocale = Options.i18n.fallbackLocale;
+        if (Options.i18n.messages) {
+          Object.keys(Options.i18n.messages).forEach(function(l) {
+            window.__BV_CORE__.i18n.addMessages(l, Options.i18n.messages[l]);
+          });
+        }
+      }
       // Handle Provide/Inject dependency injection
       if (Options.provide) {
         d.FData.$provided = Options.provide.call(d.FData, d.FData);
@@ -2233,10 +2705,10 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = "label { display: block; margin-top: 12px; margin-bottom: 4px; color: #555; }";
+    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra o <code>b-model</code> (two-way data binding), <code>props</code>, <code>$refs</code> e <code>$emit</code>.</p>" + "      <p>Todos os campos abaixo atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Dados Pessoais</h2>' + "      <label><strong>Nome:</strong></label>" + '      <input type="text" b-model="nome">' + "" + "      <label><strong>Email:</strong></label>" + '      <input type="text" b-model="email">' + "" + "      <label><strong>Cidade:</strong></label>" + '      <input type="text" b-model="cidade">' + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th></tr>" + "        <tr><td>Nome</td><td><strong>{{ nome }}</strong></td></tr>" + "        <tr><td>Email</td><td><strong>{{ email }}</strong></td></tr>" + "        <tr><td>Cidade</td><td><strong>{{ cidade }}</strong></td></tr>" + "      </table>" + "      <hr>" + '      <button class="btn-primary" @click="preencher">Preencher Exemplo</button>' + '      <button class="btn-danger" @click="limpar">Limpar Tudo</button>' + "    </div>" + "  </div>";
+    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -2246,6 +2718,7 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
       d["cidade"] = "";
       d["meuSub"] = "Este subtítulo é reativo do pai!";
       d["msgHeader"] = "(clique no título do header)";
+      d["msgSucesso"] = "";
       Result = d;
       return Result;
     };
@@ -2263,15 +2736,28 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
         if (header != null) header["title"] = "Título alterado via $refs!";
       };
     };
+    m["enviar"] = function (_this) {
+      var valido = false;
+      valido = this.$validate ? this.$validate() : true;
+      if (valido) {
+        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
+      } else {
+        _this["msgSucesso"] = "";
+      };
+    };
     m["preencher"] = function (_this) {
       _this["nome"] = "Blaise Pascal";
       _this["email"] = "blaise@pascal.dev";
       _this["cidade"] = "Clermont-Ferrand";
+      _this["msgSucesso"] = "";
+      if (this.$v && this.$v.$touch) this.$v.$touch();
     };
     m["limpar"] = function (_this) {
       _this["nome"] = "";
       _this["email"] = "";
       _this["cidade"] = "";
+      _this["msgSucesso"] = "";
+      if (this.$v && this.$v.$reset) this.$v.$reset();
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("formulario-page",comp);
@@ -2388,16 +2874,17 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }";
+    _styleEl.textContent = ".pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">🛡️ BlaiseVue 1.0 Pro: Novas Fronteiras</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
       d["contador"] = 0;
       d["showElement"] = true;
+      d["itens"] = "";
       Result = d;
       return Result;
     };
@@ -2430,7 +2917,30 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     m["toggleShow"] = function (_this) {
       _this["showElement"] = !!(_this["showElement"] == false);
     };
+    m["embaralhar"] = function (_this) {
+      if (Array.isArray(this.itens)) {
+        this.itens = this.itens.slice().sort(() => Math.random() - 0.5);
+      };
+    };
+    m["adicionarItem"] = function (_this) {
+      if (Array.isArray(this.itens)) {
+        const emojis = ['⚡ Lightning', '🔥 Fire', '🚀 Rocket', '💎 Diamond', '🔮 Crystal', '🌟 Star', '🛡️ Shield', '🎯 Target'];
+        const rand = emojis[Math.floor(Math.random() * emojis.length)];
+        this.itens.push(rand + ' #' + (this.itens.length + 1));
+      };
+    };
+    m["removerItem"] = function (_this) {
+      if (Array.isArray(this.itens) && this.itens.length > 0) {
+        this.itens.shift();
+      };
+    };
+    m["resetarLista"] = function (_this) {
+      this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
+    };
     comp["methods"] = m;
+    comp["created"] = function (_this) {
+      this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
+    };
     comp["updated"] = function (_this) {
       console.log("[Lifecycle] Componente UPDATED! Pulso detectado.");
     };
@@ -3599,7 +4109,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     console.log("[Init] Injecting Styles...");
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; }   .nav-links { display: flex; gap: 16px; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; }   .nav-links a:hover { background: rgba(255,255,255,0.1); color: #42b883; }   .nav-msg { margin-left: auto; color: #7f8c8d; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
+    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }';
     document.head.appendChild(_styleEl);
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
@@ -3686,15 +4196,90 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.0</strong>' + '      <div class="nav-links">' + '        <a href="#/">Home</a>' + '        <a href="#/about">About</a>' + '        <a href="#/pro">Pro Features 🛡️</a>' + '        <a href="#/form">Form</a>' + '        <a href="#/bootstrap">BlaiseUI Kit 🎨</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue Demo 2.5</strong>' + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro">{{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
-    data["mensagem"] = "BlaiseVue SPA v1.0 PRO";
+    data["mensagem"] = "BlaiseVue SPA v2.5 ENTERPRISE";
     methods = new Object();
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
-      _this["$store"]["appVersion"] = "1.0.0-PRO";
+      _this["$store"]["appVersion"] = "2.5.0-ENTERPRISE";
       _this["$store"]["user"] = "DevMaster 🏆";
+      if (window.__BV_CORE__.i18n) {
+        window.__BV_CORE__.i18n.addMessages('pt', {
+          nav: {
+            home: 'Início',
+            about: 'Sobre',
+            pro: 'Pro Features 🛡️',
+            form: 'Formulário 📋',
+            blaiseui: 'BlaiseUI Kit 🎨',
+            charts: 'Gráficos 📊',
+            showcase: 'Showcase ✨'
+          },
+          status: {
+            globalStore: 'Memória Global',
+            localeActive: 'Idioma Ativo'
+          },
+          form: {
+            title: 'Formulário de Validação Reativa',
+            subtitle: 'Demonstração de b-validate, $errors e $v no BlaiseVue 2.5',
+            name: 'Nome Completo',
+            email: 'E-mail Corporativo',
+            city: 'Cidade',
+            submit: 'Validar & Enviar 🚀',
+            reset: 'Limpar Formulário 🔄',
+            fillValid: 'Preencher Válido ✨',
+            statusValid: 'Válido ✅',
+            statusInvalid: 'Inválido ❌',
+            formState: 'Status do Formulário'
+          },
+          pro: {
+            title: '🛡️ BlaiseVue 2.5 Pro: Novas Fronteiras',
+            transitionTitle: '🎬 Lista com Animações FLIP (<transition-group>)',
+            shuffle: 'Embaralhar 🔀',
+            add: 'Adicionar Item ➕',
+            remove: 'Remover Primeiro ➖',
+            resetList: 'Resetar Lista 🔄'
+          }
+        });
+        window.__BV_CORE__.i18n.addMessages('en', {
+          nav: {
+            home: 'Home',
+            about: 'About',
+            pro: 'Pro Features 🛡️',
+            form: 'Form 📋',
+            blaiseui: 'BlaiseUI Kit 🎨',
+            charts: 'Charts 📊',
+            showcase: 'Showcase ✨'
+          },
+          status: {
+            globalStore: 'Global Store',
+            localeActive: 'Active Locale'
+          },
+          form: {
+            title: 'Reactive Form Validation',
+            subtitle: 'Demonstrating b-validate, $errors, and $v in BlaiseVue 2.5',
+            name: 'Full Name',
+            email: 'Corporate Email',
+            city: 'City',
+            submit: 'Validate & Submit 🚀',
+            reset: 'Reset Form 🔄',
+            fillValid: 'Fill Valid Sample ✨',
+            statusValid: 'Valid ✅',
+            statusInvalid: 'Invalid ❌',
+            formState: 'Form Status'
+          },
+          pro: {
+            title: '🛡️ BlaiseVue 2.5 Pro: New Frontiers',
+            transitionTitle: '🎬 FLIP List Transitions (<transition-group>)',
+            shuffle: 'Shuffle 🔀',
+            add: 'Add Item ➕',
+            remove: 'Remove First ➖',
+            resetList: 'Reset List 🔄'
+          }
+        });
+        window.__BV_CORE__.i18n.setLocale('pt');
+      };
     };
     comp["provide"] = function (_this) {
       var Result = null;

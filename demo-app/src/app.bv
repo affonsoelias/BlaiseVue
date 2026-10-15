@@ -1,15 +1,19 @@
 <template>
   <div translate="no" class="notranslate">
     <nav class="navbar">
-      <strong class="brand">BlaiseVue Demo 2.0</strong>
+      <strong class="brand">BlaiseVue Demo 2.5</strong>
       <div class="nav-links">
-        <a href="#/">Home</a>
-        <a href="#/about">About</a>
-        <a href="#/pro">Pro Features 🛡️</a>
-        <a href="#/form">Form</a>
-        <a href="#/bootstrap">BlaiseUI Kit 🎨</a>
-        <a href="#/charts" style="background: #42b883; color: white;">Charts 📊</a>
-        <a href="#/showcase" style="background: #3498db; color: white;">Showcase ✨</a>
+        <a href="#/">{{ $t('nav.home') }}</a>
+        <a href="#/about">{{ $t('nav.about') }}</a>
+        <a href="#/pro">{{ $t('nav.pro') }}</a>
+        <a href="#/form">{{ $t('nav.form') }}</a>
+        <a href="#/bootstrap">{{ $t('nav.blaiseui') }}</a>
+        <a href="#/charts" style="background: #42b883; color: white;">{{ $t('nav.charts') }}</a>
+        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t('nav.showcase') }}</a>
+      </div>
+      <div class="lang-switcher">
+        <button class="lang-btn" :class="{ 'active-lang': $i18n.locale === 'pt' }" @click="$setLocale('pt')">🇧🇷 PT</button>
+        <button class="lang-btn" :class="{ 'active-lang': $i18n.locale === 'en' }" @click="$setLocale('en')">🇺🇸 EN</button>
       </div>
       <span class="nav-msg">{{ mensagem }}</span>
     </nav>
@@ -18,7 +22,7 @@
       <router-view></router-view>
     </div>
     <div class="footer-status">
-       Global Store: {{ $store.appVersion }} | Dev: {{ $store.user }}
+       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | Dev: {{ $store.user }}
     </div>
   </div>
 </template>
@@ -31,7 +35,7 @@
   }
 
   data:
-    mensagem: string = 'BlaiseVue SPA v1.0 PRO';
+    mensagem: string = 'BlaiseVue SPA v2.5 ENTERPRISE';
 
   { Dependency Injection: Provides a context object to all descendants }
   provide:
@@ -48,8 +52,86 @@
   { Lifecycle: Initialize global state in the centralized store }
   created:
     begin
-      TJSObject(this['$store'])['appVersion'] := '1.0.0-PRO';
+      TJSObject(this['$store'])['appVersion'] := '2.5.0-ENTERPRISE';
       TJSObject(this['$store'])['user'] := 'DevMaster 🏆';
+
+      asm
+        if (window.__BV_CORE__.i18n) {
+          window.__BV_CORE__.i18n.addMessages('pt', {
+            nav: {
+              home: 'Início',
+              about: 'Sobre',
+              pro: 'Pro Features 🛡️',
+              form: 'Formulário 📋',
+              blaiseui: 'BlaiseUI Kit 🎨',
+              charts: 'Gráficos 📊',
+              showcase: 'Showcase ✨'
+            },
+            status: {
+              globalStore: 'Memória Global',
+              localeActive: 'Idioma Ativo'
+            },
+            form: {
+              title: 'Formulário de Validação Reativa',
+              subtitle: 'Demonstração de b-validate, $errors e $v no BlaiseVue 2.5',
+              name: 'Nome Completo',
+              email: 'E-mail Corporativo',
+              city: 'Cidade',
+              submit: 'Validar & Enviar 🚀',
+              reset: 'Limpar Formulário 🔄',
+              fillValid: 'Preencher Válido ✨',
+              statusValid: 'Válido ✅',
+              statusInvalid: 'Inválido ❌',
+              formState: 'Status do Formulário'
+            },
+            pro: {
+              title: '🛡️ BlaiseVue 2.5 Pro: Novas Fronteiras',
+              transitionTitle: '🎬 Lista com Animações FLIP (<transition-group>)',
+              shuffle: 'Embaralhar 🔀',
+              add: 'Adicionar Item ➕',
+              remove: 'Remover Primeiro ➖',
+              resetList: 'Resetar Lista 🔄'
+            }
+          });
+          window.__BV_CORE__.i18n.addMessages('en', {
+            nav: {
+              home: 'Home',
+              about: 'About',
+              pro: 'Pro Features 🛡️',
+              form: 'Form 📋',
+              blaiseui: 'BlaiseUI Kit 🎨',
+              charts: 'Charts 📊',
+              showcase: 'Showcase ✨'
+            },
+            status: {
+              globalStore: 'Global Store',
+              localeActive: 'Active Locale'
+            },
+            form: {
+              title: 'Reactive Form Validation',
+              subtitle: 'Demonstrating b-validate, $errors, and $v in BlaiseVue 2.5',
+              name: 'Full Name',
+              email: 'Corporate Email',
+              city: 'City',
+              submit: 'Validate & Submit 🚀',
+              reset: 'Reset Form 🔄',
+              fillValid: 'Fill Valid Sample ✨',
+              statusValid: 'Valid ✅',
+              statusInvalid: 'Invalid ❌',
+              formState: 'Form Status'
+            },
+            pro: {
+              title: '🛡️ BlaiseVue 2.5 Pro: New Frontiers',
+              transitionTitle: '🎬 FLIP List Transitions (<transition-group>)',
+              shuffle: 'Shuffle 🔀',
+              add: 'Add Item ➕',
+              remove: 'Remove First ➖',
+              resetList: 'Reset List 🔄'
+            }
+          });
+          window.__BV_CORE__.i18n.setLocale('pt');
+        }
+      end;
     end;
 
   { Router Configuration: Maps URI hashes to Component Tags }
@@ -68,12 +150,16 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }
-  .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-  .brand { color: #42b883; font-size: 20px; }
-  .nav-links { display: flex; gap: 16px; }
-  .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 4px 8px; border-radius: 4px; }
-  .nav-links a:hover { background: rgba(255,255,255,0.1); color: #42b883; }
-  .nav-msg { margin-left: auto; color: #7f8c8d; font-size: 13px; }
+  .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { color: #42b883; font-size: 20px; font-weight: 700; }
+  .nav-links { display: flex; gap: 12px; align-items: center; }
+  .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }
+  .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }
+  .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+  .lang-btn:hover { background: rgba(255,255,255,0.2); }
+  .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }
+  .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }
   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }
   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }
   h1, h2, h3 { margin-bottom: 12px; }

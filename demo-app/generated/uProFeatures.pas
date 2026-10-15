@@ -17,12 +17,12 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }';
+  _styleEl.textContent := '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
     '  <div class="pro-features">' +
-    '    <h2 class="section-title">🛡️ BlaiseVue 1.0 Pro: Novas Fronteiras</h2>' +
+    '    <h2 class="section-title">{{ $t(''pro.title'') }}</h2>' +
     '    ' +
     '    <!-- 1. Teste de Slots -->' +
     '    <card titulo="Demonstração de Slot">' +
@@ -68,6 +68,26 @@ begin
     '          </div>' +
     '       </transition>' +
     '    </div>' +
+    '' +
+    '    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->' +
+    '    <div class="section">' +
+    '       <h3>{{ $t(''pro.transitionTitle'') }}</h3>' +
+    '       <p style="color: #64748b; margin-bottom: 12px;">' +
+    '         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms.' +
+    '       </p>' +
+    '       <div style="margin-bottom: 14px;">' +
+    '         <button class="btn-primary" @click="embaralhar">{{ $t(''pro.shuffle'') }}</button>' +
+    '         <button class="btn-outline" @click="adicionarItem">{{ $t(''pro.add'') }}</button>' +
+    '         <button class="btn-danger" @click="removerItem">{{ $t(''pro.remove'') }}</button>' +
+    '         <button class="btn-outline" @click="resetarLista">{{ $t(''pro.resetList'') }}</button>' +
+    '       </div>' +
+    '' +
+    '       <transition-group tag="div" name="list" class="flip-grid">' +
+    '          <div b-for="item in itens" class="flip-card">' +
+    '             {{ item }}' +
+    '          </div>' +
+    '       </transition-group>' +
+    '    </div>' +
     '  </div>';
 
   comp['data'] := function(): TJSObject
@@ -76,6 +96,7 @@ begin
     d := TJSObject.new;
     d['contador'] := 0;
     d['showElement'] := true;
+    d['itens'] := '';
     Result := d;
   end;
 
@@ -127,9 +148,57 @@ begin
     begin
       _this['showElement'] := not Boolean(_this['showElement']);
     end;
+    
+  m['embaralhar'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        if (Array.isArray(this.itens)) {
+          this.itens = this.itens.slice().sort(() => Math.random() - 0.5);
+        }
+      end;
+    end;
+    
+  m['adicionarItem'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        if (Array.isArray(this.itens)) {
+          const emojis = ['⚡ Lightning', '🔥 Fire', '🚀 Rocket', '💎 Diamond', '🔮 Crystal', '🌟 Star', '🛡️ Shield', '🎯 Target'];
+          const rand = emojis[Math.floor(Math.random() * emojis.length)];
+          this.itens.push(rand + ' #' + (this.itens.length + 1));
+        }
+      end;
+    end;
+    
+  m['removerItem'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        if (Array.isArray(this.itens) && this.itens.length > 0) {
+          this.itens.shift();
+        }
+      end;
+    end;
+    
+  m['resetarLista'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
+      end;
+    end;
 
   comp['methods'] := m;
 
+  comp['created'] := procedure(_this: TJSObject)
+    begin
+      asm
+        this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
+      end;
+    end;
+
+    ;
   comp['updated'] := procedure(_this: TJSObject)
     begin
       asm console.log("[Lifecycle] Componente UPDATED! Pulso detectado."); end;
