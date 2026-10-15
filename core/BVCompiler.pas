@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
@@ -198,7 +198,7 @@ initialization
        if (node.nodeType === 1) {
           let tag = node.tagName.toLowerCase();
           if (tag.indexOf('-') !== -1 || (bv.components && bv.components[tag])) return false;
-          if (tag === 'router-view' || tag === 'transition' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
+          if (tag === 'router-view' || tag === 'transition' || tag === 'transition-group' || tag === 'b-transition-group' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
           if (node.attributes) {
              for (let i = 0; i < node.attributes.length; i++) {
                 let n = node.attributes[i].name.toLowerCase();
@@ -305,6 +305,79 @@ initialization
        } catch(e) { console.warn("[HMR] Unable to connect:", e); }
     };
 
+    // Transition Group FLIP Animation Handler
+    bv.setupTransitionGroup = function(wrapperEl, tName) {
+       if (!wrapperEl || wrapperEl['__bv_transition_group_init__']) return;
+       wrapperEl['__bv_transition_group_init__'] = true;
+       let prefix = tName || 'v';
+       let prevPositions = new Map();
+
+       function getPositions() {
+          let posMap = new Map();
+          if (wrapperEl.children) {
+             Array.from(wrapperEl.children).forEach(function(c) {
+                if (c && c.getBoundingClientRect) {
+                   posMap.set(c, c.getBoundingClientRect());
+                }
+             });
+          }
+          return posMap;
+       }
+
+       prevPositions = getPositions();
+
+       if (typeof MutationObserver !== 'undefined') {
+          let observer = new MutationObserver(function(mutations) {
+             let newPositions = getPositions();
+             Array.from(wrapperEl.children).forEach(function(child) {
+                if (!child || !child.getBoundingClientRect) return;
+                let first = prevPositions.get(child);
+                let last = newPositions.get(child);
+                if (first && last) {
+                   let dx = first.left - last.left;
+                   let dy = first.top - last.top;
+                   if (dx !== 0 || dy !== 0) {
+                      child.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+                      child.style.transition = 'transform 0s';
+                      child.classList.add(prefix + '-move');
+
+                      if (typeof requestAnimationFrame !== 'undefined') {
+                         requestAnimationFrame(function() {
+                            child.style.transform = '';
+                            child.style.transition = '';
+                            let onEnd = function(e) {
+                               if (e.target === child) {
+                                  child.classList.remove(prefix + '-move');
+                                  child.removeEventListener('transitionend', onEnd);
+                               }
+                            };
+                            child.addEventListener('transitionend', onEnd);
+                         });
+                      }
+                   }
+                } else if (!first && last) {
+                   child.classList.add(prefix + '-enter-from', prefix + '-enter-active');
+                   if (typeof requestAnimationFrame !== 'undefined') {
+                      requestAnimationFrame(function() {
+                         child.classList.remove(prefix + '-enter-from');
+                         let onEnterEnd = function(e) {
+                            if (e.target === child) {
+                               child.classList.remove(prefix + '-enter-active');
+                               child.removeEventListener('transitionend', onEnterEnd);
+                            }
+                         };
+                         child.addEventListener('transitionend', onEnterEnd);
+                      });
+                   }
+                }
+             });
+             prevPositions = newPositions;
+          });
+          observer.observe(wrapperEl, { childList: true });
+          wrapperEl['__bv_transition_observer__'] = observer;
+       }
+    };
+
     // Recursive DOM Visitor: The core of the Directive Engine
     bv.traverse = function(Node, Data, Methods) {
       if (!Node || Node['bvTraversed'] || Node['bvStatic']) return;
@@ -360,6 +433,28 @@ initialization
             }
           }
 
+          if (tagName === 'transition-group' || tagName === 'b-transition-group') {
+            let wrapperTag = el.getAttribute('tag') || 'div';
+            let tName = el.getAttribute('name') || 'v';
+            let wrapperEl = document.createElement(wrapperTag);
+            for (let i = 0; i < el.attributes.length; i++) {
+               let a = el.attributes[i];
+               if (a.name !== 'tag' && a.name !== 'name') {
+                  wrapperEl.setAttribute(a.name, a.value);
+               }
+            }
+            wrapperEl.classList.add('bv-transition-group');
+            while (el.firstChild) {
+               wrapperEl.appendChild(el.firstChild);
+            }
+            if (el.parentNode) {
+               el.parentNode.replaceChild(wrapperEl, el);
+            }
+            bv.setupTransitionGroup(wrapperEl, tName);
+            bv.traverse(wrapperEl, Data, Methods);
+            return;
+          }
+
           if (tagName === 'teleport' || tagName === 'b-teleport') {
             let toTarget = el.getAttribute('to') || 'body';
             let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
@@ -410,7 +505,7 @@ initialization
           }
 
           // 3. Directive Collection
-          let vmodel = null, vfor = null, vif = null, vshow = null, vref = null;
+          let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null;
           let binds = [];
           let events = [];
           if (el.attributes) {
@@ -418,6 +513,11 @@ initialization
                let a = el.attributes[i];
                let n = a.name.toLowerCase();
                if (n === 'b-model' || n === 'v-model') vmodel = a.value;
+               else if (n === 'b-validate' || n === 'v-validate') vvalidate = a.value;
+               else if (n.startsWith('b-validate:') || n.startsWith('v-validate:')) {
+                  vvalidateField = n.startsWith('b-validate:') ? n.substring(11) : n.substring(11);
+                  vvalidate = a.value;
+               }
                else if (n === 'b-for' || n === 'v-for') vfor = a.value;
                else if (n === 'b-if' || n === 'v-if') vif = a.value;
                else if (n === 'b-show' || n === 'v-show') vshow = a.value;
@@ -453,6 +553,45 @@ initialization
                bv.effect(function() {
                  let v = Data.Evaluate(vmodel);
                  if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+               });
+            }
+          }
+
+          // 5.5. b-validate directive (native elements)
+          if (vvalidate && !opts) {
+            el.removeAttribute('b-validate'); el.removeAttribute('v-validate');
+            if (vvalidateField) el.removeAttribute('b-validate:' + vvalidateField);
+            let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+            if (targetField && Data && Data.FData && window.__BV_CORE__.validation) {
+               window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+               
+               let runValidation = function() {
+                  let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[targetField];
+                  if (fObj) {
+                     fObj.$touch();
+                     if (fObj.$invalid) {
+                        el.classList.add('is-invalid');
+                        el.classList.add('bv-invalid');
+                        el.classList.remove('is-valid');
+                        el.classList.remove('bv-valid');
+                     } else {
+                        el.classList.add('is-valid');
+                        el.classList.add('bv-valid');
+                        el.classList.remove('is-invalid');
+                        el.classList.remove('bv-invalid');
+                     }
+                  }
+               };
+
+               el.addEventListener('blur', function() {
+                  runValidation();
+               });
+
+               el.addEventListener('input', function() {
+                  let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[targetField];
+                  if (fObj && fObj.$dirty) {
+                     runValidation();
+                  }
                });
             }
           }
@@ -623,6 +762,14 @@ initialization
                pRef['$router'] = window.__BV_CORE__.router;
             }
             if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+            if (window.__BV_CORE__.i18n) {
+               pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+               pRef['$i18n'] = window.__BV_CORE__.i18n;
+               pRef['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+            }
+            if (window.__BV_CORE__.validation) {
+               window.__BV_CORE__.validation.initDataValidation(pRef);
+            }
             
             // Props Initialization
             if (el.attributes) {
@@ -801,7 +948,20 @@ initialization
 
              if (vmodel) {
                 bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
-                pRef['$onInput'] = function(val) { Data.SetValue(vmodel, val); };
+                pRef['$onInput'] = function(val) { 
+                   Data.SetValue(vmodel, val); 
+                   if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                      let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
+                      if (fObj && fObj.$dirty) fObj.$touch();
+                   }
+                };
+             }
+
+             if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+                if (targetField) {
+                   window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+                }
              }
 
              if (vref && Data && Data.FData) {

@@ -88,8 +88,16 @@ begin
   FData := DefineReactive(AData);
   asm 
     // Global Store Integration
-    if (this && this.FData && window['__BV_PRO_STORE__']) {
-      this.FData['$store'] = window['__BV_PRO_STORE__'];
+    if (this && this.FData) {
+      if (window['__BV_PRO_STORE__']) this.FData['$store'] = window['__BV_PRO_STORE__'];
+      if (window.__BV_CORE__.i18n) {
+        this.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
+        this.FData['$i18n'] = window.__BV_CORE__.i18n;
+        this.FData['$setLocale'] = function(loc) { window.__BV_CORE__.i18n.setLocale(loc); };
+      }
+      if (window.__BV_CORE__.validation) {
+        window.__BV_CORE__.validation.initDataValidation(this.FData);
+      }
     }
   end;
 end;

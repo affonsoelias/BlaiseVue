@@ -3,14 +3,15 @@
 This document defines the technical strategy, architectural goals, and specifications for the next major evolution of the framework: **BlaiseVue 2.5 and 3.0**.
 
 > [!NOTE]
-> **Current Status**: 📋 **Planned / Under Architectural Specification**. No implementation of the 2.5/3.0 cycle has been started.
+> **Current Status**: 🚀 **BlaiseVue 2.5 Delivered (✅ Completed)**. Architectural goals for Version 2.5 are fully implemented and verified with 73 unit tests. Version 3.0 is currently under specification.
 
 ---
 
-## 🏆 Delivery Record: BlaiseVue 2.0 (✅ 100% Completed)
+## 🏆 Delivery Record: BlaiseVue 2.0 & 2.5 (✅ 100% Completed)
 
-BlaiseVue version 2.0 has reached enterprise maturity with all 9 original goals fully implemented and covered by 42 automated unit tests across 7 test suites:
+BlaiseVue has reached enterprise maturity with all goals for versions 2.0 and 2.5 fully implemented and covered by 73 automated unit tests across 10 test suites:
 
+### BlaiseVue 2.0 Enterprise Release
 | 2.0 Goal | Status | Implementation Files |
 |---|:---:|---|
 | **1. Hot Module Replacement (HMR)** | ✅ Completed | [`bin/dev-server.js`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/dev-server.js), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas) |
@@ -21,11 +22,18 @@ BlaiseVue version 2.0 has reached enterprise maturity with all 9 original goals 
 | **6. Browser DevTools Extension (Manifest V3)** | ✅ Completed | [`devtools/`](file:///c:/Users/Pichau/Documents/BlaiseVue/devtools/), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas) |
 | **7. BlaiseUI Component Kit** | ✅ Completed | [`packages/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-ui/), [`demo-app/lib/blaise-ui/`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/lib/blaise-ui/) |
 | **8. CLI Native Resource Scaffolding** | ✅ Completed | [`bin/templates/`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/templates/), `{$R templates.res}` in [`bin/bv.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/bv.pas) |
-| **9. Automated Test Suite** | ✅ Completed | `demo-app/tests/`, Vitest runner (42/42 tests passing across 7 suites) |
+| **9. Automated Test Suite** | ✅ Completed | `demo-app/tests/`, Vitest runner (73/73 tests passing across 10 suites) |
+
+### BlaiseVue 2.5 Release (✅ Completed)
+| 2.5 Goal | Status | Implementation Files |
+|---|:---:|---|
+| **1. Form Validation Engine (`b-validate`)** | ✅ Completed | [`core/BVValidation.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVValidation.pas), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`demo-app/tests/validation.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/validation.test.pas) |
+| **2. List Transitions (`<transition-group>`)** | ✅ Completed | [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`core/BlaiseVue.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BlaiseVue.pas), [`demo-app/tests/transition_group.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/transition_group.test.pas) |
+| **3. Integrated Internationalization (`Blaise-i18n`)** | ✅ Completed | [`core/BVI18n.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVI18n.pas), [`core/BVReactivity.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVReactivity.pas), [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), [`demo-app/tests/i18n.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/i18n.test.pas) |
 
 ---
 
-## 🔮 The Next Horizon: Architectural Goals (v2.5 & v3.0)
+## 🔮 The Next Horizon: Architectural Goals (v3.0)
 
 Below are the new strategic pillars designed to consolidate BlaiseVue as the most robust and performant frontend ecosystem in Object Pascal:
 
@@ -113,15 +121,15 @@ Below are the new strategic pillars designed to consolidate BlaiseVue as the mos
 [ v2.0 - Completed ✅ ]
        │
        ▼
-[ v2.5 - Q1/Q2 ] ──► Form Validation Engine (b-validate)
-                 ──► List Transitions (<transition-group>)
-                 ──► Internationalization (Blaise-i18n)
+[ v2.5 - Completed ✅ ] ──► Form Validation Engine (b-validate)
+                        ──► List Transitions (<transition-group>)
+                        ──► Internationalization (Blaise-i18n)
        │
        ▼
-[ v3.0 - Q3/Q4 ] ──► Documentation Generator (bv doc)
-                 ──► WebAssembly Acceleration (FPC Wasm)
-                 ──► SSG & Static Pre-rendering
-                 ──► Automated E2E Suite
+[ v3.0 - In Planning 📋 ] ──► Documentation Generator (bv doc)
+                          ──► WebAssembly Acceleration (FPC Wasm)
+                          ──► SSG & Static Pre-rendering
+                          ──► Automated E2E Suite
 ```
 
 ---

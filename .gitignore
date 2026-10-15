@@ -43,6 +43,7 @@ file_list.txt
 # 📦 Generated Application Bundles
 demo-app/dist/js/*.js
 demo-app/generated/
+demo-app/rtl.js
 my-app/
 
 # 🍎 OS Files

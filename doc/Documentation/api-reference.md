@@ -12,11 +12,14 @@ This document is the official technical reference for all directives, components
 | `b-show` | Visibility toggling via inline CSS (`display: none`). | `<div b-show="visible">...</div>` |
 | `b-for` | Reactive array iteration over `TJSArray` or collections. | `<li b-for="item in list">...</li>` |
 | `b-model` | Two-way reactive data synchronization for form elements and custom components. | `<input b-model="name">` |
+| `b-validate` | Declarative validation rules with automatic `$errors` and `$v` tracking. | `<input b-model="email" b-validate="required\|email">` |
 | `b-ref` | Registers an element reference into the component's `$refs` dictionary. | `<canvas b-ref="chart"></canvas>` |
 | `b-slot` / `#` | Directs content into named slots or receives scoped slot parameters. | `<template #header="scope">...</template>` |
 | `<teleport to="...">` | Teleports child DOM elements to an external selector outside the parent container. | `<teleport to="body">...</teleport>` |
 | `<suspense>` | Coordinates asynchronous component loading with `#default` and `#fallback` slots. | `<suspense>...</suspense>` |
+| `<transition-group>` | Smooth list and collection animations on insert, remove, and reorder (FLIP). | `<transition-group name="list" tag="ul">` |
 | `:attr` / `v-bind` | Dynamically synchronizes HTML attributes with Pascal expressions. | `<div :class="{ active: isActive }"></div>` |
+
 
 ---
 
@@ -77,6 +80,11 @@ Available directly in template expressions (`{{ $obj }}`) or via `this['$obj']` 
 | `$router` | `TBVRouter` | The SPA router instance for programmatic navigation and route metadata. |
 | `$refs` | `TJSObject` | Map of DOM elements or child component reactive instances registered with `b-ref`. |
 | `$emit` | `procedure` | Dispatches custom events up to the parent component. |
+| `$t` | `function` | Internationalization helper for resolving locale keys (`$t('msg.key', params)`). |
+| `$i18n` | `TJSObject` | Reactive i18n controller with active `locale`, `setLocale`, and `addMessages`. |
+| `$errors` | `TJSObject` | Reactive dictionary of validation error messages per input field. |
+| `$v` | `TJSObject` | Form validation controller (`$invalid`, `$dirty`, `$touch()`, `$reset()`, `$validate()`). |
+
 
 ---
 

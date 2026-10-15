@@ -47,13 +47,16 @@ BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 17. [17. Advanced Component Lifecycle Hooks](17-lifecycle-pro.md)
 18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md)
 
-### 🚀 BlaiseVue 2.0 Features & Tooling
+### 🚀 BlaiseVue 2.0 & 2.5 Features & Tooling
 19. [19. Unit Testing with Vitest](19-unit-testing.md)
 20. [20. Extra-Official Libraries (Bootstrap & Charts)](20-extra-libraries.md)
 21. [21. Teleport & Suspense](21-teleport-suspense.md)
 22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md)
 23. [23. Hot Module Replacement (HMR) & DevTools](23-hmr-devtools.md)
 24. [24. BlaiseUI (Official Component Kit)](24-blaise-ui.md)
+25. [25. Form Validation Engine (b-validate)](25-form-validation.md)
+26. [26. List Transitions (<transition-group>)](26-transition-group.md)
+27. [27. Integrated Internationalization (Blaise-i18n)](27-i18n.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)

@@ -12,7 +12,7 @@ unit BlaiseVue;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents;
+uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n;
 
 type
   { 
@@ -110,6 +110,16 @@ begin
   asm if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__; end;
 
   asm
+    // Initialize i18n configuration if passed in root options
+    if (Options.i18n && window.__BV_CORE__.i18n) {
+      if (Options.i18n.locale) window.__BV_CORE__.i18n.setLocale(Options.i18n.locale);
+      if (Options.i18n.fallbackLocale) window.__BV_CORE__.i18n.fallbackLocale = Options.i18n.fallbackLocale;
+      if (Options.i18n.messages) {
+        Object.keys(Options.i18n.messages).forEach(function(l) {
+          window.__BV_CORE__.i18n.addMessages(l, Options.i18n.messages[l]);
+        });
+      }
+    }
     // Handle Provide/Inject dependency injection
     if (Options.provide) {
       d.FData.$provided = Options.provide.call(d.FData, d.FData);
@@ -143,6 +153,14 @@ begin
     s.innerHTML = `
       .bv-fade-enter-active { transition: opacity .5s; }
       .bv-fade-enter { opacity: 0; }
+      .v-move, .list-move { transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+      .v-enter-active, .list-enter-active { transition: all 0.4s ease; }
+      .v-enter-from, .list-enter-from { opacity: 0; transform: translateY(15px); }
+      .v-leave-active, .list-leave-active { transition: all 0.4s ease; position: absolute; }
+      .v-leave-to, .list-leave-to { opacity: 0; transform: translateY(-15px); }
+      .is-invalid, .bv-invalid { border-color: #ef4444 !important; }
+      .is-valid, .bv-valid { border-color: #10b981 !important; }
+      .bv-error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 4px; display: block; }
     `;
     document.head.appendChild(s);
   end;
