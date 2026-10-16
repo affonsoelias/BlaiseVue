@@ -8,8 +8,13 @@ import { execSync } from 'child_process';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 const WS_PORT = parseInt(process.env.WS_PORT || '8081', 10);
 const ROOT_DIR = process.cwd();
-const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
-const SRC_DIR = path.resolve(ROOT_DIR, 'src');
+let DIST_DIR = path.resolve(ROOT_DIR, 'dist');
+let SRC_DIR = path.resolve(ROOT_DIR, 'src');
+
+if (!fs.existsSync(DIST_DIR) && fs.existsSync(path.resolve(ROOT_DIR, 'demo-app', 'dist'))) {
+  DIST_DIR = path.resolve(ROOT_DIR, 'demo-app', 'dist');
+  SRC_DIR = path.resolve(ROOT_DIR, 'demo-app', 'src');
+}
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -22,7 +27,8 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf'
+  '.ttf': 'font/ttf',
+  '.wasm': 'application/wasm'
 };
 
 // 1. Static HTTP Server
@@ -36,6 +42,11 @@ const server = http.createServer((req, res) => {
     res.writeHead(403);
     res.end('Forbidden');
     return;
+  }
+
+  // If path is a directory, check for index.html inside it (e.g. /docs -> /docs/index.html)
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, 'index.html');
   }
 
   // Fallback for SPA routing (only for path requests without file extensions)

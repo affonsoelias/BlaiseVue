@@ -130,15 +130,16 @@ begin
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
     '  <div translate="no" class="notranslate">' +
     '    <nav class="navbar">' +
-    '      <strong class="brand">BlaiseVue Demo 2.5</strong>' +
+    '      <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
     '      <div class="nav-links">' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about">{{ $t(''nav.about'') }}</a>' +
-    '        <a href="#/pro">{{ $t(''nav.pro'') }}</a>' +
+    '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(''nav.pro'') }}</a>' +
     '        <a href="#/form">{{ $t(''nav.form'') }}</a>' +
     '        <a href="#/bootstrap">{{ $t(''nav.blaiseui'') }}</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(''nav.showcase'') }}</a>' +
+    '        <a href="docs/index.html" target="_blank" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' +
     '      </div>' +
     '      <div class="lang-switcher">' +
     '        <button class="lang-btn" :class="{ ''active-lang'': $i18n.locale === ''pt'' }" @click="$setLocale(''pt'')">🇧🇷 PT</button>' +
@@ -168,12 +169,12 @@ begin
     '      <router-view></router-view>' +
     '    </div>' +
     '    <div class="footer-status">' +
-    '       {{ $t(''status.globalStore'') }}: {{ $store.appVersion }} | {{ $t(''status.localeActive'') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t(''status.theme'') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | Dev: {{ $store.user }}' +
+    '       {{ $t(''status.globalStore'') }}: {{ $store.appVersion }} | {{ $t(''status.localeActive'') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t(''status.theme'') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}' +
     '    </div>' +
     '  </div>';
 
   data := TJSObject.new;
-  data['mensagem'] := 'BlaiseVue SPA v2.5 ENTERPRISE';
+  data['mensagem'] := 'BlaiseVue SPA v3.0 TURBO';
 
   methods := TJSObject.new;
   m := methods;
@@ -197,15 +198,15 @@ begin
   comp := opts;
   comp['created'] := procedure(_this: TJSObject)
     begin
-      TJSObject(_this['$store'])['appVersion'] := '2.5.0-ENTERPRISE';
-      TJSObject(_this['$store'])['user'] := 'DevMaster 🏆';
+      TJSObject(_this['$store'])['appVersion'] := '3.0.0-TURBO';
+      TJSObject(_this['$store'])['user'] := 'Pascal Master 🚀';
       asm
         if (window.__BV_CORE__.i18n) {
           window.__BV_CORE__.i18n.addMessages('pt', {
             nav: {
               home: 'Início',
               about: 'Sobre',
-              pro: 'Pro Features 🛡️',
+              pro: 'Pro & Wasm ⚡',
               form: 'Formulário 📋',
               blaiseui: 'BlaiseUI Kit 🎨',
               charts: 'Gráficos 📊',
@@ -230,7 +231,7 @@ begin
               formState: 'Status do Formulário'
             },
             pro: {
-              title: '🛡️ BlaiseVue 2.5 Pro: Novas Fronteiras',
+              title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
               transitionTitle: '🎬 Lista com Animações FLIP (<transition-group>)',
               shuffle: 'Embaralhar 🔀',
               add: 'Adicionar Item ➕',
@@ -242,7 +243,7 @@ begin
             nav: {
               home: 'Home',
               about: 'About',
-              pro: 'Pro Features 🛡️',
+              pro: 'Pro & Wasm ⚡',
               form: 'Form 📋',
               blaiseui: 'BlaiseUI Kit 🎨',
               charts: 'Charts 📊',
@@ -267,7 +268,7 @@ begin
               formState: 'Form Status'
             },
             pro: {
-              title: '🛡️ BlaiseVue 2.5 Pro: New Frontiers',
+              title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
               transitionTitle: '🎬 FLIP List Transitions (<transition-group>)',
               shuffle: 'Shuffle 🔀',
               add: 'Add Item ➕',

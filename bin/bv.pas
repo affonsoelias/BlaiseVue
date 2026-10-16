@@ -1743,6 +1743,9 @@ begin
       WriteLn('  Look for rtl.js and place it in the root or SDK folder: ', GetSDKPath);
     end;
 
+    // BlaiseVue 3.0: Generates component documentation automatically into dist/docs/
+    CmdDoc(False);
+
     WriteLn('');
     WriteLn('=== Build completed successfully! ===');
     WriteLn('');
