@@ -12,7 +12,7 @@ unit BlaiseVue;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n;
+uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm;
 
 type
   { 
@@ -107,7 +107,17 @@ begin
   asm window.__BV_CORE__.rootData = d.FData; end;
   
   { Bridge for Pro Features (Global Store integration) }
-  asm if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__; end;
+  asm
+    if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__;
+    if (window.__BV_CORE__.theme && !d.FData.$theme) d.FData.$theme = window.__BV_CORE__.theme;
+    if (window.__BV_CORE__.wasm && !d.FData.$wasm) d.FData.$wasm = window.__BV_CORE__.wasm;
+    
+    // Check for SSG Pre-rendered content for instant zero-flicker Hydration
+    if (this.FRoot && (this.FRoot.hasAttribute('data-bv-ssg') || this.FRoot.querySelector('[data-bv-ssg]'))) {
+      console.log("[Hydration] SSG pre-rendered content detected on " + rootID + ". Engaging Reactive Hydration...");
+      this.FRoot.setAttribute('data-bv-hydrated', 'true');
+    }
+  end;
 
   asm
     // Initialize i18n configuration if passed in root options

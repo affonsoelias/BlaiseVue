@@ -21,12 +21,12 @@ implementation
 procedure InitDevTools;
 begin
   asm
-    console.log("%c BlaiseVue DevTools 2.0 ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v2.0-pro");
+    console.log("%c BlaiseVue DevTools 3.0 ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v3.0-enterprise");
 
     // Initialize global DevTools Hook for browser extensions and external inspectors
     if (!window.__BV_DEVTOOLS_HOOK__) {
       window.__BV_DEVTOOLS_HOOK__ = {
-        version: "2.0.0",
+        version: "3.0.0",
         listeners: {},
         events: [],
         snapshots: [],
@@ -84,7 +84,7 @@ begin
     p.innerHTML = `
        <div class="bv-dt-header">
          <span>BlaiseVue 🛡️</span>
-         <span class="bv-dt-tag">v2.0 DEV</span>
+         <span class="bv-dt-tag">v3.0 NEXT</span>
        </div>
        <div class="bv-dt-stat">
          <span>Reactivity:</span>

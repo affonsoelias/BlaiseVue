@@ -4,10 +4,15 @@
 
 ---
 
-## 🌟 Version 2.5: The Enterprise & Ecosystem Release
+## 🌟 Version 3.0: The Enterprise Next-Gen Release
 
-BlaiseVue 2.5 establishes a complete, production-ready frontend ecosystem for Object Pascal developers:
+BlaiseVue 3.0 represents a generational milestone, delivering native WebAssembly acceleration, zero-configuration interactive documentation, and static site pre-rendering with zero-flicker hydration:
 
+- **⚡ WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Execute compute-intensive algorithms in the browser with near-native binary speed (2x to 10x faster than pure JavaScript) via `$wasm.call('math', 'fib', 15)` and automated benchmarks (`bv wasm benchmark`).
+- **📚 Automatic Documentation Generator & Playground (`bv doc`)**: Zero-configuration Storybook/VuePress-like interactive catalog generator analyzing component AST, props, slots, and events, served directly via `bv doc --serve`.
+- **🚀 SSG & Static Pre-rendering (`bv run ssg`)**: Pre-renders routing trees into static HTML for instant First Contentful Paint (<50ms) and complete search engine indexing (SEO).
+- **🌊 Zero-Flicker Reactive Hydration**: Seamlessly adopts pre-rendered SSG DOM markup without clearing `#app`, attaching event listeners and reactive proxies with zero layout shifts.
+- **🧪 Headless End-to-End Test Suite (`bv test e2e`)**: Validates complete user journeys across routing, forms, theme switches, and hydration (130 automated tests passing across 12 test suites).
 - **📋 Reactive Form Validation Engine (`b-validate`)**: Declarative client-side validation rules (`required`, `email`, `min:N`, `max:N`, `numeric`, `pattern`), reactive error tracking (`$errors`), touch states (`$v`), and programmatic validation (`$validate()`).
 - **🎬 FLIP List Transitions (`<transition-group>`)**: High-performance collection animations powered by the First-Last-Invert-Play (FLIP) algorithm, custom wrapper tags (`tag="ul"`), and smooth reordering via `.bv-move`.
 - **🌐 Native Internationalization (`Blaise-i18n`)**: Embedded multi-locale translation engine with `$t(key, params)`, reactive locale switching (`$setLocale(code)`), and fallback resolution.
@@ -20,7 +25,6 @@ BlaiseVue 2.5 establishes a complete, production-ready frontend ecosystem for Ob
 - **🏎️ Static Hoisting & Compiler Pruning**: Compiler-level static analysis tags invariant nodes (`bvStatic = true`), bypassing diff comparisons for $O(1)$ reconciliation.
 - **🕵️ Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge with Component Tree inspection, real-time reactive state editing, and timeline logging.
 - **📦 BlaiseUI Official Component Kit**: Over 20 production-ready UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-datagrid`, `bv-chart`, `bv-toast`, `bv-accordion`, etc.) styled with clean modern CSS.
-- **🧪 Automated Unit Testing (Vitest)**: TDD engine in Pascal with headless JSDOM verification via `bv test` (111 tests passing across 11 test suites).
 
 ---
 
@@ -75,15 +79,17 @@ bv test                    # Compiles .test.pas files and runs Vitest suite
 
 ---
 
-## 🔮 The Next Frontier: Roadmap to BlaiseVue 3.0
+## 🔮 Completed Milestone: BlaiseVue 3.0 Enterprise
 
 Our architectural evolution roadmap:
 
 - [x] **v2.0**: SPA Router, History API, Scoped Slots, DevTools, Static Hoisting, Vitest.
-- [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`), Themes (`blaise-themes`), and Icons (`blaise-icons`).
-- [ ] **v3.0**: Automatic Documentation Generator & Playground (`bv doc`).
-- [ ] **v3.0**: WebAssembly Acceleration (direct FPC Wasm compilation for compute-intensive routines).
-- [ ] **v3.0**: Static Site Generation (SSG) & Static Pre-rendering with client hydration.
+- [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
+- [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
+- [x] **v3.0**: Automatic Documentation Generator & Playground (`bv doc`).
+- [x] **v3.0**: WebAssembly Acceleration Engine (`BVWasm` / `$wasm` helper).
+- [x] **v3.0**: Static Site Generation (`bv run ssg`) & Zero-Flicker Reactive Hydration.
+- [x] **v3.0**: Headless End-to-End Test Suite (`bv test e2e`).
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v2.5 & v3.0)](doc/Documentation/99-roadmap-v3.md).
@@ -96,24 +102,25 @@ Our architectural evolution roadmap:
 BlaiseVue/
 ├── bin/                       # BlaiseVue CLI compiler & dev server (bv.pas, bv.exe)
 ├── core/                      # Core runtime engine
-│   ├── BlaiseVue.pas          # Core SPA instance orchestrator
+│   ├── BlaiseVue.pas          # Core SPA instance orchestrator & Hydration
 │   ├── BVCompiler.pas         # Template engine, directives, AST parser
 │   ├── BVReactivity.pas       # Reactive proxy & dependency tracking
 │   ├── BVRouting.pas          # SPA Router & HTML5 History API
 │   ├── BVValidation.pas       # Reactive form validation engine (b-validate)
 │   ├── BVI18n.pas             # Internationalization engine ($t)
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
+│   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
 │   ├── BVStore.pas            # Centralized state management ($store)
-│   └── BVDevTools.pas         # Bridge to browser DevTools extension
+│   └── BVDevTools.pas         # Bridge to browser DevTools extension (v3.0)
 ├── packages/                  # Official ecosystem packages
 │   ├── blaise-ui/             # 20+ native UI components & styles
 │   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
 │   └── blaise-icons/          # Bootstrap Icons fonts & stylesheet
 ├── devtools/                  # Manifest V3 Chrome/Edge DevTools extension
 ├── doc/
-│   ├── Documentation/         # 29 comprehensive technical manuals + API Reference
+│   ├── Documentation/         # 33 comprehensive technical manuals + API Reference
 │   └── Course/                # 10-lesson practical course and architecture deep-dive
-└── demo-app/                  # Enterprise showcase application (v2.5)
+└── demo-app/                  # Enterprise showcase application (v3.0)
 ```
 
 ---

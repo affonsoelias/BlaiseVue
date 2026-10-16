@@ -370,6 +370,9 @@ begin
     if (window.__BV_CORE__.theme) {
        pRef['$theme'] = window.__BV_CORE__.theme;
     }
+    if (window.__BV_CORE__.wasm) {
+       pRef['$wasm'] = window.__BV_CORE__.wasm;
+    }
     if (window.__BV_CORE__.validation) {
        window.__BV_CORE__.validation.initDataValidation(pRef);
     }

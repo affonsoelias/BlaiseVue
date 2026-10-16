@@ -60,6 +60,12 @@ BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 28. [28. Themes & Bootswatch Integration ($theme)](28-themes.md)
 29. [29. Blaise Icons & Bootstrap Icons (bv-icon)](29-icons.md)
 
+### ⚡ BlaiseVue 3.0 Next-Gen Features
+30. [30. WebAssembly Acceleration Engine (BVWasm)](30-wasm-acceleration.md)
+31. [31. Automatic Documentation Generator & Playground (bv doc)](31-doc-generator.md)
+32. [32. SSG & Static Pre-rendering with Reactive Hydration](32-ssg-and-hydration.md)
+33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md)
+
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
 - [Technical Roadmap (v2.5 & v3.0)](99-roadmap-v3.md)

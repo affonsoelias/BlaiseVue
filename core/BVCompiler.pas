@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
@@ -56,6 +56,9 @@ initialization
          if (window.__BV_CORE__.theme && !Data.FData['$theme']) {
             Data.FData['$theme'] = window.__BV_CORE__.theme;
          }
+         if (window.__BV_CORE__.wasm && !Data.FData['$wasm']) {
+            Data.FData['$wasm'] = window.__BV_CORE__.wasm;
+         }
       }
 
       if (Data && !Data.Evaluate) {
@@ -79,7 +82,7 @@ initialization
         };
       }
 
-      console.log("[Compiler] BLAISE v2.0 ENGAGED on <" + Root.tagName + ">");
+      console.log("[Compiler] BLAISE v3.0 ENGAGED on <" + Root.tagName + ">");
       bv.traverse(Root, Data, Methods);
       bv.trigger(Data.FData, ""); // Initial trigger for all expressions
     };
@@ -438,6 +441,9 @@ initialization
                 }
                 if (window.__BV_CORE__.theme && !d.$theme) {
                    d.$theme = window.__BV_CORE__.theme;
+                }
+                if (window.__BV_CORE__.wasm && !d.$wasm) {
+                   d.$wasm = window.__BV_CORE__.wasm;
                 }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
@@ -806,6 +812,9 @@ initialization
             }
             if (window.__BV_CORE__.theme) {
                pRef['$theme'] = window.__BV_CORE__.theme;
+            }
+            if (window.__BV_CORE__.wasm) {
+               pRef['$wasm'] = window.__BV_CORE__.wasm;
             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);
