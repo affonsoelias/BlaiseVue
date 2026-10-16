@@ -177,7 +177,6 @@ begin
   data['mensagem'] := 'BlaiseVue SPA v3.0 TURBO';
 
   methods := TJSObject.new;
-  m := methods;
   m['onThemeSelect'] := procedure(_this: TJSObject; e: JSValue)
 
     var
