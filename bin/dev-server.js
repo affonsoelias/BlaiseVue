@@ -102,12 +102,27 @@ const server = http.createServer((req, res) => {
   }
 });
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`\x1b[33m⚡ BlaiseVue Dev Server is already running on port ${PORT} (http://localhost:${PORT}/)\x1b[0m`);
+    process.exit(0);
+  } else {
+    console.error(err);
+    process.exit(1);
+  }
+});
+
 server.listen(PORT, () => {
   console.log(`\x1b[32m🛡️  BlaiseVue 2.0 Dev Server running at http://localhost:${PORT}/\x1b[0m`);
 });
 
 // 2. WebSocket Server for HMR
 const wss = new WebSocketServer({ port: WS_PORT });
+wss.on('error', (err) => {
+  if (err.code !== 'EADDRINUSE') {
+    console.error(`[HMR WebSocket Error]`, err);
+  }
+});
 console.log(`\x1b[36m⚡ HMR WebSocket service listening on port ${WS_PORT}\x1b[0m`);
 
 function broadcast(msg) {
