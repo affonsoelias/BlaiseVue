@@ -79,20 +79,22 @@ bv test                    # Compiles .test.pas files and runs Vitest suite
 
 ---
 
-## 🔮 Completed Milestone: BlaiseVue 3.0 Enterprise
+## 🔮 Architectural Milestones & Roadmap
 
 Our architectural evolution roadmap:
 
 - [x] **v2.0**: SPA Router, History API, Scoped Slots, DevTools, Static Hoisting, Vitest.
 - [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
 - [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
-- [x] **v3.0**: Automatic Documentation Generator & Playground (`bv doc`).
-- [x] **v3.0**: WebAssembly Acceleration Engine (`BVWasm` / `$wasm` helper).
-- [x] **v3.0**: Static Site Generation (`bv run ssg`) & Zero-Flicker Reactive Hydration.
-- [x] **v3.0**: Headless End-to-End Test Suite (`bv test e2e`).
+- [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
+- [ ] **v3.5 Universal Pascal Platform (In Progress)**:
+  - 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets.
+  - 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init/run`).
+  - 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI4Delphi & Lazarus IDE (`bv desktop`).
+  - ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v2.5 & v3.0)](doc/Documentation/99-roadmap-v3.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md).
 
 ---
 

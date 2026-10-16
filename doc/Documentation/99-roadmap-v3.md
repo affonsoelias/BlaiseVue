@@ -133,10 +133,74 @@ Below are the new strategic pillars designed to consolidate BlaiseVue as the mos
 
 ---
 
-## 📅 Schedule Overview
+## 🔮 The Next Frontier: BlaiseVue 3.5 — The Universal Pascal Platform
+
+With the core web, reactive, and WebAssembly engines completed in **v3.0**, **BlaiseVue 3.5** expands the framework to a **universal multiplatform platform** (Web + Desktop + Mobile + Full-Stack Pascal), unifying frontend, mobile packaging, and backend microservices under the Object Pascal umbrella.
 
 ```
-[ v2.0 - Completed ✅ ]
+                                  BLAISEVUE 3.5
+                                        │
+        ┌───────────────┬───────────────┼───────────────┐
+        ▼               ▼               ▼               ▼
+    [Desktop]       [Mobile]       [mORMot 2]      [VS Code DX]
+ (WebUI4Delphi)   (Capacitor)     (Full-Stack)     (LSP & VSIX)
+```
+
+---
+
+### 🖥️ Pillar 1: Real Multiplatform Desktop (WebUI4Delphi + Lazarus IDE)
+**Goal**: Build ultra-lightweight, native desktop applications (<10 MB, 40 MB RAM) running identically on **Windows, Linux, and macOS** without Electron bloat and without legacy GTK2 dependencies.
+- **Why WebUI4Delphi over WebView2/GTK2**:
+  - WebUI4Delphi utilizes modern installed browsers (Chrome, Edge, Firefox, Brave) in clean native app mode (`--app`).
+  - Completely eliminates GTK2 dependency on modern Linux distributions (Ubuntu 22.04/24.04, Debian 12, Fedora).
+  - True cross-platform: Windows (Win32), Linux (X11/Wayland), macOS (Cocoa).
+- **Lazarus IDE Integration**: Official template `.lpi`/`.lpr` ready for development and native debugging (`F9`).
+- **Single-Binary Packaging (`.res`)**: Automatic packaging of `dist/` into Windows/Linux resources for a zero-dependency standalone `.exe`.
+- **CLI Commands**:
+  - `bv desktop init --webui`: Scaffolds the Lazarus + WebUI4Delphi desktop bridge.
+  - `bv desktop run`: Compiles the frontend and launches the native desktop window.
+
+---
+
+### 📱 Pillar 2: Straightforward Mobile Hybrid (Capacitor Integration)
+**Goal**: Package BlaiseVue applications as native **Android (.apk / .aab)** and iOS apps without the Rust/NDK toolchain complexity of Tauri or the obsolescence of Cordova.
+- **Why Capacitor over Cordova and Tauri Mobile**:
+  - Cordova is legacy with abandoned plugins.
+  - Tauri Mobile requires complex Rust, Android NDK, and cross-compilation toolchains on Windows.
+  - Capacitor uses standard Android Studio / Xcode, wrapping `dist/` inside a modern native WebView with zero Rust setup.
+- **Native Hardware Access**: Ready-to-use plugins and helpers for Camera / QR scanner, Geolocation (GPS), Biometrics (Fingerprint/FaceID), Push Notifications, and SQLite offline storage.
+- **CLI Commands**:
+  - `bv mobile init`: Configures Capacitor with BlaiseVue presets.
+  - `bv mobile run android`: Syncs `dist/` and launches Android Studio ready to deploy.
+
+---
+
+### ⚙️ Pillar 3: Full-Stack Pascal with mORMot 2 (Ultra-High-Performance Backend)
+**Goal**: Combine the fastest frontend Pascal framework (BlaiseVue) with the fastest backend Pascal engine in existence (Synopse mORMot 2 by Arnaud Bouchez).
+- **Official Template `fullstack-mormot`**:
+  - Pre-configured backend server in Free Pascal / Delphi with SQLite/PostgreSQL ORM, JWT authentication, and high-throughput REST endpoints.
+  - Native real-time WebSockets for bidirectional communication (push notifications, live dashboard metrics).
+- **Reactive Client Service (`$api` & `$ws`)**:
+  - Injected `$api` and `$ws` helpers in BlaiseVue component scopes with automatic header injection, bearer token handling, and reactive data synchronization.
+- **Shared Pascal Contracts**: Share data structures and record definitions directly between the backend and frontend.
+
+---
+
+### 🛠️ Pillar 4: Professional Developer Experience (VS Code Extension VSIX)
+**Goal**: Provide a frictionless developer experience comparable to Vue Volar / React JSX.
+- **Intelligent Directive & Component Autocomplete**:
+  - Typing `b-` suggests directives (`b-model`, `b-for`, `b-if`, `b-validate`).
+  - Typing `<bv-` suggests all 25+ BlaiseUI components (`<bv-modal>`, `<bv-btn>`, `<bv-card>`, `<bv-icon>`, `<bv-theme-toggle>`) with documented attributes and slots.
+- **Comprehensive Snippet Suite**:
+  - `bv-comp` (SFC scaffolding), `bv-form` (validated form), `bv-wasm` (Wasm benchmark call), `bv-modal`, `bv-chart`.
+- **Packaged `.vsix`**: Standalone 1-click installable package for VS Code and Cursor.
+
+---
+
+## 📅 Schedule & Implementation Roadmap
+
+```
+[ v2.0 - Completed ✅ ] ──► SPA Router, Scoped Slots, DevTools, Vitest
        │
        ▼
 [ v2.5 - Completed ✅ ] ──► Form Validation Engine (b-validate)
@@ -152,8 +216,16 @@ Below are the new strategic pillars designed to consolidate BlaiseVue as the mos
                         ──► SSG & Static Pre-rendering (bv run ssg)
                         ──► Zero-Flicker Reactive Hydration
                         ──► Automated E2E Suite (bv test e2e)
+       │
+       ▼
+[ v3.5 - The Universal Pascal Platform 🚀 ]
+  ├── Phase 1: Tooling & DX ──► VS Code Extension (.vsix) + Snippets + BlaiseUI Autocomplete
+  ├── Phase 2: Mobile ────────► Capacitor Integration (bv mobile init/run)
+  ├── Phase 3: Desktop ───────► WebUI4Delphi + Lazarus IDE Scaffolding (bv desktop)
+  └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (fullstack-mormot)
 ```
 
 ---
 
 🛡️ **"Architecture is the art of making the impossible inevitable."** ✨🏆🚀
+
