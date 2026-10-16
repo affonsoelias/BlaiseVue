@@ -23,11 +23,15 @@ bv serve
 
 ---
 
-## 📦 Component Magic
-To manage libraries and setups:
+## 📦 Package Magic & Themes
+To manage libraries and switch visual themes:
 ```bash
-bv lib list    # Show all installed libraries
-bv s <name>    # Run the setup script for a library
+bv lib list             # Show all installed libraries
+bv lib install themes   # Install the official Bootswatch themes suite
+bv lib install icons    # Install the official Bootstrap Icons suite
+bv theme list           # List installed themes
+bv theme use darkly     # Set the active theme to darkly in index.html
+bv s <name>             # Run the setup script for a library
 ```
 
 ---

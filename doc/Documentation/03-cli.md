@@ -67,11 +67,19 @@ Safely removes a test file and any corresponding compiled artifacts.
 
 ---
 
-## 📦 Library Management (`/lib`)
+## 📦 Library & Package Management (`/lib`)
 
-BlaiseVue automatically manages libraries placed in the `lib/` directory:
+BlaiseVue includes an integrated package manager and library system:
+- **Official Package Aliases (`bv lib install <name>`)**:
+  - `bv lib install themes`: Installs the 9 official Bootswatch themes and theme switcher components into `lib/themes/`.
+  - `bv lib install icons`: Installs the Bootstrap Icons suite (styles + woff2 fonts) into `lib/icons/`.
+  - `bv lib install ui`: Installs the official BlaiseUI component suite into `lib/blaise-ui/`.
+  - `bv lib install <url>`: Downloads, extracts, and configures third-party libraries from any `.zip` URL.
+- **Theme Switcher CLI (`bv theme`)**:
+  - `bv theme list`: Lists all installed Bootswatch themes in `lib/themes/`.
+  - `bv theme use <name>`: Updates the active project stylesheet link in `public/index.html` (e.g. `bv theme use darkly`).
 - **Auto-Autoload**: Any `.bv` files within `lib/` (or subdirectories) are automatically registered as global components.
-- **Auto-Asset Injection**: `.css` and `.js` files found in `lib/` are automatically injected into the `<head>` of `dist/index.html`.
+- **Auto-Asset Injection**: Non-theme `.css` and `.js` files found in `lib/` are automatically injected into `dist/index.html`.
 - **Interactive Library Setup (`bv s <name>`)**: Triggers an interactive installation and configuration menu for modular libraries following the **[setup.pas standard](18-external-libraries.md)**.
 
 ---

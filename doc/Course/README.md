@@ -34,7 +34,7 @@ Welcome to the official BlaiseVue course! Here you will learn how to build ultra
 
 ---
 
-### 🚀 BlaiseVue 2.0 Advanced Engineering:
+### 🚀 BlaiseVue 2.0 & 2.6 Advanced Engineering:
 Explore the advanced architectural modules in the **[Official Technical Documentation](../Documentation/README.md)**:
 - **Module 13**: [Scoped Slots & Advanced Composition](../Documentation/13-advanced-slots.md)
 - **Module 14**: [HTML5 History Mode & Nested Sub-Routes](../Documentation/09-router.md)
@@ -42,6 +42,11 @@ Explore the advanced architectural modules in the **[Official Technical Document
 - **Module 16**: [Static Hoisting & Compiler Optimization](../Documentation/22-static-hoisting.md)
 - **Module 17**: [Hot Module Replacement (HMR) & DevTools Extension](../Documentation/23-hmr-devtools.md)
 - **Module 18**: [BlaiseUI (Official Component Kit)](../Documentation/24-blaise-ui.md)
+- **Module 19**: [Form Validation Engine (b-validate)](../Documentation/25-form-validation.md)
+- **Module 20**: [List Transitions (<transition-group>)](../Documentation/26-transition-group.md)
+- **Module 21**: [Integrated Internationalization (Blaise-i18n)](../Documentation/27-i18n.md)
+- **Module 22**: [Themes & Bootswatch Integration ($theme)](../Documentation/28-themes.md)
+- **Module 23**: [Blaise Icons & Bootstrap Icons (bv-icon)](../Documentation/29-icons.md)
 
 ---
 

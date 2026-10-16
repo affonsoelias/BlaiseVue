@@ -220,4 +220,36 @@
   .badge-gray { background: #95a5a6; }
   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: 'Consolas', monospace; font-size: 13px; }
   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+
+  /* Dark Mode & Bootswatch Integration */
+  html[data-bs-theme="dark"] body, body.theme-dark {
+    background: var(--bs-body-bg, #1a1a1a);
+    color: var(--bs-body-color, #e0e0e0);
+  }
+  html[data-bs-theme="dark"] .section, body.theme-dark .section {
+    background: var(--bs-card-bg, #22252a);
+    color: var(--bs-body-color, #e0e0e0);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {
+    background: #2b3035;
+    color: #fff;
+    border-color: #444;
+  }
+  html[data-bs-theme="dark"] table, body.theme-dark table {
+    color: #e0e0e0;
+  }
+  html[data-bs-theme="dark"] th, body.theme-dark th {
+    background: #2b3035;
+    border-color: #3e444a;
+  }
+  html[data-bs-theme="dark"] td, body.theme-dark td {
+    border-color: #3e444a;
+  }
+  html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {
+    background: #181b1e;
+    color: #42b883;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
 </style>
