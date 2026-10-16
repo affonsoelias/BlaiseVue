@@ -91,6 +91,12 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(content);
   } else {
+    // If a source map file was requested by browser devtools but is not present, return empty map instead of 404
+    if (filePath.endsWith('.map')) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ version: 3, sources: [], mappings: "" }));
+      return;
+    }
     res.writeHead(404);
     res.end('Not Found');
   }
