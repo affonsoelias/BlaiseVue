@@ -1122,6 +1122,7 @@ begin
 
   // Methods
   Result := Result + '  methods := TJSObject.new;' + #10 +
+                     '  m := methods;' + #10 +
     GenerateMethodsCode(Parsed.MethodsCode) + #10;
 
   // Options (Lifecycle, Watch & Computed)

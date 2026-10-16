@@ -4440,6 +4440,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v2.5 ENTERPRISE";
     methods = new Object();
+    m = methods;
     m["onThemeSelect"] = function (_this, e) {
       var sel = "";
       sel = "" + e["target"]["value"];
