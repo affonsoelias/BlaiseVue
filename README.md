@@ -4,72 +4,117 @@
 
 ---
 
-## 🌟 Version 2.0: The Enterprise Release
+## 🌟 Version 2.5: The Enterprise & Ecosystem Release
 
-BlaiseVue 2.0 represents a monumental leap forward, establishing a complete enterprise frontend ecosystem:
+BlaiseVue 2.5 establishes a complete, production-ready frontend ecosystem for Object Pascal developers:
 
+- **📋 Reactive Form Validation Engine (`b-validate`)**: Declarative client-side validation rules (`required`, `email`, `min:N`, `max:N`, `numeric`, `pattern`), reactive error tracking (`$errors`), touch states (`$v`), and programmatic validation (`$validate()`).
+- **🎬 FLIP List Transitions (`<transition-group>`)**: High-performance collection animations powered by the First-Last-Invert-Play (FLIP) algorithm, custom wrapper tags (`tag="ul"`), and smooth reordering via `.bv-move`.
+- **🌐 Native Internationalization (`Blaise-i18n`)**: Embedded multi-locale translation engine with `$t(key, params)`, reactive locale switching (`$setLocale(code)`), and fallback resolution.
+- **🎨 Official Themes Package (`packages/blaise-themes`)**: 9 integrated Bootswatch themes (`flatly`, `darkly`, `cosmo`, `cyborg`, `lux`, `pulse`, `solar`, `vapor`, `zephyr`), dynamic stylesheet swapping, dark mode toggle (`data-bs-theme`), and ready-to-use `<bv-theme-toggle>` and `<bv-theme-select>` components.
+- **🔤 Official Icons Package (`packages/blaise-icons`)**: Full integration with 2,000+ Bootstrap Icons via `<bv-icon name="..." size="..." color="...">` with zero runtime bloat.
 - **⚡ Hot Module Replacement (HMR)**: Instant component recompilation and in-place DOM patching via WebSockets (`:8081`) while preserving active reactive state (`this['State']`).
-- **🛣️ Advanced SPA Routing**: Clean URLs via **HTML5 History API**, recursive **Nested Routes** with `<router-view>`, dynamic code-splitting (`import()`), and **Navigation Guards** (`beforeEach`, `beforeEnter`, `afterEach`).
-- **🧩 Scoped Slots**: Seamless two-way data passing from child components back to parent templates (`#name="slotProps"`, `b-slot`, `slot-scope`).
-- **🚀 Teleport & Suspense**: Mount elements into remote DOM targets (`<teleport to="body">`) and orchestrate asynchronous loading dependencies (`<suspense>`).
+- **🛣️ Advanced SPA Routing**: Clean URLs via **HTML5 History API**, recursive **Nested Routes** with `<router-view>`, dynamic route parameters (`:id`), and **Navigation Guards** (`beforeEach`, `beforeEnter`, `afterEach`).
+- **🧩 Scoped Slots & Templates**: Seamless two-way data passing from child components back to parent templates (`#name="slotProps"`, `b-slot`, `slot-scope`).
+- **🚀 Teleport & Suspense**: Mount elements into remote DOM targets (`<teleport to="body">`) and orchestrate asynchronous dependencies (`<suspense>`).
 - **🏎️ Static Hoisting & Compiler Pruning**: Compiler-level static analysis tags invariant nodes (`bvStatic = true`), bypassing diff comparisons for $O(1)$ reconciliation.
 - **🕵️ Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge with Component Tree inspection, real-time reactive state editing, and timeline logging.
-- **🎨 BlaiseUI Official Component Kit**: Production-ready, native UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-toast`, `bv-datagrid`) with pure modern CSS variables.
-- **🏗️ Native Resource Scaffolding**: CLI templates embedded at compile-time via `{$R templates.res}`, providing a portable, zero-dependency executable (`bv.exe`).
-- **🧪 Automated Unit Testing (Vitest)**: TDD engine in Pascal with headless JSDOM verification via `bv test`.
+- **📦 BlaiseUI Official Component Kit**: Over 20 production-ready UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-datagrid`, `bv-chart`, `bv-toast`, `bv-accordion`, etc.) styled with clean modern CSS.
+- **🧪 Automated Unit Testing (Vitest)**: TDD engine in Pascal with headless JSDOM verification via `bv test` (111 tests passing across 11 test suites).
 
 ---
 
-## 🔮 The Next Frontier: Roadmap to BlaiseVue 2.5 & 3.0
+## 📦 Official Packages Ecosystem
 
-Our architectural vision continues to expand. The next cycle focuses on enterprise tooling, form engineering, and high-performance computing:
+BlaiseVue features a modular package architecture located in `/packages`:
 
-1. **📋 Typed Form Engine (`b-validate`)**: Declarative validations with reactive `$errors` tracking.
-2. **🎬 List Transitions (`<transition-group>`)**: Smooth collection animations powered by the FLIP algorithm.
-3. **🌐 Native i18n (Blaise-i18n)**: Multi-locale support with `$t()` and dynamic language switching.
-4. **📚 Automatic Documentation (`bv doc`)**: Component catalog and interactive playground generator.
-5. **⚡ WebAssembly Acceleration**: Direct FPC Wasm compilation for compute-intensive routines.
-6. **🚀 SSG & Static Pre-rendering**: Static HTML pre-rendering with client hydration for instant FCP and SEO.
+| Package | Description | Key Components / Features |
+| :--- | :--- | :--- |
+| **`blaise-ui`** | Native Bootstrap-inspired component kit | `<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-datagrid>`, `<bv-chart>`, `<bv-toast>`, `<bv-navbar>`, `<bv-tabs>` |
+| **`blaise-themes`** | 9 Bootswatch themes + reactive theme management | Flatly, Darkly, Cosmo, Cyborg, Lux, Pulse, Solar, Vapor, Zephyr, `<bv-theme-toggle>`, `<bv-theme-select>`, `$theme` |
+| **`blaise-icons`** | Bootstrap Icons library (fonts + CSS) | `<bv-icon name="heart-fill" size="24px" color="red">`, 2,000+ vector icons |
 
-> [!TIP]
-> **Detailed Engineering Plan**: For a deep dive into the technical architecture of upcoming features, check out our [Technical Roadmap (v2.5 & v3.0)](doc/Documentation/99-roadmap-v3.md).
+Install packages directly into your project via the CLI:
+```bash
+bv lib install themes   # Installs Bootswatch themes and switcher components
+bv lib install icons    # Installs Bootstrap Icons fonts and stylesheets
+bv lib install ui       # Installs the complete BlaiseUI component suite
+```
 
 ---
 
 ## 🛠️ CLI Quick Reference (`bv.exe`)
 
+The BlaiseVue CLI is a single, zero-dependency native executable compiled with Free Pascal.
+
 ```bash
-# Start development server with instant HMR and WebSocket
-bv serve
+# === Development & Server ===
+bv serve                   # Starts development server with HMR on http://localhost:8080
+bv run dev                 # Builds project in development mode with cache-busting
+bv run build               # Builds optimized production bundle in dist/
+bv run preview             # Local HTTP preview of production build (port 5000)
+bv clean                   # Cleans generated files (generated/ and dist/)
 
-# Run express development build with cache busting
-bv run dev
+# === Scaffolding & Generators ===
+bv create <app-name>       # Scaffolds a complete new BlaiseVue project
+bv new c <Name>            # Scaffolds a new component (.bv) in src/components/
+bv new v <Name>            # Scaffolds a new route view (.bv) in src/views/
+bv new t <Name>            # Scaffolds a new Pascal test file (.test.pas) in tests/
+bv remove <c|v|t> <Name>   # Safely deletes a component, view, or test
+bv list <c|v|t|lib>        # Lists project components, views, tests, or installed libs
 
-# Run automated unit test suite with Vitest
-bv test
+# === Package & Theme Management ===
+bv lib install <pkg|url>   # Installs official package (themes, icons, ui) or from URL
+bv lib remove <name>       # Removes an installed component or package from lib/
+bv theme list              # Lists all available installed themes
+bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
 
-# Scaffold a new unit test in tests/
-bv new t MyComponent
-
-# Build optimized production bundle
-bv run build
-
-# Clean build artifacts (dist/ and generated/)
-bv clean
+# === Testing ===
+bv test                    # Compiles .test.pas files and runs Vitest suite
 ```
+
+---
+
+## 🔮 The Next Frontier: Roadmap to BlaiseVue 3.0
+
+Our architectural evolution roadmap:
+
+- [x] **v2.0**: SPA Router, History API, Scoped Slots, DevTools, Static Hoisting, Vitest.
+- [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`), Themes (`blaise-themes`), and Icons (`blaise-icons`).
+- [ ] **v3.0**: Automatic Documentation Generator & Playground (`bv doc`).
+- [ ] **v3.0**: WebAssembly Acceleration (direct FPC Wasm compilation for compute-intensive routines).
+- [ ] **v3.0**: Static Site Generation (SSG) & Static Pre-rendering with client hydration.
+
+> [!TIP]
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v2.5 & v3.0)](doc/Documentation/99-roadmap-v3.md).
 
 ---
 
 ## 📂 Project Structure
 
-- **`/bin`**: The BlaiseVue CLI (`bv.pas`). The native compiler and orchestrator.
-- **`/core`**: Framework runtime internals (Reactivity Proxy, Compiler, Directives, Store, Router).
-- **`/packages/blaise-ui`**: Official native component library and stylesheets.
-- **`/devtools`**: Manifest V3 browser extension for Chrome and Edge.
-- **`/doc`**:
-  - `Documentation/`: Comprehensive technical manuals (24 chapters + API Reference).
-  - `Course/`: Step-by-step guides, including an **Internals & Architecture** course for contributors.
-- **`/demo-app`**: Showcase application featuring all 2.0 features, router views, and UI kits.
+```text
+BlaiseVue/
+├── bin/                       # BlaiseVue CLI compiler & dev server (bv.pas, bv.exe)
+├── core/                      # Core runtime engine
+│   ├── BlaiseVue.pas          # Core SPA instance orchestrator
+│   ├── BVCompiler.pas         # Template engine, directives, AST parser
+│   ├── BVReactivity.pas       # Reactive proxy & dependency tracking
+│   ├── BVRouting.pas          # SPA Router & HTML5 History API
+│   ├── BVValidation.pas       # Reactive form validation engine (b-validate)
+│   ├── BVI18n.pas             # Internationalization engine ($t)
+│   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
+│   ├── BVStore.pas            # Centralized state management ($store)
+│   └── BVDevTools.pas         # Bridge to browser DevTools extension
+├── packages/                  # Official ecosystem packages
+│   ├── blaise-ui/             # 20+ native UI components & styles
+│   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
+│   └── blaise-icons/          # Bootstrap Icons fonts & stylesheet
+├── devtools/                  # Manifest V3 Chrome/Edge DevTools extension
+├── doc/
+│   ├── Documentation/         # 29 comprehensive technical manuals + API Reference
+│   └── Course/                # 10-lesson practical course and architecture deep-dive
+└── demo-app/                  # Enterprise showcase application (v2.5)
+```
 
 ---
 
@@ -79,22 +124,22 @@ bv clean
 Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed:
 ```bash
 cd bin
-fpc bv.pas
-# Move bv or bv.exe to root or add bin/ to your PATH
+fpc -O2 bv.pas
+# Move bv or bv.exe to your PATH or use directly from bin/
 ```
 
 ### 2. Set Up Pas2JS (Multi-platform)
-Download the [Pas2JS 3.2.0](https://getpas2js.freepascal.org) archive for your OS (Windows, Linux, or macOS). Extract it into a `pas2js/` folder at the project root following this naming convention:
+Download the [Pas2JS 3.2.0](https://getpas2js.freepascal.org) archive for your OS (Windows, Linux, or macOS) and extract it into a `pas2js/` folder at the repository root:
 - `/pas2js/pas2js-win64-x86_64-3.2.0/`
 - `/pas2js/pas2js-linux-x86_64-3.2.0/`
 - `/pas2js/pas2js-darwin-x86_64-3.2.0/`
 
-The CLI automatically detects your OS and uses the correct binary path!
+The CLI automatically detects your platform and invokes the matching compiler!
 
 ### 3. Launch the Demo App
 ```bash
 cd demo-app
-..\bin\bv serve
+..\bin\bv.exe serve
 # Open http://localhost:8080 in your browser
 ```
 
@@ -102,11 +147,11 @@ cd demo-app
 
 ## ⚖️ Licensing
 
-BlaiseVue is open-source and follows the **Lazarus / Free Pascal** licensing model:
+BlaiseVue is open-source and follows the standard **Lazarus / Free Pascal** licensing model:
 - **The BlaiseCLI tool (`bin/`):** Licensed under the **GNU GPL v2**.
 - **The BlaiseVue Core (`core/`):** Licensed under the **Modified GNU LGPL v2.1** with a **Static Linking Exception**.
 
-This allows you to create **commercial and proprietary applications** without having to open-source your own code, while maintaining the open-source nature of the framework itself. See the [LICENSE](LICENSE) file for more details.
+This allows developers to build **commercial and proprietary applications** without having to open-source their proprietary code, while ensuring the framework runtime remains open and accessible to all. See the [LICENSE](LICENSE) file for details.
 
 ---
 
