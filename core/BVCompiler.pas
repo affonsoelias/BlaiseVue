@@ -94,11 +94,13 @@ initialization
     bv.unmount = function(el) {
        if (!el) return;
        if (el['bvUnmount']) el['bvUnmount']();
-       let children = el.querySelectorAll('*');
-       for (let i = 0; i < children.length; i++) {
-          if (children[i]['bvUnmount']) children[i]['bvUnmount']();
+       if (el.nodeType === 1 && el.querySelectorAll) {
+          let children = el.querySelectorAll('*');
+          for (let i = 0; i < children.length; i++) {
+             if (children[i]['bvUnmount']) children[i]['bvUnmount']();
+          }
        }
-       el.remove();
+       if (el.remove) el.remove();
     };
 
     // Prevent redundant processing on managed nodes

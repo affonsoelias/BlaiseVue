@@ -1,41 +1,41 @@
 # 20. Extra-Official Libraries & BlaiseUI Evolution
 
-Nas versões iniciais do BlaiseVue, foram desenvolvidas duas bibliotecas auxiliares na pasta `lib/` para demonstrar o ecossistema de componentes externos: `bootstrap-bv` (wrapper do Bootstrap 5) e `chart-bv` (wrapper do Chart.js).
+In early versions of BlaiseVue, two auxiliary libraries were developed in the `lib/` directory to showcase external component integration: `bootstrap-bv` (Bootstrap 5 wrapper) and `chart-bv` (Chart.js wrapper).
 
-Com a evolução para o **BlaiseVue 2.0**, esses componentes foram consolidados e unificados sob a biblioteca oficial **[BlaiseUI](24-blaise-ui.md)**, eliminando redundâncias de prefixos e a dependência pesada de frameworks CSS externos.
+With the release of **BlaiseVue 2.0**, these libraries were consolidated into the official, native **[BlaiseUI](24-blaise-ui.md)** package, eliminating prefix ambiguity and external heavyweight CSS dependencies.
 
 ---
 
-## 🏛️ A Evolução para o BlaiseUI Unificado
+## 🏛️ Evolution to Unified BlaiseUI
 
-| Biblioteca Antiga | Nova Estrutura Unificada | Motivo da Migração |
+| Legacy Library | Unified Architecture | Motivation for Migration |
 |---|---|---|
-| `bootstrap-bv/` | **`packages/blaise-ui/`** | Eliminação do `bootstrap.css` (~230KB) em favor de CSS leve nativo com variáveis (`blaise-ui.css`). |
-| `chart-bv/` | **`packages/blaise-ui/`** | Inclusão do `<bv-chart>` e wrappers diretamente no kit oficial de componentes. |
-| Prefixos `b-*` e `c-*` | **Prefixo Padronizado `bv-*`** | Fim da ambiguidade entre componentes (`BBtn` vs `BVBtn`, `BToast` vs `BVToast`). |
+| `bootstrap-bv/` | **`packages/blaise-ui/`** | Removal of `bootstrap.css` (~230KB) in favor of lightweight native CSS variables (`blaise-ui.css`). |
+| `chart-bv/` | **`packages/blaise-ui/`** | Integrated `<bv-chart>` and specialized chart wrappers directly into the official component kit. |
+| Mixed `b-*` and `c-*` Prefixes | **Standardized `bv-*` Prefix** | Resolved naming collisions between components (`BBtn` vs `BVBtn`, `BToast` vs `BVToast`). |
 
 ---
 
-## 📦 Como Criar Suas Próprias Bibliotecas em `/lib`
+## 📦 Creating Custom Libraries in `/lib`
 
-O ecossistema do BlaiseVue continua oferecendo suporte completo a bibliotecas externas e módulos de terceiros colocados na pasta `lib/`.
+The BlaiseVue ecosystem provides full native support for modular third-party libraries and local packages placed in the `lib/` directory.
 
-Qualquer pasta dentro de `lib/` desfruta dos seguintes recursos automáticos do CLI (`bv.exe`):
-1. **Auto-Registro de Componentes**: Qualquer arquivo `.bv` dentro de `lib/<sua-lib>/` é transpilado e registrado globalmente na aplicação.
-2. **Auto-Injeção de CSS**: Arquivos `.css` presentes em `lib/<sua-lib>/` são copiados para `dist/css/lib/` e injetados via `<link>` no `index.html`.
-3. **Auto-Injeção de Scripts JS**: Arquivos `.js` presentes em `lib/<sua-lib>/` (como drivers de gráficos ou utilitários) são copiados para `dist/js/lib/` e incluídos via `<script>` antes da inicialização do app.
-4. **Lifecycle Setup (`setup.pas`)**: Bibliotecas podem incluir um script `setup.pas` interativo executável via `bv s <nome-da-lib>`.
+Any folder inside `lib/` benefits from automatic CLI (`bv.exe`) integration:
+1. **Auto Component Registration**: Any `.bv` file inside `lib/<your-lib>/` is automatically transpiled and registered globally across the application.
+2. **Auto CSS Injection**: `.css` files located in `lib/<your-lib>/` are copied to `dist/css/lib/` and injected via `<link>` into `index.html`.
+3. **Auto JS Script Injection**: `.js` files located in `lib/<your-lib>/` (such as chart engines or utility drivers) are copied to `dist/js/lib/` and injected via `<script>` before application initialization.
+4. **Lifecycle Setup (`setup.pas`)**: Libraries can provide an interactive `setup.pas` configuration script executed via `bv s <lib-name>`.
 
 ---
 
-## 📊 Gráficos no BlaiseUI Unificado
+## 📊 Reactive Charts in Unified BlaiseUI
 
-Para utilizar gráficos reativos em qualquer projeto, basta utilizar os componentes unificados do BlaiseUI:
+To use reactive data visualizations in any BlaiseVue project, use the unified BlaiseUI chart components:
 
 ```html
 <template>
   <div style="height: 350px;">
-    <!-- Master component ou atalho direto -->
+    <!-- Master chart component or direct shortcut -->
     <bv-bar :data="chartData" :options="chartOptions"></bv-bar>
     <bv-btn variant="primary" @click="updateData">Randomize Data ⚡</bv-btn>
   </div>
@@ -51,8 +51,8 @@ Para utilizar gráficos reativos em qualquer projeto, basta utilizar os componen
        asm
          this.chartOptions = { responsive: true, maintainAspectRatio: false };
          this.chartData = {
-           labels: ['Jan', 'Fev', 'Mar'],
-           datasets: [{ label: 'Vendas', data: [10, 25, 42], backgroundColor: '#42b883' }]
+           labels: ['Jan', 'Feb', 'Mar'],
+           datasets: [{ label: 'Sales', data: [10, 25, 42], backgroundColor: '#42b883' }]
          };
        end;
     end;
@@ -72,4 +72,4 @@ Para utilizar gráficos reativos em qualquer projeto, basta utilizar os componen
 
 ---
 
-🛡️ Para a lista completa de componentes, consulte o capítulo oficial **[24. BlaiseUI (Official Component Kit)](24-blaise-ui.md)**.
+🛡️ For the full catalog of components, consult the official guide: **[24. BlaiseUI (Official Component Kit)](24-blaise-ui.md)**.

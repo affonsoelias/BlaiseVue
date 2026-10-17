@@ -137,11 +137,11 @@ When `$theme.setTheme(name)` is called:
 
 ---
 
-## 7. Harmonização Automática com BlaiseUI
+## 7. Automatic Harmonization with BlaiseUI
 
-Todos os componentes oficiais do **BlaiseUI** (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-navbar>`, etc.) foram desenvolvidos para respeitar automaticamente a paleta e o contraste do tema ativo:
+All official **BlaiseUI** components (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-navbar>`, etc.) are engineered to respect the active theme palette and contrast dynamically:
 
-1. **Variáveis Semânticas do Bootstrap 5**: Cores de botões, fundos de cards, bordas e textos herdam diretamente dos estilos do tema Bootswatch selecionado.
-2. **Adaptação Imediata sem Recarga**: Ao chamar `$theme.setTheme('darkly')` ou `$theme.toggle()`, todos os componentes adaptam suas cores e contrastes em tempo real sem desmontar a árvore reativa.
-3. **Suporte Nativo a Mobile**: No aplicativo híbrido Android/iOS, a troca de tema é refletida instantaneamente na barra superior, no menu drawer lateral e na barra inferior `<bv-bottom-nav>`.
+1. **Bootstrap 5 Semantic Variables**: Button colors, card backgrounds, borders, and typography inherit directly from the selected Bootswatch theme.
+2. **Immediate Adaptation Without Reload**: Calling `$theme.setTheme('darkly')` or `$theme.toggle()` adapts component styling across the application in real time without unmounting reactive components.
+3. **Native Mobile Support**: In the hybrid Android/iOS application, theme changes instantly apply to the top app bar, off-canvas navigation drawer, and mobile bottom navigation `<bv-bottom-nav>`.
 
