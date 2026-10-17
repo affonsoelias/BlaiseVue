@@ -134,3 +134,14 @@ When `$theme.setTheme(name)` is called:
 3. It sets classes `.theme-dark` and `.theme-light` on `<html>`.
 4. It saves the preference to `localStorage.getItem('bv_theme')`.
 5. Upon page reload, the user's preferred theme is restored automatically before rendering.
+
+---
+
+## 7. Harmonização Automática com BlaiseUI
+
+Todos os componentes oficiais do **BlaiseUI** (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-navbar>`, etc.) foram desenvolvidos para respeitar automaticamente a paleta e o contraste do tema ativo:
+
+1. **Variáveis Semânticas do Bootstrap 5**: Cores de botões, fundos de cards, bordas e textos herdam diretamente dos estilos do tema Bootswatch selecionado.
+2. **Adaptação Imediata sem Recarga**: Ao chamar `$theme.setTheme('darkly')` ou `$theme.toggle()`, todos os componentes adaptam suas cores e contrastes em tempo real sem desmontar a árvore reativa.
+3. **Suporte Nativo a Mobile**: No aplicativo híbrido Android/iOS, a troca de tema é refletida instantaneamente na barra superior, no menu drawer lateral e na barra inferior `<bv-bottom-nav>`.
+

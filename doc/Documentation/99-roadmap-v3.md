@@ -162,16 +162,22 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 
 ---
 
-### 📱 Pillar 2: Straightforward Mobile Hybrid (Capacitor Integration)
+### 📱 Pillar 2: Straightforward Mobile Hybrid (Capacitor Integration) — ✅ Completed
 **Goal**: Package BlaiseVue applications as native **Android (.apk / .aab)** and iOS apps without the Rust/NDK toolchain complexity of Tauri or the obsolescence of Cordova.
 - **Why Capacitor over Cordova and Tauri Mobile**:
   - Cordova is legacy with abandoned plugins.
   - Tauri Mobile requires complex Rust, Android NDK, and cross-compilation toolchains on Windows.
   - Capacitor uses standard Android Studio / Xcode, wrapping `dist/` inside a modern native WebView with zero Rust setup.
-- **Native Hardware Access**: Ready-to-use plugins and helpers for Camera / QR scanner, Geolocation (GPS), Biometrics (Fingerprint/FaceID), Push Notifications, and SQLite offline storage.
+- **Responsive Layout & Mobile UX**:
+  - Responsive Grid System (`bv-container`, `bv-row`, `bv-col`) with fluid gutters and 12-column adaptive layout.
+  - Mobile bottom navigation (`bv-bottom-nav`, `bv-bottom-nav-item`) with active route tracking.
+  - Responsive Off-canvas Drawer (`bv-drawer`) for secondary navigation.
+  - Adaptive dialog modals (`bv-modal`) with clean unmount and teleport management.
 - **CLI Commands**:
-  - `bv mobile init`: Configures Capacitor with BlaiseVue presets.
-  - `bv mobile run android`: Syncs `dist/` and launches Android Studio ready to deploy.
+  - `bv mobile init [name] [id]`: Configures Capacitor and scaffolds the native Android project.
+  - `bv mobile sync`: Syncs `dist/` assets directly into `android/app/src/main/assets/public/`.
+  - `bv mobile open`: Syncs and opens the project in Android Studio.
+  - `bv mobile build`: Compiles the native Debug APK via Gradle (`android/app/build/outputs/apk/debug/app-debug.apk`).
 
 ---
 
@@ -186,14 +192,16 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 
 ---
 
-### 🛠️ Pillar 4: Professional Developer Experience (VS Code Extension VSIX)
+### 🛠️ Pillar 4: Professional Developer Experience (VS Code Extension VSIX) — ✅ Completed
 **Goal**: Provide a frictionless developer experience comparable to Vue Volar / React JSX.
 - **Intelligent Directive & Component Autocomplete**:
   - Typing `b-` suggests directives (`b-model`, `b-for`, `b-if`, `b-validate`).
   - Typing `<bv-` suggests all 25+ BlaiseUI components (`<bv-modal>`, `<bv-btn>`, `<bv-card>`, `<bv-icon>`, `<bv-theme-toggle>`) with documented attributes and slots.
 - **Comprehensive Snippet Suite**:
   - `bv-comp` (SFC scaffolding), `bv-form` (validated form), `bv-wasm` (Wasm benchmark call), `bv-modal`, `bv-chart`.
-- **Packaged `.vsix`**: Standalone 1-click installable package for VS Code and Cursor.
+- **Packaged `.vsix` & Direct CLI Tooling**:
+  - `bv vsix` / `bv extension package`: Generates standalone 1-click installable `.vsix` package for VS Code and Cursor.
+  - `bv extension install`: Installs the extension into the local VS Code editor.
 
 ---
 

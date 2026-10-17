@@ -80,3 +80,70 @@
       end;
     end;
 </script>
+
+<style>
+.bui-drawer-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1050;
+  pointer-events: none;
+  visibility: hidden;
+}
+.bui-drawer-wrapper.is-open {
+  pointer-events: auto;
+  visibility: visible;
+}
+.bui-drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1050;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+}
+.bui-drawer-wrapper.is-open .bui-drawer-backdrop {
+  opacity: 1;
+}
+.bui-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: var(--bui-card-bg, #fff);
+  color: var(--bui-text, #1e293b);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  z-index: 1060;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-sizing: border-box;
+  pointer-events: auto;
+  visibility: visible;
+}
+.bui-drawer-left {
+  left: 0;
+  right: auto;
+  transform: translateX(-100%);
+}
+.bui-drawer-left.is-open {
+  transform: translateX(0);
+}
+.bui-drawer-right {
+  left: auto;
+  right: 0;
+  transform: translateX(100%);
+}
+.bui-drawer-right.is-open {
+  transform: translateX(0);
+}
+</style>

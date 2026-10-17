@@ -507,8 +507,9 @@ initialization
           if (tagName === 'teleport' || tagName === 'b-teleport') {
             let toTarget = el.getAttribute('to') || 'body';
             let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
-            if (!targetEl) targetEl = document.body;
-            let anchor = document.createComment('teleport-anchor');
+            let anchor = document.createElement('span');
+            anchor.style.display = 'none';
+            anchor.setAttribute('data-teleport-anchor', toTarget);
             if (el.parentNode) el.parentNode.replaceChild(anchor, el);
             let fragment = document.createDocumentFragment();
             let teleportedNodes = Array.from(el.childNodes);

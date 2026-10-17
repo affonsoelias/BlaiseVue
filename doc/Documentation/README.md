@@ -1,23 +1,23 @@
-# 🛡️ BlaiseVue Framework v2.0
-**The Power of Pascal, the Soul of Vue.**
+# 🛡️ BlaiseVue Framework v3.5
+**The Universal Pascal Platform: Web, Mobile, Desktop, and Full-Stack.**
 
-BlaiseVue is an enterprise-grade, reactive SPA (Single Page Application) framework that combines the strong typing and architectural robustness of **Object Pascal** with the simplicity, ergonomics, and reactivity of **Vue.js**.
+BlaiseVue is an enterprise-grade, reactive framework that combines the strong typing and architectural robustness of **Object Pascal** with the simplicity, ergonomics, and reactivity of **Vue.js**.
 
 ---
 
-## ⚔️ What's New in Version 2.0
+## ⚔️ What's New in Version 3.5 (The Universal Release)
 
-BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
+BlaiseVue 3.5 expands the platform across multiple form factors:
 
-- ⚡ **Hot Module Replacement (HMR)**: Instant component recompilation and in-place DOM patching via WebSockets (`:8081`) while preserving component reactive state (`this['State']`).
-- 🛣️ **Advanced Routing**: Support for clean URLs via **HTML5 History Mode**, recursive **Nested Routes** with `<router-view>`, dynamic code-splitting (`import()`), and **Navigation Guards** (`beforeEach`, `beforeEnter`, `afterEach`).
-- 🧩 **Scoped Slots**: Pass child component data back to parent templates with `#slot="props"`, `b-slot`, and `slot-scope`.
-- 🚀 **Teleport & Suspense**: Move DOM nodes to target containers (`<teleport to="body">`) and orchestrate asynchronous dependencies with loading fallbacks (`<suspense>`).
-- 🏎️ **Static Hoisting**: The compiler automatically identifies static template nodes and hoists them out of the patch cycle, bypassing diffing for $O(1)$ reconciliation.
-- 🕵️ **Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge featuring Component Tree inspection, real-time reactive state editing, and timeline logging.
-- 🎨 **BlaiseUI Official Component Kit**: Production-ready, native component library (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-toast`, `bv-datagrid`) with pure CSS.
-- 🏗️ **CLI Native Resource Scaffolding**: All scaffolding templates are embedded into `bv.exe` at compile-time via `{$R templates.res}`, providing a single, zero-dependency binary.
-- 🧪 **Vitest Pascal Test Suite**: Automated TDD in Pascal with JSDOM runner via `bv test`.
+- 📱 **Hybrid Mobile Platform (Capacitor & Android .apk)**: Full native Android/iOS compilation via `bv mobile [init|sync|open|build]` with APK generation.
+- 🛠️ **Professional DX & VS Code Extension (`.vsix`)**: Triple syntax highlighting for `.bv`, directive IntelliSense, BlaiseUI autocomplete, and snippets (`bv vsix`, `bv extension install`).
+- 🎨 **Responsive Grid System (`<bv-container>`, `<bv-row>`, `<bv-col>`)**: Fluid 12-column grid layout fully adaptable from mobile phones to 4K displays.
+- 🧭 **Mobile Bottom Navigation & Drawer**: Native mobile UX with `<bv-bottom-nav>`, `<bv-bottom-nav-item>`, and responsive off-canvas `<bv-drawer>`.
+- ⚡ **WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Run compute-intensive Pascal routines at native binary speed.
+- 📚 **Automatic Component Documentation & Playground (`bv doc`)**: Zero-configuration catalog analyzing component AST, props, and events.
+- 🚀 **SSG & Static Pre-rendering (`bv run ssg`)**: Instant First Contentful Paint with Zero-Flicker Reactive Hydration.
+- 🎨 **Bootswatch Themes & Theme Engine (`$theme`)**: 9 integrated themes with runtime switching and dark mode toggle.
+- 🧪 **Vitest Pascal Test Suite (100% Pass Rate)**: Automated TDD with JSDOM runner via `bv test`.
 
 ---
 
@@ -66,9 +66,13 @@ BlaiseVue 2.0 delivers a high-performance web engineering ecosystem:
 32. [32. SSG & Static Pre-rendering with Reactive Hydration](32-ssg-and-hydration.md)
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md)
 
+### 🚀 BlaiseVue 3.5 Universal Platform (Phase 1 & Phase 2)
+34. [34. VS Code Extension & Professional DX (.vsix) - Phase 1](34-vscode-extension.md)
+35. [35. Hybrid Mobile Platform & Capacitor (bv mobile) - Phase 2](35-mobile-capacitor.md)
+
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
-- [Technical Roadmap (v2.5 & v3.0)](99-roadmap-v3.md)
+- [Technical Roadmap (v3.0 & v3.5)](99-roadmap-v3.md)
 
 ---
 

@@ -43,6 +43,26 @@ O BlaiseUI utiliza variáveis CSS customizáveis (`--bui-*`):
 
 ## 🧩 Catálogo Completo de Componentes
 
+### 0. Layout & Grid Responsivo (Mobile & Desktop)
+Construído com base no sistema de 12 colunas adaptativas para suportar telas de qualquer resolução:
+- **`<bv-container>`**: Container centralizado com suporte a largura fixa responsiva ou fluida (`fluid="true"`).
+- **`<bv-row>`**: Linha flexível com espaçamento entre colunas configurável via prop `gutter` (`none`, `sm`, `md`, `lg`).
+- **`<bv-col>`**: Coluna adaptativa com suporte a breakpoints do Bootstrap (`cols`, `sm`, `md`, `lg`, `xl`) e deslocamento (`offset`).
+  ```html
+  <bv-container fluid="true">
+    <bv-row gutter="md">
+      <!-- 12 colunas no celular, 4 colunas a partir de telas médias -->
+      <bv-col cols="12" md="4">
+        <bv-card title="Sidebar / Resumo">...</bv-card>
+      </bv-col>
+      <!-- 12 colunas no celular, 8 colunas a partir de telas médias -->
+      <bv-col cols="12" md="8">
+        <bv-card title="Conteúdo Principal">...</bv-card>
+      </bv-col>
+    </bv-row>
+  </bv-container>
+  ```
+
 ### 1. Ações e Estrutura Básica
 - **`<bv-btn>`**: Botão padronizado com variantes (`primary`, `secondary`, `success`, `danger`, `outline`), tamanhos (`sm`, `md`, `lg`) e estado `disabled`.
   ```html
@@ -65,11 +85,17 @@ O BlaiseUI utiliza variáveis CSS customizáveis (`--bui-*`):
 ---
 
 ### 2. Feedback, Overlays e Notificações
-- **`<bv-modal>`**: Diálogo modal interativo renderizado via `<teleport to="body">` para evitar problemas de `z-index` e `overflow`.
+- **`<bv-modal>`**: Diálogo modal interativo renderizado via `<teleport to="body">` com controle seguro via `b-show="isVisible"`, evitando problemas de `z-index`, layout shifts ou bloqueios indesejados. Inclui limpeza automática de nós filhos no ciclo de desmonte do roteador.
   ```html
   <bv-modal b-ref="meuModal" title="Confirmar Operação" okLabel="Confirmar" cancelLabel="Cancelar" @ok="aoConfirmar">
     <p>Tem certeza de que deseja continuar?</p>
   </bv-modal>
+  ```
+- **`<bv-drawer>`**: Menu lateral deslizante (*Off-Canvas Drawer*) ideal para navegação secundária e menus de aplicativos mobile.
+  ```html
+  <bv-drawer b-ref="meuDrawer" title="Menu Principal">
+    <p>Conteúdo deslizante do menu lateral.</p>
+  </bv-drawer>
   ```
 - **`<bv-toast>`**: Notificações flutuantes com auto-dismiss temporizado.
   ```html
@@ -93,7 +119,14 @@ O BlaiseUI utiliza variáveis CSS customizáveis (`--bui-*`):
 ---
 
 ### 3. Navegação e Coleções
-- **`<bv-navbar>` & `<bv-nav-item>`**: Barra de navegação superior com branding e links reativos.
+- **`<bv-bottom-nav>` & `<bv-bottom-nav-item>`**: Barra de navegação inferior fixa para dispositivos móveis com suporte a ícones, labels e detecção de rota ativa.
+  ```html
+  <bv-bottom-nav>
+    <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>
+    <bv-bottom-nav-item href="#/perfil" icon="👤" label="Perfil"></bv-bottom-nav-item>
+  </bv-bottom-nav>
+  ```
+- **`<bv-navbar>` & `<bv-nav-item>`**: Barra de navegação superior com branding e links reativos. Trata cliques com `preventDefault` em rotas locais para evitar mutações indesejadas no hash da URL.
   ```html
   <bv-navbar brand="Meu Sistema">
     <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>

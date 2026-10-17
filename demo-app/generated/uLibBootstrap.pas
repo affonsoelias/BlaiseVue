@@ -27,7 +27,7 @@ begin
     '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' +
     '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' +
     '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' +
-    '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(''Global Settings'')"></bv-nav-item>' +
+    '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' +
     '    </bv-navbar>' +
     '' +
     '    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->' +
@@ -47,6 +47,7 @@ begin
     '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' +
     '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' +
     '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(''Manual Toast Trigger'')"></bv-btn>' +
+    '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' +
     '         </bv-col>' +
     '      </bv-row>' +
     '' +
@@ -76,7 +77,7 @@ begin
     '                  <bv-list-group-item @click="clickNotif(''Cloud Sync'')">☁️ Cloud Synchronization</bv-list-group-item>' +
     '               </bv-list-group>' +
     '            </bv-card>' +
-    '         </div>' +
+    '         </bv-col>' +
     '' +
     '         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->' +
     '         <bv-col cols="12" md="8">' +
@@ -160,6 +161,29 @@ begin
     '          <p>Current Values:</p>' +
     '          <bv-badge variant="info">{{ libName }}</bv-badge>' +
     '          <bv-badge variant="success">{{ count }}%</bv-badge>' +
+    '       </div>' +
+    '    </bv-modal>' +
+    '' +
+    '    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->' +
+    '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' +
+    '       <div class="p-2">' +
+    '          <div class="mb-3" style="margin-bottom: 14px;">' +
+    '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' +
+    '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' +
+    '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' +
+    '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' +
+    '             </button>' +
+    '          </div>' +
+    '          <div class="mb-3" style="margin-bottom: 14px;">' +
+    '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' +
+    '             <div style="display: flex; gap: 8px;">' +
+    '                <button class="bui-btn bui-btn-sm" :class="{ ''bui-btn-primary'': $i18n.locale === ''pt'', ''bui-btn-secondary'': $i18n.locale !== ''pt'' }" type="button" @click="$setLocale(''pt'')">🇧🇷 Português</button>' +
+    '                <button class="bui-btn bui-btn-sm" :class="{ ''bui-btn-primary'': $i18n.locale === ''en'', ''bui-btn-secondary'': $i18n.locale !== ''en'' }" type="button" @click="$setLocale(''en'')">🇺🇸 English</button>' +
+    '             </div>' +
+    '          </div>' +
+    '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' +
+    '             🛡️ <strong>BlaiseVue 3.0 TURBO</strong> &bull; Reatividade Pascal + WebAssembly' +
+    '          </div>' +
     '       </div>' +
     '    </bv-modal>' +
     '' +
@@ -257,6 +281,26 @@ begin
           if (this.$refs.mainDrawer && this.$refs.mainDrawer.close) {
             this.$refs.mainDrawer.close();
           }
+       end;
+    end;
+    
+  m['openSettings'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          if (this.$refs.settingsModal && this.$refs.settingsModal.showModal) {
+            this.$refs.settingsModal.showModal();
+          } else if (this.$refs.settingsModal && this.$refs.settingsModal.show) {
+            this.$refs.settingsModal.show();
+          }
+       end;
+    end;
+    
+  m['applySettings'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          this.clickNotif('Configurações salvas!');
        end;
     end;
 

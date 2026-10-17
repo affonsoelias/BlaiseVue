@@ -84,6 +84,29 @@ BlaiseVue includes an integrated package manager and library system:
 
 ---
 
+## ⚡ Next-Gen Enterprise & Phase 1 / Phase 2 Commands
+
+### 1. `bv doc [--serve]` (Documentador Interativo & Playground)
+Analisa a AST de todos os componentes `.bv` do projeto, extraindo props, slots, eventos e comentários, e gera uma documentação interativa em `dist/docs/index.html`. Opcionalmente sobe um servidor HTTP dedicado com `--serve`.
+
+### 2. `bv wasm <info|benchmark>` (Aceleração WebAssembly)
+Gerencia os módulos WebAssembly do projeto e executa testes comparativos de desempenho entre Pascal compilado para JS versus Pascal executado em Wasm.
+
+### 3. `bv run ssg` (Static Site Generation & Pré-renderização)
+Pré-renderiza todas as rotas registradas da aplicação em arquivos HTML estáticos com suporte a hidratação reativa de zero flicker.
+
+### 4. `bv vsix` / `bv extension [install|package]` (Fase 1: Extensão VS Code)
+Empacota a extensão oficial do BlaiseVue em arquivo `.vsix` independente para o VS Code com destaque de sintaxe triplo, autocompletar inteligente e biblioteca de snippets. O comando `bv extension install` instala a extensão diretamente no editor local.
+
+### 5. `bv mobile` (Fase 2: Plataforma Móvel Híbrida Android / iOS)
+Gerencia o ciclo de desenvolvimento móvel com Capacitor:
+- **`bv mobile init [name] [id]`**: Inicializa o suporte a Capacitor e gera a estrutura do projeto Android.
+- **`bv mobile sync`**: Sincroniza os arquivos de build de `dist/` com a pasta de assets nativos do Android.
+- **`bv mobile open`**: Abre o projeto móvel no Android Studio.
+- **`bv mobile build`**: Compila o pacote nativo APK utilizando o Gradle Wrapper (`assembleDebug`).
+
+---
+
 ## 🧹 Maintenance Commands
 
 ### `bv clean`
