@@ -2865,6 +2865,43 @@ begin
   {$ENDIF}
 end;
 
+procedure CmdExtension(const Action: string);
+var
+  ExtDir, ScriptPath: string;
+begin
+  WriteLn('=== BlaiseVue 3.5 VS Code Extension Tool ===');
+  ExtDir := GetSDKPath + 'vscode-extension';
+  if not DirectoryExists(ExtDir) then
+  begin
+    WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
+    Exit;
+  end;
+
+  if (Action = 'install') or (Action = '') then
+  begin
+    WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
+    ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
+    {$IFDEF WINDOWS}
+    ExecuteProcess('powershell', '-ExecutionPolicy Bypass -File "' + ScriptPath + '"');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ' + ExtDir + '/* ~/.vscode/extensions/blaisevue-vscode/"');
+    {$ENDIF}
+  end
+  else if (Action = 'package') or (Action = 'vsix') then
+  begin
+    WriteLn('Packaging BlaiseVue VS Code extension into .vsix...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + ExtDir + ' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('Usage: bv extension <install|package>');
+  end;
+end;
+
 // =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
@@ -2875,8 +2912,8 @@ begin
   if ParamCount < 1 then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v3.0 (Enterprise Next)');
-    WriteLn('  ====================================');
+    WriteLn('  BlaiseVue CLI v3.5 (Universal Pascal Platform)');
+    WriteLn('  ==============================================');
     WriteLn('');
     WriteLn('  Usage:');
     WriteLn('    bv create <name>       Scaffolds a new project');
@@ -2903,6 +2940,8 @@ begin
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
     WriteLn('    bv theme list          Lists available installed themes');
     WriteLn('    bv theme use <name>    Switches active project theme in index.html');
+    WriteLn('    bv extension [install|package] Installs or packages the official VS Code extension');
+    WriteLn('    bv vsix                Packages standalone VS Code extension (.vsix)');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -3080,6 +3119,15 @@ begin
       CmdWasm('info')
     else
       CmdWasm(LowerCase(ParamStr(2)));
+  end
+  else if (Cmd = 'extension') or (Cmd = 'vsix') then
+  begin
+    if Cmd = 'vsix' then
+      CmdExtension('package')
+    else if ParamCount >= 2 then
+      CmdExtension(LowerCase(ParamStr(2)))
+    else
+      CmdExtension('install');
   end
   else
   begin

@@ -219,7 +219,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
        │
        ▼
 [ v3.5 - The Universal Pascal Platform 🚀 ]
-  ├── Phase 1: Tooling & DX ──► VS Code Extension (.vsix) + Snippets + BlaiseUI Autocomplete
+  ├── Phase 1: Tooling & DX ──► VS Code Extension (.vsix) + Snippets + BlaiseUI Autocomplete (✅ Completed)
   ├── Phase 2: Mobile ────────► Capacitor Integration (bv mobile init/run)
   ├── Phase 3: Desktop ───────► WebUI4Delphi + Lazarus IDE Scaffolding (bv desktop)
   └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (fullstack-mormot)

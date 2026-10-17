@@ -1,46 +1,108 @@
 {
-    "name": "blaisevue-vscode",
-    "displayName": "BlaiseVue Support",
-    "description": "Syntax highlighting and language support for BlaiseVue SFC (.bv) files.",
-    "version": "1.0.0",
-    "publisher": "blaisevue",
-    "engines": {
-        "vscode": "*"
-    },
-    "categories": [
-        "Programming Languages"
+  "name": "blaisevue-vscode",
+  "displayName": "BlaiseVue Official Support",
+  "description": "Professional DX for BlaiseVue: syntax highlighting, snippets, BlaiseUI IntelliSense, and CLI tools for Single File Components (.bv).",
+  "version": "3.5.0",
+  "publisher": "blaisevue",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/affonsoelias/BlaiseVue.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "pascal",
+    "blaisevue",
+    "object-pascal",
+    "vue",
+    "webassembly",
+    "fpc",
+    "pas2js"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:blaisevue",
+    "workspaceContains:**/*.bv"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "blaisevue",
+        "aliases": [
+          "BlaiseVue",
+          "blaisevue"
+        ],
+        "extensions": [
+          ".bv"
+        ],
+        "configuration": "./language-configuration.json"
+      }
     ],
-    "contributes": {
-        "languages": [
-            {
-                "id": "blaisevue",
-                "aliases": [
-                    "BlaiseVue",
-                    "blaisevue"
-                ],
-                "extensions": [
-                    ".bv"
-                ],
-                "configuration": "./language-configuration.json"
-            }
-        ],
-        "grammars": [
-            {
-                "language": "blaisevue",
-                "scopeName": "text.html.blaisevue",
-                "path": "./syntaxes/blaisevue.tmLanguage.json",
-                "embeddedLanguages": {
-                    "text.html.basic": "html",
-                    "source.pascal": "pascal",
-                    "source.css": "css"
-                }
-            }
-        ],
-        "snippets": [
-            {
-                "language": "blaisevue",
-                "path": "./snippets/snippets.json"
-            }
-        ]
+    "grammars": [
+      {
+        "language": "blaisevue",
+        "scopeName": "text.html.blaisevue",
+        "path": "./syntaxes/blaisevue.tmLanguage.json",
+        "embeddedLanguages": {
+          "text.html.basic": "html",
+          "source.pascal": "pascal",
+          "source.css": "css",
+          "source.js": "javascript"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "blaisevue",
+        "path": "./snippets/snippets.json"
+      }
+    ],
+    "html": {
+      "customData": [
+        "./data/blaisevue.html-data.json"
+      ]
+    },
+    "commands": [
+      {
+        "command": "blaisevue.dev",
+        "title": "BlaiseVue: Start Dev Server (HMR)",
+        "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.build",
+        "title": "BlaiseVue: Build Production Bundle",
+        "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.test",
+        "title": "BlaiseVue: Run Unit Tests",
+        "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.doc",
+        "title": "BlaiseVue: Generate Documentation Catalog",
+        "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.newComponent",
+        "title": "BlaiseVue: Create New Component (.bv)",
+        "category": "BlaiseVue"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "blaisevue.newComponent",
+          "group": "7_modification",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
     }
+  }
 }
