@@ -84,70 +84,70 @@ BlaiseVue includes an integrated package manager and library system:
 
 ---
 
-## ⚡ Next-Gen Enterprise & Phase 1 / Phase 2 Commands
+## ⚡ Next-Gen Enterprise & Phase 1 / Phase 2 / Phase 3 Commands
 
-### 1. `bv doc [--serve]` (Documentador Interativo & Playground)
-Analisa a AST de todos os componentes `.bv` do projeto, extraindo props, slots, eventos e comentários, e gera uma documentação interativa em `dist/docs/index.html`. Opcionalmente sobe um servidor HTTP dedicado com `--serve`.
+### 1. `bv doc [--serve]` (Interactive Documentation & Component Playground)
+Parses the AST of all `.bv` components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at `dist/docs/index.html`. Optionally boots a dedicated HTTP documentation server with `--serve`.
 
-### 2. `bv wasm <info|benchmark>` (Aceleração WebAssembly)
-Gerencia os módulos WebAssembly do projeto e executa testes comparativos de desempenho entre Pascal compilado para JS versus Pascal executado em Wasm.
+### 2. `bv wasm <info|benchmark>` (WebAssembly Acceleration)
+Manages WebAssembly modules in the project and executes performance benchmarks comparing Pascal compiled directly to JavaScript versus Pascal executing natively inside WebAssembly (Wasm).
 
-### 3. `bv run ssg` (Static Site Generation & Pré-renderização)
-Pré-renderiza todas as rotas registradas da aplicação em arquivos HTML estáticos com suporte a hidratação reativa de zero flicker.
+### 3. `bv run ssg` (Static Site Generation & Pre-rendering)
+Pre-renders all registered application routes into static, SEO-friendly HTML files with zero-flicker reactive client-side hydration.
 
-### 4. `bv vsix` / `bv extension [install|package]` (Fase 1: Extensão VS Code)
-Empacota a extensão oficial do BlaiseVue em arquivo `.vsix` independente para o VS Code com destaque de sintaxe triplo, autocompletar inteligente e biblioteca de snippets. O comando `bv extension install` instala a extensão diretamente no editor local.
+### 4. `bv vsix` / `bv extension [install|package]` (Phase 1: VS Code Official Extension)
+Packages the official BlaiseVue extension into a standalone `.vsix` bundle for Visual Studio Code and VSCodium, featuring triple syntax highlighting, intelligent auto-completion, and an extensive snippet library. The `bv extension install` command installs the extension directly into the local editor.
 
-### 5. `bv mobile` (Fase 2: Plataforma Móvel Híbrida Android / iOS & Capacitor)
-Gerencia o ciclo de desenvolvimento móvel com Capacitor em estrutura unificada na pasta `mobile/`:
-- **`bv mobile init [name] [id]`**: Inicializa a estrutura móvel na pasta `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) e gera `capacitor.config.json`.
-- **`bv mobile sync [android|ios|all]`**: Sincroniza os arquivos de build de `dist/` com a plataforma móvel desejada.
-- **`bv mobile build [target] [--release]`**: Compila o pacote instalável nativo (`.apk` / `.aab` / `.ipa`).
-  - Ex: `bv mobile build android` (Gera `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
-  - Ex: `bv mobile build android --release` (Gera `mobile/bin/android/<App>-release.apk` otimizado via `assembleRelease`)
-  - Ex: `bv mobile build ios` (Prepara e sincroniza o projeto nativo iOS)
-  - Ex: `bv mobile build all --release` (Compila todas as plataformas móveis em modo release)
-- **`bv mobile emulator <list|start [nome]|run [nome]>`**: Gerencia e executa emuladores Android (AVD) diretamente pelo terminal.
-  - Ex: `bv mobile emulator list` (Lista os emuladores instalados no Android Studio)
-  - Ex: `bv mobile emulator start` (Inicia o emulador em segundo plano)
-- **`bv mobile run [target] [--emulator [nome]]`**: Instala e executa diretamente no aparelho ou emulador conectado via ADB (`adb install -r` + `am start`). Se a flag `--emulator` for fornecida, inicia o emulador automaticamente se estiver desligado.
-- **`bv mobile open [target]`**: Abre o projeto na IDE nativa (`open android` para Android Studio, `open ios` para Xcode no macOS).
+### 5. `bv mobile` (Phase 2: Hybrid Mobile Platform Android / iOS & Capacitor)
+Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
+- **`bv mobile init [name] [id]`**: Scaffolds the mobile directory structure inside `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
+- **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
+- **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
+  - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
+  - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
+  - E.g.: `bv mobile build ios` (Prepares and synchronizes native Xcode project)
+  - E.g.: `bv mobile build all --release` (Compiles all mobile target platforms in release mode)
+- **`bv mobile emulator <list|start [name]|run [name]>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
+  - E.g.: `bv mobile emulator list` (Lists all installed AVDs from Android Studio)
+  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background)
+- **`bv mobile run [target] [--emulator [name]]`**: Installs and launches the application directly on a connected device or emulator via ADB (`adb install -r` + `am start`). If `--emulator` is provided, automatically boots the emulator if it is offline.
+- **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
 
 > [!NOTE]
-> **O BlaiseVue NÃO requer o Flutter instalado.** O ambiente móvel utiliza apenas o Node.js/npm, o Android Studio (Android SDK, Build-Tools e Platform-Tools `adb`) e o Java JDK 17/21.
+> **BlaiseVue does NOT require Flutter.** The mobile toolchain only requires Node.js/npm, Android Studio (Android SDK, Build-Tools, and Platform-Tools `adb`), and Java JDK 17/21.
 
-| Comando Móvel | Plataforma | Modo | Saída / Ação |
+| Mobile Command | Platform | Build Mode | Output / Action |
 |---|---|---|---|
 | `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
 | `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
-| `bv mobile emulator list` | Android | - | Lista os emuladores (AVDs) instalados |
-| `bv mobile emulator start` | Android | - | Inicia o emulador em segundo plano |
-| `bv mobile run android` | Android | Debug | Instala e abre no dispositivo USB conectado |
-| `bv mobile run android --emulator` | Android | Debug | Inicia emulador, instala e abre o app |
-| `bv mobile open android` | Android | - | Abre projeto no Android Studio |
-| `bv mobile open ios` | iOS | - | Abre projeto no Xcode (macOS) |
+| `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
+| `bv mobile emulator start` | Android | - | Boots emulator in background |
+| `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
+| `bv mobile run android --emulator` | Android | Debug | Boots emulator, installs APK, and launches app |
+| `bv mobile open android` | Android | - | Opens project in Android Studio |
+| `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
 
-### 6. `bv desktop` (Fase 3: Plataforma Desktop Multiplataforma WebUI & Lazarus IDE)
-Gerencia o ciclo de desenvolvimento desktop nativo com Free Pascal e WebUI:
-- **`bv desktop init [name]`**: Gera a estrutura de projeto Lazarus (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) na pasta `desktop/`.
-- **`bv desktop sync`**: Sincroniza o build de produção (`dist/`) com os assets da aplicação desktop (`desktop/assets/`).
-- **`bv desktop build [target] [--release]`**: Compila o binário nativo para uma plataforma específica (`windows`, `linux`, `macos` ou `all`). Se o alvo não for informado, usa o SO atual.
-  - Ex: `bv desktop build windows` (Modo Debug no Windows com console ativo)
-  - Ex: `bv desktop build linux --release` (Modo Release para Linux em `desktop/bin/linux/`)
-  - Ex: `bv desktop build all --release` (Compila todas as plataformas em modo Release)
-- **`bv desktop run [target] [--release]`**: Sincroniza, compila e inicializa a aplicação desktop.
-  - Ex: `bv desktop run windows` (Inicia no Windows com console de logs para depuração)
-  - Ex: `bv desktop run windows --release` (Inicia sem janela de console para usuário final)
+### 6. `bv desktop` (Phase 3: Multiplatform Desktop WebUI & Lazarus IDE)
+Manages the native desktop development lifecycle with Free Pascal and WebUI:
+- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
+- **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
+- **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
+  - E.g.: `bv desktop build windows` (Debug mode on Windows with active logging console)
+  - E.g.: `bv desktop build linux --release` (Release mode for Linux in `desktop/bin/linux/`)
+  - E.g.: `bv desktop build all --release` (Cross-compiles for all platforms in Release mode)
+- **`bv desktop run [target] [--release]`**: Synchronizes assets, compiles, and launches the native desktop application.
+  - E.g.: `bv desktop run windows` (Launches on Windows with console window for live diagnostics)
+  - E.g.: `bv desktop run windows --release` (Launches in pure GUI mode without console window for end users)
 
-| Modo Desktop | Exemplo CLI | Modo Lazarus IDE | Comportamento da Janela | Diretório de Saída |
+| Desktop Target / Mode | CLI Command | Lazarus IDE Mode | Window Behavior | Output Directory |
 |---|---|---|---|---|
-| **Debug (Windows)** | `bv desktop run windows` | `Debug` | Janela GUI + Console de Logs | `desktop/bin/windows/` |
-| **Release (Windows)** | `bv desktop run windows --release` | `Release` | Janela GUI (Sem Console) | `desktop/bin/windows/` |
-| **Debug (Linux)** | `bv desktop build linux` | `Debug` | Binário ELF nativo com logs | `desktop/bin/linux/` |
-| **Release (Linux)** | `bv desktop build linux --release` | `Release` | Binário ELF otimizado | `desktop/bin/linux/` |
-| **All Platforms** | `bv desktop build all --release` | - | Binários para Win, Linux e Mac | `desktop/bin/<plataforma>/` |
+| **Debug (Windows)** | `bv desktop run windows` | `Debug` | GUI Window + Diagnostics Console | `desktop/bin/windows/` |
+| **Release (Windows)** | `bv desktop run windows --release` | `Release` | GUI Window Only (No Console) | `desktop/bin/windows/` |
+| **Debug (Linux)** | `bv desktop build linux` | `Debug` | Native ELF Binary with Logs | `desktop/bin/linux/` |
+| **Release (Linux)** | `bv desktop build linux --release` | `Release` | Optimized Native ELF Binary | `desktop/bin/linux/` |
+| **All Platforms** | `bv desktop build all --release` | - | Segregated Binaries for Win, Linux, Mac | `desktop/bin/<platform>/` |
 
-Consulte o capítulo detalhado em **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
+See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
 
 ---
 
