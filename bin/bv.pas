@@ -161,6 +161,30 @@ begin
   Result := '';
 end;
 
+{ Checks whether a system command/executable is available on the PATH }
+function HasCommand(const ACmd: string): Boolean;
+var
+  OutStr: string;
+begin
+  OutStr := '';
+  {$IFDEF WINDOWS}
+  Result := RunCommand('cmd.exe', ['/c', 'where ' + ACmd], OutStr);
+  if not Result then
+    Result := RunCommand('cmd.exe', ['/c', ACmd + ' --version'], OutStr);
+  {$ELSE}
+  Result := RunCommand('which', [ACmd], OutStr);
+  if not Result then
+    Result := RunCommand(ACmd, ['--version'], OutStr);
+  {$ENDIF}
+end;
+
+procedure PrintNodeRequiredError(const ActionDesc: string);
+begin
+  WriteLn('  [ERROR] Node.js is required to ' + ActionDesc + '.');
+  WriteLn('          Please install Node.js (v18+ LTS) from: https://nodejs.org');
+  WriteLn('          Ensure "node" and "npm" are accessible in your system PATH.');
+end;
+
 function PascalToKebab(const S: string): string;
 var
   i: Integer;
@@ -1381,14 +1405,22 @@ begin
       WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
   end;
 
-  WriteLn('');
-  WriteLn('Installing dependencies (npm install)...');
-  
-  {$IFDEF WINDOWS}
-  ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
-  {$ELSE}
-  ExecuteProcess('npm', 'install --prefix "' + Base + '"');
-  {$ENDIF}
+  if HasCommand('npm') then
+  begin
+    WriteLn('');
+    WriteLn('Installing dependencies (npm install)...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
+    {$ELSE}
+    ExecuteProcess('npm', 'install --prefix "' + Base + '"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('');
+    WriteLn('  [WARNING] npm not found in system PATH.');
+    WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
+  end;
 
   WriteLn('');
   WriteLn('Project created successfully!');
@@ -2421,6 +2453,12 @@ end;
 procedure CmdServe;
 begin
   WriteLn('=== BlaiseVue 2.0 Dev Server (HMR Enabled) ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the development server with HMR');
+    Exit;
+  end;
+
   if FileExists(GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js') then
   begin
     WriteLn('  HMR WebSocket: ws://localhost:8081');
@@ -2452,6 +2490,13 @@ begin
     WriteLn('ERROR: /dist folder not found. Run "bv run build" first.');
     Exit;
   end;
+
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the preview server (npx http-server)');
+    Exit;
+  end;
+
   WriteLn('Serving /dist at http://localhost:5000...');
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c npx http-server dist -p 5000');
@@ -2504,6 +2549,12 @@ var
   GenPath, TestPath, UnitName, CorePath, RTLFile: string;
 begin
   WriteLn('=== BlaiseVue Unit Testing ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the Vitest test runner');
+    Exit;
+  end;
+
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator;
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
   CorePath := GetCorePath;
@@ -2769,6 +2820,11 @@ begin
 
     if ServeMode then
     begin
+      if not HasCommand('node') then
+      begin
+        PrintNodeRequiredError('serve the interactive documentation playground (npx http-server)');
+        Exit;
+      end;
       WriteLn('Serving documentation playground on http://localhost:8085...');
       {$IFDEF WINDOWS}
       ExecuteProcess('cmd', '/c npx http-server dist/docs -p 8085 -c-1');
@@ -2885,6 +2941,11 @@ end;
 procedure CmdTestE2E;
 begin
   WriteLn('=== BlaiseVue 3.0 Headless E2E Test Suite ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run headless E2E tests with Vitest');
+    Exit;
+  end;
   WriteLn('Executing end-to-end user journeys (Routing, Forms, Themes, Hydration)...');
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c npx vitest run --testNamePattern="E2E|Integration|Hydration"');
@@ -2917,6 +2978,11 @@ begin
   end
   else if (Action = 'package') or (Action = 'vsix') then
   begin
+    if not HasCommand('node') then
+    begin
+      PrintNodeRequiredError('package the VS Code extension (@vscode/vsce)');
+      Exit;
+    end;
     WriteLn('Packaging BlaiseVue VS Code extension into .vsix...');
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
@@ -3257,6 +3323,11 @@ var
       end
       else
       begin
+        if not HasCommand('node') then
+        begin
+          PrintNodeRequiredError('launch the mobile app via Capacitor CLI');
+          Exit;
+        end;
         WriteLn('Launching via Capacitor CLI runner...');
         {$IFDEF WINDOWS}
         ExecuteProcess('cmd', '/c npx cap run android');
@@ -3364,6 +3435,15 @@ begin
 
   if TargetPlatform = '' then
     TargetPlatform := 'android';
+
+  if (SubCmd = 'init') or (SubCmd = 'sync') or (SubCmd = 'open') or (SubCmd = 'build') then
+  begin
+    if not HasCommand('node') then
+    begin
+      PrintNodeRequiredError('manage mobile projects with Capacitor');
+      Exit;
+    end;
+  end;
 
   if (SubCmd = 'init') then
   begin

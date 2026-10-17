@@ -154,6 +154,11 @@ BlaiseVue/
 
 ## 🏁 Quick Start
 
+### 📋 Prerequisites
+- **FPC (Free Pascal Compiler 3.2+)**: Compiles the native CLI (`bv` / `bv.exe`) and desktop apps.
+- **Pas2JS (3.2.0+)**: Transpiles Object Pascal components to JavaScript.
+- **Node.js (v18+ LTS) & npm**: Powers the dev server with HMR (`bv serve`), Capacitor mobile workflows (`bv mobile`), and testing (`bv test`).
+
 ### 1. Compile the BlaiseVue CLI
 Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed:
 ```bash
