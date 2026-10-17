@@ -1,6 +1,9 @@
 program BlaiseVue_Desktop;
 
 {$mode objfpc}{$H+}
+{$IFDEF RELEASE}
+  {$APPTYPE GUI}
+{$ENDIF}
 
 uses
   {$IFDEF UNIX}

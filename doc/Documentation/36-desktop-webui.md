@@ -35,8 +35,6 @@ Essa arquitetura viabiliza binários desktop ultraleves (**< 10 MB** em disco, *
 
 ## 🛠️ Comandos da CLI (`bv desktop`)
 
-A CLI `bv.exe` fornece suporte nativo completo ao ciclo de vida desktop:
-
 ```bash
 # 1. Scaffolding do projeto desktop completo (Lazarus .lpi, .lpr, bridges, assets)
 bv desktop init [NomeDoApp]
@@ -44,12 +42,21 @@ bv desktop init [NomeDoApp]
 # 2. Sincroniza o build de produção (dist/) com a pasta desktop/assets/
 bv desktop sync
 
-# 3. Compila o binário nativo utilizando o Free Pascal Compiler (fpc)
+# 3. Compilação em Modo DEBUG (com janela de console para diagnósticos e logs):
 bv desktop build
-
-# 4. Sincroniza, compila e inicializa a aplicação desktop nativa
 bv desktop run
+
+# 4. Compilação em Modo RELEASE (para o Usuário Final - 100% GUI, sem janela de console):
+bv desktop build --release
+bv desktop run --release
 ```
+
+### ⚙️ Modos de Compilação: Debug vs. Release
+
+| Modo | Comando CLI | Modo Lazarus IDE | Comportamento da Janela | Finalidade |
+|---|---|---|---|---|
+| **Debug** | `bv desktop run` | `Debug` | **Janela GUI + Console de Logs** | Desenvolvimento, depuração de RPC, logs do WebUI e do sistema. |
+| **Release** | `bv desktop run --release` | `Release` | **Apenas Janela GUI (Sem Console)** | Distribuição para usuário final, executável limpo e profissional. |
 
 ---
 

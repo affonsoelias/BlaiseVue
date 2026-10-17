@@ -3025,7 +3025,7 @@ begin
   end;
 end;
 
-procedure CmdDesktop(const SubCmd, AppName: string);
+procedure CmdDesktop(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
   DesktopDir, AssetsDir, BinDir, UnitsDir: string;
   CleanName, DisplayName: string;
@@ -3036,10 +3036,16 @@ var
   FoundLpr: string;
   ExeExt: string;
   TargetExe: string;
+  IsRelease: Boolean;
 begin
   WriteLn('=== BlaiseVue 3.5 Desktop (WebUI & Lazarus IDE) ===');
 
-  DisplayName := AppName;
+  IsRelease := (LowerCase(Arg1) = '--release') or (LowerCase(Arg1) = '-r') or (LowerCase(Arg1) = 'release') or
+               (LowerCase(Arg2) = '--release') or (LowerCase(Arg2) = '-r') or (LowerCase(Arg2) = 'release');
+
+  DisplayName := Arg1;
+  if IsRelease or (LowerCase(DisplayName) = '--debug') or (LowerCase(DisplayName) = '-d') then
+    DisplayName := '';
   if DisplayName = '' then DisplayName := 'BlaiseVue Desktop';
 
   CleanName := '';
@@ -3402,6 +3408,9 @@ begin
         'program ' + CleanName + ';' + #10 +
         '' + #10 +
         '{$mode objfpc}{$H+}' + #10 +
+        '{$IFDEF RELEASE}' + #10 +
+        '  {$APPTYPE GUI}' + #10 +
+        '{$ENDIF}' + #10 +
         '' + #10 +
         'uses' + #10 +
         '  {$IFDEF UNIX}' + #10 +
@@ -3565,8 +3574,36 @@ begin
         '        <DpiAware Value="True"/>' + #10 +
         '      </XPManifest>' + #10 +
         '    </General>' + #10 +
-        '    <BuildModes>' + #10 +
-        '      <Item Name="Default" Default="True"/>' + #10 +
+        '    <BuildModes Count="2">' + #10 +
+        '      <Item1 Name="Debug" Default="True"/>' + #10 +
+        '      <Item2 Name="Release">' + #10 +
+        '        <CompilerOptions>' + #10 +
+        '          <Version Value="11"/>' + #10 +
+        '          <Target>' + #10 +
+        '            <Filename Value="bin/' + CleanName + '"/>' + #10 +
+        '          </Target>' + #10 +
+        '          <SearchPaths>' + #10 +
+        '            <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
+        '            <UnitOutputDirectory Value="units"/>' + #10 +
+        '          </SearchPaths>' + #10 +
+        '          <CodeGeneration>' + #10 +
+        '            <Optimizations>' + #10 +
+        '              <OptimizationLevel Value="3"/>' + #10 +
+        '            </Optimizations>' + #10 +
+        '          </CodeGeneration>' + #10 +
+        '          <Linking>' + #10 +
+        '            <Debugging>' + #10 +
+        '              <GenerateDebugInfo Value="False"/>' + #10 +
+        '              <StripSymbols Value="True"/>' + #10 +
+        '            </Debugging>' + #10 +
+        '            <Options>' + #10 +
+        '              <Win32>' + #10 +
+        '                <GraphicApplication Value="True"/>' + #10 +
+        '              </Win32>' + #10 +
+        '            </Options>' + #10 +
+        '          </Linking>' + #10 +
+        '        </CompilerOptions>' + #10 +
+        '      </Item2>' + #10 +
         '    </BuildModes>' + #10 +
         '    <PublishOptions>' + #10 +
         '      <Version Value="2"/>' + #10 +
@@ -3665,7 +3702,7 @@ begin
   else if (SubCmd = 'build') then
   begin
     WriteLn('Building native Desktop application with Free Pascal...');
-    CmdDesktop('sync', AppName);
+    CmdDesktop('sync', Arg1, Arg2);
 
     FoundLpr := '';
     if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
@@ -3681,18 +3718,36 @@ begin
     end;
 
     CleanName := ChangeFileExt(FoundLpr, '');
-    WriteLn('  Compiling ' + FoundLpr + ' with FPC...');
 
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -FEbin -FUunits ' + FoundLpr);
-    {$ELSE}
-    ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -FEbin -FUunits ' + FoundLpr + '"');
-    {$ENDIF}
+    if IsRelease then
+    begin
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode (GUI Application - No Console Window)...');
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O3 -WG -Xs -dRELEASE -FEbin -FUunits ' + FoundLpr);
+      {$ELSE}
+      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O3 -Xs -dRELEASE -FEbin -FUunits ' + FoundLpr + '"');
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode (Console Window Active for Diagnostics)...');
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -g -gl -dDEBUG -FEbin -FUunits ' + FoundLpr);
+      {$ELSE}
+      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -g -gl -dDEBUG -FEbin -FUunits ' + FoundLpr + '"');
+      {$ENDIF}
+    end;
 
     TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
     if FileExists(TargetExe) then
     begin
-      WriteLn('  [SUCCESS] Native binary built: desktop/bin/' + CleanName + ExeExt);
+      if IsRelease then
+        WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + CleanName + ExeExt)
+      else
+      begin
+        WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + CleanName + ExeExt);
+        WriteLn('  [TIP] For end users, run "bv desktop build --release" to compile a clean GUI application without console.');
+      end;
     end
     else
     begin
@@ -3711,7 +3766,7 @@ begin
     if FoundLpr = '' then
     begin
       WriteLn('No desktop project found. Initializing first...');
-      CmdDesktop('init', AppName);
+      CmdDesktop('init', Arg1, Arg2);
       if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
       begin
         FoundLpr := SearchRec.Name;
@@ -3722,15 +3777,22 @@ begin
     CleanName := ChangeFileExt(FoundLpr, '');
     TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
 
-    if not FileExists(TargetExe) then
+    if not FileExists(TargetExe) or IsRelease then
     begin
-      WriteLn('Target binary not found. Building desktop app...');
-      CmdDesktop('build', AppName);
+      if IsRelease then
+        WriteLn('Building desktop app in RELEASE mode...')
+      else
+        WriteLn('Target binary not found. Building desktop app in DEBUG mode...');
+      CmdDesktop('build', Arg1, Arg2);
     end;
 
     if FileExists(TargetExe) then
     begin
-      WriteLn('Launching native desktop app: ' + TargetExe);
+      if IsRelease then
+        WriteLn('Launching native desktop app in RELEASE mode (No Console): ' + TargetExe)
+      else
+        WriteLn('Launching native desktop app in DEBUG mode (Live Console): ' + TargetExe);
+
       {$IFDEF WINDOWS}
       ExecuteProcess('cmd', '/c cd /d "' + BinDir + '" && "' + TargetExe + '"');
       {$ELSE}
@@ -3745,7 +3807,7 @@ begin
   end
   else
   begin
-    WriteLn('Usage: bv desktop <init [name]|sync|build|run>');
+    WriteLn('Usage: bv desktop <init [name]|sync|build [--release]|run [--release]>');
   end;
 end;
 
@@ -3795,8 +3857,8 @@ begin
     WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
     WriteLn('    bv desktop init [name] Scaffolds WebUI & Lazarus desktop project in desktop/');
     WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
-    WriteLn('    bv desktop build       Compiles native desktop binary using Free Pascal');
-    WriteLn('    bv desktop run         Syncs, builds and launches the desktop app');
+    WriteLn('    bv desktop build [--release] Compiles native binary (Debug console or Release GUI)');
+    WriteLn('    bv desktop run [--release]   Syncs, builds and launches the desktop app');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -3997,10 +4059,10 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv desktop <init [name]|sync|build|run>');
+      WriteLn('Usage: bv desktop <init [name]|sync|build [--release]|run [--release]>');
       Halt(1);
     end;
-    CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3));
+    CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
   else
   begin
