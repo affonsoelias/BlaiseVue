@@ -525,6 +525,142 @@
       "name": "suspense",
       "description": "BlaiseVue Async Boundary handling async components with fallback template.",
       "attributes": []
+    },
+    {
+      "name": "bv-container",
+      "description": "BlaiseUI Responsive Layout Container with fluid mode and responsive max-width breakpoints.",
+      "attributes": [
+        {
+          "name": "fluid",
+          "description": "Sets container width to 100% across all viewport widths.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-row",
+      "description": "BlaiseUI Responsive Flexbox Row with configurable gutters and alignment.",
+      "attributes": [
+        {
+          "name": "gutter",
+          "description": "Spacing between columns.",
+          "values": [
+            { "name": "none" },
+            { "name": "sm" },
+            { "name": "md" },
+            { "name": "lg" }
+          ]
+        },
+        {
+          "name": "align",
+          "description": "Vertical alignment of columns.",
+          "values": [
+            { "name": "start" },
+            { "name": "center" },
+            { "name": "end" },
+            { "name": "stretch" }
+          ]
+        },
+        {
+          "name": "justify",
+          "description": "Horizontal distribution of columns.",
+          "values": [
+            { "name": "start" },
+            { "name": "center" },
+            { "name": "end" },
+            { "name": "between" },
+            { "name": "around" }
+          ]
+        },
+        {
+          "name": "noGutters",
+          "description": "Removes negative row margins and column paddings.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-col",
+      "description": "BlaiseUI 12-Column Responsive Grid Column supporting mobile-first and multi-breakpoint sizing.",
+      "attributes": [
+        {
+          "name": "cols",
+          "description": "Base column span (1..12). Defaults to 12 (full width).",
+          "values": [
+            { "name": "12" },
+            { "name": "6" },
+            { "name": "4" },
+            { "name": "3" },
+            { "name": "2" },
+            { "name": "1" }
+          ]
+        },
+        { "name": "sm", "description": "Column span on small screens (>= 576px)." },
+        { "name": "md", "description": "Column span on medium screens / tablets / desktops (>= 768px)." },
+        { "name": "lg", "description": "Column span on large desktop screens (>= 992px)." },
+        { "name": "xl", "description": "Column span on extra large screens (>= 1200px)." },
+        { "name": "offset", "description": "Number of columns to offset." }
+      ]
+    },
+    {
+      "name": "bv-drawer",
+      "description": "BlaiseUI Responsive Offcanvas Navigation Drawer with smooth slide transition and backdrop.",
+      "attributes": [
+        { "name": "title", "description": "Header title of the drawer." },
+        { "name": "width", "description": "Custom drawer width (e.g. '280px', '320px')." },
+        {
+          "name": "position",
+          "description": "Side from which drawer opens.",
+          "values": [
+            { "name": "left" },
+            { "name": "right" }
+          ]
+        },
+        {
+          "name": "overlay",
+          "description": "Enables or disables dark backdrop overlay.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "Initial visibility state.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-bottom-nav",
+      "description": "BlaiseUI Mobile Bottom Navigation Bar pinned to viewport footer on phones.",
+      "attributes": []
+    },
+    {
+      "name": "bv-bottom-nav-item",
+      "description": "Action item within bv-bottom-nav with icon and text label.",
+      "attributes": [
+        { "name": "href", "description": "Target navigation link (e.g. '#/pro')." },
+        { "name": "icon", "description": "Icon or emoji character (e.g. '🏠')." },
+        { "name": "label", "description": "Text displayed below the icon." },
+        {
+          "name": "active",
+          "description": "Whether this item is currently active.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
     }
   ],
   "globalAttributes": [

@@ -1009,6 +1009,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
              if (window.__BV_CORE__.wasm && !Data.FData['$wasm']) {
                 Data.FData['$wasm'] = window.__BV_CORE__.wasm;
              }
+             if (window.__BV_CORE__.mobile && !Data.FData['$mobile']) {
+                Data.FData['$mobile'] = window.__BV_CORE__.mobile;
+             }
           }
     
           if (Data && !Data.Evaluate) {
@@ -1395,6 +1398,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                     if (window.__BV_CORE__.wasm && !d.$wasm) {
                        d.$wasm = window.__BV_CORE__.wasm;
                     }
+                    if (window.__BV_CORE__.mobile && !d.$mobile) {
+                       d.$mobile = window.__BV_CORE__.mobile;
+                    }
                     let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                        try {
                          let expr = e.trim();
@@ -1765,6 +1771,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 }
                 if (window.__BV_CORE__.wasm) {
                    pRef['$wasm'] = window.__BV_CORE__.wasm;
+                }
+                if (window.__BV_CORE__.mobile) {
+                   pRef['$mobile'] = window.__BV_CORE__.mobile;
                 }
                 if (window.__BV_CORE__.validation) {
                    window.__BV_CORE__.validation.initDataValidation(pRef);
@@ -2553,7 +2562,185 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
     };
   });
 });
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm"],function () {
+rtl.module("BVMobile",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (typeof window !== 'undefined') {
+          if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          const bv = window.__BV_CORE__;
+    
+          // Detect Capacitor or Web runtime
+          const hasCapacitor = Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+          const capPlatform = hasCapacitor ? (window.Capacitor.getPlatform() || 'android') : 'web';
+    
+          const mobileBridge = {
+            isNative: function() {
+              if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function') {
+                return window.Capacitor.isNativePlatform();
+              }
+              return false;
+            },
+    
+            getPlatform: function() {
+              if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+                return window.Capacitor.getPlatform();
+              }
+              const userAgent = navigator.userAgent || '';
+              if (/android/i.test(userAgent)) return 'android';
+              if (/iPad|iPhone|iPod/.test(userAgent)) return 'ios';
+              return 'web';
+            },
+    
+            haptics: {
+              vibrate: function(durationMs) {
+                const ms = durationMs || 200;
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+                  window.Capacitor.Plugins.Haptics.vibrate({ duration: ms });
+                } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                  navigator.vibrate(ms);
+                } else {
+                  console.log('[BVMobile] Haptics.vibrate simulation (' + ms + 'ms)');
+                }
+              },
+    
+              impact: function(style) {
+                const s = style || 'medium';
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+                  window.Capacitor.Plugins.Haptics.impact({ style: s.toUpperCase() });
+                } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                  navigator.vibrate(s === 'heavy' ? 40 : (s === 'light' ? 15 : 25));
+                } else {
+                  console.log('[BVMobile] Haptics.impact simulation (' + s + ')');
+                }
+              },
+    
+              notification: function(type) {
+                const t = type || 'success';
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+                  window.Capacitor.Plugins.Haptics.notification({ type: t.toUpperCase() });
+                } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                  navigator.vibrate([20, 40, 20]);
+                } else {
+                  console.log('[BVMobile] Haptics.notification simulation (' + t + ')');
+                }
+              }
+            },
+    
+            geolocation: {
+              getCurrentPosition: function(onSuccess, onError) {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+                  window.Capacitor.Plugins.Geolocation.getCurrentPosition()
+                    .then(function(pos) {
+                      if (typeof onSuccess === 'function') onSuccess(pos);
+                    })
+                    .catch(function(err) {
+                      if (typeof onError === 'function') onError(err);
+                    });
+                } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                      const coords = {
+                        coords: {
+                          latitude: pos.coords.latitude,
+                          longitude: pos.coords.longitude,
+                          accuracy: pos.coords.accuracy,
+                          altitude: pos.coords.altitude
+                        },
+                        timestamp: pos.timestamp
+                      };
+                      if (typeof onSuccess === 'function') onSuccess(coords);
+                    },
+                    function(err) {
+                      if (typeof onError === 'function') onError(err);
+                    }
+                  );
+                } else {
+                  if (typeof onError === 'function') onError(new Error('Geolocation not supported'));
+                }
+              }
+            },
+    
+            camera: {
+              takePhoto: function(onSuccess, onError) {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Camera) {
+                  window.Capacitor.Plugins.Camera.getPhoto({
+                    quality: 90,
+                    allowEditing: false,
+                    resultType: 'dataUrl'
+                  })
+                  .then(function(img) {
+                    if (typeof onSuccess === 'function') onSuccess(img.dataUrl);
+                  })
+                  .catch(function(err) {
+                    if (typeof onError === 'function') onError(err);
+                  });
+                } else if (typeof document !== 'undefined') {
+                  // Web Camera Fallback using file input
+                  let fileInput = document.getElementById('__bv_camera_input__');
+                  if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.id = '__bv_camera_input__';
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.capture = 'environment';
+                    fileInput.style.display = 'none';
+                    document.body.appendChild(fileInput);
+                  }
+                  fileInput.onchange = function(e) {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = function(re) {
+                        if (typeof onSuccess === 'function') onSuccess(re.target.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  };
+                  fileInput.click();
+                } else {
+                  if (typeof onError === 'function') onError(new Error('Camera not supported'));
+                }
+              }
+            },
+    
+            device: {
+              getInfo: function(onSuccess) {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+                  window.Capacitor.Plugins.Device.getInfo().then(function(info) {
+                    if (typeof onSuccess === 'function') onSuccess(info);
+                  });
+                } else {
+                  const info = {
+                    model: 'Browser Client',
+                    platform: mobileBridge.getPlatform(),
+                    operatingSystem: navigator.platform || 'web',
+                    osVersion: navigator.userAgent || 'unknown',
+                    manufacturer: 'Standard Hardware',
+                    isVirtual: false
+                  };
+                  if (typeof onSuccess === 'function') onSuccess(info);
+                }
+              }
+            },
+    
+            statusBar: {
+              setBackgroundColor: function(colorHex) {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
+                  window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: colorHex });
+                } else {
+                  console.log('[BVMobile] StatusBar color: ' + colorHex);
+                }
+              }
+            }
+          };
+    
+          bv.mobile = mobileBridge;
+          window.$mobile = mobileBridge;
+        };
+  };
+});
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -2629,6 +2816,7 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__;
       if (window.__BV_CORE__.theme && !d.FData.$theme) d.FData.$theme = window.__BV_CORE__.theme;
       if (window.__BV_CORE__.wasm && !d.FData.$wasm) d.FData.$wasm = window.__BV_CORE__.wasm;
+      if (window.__BV_CORE__.mobile && !d.FData.$mobile) d.FData.$mobile = window.__BV_CORE__.mobile;
       
       // Check for SSG Pre-rendered content for instant zero-flicker Hydration
       if (this.FRoot && (this.FRoot.hasAttribute('data-bv-ssg') || this.FRoot.querySelector('[data-bv-ssg]'))) {
@@ -3190,7 +3378,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER -->" + '    <div class="container-fluid p-0">' + '      <div class="row mb-5">' + '         <div class="col-8">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </div>" + '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </div>" + "      </div>" + "" + '      <div class="row">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <div class="col-4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->" + '         <div class="col-8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <div class="row mt-4">' + '                           <div class="col-6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </div>" + '                           <div class="col-6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </div>" + "                        </div>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </div>" + "      </div>" + "    </div>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(\'Global Settings\')"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </div>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer b-ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Drawer Menu 1\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 2\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 3\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -3235,6 +3423,18 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m["tabChanged"] = function (_this, id) {
       console.log("Tab changed to: ", id);
+    };
+    m["showDrawer"] = function (_this) {
+      if (this.$refs.mainDrawer && this.$refs.mainDrawer.open) {
+        this.$refs.mainDrawer.open();
+      } else if (this.$refs.mainDrawer && this.$refs.mainDrawer.toggle) {
+        this.$refs.mainDrawer.toggle();
+      };
+    };
+    m["closeDrawer"] = function (_this) {
+      if (this.$refs.mainDrawer && this.$refs.mainDrawer.close) {
+        this.$refs.mainDrawer.close();
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -3575,6 +3775,47 @@ rtl.module("uBVBar",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-bar",comp);
   };
 });
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNav = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-bottom-nav">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
+  };
+});
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNavItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <a class="bui-bottom-nav-item" :class="{ active: active }" :href="href" @click="handleClick">' + '    <span class="bui-bottom-nav-icon" b-if="icon">{{ icon }}</span>' + '    <span class="bui-bottom-nav-label">{{ label }}</span>' + "  </a>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("href");
+    comp["props"].push("label");
+    comp["props"].push("icon");
+    comp["props"].push("active");
+    m = new Object();
+    m["handleClick"] = function (_this, e) {
+      this.$emit('click', e);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
+  };
+});
 rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -3786,6 +4027,69 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCol = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-col" :class="colClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("cols");
+    comp["props"].push("sm");
+    comp["props"].push("md");
+    comp["props"].push("lg");
+    comp["props"].push("xl");
+    comp["props"].push("offset");
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["colClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      var c = this.cols || '12';
+      cls.push('bui-col-' + c);
+      if (this.sm) cls.push('bui-col-sm-' + this.sm);
+      if (this.md) cls.push('bui-col-md-' + this.md);
+      if (this.lg) cls.push('bui-col-lg-' + this.lg);
+      if (this.xl) cls.push('bui-col-xl-' + this.xl);
+      if (this.offset) cls.push('bui-offset-' + this.offset);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-col",comp);
+  };
+});
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVContainer = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-container" :class="{ \'bui-container-fluid\': fluid }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("fluid");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-container",comp);
+  };
+});
 rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -3885,6 +4189,53 @@ rtl.module("uBVDoughnut",["System","JS","Web","BVComponents","BVReactivity","BVS
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-doughnut",comp);
+  };
+});
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDrawer = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-drawer-wrapper" :class="{ \'is-open\': isOpen }">' + '    <div class="bui-drawer-backdrop" b-if="isOpen && overlay" @click="close"></div>' + '    <aside class="bui-drawer" :class="[\'bui-drawer-\' + position, { \'is-open\': isOpen }]" :style="\'width: \' + width">' + '      <div class="bui-drawer-header">' + '        <slot name="header">' + '          <strong class="bui-drawer-title">{{ title }}</strong>' + '          <button class="bui-drawer-close" type="button" @click="close">&times;</button>' + "        </slot>" + "      </div>" + '      <div class="bui-drawer-body">' + "        <slot></slot>" + "      </div>" + '      <div class="bui-drawer-footer" b-if="hasFooter">' + '        <slot name="footer"></slot>' + "      </div>" + "    </aside>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("title");
+    comp["props"].push("width");
+    comp["props"].push("position");
+    comp["props"].push("overlay");
+    comp["props"].push("hasFooter");
+    comp["props"].push("show");
+    m = new Object();
+    m["open"] = function (_this) {
+      _this["isOpen"] = true;
+      this.$emit('open');
+    };
+    m["close"] = function (_this) {
+      _this["isOpen"] = false;
+      this.$emit('close');
+    };
+    m["toggle"] = function (_this) {
+      _this["isOpen"] = !!(_this["isOpen"] == false);
+      if (!(_this["isOpen"] == false)) {
+        this.$emit('open');
+      } else {
+        this.$emit('close');
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!(_this["show"] == false)) _this["isOpen"] = true;
+    };
+    pas.BVComponents.RegisterComponent("bv-drawer",comp);
   };
 });
 rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -4343,6 +4694,50 @@ rtl.module("uBVRadar",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-radar",comp);
   };
 });
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVRow = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-row" :class="rowClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("gutter");
+    comp["props"].push("align");
+    comp["props"].push("justify");
+    comp["props"].push("noGutters");
+    comp["props"].push("nogutters");
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["rowClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      if (this.noGutters || this.nogutters || this.gutter === 'none') {
+        cls.push('bui-gutter-none');
+      } else if (this.gutter === 'sm') {
+        cls.push('bui-gutter-sm');
+      } else if (this.gutter === 'lg') {
+        cls.push('bui-gutter-lg');
+      } else {
+        cls.push('bui-gutter-md');
+      }
+      if (this.align) cls.push('bui-align-' + this.align);
+      if (this.justify) cls.push('bui-justify-' + this.justify);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-row",comp);
+  };
+});
 rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -4553,7 +4948,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVDataGrid","uBVDoughnut","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -4578,7 +4973,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     console.log("[Init] Injecting Styles...");
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
+    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .drawer-btn { background: rgba(255,255,255,0.12); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; padding: 5px 10px; font-size: 16px; cursor: pointer; transition: background 0.2s; }   .drawer-btn:hover { background: rgba(255,255,255,0.25); }   .drawer-nav { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }   .drawer-link { color: inherit; text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 15px; font-weight: 500; display: block; transition: all 0.2s; }   .drawer-link:hover { background: rgba(66, 184, 131, 0.15); color: #42b883; font-weight: 600; }   .mobile-bottom-bar { display: none; }   .main-content-container { max-width: 960px; margin: 24px auto; padding: 0 16px; }   @media (max-width: 768px) {     .nav-links { display: none; } /* Hide wide links on mobile; drawer & bottom nav take over! */     .mobile-bottom-bar { display: flex; }     .desktop-only-footer { display: none; }     .main-content-container { padding-bottom: 75px; }   }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
     document.head.appendChild(_styleEl);
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
@@ -4612,6 +5007,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVBadge.Register_uBVBadge();
     console.log("[Init] Registering uBVBar...");
     pas.uBVBar.Register_uBVBar();
+    console.log("[Init] Registering uBVBottomNav...");
+    pas.uBVBottomNav.Register_uBVBottomNav();
+    console.log("[Init] Registering uBVBottomNavItem...");
+    pas.uBVBottomNavItem.Register_uBVBottomNavItem();
     console.log("[Init] Registering uBVBreadcrumb...");
     pas.uBVBreadcrumb.Register_uBVBreadcrumb();
     console.log("[Init] Registering uBVBreadcrumbItem...");
@@ -4622,10 +5021,16 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVCard.Register_uBVCard();
     console.log("[Init] Registering uBVChart...");
     pas.uBVChart.Register_uBVChart();
+    console.log("[Init] Registering uBVCol...");
+    pas.uBVCol.Register_uBVCol();
+    console.log("[Init] Registering uBVContainer...");
+    pas.uBVContainer.Register_uBVContainer();
     console.log("[Init] Registering uBVDataGrid...");
     pas.uBVDataGrid.Register_uBVDataGrid();
     console.log("[Init] Registering uBVDoughnut...");
     pas.uBVDoughnut.Register_uBVDoughnut();
+    console.log("[Init] Registering uBVDrawer...");
+    pas.uBVDrawer.Register_uBVDrawer();
     console.log("[Init] Registering uBVFormSelect...");
     pas.uBVFormSelect.Register_uBVFormSelect();
     console.log("[Init] Registering uBVIcon...");
@@ -4656,6 +5061,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVProgress.Register_uBVProgress();
     console.log("[Init] Registering uBVRadar...");
     pas.uBVRadar.Register_uBVRadar();
+    console.log("[Init] Registering uBVRow...");
+    pas.uBVRow.Register_uBVRow();
     console.log("[Init] Registering uBVSpinner...");
     pas.uBVSpinner.Register_uBVSpinner();
     console.log("[Init] Registering uBVTab...");
@@ -4669,7 +5076,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + '    <nav class="navbar">' + '      <strong class="brand">BlaiseVue 3.0 TURBO</strong>' + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" target="_blank" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + '    <div class="container">' + "      <!-- The router-view tag is replaced by the component matching the current hash -->" + "      <router-view></router-view>" + "    </div>" + '    <div class="footer-status">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer b-ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v3.0 TURBO";
     methods = new Object();
@@ -4679,6 +5086,16 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
       sel = "" + e["target"]["value"];
       if (sel !== "") {
         if (window.$theme) window.$theme.setTheme(sel);
+      };
+    };
+    m["toggleDrawer"] = function (_this) {
+      if (this.$refs.appDrawer && this.$refs.appDrawer.toggle) {
+        this.$refs.appDrawer.toggle();
+      };
+    };
+    m["closeDrawer"] = function (_this) {
+      if (this.$refs.appDrawer && this.$refs.appDrawer.close) {
+        this.$refs.appDrawer.close();
       };
     };
     opts = new Object();

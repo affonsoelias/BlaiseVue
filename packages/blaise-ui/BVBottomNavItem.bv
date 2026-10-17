@@ -1,0 +1,30 @@
+<template>
+  <a class="bui-bottom-nav-item" :class="{ active: active }" :href="href" @click="handleClick">
+    <span class="bui-bottom-nav-icon" b-if="icon">{{ icon }}</span>
+    <span class="bui-bottom-nav-label">{{ label }}</span>
+  </a>
+</template>
+
+<script>
+  {
+    BVBottomNavItem - Item for Bottom Navigation Bar
+    ------------------------------------------------
+    Props:
+    - href: String target link
+    - label: String item text
+    - icon: String icon symbol or emoji
+    - active: Boolean is current active item
+  }
+
+  props:
+    href: string = '#/';
+    label: string = 'Item';
+    icon: string = '';
+    active: boolean = false;
+
+  methods:
+    procedure handleClick(e: JSValue);
+    begin
+      asm this.$emit('click', e); end;
+    end;
+</script>

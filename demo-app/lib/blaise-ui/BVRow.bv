@@ -1,0 +1,44 @@
+<template>
+  <div class="bui-row" :class="rowClass">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVRow - Responsive Flexbox Row Container
+    ----------------------------------------
+    Props:
+    - gutter: String ('none', 'sm', 'md', 'lg')
+    - align: String ('start', 'center', 'end', 'baseline', 'stretch')
+    - justify: String ('start', 'center', 'end', 'between', 'around')
+    - noGutters: Boolean (removes all gutters)
+  }
+
+  props:
+    gutter: string = 'md';
+    align: string = '';
+    justify: string = '';
+    noGutters: boolean = false;
+    nogutters: boolean = false;
+
+  computed:
+    function rowClass: string;
+    begin
+      asm
+        var cls = [];
+        if (this.noGutters || this.nogutters || this.gutter === 'none') {
+          cls.push('bui-gutter-none');
+        } else if (this.gutter === 'sm') {
+          cls.push('bui-gutter-sm');
+        } else if (this.gutter === 'lg') {
+          cls.push('bui-gutter-lg');
+        } else {
+          cls.push('bui-gutter-md');
+        }
+        if (this.align) cls.push('bui-align-' + this.align);
+        if (this.justify) cls.push('bui-justify-' + this.justify);
+        return cls.join(' ');
+      end;
+    end;
+</script>
