@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BlaiseVue Demo</string>
+    <string name="title_activity_main">BlaiseVue Demo</string>
+    <string name="package_name">com.blaisevue.demoapp</string>
+    <string name="custom_url_scheme">com.blaisevue.demoapp</string>
+</resources>
