@@ -34,9 +34,14 @@ bin/lib/
 temp/
 obj/
 
-# Ensure essential tools in pas2js/ are tracked!
+# Ensure essential tools in pas2js/ and vendor/ are tracked!
 !pas2js/
 !pas2js/**
+!vendor/
+!vendor/**
+!vendor/**/*.o
+!vendor/**/*.obj
+!vendor/**/*.a
 
 # 📊 Local Logs & Trace
 compile_log.txt

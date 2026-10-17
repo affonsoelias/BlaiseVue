@@ -4686,12 +4686,30 @@ var
 begin
   Result := '';
 
-  // 1. Environment variable MORMOT2_PATH
+  // 1. Embedded vendor in BlaiseVue SDK: vendor/mormot2
+  Candidate := GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 2. Relative to current project or workspace: vendor/mormot2 or ../vendor/mormot2
+  Candidate := GetCurrentDir + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 3. Environment variable MORMOT2_PATH
   Candidate := GetEnvironmentVariable('MORMOT2_PATH');
   if IsValidMormot(Candidate) then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
 
-  // 2. Project or server configuration file: server/mormot.path or mormot.path
+  // 4. Project or server configuration file: server/mormot.path or mormot.path
   ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
   if FileExists(ConfigFile) then
   begin
@@ -4707,12 +4725,12 @@ begin
       Exit(ExcludeTrailingPathDelimiter(Candidate));
   end;
 
-  // 3. User local installation path on Windows
+  // 5. User local installation path on Windows (fallback)
   Candidate := 'C:\ComponenteLazarus\mORMot2';
   if IsValidMormot(Candidate) then
     Exit(Candidate);
 
-  // 4. Relative paths to workspace or BlaiseVue SDK
+  // 6. Relative paths to workspace or BlaiseVue SDK
   Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'mORMot2');
   if IsValidMormot(Candidate) then
     Exit(Candidate);
