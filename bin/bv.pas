@@ -3673,12 +3673,17 @@ begin
         '# 1. Sync frontend to desktop assets' + #10 +
         'bv desktop sync' + #10 +
         '' + #10 +
-        '# 2. Build native binary with Free Pascal' + #10 +
+        '# 2. Build in Debug mode (with console for logs & diagnostics)' + #10 +
         'bv desktop build' + #10 +
-        '' + #10 +
-        '# 3. Launch desktop app' + #10 +
         'bv desktop run' + #10 +
-        '```' + #10;
+        '' + #10 +
+        '# 3. Build in Release mode (pure GUI for end users - NO console window)' + #10 +
+        'bv desktop build --release' + #10 +
+        'bv desktop run --release' + #10 +
+        '```' + #10 +
+        '' + #10 +
+        '## Lazarus IDE (F9)' + #10 +
+        'Open `' + CleanName + '.lpi` in Lazarus IDE and switch between **Debug** and **Release** build modes in the top toolbar.' + #10;
       WriteStringToFile(ReadmeFile, ReadmeContent);
       WriteLn('  [+] Created desktop/README.md');
     end;

@@ -76,6 +76,20 @@ bv lib remove <name>       # Removes an installed component or package from lib/
 bv theme list              # Lists all available installed themes
 bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
 
+# === Mobile (Capacitor) ===
+bv mobile init [name] [id] # Scaffolds Capacitor & Android native project
+bv mobile sync             # Syncs dist/ with native Android assets
+bv mobile open             # Opens project in Android Studio
+bv mobile build            # Builds native Android Debug APK via Gradle
+
+# === Desktop (Free Pascal & Lazarus) ===
+bv desktop init [name]     # Scaffolds Lazarus (.lpi, .lpr) & WebUI project
+bv desktop sync            # Syncs dist/ to desktop/assets/
+bv desktop build           # Compiles Debug native binary (live console logging)
+bv desktop build --release # Compiles Release native binary (pure GUI - NO console)
+bv desktop run             # Launches desktop app in Debug mode (with console)
+bv desktop run --release   # Launches desktop app in Release mode (clean GUI)
+
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
 ```
@@ -90,14 +104,14 @@ Our architectural evolution roadmap:
 - [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
 - [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
 - [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
-- [x] **v3.5 Universal Pascal Platform (Phase 1 & Phase 2 Complete)**:
+- [x] **v3.5 Universal Pascal Platform (Phase 1, 2 & 3 Complete)**:
   - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
-  - [ ] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI4Delphi & Lazarus IDE (`bv desktop`).
+  - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
   - [ ] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md) and [Desktop Documentation](doc/Documentation/36-desktop-webui.md).
 
 ---
 

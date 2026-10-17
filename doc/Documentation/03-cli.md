@@ -109,8 +109,17 @@ Gerencia o ciclo de desenvolvimento móvel com Capacitor:
 Gerencia o ciclo de desenvolvimento desktop nativo com Free Pascal e WebUI:
 - **`bv desktop init [name]`**: Gera a estrutura de projeto Lazarus (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `README.md`) na pasta `desktop/`.
 - **`bv desktop sync`**: Sincroniza o build de produção (`dist/`) com os assets da aplicação desktop (`desktop/assets/`).
-- **`bv desktop build`**: Compila o binário nativo executável (`desktop/bin/<AppName>.exe`) utilizando o compilador Free Pascal (`fpc`).
-- **`bv desktop run`**: Sincroniza, compila e inicializa a aplicação desktop nativa (com suporte ao runtime WebUI ou fallback para o modo janela de aplicativo do Edge/Chrome).
+- **`bv desktop build`**: Compila o binário nativo em **Modo Debug** com janela de console ativa para diagnósticos e logs do sistema.
+- **`bv desktop build --release`**: Compila o binário nativo em **Modo Release** (`-WG`, `-O3`, `{$APPTYPE GUI}`), sem exibir janela de console, gerando um executável limpo e profissional para o usuário final.
+- **`bv desktop run`**: Sincroniza, compila e inicializa a aplicação desktop em modo de depuração (com janela de console).
+- **`bv desktop run --release`**: Sincroniza, compila e inicializa a aplicação desktop em modo produção (sem janela de console).
+
+| Modo Desktop | Comando CLI | Modo Lazarus IDE | Comportamento da Janela | Finalidade |
+|---|---|---|---|---|
+| **Debug** | `bv desktop run` | `Debug` | Janela GUI + Console de Logs | Desenvolvimento e depuração de chamadas RPC e IPC |
+| **Release** | `bv desktop run --release` | `Release` | Apenas Janela GUI (Sem Console) | Distribuição para usuário final (executável limpo) |
+
+Consulte o capítulo detalhado em **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
 
 ---
 

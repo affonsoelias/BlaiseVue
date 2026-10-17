@@ -16,9 +16,14 @@ Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **We
 # 1. Sync frontend to desktop assets
 bv desktop sync
 
-# 2. Build native binary with Free Pascal
+# 2. Build in Debug mode (with console for logs & diagnostics)
 bv desktop build
-
-# 3. Launch desktop app
 bv desktop run
+
+# 3. Build in Release mode (pure GUI for end users - NO console window)
+bv desktop build --release
+bv desktop run --release
 ```
+
+## Lazarus IDE (F9)
+Open `BlaiseVue_Desktop.lpi` in Lazarus IDE and switch between **Debug** and **Release** build modes in the top toolbar.
