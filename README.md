@@ -1,6 +1,9 @@
-# 🛡️ BlaiseVue: The Modern Pascal SPA Framework
+# 🛡️ BlaiseVue: The Universal Reactive Framework for Object Pascal
 
-**BlaiseVue** is a high-performance, enterprise-grade Single Page Application (SPA) framework for **Object Pascal**. It combines the type safety, architectural robustness, and raw compilation speed of Pascal with the elegance, ergonomics, and reactivity of **Vue.js**.
+> **The Universal Reactive Framework for Object Pascal.**  
+> Build modern Web (SPA/SSG), Native Mobile (Android/iOS), and Ultra-light Desktop apps from a single Pascal codebase.
+
+**BlaiseVue** is a high-performance, enterprise-grade universal reactive framework for **Object Pascal**. It combines the type safety, architectural robustness, and raw compilation speed of Pascal with the elegance, ergonomics, and reactivity of **Vue.js**, enabling seamless multiplatform deployment across Web, Mobile, and Desktop from a single codebase.
 
 ---
 
@@ -76,19 +79,24 @@ bv lib remove <name>       # Removes an installed component or package from lib/
 bv theme list              # Lists all available installed themes
 bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
 
-# === Mobile (Capacitor) ===
-bv mobile init [name] [id] # Scaffolds Capacitor & Android native project
-bv mobile sync             # Syncs dist/ with native Android assets
-bv mobile open             # Opens project in Android Studio
-bv mobile build            # Builds native Android Debug APK via Gradle
+# === Mobile (Android & iOS via Capacitor) ===
+bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project
+bv mobile sync             # Syncs dist/ with native mobile assets
+bv mobile build android    # Builds native Android Debug APK in mobile/bin/android/
+bv mobile build android --release # Builds optimized Release APK (R8/ProGuard)
+bv mobile emulator list    # Lists installed Android Virtual Devices (AVD)
+bv mobile emulator start   # Boots Android emulator in background
+bv mobile run android      # Installs and launches APK on connected USB device
+bv mobile run android --emulator # Boots emulator, installs APK, and runs app
+bv mobile open android     # Opens project in Android Studio
 
-# === Desktop (Free Pascal & Lazarus) ===
+# === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
 bv desktop init [name]     # Scaffolds Lazarus (.lpi, .lpr) & WebUI project
 bv desktop sync            # Syncs dist/ to desktop/assets/
-bv desktop build           # Compiles Debug native binary (live console logging)
-bv desktop build --release # Compiles Release native binary (pure GUI - NO console)
-bv desktop run             # Launches desktop app in Debug mode (with console)
-bv desktop run --release   # Launches desktop app in Release mode (clean GUI)
+bv desktop build [target]  # Compiles Debug native binary (live console logging)
+bv desktop build [target] --release # Compiles Release native binary (pure GUI - NO console)
+bv desktop run [target]    # Launches desktop app in Debug mode (with console)
+bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
 
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
@@ -181,4 +189,4 @@ This allows developers to build **commercial and proprietary applications** with
 
 ---
 
-🛡️ **"BlaiseVue: Bringing Pascal to the modern Web, and the Web to Pascal."** ✨🏆🚀
+🛡️ **"BlaiseVue: The Universal Reactive Framework for Object Pascal."** ✨🏆🚀
