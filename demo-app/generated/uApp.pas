@@ -142,7 +142,7 @@ begin
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
     '  <div translate="no" class="notranslate">' +
     '    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->' +
-    '    <bv-drawer b-ref="appDrawer" title="🧭 BlaiseVue Menu">' +
+    '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' +
     '      <div class="drawer-nav">' +
     '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +

@@ -119,7 +119,7 @@
     </bv-container>
 
     <!-- DRAWER: Programmatically triggered via $ref -->
-    <bv-drawer b-ref="mainDrawer" title="🎨 BlaiseUI Drawer">
+    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">
        <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>
        <bv-list-group>
           <bv-list-group-item active="true" @click="clickNotif('Drawer Menu 1')">🏠 Dashboard View</bv-list-group-item>

@@ -2325,7 +2325,7 @@ procedure CmdRunBuild;
 var
   GenPath, DistPath, PublicPath: string;
   Hash, IndexHTML: string;
-  JSFiles: TStringList;
+  JSFiles, CSSFiles: TStringList;
   JSTags, FileName: string;
   i: Integer;
 begin
@@ -2362,6 +2362,20 @@ begin
     IndexHTML := StringReplace(IndexHTML, 'src="js/main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
     IndexHTML := StringReplace(IndexHTML, 'src="main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
     IndexHTML := StringReplace(IndexHTML, 'js/rtl.js', 'js/rtl.js', [rfReplaceAll]);
+
+    // Injeta CSS das bibliotecas (Produção)
+    CSSFiles := TStringList.Create;
+    ScanDirForCSS(GetCurrentDir + DirectorySeparator + 'lib', CSSFiles);
+    if CSSFiles.Count > 0 then
+    begin
+      ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
+      for i := 0 to CSSFiles.Count - 1 do
+      begin
+         FileName := ExtractFileName(CSSFiles[i]);
+         WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
+      end;
+      CSSFiles.Free;
+    end;
 
     // Injeta JS das bibliotecas (Produção)
     JSFiles := TStringList.Create;

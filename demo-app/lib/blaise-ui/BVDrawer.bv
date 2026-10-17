@@ -1,7 +1,7 @@
 <template>
   <div class="bui-drawer-wrapper" :class="{ 'is-open': isOpen }">
-    <div class="bui-drawer-backdrop" b-if="isOpen && overlay" @click="close"></div>
-    <aside class="bui-drawer" :class="['bui-drawer-' + position, { 'is-open': isOpen }]" :style="'width: ' + width">
+    <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>
+    <aside :class="'bui-drawer bui-drawer-' + position + (isOpen ? ' is-open' : '')" :style="'width: ' + width">
       <div class="bui-drawer-header">
         <slot name="header">
           <strong class="bui-drawer-title">{{ title }}</strong>
@@ -11,7 +11,7 @@
       <div class="bui-drawer-body">
         <slot></slot>
       </div>
-      <div class="bui-drawer-footer" b-if="hasFooter">
+      <div class="bui-drawer-footer" v-if="hasFooter">
         <slot name="footer"></slot>
       </div>
     </aside>
@@ -44,7 +44,10 @@
 
   created:
     begin
-      if Boolean(this['show']) then this['isOpen'] := true;
+      if (this['show'] = true) or (this['show'] = 'true') then
+        this['isOpen'] := true
+      else
+        this['isOpen'] := false;
     end;
 
   methods:

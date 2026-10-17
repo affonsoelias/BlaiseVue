@@ -712,6 +712,13 @@
   position: relative;
   z-index: 1050;
 }
+.bui-drawer-wrapper:not(.is-open) {
+  pointer-events: none;
+}
+.bui-drawer-wrapper:not(.is-open) .bui-drawer {
+  visibility: hidden;
+  pointer-events: none;
+}
 .bui-drawer-backdrop {
   position: fixed;
   top: 0;
