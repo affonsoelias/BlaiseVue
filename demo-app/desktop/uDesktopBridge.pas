@@ -153,4 +153,18 @@ begin
   webui_bind(AWindow, 'bv_get_system_info', @HandleGetSystemInfo);
 end;
 
+initialization
+  {$IFDEF MSWINDOWS}
+  if not IsConsole then
+  begin
+    try
+      AssignFile(Output, 'NUL');
+      Rewrite(Output);
+      AssignFile(ErrOutput, 'NUL');
+      Rewrite(ErrOutput);
+    except
+    end;
+  end;
+  {$ENDIF}
+
 end.

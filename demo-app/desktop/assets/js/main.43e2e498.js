@@ -2863,7 +2863,7 @@ rtl.module("BVDesktop",["System","JS","Web","SysUtils","BVReactivity"],function 
                 if (window.webui && typeof window.webui.call === 'function') {
                   window.webui.call('bv_open_url', url);
                 } else if (typeof window !== 'undefined') {
-                  window.open(url, '_blank', 'noopener,noreferrer');
+                  try { window.open(url, '_blank', 'noopener,noreferrer'); } catch(e) {}
                 }
               }
             },

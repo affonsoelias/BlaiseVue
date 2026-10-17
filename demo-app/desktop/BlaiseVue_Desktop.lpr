@@ -9,6 +9,9 @@ uses
   {$IFDEF UNIX}
   cthreads,
   {$ENDIF}
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
   SysUtils, Classes, Process, webui, uDesktopBridge;
 
 const
@@ -71,6 +74,7 @@ procedure LaunchNativeBrowserApp(const TargetURL: string);
 var
   BCmd: string;
   Proc: TProcess;
+  ProfileDir: string;
 begin
   WriteLn('[BlaiseVue Desktop] Launching native Browser App mode...');
   if FindAppModeBrowser(TargetURL, BCmd) then
@@ -87,8 +91,12 @@ begin
       end
       else
       begin
+        ProfileDir := GetTempDir(False) + 'bv_desktop_profile';
+        ForceDirectories(ProfileDir);
         Proc.Parameters.Add('--app=' + TargetURL);
         Proc.Parameters.Add('--window-size=' + IntToStr(DEFAULT_WIDTH) + ',' + IntToStr(DEFAULT_HEIGHT));
+        Proc.Parameters.Add('--user-data-dir=' + ProfileDir);
+        Proc.Parameters.Add('--no-first-run');
       end;
       Proc.Options := [poWaitOnExit];
       Proc.Execute;
@@ -99,6 +107,19 @@ begin
 end;
 
 begin
+  {$IFDEF MSWINDOWS}
+  if not IsConsole then
+  begin
+    try
+      AssignFile(Output, 'NUL');
+      Rewrite(Output);
+      AssignFile(ErrOutput, 'NUL');
+      Rewrite(ErrOutput);
+    except
+    end;
+  end;
+  {$ENDIF}
+
   WriteLn('====================================================');
   WriteLn('  ' + APP_TITLE + ' - BlaiseVue 3.5 Desktop');
   WriteLn('====================================================');
@@ -112,8 +133,12 @@ begin
   IndexPath := AssetsDir + DirectorySeparator + 'index.html';
   if not FileExists(IndexPath) then
   begin
-    WriteLn('[ERROR] Assets not found: ', IndexPath);
-    WriteLn('Please run "bv desktop sync" to copy frontend assets.');
+    {$IFDEF MSWINDOWS}
+    if not IsConsole then
+      MessageBoxA(0, PChar('Assets not found: ' + IndexPath + #13#10 + 'Please run "bv desktop sync" first.'), PChar(APP_TITLE), MB_ICONERROR or MB_OK)
+    else
+    {$ENDIF}
+      WriteLn('[ERROR] Assets not found: ', IndexPath);
     Halt(1);
   end;
 

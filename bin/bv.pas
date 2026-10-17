@@ -3394,6 +3394,20 @@ begin
         '  webui_bind(AWindow, ''bv_get_system_info'', @HandleGetSystemInfo);' + #10 +
         'end;' + #10 +
         '' + #10 +
+        'initialization' + #10 +
+        '  {$IFDEF MSWINDOWS}' + #10 +
+        '  if not IsConsole then' + #10 +
+        '  begin' + #10 +
+        '    try' + #10 +
+        '      AssignFile(Output, ''NUL'');' + #10 +
+        '      Rewrite(Output);' + #10 +
+        '      AssignFile(ErrOutput, ''NUL'');' + #10 +
+        '      Rewrite(ErrOutput);' + #10 +
+        '    except' + #10 +
+        '    end;' + #10 +
+        '  end;' + #10 +
+        '  {$ENDIF}' + #10 +
+        '' + #10 +
         'end.' + #10;
       WriteStringToFile(BridgeFile, BridgeContent);
       WriteLn('  [+] Created desktop/uDesktopBridge.pas (Native Desktop Bridge)');
@@ -3415,6 +3429,9 @@ begin
         'uses' + #10 +
         '  {$IFDEF UNIX}' + #10 +
         '  cthreads,' + #10 +
+        '  {$ENDIF}' + #10 +
+        '  {$IFDEF MSWINDOWS}' + #10 +
+        '  Windows,' + #10 +
         '  {$ENDIF}' + #10 +
         '  SysUtils, Classes, Process, webui, uDesktopBridge;' + #10 +
         '' + #10 +
@@ -3478,6 +3495,7 @@ begin
         'var' + #10 +
         '  BCmd: string;' + #10 +
         '  Proc: TProcess;' + #10 +
+        '  ProfileDir: string;' + #10 +
         'begin' + #10 +
         '  WriteLn(''[BlaiseVue Desktop] Launching native Browser App mode...'');' + #10 +
         '  if FindAppModeBrowser(TargetURL, BCmd) then' + #10 +
@@ -3494,8 +3512,12 @@ begin
         '      end' + #10 +
         '      else' + #10 +
         '      begin' + #10 +
+        '        ProfileDir := GetTempDir(False) + ''bv_desktop_profile'';' + #10 +
+        '        ForceDirectories(ProfileDir);' + #10 +
         '        Proc.Parameters.Add(''--app='' + TargetURL);' + #10 +
         '        Proc.Parameters.Add(''--window-size='' + IntToStr(DEFAULT_WIDTH) + '','' + IntToStr(DEFAULT_HEIGHT));' + #10 +
+        '        Proc.Parameters.Add(''--user-data-dir='' + ProfileDir);' + #10 +
+        '        Proc.Parameters.Add(''--no-first-run'');' + #10 +
         '      end;' + #10 +
         '      Proc.Options := [poWaitOnExit];' + #10 +
         '      Proc.Execute;' + #10 +
@@ -3506,6 +3528,19 @@ begin
         'end;' + #10 +
         '' + #10 +
         'begin' + #10 +
+        '  {$IFDEF MSWINDOWS}' + #10 +
+        '  if not IsConsole then' + #10 +
+        '  begin' + #10 +
+        '    try' + #10 +
+        '      AssignFile(Output, ''NUL'');' + #10 +
+        '      Rewrite(Output);' + #10 +
+        '      AssignFile(ErrOutput, ''NUL'');' + #10 +
+        '      Rewrite(ErrOutput);' + #10 +
+        '    except' + #10 +
+        '    end;' + #10 +
+        '  end;' + #10 +
+        '  {$ENDIF}' + #10 +
+        '' + #10 +
         '  WriteLn(''===================================================='');' + #10 +
         '  WriteLn(''  '' + APP_TITLE + '' - BlaiseVue 3.5 Desktop'');' + #10 +
         '  WriteLn(''===================================================='');' + #10 +
@@ -3519,8 +3554,12 @@ begin
         '  IndexPath := AssetsDir + DirectorySeparator + ''index.html'';' + #10 +
         '  if not FileExists(IndexPath) then' + #10 +
         '  begin' + #10 +
-        '    WriteLn(''[ERROR] Assets not found: '', IndexPath);' + #10 +
-        '    WriteLn(''Please run "bv desktop sync" to copy frontend assets.'');' + #10 +
+        '    {$IFDEF MSWINDOWS}' + #10 +
+        '    if not IsConsole then' + #10 +
+        '      MessageBoxA(0, PChar(''Assets not found: '' + IndexPath + #13#10 + ''Please run "bv desktop sync" first.''), PChar(APP_TITLE), MB_ICONERROR or MB_OK)' + #10 +
+        '    else' + #10 +
+        '    {$ENDIF}' + #10 +
+        '      WriteLn(''[ERROR] Assets not found: '', IndexPath);' + #10 +
         '    Halt(1);' + #10 +
         '  end;' + #10 +
         '' + #10 +
