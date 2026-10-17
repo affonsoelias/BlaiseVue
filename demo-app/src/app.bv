@@ -10,7 +10,7 @@
         <a href="#/bootstrap">{{ $t('nav.blaiseui') }}</a>
         <a href="#/charts" style="background: #42b883; color: white;">{{ $t('nav.charts') }}</a>
         <a href="#/showcase" style="background: #3498db; color: white;">{{ $t('nav.showcase') }}</a>
-        <a href="docs/index.html" target="_blank" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>
+        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>
       </div>
       <div class="lang-switcher">
         <button class="lang-btn" :class="{ 'active-lang': $i18n.locale === 'pt' }" @click="$setLocale('pt')">🇧🇷 PT</button>
@@ -186,7 +186,7 @@
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }
   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   .brand { color: #42b883; font-size: 20px; font-weight: 700; }
-  .nav-links { display: flex; gap: 12px; align-items: center; }
+  .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }
   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }

@@ -2395,6 +2395,9 @@ begin
      CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
   end;
 
+  // Generates component documentation automatically into dist/docs/
+  CmdDoc(False);
+
   WriteLn('');
   WriteLn('Production build generated in /dist');
   WriteLn('Main file: main.' + Hash + '.js');
@@ -2665,19 +2668,30 @@ begin
       '    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--bv-border); }'#10 +
       '    th { background: rgba(0,0,0,0.02); font-weight: 600; }'#10 +
       '    pre { background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; }'#10 +
+      '    @media (max-width: 768px) {'#10 +
+      '      body { flex-direction: column; height: 100vh; overflow: auto; }'#10 +
+      '      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--bv-border); max-height: 220px; flex-shrink: 0; }'#10 +
+      '      .main-view { padding: 16px; }'#10 +
+      '    }'#10 +
       '  </style>'#10 +
       '</head>'#10 +
       '<body>'#10 +
       '  <div class="sidebar">'#10 +
       '    <div class="sidebar-header">'#10 +
-      '      <div class="brand"><span>🛡️</span> BlaiseVue 3.0 Docs</div>'#10 +
+      '      <div style="display:flex; justify-content:space-between; align-items:center;">'#10 +
+      '        <div class="brand"><span>🛡️</span> BlaiseVue Docs</div>'#10 +
+      '        <a href="../index.html" style="color:var(--bv-primary); font-size:13px; text-decoration:none; font-weight:bold;">← App</a>'#10 +
+      '      </div>'#10 +
       '      <div class="search-box"><input type="text" id="searchInput" placeholder="Filter components..."></div>'#10 +
       '    </div>'#10 +
       '    <div class="comp-list" id="compList"></div>'#10 +
       '  </div>'#10 +
       '  <div class="main-view">'#10 +
       '    <div class="header-bar">'#10 +
-      '      <div><span id="activeTag" class="tag-badge">&lt;component&gt;</span></div>'#10 +
+      '      <div style="display:flex; align-items:center; gap:8px;">'#10 +
+      '        <a href="../index.html" class="theme-btn" style="text-decoration:none; font-weight:bold; color:var(--bv-primary); display:inline-flex; align-items:center;">← Voltar ao App</a>'#10 +
+      '        <span id="activeTag" class="tag-badge">&lt;component&gt;</span>'#10 +
+      '      </div>'#10 +
       '      <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark</button>'#10 +
       '    </div>'#10 +
       '    <div class="card">'#10 +

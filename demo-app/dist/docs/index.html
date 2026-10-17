@@ -28,19 +28,30 @@
     th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--bv-border); }
     th { background: rgba(0,0,0,0.02); font-weight: 600; }
     pre { background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: 100vh; overflow: auto; }
+      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--bv-border); max-height: 220px; flex-shrink: 0; }
+      .main-view { padding: 16px; }
+    }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <div class="sidebar-header">
-      <div class="brand"><span>🛡️</span> BlaiseVue 3.0 Docs</div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="brand"><span>🛡️</span> BlaiseVue Docs</div>
+        <a href="../index.html" style="color:var(--bv-primary); font-size:13px; text-decoration:none; font-weight:bold;">← App</a>
+      </div>
       <div class="search-box"><input type="text" id="searchInput" placeholder="Filter components..."></div>
     </div>
     <div class="comp-list" id="compList"></div>
   </div>
   <div class="main-view">
     <div class="header-bar">
-      <div><span id="activeTag" class="tag-badge">&lt;component&gt;</span></div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="../index.html" class="theme-btn" style="text-decoration:none; font-weight:bold; color:var(--bv-primary); display:inline-flex; align-items:center;">← Voltar ao App</a>
+        <span id="activeTag" class="tag-badge">&lt;component&gt;</span>
+      </div>
       <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark</button>
     </div>
     <div class="card">
