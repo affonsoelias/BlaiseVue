@@ -3028,26 +3028,145 @@ end;
 procedure CmdDesktop(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
   DesktopDir, AssetsDir, BinDir, UnitsDir: string;
-  PlatformName, AltPlatformName, ExeDir: string;
-  PlatformBinDir, PlatformUnitsDir: string;
+  HostPlatform, TargetPlatform, AltPlatformName, ExeDir: string;
   CleanName, DisplayName: string;
   LprFile, LpiFile, WebUIFile, BridgeFile, ReadmeFile: string;
   LprContent, LpiContent, WebUIContent, BridgeContent, ReadmeContent: string;
   i: Integer;
   SearchRec: TSearchRec;
   FoundLpr: string;
-  ExeExt: string;
-  TargetExe: string;
-  IsRelease: Boolean;
+  TargetExe, TargetBin, TargetExt: string;
+  IsRelease, IsAllTargets: Boolean;
+
+  procedure ParseArg(const A: string);
+  var
+    S: string;
+  begin
+    S := LowerCase(A);
+    if S = '' then Exit;
+    if (S = '--release') or (S = '-r') or (S = 'release') then
+      IsRelease := True
+    else if (S = '--debug') or (S = '-d') or (S = 'debug') then
+      IsRelease := False
+    else if (S = 'windows') or (S = 'win') or (S = 'win64') or (S = '--windows') or (S = '--target=windows') then
+      TargetPlatform := 'windows'
+    else if (S = 'linux') or (S = 'linux64') or (S = '--linux') or (S = '--target=linux') then
+      TargetPlatform := 'linux'
+    else if (S = 'macos') or (S = 'mac') or (S = 'darwin') or (S = '--macos') or (S = '--target=macos') or (S = '--target=darwin') then
+      TargetPlatform := 'macos'
+    else if (S = 'all') or (S = '--all') or (S = '--target=all') then
+      IsAllTargets := True
+    else if (DisplayName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
+      DisplayName := A;
+  end;
+
+  function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
+  var
+    TBin, TUnits: string;
+    TExt, TExe: string;
+    FpcCmd: string;
+    IsNative: Boolean;
+  begin
+    Result := False;
+    TBin := BinDir + DirectorySeparator + ATarget;
+    TUnits := UnitsDir + DirectorySeparator + ATarget;
+    ForceDir(TBin);
+    ForceDir(TUnits);
+
+    if ATarget = 'windows' then
+      TExt := '.exe'
+    else
+      TExt := '';
+
+    TExe := TBin + DirectorySeparator + CleanName + TExt;
+    IsNative := (ATarget = HostPlatform);
+
+    if ARelease then
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode for ' + ATarget + ' (GUI Application - No Console Window)...')
+    else
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode for ' + ATarget + ' (Console Window Active for Diagnostics)...');
+
+    FpcCmd := 'fpc ';
+    if ARelease then
+    begin
+      FpcCmd := FpcCmd + '-O3 -Xs -dRELEASE ';
+      if ATarget = 'windows' then
+        FpcCmd := FpcCmd + '-WG ';
+    end
+    else
+    begin
+      FpcCmd := FpcCmd + '-O2 -g -gl -dDEBUG ';
+    end;
+
+    if not IsNative then
+    begin
+      if ATarget = 'windows' then
+        FpcCmd := FpcCmd + '-Twin64 -Px86_64 '
+      else if ATarget = 'linux' then
+        FpcCmd := FpcCmd + '-Tlinux -Px86_64 '
+      else if ATarget = 'macos' then
+        FpcCmd := FpcCmd + '-Tdarwin -Px86_64 ';
+    end;
+
+    {$IFDEF WINDOWS}
+    FpcCmd := FpcCmd + '-FEbin\' + ATarget + ' -FUunits\' + ATarget + ' ' + FoundLpr;
+    ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && ' + FpcCmd);
+    {$ELSE}
+    FpcCmd := FpcCmd + '-FEbin/' + ATarget + ' -FUunits/' + ATarget + ' ' + FoundLpr;
+    ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && ' + FpcCmd + '"');
+    {$ENDIF}
+
+    if FileExists(TExe) then
+    begin
+      Result := True;
+      if ARelease then
+        WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + ATarget + '/' + CleanName + TExt)
+      else
+      begin
+        WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + ATarget + '/' + CleanName + TExt);
+        WriteLn('  [TIP] For end users, run "bv desktop build ' + ATarget + ' --release" to compile a clean GUI application without console.');
+      end;
+    end
+    else
+    begin
+      WriteLn('  [WARNING] Binary not generated at expected location: ' + TExe);
+      if not IsNative then
+      begin
+        WriteLn('  [INFO] Note: Cross-compiling for ' + ATarget + ' from ' + HostPlatform + ' requires FPC target units.');
+        WriteLn('         You can compile natively on ' + ATarget + ' (or WSL/Docker for Linux) using "bv desktop build".');
+      end;
+    end;
+  end;
+
 begin
   WriteLn('=== BlaiseVue 3.5 Desktop (WebUI & Lazarus IDE) ===');
 
-  IsRelease := (LowerCase(Arg1) = '--release') or (LowerCase(Arg1) = '-r') or (LowerCase(Arg1) = 'release') or
-               (LowerCase(Arg2) = '--release') or (LowerCase(Arg2) = '-r') or (LowerCase(Arg2) = 'release');
+  {$IFDEF MSWINDOWS}
+  HostPlatform := 'windows';
+  AltPlatformName := 'win64';
+  {$ELSE}
+    {$IFDEF DARWIN}
+    HostPlatform := 'macos';
+    AltPlatformName := 'darwin';
+    {$ELSE}
+    HostPlatform := 'linux';
+    AltPlatformName := 'linux64';
+    {$ENDIF}
+  {$ENDIF}
 
-  DisplayName := Arg1;
-  if IsRelease or (LowerCase(DisplayName) = '--debug') or (LowerCase(DisplayName) = '-d') then
-    DisplayName := '';
+  IsRelease := False;
+  IsAllTargets := False;
+  TargetPlatform := '';
+  DisplayName := '';
+
+  ParseArg(Arg1);
+  ParseArg(Arg2);
+  for i := 3 to ParamCount do
+    ParseArg(ParamStr(i));
+
+  if TargetPlatform = '' then
+    TargetPlatform := HostPlatform;
+
   if DisplayName = '' then DisplayName := 'BlaiseVue Desktop';
 
   CleanName := '';
@@ -3065,25 +3184,6 @@ begin
   AssetsDir := DesktopDir + DirectorySeparator + 'assets';
   BinDir := DesktopDir + DirectorySeparator + 'bin';
   UnitsDir := DesktopDir + DirectorySeparator + 'units';
-
-  {$IFDEF MSWINDOWS}
-  PlatformName := 'windows';
-  AltPlatformName := 'win64';
-  ExeExt := '.exe';
-  {$ELSE}
-    {$IFDEF DARWIN}
-    PlatformName := 'macos';
-    AltPlatformName := 'darwin';
-    ExeExt := '';
-    {$ELSE}
-    PlatformName := 'linux';
-    AltPlatformName := 'linux64';
-    ExeExt := '';
-    {$ENDIF}
-  {$ENDIF}
-
-  PlatformBinDir := BinDir + DirectorySeparator + PlatformName;
-  PlatformUnitsDir := UnitsDir + DirectorySeparator + PlatformName;
 
   if (SubCmd = 'init') then
   begin
@@ -3662,11 +3762,11 @@ begin
         '        <CompilerOptions>' + #10 +
         '          <Version Value="11"/>' + #10 +
         '          <Target>' + #10 +
-        '            <Filename Value="bin/' + PlatformName + '/' + CleanName + '"/>' + #10 +
+        '            <Filename Value="bin/' + HostPlatform + '/' + CleanName + '"/>' + #10 +
         '          </Target>' + #10 +
         '          <SearchPaths>' + #10 +
         '            <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
-        '            <UnitOutputDirectory Value="units/' + PlatformName + '"/>' + #10 +
+        '            <UnitOutputDirectory Value="units/' + HostPlatform + '"/>' + #10 +
         '          </SearchPaths>' + #10 +
         '          <CodeGeneration>' + #10 +
         '            <Optimizations>' + #10 +
@@ -3714,11 +3814,11 @@ begin
         '  <CompilerOptions>' + #10 +
         '    <Version Value="11"/>' + #10 +
         '    <Target>' + #10 +
-        '      <Filename Value="bin/' + PlatformName + '/' + CleanName + '"/>' + #10 +
+        '      <Filename Value="bin/' + HostPlatform + '/' + CleanName + '"/>' + #10 +
         '    </Target>' + #10 +
         '    <SearchPaths>' + #10 +
         '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
-        '      <UnitOutputDirectory Value="units/' + PlatformName + '"/>' + #10 +
+        '      <UnitOutputDirectory Value="units/' + HostPlatform + '"/>' + #10 +
         '    </SearchPaths>' + #10 +
         '    <CodeGeneration>' + #10 +
         '      <Optimizations>' + #10 +
@@ -3755,13 +3855,22 @@ begin
         '# 1. Sync frontend to desktop assets' + #10 +
         'bv desktop sync' + #10 +
         '' + #10 +
-        '# 2. Build in Debug mode (with console for logs & diagnostics)' + #10 +
+        '# 2. Build in Debug mode (default: host OS, with console for logs & diagnostics)' + #10 +
         'bv desktop build' + #10 +
+        'bv desktop build windows' + #10 +
+        'bv desktop build linux' + #10 +
         'bv desktop run' + #10 +
         '' + #10 +
         '# 3. Build in Release mode (pure GUI for end users - NO console window)' + #10 +
         'bv desktop build --release' + #10 +
-        'bv desktop run --release' + #10 +
+        'bv desktop build windows --release' + #10 +
+        'bv desktop build linux --release' + #10 +
+        'bv desktop build macos --release' + #10 +
+        'bv desktop run windows --release' + #10 +
+        '' + #10 +
+        '# 4. Build for all platforms at once' + #10 +
+        'bv desktop build all' + #10 +
+        'bv desktop build all --release' + #10 +
         '```' + #10 +
         '' + #10 +
         '## Lazarus IDE (F9)' + #10 +
@@ -3805,47 +3914,17 @@ begin
     end;
 
     CleanName := ChangeFileExt(FoundLpr, '');
-    ForceDir(PlatformBinDir);
-    ForceDir(PlatformUnitsDir);
 
-    if IsRelease then
+    if IsAllTargets then
     begin
-      WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode for ' + PlatformName + ' (GUI Application - No Console Window)...');
-      {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O3 -WG -Xs -dRELEASE -FEbin\' + PlatformName + ' -FUunits\' + PlatformName + ' ' + FoundLpr);
-      {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O3 -Xs -dRELEASE -FEbin/' + PlatformName + ' -FUunits/' + PlatformName + ' ' + FoundLpr + '"');
-      {$ENDIF}
+      WriteLn('Building native Desktop application for ALL platforms (windows, linux, macos)...');
+      BuildSingleTarget('windows', IsRelease);
+      BuildSingleTarget('linux', IsRelease);
+      BuildSingleTarget('macos', IsRelease);
     end
     else
     begin
-      WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode for ' + PlatformName + ' (Console Window Active for Diagnostics)...');
-      {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -g -gl -dDEBUG -FEbin\' + PlatformName + ' -FUunits\' + PlatformName + ' ' + FoundLpr);
-      {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -g -gl -dDEBUG -FEbin/' + PlatformName + ' -FUunits/' + PlatformName + ' ' + FoundLpr + '"');
-      {$ENDIF}
-    end;
-
-    TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
-    if not FileExists(TargetExe) and (AltPlatformName <> '') then
-      TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
-    if not FileExists(TargetExe) then
-      TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
-
-    if FileExists(TargetExe) then
-    begin
-      if IsRelease then
-        WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + PlatformName + '/' + CleanName + ExeExt)
-      else
-      begin
-        WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + PlatformName + '/' + CleanName + ExeExt);
-        WriteLn('  [TIP] For end users, run "bv desktop build --release" to compile a clean GUI application without console.');
-      end;
-    end
-    else
-    begin
-      WriteLn('  [WARNING] Binary not found at expected location: ' + TargetExe);
+      BuildSingleTarget(TargetPlatform, IsRelease);
     end;
   end
   else if (SubCmd = 'run') then
@@ -3869,39 +3948,52 @@ begin
     end;
 
     CleanName := ChangeFileExt(FoundLpr, '');
-    TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
+    if TargetPlatform = 'all' then TargetPlatform := HostPlatform;
+
+    if TargetPlatform = 'windows' then TargetExt := '.exe' else TargetExt := '';
+    TargetBin := BinDir + DirectorySeparator + TargetPlatform;
+    TargetExe := TargetBin + DirectorySeparator + CleanName + TargetExt;
+
     if not FileExists(TargetExe) and (AltPlatformName <> '') then
-      TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
+      TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + TargetExt;
     if not FileExists(TargetExe) then
-      TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+      TargetExe := BinDir + DirectorySeparator + CleanName + TargetExt;
 
     if not FileExists(TargetExe) or IsRelease then
     begin
       if IsRelease then
-        WriteLn('Building desktop app in RELEASE mode for ' + PlatformName + '...')
+        WriteLn('Building desktop app in RELEASE mode for ' + TargetPlatform + '...')
       else
-        WriteLn('Target binary not found. Building desktop app in DEBUG mode for ' + PlatformName + '...');
-      CmdDesktop('build', Arg1, Arg2);
-      TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
-      if not FileExists(TargetExe) and (AltPlatformName <> '') then
-        TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
-      if not FileExists(TargetExe) then
-        TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+        WriteLn('Target binary not found. Building desktop app in DEBUG mode for ' + TargetPlatform + '...');
+      BuildSingleTarget(TargetPlatform, IsRelease);
+      TargetExe := TargetBin + DirectorySeparator + CleanName + TargetExt;
     end;
 
     if FileExists(TargetExe) then
     begin
-      ExeDir := ExtractFilePath(TargetExe);
-      if IsRelease then
-        WriteLn('Launching native desktop app in RELEASE mode (No Console): ' + TargetExe)
+      if TargetPlatform <> HostPlatform then
+      begin
+        WriteLn('[i] Target platform is ' + TargetPlatform + ', but current host machine is ' + HostPlatform + '.');
+        WriteLn('[i] Binary ready at: ' + TargetExe);
+        if (HostPlatform = 'windows') and (TargetPlatform = 'linux') then
+          WriteLn('[TIP] To test on Windows via WSL, run: wsl ./desktop/bin/linux/' + CleanName)
+        else
+          WriteLn('[TIP] To run this binary, execute it natively on a ' + TargetPlatform + ' system.');
+      end
       else
-        WriteLn('Launching native desktop app in DEBUG mode (Live Console): ' + TargetExe);
+      begin
+        ExeDir := ExtractFilePath(TargetExe);
+        if IsRelease then
+          WriteLn('Launching native desktop app in RELEASE mode (No Console): ' + TargetExe)
+        else
+          WriteLn('Launching native desktop app in DEBUG mode (Live Console): ' + TargetExe);
 
-      {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + ExeDir + '" && "' + TargetExe + '"');
-      {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + ExeDir + ' && ./' + ExtractFileName(TargetExe) + '"');
-      {$ENDIF}
+        {$IFDEF WINDOWS}
+        ExecuteProcess('cmd', '/c cd /d "' + ExeDir + '" && "' + TargetExe + '"');
+        {$ELSE}
+        ExecuteProcess('sh', '-c "cd ' + ExeDir + ' && ./' + ExtractFileName(TargetExe) + '"');
+        {$ENDIF}
+      end;
     end
     else
     begin
@@ -3911,7 +4003,8 @@ begin
   end
   else
   begin
-    WriteLn('Usage: bv desktop <init [name]|sync|build [--release]|run [--release]>');
+    WriteLn('Usage: bv desktop <init [name]|sync|build [target] [--release]|run [target] [--release]>');
+    WriteLn('       Targets: windows | linux | macos | all (default: host OS)');
   end;
 end;
 
@@ -3961,8 +4054,8 @@ begin
     WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
     WriteLn('    bv desktop init [name] Scaffolds WebUI & Lazarus desktop project in desktop/');
     WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
-    WriteLn('    bv desktop build [--release] Compiles native binary (Debug console or Release GUI)');
-    WriteLn('    bv desktop run [--release]   Syncs, builds and launches the desktop app');
+    WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
+    WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -4163,7 +4256,8 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv desktop <init [name]|sync|build [--release]|run [--release]>');
+      WriteLn('Usage: bv desktop <init [name]|sync|build [target] [--release]|run [target] [--release]>');
+      WriteLn('       Targets: windows | linux | macos | all (default: host OS)');
       Halt(1);
     end;
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));

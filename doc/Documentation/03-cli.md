@@ -107,17 +107,23 @@ Gerencia o ciclo de desenvolvimento móvel com Capacitor:
 
 ### 6. `bv desktop` (Fase 3: Plataforma Desktop Multiplataforma WebUI & Lazarus IDE)
 Gerencia o ciclo de desenvolvimento desktop nativo com Free Pascal e WebUI:
-- **`bv desktop init [name]`**: Gera a estrutura de projeto Lazarus (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `README.md`) na pasta `desktop/`.
+- **`bv desktop init [name]`**: Gera a estrutura de projeto Lazarus (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) na pasta `desktop/`.
 - **`bv desktop sync`**: Sincroniza o build de produção (`dist/`) com os assets da aplicação desktop (`desktop/assets/`).
-- **`bv desktop build`**: Compila o binário nativo em **Modo Debug** com janela de console ativa para diagnósticos e logs do sistema.
-- **`bv desktop build --release`**: Compila o binário nativo em **Modo Release** (`-WG`, `-O3`, `{$APPTYPE GUI}`), sem exibir janela de console, gerando um executável limpo e profissional para o usuário final.
-- **`bv desktop run`**: Sincroniza, compila e inicializa a aplicação desktop em modo de depuração (com janela de console).
-- **`bv desktop run --release`**: Sincroniza, compila e inicializa a aplicação desktop em modo produção (sem janela de console).
+- **`bv desktop build [target] [--release]`**: Compila o binário nativo para uma plataforma específica (`windows`, `linux`, `macos` ou `all`). Se o alvo não for informado, usa o SO atual.
+  - Ex: `bv desktop build windows` (Modo Debug no Windows com console ativo)
+  - Ex: `bv desktop build linux --release` (Modo Release para Linux em `desktop/bin/linux/`)
+  - Ex: `bv desktop build all --release` (Compila todas as plataformas em modo Release)
+- **`bv desktop run [target] [--release]`**: Sincroniza, compila e inicializa a aplicação desktop.
+  - Ex: `bv desktop run windows` (Inicia no Windows com console de logs para depuração)
+  - Ex: `bv desktop run windows --release` (Inicia sem janela de console para usuário final)
 
-| Modo Desktop | Comando CLI | Modo Lazarus IDE | Comportamento da Janela | Finalidade |
+| Modo Desktop | Exemplo CLI | Modo Lazarus IDE | Comportamento da Janela | Diretório de Saída |
 |---|---|---|---|---|
-| **Debug** | `bv desktop run` | `Debug` | Janela GUI + Console de Logs | Desenvolvimento e depuração de chamadas RPC e IPC |
-| **Release** | `bv desktop run --release` | `Release` | Apenas Janela GUI (Sem Console) | Distribuição para usuário final (executável limpo) |
+| **Debug (Windows)** | `bv desktop run windows` | `Debug` | Janela GUI + Console de Logs | `desktop/bin/windows/` |
+| **Release (Windows)** | `bv desktop run windows --release` | `Release` | Janela GUI (Sem Console) | `desktop/bin/windows/` |
+| **Debug (Linux)** | `bv desktop build linux` | `Debug` | Binário ELF nativo com logs | `desktop/bin/linux/` |
+| **Release (Linux)** | `bv desktop build linux --release` | `Release` | Binário ELF otimizado | `desktop/bin/linux/` |
+| **All Platforms** | `bv desktop build all --release` | - | Binários para Win, Linux e Mac | `desktop/bin/<plataforma>/` |
 
 Consulte o capítulo detalhado em **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
 

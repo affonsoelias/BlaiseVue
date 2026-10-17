@@ -20,13 +20,22 @@ Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **We
 # 1. Sync frontend to desktop assets
 bv desktop sync
 
-# 2. Build in Debug mode (with console for logs & diagnostics)
+# 2. Build in Debug mode (default: host OS, with console for logs & diagnostics)
 bv desktop build
+bv desktop build windows
+bv desktop build linux
 bv desktop run
 
 # 3. Build in Release mode (pure GUI for end users - NO console window)
 bv desktop build --release
-bv desktop run --release
+bv desktop build windows --release
+bv desktop build linux --release
+bv desktop build macos --release
+bv desktop run windows --release
+
+# 4. Build for all platforms at once
+bv desktop build all
+bv desktop build all --release
 ```
 
 ## Lazarus IDE (F9)

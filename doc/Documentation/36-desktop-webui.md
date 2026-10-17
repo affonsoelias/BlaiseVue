@@ -36,27 +36,40 @@ Essa arquitetura viabiliza binários desktop ultraleves (**< 10 MB** em disco, *
 ## 🛠️ Comandos da CLI (`bv desktop`)
 
 ```bash
-# 1. Scaffolding do projeto desktop completo (Lazarus .lpi, .lpr, bridges, assets)
+# 1. Scaffolding do projeto desktop completo (Lazarus .lpi, .lpr, bridges, assets, bin/, units/)
 bv desktop init [NomeDoApp]
 
 # 2. Sincroniza o build de produção (dist/) com a pasta desktop/assets/
 bv desktop sync
 
 # 3. Compilação em Modo DEBUG (com janela de console para diagnósticos e logs):
-bv desktop build
-bv desktop run
+bv desktop build               # Compila para o SO atual (ex: Windows -> desktop/bin/windows/)
+bv desktop build windows       # Compila especificamente para Windows
+bv desktop build linux         # Compila especificamente para Linux
+bv desktop run                 # Executa o binário do SO atual em modo depuração
 
 # 4. Compilação em Modo RELEASE (para o Usuário Final - 100% GUI, sem janela de console):
-bv desktop build --release
-bv desktop run --release
+bv desktop build --release             # Compila para o SO atual em modo Release
+bv desktop build windows --release     # Compila para Windows em desktop/bin/windows/
+bv desktop build linux --release       # Compila para Linux em desktop/bin/linux/
+bv desktop build macos --release       # Compila para macOS em desktop/bin/macos/
+bv desktop run windows --release       # Executa no Windows sem janela de console
+
+# 5. Compilação para TODAS as Plataformas de uma só vez:
+bv desktop build all                   # Compila Windows, Linux e macOS (Debug)
+bv desktop build all --release         # Compila Windows, Linux e macOS (Release)
 ```
 
-### ⚙️ Modos de Compilação: Debug vs. Release
+### ⚙️ Modos de Compilação & Plataformas
 
-| Modo | Comando CLI | Modo Lazarus IDE | Comportamento da Janela | Finalidade |
+| Plataforma / Modo | Comando CLI | Modo Lazarus IDE | Comportamento da Janela | Binário Gerado |
 |---|---|---|---|---|
-| **Debug** | `bv desktop run` | `Debug` | **Janela GUI + Console de Logs** | Desenvolvimento, depuração de RPC, logs do WebUI e do sistema. |
-| **Release** | `bv desktop run --release` | `Release` | **Apenas Janela GUI (Sem Console)** | Distribuição para usuário final, executável limpo e profissional. |
+| **Windows Debug** | `bv desktop run windows` | `Debug` | **Janela GUI + Console de Logs** | `desktop/bin/windows/<App>.exe` |
+| **Windows Release** | `bv desktop run windows --release` | `Release` | **Apenas Janela GUI (Sem Console)** | `desktop/bin/windows/<App>.exe` |
+| **Linux Debug** | `bv desktop build linux` | `Debug` | Executável ELF nativo + Logs | `desktop/bin/linux/<App>` |
+| **Linux Release** | `bv desktop build linux --release` | `Release` | Executável ELF otimizado | `desktop/bin/linux/<App>` |
+| **macOS Release** | `bv desktop build macos --release` | `Release` | Executável Mach-O / App Bundle | `desktop/bin/macos/<App>` |
+| **Todas as Plataformas** | `bv desktop build all --release` | - | Gera binários para Win, Linux e macOS | `desktop/bin/<plataforma>/` |
 
 ---
 
