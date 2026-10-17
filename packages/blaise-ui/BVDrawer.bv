@@ -1,7 +1,7 @@
 <template>
-  <div class="bui-drawer-wrapper" :class="{ 'is-open': isOpen }">
+  <div :class="'bui-drawer-wrapper' + (isOpen ? ' is-open' : '')">
     <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>
-    <aside :class="'bui-drawer bui-drawer-' + position + (isOpen ? ' is-open' : '')" :style="'width: ' + width">
+    <aside :class="'bui-drawer bui-drawer-' + (position || 'left') + (isOpen ? ' is-open' : '')" :style="'width: ' + (width || '280px')">
       <div class="bui-drawer-header">
         <slot name="header">
           <strong class="bui-drawer-title">{{ title }}</strong>
@@ -41,6 +41,10 @@
 
   data:
     isOpen: boolean = false;
+    position: string = 'left';
+    width: string = '280px';
+    overlay: boolean = true;
+    hasFooter: boolean = false;
 
   created:
     begin
