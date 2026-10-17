@@ -3058,9 +3058,9 @@ var
 
     WriteLn('  [+] Starting Android Emulator: ' + TargetAVD + ' ...');
     {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c start "" "' + EmulatorExe + '" -avd ' + TargetAVD);
+    ExecuteProcess('cmd', '/c set "PATH=' + ExtractFileDir(FindAndroidADB) + ';%PATH%" && start "" "' + EmulatorExe + '" -avd ' + TargetAVD);
     {$ELSE}
-    ExecuteProcess('sh', '-c "' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
+    ExecuteProcess('sh', '-c "export PATH=\"' + ExtractFileDir(FindAndroidADB) + ':$PATH\" && ' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
     {$ENDIF}
     Result := True;
   end;
@@ -3194,7 +3194,7 @@ var
 
   procedure RunTarget(const ATarget: string);
   var
-    TargetApk, TBinDir, AdbExe, AdbOutput: string;
+    TargetApk, TBinDir, AdbExe, AdbOutput, AdbTarget: string;
   begin
     if ATarget = 'android' then
     begin
@@ -3211,31 +3211,48 @@ var
       end;
 
       AdbExe := FindAndroidADB;
+      AdbTarget := '';
 
       if UseEmulator then
       begin
+        AdbTarget := '-e ';
         AdbOutput := '';
         RunCommand(AdbExe, ['devices'], AdbOutput);
         if Pos('emulator-', AdbOutput) = 0 then
         begin
           WriteLn('  [+] No active emulator detected in ADB. Launching emulator...');
           StartEmulator(SelectedAVD);
-          WriteLn('  [+] Waiting for emulator to boot (adb wait-for-device)...');
+          WriteLn('  [+] Waiting for emulator to boot (adb -e wait-for-device)...');
           {$IFDEF WINDOWS}
-          ExecuteProcess('cmd', '/c "' + AdbExe + '" wait-for-device');
+          ExecuteProcess('cmd', '/c ' + AdbExe + ' -e wait-for-device');
           {$ELSE}
-          ExecuteProcess('sh', '-c "' + AdbExe + ' wait-for-device"');
+          ExecuteProcess('sh', '-c "' + AdbExe + ' -e wait-for-device"');
           {$ENDIF}
+          WriteLn('  [+] Waiting for emulator system to finalize boot...');
+          Sleep(4000);
         end;
+      end
+      else
+      begin
+        AdbOutput := '';
+        RunCommand(AdbExe, ['devices'], AdbOutput);
+        if (Pos('emulator-', AdbOutput) > 0) and (Pos(#10, Trim(AdbOutput)) > 0) then
+          AdbTarget := '-d ';
       end;
 
       if FileExists(TargetApk) then
       begin
-        WriteLn('Installing and running APK on connected Android device/emulator via ADB: ' + TargetApk);
+        if UseEmulator then
+          WriteLn('Installing and running APK on Android Emulator via ADB: ' + TargetApk)
+        else
+          WriteLn('Installing and running APK on Android device via ADB: ' + TargetApk);
+
         {$IFDEF WINDOWS}
-        ExecuteProcess('cmd', '/c "' + AdbExe + '" install -r "' + TargetApk + '" && "' + AdbExe + '" shell am start -n ' + ActualAppId + '/.MainActivity');
+        ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'install -r "' + TargetApk + '"');
+        ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity');
         {$ELSE}
-        ExecuteProcess('sh', '-c "' + AdbExe + ' install -r \"' + TargetApk + '\" && ' + AdbExe + ' shell am start -n ' + ActualAppId + '/.MainActivity"');
+        ExecuteProcess('sh', '-c "' + AdbExe + ' ' + AdbTarget + 'install -r \"' + TargetApk + '\""');
+        ExecuteProcess('sh', '-c "' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity"');
         {$ENDIF}
       end
       else
