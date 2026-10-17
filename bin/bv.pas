@@ -2930,37 +2930,304 @@ begin
   end;
 end;
 
-procedure CmdMobile(const SubCmd, AppName, AppId: string);
+procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
-  CapConfigFile, ActualAppName, ActualAppId, ConfigContent: string;
+  MobileDir, BinDir, AndroidDir, IOSDir: string;
+  CapConfigFile, MobileCapConfigFile: string;
+  ActualAppName, ActualAppId, ConfigContent, ReadmeFile, ReadmeContent: string;
+  ExistingConfig, CleanName, TargetPlatform: string;
+  IsRelease, IsAllTargets: Boolean;
+  i: Integer;
+
+  procedure ParseArg(const A: string);
+  var
+    S: string;
+  begin
+    S := LowerCase(A);
+    if S = '' then Exit;
+    if (S = '--release') or (S = '-r') or (S = 'release') then
+      IsRelease := True
+    else if (S = '--debug') or (S = '-d') or (S = 'debug') then
+      IsRelease := False
+    else if (S = 'android') or (S = '--android') or (S = '--target=android') then
+      TargetPlatform := 'android'
+    else if (S = 'ios') or (S = '--ios') or (S = '--target=ios') then
+      TargetPlatform := 'ios'
+    else if (S = 'all') or (S = '--all') or (S = '--target=all') then
+      IsAllTargets := True
+    else if (ActualAppName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
+      ActualAppName := A
+    else if (ActualAppId = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
+      ActualAppId := A;
+  end;
+
+  function ExtractJsonField(const Content, Prop: string): string;
+  var
+    P, Q, StartVal, EndVal: Integer;
+  begin
+    Result := '';
+    P := Pos('"' + Prop + '"', Content);
+    if P <= 0 then Exit;
+    Q := PosEx(':', Content, P);
+    if Q <= 0 then Exit;
+    StartVal := PosEx('"', Content, Q);
+    if StartVal <= 0 then Exit;
+    EndVal := PosEx('"', Content, StartVal + 1);
+    if EndVal <= 0 then Exit;
+    Result := Copy(Content, StartVal + 1, EndVal - StartVal - 1);
+  end;
+
+  function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
+  var
+    TBinDir, SourceApk, TargetApk, AltApk: string;
+  begin
+    Result := False;
+    TBinDir := BinDir + DirectorySeparator + ATarget;
+    ForceDir(TBinDir);
+
+    if ATarget = 'android' then
+    begin
+      if not DirectoryExists(AndroidDir) then
+      begin
+        WriteLn('  [ERROR] Android native project not found at: ' + AndroidDir);
+        WriteLn('          Run "bv mobile init" first.');
+        Exit(False);
+      end;
+
+      if ARelease then
+        WriteLn('  [+] Compiling Android APK in RELEASE mode (Gradle assembleRelease)...')
+      else
+        WriteLn('  [+] Compiling Android APK in DEBUG mode (Gradle assembleDebug)...');
+
+      {$IFDEF WINDOWS}
+      if ARelease then
+        ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleRelease')
+      else
+        ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleDebug');
+      {$ELSE}
+      if ARelease then
+        ExecuteProcess('sh', '-c "cd ' + AndroidDir + ' && ./gradlew assembleRelease"')
+      else
+        ExecuteProcess('sh', '-c "cd ' + AndroidDir + ' && ./gradlew assembleDebug"');
+      {$ENDIF}
+
+      if ARelease then
+      begin
+        SourceApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release.apk';
+        AltApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release-unsigned.apk';
+        TargetApk := TBinDir + DirectorySeparator + CleanName + '-release.apk';
+      end
+      else
+      begin
+        SourceApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'debug' + DirectorySeparator + 'app-debug.apk';
+        AltApk := '';
+        TargetApk := TBinDir + DirectorySeparator + CleanName + '-debug.apk';
+      end;
+
+      if not FileExists(SourceApk) and (AltApk <> '') and FileExists(AltApk) then
+        SourceApk := AltApk;
+
+      if FileExists(SourceApk) then
+      begin
+        CopyFile(SourceApk, TargetApk);
+        Result := True;
+        if ARelease then
+          WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk))
+        else
+        begin
+          WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk));
+          WriteLn('  [TIP] To install on your connected device: adb install -r "mobile/bin/android/' + ExtractFileName(TargetApk) + '"');
+        end;
+      end
+      else
+      begin
+        WriteLn('  [WARNING] Expected APK was not found at: ' + SourceApk);
+      end;
+    end
+    else if ATarget = 'ios' then
+    begin
+      {$IFDEF DARWIN}
+      WriteLn('  [+] Building iOS native package...');
+      ExecuteProcess('sh', '-c "npx cap build ios"');
+      Result := True;
+      WriteLn('  [SUCCESS] iOS project built successfully in mobile/ios.');
+      {$ELSE}
+      WriteLn('  [i] Target platform is iOS.');
+      WriteLn('  [INFO] iOS native compilation requires macOS with Xcode installed.');
+      WriteLn('         Assets are synchronized and ready. On macOS, run "bv mobile open ios" or "bv mobile build ios".');
+      Result := True;
+      {$ENDIF}
+    end;
+  end;
+
+  procedure RunTarget(const ATarget: string);
+  var
+    TargetApk, TBinDir: string;
+  begin
+    if ATarget = 'android' then
+    begin
+      TBinDir := BinDir + DirectorySeparator + 'android';
+      if IsRelease then
+        TargetApk := TBinDir + DirectorySeparator + CleanName + '-release.apk'
+      else
+        TargetApk := TBinDir + DirectorySeparator + CleanName + '-debug.apk';
+
+      if not FileExists(TargetApk) then
+      begin
+        WriteLn('Target binary not found. Compiling first...');
+        BuildSingleTarget('android', IsRelease);
+      end;
+
+      if FileExists(TargetApk) then
+      begin
+        WriteLn('Installing and running APK on connected Android device/emulator via ADB: ' + TargetApk);
+        {$IFDEF WINDOWS}
+        ExecuteProcess('cmd', '/c adb install -r "' + TargetApk + '" && adb shell am start -n ' + ActualAppId + '/.MainActivity');
+        {$ELSE}
+        ExecuteProcess('sh', '-c "adb install -r \"' + TargetApk + '\" && adb shell am start -n ' + ActualAppId + '/.MainActivity"');
+        {$ENDIF}
+      end
+      else
+      begin
+        WriteLn('Launching via Capacitor CLI runner...');
+        {$IFDEF WINDOWS}
+        ExecuteProcess('cmd', '/c npx cap run android');
+        {$ELSE}
+        ExecuteProcess('npx', 'cap run android');
+        {$ENDIF}
+      end;
+    end
+    else if ATarget = 'ios' then
+    begin
+      {$IFDEF DARWIN}
+      ExecuteProcess('sh', '-c "npx cap run ios"');
+      {$ELSE}
+      WriteLn('[INFO] Running on iOS simulator or device requires macOS with Xcode.');
+      {$ENDIF}
+    end;
+  end;
+
+  procedure OpenTarget(const ATarget: string);
+  begin
+    if ATarget = 'ios' then
+    begin
+      WriteLn('Opening Xcode for ' + IOSDir + '...');
+      CmdRunBuild;
+      {$IFDEF WINDOWS}
+      WriteLn('[INFO] Xcode is only available on macOS.');
+      {$ELSE}
+      ExecuteProcess('sh', '-c "npx cap sync ios && npx cap open ios"');
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('Opening Android Studio for ' + AndroidDir + '...');
+      CmdRunBuild;
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c npx cap sync android && npx cap open android');
+      {$ELSE}
+      ExecuteProcess('sh', '-c "npx cap sync android && npx cap open android"');
+      {$ENDIF}
+    end;
+  end;
+
 begin
   WriteLn('=== BlaiseVue 3.5 Mobile (Capacitor Engine) ===');
 
-  ActualAppName := AppName;
-  if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
+  IsRelease := False;
+  IsAllTargets := False;
+  TargetPlatform := '';
+  ActualAppName := '';
+  ActualAppId := '';
 
-  ActualAppId := AppId;
+  ParseArg(Arg1);
+  ParseArg(Arg2);
+  for i := 5 to ParamCount do
+    ParseArg(ParamStr(i));
+
+  MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
+  BinDir := MobileDir + DirectorySeparator + 'bin';
+  CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
+  MobileCapConfigFile := MobileDir + DirectorySeparator + 'capacitor.config.json';
+
+  if DirectoryExists(MobileDir + DirectorySeparator + 'android') then
+    AndroidDir := MobileDir + DirectorySeparator + 'android'
+  else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'android') then
+    AndroidDir := GetCurrentDir + DirectorySeparator + 'android'
+  else
+    AndroidDir := MobileDir + DirectorySeparator + 'android';
+
+  if DirectoryExists(MobileDir + DirectorySeparator + 'ios') then
+    IOSDir := MobileDir + DirectorySeparator + 'ios'
+  else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'ios') then
+    IOSDir := GetCurrentDir + DirectorySeparator + 'ios'
+  else
+    IOSDir := MobileDir + DirectorySeparator + 'ios';
+
+  if FileExists(CapConfigFile) then
+    ExistingConfig := ReadFileToString(CapConfigFile)
+  else if FileExists(MobileCapConfigFile) then
+    ExistingConfig := ReadFileToString(MobileCapConfigFile)
+  else
+    ExistingConfig := '';
+
+  if ExistingConfig <> '' then
+  begin
+    if ActualAppName = '' then ActualAppName := ExtractJsonField(ExistingConfig, 'appName');
+    if ActualAppId = '' then ActualAppId := ExtractJsonField(ExistingConfig, 'appId');
+  end;
+
+  if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
   if ActualAppId = '' then ActualAppId := 'com.blaisevue.app';
+
+  CleanName := '';
+  for i := 1 to Length(ActualAppName) do
+  begin
+    if (ActualAppName[i] in ['a'..'z', 'A'..'Z', '0'..'9']) then
+      CleanName := CleanName + ActualAppName[i]
+    else if CleanName <> '' then
+      CleanName := CleanName + '_';
+  end;
+  if CleanName = '' then CleanName := 'MobileApp';
+  if CleanName[1] in ['0'..'9'] then CleanName := 'App' + CleanName;
+
+  if TargetPlatform = '' then
+    TargetPlatform := 'android';
 
   if (SubCmd = 'init') then
   begin
-    WriteLn('Initializing Capacitor for BlaiseVue...');
-    CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
-    
-    // 1. Generate capacitor.config.json if not present
+    WriteLn('Initializing Capacitor Mobile platform in mobile/ ...');
+    ReadmeFile := MobileDir + DirectorySeparator + 'README.md';
+
+    ForceDir(MobileDir);
+    ForceDir(BinDir);
+    ForceDir(BinDir + DirectorySeparator + 'android');
+    ForceDir(BinDir + DirectorySeparator + 'ios');
+
+    // 1. Generate capacitor.config.json
+    ConfigContent := '{' + #10 +
+      '  "appId": "' + ActualAppId + '",' + #10 +
+      '  "appName": "' + ActualAppName + '",' + #10 +
+      '  "webDir": "dist",' + #10 +
+      '  "bundledWebRuntime": false,' + #10 +
+      '  "android": {' + #10 +
+      '    "path": "mobile/android"' + #10 +
+      '  },' + #10 +
+      '  "ios": {' + #10 +
+      '    "path": "mobile/ios"' + #10 +
+      '  }' + #10 +
+      '}';
+
     if not FileExists(CapConfigFile) then
     begin
-      ConfigContent := '{' + #10 +
-        '  "appId": "' + ActualAppId + '",' + #10 +
-        '  "appName": "' + ActualAppName + '",' + #10 +
-        '  "webDir": "dist",' + #10 +
-        '  "bundledWebRuntime": false' + #10 +
-        '}';
       WriteStringToFile(CapConfigFile, ConfigContent);
       WriteLn('  [+] Generated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
     end
     else
       WriteLn('  [i] capacitor.config.json already exists.');
+
+    if not FileExists(MobileCapConfigFile) then
+      WriteStringToFile(MobileCapConfigFile, ConfigContent);
 
     // 2. Ensure @capacitor/core and @capacitor/cli are installed
     WriteLn('  [+] Installing Capacitor dependencies (@capacitor/core, @capacitor/cli, @capacitor/android)...');
@@ -2971,7 +3238,7 @@ begin
     {$ENDIF}
 
     // 3. Add Android platform if not present
-    if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'android') then
+    if not DirectoryExists(AndroidDir) then
     begin
       WriteLn('  [+] Adding Android native project (npx cap add android)...');
       CmdRunBuild;
@@ -2982,46 +3249,104 @@ begin
       {$ENDIF}
     end
     else
-      WriteLn('  [i] Native android/ directory already initialized.');
+      WriteLn('  [i] Native android/ directory already initialized at: ' + AndroidDir);
+
+    // 4. Generate README.md
+    if not FileExists(ReadmeFile) then
+    begin
+      ReadmeContent :=
+        '# ' + ActualAppName + ' (BlaiseVue 3.5 Mobile)' + #10 +
+        '' + #10 +
+        'Native mobile application powered by **Capacitor** and **BlaiseVue**.' + #10 +
+        '' + #10 +
+        '## Structure' + #10 +
+        '- `android/`: Native Android Studio project.' + #10 +
+        '- `ios/`: Native Xcode project (when added).' + #10 +
+        '- `bin/`: Platform-segregated ready-to-install packages:' + #10 +
+        '  - `bin/android/`: Compiled APKs (`' + CleanName + '-debug.apk`, `' + CleanName + '-release.apk`).' + #10 +
+        '  - `bin/ios/`: Compiled IPAs.' + #10 +
+        '- `capacitor.config.json`: Capacitor bridge configuration.' + #10 +
+        '' + #10 +
+        '## Quick Commands' + #10 +
+        '```bash' + #10 +
+        '# 1. Sync frontend to mobile assets' + #10 +
+        'bv mobile sync' + #10 +
+        '' + #10 +
+        '# 2. Build for Android' + #10 +
+        'bv mobile build android            # Debug APK' + #10 +
+        'bv mobile build android --release  # Release APK (optimized)' + #10 +
+        '' + #10 +
+        '# 3. Build for iOS (macOS only)' + #10 +
+        'bv mobile build ios' + #10 +
+        '' + #10 +
+        '# 4. Build for all mobile platforms' + #10 +
+        'bv mobile build all' + #10 +
+        'bv mobile build all --release' + #10 +
+        '' + #10 +
+        '# 5. Run or Open IDE' + #10 +
+        'bv mobile run android              # Install & launch via ADB' + #10 +
+        'bv mobile open android             # Open in Android Studio' + #10 +
+        'bv mobile open ios                 # Open in Xcode' + #10 +
+        '```' + #10;
+      WriteStringToFile(ReadmeFile, ReadmeContent);
+      WriteLn('  [+] Created mobile/README.md');
+    end;
 
     WriteLn('');
-    WriteLn('Mobile initialization complete!');
-    WriteLn('Run "bv mobile open" to launch Android Studio.');
+    WriteLn('Mobile initialization complete in mobile/ !');
+    WriteLn('Run "bv mobile open android" to launch Android Studio.');
+    WriteLn('Run "bv mobile build android" to compile APK to mobile/bin/android/.');
   end
   else if (SubCmd = 'sync') then
   begin
-    WriteLn('Synchronizing BlaiseVue dist/ with native Android platform...');
+    WriteLn('Synchronizing BlaiseVue dist/ with native Mobile platform...');
     CmdRunBuild;
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c npx cap sync android');
-    {$ELSE}
-    ExecuteProcess('npx', 'cap sync android');
-    {$ENDIF}
+    if IsAllTargets or (TargetPlatform = 'all') then
+    begin
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c npx cap sync');
+      {$ELSE}
+      ExecuteProcess('npx', 'cap sync');
+      {$ENDIF}
+    end
+    else
+    begin
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c npx cap sync ' + TargetPlatform);
+      {$ELSE}
+      ExecuteProcess('npx', 'cap sync ' + TargetPlatform);
+      {$ENDIF}
+    end;
     WriteLn('Mobile assets synchronized successfully!');
-  end
-  else if (SubCmd = 'open') or (SubCmd = 'run') then
-  begin
-    WriteLn('Syncing and launching Android Studio...');
-    CmdRunBuild;
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c npx cap sync android && npx cap open android');
-    {$ELSE}
-    ExecuteProcess('sh', '-c "npx cap sync android && npx cap open android"');
-    {$ENDIF}
   end
   else if (SubCmd = 'build') then
   begin
-    WriteLn('Compiling native Android Debug APK...');
-    CmdRunBuild;
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c npx cap sync android && cd android && gradlew.bat assembleDebug');
-    {$ELSE}
-    ExecuteProcess('sh', '-c "npx cap sync android && cd android && ./gradlew assembleDebug"');
-    {$ENDIF}
+    WriteLn('Building native Mobile application with Capacitor...');
+    CmdMobile('sync', TargetPlatform);
+
+    if IsAllTargets or (TargetPlatform = 'all') then
+    begin
+      WriteLn('Building native Mobile application for ALL platforms (android, ios)...');
+      BuildSingleTarget('android', IsRelease);
+      BuildSingleTarget('ios', IsRelease);
+    end
+    else
+    begin
+      BuildSingleTarget(TargetPlatform, IsRelease);
+    end;
+  end
+  else if (SubCmd = 'run') then
+  begin
+    RunTarget(TargetPlatform);
+  end
+  else if (SubCmd = 'open') then
+  begin
+    OpenTarget(TargetPlatform);
   end
   else
   begin
-    WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+    WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target]|open [target]>');
+    WriteLn('       Targets: android | ios | all (default: android)');
   end;
 end;
 
@@ -4247,7 +4572,8 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+      WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target]|open [target]>');
+      WriteLn('       Targets: android | ios | all (default: android)');
       Halt(1);
     end;
     CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));

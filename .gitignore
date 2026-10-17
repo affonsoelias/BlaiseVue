@@ -26,6 +26,9 @@ bin/lib/
 *.so
 *.dylib
 *.compiled
+*.apk
+*.aab
+*.ipa
 
 # ⚙️ Embedded Tools & Resources
 temp/

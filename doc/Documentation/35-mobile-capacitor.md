@@ -20,38 +20,77 @@ Dessa forma, o mesmo código-fonte em Object Pascal e Single File Components (`.
 └──────────────────────────┬─────────────────────────────┘
                            │ Sincronização (bv mobile sync)
 ┌──────────────────────────▼─────────────────────────────┐
-│             Capacitor Android Project                  │
-│       android/app/src/main/assets/public/              │
+│           Capacitor Native Platform (mobile/)          │
+│   mobile/android/ (Android Studio) / mobile/ios/ (Xcode)│
 └──────────────────────────┬─────────────────────────────┘
-                           │ Compilação Gradle (bv mobile build)
+                           │ Compilação (bv mobile build [target] [--release])
 ┌──────────────────────────▼─────────────────────────────┐
-│           Pacote Nativo Instalável (.apk)              │
-│       app-debug.apk / app-release.apk                  │
+│       Pacotes Instaláveis Nativos (mobile/bin/)        │
+│   mobile/bin/android/<App>-debug.apk                   │
+│   mobile/bin/android/<App>-release.apk                 │
+│   mobile/bin/ios/<App>.ipa                             │
 └────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📦 Estrutura do Diretório `mobile/`
+
+Quando executado `bv mobile init [NomeDoApp] [com.empresa.app]`, a seguinte estrutura multiplataforma é gerada na pasta `mobile/`:
+
+```text
+meu-projeto/
+├── mobile/
+│   ├── capacitor.config.json   # Configuração do Capacitor com caminhos para mobile/android e mobile/ios
+│   ├── android/                # Projeto nativo Android Studio (Gradle Wrapper, app/src, Manifest)
+│   ├── ios/                    # Projeto nativo Xcode (quando adicionado)
+│   ├── bin/                    # Binários instaláveis prontos separados por plataforma
+│   │   ├── android/            # MeuApp-debug.apk e MeuApp-release.apk
+│   │   └── ios/                # MeuApp.ipa
+│   └── README.md               # Instruções de desenvolvimento e comandos
+├── desktop/                    # Projeto Lazarus / WebUI desktop (Fase 3)
+├── src/                        # Componentes .bv e código Object Pascal compartilhados
+└── dist/                       # Bundle web compilado
 ```
 
 ---
 
 ## 🛠️ Comandos da CLI (`bv mobile`)
 
-A CLI `bv.exe` fornece suporte nativo ao ciclo de vida móvel completo:
+A CLI `bv.exe` fornece suporte nativo ao ciclo de vida móvel completo de forma granular:
 
 ```bash
-# 1. Inicializa o projeto móvel com Capacitor e estrutura Android
+# 1. Inicializa o projeto móvel com Capacitor e estrutura mobile/
 bv mobile init [NomeDoApp] [com.suaempresa.app]
 
-# 2. Sincroniza o diretório de build (dist/) com os assets nativos do Android
-bv mobile sync
+# 2. Sincroniza o diretório de build (dist/) com os assets nativos do Android/iOS
+bv mobile sync [android|ios|all]
 
-# 3. Abre o projeto gerado no Android Studio
-bv mobile open
+# 3. Compilação em Modo DEBUG (com logs e símbolos ativos):
+bv mobile build android             # Compila APK Debug para mobile/bin/android/<App>-debug.apk
+bv mobile build ios                 # Prepara/sincroniza projeto nativo iOS
 
-# 4. Compila o pacote nativo APK utilizando o Gradle Wrapper do projeto
-bv mobile build
+# 4. Compilação em Modo RELEASE (otimização R8/ProGuard para produção e lojas):
+bv mobile build android --release   # Compila APK Release para mobile/bin/android/<App>-release.apk
+bv mobile build all --release       # Compila todas as plataformas móveis
+
+# 5. Execução direta no aparelho ou emulador via ADB:
+bv mobile run android               # Instala e inicializa a Activity principal no celular via ADB
+
+# 6. Abertura do projeto na IDE nativa:
+bv mobile open android              # Abre no Android Studio
+bv mobile open ios                  # Abre no Xcode (no macOS)
 ```
 
-O comando `bv mobile build` executa o Gradle de forma transparente e gera o APK final localizado em:
-`android/app/build/outputs/apk/debug/app-debug.apk`.
+### ⚙️ Modos de Compilação & Plataformas Móveis
+
+| Comando Móvel | Plataforma | Modo de Build | Pacote Gerado | Finalidade |
+|---|---|---|---|---|
+| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` | Teste rápido, desenvolvimento e depuração via Logcat |
+| `bv mobile build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Versão final compacta e otimizada para distribuição |
+| `bv mobile run android` | Android | Debug | Executado via ADB | Instalação e inicialização direta no smartphone |
+| `bv mobile open android` | Android | - | Android Studio | Edição nativa Java/Kotlin, emuladores e profilers |
+| `bv mobile open ios` | iOS | - | Xcode | Assinatura e compilação para iPhone/iPad (macOS) |
 
 ---
 

@@ -98,12 +98,25 @@ Pré-renderiza todas as rotas registradas da aplicação em arquivos HTML estát
 ### 4. `bv vsix` / `bv extension [install|package]` (Fase 1: Extensão VS Code)
 Empacota a extensão oficial do BlaiseVue em arquivo `.vsix` independente para o VS Code com destaque de sintaxe triplo, autocompletar inteligente e biblioteca de snippets. O comando `bv extension install` instala a extensão diretamente no editor local.
 
-### 5. `bv mobile` (Fase 2: Plataforma Móvel Híbrida Android / iOS)
-Gerencia o ciclo de desenvolvimento móvel com Capacitor:
-- **`bv mobile init [name] [id]`**: Inicializa o suporte a Capacitor e gera a estrutura do projeto Android.
-- **`bv mobile sync`**: Sincroniza os arquivos de build de `dist/` com a pasta de assets nativos do Android.
-- **`bv mobile open`**: Abre o projeto móvel no Android Studio.
-- **`bv mobile build`**: Compila o pacote nativo APK utilizando o Gradle Wrapper (`assembleDebug`).
+### 5. `bv mobile` (Fase 2: Plataforma Móvel Híbrida Android / iOS & Capacitor)
+Gerencia o ciclo de desenvolvimento móvel com Capacitor em estrutura unificada na pasta `mobile/`:
+- **`bv mobile init [name] [id]`**: Inicializa a estrutura móvel na pasta `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) e gera `capacitor.config.json`.
+- **`bv mobile sync [android|ios|all]`**: Sincroniza os arquivos de build de `dist/` com a plataforma móvel desejada.
+- **`bv mobile build [target] [--release]`**: Compila o pacote instalável nativo (`.apk` / `.aab` / `.ipa`).
+  - Ex: `bv mobile build android` (Gera `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
+  - Ex: `bv mobile build android --release` (Gera `mobile/bin/android/<App>-release.apk` otimizado via `assembleRelease`)
+  - Ex: `bv mobile build ios` (Prepara e sincroniza o projeto nativo iOS)
+  - Ex: `bv mobile build all --release` (Compila todas as plataformas móveis em modo release)
+- **`bv mobile run [target]`**: Instala e executa diretamente no emulador ou celular conectado via ADB (`adb install -r` + `am start`).
+- **`bv mobile open [target]`**: Abre o projeto na IDE nativa (`open android` para Android Studio, `open ios` para Xcode no macOS).
+
+| Comando Móvel | Plataforma | Modo | Saída Gerada |
+|---|---|---|---|
+| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
+| `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
+| `bv mobile run android` | Android | Debug | Execução direta no aparelho/emulador via ADB |
+| `bv mobile open android` | Android | - | Abre projeto no Android Studio |
+| `bv mobile open ios` | iOS | - | Abre projeto no Xcode (macOS) |
 
 ### 6. `bv desktop` (Fase 3: Plataforma Desktop Multiplataforma WebUI & Lazarus IDE)
 Gerencia o ciclo de desenvolvimento desktop nativo com Free Pascal e WebUI:

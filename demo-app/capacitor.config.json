@@ -2,5 +2,11 @@
   "appId": "com.blaisevue.demoapp",
   "appName": "BlaiseVue Demo",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "android": {
+    "path": "mobile/android"
+  },
+  "ios": {
+    "path": "mobile/ios"
+  }
 }
