@@ -1,15 +1,19 @@
-# BlaiseVue VS Code Extension Installer & Packager
-# Automates the installation and packaging process for VS Code and Cursor.
+# BlaiseVue Extension Installer & Packager
+# Supports Antigravity IDE, Cursor, and VS Code.
 
 $ErrorActionPreference = "Stop"
 
 $SourceDir = $PSScriptRoot
-$ExtensionName = "blaisevue-vscode"
-$VSCodeExtensionsDir = Join-Path $env:USERPROFILE ".vscode\extensions"
-$TargetDir = Join-Path $VSCodeExtensionsDir $ExtensionName
+$ExtensionFolderName = "blaisevue.blaisevue-vscode-3.5.0"
+
+$TargetExtensionDirs = @(
+    (Join-Path $env:USERPROFILE ".antigravity-ide\extensions"),
+    (Join-Path $env:USERPROFILE ".antigravity\extensions"),
+    (Join-Path $env:USERPROFILE ".vscode\extensions")
+)
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "   BlaiseVue 3.5 VS Code Extension Installer " -ForegroundColor Cyan
+Write-Host "  BlaiseVue 3.5 Extension Installer (IDE)   " -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -22,42 +26,38 @@ try {
     Write-Warning "VSIX packaging skipped. Continuing directory installation..."
 }
 
-# 2. Check if VS Code Extensions directory exists
-if (-not (Test-Path $VSCodeExtensionsDir)) {
-    Write-Host "Creating VS Code extensions folder at: $VSCodeExtensionsDir"
-    New-Item -ItemType Directory -Path $VSCodeExtensionsDir -Force | Out-Null
-}
+# 2. Install to detected IDE directories
+foreach ($extBase in $TargetExtensionDirs) {
+    if (Test-Path $extBase) {
+        $target = Join-Path $extBase $ExtensionFolderName
+        Write-Host "Deploying extension to: $target" -ForegroundColor Cyan
+        if (Test-Path $target) {
+            Remove-Item -Path $target -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $target -Force | Out-Null
 
-# 3. Cleanup existing installation
-if (Test-Path $TargetDir) {
-    Write-Host "Removing existing installation at $TargetDir..." -ForegroundColor Yellow
-    Remove-Item -Path $TargetDir -Recurse -Force
-}
+        Copy-Item -Path (Join-Path $SourceDir "package.json") -Destination $target
+        Copy-Item -Path (Join-Path $SourceDir "language-configuration.json") -Destination $target
+        Copy-Item -Path (Join-Path $SourceDir "README.md") -Destination $target
+        Copy-Item -Path (Join-Path $SourceDir "LICENSE") -Destination $target
 
-# 4. Create target directory
-Write-Host "Creating extension directory..."
-New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
-
-# 5. Copy files
-Write-Host "Copying extension files to $TargetDir..."
-Copy-Item -Path (Join-Path $SourceDir "package.json") -Destination $TargetDir
-Copy-Item -Path (Join-Path $SourceDir "language-configuration.json") -Destination $TargetDir
-Copy-Item -Path (Join-Path $SourceDir "README.md") -Destination $TargetDir
-
-if (Test-Path (Join-Path $SourceDir "src")) {
-    Copy-Item -Path (Join-Path $SourceDir "src") -Destination $TargetDir -Recurse
-}
-if (Test-Path (Join-Path $SourceDir "data")) {
-    Copy-Item -Path (Join-Path $SourceDir "data") -Destination $TargetDir -Recurse
-}
-if (Test-Path (Join-Path $SourceDir "syntaxes")) {
-    Copy-Item -Path (Join-Path $SourceDir "syntaxes") -Destination $TargetDir -Recurse
-}
-if (Test-Path (Join-Path $SourceDir "snippets")) {
-    Copy-Item -Path (Join-Path $SourceDir "snippets") -Destination $TargetDir -Recurse
+        if (Test-Path (Join-Path $SourceDir "src")) {
+            Copy-Item -Path (Join-Path $SourceDir "src") -Destination $target -Recurse
+        }
+        if (Test-Path (Join-Path $SourceDir "data")) {
+            Copy-Item -Path (Join-Path $SourceDir "data") -Destination $target -Recurse
+        }
+        if (Test-Path (Join-Path $SourceDir "syntaxes")) {
+            Copy-Item -Path (Join-Path $SourceDir "syntaxes") -Destination $target -Recurse
+        }
+        if (Test-Path (Join-Path $SourceDir "snippets")) {
+            Copy-Item -Path (Join-Path $SourceDir "snippets") -Destination $target -Recurse
+        }
+        Write-Host "Installed in $extBase!" -ForegroundColor Green
+    }
 }
 
 Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
-Write-Host "Restart VS Code or run Developer: Reload Window to activate." -ForegroundColor Cyan
+Write-Host "Restart Antigravity IDE or run Developer: Reload Window to activate." -ForegroundColor Cyan
 Write-Host "---------------------------------------------"
