@@ -2935,9 +2935,135 @@ var
   MobileDir, BinDir, AndroidDir, IOSDir: string;
   CapConfigFile, MobileCapConfigFile: string;
   ActualAppName, ActualAppId, ConfigContent, ReadmeFile, ReadmeContent: string;
-  ExistingConfig, CleanName, TargetPlatform: string;
-  IsRelease, IsAllTargets: Boolean;
+  ExistingConfig, CleanName, TargetPlatform, SelectedAVD, EmulatorAction: string;
+  IsRelease, IsAllTargets, UseEmulator: Boolean;
+  AvdList: TStringList;
   i: Integer;
+
+  function FindAndroidEmulator: string;
+  var
+    AndroidHome, LocalAppData, P: string;
+  begin
+    Result := '';
+    {$IFDEF WINDOWS}
+    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
+    if (AndroidHome <> '') and FileExists(AndroidHome + '\emulator\emulator.exe') then
+      Exit(AndroidHome + '\emulator\emulator.exe');
+
+    LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
+    if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\emulator\emulator.exe') then
+      Exit(LocalAppData + '\Android\Sdk\emulator\emulator.exe');
+
+    P := GetEnvironmentVariable('ProgramFiles');
+    if (P <> '') and FileExists(P + '\Android\Android Studio\jbr\bin\emulator.exe') then
+      Exit(P + '\Android\Android Studio\jbr\bin\emulator.exe');
+
+    Result := 'emulator.exe';
+    {$ELSE}
+    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
+    if (AndroidHome <> '') and FileExists(AndroidHome + '/emulator/emulator') then
+      Exit(AndroidHome + '/emulator/emulator');
+
+    LocalAppData := GetEnvironmentVariable('HOME');
+    if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/emulator/emulator') then
+      Exit(LocalAppData + '/Android/Sdk/emulator/emulator');
+
+    Result := 'emulator';
+    {$ENDIF}
+  end;
+
+  function FindAndroidADB: string;
+  var
+    AndroidHome, LocalAppData: string;
+  begin
+    Result := 'adb';
+    {$IFDEF WINDOWS}
+    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
+    if (AndroidHome <> '') and FileExists(AndroidHome + '\platform-tools\adb.exe') then
+      Exit(AndroidHome + '\platform-tools\adb.exe');
+
+    LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
+    if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\platform-tools\adb.exe') then
+      Exit(LocalAppData + '\Android\Sdk\platform-tools\adb.exe');
+
+    Result := 'adb.exe';
+    {$ELSE}
+    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
+    if (AndroidHome <> '') and FileExists(AndroidHome + '/platform-tools/adb') then
+      Exit(AndroidHome + '/platform-tools/adb');
+
+    LocalAppData := GetEnvironmentVariable('HOME');
+    if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/platform-tools/adb') then
+      Exit(LocalAppData + '/Android/Sdk/platform-tools/adb');
+    {$ENDIF}
+  end;
+
+  function GetInstalledAVDs: TStringList;
+  var
+    EmulatorExe, CmdOutput, Line: string;
+    RawList: TStringList;
+    j: Integer;
+    RunSuccess: Boolean;
+  begin
+    Result := TStringList.Create;
+    EmulatorExe := FindAndroidEmulator;
+    CmdOutput := '';
+    {$IFDEF WINDOWS}
+    RunSuccess := RunCommand('cmd.exe', ['/c', '"' + EmulatorExe + '" -list-avds'], CmdOutput);
+    {$ELSE}
+    RunSuccess := RunCommand(EmulatorExe, ['-list-avds'], CmdOutput);
+    {$ENDIF}
+    if RunSuccess then
+    begin
+      RawList := TStringList.Create;
+      try
+        RawList.Text := CmdOutput;
+        for j := 0 to RawList.Count - 1 do
+        begin
+          Line := Trim(RawList[j]);
+          if (Line <> '') and (Pos('INFO', Line) <> 1) and (Pos('WARNING', Line) <> 1) and (Pos('ERROR', Line) <> 1) then
+            Result.Add(Line);
+        end;
+      finally
+        RawList.Free;
+      end;
+    end;
+  end;
+
+  function StartEmulator(const SpecificAVD: string = ''): Boolean;
+  var
+    EmulatorExe, TargetAVD: string;
+    List: TStringList;
+  begin
+    Result := False;
+    EmulatorExe := FindAndroidEmulator;
+    TargetAVD := SpecificAVD;
+
+    if TargetAVD = '' then
+    begin
+      List := GetInstalledAVDs;
+      try
+        if List.Count > 0 then
+          TargetAVD := List[0]
+        else
+        begin
+          WriteLn('  [ERROR] No Android Virtual Device (AVD) found.');
+          WriteLn('          Open Android Studio > Virtual Device Manager to create an emulator.');
+          Exit(False);
+        end;
+      finally
+        List.Free;
+      end;
+    end;
+
+    WriteLn('  [+] Starting Android Emulator: ' + TargetAVD + ' ...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c start "" "' + EmulatorExe + '" -avd ' + TargetAVD);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
+    {$ENDIF}
+    Result := True;
+  end;
 
   procedure ParseArg(const A: string);
   var
@@ -2955,6 +3081,12 @@ var
       TargetPlatform := 'ios'
     else if (S = 'all') or (S = '--all') or (S = '--target=all') then
       IsAllTargets := True
+    else if (S = '--emulator') or (S = '-e') or (S = 'emulator') then
+      UseEmulator := True
+    else if (SubCmd = 'emulator') and (EmulatorAction = '') then
+      EmulatorAction := S
+    else if (UseEmulator or (SubCmd = 'emulator')) and (SelectedAVD = '') and (Copy(S, 1, 1) <> '-') then
+      SelectedAVD := A
     else if (ActualAppName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
       ActualAppName := A
     else if (ActualAppId = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
@@ -3062,7 +3194,7 @@ var
 
   procedure RunTarget(const ATarget: string);
   var
-    TargetApk, TBinDir: string;
+    TargetApk, TBinDir, AdbExe, AdbOutput: string;
   begin
     if ATarget = 'android' then
     begin
@@ -3078,13 +3210,32 @@ var
         BuildSingleTarget('android', IsRelease);
       end;
 
+      AdbExe := FindAndroidADB;
+
+      if UseEmulator then
+      begin
+        AdbOutput := '';
+        RunCommand(AdbExe, ['devices'], AdbOutput);
+        if Pos('emulator-', AdbOutput) = 0 then
+        begin
+          WriteLn('  [+] No active emulator detected in ADB. Launching emulator...');
+          StartEmulator(SelectedAVD);
+          WriteLn('  [+] Waiting for emulator to boot (adb wait-for-device)...');
+          {$IFDEF WINDOWS}
+          ExecuteProcess('cmd', '/c "' + AdbExe + '" wait-for-device');
+          {$ELSE}
+          ExecuteProcess('sh', '-c "' + AdbExe + ' wait-for-device"');
+          {$ENDIF}
+        end;
+      end;
+
       if FileExists(TargetApk) then
       begin
         WriteLn('Installing and running APK on connected Android device/emulator via ADB: ' + TargetApk);
         {$IFDEF WINDOWS}
-        ExecuteProcess('cmd', '/c adb install -r "' + TargetApk + '" && adb shell am start -n ' + ActualAppId + '/.MainActivity');
+        ExecuteProcess('cmd', '/c "' + AdbExe + '" install -r "' + TargetApk + '" && "' + AdbExe + '" shell am start -n ' + ActualAppId + '/.MainActivity');
         {$ELSE}
-        ExecuteProcess('sh', '-c "adb install -r \"' + TargetApk + '\" && adb shell am start -n ' + ActualAppId + '/.MainActivity"');
+        ExecuteProcess('sh', '-c "' + AdbExe + ' install -r \"' + TargetApk + '\" && ' + AdbExe + ' shell am start -n ' + ActualAppId + '/.MainActivity"');
         {$ENDIF}
       end
       else
@@ -3136,7 +3287,10 @@ begin
 
   IsRelease := False;
   IsAllTargets := False;
+  UseEmulator := False;
   TargetPlatform := '';
+  SelectedAVD := '';
+  EmulatorAction := '';
   ActualAppName := '';
   ActualAppId := '';
 
@@ -3283,8 +3437,11 @@ begin
         'bv mobile build all' + #10 +
         'bv mobile build all --release' + #10 +
         '' + #10 +
-        '# 5. Run or Open IDE' + #10 +
+        '# 5. Run on Device or Emulator' + #10 +
         'bv mobile run android              # Install & launch via ADB' + #10 +
+        'bv mobile run android --emulator   # Launch in Android Emulator' + #10 +
+        'bv mobile emulator list            # List available AVDs' + #10 +
+        'bv mobile emulator start           # Start default AVD' + #10 +
         'bv mobile open android             # Open in Android Studio' + #10 +
         'bv mobile open ios                 # Open in Xcode' + #10 +
         '```' + #10;
@@ -3343,9 +3500,47 @@ begin
   begin
     OpenTarget(TargetPlatform);
   end
+  else if (SubCmd = 'emulator') then
+  begin
+    if (EmulatorAction = 'list') or (EmulatorAction = 'ls') or (EmulatorAction = '') then
+    begin
+      WriteLn('Installed Android Virtual Devices (AVD):');
+      AvdList := GetInstalledAVDs;
+      try
+        if AvdList.Count = 0 then
+        begin
+          WriteLn('  [!] No AVD emulators found.');
+          WriteLn('      Create one in Android Studio: Tools > Device Manager > Create Virtual Device');
+        end
+        else
+        begin
+          for i := 0 to AvdList.Count - 1 do
+            WriteLn('  [' + IntToStr(i + 1) + '] ' + AvdList[i]);
+          WriteLn('');
+          WriteLn('To start an emulator: bv mobile emulator start ' + AvdList[0]);
+          WriteLn('To build and run:     bv mobile run android --emulator');
+        end;
+      finally
+        AvdList.Free;
+      end;
+    end
+    else if (EmulatorAction = 'start') or (EmulatorAction = 'open') then
+    begin
+      StartEmulator(SelectedAVD);
+    end
+    else if (EmulatorAction = 'run') then
+    begin
+      UseEmulator := True;
+      RunTarget('android');
+    end
+    else
+    begin
+      WriteLn('Usage: bv mobile emulator <list|start [name]|run [name]>');
+    end;
+  end
   else
   begin
-    WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target]|open [target]>');
+    WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
     WriteLn('       Targets: android | ios | all (default: android)');
   end;
 end;
@@ -4572,7 +4767,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target]|open [target]>');
+      WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
       WriteLn('       Targets: android | ios | all (default: android)');
       Halt(1);
     end;

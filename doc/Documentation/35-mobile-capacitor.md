@@ -55,6 +55,29 @@ meu-projeto/
 
 ---
 
+## 📋 Guia de Preparação do Ambiente Mobile (Android)
+
+Para desenvolver e compilar aplicações móveis no BlaiseVue, o desenvolvedor precisa apenas do ecossistema padrão do **Android Studio**.
+
+> [!IMPORTANT]
+> **O BlaiseVue NÃO utiliza nem precisa do Flutter.**  
+> O framework não possui nenhuma dependência do SDK do Flutter ou da linguagem Dart. Caso você tenha o Flutter instalado em sua máquina, pode removê-lo completamente com segurança sem afetar o BlaiseVue.
+
+### Ferramentas Necessárias:
+1. **Node.js (v18+ LTS) & npm**: Utilizado para gerenciar a camada de runtime do Capacitor (`@capacitor/core`, `@capacitor/cli`, `@capacitor/android`).
+2. **Android Studio**:
+   - **Android SDK Platform**: APIs 33, 34 ou 35 instaladas pelo *SDK Manager*.
+   - **Android SDK Build-Tools & Platform-Tools**: Fornece o utilitário `adb` (Android Debug Bridge).
+   - **Android Emulator**: Permite rodar e testar dispositivos virtuais sem precisar de cabo USB.
+3. **Java JDK (JDK 17 ou 21)**: Geralmente já embutido no próprio Android Studio (`jbr` / JetBrains Runtime) ou instalado via OpenJDK.
+4. **Variáveis de Ambiente Recomendadas (Windows)**:
+   - `ANDROID_HOME`: `%LOCALAPPDATA%\Android\Sdk`
+   - Adicionar ao `PATH`:
+     - `%LOCALAPPDATA%\Android\Sdk\platform-tools` (para o comando `adb`)
+     - `%LOCALAPPDATA%\Android\Sdk\emulator` (para o comando `emulator`)
+
+---
+
 ## 🛠️ Comandos da CLI (`bv mobile`)
 
 A CLI `bv.exe` fornece suporte nativo ao ciclo de vida móvel completo de forma granular:
@@ -74,21 +97,30 @@ bv mobile build ios                 # Prepara/sincroniza projeto nativo iOS
 bv mobile build android --release   # Compila APK Release para mobile/bin/android/<App>-release.apk
 bv mobile build all --release       # Compila todas as plataformas móveis
 
-# 5. Execução direta no aparelho ou emulador via ADB:
-bv mobile run android               # Instala e inicializa a Activity principal no celular via ADB
+# 5. Gerenciamento de Emuladores Android (AVD):
+bv mobile emulator list             # Lista todos os emuladores instalados no Android Studio
+bv mobile emulator start [nome]      # Inicia o emulador especificado em segundo plano
+bv mobile emulator run [nome]        # Inicia o emulador, aguarda o boot e abre a aplicação
 
-# 6. Abertura do projeto na IDE nativa:
+# 6. Execução direta no aparelho conectado ou emulador via ADB:
+bv mobile run android               # Instala e abre no celular conectado via USB
+bv mobile run android --emulator    # Inicia o emulador automaticamente e executa o app
+
+# 7. Abertura do projeto na IDE nativa:
 bv mobile open android              # Abre no Android Studio
 bv mobile open ios                  # Abre no Xcode (no macOS)
 ```
 
 ### ⚙️ Modos de Compilação & Plataformas Móveis
 
-| Comando Móvel | Plataforma | Modo de Build | Pacote Gerado | Finalidade |
+| Comando Móvel | Plataforma | Modo de Build | Pacote / Ação | Finalidade |
 |---|---|---|---|---|
 | `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` | Teste rápido, desenvolvimento e depuração via Logcat |
 | `bv mobile build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Versão final compacta e otimizada para distribuição |
-| `bv mobile run android` | Android | Debug | Executado via ADB | Instalação e inicialização direta no smartphone |
+| `bv mobile emulator list` | Android | - | Exibe lista de AVDs | Consulta os emuladores configurados na máquina |
+| `bv mobile emulator start` | Android | - | Inicia AVD em background | Prepara o emulador para desenvolvimento |
+| `bv mobile run android` | Android | Debug | Execução via ADB | Instalação e inicialização no dispositivo USB |
+| `bv mobile run android --emulator` | Android | Debug | Boot AVD + ADB Install | Execução 100% automatizada no emulador |
 | `bv mobile open android` | Android | - | Android Studio | Edição nativa Java/Kotlin, emuladores e profilers |
 | `bv mobile open ios` | iOS | - | Xcode | Assinatura e compilação para iPhone/iPad (macOS) |
 
@@ -166,7 +198,7 @@ Com a ferramenta `adb` (Android Debug Bridge), você pode instalar e validar o a
 adb devices
 
 # 2. Instala ou atualiza o APK diretamente no dispositivo
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r mobile/bin/android/BlaiseVue_Demo-debug.apk
 
 # 3. Inicia a Activity principal no smartphone
 adb shell am start -n com.blaisevue.demoapp/.MainActivity

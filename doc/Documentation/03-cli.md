@@ -107,14 +107,23 @@ Gerencia o ciclo de desenvolvimento móvel com Capacitor em estrutura unificada 
   - Ex: `bv mobile build android --release` (Gera `mobile/bin/android/<App>-release.apk` otimizado via `assembleRelease`)
   - Ex: `bv mobile build ios` (Prepara e sincroniza o projeto nativo iOS)
   - Ex: `bv mobile build all --release` (Compila todas as plataformas móveis em modo release)
-- **`bv mobile run [target]`**: Instala e executa diretamente no emulador ou celular conectado via ADB (`adb install -r` + `am start`).
+- **`bv mobile emulator <list|start [nome]|run [nome]>`**: Gerencia e executa emuladores Android (AVD) diretamente pelo terminal.
+  - Ex: `bv mobile emulator list` (Lista os emuladores instalados no Android Studio)
+  - Ex: `bv mobile emulator start` (Inicia o emulador em segundo plano)
+- **`bv mobile run [target] [--emulator [nome]]`**: Instala e executa diretamente no aparelho ou emulador conectado via ADB (`adb install -r` + `am start`). Se a flag `--emulator` for fornecida, inicia o emulador automaticamente se estiver desligado.
 - **`bv mobile open [target]`**: Abre o projeto na IDE nativa (`open android` para Android Studio, `open ios` para Xcode no macOS).
 
-| Comando Móvel | Plataforma | Modo | Saída Gerada |
+> [!NOTE]
+> **O BlaiseVue NÃO requer o Flutter instalado.** O ambiente móvel utiliza apenas o Node.js/npm, o Android Studio (Android SDK, Build-Tools e Platform-Tools `adb`) e o Java JDK 17/21.
+
+| Comando Móvel | Plataforma | Modo | Saída / Ação |
 |---|---|---|---|
 | `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
 | `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
-| `bv mobile run android` | Android | Debug | Execução direta no aparelho/emulador via ADB |
+| `bv mobile emulator list` | Android | - | Lista os emuladores (AVDs) instalados |
+| `bv mobile emulator start` | Android | - | Inicia o emulador em segundo plano |
+| `bv mobile run android` | Android | Debug | Instala e abre no dispositivo USB conectado |
+| `bv mobile run android --emulator` | Android | Debug | Inicia emulador, instala e abre o app |
 | `bv mobile open android` | Android | - | Abre projeto no Android Studio |
 | `bv mobile open ios` | iOS | - | Abre projeto no Xcode (macOS) |
 
