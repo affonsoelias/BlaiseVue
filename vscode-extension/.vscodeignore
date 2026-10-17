@@ -1,0 +1,4 @@
+.git/**
+.vscode/**
+*.vsix
+install_extension.ps1

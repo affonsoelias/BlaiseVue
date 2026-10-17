@@ -1,0 +1,6 @@
+{
+  "appId": "com.blaisevue.demoapp",
+  "appName": "BlaiseVue Demo",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

@@ -23,8 +23,11 @@ BlaiseVue 3.0 represents a generational milestone, delivering native WebAssembly
 - **🧩 Scoped Slots & Templates**: Seamless two-way data passing from child components back to parent templates (`#name="slotProps"`, `b-slot`, `slot-scope`).
 - **🚀 Teleport & Suspense**: Mount elements into remote DOM targets (`<teleport to="body">`) and orchestrate asynchronous dependencies (`<suspense>`).
 - **🏎️ Static Hoisting & Compiler Pruning**: Compiler-level static analysis tags invariant nodes (`bvStatic = true`), bypassing diff comparisons for $O(1)$ reconciliation.
-- **🕵️ Browser DevTools Extension**: Dedicated Manifest V3 extension for Chrome/Edge with Component Tree inspection, real-time reactive state editing, and timeline logging.
-- **📦 BlaiseUI Official Component Kit**: Over 20 production-ready UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-datagrid`, `bv-chart`, `bv-toast`, `bv-accordion`, etc.) styled with clean modern CSS.
+- **📱 Hybrid Mobile Platform (Capacitor & Android .apk)**: Native mobile runtime targeting Android and iOS with native APK generation via `bv mobile build`.
+- **📐 Responsive Grid System (`<bv-container>`, `<bv-row>`, `<bv-col>`)**: Fluid 12-column grid layout with Bootstrap-compatible breakpoints (`cols`, `sm`, `md`, `lg`, `xl`) and gutter controls.
+- **🧭 Mobile Bottom Navigation & Drawer**: Bottom-pinned mobile navigation (`<bv-bottom-nav>`, `<bv-bottom-nav-item>`) and off-canvas drawer (`<bv-drawer>`).
+- **🛠️ VS Code Official Extension (`.vsix`)**: Triple syntax highlighting for `.bv`, directive autocompletion, BlaiseUI IntelliSense, and snippets (`bv vsix`, `bv extension install`).
+- **📦 BlaiseUI Official Component Kit**: Over 25 production-ready UI widgets (`bv-btn`, `bv-card`, `bv-input`, `bv-modal`, `bv-datagrid`, `bv-chart`, `bv-toast`, `bv-accordion`, `bv-container`, `bv-row`, `bv-col`, `bv-drawer`, `bv-bottom-nav`) styled with clean modern CSS.
 
 ---
 
@@ -87,11 +90,11 @@ Our architectural evolution roadmap:
 - [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
 - [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
 - [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
-- [ ] **v3.5 Universal Pascal Platform (In Progress)**:
-  - 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets.
-  - 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init/run`).
-  - 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI4Delphi & Lazarus IDE (`bv desktop`).
-  - ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
+- [x] **v3.5 Universal Pascal Platform (Phase 1 & Phase 2 Complete)**:
+  - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
+  - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
+  - [ ] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI4Delphi & Lazarus IDE (`bv desktop`).
+  - [ ] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md).

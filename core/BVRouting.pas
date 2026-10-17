@@ -342,7 +342,12 @@ begin
   navEl.innerHTML := string(TJSObject(CompOpt)['template']);
   rootPageEl := TJSHTMLElement(navEl.firstElementChild);
   if not Assigned(rootPageEl) then Exit;
-  asm rootPageEl['bvManaged'] = true; end;
+  asm 
+    rootPageEl['bvManaged'] = true; 
+    if (ViewEl.firstElementChild && window.__BV_CORE__ && window.__BV_CORE__.unmount) {
+      window.__BV_CORE__.unmount(ViewEl.firstElementChild);
+    }
+  end;
   ViewEl.innerHTML := '';
   ViewEl.appendChild(rootPageEl);
 
@@ -358,6 +363,7 @@ begin
     Object.keys(q).forEach(function(k) { pageData[k] = q[k]; });
 
     let pRef = window.__BV_CORE__.defineReactive(pageData);
+    rootPageEl['__bv_instance_data__'] = pRef;
     pRef['Router'] = this;
     pRef['$router'] = this;
     if (!pRef['$refs']) pRef['$refs'] = {};
@@ -442,6 +448,14 @@ var
   fullHash, cleanP: string; 
   matchedRoute, matchedChild: TBVRoute; 
 begin
+  asm
+    if (!this.FRouterViewEl || !document.body.contains(this.FRouterViewEl)) {
+      let rv = null;
+      if (this.FAppRoot) rv = this.FAppRoot.querySelector('router-view');
+      if (!rv) rv = document.querySelector('router-view');
+      if (rv) this.FRouterViewEl = rv;
+    }
+  end;
   if not Assigned(FRouterViewEl) then Exit;
 
   if FMode = 'history' then

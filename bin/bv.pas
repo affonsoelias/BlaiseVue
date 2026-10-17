@@ -2325,7 +2325,7 @@ procedure CmdRunBuild;
 var
   GenPath, DistPath, PublicPath: string;
   Hash, IndexHTML: string;
-  JSFiles: TStringList;
+  JSFiles, CSSFiles: TStringList;
   JSTags, FileName: string;
   i: Integer;
 begin
@@ -2363,6 +2363,20 @@ begin
     IndexHTML := StringReplace(IndexHTML, 'src="main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
     IndexHTML := StringReplace(IndexHTML, 'js/rtl.js', 'js/rtl.js', [rfReplaceAll]);
 
+    // Injeta CSS das bibliotecas (Produção)
+    CSSFiles := TStringList.Create;
+    ScanDirForCSS(GetCurrentDir + DirectorySeparator + 'lib', CSSFiles);
+    if CSSFiles.Count > 0 then
+    begin
+      ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
+      for i := 0 to CSSFiles.Count - 1 do
+      begin
+         FileName := ExtractFileName(CSSFiles[i]);
+         WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
+      end;
+      CSSFiles.Free;
+    end;
+
     // Injeta JS das bibliotecas (Produção)
     JSFiles := TStringList.Create;
     ScanDirForJS(GetCurrentDir + DirectorySeparator + 'lib', JSFiles);
@@ -2394,6 +2408,9 @@ begin
      WriteLn('  Copying installed libraries (/lib) to /dist/lib...');
      CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
   end;
+
+  // Generates component documentation automatically into dist/docs/
+  CmdDoc(False);
 
   WriteLn('');
   WriteLn('Production build generated in /dist');
@@ -2665,19 +2682,30 @@ begin
       '    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--bv-border); }'#10 +
       '    th { background: rgba(0,0,0,0.02); font-weight: 600; }'#10 +
       '    pre { background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; }'#10 +
+      '    @media (max-width: 768px) {'#10 +
+      '      body { flex-direction: column; height: 100vh; overflow: auto; }'#10 +
+      '      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--bv-border); max-height: 220px; flex-shrink: 0; }'#10 +
+      '      .main-view { padding: 16px; }'#10 +
+      '    }'#10 +
       '  </style>'#10 +
       '</head>'#10 +
       '<body>'#10 +
       '  <div class="sidebar">'#10 +
       '    <div class="sidebar-header">'#10 +
-      '      <div class="brand"><span>🛡️</span> BlaiseVue 3.0 Docs</div>'#10 +
+      '      <div style="display:flex; justify-content:space-between; align-items:center;">'#10 +
+      '        <div class="brand"><span>🛡️</span> BlaiseVue Docs</div>'#10 +
+      '        <a href="../index.html" style="color:var(--bv-primary); font-size:13px; text-decoration:none; font-weight:bold;">← App</a>'#10 +
+      '      </div>'#10 +
       '      <div class="search-box"><input type="text" id="searchInput" placeholder="Filter components..."></div>'#10 +
       '    </div>'#10 +
       '    <div class="comp-list" id="compList"></div>'#10 +
       '  </div>'#10 +
       '  <div class="main-view">'#10 +
       '    <div class="header-bar">'#10 +
-      '      <div><span id="activeTag" class="tag-badge">&lt;component&gt;</span></div>'#10 +
+      '      <div style="display:flex; align-items:center; gap:8px;">'#10 +
+      '        <a href="../index.html" class="theme-btn" style="text-decoration:none; font-weight:bold; color:var(--bv-primary); display:inline-flex; align-items:center;">← Voltar ao App</a>'#10 +
+      '        <span id="activeTag" class="tag-badge">&lt;component&gt;</span>'#10 +
+      '      </div>'#10 +
       '      <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Dark</button>'#10 +
       '    </div>'#10 +
       '    <div class="card">'#10 +
@@ -2865,6 +2893,138 @@ begin
   {$ENDIF}
 end;
 
+procedure CmdExtension(const Action: string);
+var
+  ExtDir, ScriptPath: string;
+begin
+  WriteLn('=== BlaiseVue 3.5 VS Code Extension Tool ===');
+  ExtDir := GetSDKPath + 'vscode-extension';
+  if not DirectoryExists(ExtDir) then
+  begin
+    WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
+    Exit;
+  end;
+
+  if (Action = 'install') or (Action = '') then
+  begin
+    WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
+    ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
+    {$IFDEF WINDOWS}
+    ExecuteProcess('powershell', '-ExecutionPolicy Bypass -File "' + ScriptPath + '"');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ' + ExtDir + '/* ~/.vscode/extensions/blaisevue-vscode/"');
+    {$ENDIF}
+  end
+  else if (Action = 'package') or (Action = 'vsix') then
+  begin
+    WriteLn('Packaging BlaiseVue VS Code extension into .vsix...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + ExtDir + ' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('Usage: bv extension <install|package>');
+  end;
+end;
+
+procedure CmdMobile(const SubCmd, AppName, AppId: string);
+var
+  CapConfigFile, ActualAppName, ActualAppId, ConfigContent: string;
+begin
+  WriteLn('=== BlaiseVue 3.5 Mobile (Capacitor Engine) ===');
+
+  ActualAppName := AppName;
+  if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
+
+  ActualAppId := AppId;
+  if ActualAppId = '' then ActualAppId := 'com.blaisevue.app';
+
+  if (SubCmd = 'init') then
+  begin
+    WriteLn('Initializing Capacitor for BlaiseVue...');
+    CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
+    
+    // 1. Generate capacitor.config.json if not present
+    if not FileExists(CapConfigFile) then
+    begin
+      ConfigContent := '{' + #10 +
+        '  "appId": "' + ActualAppId + '",' + #10 +
+        '  "appName": "' + ActualAppName + '",' + #10 +
+        '  "webDir": "dist",' + #10 +
+        '  "bundledWebRuntime": false' + #10 +
+        '}';
+      WriteStringToFile(CapConfigFile, ConfigContent);
+      WriteLn('  [+] Generated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
+    end
+    else
+      WriteLn('  [i] capacitor.config.json already exists.');
+
+    // 2. Ensure @capacitor/core and @capacitor/cli are installed
+    WriteLn('  [+] Installing Capacitor dependencies (@capacitor/core, @capacitor/cli, @capacitor/android)...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
+    {$ELSE}
+    ExecuteProcess('npm', 'install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
+    {$ENDIF}
+
+    // 3. Add Android platform if not present
+    if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'android') then
+    begin
+      WriteLn('  [+] Adding Android native project (npx cap add android)...');
+      CmdRunBuild;
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c npx cap add android');
+      {$ELSE}
+      ExecuteProcess('npx', 'cap add android');
+      {$ENDIF}
+    end
+    else
+      WriteLn('  [i] Native android/ directory already initialized.');
+
+    WriteLn('');
+    WriteLn('Mobile initialization complete!');
+    WriteLn('Run "bv mobile open" to launch Android Studio.');
+  end
+  else if (SubCmd = 'sync') then
+  begin
+    WriteLn('Synchronizing BlaiseVue dist/ with native Android platform...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android');
+    {$ELSE}
+    ExecuteProcess('npx', 'cap sync android');
+    {$ENDIF}
+    WriteLn('Mobile assets synchronized successfully!');
+  end
+  else if (SubCmd = 'open') or (SubCmd = 'run') then
+  begin
+    WriteLn('Syncing and launching Android Studio...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android && npx cap open android');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "npx cap sync android && npx cap open android"');
+    {$ENDIF}
+  end
+  else if (SubCmd = 'build') then
+  begin
+    WriteLn('Compiling native Android Debug APK...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android && cd android && gradlew.bat assembleDebug');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "npx cap sync android && cd android && ./gradlew assembleDebug"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+  end;
+end;
+
 // =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
@@ -2875,8 +3035,8 @@ begin
   if ParamCount < 1 then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v3.0 (Enterprise Next)');
-    WriteLn('  ====================================');
+    WriteLn('  BlaiseVue CLI v3.5 (Universal Pascal Platform)');
+    WriteLn('  ==============================================');
     WriteLn('');
     WriteLn('  Usage:');
     WriteLn('    bv create <name>       Scaffolds a new project');
@@ -2903,6 +3063,12 @@ begin
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
     WriteLn('    bv theme list          Lists available installed themes');
     WriteLn('    bv theme use <name>    Switches active project theme in index.html');
+    WriteLn('    bv extension [install|package] Installs or packages the official VS Code extension');
+    WriteLn('    bv vsix                Packages standalone VS Code extension (.vsix)');
+    WriteLn('    bv mobile init [name] [id] Configures Capacitor and scaffolds Android project');
+    WriteLn('    bv mobile sync         Syncs dist/ with native Android assets');
+    WriteLn('    bv mobile open         Syncs and opens Android Studio');
+    WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -3080,6 +3246,24 @@ begin
       CmdWasm('info')
     else
       CmdWasm(LowerCase(ParamStr(2)));
+  end
+  else if (Cmd = 'extension') or (Cmd = 'vsix') then
+  begin
+    if Cmd = 'vsix' then
+      CmdExtension('package')
+    else if ParamCount >= 2 then
+      CmdExtension(LowerCase(ParamStr(2)))
+    else
+      CmdExtension('install');
+  end
+  else if Cmd = 'mobile' then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+      Halt(1);
+    end;
+    CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
   else
   begin

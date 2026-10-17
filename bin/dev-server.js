@@ -132,7 +132,7 @@ function broadcast(msg) {
   });
 }
 
-// 3. File Watcher
+let isBuilding = false;
 let debounceTimer = null;
 function watchDir(dir) {
   if (!fs.existsSync(dir)) return;
@@ -148,13 +148,22 @@ function watchDir(dir) {
         const basename = path.basename(filename, '.bv');
         const tag = basename.toLowerCase();
         console.log(`\x1b[36m[HMR] Triggering recompilation for <${tag}>...\x1b[0m`);
+        if (isBuilding) {
+          console.log(`[HMR] Build already in progress, skipping duplicate trigger.`);
+          return;
+        }
+        isBuilding = true;
         try {
-          // Re-transpile and build
-          const bvExe = fs.existsSync(path.resolve(ROOT_DIR, 'bv.exe')) ? 
-            path.resolve(ROOT_DIR, 'bv.exe') : 
-            path.resolve(ROOT_DIR, '..', 'bv.exe');
-          if (fs.existsSync(bvExe)) {
-            execSync(`"${bvExe}" run dev`, { stdio: 'pipe' });
+          const candidateExes = [
+            path.resolve(ROOT_DIR, 'bin', 'bv.exe'),
+            path.resolve(ROOT_DIR, 'bv.exe'),
+            path.resolve(ROOT_DIR, '..', 'bin', 'bv.exe'),
+            path.resolve(ROOT_DIR, '..', 'bv.exe')
+          ];
+          const bvExe = candidateExes.find(p => fs.existsSync(p));
+          const appDir = fs.existsSync(path.resolve(ROOT_DIR, 'demo-app')) ? path.resolve(ROOT_DIR, 'demo-app') : ROOT_DIR;
+          if (bvExe) {
+            execSync(`"${bvExe}" run dev`, { cwd: appDir, stdio: 'pipe' });
             console.log(`\x1b[32m[HMR] Dev build refreshed. Broadcasting update...\x1b[0m`);
             broadcast({ type: 'reload' });
           } else {
@@ -162,11 +171,13 @@ function watchDir(dir) {
           }
         } catch(e) {
           console.error(`[HMR] Build error:`, e.message);
+        } finally {
+          isBuilding = false;
         }
       } else {
         broadcast({ type: 'reload' });
       }
-    }, 150);
+    }, 200);
   });
 }
 

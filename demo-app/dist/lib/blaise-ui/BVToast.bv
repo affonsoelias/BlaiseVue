@@ -1,11 +1,13 @@
 <template>
-  <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="isVisible">
-    <div class="bui-toast-content">
-      <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>
-      <slot>{{ message }}</slot>
+  <teleport to="body">
+    <div class="bui-toast" :class="'bui-toast-' + (variant || 'success')" b-if="isVisible">
+      <div class="bui-toast-content">
+        <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>
+        <slot>{{ message }}</slot>
+      </div>
+      <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>
     </div>
-    <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>
-  </div>
+  </teleport>
 </template>
 
 <script>
@@ -26,16 +28,23 @@
     variant: string = 'success';
 
   data:
-    isVisible: boolean = false;
+    isOpen: boolean = false;
+
+  computed:
+    function isVisible: boolean;
+    begin
+       asm return Boolean(this.isOpen); end;
+    end;
 
   methods:
     procedure showToast;
     begin
-      this['isVisible'] := true;
+      this['isOpen'] := true;
       asm
         const dur = this.duration || 3000;
-        setTimeout(() => {
-          this.isVisible = false;
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => {
+          this.isOpen = false;
         }, dur);
       end;
     end;
@@ -47,7 +56,39 @@
 
     procedure dismiss;
     begin
-      this['isVisible'] := false;
+      this['isOpen'] := false;
       asm this.$emit('dismiss'); end;
     end;
 </script>
+
+<style>
+.bui-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1e293b;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10000;
+  border-left: 4px solid var(--bui-primary, #42b883);
+  animation: bui-toast-slide 0.3s ease-out;
+}
+@media (max-width: 576px) {
+  .bui-toast {
+    bottom: 74px;
+    left: 16px;
+    right: 16px;
+    max-width: calc(100vw - 32px);
+    justify-content: space-between;
+  }
+}
+@keyframes bui-toast-slide {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+</style>

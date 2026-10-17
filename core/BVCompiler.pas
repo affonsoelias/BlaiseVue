@@ -59,6 +59,9 @@ initialization
          if (window.__BV_CORE__.wasm && !Data.FData['$wasm']) {
             Data.FData['$wasm'] = window.__BV_CORE__.wasm;
          }
+         if (window.__BV_CORE__.mobile && !Data.FData['$mobile']) {
+            Data.FData['$mobile'] = window.__BV_CORE__.mobile;
+         }
       }
 
       if (Data && !Data.Evaluate) {
@@ -445,6 +448,9 @@ initialization
                 if (window.__BV_CORE__.wasm && !d.$wasm) {
                    d.$wasm = window.__BV_CORE__.wasm;
                 }
+                if (window.__BV_CORE__.mobile && !d.$mobile) {
+                   d.$mobile = window.__BV_CORE__.mobile;
+                }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -501,8 +507,9 @@ initialization
           if (tagName === 'teleport' || tagName === 'b-teleport') {
             let toTarget = el.getAttribute('to') || 'body';
             let targetEl = (toTarget === 'body') ? document.body : document.querySelector(toTarget);
-            if (!targetEl) targetEl = document.body;
-            let anchor = document.createComment('teleport-anchor');
+            let anchor = document.createElement('span');
+            anchor.style.display = 'none';
+            anchor.setAttribute('data-teleport-anchor', toTarget);
             if (el.parentNode) el.parentNode.replaceChild(anchor, el);
             let fragment = document.createDocumentFragment();
             let teleportedNodes = Array.from(el.childNodes);
@@ -816,6 +823,9 @@ initialization
             if (window.__BV_CORE__.wasm) {
                pRef['$wasm'] = window.__BV_CORE__.wasm;
             }
+            if (window.__BV_CORE__.mobile) {
+               pRef['$mobile'] = window.__BV_CORE__.mobile;
+            }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);
             }
@@ -855,6 +865,19 @@ initialization
             root_c.innerHTML = opts.template;
             let rEl = root_c.firstElementChild;
             if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
+            if (el.getAttribute('class')) {
+               let origClass = el.getAttribute('class');
+               let rClass = rEl.getAttribute('class') || '';
+               rEl.setAttribute('class', (rClass ? rClass + ' ' : '') + origClass);
+            }
+            if (el.getAttribute('style')) {
+               let origStyle = el.getAttribute('style');
+               let rStyle = rEl.getAttribute('style') || '';
+               rEl.setAttribute('style', (rStyle ? rStyle + '; ' : '') + origStyle);
+            }
+            if (el.getAttribute('id') && !rEl.getAttribute('id')) {
+               rEl.setAttribute('id', el.getAttribute('id'));
+            }
             rEl['bvManaged'] = true;
             rEl.setAttribute('data-bv-component', tagName);
             rEl['__bv_component_tag__'] = tagName;
@@ -981,11 +1004,11 @@ initialization
                   let hasBareNodes = false;
                   originalChildren.forEach(function(cn) {
                      if (!isNamedSlotNode(cn)) {
-                        let cnClone = cn.cloneNode(true);
-                        if (sNode.parentNode) sNode.parentNode.insertBefore(cnClone, sNode);
-                        bv.traverse(cnClone, Data, Methods);
-                        let finalCnClone = cnClone['__bv_replacement__'] || cnClone;
-                        bv.markManaged(finalCnClone);
+                        let targetNode = cn;
+                        if (sNode.parentNode) sNode.parentNode.insertBefore(targetNode, sNode);
+                        bv.traverse(targetNode, Data, Methods);
+                        let finalNode = targetNode['__bv_replacement__'] || targetNode;
+                        bv.markManaged(finalNode);
                         hasBareNodes = true;
                      }
                   });

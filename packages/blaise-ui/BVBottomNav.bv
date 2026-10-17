@@ -1,0 +1,12 @@
+<template>
+  <nav class="bui-bottom-nav">
+    <slot></slot>
+  </nav>
+</template>
+
+<script>
+  {
+    BVBottomNav - Mobile Bottom Navigation Bar Container
+    ----------------------------------------------------
+  }
+</script>

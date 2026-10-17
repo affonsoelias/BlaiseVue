@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVDataGrid, uBVDoughnut, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -34,7 +34,7 @@ begin
   end;
   asm console.log("[Init] Injecting Styles..."); end;
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: ''Segoe UI'', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 12px; align-items: center; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .nav-msg { margin-left: auto; color: #95a5a6; font-size: 13px; }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: ''Consolas'', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
+  _styleEl.textContent := '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: ''Segoe UI'', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .drawer-btn { background: rgba(255,255,255,0.12); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; padding: 5px 10px; font-size: 16px; cursor: pointer; transition: background 0.2s; }   .drawer-btn:hover { background: rgba(255,255,255,0.25); }   .drawer-nav { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }   .drawer-link { color: inherit; text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 15px; font-weight: 500; display: block; transition: all 0.2s; }   .drawer-link:hover { background: rgba(66, 184, 131, 0.15); color: #42b883; font-weight: 600; }   .mobile-bottom-bar { display: none; }   .main-content-container { max-width: 960px; margin: 24px auto; padding: 0 16px; }   @media (max-width: 768px) {     .nav-links { display: none; } /* Hide wide links on mobile; drawer & bottom nav take over! */     .mobile-bottom-bar { display: flex; }     .desktop-only-footer { display: none; }     .main-content-container { padding-bottom: 75px; }   }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: ''Consolas'', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
   document.head.appendChild(_styleEl);
   asm console.log("[Init] Registering uCard..."); end;
   Register_uCard;
@@ -68,6 +68,10 @@ begin
   Register_uBVBadge;
   asm console.log("[Init] Registering uBVBar..."); end;
   Register_uBVBar;
+  asm console.log("[Init] Registering uBVBottomNav..."); end;
+  Register_uBVBottomNav;
+  asm console.log("[Init] Registering uBVBottomNavItem..."); end;
+  Register_uBVBottomNavItem;
   asm console.log("[Init] Registering uBVBreadcrumb..."); end;
   Register_uBVBreadcrumb;
   asm console.log("[Init] Registering uBVBreadcrumbItem..."); end;
@@ -78,10 +82,16 @@ begin
   Register_uBVCard;
   asm console.log("[Init] Registering uBVChart..."); end;
   Register_uBVChart;
+  asm console.log("[Init] Registering uBVCol..."); end;
+  Register_uBVCol;
+  asm console.log("[Init] Registering uBVContainer..."); end;
+  Register_uBVContainer;
   asm console.log("[Init] Registering uBVDataGrid..."); end;
   Register_uBVDataGrid;
   asm console.log("[Init] Registering uBVDoughnut..."); end;
   Register_uBVDoughnut;
+  asm console.log("[Init] Registering uBVDrawer..."); end;
+  Register_uBVDrawer;
   asm console.log("[Init] Registering uBVFormSelect..."); end;
   Register_uBVFormSelect;
   asm console.log("[Init] Registering uBVIcon..."); end;
@@ -112,6 +122,8 @@ begin
   Register_uBVProgress;
   asm console.log("[Init] Registering uBVRadar..."); end;
   Register_uBVRadar;
+  asm console.log("[Init] Registering uBVRow..."); end;
+  Register_uBVRow;
   asm console.log("[Init] Registering uBVSpinner..."); end;
   Register_uBVSpinner;
   asm console.log("[Init] Registering uBVTab..."); end;
@@ -129,8 +141,25 @@ begin
   asm console.log("[Init] Setting #app template..."); end;
   TJSHTMLElement(document.querySelector('#app')).innerHTML :=
     '  <div translate="no" class="notranslate">' +
+    '    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->' +
+    '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' +
+    '      <div class="drawer-nav">' +
+    '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
+    '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +
+    '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(''nav.pro'') }}</a>' +
+    '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(''nav.form'') }}</a>' +
+    '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(''nav.blaiseui'') }}</a>' +
+    '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(''nav.charts'') }}</a>' +
+    '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(''nav.showcase'') }}</a>' +
+    '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' +
+    '      </div>' +
+    '    </bv-drawer>' +
+    '' +
     '    <nav class="navbar">' +
-    '      <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
+    '      <div style="display: flex; align-items: center; gap: 8px;">' +
+    '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' +
+    '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
+    '      </div>' +
     '      <div class="nav-links">' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about">{{ $t(''nav.about'') }}</a>' +
@@ -139,7 +168,7 @@ begin
     '        <a href="#/bootstrap">{{ $t(''nav.blaiseui'') }}</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(''nav.showcase'') }}</a>' +
-    '        <a href="docs/index.html" target="_blank" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' +
+    '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' +
     '      </div>' +
     '      <div class="lang-switcher">' +
     '        <button class="lang-btn" :class="{ ''active-lang'': $i18n.locale === ''pt'' }" @click="$setLocale(''pt'')">🇧🇷 PT</button>' +
@@ -164,11 +193,22 @@ begin
     '      </div>' +
     '      <span class="nav-msg">{{ mensagem }}</span>' +
     '    </nav>' +
-    '    <div class="container">' +
-    '      <!-- The router-view tag is replaced by the component matching the current hash -->' +
+    '' +
+    '    <!-- MAIN RESPONSIVE CONTAINER -->' +
+    '    <bv-container class="main-content-container">' +
     '      <router-view></router-view>' +
-    '    </div>' +
-    '    <div class="footer-status">' +
+    '    </bv-container>' +
+    '' +
+    '    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->' +
+    '    <bv-bottom-nav class="mobile-bottom-bar">' +
+    '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' +
+    '    </bv-bottom-nav>' +
+    '' +
+    '    <div class="footer-status desktop-only-footer">' +
     '       {{ $t(''status.globalStore'') }}: {{ $store.appVersion }} | {{ $t(''status.localeActive'') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t(''status.theme'') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}' +
     '    </div>' +
     '  </div>';
@@ -189,6 +229,26 @@ begin
         asm
           if (window.$theme) window.$theme.setTheme(sel);
         end;
+      end;
+    end;
+    
+  m['toggleDrawer'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        if (this.$refs.appDrawer && this.$refs.appDrawer.toggle) {
+          this.$refs.appDrawer.toggle();
+        }
+      end;
+    end;
+    
+  m['closeDrawer'] := procedure(_this: TJSObject)
+
+    begin
+      asm
+        if (this.$refs.appDrawer && this.$refs.appDrawer.close) {
+          this.$refs.appDrawer.close();
+        }
       end;
     end;
   { Router Configuration: Maps URI hashes to Component Tags }

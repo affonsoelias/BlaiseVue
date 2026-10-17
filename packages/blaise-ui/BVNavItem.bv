@@ -1,6 +1,6 @@
 <template>
   <li class="bui-nav-item">
-     <a class="bui-nav-link" :class="{ active: active }" :href="href" @click="handleClick">
+     <a class="bui-nav-link" :class="{ active: active }" :href="href || '#'" @click="handleClick">
         <slot>{{ label }}</slot>
      </a>
   </li>
@@ -17,13 +17,25 @@
   }
   
   props:
-    href: string = '#';
+    href: string = '';
     label: string = '';
     active: boolean = false;
 
   methods:
     procedure handleClick(ev: TJSEvent);
     begin
-       asm this.$emit('click', ev); end;
+       asm 
+         if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
+           if (ev && ev.preventDefault) ev.preventDefault();
+         }
+         this.$emit('click', ev); 
+       end;
     end;
 </script>
+
+<style>
+.bui-nav-link {
+  cursor: pointer;
+  user-select: none;
+}
+</style>

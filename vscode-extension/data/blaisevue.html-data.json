@@ -1,0 +1,721 @@
+{
+  "version": 1.1,
+  "tags": [
+    {
+      "name": "bv-btn",
+      "description": "BlaiseUI Actionable Button Component with variants, sizes, and outline styling.",
+      "attributes": [
+        {
+          "name": "variant",
+          "description": "Color theme variant for the button.",
+          "values": [
+            { "name": "primary", "description": "Primary theme color" },
+            { "name": "secondary", "description": "Secondary neutral color" },
+            { "name": "success", "description": "Success positive action" },
+            { "name": "danger", "description": "Destructive or critical action" },
+            { "name": "warning", "description": "Warning or caution action" },
+            { "name": "info", "description": "Informational action" },
+            { "name": "light", "description": "Light background button" },
+            { "name": "dark", "description": "Dark background button" },
+            { "name": "outline-primary", "description": "Outlined primary border" },
+            { "name": "outline-secondary", "description": "Outlined secondary border" },
+            { "name": "outline-success", "description": "Outlined success border" },
+            { "name": "outline-danger", "description": "Outlined danger border" }
+          ]
+        },
+        {
+          "name": "size",
+          "description": "Size of the button.",
+          "values": [
+            { "name": "sm", "description": "Small compact button" },
+            { "name": "md", "description": "Medium default button" },
+            { "name": "lg", "description": "Large prominent button" }
+          ]
+        },
+        {
+          "name": "label",
+          "description": "Text label fallback for the button (or use slot content)."
+        },
+        {
+          "name": "disabled",
+          "description": "Disables click events and applies muted appearance.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "outline",
+          "description": "Renders button with transparent background and colored outline border.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-card",
+      "description": "BlaiseUI Container Card with header, body, and footer slots.",
+      "attributes": [
+        {
+          "name": "title",
+          "description": "Card header title text."
+        },
+        {
+          "name": "hasFooter",
+          "description": "Enables the footer slot container.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-modal",
+      "description": "BlaiseUI Teleported Interactive Modal Dialog.",
+      "attributes": [
+        {
+          "name": "title",
+          "description": "Modal header title."
+        },
+        {
+          "name": "okLabel",
+          "description": "Confirmation button label (default: 'Process')."
+        },
+        {
+          "name": "cancelLabel",
+          "description": "Cancellation button label (default: 'Close')."
+        },
+        {
+          "name": "show",
+          "description": "Controls initial visibility of the modal.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-input",
+      "description": "BlaiseUI Reactive Form Input Field with validation support.",
+      "attributes": [
+        {
+          "name": "label",
+          "description": "Input field label."
+        },
+        {
+          "name": "type",
+          "description": "HTML input type.",
+          "values": [
+            { "name": "text" },
+            { "name": "password" },
+            { "name": "email" },
+            { "name": "number" },
+            { "name": "tel" },
+            { "name": "url" }
+          ]
+        },
+        {
+          "name": "placeholder",
+          "description": "Placeholder text."
+        },
+        {
+          "name": "value",
+          "description": "Bound input value (or use b-model)."
+        },
+        {
+          "name": "readonly",
+          "description": "Sets field to read-only mode.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-alert",
+      "description": "BlaiseUI Feedback Alert component with dismissible option.",
+      "attributes": [
+        {
+          "name": "variant",
+          "description": "Alert contextual color variant.",
+          "values": [
+            { "name": "primary" },
+            { "name": "secondary" },
+            { "name": "success" },
+            { "name": "danger" },
+            { "name": "warning" },
+            { "name": "info" }
+          ]
+        },
+        {
+          "name": "dismissible",
+          "description": "Shows an interactive close button.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "Controls alert visibility.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-badge",
+      "description": "BlaiseUI Visual Badge/Pill Label.",
+      "attributes": [
+        {
+          "name": "variant",
+          "description": "Badge color variant.",
+          "values": [
+            { "name": "primary" },
+            { "name": "secondary" },
+            { "name": "success" },
+            { "name": "danger" },
+            { "name": "warning" },
+            { "name": "info" },
+            { "name": "light" },
+            { "name": "dark" }
+          ]
+        },
+        {
+          "name": "pill",
+          "description": "Renders badge with fully rounded pill corners.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-icon",
+      "description": "BlaiseUI Vector SVG & Bootstrap Icons (1800+ icons supported).",
+      "attributes": [
+        {
+          "name": "name",
+          "description": "Icon identifier (e.g. 'check-circle', 'star-fill', 'gear-fill', 'heart-fill', 'moon-fill', 'code-slash').",
+          "values": [
+            { "name": "check-circle" },
+            { "name": "warning" },
+            { "name": "gear-fill" },
+            { "name": "heart-fill" },
+            { "name": "weather" },
+            { "name": "code-slash" },
+            { "name": "cpu" },
+            { "name": "bootstrap-fill" },
+            { "name": "star-fill" },
+            { "name": "moon-fill" },
+            { "name": "sun-fill" },
+            { "name": "trash" },
+            { "name": "pencil" },
+            { "name": "download" },
+            { "name": "upload" }
+          ]
+        },
+        {
+          "name": "size",
+          "description": "Pixel size of the icon (default: 16)."
+        },
+        {
+          "name": "color",
+          "description": "CSS color string (e.g. '#3498db', 'currentColor', 'crimson')."
+        }
+      ]
+    },
+    {
+      "name": "bv-toast",
+      "description": "BlaiseUI Animated Notification Toast with auto-dismiss duration.",
+      "attributes": [
+        {
+          "name": "title",
+          "description": "Toast header title."
+        },
+        {
+          "name": "message",
+          "description": "Toast body message text."
+        },
+        {
+          "name": "duration",
+          "description": "Auto-dismiss timeout in milliseconds (default: 3000)."
+        },
+        {
+          "name": "variant",
+          "description": "Toast color theme variant.",
+          "values": [
+            { "name": "success" },
+            { "name": "primary" },
+            { "name": "danger" },
+            { "name": "warning" },
+            { "name": "info" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-spinner",
+      "description": "BlaiseUI Loading Spinner indicator.",
+      "attributes": [
+        {
+          "name": "variant",
+          "description": "Spinner color variant.",
+          "values": [
+            { "name": "primary" },
+            { "name": "secondary" },
+            { "name": "success" },
+            { "name": "danger" },
+            { "name": "warning" },
+            { "name": "info" },
+            { "name": "light" },
+            { "name": "dark" }
+          ]
+        },
+        {
+          "name": "size",
+          "description": "Spinner size.",
+          "values": [
+            { "name": "sm", "description": "Small spinner" },
+            { "name": "md", "description": "Medium default spinner" },
+            { "name": "lg", "description": "Large spinner" }
+          ]
+        },
+        {
+          "name": "type",
+          "description": "Spinner animation type.",
+          "values": [
+            { "name": "border", "description": "Rotating border ring" },
+            { "name": "grow", "description": "Expanding pulsing dot" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-progress",
+      "description": "BlaiseUI Reactive Progress Bar.",
+      "attributes": [
+        {
+          "name": "value",
+          "description": "Current progress value (0 to 100)."
+        },
+        {
+          "name": "max",
+          "description": "Maximum progress scale value (default: 100)."
+        },
+        {
+          "name": "variant",
+          "description": "Progress bar color variant.",
+          "values": [
+            { "name": "primary" },
+            { "name": "success" },
+            { "name": "danger" },
+            { "name": "warning" },
+            { "name": "info" }
+          ]
+        },
+        {
+          "name": "striped",
+          "description": "Applies diagonal stripes pattern.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "animated",
+          "description": "Animates striped pattern motion.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "showProgress",
+          "description": "Displays percentage text inside progress bar.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-chart",
+      "description": "BlaiseUI Reactive Chart.js Component with real-time dataset updates.",
+      "attributes": [
+        {
+          "name": "type",
+          "description": "Chart rendering type.",
+          "values": [
+            { "name": "bar", "description": "Bar chart" },
+            { "name": "line", "description": "Line chart" },
+            { "name": "pie", "description": "Pie chart" },
+            { "name": "doughnut", "description": "Doughnut chart" },
+            { "name": "radar", "description": "Radar chart" },
+            { "name": "polarArea", "description": "Polar Area chart" }
+          ]
+        },
+        {
+          "name": "data",
+          "description": "Chart data object with labels and datasets."
+        },
+        {
+          "name": "options",
+          "description": "Chart.js configuration options object."
+        },
+        {
+          "name": "height",
+          "description": "Canvas display height in pixels."
+        },
+        {
+          "name": "width",
+          "description": "Canvas display width in pixels."
+        }
+      ]
+    },
+    {
+      "name": "bv-data-grid",
+      "description": "BlaiseUI Reactive Data Grid with sorting and pagination.",
+      "attributes": [
+        {
+          "name": "columns",
+          "description": "Array of column definition objects."
+        },
+        {
+          "name": "items",
+          "description": "Array of data record objects to display."
+        },
+        {
+          "name": "perPage",
+          "description": "Number of rows per page."
+        }
+      ]
+    },
+    {
+      "name": "bv-theme-select",
+      "description": "BlaiseThemes Bootswatch Theme Selector dropdown (Flatly, Cosmo, Darkly, etc.).",
+      "attributes": []
+    },
+    {
+      "name": "bv-theme-toggle",
+      "description": "BlaiseThemes Quick Dark/Light Mode toggle button.",
+      "attributes": []
+    },
+    {
+      "name": "bv-tabs",
+      "description": "BlaiseUI Tabbed Navigation Container.",
+      "attributes": [
+        {
+          "name": "pills",
+          "description": "Renders tabs as rounded pills.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "card",
+          "description": "Integrates tab headers with card container styling.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-tab",
+      "description": "BlaiseUI Single Tab Pane inside bv-tabs.",
+      "attributes": [
+        {
+          "name": "title",
+          "description": "Tab header text label."
+        },
+        {
+          "name": "active",
+          "description": "Sets tab as initially active.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "disabled",
+          "description": "Disables switching to this tab.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "router-view",
+      "description": "BlaiseVue Dynamic Routing Viewport for active hash/history route component.",
+      "attributes": []
+    },
+    {
+      "name": "router-link",
+      "description": "BlaiseVue Route Navigation Link.",
+      "attributes": [
+        {
+          "name": "to",
+          "description": "Target route path (e.g. '/' or '/about')."
+        }
+      ]
+    },
+    {
+      "name": "transition",
+      "description": "BlaiseVue CSS Animation Transition wrapper.",
+      "attributes": [
+        {
+          "name": "name",
+          "description": "Prefix for CSS animation classes (e.g. 'fade', 'slide')."
+        },
+        {
+          "name": "mode",
+          "description": "Transition mode.",
+          "values": [
+            { "name": "out-in" },
+            { "name": "in-out" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "transition-group",
+      "description": "BlaiseVue FLIP (*First, Last, Invert, Play*) Reactive List Transition Container.",
+      "attributes": [
+        {
+          "name": "name",
+          "description": "Prefix for FLIP animation classes (e.g. 'list')."
+        },
+        {
+          "name": "tag",
+          "description": "HTML tag to wrap items with (e.g. 'div', 'ul', 'tbody').",
+          "values": [
+            { "name": "div" },
+            { "name": "ul" },
+            { "name": "ol" },
+            { "name": "tbody" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "teleport",
+      "description": "BlaiseVue Teleport Portal: moves rendered DOM nodes to a target selector.",
+      "attributes": [
+        {
+          "name": "to",
+          "description": "Target DOM query selector (e.g. 'body', '#modal-root')."
+        }
+      ]
+    },
+    {
+      "name": "suspense",
+      "description": "BlaiseVue Async Boundary handling async components with fallback template.",
+      "attributes": []
+    },
+    {
+      "name": "bv-container",
+      "description": "BlaiseUI Responsive Layout Container with fluid mode and responsive max-width breakpoints.",
+      "attributes": [
+        {
+          "name": "fluid",
+          "description": "Sets container width to 100% across all viewport widths.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-row",
+      "description": "BlaiseUI Responsive Flexbox Row with configurable gutters and alignment.",
+      "attributes": [
+        {
+          "name": "gutter",
+          "description": "Spacing between columns.",
+          "values": [
+            { "name": "none" },
+            { "name": "sm" },
+            { "name": "md" },
+            { "name": "lg" }
+          ]
+        },
+        {
+          "name": "align",
+          "description": "Vertical alignment of columns.",
+          "values": [
+            { "name": "start" },
+            { "name": "center" },
+            { "name": "end" },
+            { "name": "stretch" }
+          ]
+        },
+        {
+          "name": "justify",
+          "description": "Horizontal distribution of columns.",
+          "values": [
+            { "name": "start" },
+            { "name": "center" },
+            { "name": "end" },
+            { "name": "between" },
+            { "name": "around" }
+          ]
+        },
+        {
+          "name": "noGutters",
+          "description": "Removes negative row margins and column paddings.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-col",
+      "description": "BlaiseUI 12-Column Responsive Grid Column supporting mobile-first and multi-breakpoint sizing.",
+      "attributes": [
+        {
+          "name": "cols",
+          "description": "Base column span (1..12). Defaults to 12 (full width).",
+          "values": [
+            { "name": "12" },
+            { "name": "6" },
+            { "name": "4" },
+            { "name": "3" },
+            { "name": "2" },
+            { "name": "1" }
+          ]
+        },
+        { "name": "sm", "description": "Column span on small screens (>= 576px)." },
+        { "name": "md", "description": "Column span on medium screens / tablets / desktops (>= 768px)." },
+        { "name": "lg", "description": "Column span on large desktop screens (>= 992px)." },
+        { "name": "xl", "description": "Column span on extra large screens (>= 1200px)." },
+        { "name": "offset", "description": "Number of columns to offset." }
+      ]
+    },
+    {
+      "name": "bv-drawer",
+      "description": "BlaiseUI Responsive Offcanvas Navigation Drawer with smooth slide transition and backdrop.",
+      "attributes": [
+        { "name": "title", "description": "Header title of the drawer." },
+        { "name": "width", "description": "Custom drawer width (e.g. '280px', '320px')." },
+        {
+          "name": "position",
+          "description": "Side from which drawer opens.",
+          "values": [
+            { "name": "left" },
+            { "name": "right" }
+          ]
+        },
+        {
+          "name": "overlay",
+          "description": "Enables or disables dark backdrop overlay.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "Initial visibility state.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bv-bottom-nav",
+      "description": "BlaiseUI Mobile Bottom Navigation Bar pinned to viewport footer on phones.",
+      "attributes": []
+    },
+    {
+      "name": "bv-bottom-nav-item",
+      "description": "Action item within bv-bottom-nav with icon and text label.",
+      "attributes": [
+        { "name": "href", "description": "Target navigation link (e.g. '#/pro')." },
+        { "name": "icon", "description": "Icon or emoji character (e.g. '🏠')." },
+        { "name": "label", "description": "Text displayed below the icon." },
+        {
+          "name": "active",
+          "description": "Whether this item is currently active.",
+          "values": [
+            { "name": "true" },
+            { "name": "false" }
+          ]
+        }
+      ]
+    }
+  ],
+  "globalAttributes": [
+    {
+      "name": "b-model",
+      "description": "Two-way reactive data binding to a variable declared in the component's `data:` section."
+    },
+    {
+      "name": "b-validate",
+      "description": "Declarative form validation rules. Supported: `required`, `email`, `min:N`, `max:N`, `numeric`, `alpha`, `regex`. Interacts with `$errors` and `$v`.",
+      "values": [
+        { "name": "required", "description": "Field must not be empty" },
+        { "name": "email", "description": "Field must be a valid email format" },
+        { "name": "required|email", "description": "Required and valid email" },
+        { "name": "min:3", "description": "Minimum character length" },
+        { "name": "max:50", "description": "Maximum character length" },
+        { "name": "numeric", "description": "Numbers only" },
+        { "name": "alpha", "description": "Letters only" }
+      ]
+    },
+    {
+      "name": "b-for",
+      "description": "Iterates over an array. Syntax: `item in list` or `(item, index) in list`."
+    },
+    {
+      "name": "b-if",
+      "description": "Conditionally renders the DOM element based on a truthy expression."
+    },
+    {
+      "name": "b-else-if",
+      "description": "Conditional branch accompanying a preceding `b-if`."
+    },
+    {
+      "name": "b-else",
+      "description": "Conditional fallback branch for `b-if` without expression."
+    },
+    {
+      "name": "b-show",
+      "description": "Toggles CSS `display: none` conditionally while keeping the element in the DOM tree."
+    },
+    {
+      "name": "b-bind",
+      "description": "Dynamically binds an HTML attribute or prop to an expression. Shorthand: `:attr=\"val\"`."
+    },
+    {
+      "name": "b-on",
+      "description": "Attaches an event listener. Shorthand: `@event=\"method\"`."
+    },
+    {
+      "name": "b-html",
+      "description": "Updates the element's `innerHTML` with raw HTML string."
+    },
+    {
+      "name": "b-text",
+      "description": "Updates the element's `textContent` with evaluated string."
+    }
+  ]
+}

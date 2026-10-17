@@ -17,7 +17,7 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .container-fluid { padding: 0 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }';
+  _styleEl.textContent := '.mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
@@ -27,31 +27,33 @@ begin
     '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' +
     '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' +
     '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' +
-    '       <bv-nav-item href="javascript:void(0)" label="⚙️ Settings" @click="clickNotif(''Global Settings'')"></bv-nav-item>' +
+    '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' +
     '    </bv-navbar>' +
     '' +
-    '    <!-- CONTENT CONTAINER -->' +
-    '    <div class="container-fluid p-0">' +
-    '      <div class="row mb-5">' +
-    '         <div class="col-8">' +
+    '    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->' +
+    '    <bv-container fluid="true">' +
+    '      <bv-row gutter="md" class="mb-5">' +
+    '         <bv-col cols="12" md="7">' +
     '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' +
-    '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with zero external CSS dependencies.</p>' +
+    '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' +
     '            ' +
     '            <bv-breadcrumb>' +
     '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' +
     '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' +
     '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' +
     '            </bv-breadcrumb>' +
-    '         </div>' +
-    '         <div class="col-4 d-flex align-items-end justify-content-end p-2 gap-2">' +
+    '         </bv-col>' +
+    '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' +
+    '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' +
     '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' +
     '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(''Manual Toast Trigger'')"></bv-btn>' +
-    '         </div>' +
-    '      </div>' +
+    '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' +
+    '         </bv-col>' +
+    '      </bv-row>' +
     '' +
-    '      <div class="row">' +
-    '         <!-- LEFT COLUMN: Feedback & Status -->' +
-    '         <div class="col-4">' +
+    '      <bv-row gutter="md">' +
+    '         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->' +
+    '         <bv-col cols="12" md="4">' +
     '            <bv-card title="📊 System Status">' +
     '               <div class="mb-3">' +
     '                  <small>Engine Load (Reactivity)</small>' +
@@ -75,27 +77,27 @@ begin
     '                  <bv-list-group-item @click="clickNotif(''Cloud Sync'')">☁️ Cloud Synchronization</bv-list-group-item>' +
     '               </bv-list-group>' +
     '            </bv-card>' +
-    '         </div>' +
+    '         </bv-col>' +
     '' +
-    '         <!-- RIGHT COLUMN: Tabs / Forms / Navigation -->' +
-    '         <div class="col-8">' +
+    '         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->' +
+    '         <bv-col cols="12" md="8">' +
     '            <bv-card style="height: 100%;">' +
     '               <bv-tabs @change="tabChanged">' +
     '                  <bv-tab id="forms" title="📝 Forms" active="true">' +
     '                     <div class="p-4">' +
     '                        <h4>Input Controls</h4>' +
-    '                        <div class="row mt-4">' +
-    '                           <div class="col-6">' +
+    '                        <bv-row gutter="md" class="mt-4">' +
+    '                           <bv-col cols="12" md="6">' +
     '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' +
     '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' +
-    '                           </div>' +
-    '                           <div class="col-6">' +
+    '                           </bv-col>' +
+    '                           <bv-col cols="12" md="6">' +
     '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' +
     '                              <bv-input-group label="API Key" append="Regenerate">' +
     '                                 <bv-input b-model="libName" readonly="true"></bv-input>' +
     '                              </bv-input-group>' +
-    '                           </div>' +
-    '                        </div>' +
+    '                           </bv-col>' +
+    '                        </bv-row>' +
     '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' +
     '                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state.' +
     '                        </div>' +
@@ -135,9 +137,22 @@ begin
     '                  </bv-tab>' +
     '               </bv-tabs>' +
     '            </bv-card>' +
-    '         </div>' +
-    '      </div>' +
-    '    </div>' +
+    '         </bv-col>' +
+    '      </bv-row>' +
+    '    </bv-container>' +
+    '' +
+    '    <!-- DRAWER: Programmatically triggered via $ref -->' +
+    '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' +
+    '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' +
+    '       <bv-list-group>' +
+    '          <bv-list-group-item active="true" @click="clickNotif(''Drawer Menu 1'')">🏠 Dashboard View</bv-list-group-item>' +
+    '          <bv-list-group-item @click="clickNotif(''Drawer Menu 2'')">⚙️ Component Config</bv-list-group-item>' +
+    '          <bv-list-group-item @click="clickNotif(''Drawer Menu 3'')">📱 Mobile Optimization</bv-list-group-item>' +
+    '       </bv-list-group>' +
+    '       <div class="mt-4">' +
+    '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' +
+    '       </div>' +
+    '    </bv-drawer>' +
     '' +
     '    <!-- OVERLAYS: Programmatically triggered via $ref -->' +
     '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' +
@@ -146,6 +161,29 @@ begin
     '          <p>Current Values:</p>' +
     '          <bv-badge variant="info">{{ libName }}</bv-badge>' +
     '          <bv-badge variant="success">{{ count }}%</bv-badge>' +
+    '       </div>' +
+    '    </bv-modal>' +
+    '' +
+    '    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->' +
+    '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' +
+    '       <div class="p-2">' +
+    '          <div class="mb-3" style="margin-bottom: 14px;">' +
+    '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' +
+    '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' +
+    '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' +
+    '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' +
+    '             </button>' +
+    '          </div>' +
+    '          <div class="mb-3" style="margin-bottom: 14px;">' +
+    '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' +
+    '             <div style="display: flex; gap: 8px;">' +
+    '                <button class="bui-btn bui-btn-sm" :class="{ ''bui-btn-primary'': $i18n.locale === ''pt'', ''bui-btn-secondary'': $i18n.locale !== ''pt'' }" type="button" @click="$setLocale(''pt'')">🇧🇷 Português</button>' +
+    '                <button class="bui-btn bui-btn-sm" :class="{ ''bui-btn-primary'': $i18n.locale === ''en'', ''bui-btn-secondary'': $i18n.locale !== ''en'' }" type="button" @click="$setLocale(''en'')">🇺🇸 English</button>' +
+    '             </div>' +
+    '          </div>' +
+    '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' +
+    '             🛡️ <strong>BlaiseVue 3.0 TURBO</strong> &bull; Reatividade Pascal + WebAssembly' +
+    '          </div>' +
     '       </div>' +
     '    </bv-modal>' +
     '' +
@@ -222,6 +260,48 @@ begin
 
     begin
        asm console.log("Tab changed to: ", id); end;
+    end;
+    
+  m['showDrawer'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          if (this.$refs.mainDrawer && this.$refs.mainDrawer.open) {
+            this.$refs.mainDrawer.open();
+          } else if (this.$refs.mainDrawer && this.$refs.mainDrawer.toggle) {
+            this.$refs.mainDrawer.toggle();
+          }
+       end;
+    end;
+    
+  m['closeDrawer'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          if (this.$refs.mainDrawer && this.$refs.mainDrawer.close) {
+            this.$refs.mainDrawer.close();
+          }
+       end;
+    end;
+    
+  m['openSettings'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          if (this.$refs.settingsModal && this.$refs.settingsModal.showModal) {
+            this.$refs.settingsModal.showModal();
+          } else if (this.$refs.settingsModal && this.$refs.settingsModal.show) {
+            this.$refs.settingsModal.show();
+          }
+       end;
+    end;
+    
+  m['applySettings'] := procedure(_this: TJSObject)
+
+    begin
+       asm 
+          this.clickNotif('Configurações salvas!');
+       end;
     end;
 
   comp['methods'] := m;
