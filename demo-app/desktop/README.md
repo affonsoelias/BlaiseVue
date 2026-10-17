@@ -8,8 +8,12 @@ Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **We
 - `webui.pas`: WebUI C dynamic library loader.
 - `uDesktopBridge.pas`: Native Pascal RPC bridge handlers for `$desktop`.
 - `assets/`: Synchronized frontend build (`dist/`).
-- `bin/`: Compiled native executable.
-- `units/`: Free Pascal compiled unit cache (`.ppu`, `.o`).
+- `bin/`: Platform-segregated native executables:
+  - `bin/windows/`: Windows executable (`.exe`) and `webui-2.dll`.
+  - `bin/linux/`: Linux native ELF executable and `libwebui-2.so`.
+  - `bin/macos/`: macOS executable / application bundle and `libwebui-2.dylib`.
+- `units/`: Free Pascal compiled unit caches (`.ppu`, `.o`) separated by target OS:
+  - `units/windows/`, `units/linux/`, `units/macos/`.
 
 ## Quick Commands
 ```bash

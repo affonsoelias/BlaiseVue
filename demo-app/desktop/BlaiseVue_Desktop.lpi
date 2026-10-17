@@ -22,11 +22,11 @@
         <CompilerOptions>
           <Version Value="11"/>
           <Target>
-            <Filename Value="bin/BlaiseVue_Desktop"/>
+            <Filename Value="bin/windows/BlaiseVue_Desktop"/>
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <UnitOutputDirectory Value="units"/>
+            <UnitOutputDirectory Value="units/windows"/>
           </SearchPaths>
           <CodeGeneration>
             <Optimizations>
@@ -74,11 +74,11 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="bin/BlaiseVue_Desktop"/>
+      <Filename Value="bin/windows/BlaiseVue_Desktop"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <UnitOutputDirectory Value="units"/>
+      <UnitOutputDirectory Value="units/windows"/>
     </SearchPaths>
     <CodeGeneration>
       <Optimizations>

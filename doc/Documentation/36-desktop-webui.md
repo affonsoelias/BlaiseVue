@@ -62,15 +62,20 @@ bv desktop run --release
 
 ## 📦 Estrutura do Diretório `desktop/`
 
-Quando executado `bv desktop init [NomeDoApp]`, a seguinte estrutura é gerada automaticamente:
+Quando executado `bv desktop init [NomeDoApp]`, a seguinte estrutura multiplataforma é gerada automaticamente:
 
 ```text
 meu-projeto/
 ├── desktop/
-│   ├── assets/                 # Frontend sincronizado (dist/)
-│   ├── bin/                    # Binários executáveis nativos gerados
-│   │   └── MeuApp.exe
-│   ├── units/                  # Cache de compilação do Free Pascal (.ppu, .o)
+│   ├── assets/                 # Frontend sincronizado (dist/ compartilhado entre todos os SOs)
+│   ├── bin/                    # Binários executáveis nativos separados por plataforma
+│   │   ├── windows/            # Executável Windows (MeuApp.exe e webui-2.dll)
+│   │   ├── linux/              # Executável nativo Linux ELF (MeuApp e libwebui-2.so)
+│   │   └── macos/              # Executável macOS / App Bundle (MeuApp e libwebui-2.dylib)
+│   ├── units/                  # Caches de compilação (.ppu, .o) isolados por plataforma
+│   │   ├── windows/            # Evita conflitos de checksum ao compilar no Windows
+│   │   ├── linux/              # Evita conflitos de checksum ao compilar no Linux
+│   │   └── macos/              # Evita conflitos de checksum ao compilar no macOS
 │   ├── MeuApp.lpi              # Projeto Lazarus (abrir na IDE e pressionar F9)
 │   ├── MeuApp.lpr              # Programa principal em Free Pascal
 │   ├── webui.pas               # Carregador dinâmico da biblioteca WebUI C

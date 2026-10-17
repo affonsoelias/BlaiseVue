@@ -124,11 +124,22 @@ begin
   WriteLn('  ' + APP_TITLE + ' - BlaiseVue 3.5 Desktop');
   WriteLn('====================================================');
 
-  AssetsDir := ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'assets';
+  // 1. Packaged directly alongside executable (standalone bundle/dist)
+  AssetsDir := ExtractFilePath(ParamStr(0)) + 'assets';
+
+  // 2. Platform bin subdirectory: desktop/bin/<platform>/ -> desktop/assets
   if not DirectoryExists(AssetsDir) then
-    AssetsDir := ExtractFilePath(ParamStr(0)) + 'assets';
+    AssetsDir := ExpandFileName(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '..' + DirectorySeparator + 'assets');
+
+  // 3. Flat bin directory: desktop/bin/ -> desktop/assets
+  if not DirectoryExists(AssetsDir) then
+    AssetsDir := ExpandFileName(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'assets');
+
+  // 4. Current working directory
   if not DirectoryExists(AssetsDir) then
     AssetsDir := GetCurrentDir + DirectorySeparator + 'assets';
+  if not DirectoryExists(AssetsDir) then
+    AssetsDir := GetCurrentDir + DirectorySeparator + 'desktop' + DirectorySeparator + 'assets';
 
   IndexPath := AssetsDir + DirectorySeparator + 'index.html';
   if not FileExists(IndexPath) then

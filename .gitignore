@@ -25,6 +25,7 @@ bin/lib/
 *.dll
 *.so
 *.dylib
+*.compiled
 
 # ⚙️ Embedded Tools & Resources
 temp/

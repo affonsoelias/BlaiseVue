@@ -3028,6 +3028,8 @@ end;
 procedure CmdDesktop(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
   DesktopDir, AssetsDir, BinDir, UnitsDir: string;
+  PlatformName, AltPlatformName, ExeDir: string;
+  PlatformBinDir, PlatformUnitsDir: string;
   CleanName, DisplayName: string;
   LprFile, LpiFile, WebUIFile, BridgeFile, ReadmeFile: string;
   LprContent, LpiContent, WebUIContent, BridgeContent, ReadmeContent: string;
@@ -3065,10 +3067,23 @@ begin
   UnitsDir := DesktopDir + DirectorySeparator + 'units';
 
   {$IFDEF MSWINDOWS}
+  PlatformName := 'windows';
+  AltPlatformName := 'win64';
   ExeExt := '.exe';
   {$ELSE}
-  ExeExt := '';
+    {$IFDEF DARWIN}
+    PlatformName := 'macos';
+    AltPlatformName := 'darwin';
+    ExeExt := '';
+    {$ELSE}
+    PlatformName := 'linux';
+    AltPlatformName := 'linux64';
+    ExeExt := '';
+    {$ENDIF}
   {$ENDIF}
+
+  PlatformBinDir := BinDir + DirectorySeparator + PlatformName;
+  PlatformUnitsDir := UnitsDir + DirectorySeparator + PlatformName;
 
   if (SubCmd = 'init') then
   begin
@@ -3077,6 +3092,12 @@ begin
     ForceDir(AssetsDir);
     ForceDir(BinDir);
     ForceDir(UnitsDir);
+    ForceDir(BinDir + DirectorySeparator + 'windows');
+    ForceDir(BinDir + DirectorySeparator + 'linux');
+    ForceDir(BinDir + DirectorySeparator + 'macos');
+    ForceDir(UnitsDir + DirectorySeparator + 'windows');
+    ForceDir(UnitsDir + DirectorySeparator + 'linux');
+    ForceDir(UnitsDir + DirectorySeparator + 'macos');
 
     LprFile := DesktopDir + DirectorySeparator + CleanName + '.lpr';
     LpiFile := DesktopDir + DirectorySeparator + CleanName + '.lpi';
@@ -3166,6 +3187,7 @@ begin
         'function InitWebUI(const LibPath: string): Boolean;' + #10 +
         'var' + #10 +
         '  TargetLib: string;' + #10 +
+        '  BaseDir: string;' + #10 +
         'begin' + #10 +
         '  Result := False;' + #10 +
         '  if WebUILibHandle <> NilHandle then Exit(True);' + #10 +
@@ -3175,10 +3197,6 @@ begin
         '  begin' + #10 +
         '    {$IFDEF MSWINDOWS}' + #10 +
         '    TargetLib := ''webui-2.dll'';' + #10 +
-        '    if not FileExists(TargetLib) then' + #10 +
-        '      TargetLib := ExtractFilePath(ParamStr(0)) + ''webui-2.dll'';' + #10 +
-        '    if not FileExists(TargetLib) then' + #10 +
-        '      TargetLib := ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''webui-2.dll'';' + #10 +
         '    {$ELSE}' + #10 +
         '      {$IFDEF DARWIN}' + #10 +
         '      TargetLib := ''libwebui-2.dylib'';' + #10 +
@@ -3186,6 +3204,23 @@ begin
         '      TargetLib := ''libwebui-2.so'';' + #10 +
         '      {$ENDIF}' + #10 +
         '    {$ENDIF}' + #10 +
+        '' + #10 +
+        '    if not FileExists(TargetLib) then' + #10 +
+        '    begin' + #10 +
+        '      BaseDir := ExtractFilePath(ParamStr(0));' + #10 +
+        '      // 1. Next to executable: desktop/bin/<platform>/webui-2.dll' + #10 +
+        '      if FileExists(BaseDir + TargetLib) then' + #10 +
+        '        TargetLib := BaseDir + TargetLib' + #10 +
+        '      // 2. Parent bin folder: desktop/bin/webui-2.dll' + #10 +
+        '      else if FileExists(BaseDir + ''..'' + DirectorySeparator + TargetLib) then' + #10 +
+        '        TargetLib := BaseDir + ''..'' + DirectorySeparator + TargetLib' + #10 +
+        '      // 3. Desktop root folder: desktop/webui-2.dll' + #10 +
+        '      else if FileExists(BaseDir + ''..'' + DirectorySeparator + ''..'' + DirectorySeparator + TargetLib) then' + #10 +
+        '        TargetLib := BaseDir + ''..'' + DirectorySeparator + ''..'' + DirectorySeparator + TargetLib' + #10 +
+        '      // 4. Current working directory' + #10 +
+        '      else if FileExists(GetCurrentDir + DirectorySeparator + TargetLib) then' + #10 +
+        '        TargetLib := GetCurrentDir + DirectorySeparator + TargetLib;' + #10 +
+        '    end;' + #10 +
         '  end;' + #10 +
         '' + #10 +
         '  WebUILibHandle := SafeLoadLibrary(TargetLib);' + #10 +
@@ -3545,11 +3580,19 @@ begin
         '  WriteLn(''  '' + APP_TITLE + '' - BlaiseVue 3.5 Desktop'');' + #10 +
         '  WriteLn(''===================================================='');' + #10 +
         '' + #10 +
-        '  AssetsDir := ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''assets'';' + #10 +
+        '  // 1. Packaged directly alongside executable (standalone bundle/dist)' + #10 +
+        '  AssetsDir := ExtractFilePath(ParamStr(0)) + ''assets'';' + #10 +
+        '  // 2. Platform bin subdirectory: desktop/bin/<platform>/ -> desktop/assets' + #10 +
         '  if not DirectoryExists(AssetsDir) then' + #10 +
-        '    AssetsDir := ExtractFilePath(ParamStr(0)) + ''assets'';' + #10 +
+        '    AssetsDir := ExpandFileName(ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''..'' + DirectorySeparator + ''assets'');' + #10 +
+        '  // 3. Flat bin directory: desktop/bin/ -> desktop/assets' + #10 +
+        '  if not DirectoryExists(AssetsDir) then' + #10 +
+        '    AssetsDir := ExpandFileName(ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''assets'');' + #10 +
+        '  // 4. Current working directory' + #10 +
         '  if not DirectoryExists(AssetsDir) then' + #10 +
         '    AssetsDir := GetCurrentDir + DirectorySeparator + ''assets'';' + #10 +
+        '  if not DirectoryExists(AssetsDir) then' + #10 +
+        '    AssetsDir := GetCurrentDir + DirectorySeparator + ''desktop'' + DirectorySeparator + ''assets'';' + #10 +
         '' + #10 +
         '  IndexPath := AssetsDir + DirectorySeparator + ''index.html'';' + #10 +
         '  if not FileExists(IndexPath) then' + #10 +
@@ -3619,11 +3662,11 @@ begin
         '        <CompilerOptions>' + #10 +
         '          <Version Value="11"/>' + #10 +
         '          <Target>' + #10 +
-        '            <Filename Value="bin/' + CleanName + '"/>' + #10 +
+        '            <Filename Value="bin/' + PlatformName + '/' + CleanName + '"/>' + #10 +
         '          </Target>' + #10 +
         '          <SearchPaths>' + #10 +
         '            <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
-        '            <UnitOutputDirectory Value="units"/>' + #10 +
+        '            <UnitOutputDirectory Value="units/' + PlatformName + '"/>' + #10 +
         '          </SearchPaths>' + #10 +
         '          <CodeGeneration>' + #10 +
         '            <Optimizations>' + #10 +
@@ -3671,11 +3714,11 @@ begin
         '  <CompilerOptions>' + #10 +
         '    <Version Value="11"/>' + #10 +
         '    <Target>' + #10 +
-        '      <Filename Value="bin/' + CleanName + '"/>' + #10 +
+        '      <Filename Value="bin/' + PlatformName + '/' + CleanName + '"/>' + #10 +
         '    </Target>' + #10 +
         '    <SearchPaths>' + #10 +
         '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
-        '      <UnitOutputDirectory Value="units"/>' + #10 +
+        '      <UnitOutputDirectory Value="units/' + PlatformName + '"/>' + #10 +
         '    </SearchPaths>' + #10 +
         '    <CodeGeneration>' + #10 +
         '      <Optimizations>' + #10 +
@@ -3704,8 +3747,8 @@ begin
         '- `webui.pas`: WebUI C dynamic library loader.' + #10 +
         '- `uDesktopBridge.pas`: Native Pascal RPC bridge handlers for `$desktop`.' + #10 +
         '- `assets/`: Synchronized frontend build (`dist/`).' + #10 +
-        '- `bin/`: Compiled native executable.' + #10 +
-        '- `units/`: Free Pascal compiled unit cache (`.ppu`, `.o`).' + #10 +
+        '- `bin/`: Platform-segregated native executables (`bin/windows/`, `bin/linux/`, `bin/macos/`).' + #10 +
+        '- `units/`: Free Pascal compiled unit caches (`units/windows/`, `units/linux/`, `units/macos/`).' + #10 +
         '' + #10 +
         '## Quick Commands' + #10 +
         '```bash' + #10 +
@@ -3762,34 +3805,41 @@ begin
     end;
 
     CleanName := ChangeFileExt(FoundLpr, '');
+    ForceDir(PlatformBinDir);
+    ForceDir(PlatformUnitsDir);
 
     if IsRelease then
     begin
-      WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode (GUI Application - No Console Window)...');
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode for ' + PlatformName + ' (GUI Application - No Console Window)...');
       {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O3 -WG -Xs -dRELEASE -FEbin -FUunits ' + FoundLpr);
+      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O3 -WG -Xs -dRELEASE -FEbin\' + PlatformName + ' -FUunits\' + PlatformName + ' ' + FoundLpr);
       {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O3 -Xs -dRELEASE -FEbin -FUunits ' + FoundLpr + '"');
+      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O3 -Xs -dRELEASE -FEbin/' + PlatformName + ' -FUunits/' + PlatformName + ' ' + FoundLpr + '"');
       {$ENDIF}
     end
     else
     begin
-      WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode (Console Window Active for Diagnostics)...');
+      WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode for ' + PlatformName + ' (Console Window Active for Diagnostics)...');
       {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -g -gl -dDEBUG -FEbin -FUunits ' + FoundLpr);
+      ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -g -gl -dDEBUG -FEbin\' + PlatformName + ' -FUunits\' + PlatformName + ' ' + FoundLpr);
       {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -g -gl -dDEBUG -FEbin -FUunits ' + FoundLpr + '"');
+      ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -g -gl -dDEBUG -FEbin/' + PlatformName + ' -FUunits/' + PlatformName + ' ' + FoundLpr + '"');
       {$ENDIF}
     end;
 
-    TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+    TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
+    if not FileExists(TargetExe) and (AltPlatformName <> '') then
+      TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
+    if not FileExists(TargetExe) then
+      TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+
     if FileExists(TargetExe) then
     begin
       if IsRelease then
-        WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + CleanName + ExeExt)
+        WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + PlatformName + '/' + CleanName + ExeExt)
       else
       begin
-        WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + CleanName + ExeExt);
+        WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + PlatformName + '/' + CleanName + ExeExt);
         WriteLn('  [TIP] For end users, run "bv desktop build --release" to compile a clean GUI application without console.');
       end;
     end
@@ -3819,33 +3869,43 @@ begin
     end;
 
     CleanName := ChangeFileExt(FoundLpr, '');
-    TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+    TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
+    if not FileExists(TargetExe) and (AltPlatformName <> '') then
+      TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
+    if not FileExists(TargetExe) then
+      TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
 
     if not FileExists(TargetExe) or IsRelease then
     begin
       if IsRelease then
-        WriteLn('Building desktop app in RELEASE mode...')
+        WriteLn('Building desktop app in RELEASE mode for ' + PlatformName + '...')
       else
-        WriteLn('Target binary not found. Building desktop app in DEBUG mode...');
+        WriteLn('Target binary not found. Building desktop app in DEBUG mode for ' + PlatformName + '...');
       CmdDesktop('build', Arg1, Arg2);
+      TargetExe := PlatformBinDir + DirectorySeparator + CleanName + ExeExt;
+      if not FileExists(TargetExe) and (AltPlatformName <> '') then
+        TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + ExeExt;
+      if not FileExists(TargetExe) then
+        TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
     end;
 
     if FileExists(TargetExe) then
     begin
+      ExeDir := ExtractFilePath(TargetExe);
       if IsRelease then
         WriteLn('Launching native desktop app in RELEASE mode (No Console): ' + TargetExe)
       else
         WriteLn('Launching native desktop app in DEBUG mode (Live Console): ' + TargetExe);
 
       {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + BinDir + '" && "' + TargetExe + '"');
+      ExecuteProcess('cmd', '/c cd /d "' + ExeDir + '" && "' + TargetExe + '"');
       {$ELSE}
-      ExecuteProcess('sh', '-c "cd ' + BinDir + ' && ./' + CleanName + '"');
+      ExecuteProcess('sh', '-c "cd ' + ExeDir + ' && ./' + ExtractFileName(TargetExe) + '"');
       {$ENDIF}
     end
     else
     begin
-      WriteLn('Error: Failed to launch desktop app. Binary could not be found.');
+      WriteLn('Error: Failed to launch desktop app. Binary could not be found: ' + TargetExe);
       Halt(1);
     end;
   end

@@ -76,6 +76,7 @@ end;
 function InitWebUI(const LibPath: string): Boolean;
 var
   TargetLib: string;
+  BaseDir: string;
 begin
   Result := False;
   if WebUILibHandle <> NilHandle then Exit(True);
@@ -85,10 +86,6 @@ begin
   begin
     {$IFDEF MSWINDOWS}
     TargetLib := 'webui-2.dll';
-    if not FileExists(TargetLib) then
-      TargetLib := ExtractFilePath(ParamStr(0)) + 'webui-2.dll';
-    if not FileExists(TargetLib) then
-      TargetLib := ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'webui-2.dll';
     {$ELSE}
       {$IFDEF DARWIN}
       TargetLib := 'libwebui-2.dylib';
@@ -96,6 +93,23 @@ begin
       TargetLib := 'libwebui-2.so';
       {$ENDIF}
     {$ENDIF}
+
+    if not FileExists(TargetLib) then
+    begin
+      BaseDir := ExtractFilePath(ParamStr(0));
+      // 1. Next to executable: desktop/bin/<platform>/webui-2.dll
+      if FileExists(BaseDir + TargetLib) then
+        TargetLib := BaseDir + TargetLib
+      // 2. Parent bin folder: desktop/bin/webui-2.dll
+      else if FileExists(BaseDir + '..' + DirectorySeparator + TargetLib) then
+        TargetLib := BaseDir + '..' + DirectorySeparator + TargetLib
+      // 3. Desktop root folder: desktop/webui-2.dll
+      else if FileExists(BaseDir + '..' + DirectorySeparator + '..' + DirectorySeparator + TargetLib) then
+        TargetLib := BaseDir + '..' + DirectorySeparator + '..' + DirectorySeparator + TargetLib
+      // 4. Current working directory
+      else if FileExists(GetCurrentDir + DirectorySeparator + TargetLib) then
+        TargetLib := GetCurrentDir + DirectorySeparator + TargetLib;
+    end;
   end;
 
   WebUILibHandle := SafeLoadLibrary(TargetLib);
