@@ -1,0 +1,27 @@
+<template>
+  <div class="bui-card">
+    <div class="bui-card-header" b-if="title">
+      <slot name="header">{{ title }}</slot>
+    </div>
+    <div class="bui-card-body">
+      <slot></slot>
+    </div>
+    <div class="bui-card-footer" b-if="hasFooter">
+      <slot name="footer"></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVCard - Container Card
+    -----------------------
+    Props:
+    - title: String card header title
+    - hasFooter: Boolean toggle footer container
+  }
+
+  props:
+    title: string = '';
+    hasFooter: boolean = false;
+</script>

@@ -1,0 +1,25 @@
+<template>
+  <button 
+    type="button"
+    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+    :title="$theme.isDark ? 'Tema Claro' : 'Tema Escuro'"
+    @click="toggleTheme">
+    <span v-if="$theme.isDark">☀️ Claro</span>
+    <span v-if="!$theme.isDark">🌙 Escuro</span>
+  </button>
+</template>
+
+<script>
+  {
+    BVThemeToggle - Quick toggle button between Light and Dark mode
+  }
+  methods:
+    procedure toggleTheme;
+    begin
+      asm
+        if (window.$theme) {
+          window.$theme.toggleDarkLight();
+        }
+      end;
+    end;
+</script>

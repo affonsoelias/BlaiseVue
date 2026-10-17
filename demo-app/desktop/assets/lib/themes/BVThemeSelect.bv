@@ -1,0 +1,36 @@
+<template>
+  <div class="bv-theme-select-wrapper d-inline-block">
+    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">
+      <option value="flatly">Flatly (Claro)</option>
+      <option value="cosmo">Cosmo (Claro)</option>
+      <option value="lux">Lux (Claro)</option>
+      <option value="zephyr">Zephyr (Claro)</option>
+      <option value="darkly">Darkly (Escuro)</option>
+      <option value="cyborg">Cyborg (Escuro)</option>
+      <option value="solar">Solar (Escuro)</option>
+      <option value="vapor">Vapor (Neon)</option>
+      <option value="pulse">Pulse (Roxo)</option>
+    </select>
+  </div>
+</template>
+
+<script>
+  {
+    BVThemeSelect - Dropdown for quick Bootswatch theme switching
+  }
+  methods:
+    procedure onThemeChange(e: JSValue);
+    var
+      sel: string;
+    begin
+      sel := string(TJSObject(TJSObject(e)['target'])['value']);
+      if sel <> '' then
+      begin
+        asm
+          if (window.$theme) {
+            window.$theme.setTheme(sel);
+          }
+        end;
+      end;
+    end;
+</script>

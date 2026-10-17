@@ -1,0 +1,17 @@
+<template>
+  <div class="bui-spinner" :class="['bui-spinner', 'bui-spinner-' + (variant || 'primary'), (small && small !== 'false') ? 'bui-spinner-sm' : '']" role="status"></div>
+</template>
+
+<script>
+  {
+    BVSpinner - Loading Spinner Indicator
+    -------------------------------------
+    Props:
+    - variant: String (primary, secondary, success, danger)
+    - small: Boolean (Compact mode)
+  }
+  
+  props:
+    variant: string = 'primary';
+    small: boolean = false;
+</script>

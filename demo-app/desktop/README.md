@@ -1,0 +1,29 @@
+# BlaiseVue Desktop (BlaiseVue 3.5 Desktop)
+
+Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **WebUI**.
+
+## Structure
+- `BlaiseVue_Desktop.lpi`: Lazarus Project File (open in Lazarus IDE and press F9).
+- `BlaiseVue_Desktop.lpr`: Main Free Pascal program entry point.
+- `webui.pas`: WebUI C dynamic library loader.
+- `uDesktopBridge.pas`: Native Pascal RPC bridge handlers for `$desktop`.
+- `assets/`: Synchronized frontend build (`dist/`).
+- `bin/`: Compiled native executable.
+- `units/`: Free Pascal compiled unit cache (`.ppu`, `.o`).
+
+## Quick Commands
+```bash
+# 1. Sync frontend to desktop assets
+bv desktop sync
+
+# 2. Build in Debug mode (with console for logs & diagnostics)
+bv desktop build
+bv desktop run
+
+# 3. Build in Release mode (pure GUI for end users - NO console window)
+bv desktop build --release
+bv desktop run --release
+```
+
+## Lazarus IDE (F9)
+Open `BlaiseVue_Desktop.lpi` in Lazarus IDE and switch between **Debug** and **Release** build modes in the top toolbar.

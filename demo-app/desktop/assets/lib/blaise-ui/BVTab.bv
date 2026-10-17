@@ -1,0 +1,53 @@
+<template>
+  <div class="bui-tab-pane" b-show="active">
+     <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVTab - Single Tab Pane
+    -----------------------
+    Registers itself into parent BVTabs via inject.
+  }
+
+  props:
+    id: string = '';
+    title: string = 'Tab';
+    active: boolean = false;
+
+  inject:
+    registerTab;
+    isActive;
+
+  computed:
+    function active: boolean;
+    begin
+       asm
+         if (typeof this.isActive === 'function') {
+           return Boolean(this.isActive(this.id));
+         }
+         return true;
+       end;
+    end;
+
+  created:
+    begin
+       asm 
+         if (typeof this.registerTab === 'function') {
+           var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+           this.registerTab(t);
+         }
+       end;
+    end;
+
+  mounted:
+    begin
+       asm 
+         if (typeof this.registerTab === 'function') {
+           var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+           this.registerTab(t);
+         }
+       end;
+    end;
+</script>

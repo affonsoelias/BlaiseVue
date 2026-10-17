@@ -1,0 +1,11 @@
+<template>
+  <bv-chart type="doughnut" :data="data" :options="options" :width="width" :height="height"></bv-chart>
+</template>
+
+<script>
+  props:
+    data: JSValue = null;
+    options: JSValue = null;
+    width: string = '100%';
+    height: string = '400px';
+</script>

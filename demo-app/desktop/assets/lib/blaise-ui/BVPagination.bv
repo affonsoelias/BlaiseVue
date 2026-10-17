@@ -1,0 +1,51 @@
+<template>
+  <nav aria-label="Page navigation">
+    <ul class="bui-pagination">
+       <li class="bui-page-item" :class="{ disabled: value <= 1 }">
+         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>
+       </li>
+       
+       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">
+         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>
+       </li>
+
+       <li class="bui-page-item" :class="{ disabled: value >= total }">
+         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>
+       </li>
+    </ul>
+  </nav>
+</template>
+
+<script>
+  {
+    BVPagination - Numbered Page Navigator
+    --------------------------------------
+    Props:
+    - value: Current active page
+    - total: Total page count
+  }
+  
+  props:
+    value: integer = 1;
+    total: integer = 10;
+
+  computed:
+    function pages: JSValue;
+    begin
+       asm
+         var arr = [];
+         var tot = parseInt(this.total) || 1;
+         for (var i = 1; i <= tot; i++) arr.push(i);
+         return arr;
+       end;
+    end;
+
+  methods:
+    procedure changePage(p: integer);
+    begin
+       if (p >= 1) and (p <= integer(this['total'])) then
+       begin
+         asm this.$emit('input', p); this.$emit('change', p); end;
+       end;
+    end;
+</script>

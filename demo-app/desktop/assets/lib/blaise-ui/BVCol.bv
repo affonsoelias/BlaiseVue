@@ -1,0 +1,43 @@
+<template>
+  <div class="bui-col" :class="colClass">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVCol - Responsive 12-Column Grid Item
+    --------------------------------------
+    Props:
+    - cols: String (1..12, default '12' for mobile-first)
+    - sm: String (1..12 breakpoint >= 576px)
+    - md: String (1..12 breakpoint >= 768px)
+    - lg: String (1..12 breakpoint >= 992px)
+    - xl: String (1..12 breakpoint >= 1200px)
+    - offset: String (offset columns)
+  }
+
+  props:
+    cols: string = '12';
+    sm: string = '';
+    md: string = '';
+    lg: string = '';
+    xl: string = '';
+    offset: string = '';
+
+  computed:
+    function colClass: string;
+    begin
+      asm
+        var cls = [];
+        var c = this.cols || '12';
+        cls.push('bui-col-' + c);
+        if (this.sm) cls.push('bui-col-sm-' + this.sm);
+        if (this.md) cls.push('bui-col-md-' + this.md);
+        if (this.lg) cls.push('bui-col-lg-' + this.lg);
+        if (this.xl) cls.push('bui-col-xl-' + this.xl);
+        if (this.offset) cls.push('bui-offset-' + this.offset);
+        return cls.join(' ');
+      end;
+    end;
+</script>

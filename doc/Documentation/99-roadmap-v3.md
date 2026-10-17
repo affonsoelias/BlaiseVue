@@ -148,17 +148,20 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 
 ---
 
-### 🖥️ Pillar 1: Real Multiplatform Desktop (WebUI4Delphi + Lazarus IDE)
+### 🖥️ Pillar 1: Real Multiplatform Desktop (WebUI + Lazarus IDE) — ✅ Completed
 **Goal**: Build ultra-lightweight, native desktop applications (<10 MB, 40 MB RAM) running identically on **Windows, Linux, and macOS** without Electron bloat and without legacy GTK2 dependencies.
-- **Why WebUI4Delphi over WebView2/GTK2**:
-  - WebUI4Delphi utilizes modern installed browsers (Chrome, Edge, Firefox, Brave) in clean native app mode (`--app`).
+- **Why WebUI over Electron/GTK2**:
+  - WebUI utilizes modern installed browsers (Chrome, Edge, Firefox, Brave) in clean native app mode (`--app`).
   - Completely eliminates GTK2 dependency on modern Linux distributions (Ubuntu 22.04/24.04, Debian 12, Fedora).
   - True cross-platform: Windows (Win32), Linux (X11/Wayland), macOS (Cocoa).
+  - Automatic fallback to native system browser app mode if dynamic C library is not present.
 - **Lazarus IDE Integration**: Official template `.lpi`/`.lpr` ready for development and native debugging (`F9`).
-- **Single-Binary Packaging (`.res`)**: Automatic packaging of `dist/` into Windows/Linux resources for a zero-dependency standalone `.exe`.
+- **Reactive `$desktop` Bridge**: Window controls (`minimize`, `maximize`, `close`, `setTitle`, `setFullScreen`), native dialogs, notifications, external URLs, and bidirectional Pascal RPC.
 - **CLI Commands**:
-  - `bv desktop init --webui`: Scaffolds the Lazarus + WebUI4Delphi desktop bridge.
-  - `bv desktop run`: Compiles the frontend and launches the native desktop window.
+  - `bv desktop init [name]`: Scaffolds the complete Lazarus + WebUI desktop project (`desktop/`).
+  - `bv desktop sync`: Compiles frontend and syncs `dist/` to `desktop/assets/`.
+  - `bv desktop build`: Compiles native binary using Free Pascal Compiler (`fpc`).
+  - `bv desktop run`: Launches the native desktop application.
 
 ---
 
@@ -229,7 +232,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 [ v3.5 - The Universal Pascal Platform 🚀 ]
   ├── Phase 1: Tooling & DX ──► VS Code Extension (.vsix) + Snippets + BlaiseUI Autocomplete (✅ Completed)
   ├── Phase 2: Mobile ────────► Capacitor Integration (bv mobile init/run) (✅ Completed)
-  ├── Phase 3: Desktop ───────► WebUI4Delphi + Lazarus IDE Scaffolding (bv desktop)
+  ├── Phase 3: Desktop ───────► WebUI & Lazarus IDE Scaffolding (bv desktop) (✅ Completed)
   └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (fullstack-mormot)
 ```
 
