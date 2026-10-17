@@ -132,7 +132,7 @@ function broadcast(msg) {
   });
 }
 
-// 3. File Watcher
+let isBuilding = false;
 let debounceTimer = null;
 function watchDir(dir) {
   if (!fs.existsSync(dir)) return;
@@ -148,6 +148,11 @@ function watchDir(dir) {
         const basename = path.basename(filename, '.bv');
         const tag = basename.toLowerCase();
         console.log(`\x1b[36m[HMR] Triggering recompilation for <${tag}>...\x1b[0m`);
+        if (isBuilding) {
+          console.log(`[HMR] Build already in progress, skipping duplicate trigger.`);
+          return;
+        }
+        isBuilding = true;
         try {
           const candidateExes = [
             path.resolve(ROOT_DIR, 'bin', 'bv.exe'),
@@ -166,11 +171,13 @@ function watchDir(dir) {
           }
         } catch(e) {
           console.error(`[HMR] Build error:`, e.message);
+        } finally {
+          isBuilding = false;
         }
       } else {
         broadcast({ type: 'reload' });
       }
-    }, 150);
+    }, 200);
   });
 }
 

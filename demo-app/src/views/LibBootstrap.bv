@@ -258,8 +258,10 @@
   .mb-4 { margin-bottom: 16px; }
   .mb-5 { margin-bottom: 24px; }
   .mt-3 { margin-top: 15px; }
-  .container-fluid { padding: 0 15px; }
   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }
+  @media (max-width: 576px) {
+    .lib-bootstrap-page { padding: 12px 10px; }
+  }
   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }
   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }
   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }
