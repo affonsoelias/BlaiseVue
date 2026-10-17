@@ -864,6 +864,19 @@ initialization
             root_c.innerHTML = opts.template;
             let rEl = root_c.firstElementChild;
             if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
+            if (el.getAttribute('class')) {
+               let origClass = el.getAttribute('class');
+               let rClass = rEl.getAttribute('class') || '';
+               rEl.setAttribute('class', (rClass ? rClass + ' ' : '') + origClass);
+            }
+            if (el.getAttribute('style')) {
+               let origStyle = el.getAttribute('style');
+               let rStyle = rEl.getAttribute('style') || '';
+               rEl.setAttribute('style', (rStyle ? rStyle + '; ' : '') + origStyle);
+            }
+            if (el.getAttribute('id') && !rEl.getAttribute('id')) {
+               rEl.setAttribute('id', el.getAttribute('id'));
+            }
             rEl['bvManaged'] = true;
             rEl.setAttribute('data-bv-component', tagName);
             rEl['__bv_component_tag__'] = tagName;
@@ -990,11 +1003,11 @@ initialization
                   let hasBareNodes = false;
                   originalChildren.forEach(function(cn) {
                      if (!isNamedSlotNode(cn)) {
-                        let cnClone = cn.cloneNode(true);
-                        if (sNode.parentNode) sNode.parentNode.insertBefore(cnClone, sNode);
-                        bv.traverse(cnClone, Data, Methods);
-                        let finalCnClone = cnClone['__bv_replacement__'] || cnClone;
-                        bv.markManaged(finalCnClone);
+                        let targetNode = cn;
+                        if (sNode.parentNode) sNode.parentNode.insertBefore(targetNode, sNode);
+                        bv.traverse(targetNode, Data, Methods);
+                        let finalNode = targetNode['__bv_replacement__'] || targetNode;
+                        bv.markManaged(finalNode);
                         hasBareNodes = true;
                      }
                   });

@@ -442,6 +442,14 @@ var
   fullHash, cleanP: string; 
   matchedRoute, matchedChild: TBVRoute; 
 begin
+  asm
+    if (!this.FRouterViewEl || !document.body.contains(this.FRouterViewEl)) {
+      let rv = null;
+      if (this.FAppRoot) rv = this.FAppRoot.querySelector('router-view');
+      if (!rv) rv = document.querySelector('router-view');
+      if (rv) this.FRouterViewEl = rv;
+    }
+  end;
   if not Assigned(FRouterViewEl) then Exit;
 
   if FMode = 'history' then

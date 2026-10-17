@@ -831,14 +831,25 @@
   font-size: 11px;
   gap: 2px;
   padding: 6px 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: all 0.2s ease;
+}
+.bui-bottom-nav-item span {
+  pointer-events: none;
 }
 .bui-bottom-nav-item:hover, .bui-bottom-nav-item.active {
   color: var(--bui-primary);
   font-weight: 600;
 }
+.bui-bottom-nav-item.active .bui-bottom-nav-icon {
+  transform: scale(1.15);
+  transition: transform 0.2s ease;
+}
 .bui-bottom-nav-icon {
   font-size: 18px;
   line-height: 1;
 }
+
 
