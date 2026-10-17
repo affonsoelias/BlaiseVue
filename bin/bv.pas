@@ -1289,6 +1289,9 @@ procedure CmdCreate(const ProjectName: string);
 var
   Base, TemplatePath: string;
   Content: string;
+  IsFullStack: Boolean;
+  TemplateMormotDir: string;
+  i: Integer;
 begin
   Base := GetCurrentDir + DirectorySeparator + ProjectName + DirectorySeparator;
   TemplatePath := GetSDKPath + 'demo-app' + DirectorySeparator;
@@ -1422,12 +1425,44 @@ begin
     WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
   end;
 
+  // Check if --fullstack or -f flag was passed
+  IsFullStack := False;
+  for i := 2 to ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--fullstack') or
+       (LowerCase(ParamStr(i)) = '-f') or
+       (LowerCase(ParamStr(i)) = '--template=fullstack-mormot') or
+       ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and (LowerCase(ParamStr(i + 1)) = 'fullstack-mormot')) then
+    begin
+      IsFullStack := True;
+      Break;
+    end;
+  end;
+
+  if IsFullStack then
+  begin
+    TemplateMormotDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
+    if DirectoryExists(TemplateMormotDir) then
+    begin
+      WriteLn('Scaffolding Full-Stack mORMot 2 backend server in ', ProjectName, '/server...');
+      ForceDir(Base + 'server');
+      CopyDir(TemplateMormotDir, Base + 'server', ['bin', 'lib']);
+      ForceDir(Base + 'server' + DirectorySeparator + 'bin');
+      ForceDir(Base + 'server' + DirectorySeparator + 'lib');
+      WriteLn('  [+] Full-Stack mORMot 2 backend scaffolded successfully.');
+    end;
+  end;
+
   WriteLn('');
   WriteLn('Project created successfully!');
   WriteLn('');
   WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
   WriteLn('  bv run dev');
+  if IsFullStack then
+  begin
+    WriteLn('  bv server run          # Starts the native mORMot 2 backend on port 8090');
+  end;
 end;
 
 // =====================================================================
@@ -4626,6 +4661,306 @@ begin
 end;
 
 // =====================================================================
+//  FULL-STACK PASCAL: mORMot 2 BACKEND SERVER
+// =====================================================================
+
+function FindMormot2Path: string;
+var
+  Candidate: string;
+  ConfigFile: string;
+
+  function IsValidMormot(const Dir: string): Boolean;
+  var
+    P: string;
+  begin
+    Result := False;
+    P := ExcludeTrailingPathDelimiter(Dir);
+    if (P <> '') and DirectoryExists(P) then
+    begin
+      if DirectoryExists(P + DirectorySeparator + 'src') and
+         FileExists(P + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas') then
+        Result := True;
+    end;
+  end;
+
+begin
+  Result := '';
+
+  // 1. Environment variable MORMOT2_PATH
+  Candidate := GetEnvironmentVariable('MORMOT2_PATH');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 2. Project or server configuration file: server/mormot.path or mormot.path
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
+
+  // 3. User local installation path on Windows
+  Candidate := 'C:\ComponenteLazarus\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 4. Relative paths to workspace or BlaiseVue SDK
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := ExpandFileName(GetSDKPath + '..' + DirectorySeparator + 'mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 5. Alternate drive paths on Windows
+  Candidate := 'C:\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := 'D:\ComponenteLazarus\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := 'D:\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 6. Common Unix locations
+  Candidate := '/opt/mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := '/usr/local/share/mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := ExpandFileName('~/mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+end;
+
+procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
+var
+  ServerDir, BinDir, LibDir, TemplateDir: string;
+  LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
+  IsRelease: Boolean;
+  i: Integer;
+  HttpClient: TFPHTTPClient;
+  StatusResp: string;
+
+  procedure ParseArg(const A: string);
+  var
+    S: string;
+  begin
+    S := LowerCase(A);
+    if S = '' then Exit;
+    if (S = '--release') or (S = '-r') or (S = 'release') then
+      IsRelease := True
+    else if (S = '--debug') or (S = '-d') or (S = 'debug') then
+      IsRelease := False
+    else if (Copy(S, 1, 7) = '--port=') then
+      PortArg := Copy(A, 8, MaxInt);
+  end;
+
+begin
+  ServerDir := GetCurrentDir + DirectorySeparator + 'server';
+  BinDir := ServerDir + DirectorySeparator + 'bin';
+  LibDir := ServerDir + DirectorySeparator + 'lib';
+  LprFile := ServerDir + DirectorySeparator + 'server.lpr';
+  TargetExe := BinDir + DirectorySeparator + 'server' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+  TemplateDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
+  IsRelease := False;
+  PortArg := '';
+
+  for i := 2 to ParamCount do
+  begin
+    if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
+    begin
+      if i + 1 <= ParamCount then
+        PortArg := ParamStr(i + 1);
+    end
+    else
+      ParseArg(ParamStr(i));
+  end;
+
+  if (SubCmd = 'init') then
+  begin
+    WriteLn('Initializing BlaiseVue mORMot 2 Native Backend Server in server/...');
+    if not DirectoryExists(TemplateDir) then
+    begin
+      WriteLn('Error: Fullstack mORMot template directory not found at: ' + TemplateDir);
+      Halt(1);
+    end;
+
+    ForceDir(ServerDir);
+    CopyDir(TemplateDir, ServerDir, ['bin', 'lib']);
+    ForceDir(BinDir);
+    ForceDir(LibDir);
+
+    WriteLn('  [+] Full-Stack mORMot 2 server template scaffolded successfully in server/ !');
+    WriteLn('');
+    WriteLn('Next steps:');
+    WriteLn('  1. Run "bv build" to compile your reactive frontend to dist/');
+    WriteLn('  2. Run "bv server build" (or "bv server build --release") to compile the native server');
+    WriteLn('  3. Run "bv server run" to launch the server on port 8090');
+    WriteLn('  Or open server/server.lpi in Lazarus IDE and press F9!');
+  end
+  else if (SubCmd = 'build') then
+  begin
+    if not FileExists(LprFile) then
+    begin
+      WriteLn('No server project found in server/. Initializing first...');
+      CmdServer('init');
+    end;
+
+    MormotPath := FindMormot2Path;
+    if MormotPath = '' then
+    begin
+      WriteLn('[!] Error: Synopse mORMot 2 installation not found.');
+      WriteLn('    BlaiseVue searched:');
+      WriteLn('    - Environment variable MORMOT2_PATH');
+      WriteLn('    - C:\ComponenteLazarus\mORMot2');
+      WriteLn('    - Local config file server/mormot.path');
+      WriteLn('    - ../mORMot2, /opt/mormot2, ~/mORMot2');
+      WriteLn('');
+      WriteLn('    To fix:');
+      WriteLn('    1. Set MORMOT2_PATH to your mORMot 2 directory:');
+      WriteLn('       set MORMOT2_PATH=C:\ComponenteLazarus\mORMot2');
+      WriteLn('    2. Or create server/mormot.path containing your mORMot 2 directory path.');
+      Halt(1);
+    end;
+
+    ForceDir(BinDir);
+    ForceDir(LibDir);
+
+    WriteLn('Building BlaiseVue mORMot 2 Native Server...');
+    WriteLn('  [+] mORMot 2 Path: ' + MormotPath);
+    if IsRelease then
+      WriteLn('  [+] Mode: RELEASE (Optimized -O3, stripped symbols)')
+    else
+      WriteLn('  [+] Mode: DEBUG (-O2, debug symbols active)');
+
+    FpcCmd := 'fpc -MObjFPC -Sh ';
+    if IsRelease then
+      FpcCmd := FpcCmd + '-O3 -Xs -dRELEASE '
+    else
+      FpcCmd := FpcCmd + '-O2 -g -gl -dDEBUG ';
+
+    FpcCmd := FpcCmd +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src" ' +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'core" ' +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'net" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'core" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'net" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'app" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'crypt" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'db" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'lib" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'orm" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'rest" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'soa" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'misc" ';
+
+    {$IFDEF WINDOWS}
+    if DirectoryExists(MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64') then
+      FpcCmd := FpcCmd + '-Fl"' + MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64" ';
+    FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
+    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && ' + FpcCmd);
+    {$ELSE}
+    FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
+    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ' + FpcCmd + '"');
+    {$ENDIF}
+
+    if FileExists(TargetExe) then
+    begin
+      WriteLn('  [SUCCESS] Native mORMot 2 server compiled successfully: ' + TargetExe);
+      WriteLn('  [TIP] Run "bv server run" to start the server.');
+    end
+    else
+    begin
+      WriteLn('  [ERROR] Server compilation failed. Check FPC compiler output above.');
+      Halt(1);
+    end;
+  end
+  else if (SubCmd = 'run') then
+  begin
+    if not FileExists(TargetExe) or IsRelease then
+    begin
+      CmdServer('build', Arg1, Arg2);
+    end;
+
+    if not FileExists(TargetExe) then
+    begin
+      WriteLn('Error: Server binary not found: ' + TargetExe);
+      Halt(1);
+    end;
+
+    ExtraArgs := '';
+    if PortArg <> '' then
+      ExtraArgs := ' --port ' + PortArg;
+
+    WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
+    WriteLn('Executable: ' + TargetExe);
+    WriteLn('');
+
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ./bin/server' + ExtraArgs + '"');
+    {$ENDIF}
+  end
+  else if (SubCmd = 'status') then
+  begin
+    PortArg := '8090';
+    for i := 2 to ParamCount do
+    begin
+      if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
+      begin
+        if i + 1 <= ParamCount then
+          PortArg := ParamStr(i + 1);
+      end
+      else if Copy(ParamStr(i), 1, 7) = '--port=' then
+        PortArg := Copy(ParamStr(i), 8, MaxInt);
+    end;
+
+    WriteLn('Checking BlaiseVue mORMot 2 server status on http://localhost:' + PortArg + '/api/status ...');
+    HttpClient := TFPHTTPClient.Create(nil);
+    try
+      try
+        StatusResp := HttpClient.Get('http://localhost:' + PortArg + '/api/status');
+        WriteLn('[+] Server is ONLINE!');
+        WriteLn(StatusResp);
+      except
+        on E: Exception do
+        begin
+          WriteLn('[-] Server is OFFLINE or unreachable on port ' + PortArg + ': ' + E.Message);
+          WriteLn('    Start it using: bv server run');
+        end;
+      end;
+    finally
+      HttpClient.Free;
+    end;
+  end
+  else
+  begin
+    WriteLn('Usage: bv server <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+    WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
+    WriteLn('  build [--release]     Compiles native server with Free Pascal');
+    WriteLn('  run [--port <port>]   Launches native server');
+    WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
+  end;
+end;
+
+// =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
 
@@ -4673,6 +5008,10 @@ begin
     WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
     WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
     WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
+    WriteLn('    bv server init         Scaffolds mORMot 2 backend server in server/');
+    WriteLn('    bv server build [--release] Compiles native server binary with Free Pascal');
+    WriteLn('    bv server run [--port <p>] Starts native backend server (default: 8090)');
+    WriteLn('    bv server status [--port <p>] Queries running server health endpoint (/api/status)');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -4879,6 +5218,15 @@ begin
       Halt(1);
     end;
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+  else if Cmd = 'server' then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv server <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+      Halt(1);
+    end;
+    CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
   else
   begin

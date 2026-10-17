@@ -184,14 +184,21 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 
 ---
 
-### ⚙️ Pillar 3: Full-Stack Pascal with mORMot 2 (Ultra-High-Performance Backend)
+### ⚙️ Pillar 3: Full-Stack Pascal with mORMot 2 (Ultra-High-Performance Backend) — ✅ Completed
 **Goal**: Combine the fastest frontend Pascal framework (BlaiseVue) with the fastest backend Pascal engine in existence (Synopse mORMot 2 by Arnaud Bouchez).
 - **Official Template `fullstack-mormot`**:
-  - Pre-configured backend server in Free Pascal / Delphi with SQLite/PostgreSQL ORM, JWT authentication, and high-throughput REST endpoints.
-  - Native real-time WebSockets for bidirectional communication (push notifications, live dashboard metrics).
+  - Pre-configured backend server in Free Pascal / Delphi with asynchronous HTTP, CORS, and high-throughput REST endpoints.
+  - Native real-time WebSockets (`blaise-ws`) for bidirectional communication and live updates.
+  - Automatic static SPA hosting from `dist/` with HTML5 History API routing fallback.
 - **Reactive Client Service (`$api` & `$ws`)**:
   - Injected `$api` and `$ws` helpers in BlaiseVue component scopes with automatic header injection, bearer token handling, and reactive data synchronization.
-- **Shared Pascal Contracts**: Share data structures and record definitions directly between the backend and frontend.
+- **Shared Pascal Contracts**: Share data structures and record definitions directly between the backend and frontend (`ServerModels.pas`).
+- **CLI Commands (`bv server`)**:
+  - `bv create <name> --fullstack`: Scaffolds full-stack app with mORMot 2 backend.
+  - `bv server init`: Scaffolds `server/` directory.
+  - `bv server build [--release]`: Compiles native server binary with Free Pascal.
+  - `bv server run [--port <p>]`: Starts native server on port 8090.
+  - `bv server status`: Queries health endpoint `/api/status`.
 
 ---
 
@@ -229,11 +236,11 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
                         ──► Automated E2E Suite (bv test e2e)
        │
        ▼
-[ v3.5 - The Universal Pascal Platform 🚀 ]
+[ v3.5 - The Universal Pascal Platform (100% Complete) 🚀 ]
   ├── Phase 1: Tooling & DX ──► VS Code Extension (.vsix) + Snippets + BlaiseUI Autocomplete (✅ Completed)
   ├── Phase 2: Mobile ────────► Capacitor Integration (bv mobile init/run) (✅ Completed)
   ├── Phase 3: Desktop ───────► WebUI & Lazarus IDE Scaffolding (bv desktop) (✅ Completed)
-  └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (fullstack-mormot)
+  └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (bv server init/build/run) (✅ Completed)
 ```
 
 ---

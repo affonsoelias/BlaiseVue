@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm, BVClient;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
@@ -61,6 +61,12 @@ initialization
          }
          if (window.__BV_CORE__.mobile && !Data.FData['$mobile']) {
             Data.FData['$mobile'] = window.__BV_CORE__.mobile;
+         }
+         if (window.__BV_CORE__.api && !Data.FData['$api']) {
+            Data.FData['$api'] = window.__BV_CORE__.api;
+         }
+         if (window.__BV_CORE__.ws && !Data.FData['$ws']) {
+            Data.FData['$ws'] = window.__BV_CORE__.ws;
          }
       }
 
@@ -453,6 +459,12 @@ initialization
                 if (window.__BV_CORE__.mobile && !d.$mobile) {
                    d.$mobile = window.__BV_CORE__.mobile;
                 }
+                if (window.__BV_CORE__.api && !d.$api) {
+                   d.$api = window.__BV_CORE__.api;
+                }
+                if (window.__BV_CORE__.ws && !d.$ws) {
+                   d.$ws = window.__BV_CORE__.ws;
+                }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -830,6 +842,12 @@ initialization
             }
             if (window.__BV_CORE__.desktop) {
                pRef['$desktop'] = window.__BV_CORE__.desktop;
+            }
+            if (window.__BV_CORE__.api) {
+               pRef['$api'] = window.__BV_CORE__.api;
+            }
+            if (window.__BV_CORE__.ws) {
+               pRef['$ws'] = window.__BV_CORE__.ws;
             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);

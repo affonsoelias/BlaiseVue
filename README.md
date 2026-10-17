@@ -98,6 +98,14 @@ bv desktop build [target] --release # Compiles Release native binary (pure GUI -
 bv desktop run [target]    # Launches desktop app in Debug mode (with console)
 bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
 
+# === Backend & Full-Stack (Synopse mORMot 2) ===
+bv create <name> --fullstack # Scaffolds full-stack app with mORMot 2 native backend
+bv server init             # Scaffolds mORMot 2 backend server in server/
+bv server build            # Compiles Debug native server with Free Pascal
+bv server build --release  # Compiles optimized Release native server (-O3, stripped)
+bv server run              # Starts native backend server on port 8090
+bv server status           # Queries /api/status health endpoint
+
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
 ```
@@ -112,14 +120,14 @@ Our architectural evolution roadmap:
 - [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
 - [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
 - [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
-- [x] **v3.5 Universal Pascal Platform (Phase 1, 2 & 3 Complete)**:
+- [x] **v3.5 Universal Pascal Platform (100% Complete - Phases 1, 2, 3 & 4 Delivered)**:
   - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
   - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
-  - [ ] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
+  - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv server init|build|run|status`, `--fullstack`, `$api`, `$ws`).
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md) and [Desktop Documentation](doc/Documentation/36-desktop-webui.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
 
 ---
 
@@ -138,6 +146,9 @@ BlaiseVue/
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
 │   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
 │   ├── BVStore.pas            # Centralized state management ($store)
+│   ├── BVClient.pas           # REST ($api) & WebSocket ($ws) client helpers
+├── templates/                 # Scaffolding templates
+│   ├── fullstack-mormot/      # High-performance mORMot 2 server template
 │   └── BVDevTools.pas         # Bridge to browser DevTools extension (v3.0)
 ├── packages/                  # Official ecosystem packages
 │   ├── blaise-ui/             # 20+ native UI components & styles
