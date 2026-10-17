@@ -1,0 +1,20 @@
+<template>
+  <nav class="bui-navbar">
+    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>
+    <ul class="bui-navbar-nav">
+      <slot></slot>
+    </ul>
+  </nav>
+</template>
+
+<script>
+  {
+    BVNavbar - Application Top Navigation Header
+    ---------------------------------------------
+    Props:
+    - brand: String (Logo / Brand Title)
+  }
+  
+  props:
+    brand: string = 'BlaiseVue UI';
+</script>

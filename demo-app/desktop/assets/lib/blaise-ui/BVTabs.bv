@@ -1,0 +1,73 @@
+<template>
+  <div class="bui-tabs-container">
+    <ul class="bui-tabs-nav">
+       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">
+         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">
+            {{ tab.title }}
+         </a>
+       </li>
+    </ul>
+
+    <div class="bui-tab-content">
+       <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVTabs - Tabbed Interface Container
+    -----------------------------------
+    Provides registration and active state context to child BVTab components.
+  }
+
+  data:
+    tabs: JSValue;
+    activeTabId: string = '';
+
+  created:
+    begin
+       asm this.tabs = []; end;
+    end;
+
+  provide:
+    begin
+       Result := TJSObject.new;
+       asm
+         var self = this;
+         Result.registerTab = function(tab) {
+           if (!self.tabs) self.tabs = [];
+           var exists = false;
+           for (var i = 0; i < self.tabs.length; i++) {
+             if (self.tabs[i].id === tab.id) { exists = true; break; }
+           }
+           if (!exists) {
+             self.tabs.push(tab);
+             if (tab.active || !self.activeTabId || self.activeTabId === '') {
+               self.activeTabId = tab.id;
+             }
+           }
+         };
+         Result.unregisterTab = function(id) {
+           if (!self.tabs) return;
+           var idx = -1;
+           for (var i = 0; i < self.tabs.length; i++) {
+             if (self.tabs[i].id === id) { idx = i; break; }
+           }
+           if (idx !== -1) self.tabs.splice(idx, 1);
+         };
+         Result.isActive = function(id) {
+           return self.activeTabId === id;
+         };
+       end;
+    end;
+
+  methods:
+    procedure selectTab(id: string);
+    begin
+       asm 
+         this.activeTabId = id; 
+         this.$emit('change', id); 
+       end;
+    end;
+</script>

@@ -1,0 +1,181 @@
+<template>
+  <teleport to="body">
+    <div class="bui-modal-backdrop" b-show="isVisible" style="display: none;" @click="handleBackdropClick">
+      <div class="bui-modal-content" @click.stop="">
+        <div class="bui-modal-header">
+          <span>{{ title }}</span>
+          <button class="bui-modal-close" type="button" @click="close">&times;</button>
+        </div>
+        <div class="bui-modal-body">
+          <slot></slot>
+        </div>
+        <div class="bui-modal-footer">
+          <slot name="footer">
+            <button class="bui-btn bui-btn-secondary" type="button" @click="close">{{ computedCancelLabel }}</button>
+            <button class="bui-btn bui-btn-primary" type="button" @click="confirm">{{ computedOkLabel }}</button>
+          </slot>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<script>
+  {
+    BVModal - Teleported Interactive Dialog
+    ----------------------------------------
+    Props:
+    - title: String modal title
+    - okLabel: String confirmation label
+    - cancelLabel: String cancellation label
+    - show: Boolean initial visibility
+  }
+
+  props:
+    title: string = 'Modal';
+    okLabel: string = 'Process';
+    oklabel: string = 'Process';
+    cancelLabel: string = 'Close';
+    cancellabel: string = 'Close';
+    show: boolean = false;
+
+  data:
+    isOpen: boolean = false;
+
+  created:
+    begin
+       asm
+         if (this.show === true || this.show === 'true') {
+           this.isOpen = true;
+         } else {
+           this.isOpen = false;
+         }
+       end;
+    end;
+
+  computed:
+    function isVisible: boolean;
+    begin
+       asm
+         return Boolean(this.isOpen === true || this.show === true || this.show === 'true');
+       end;
+    end;
+
+    function computedOkLabel: string;
+    begin
+       asm
+         return this.okLabel || this.oklabel || 'Process';
+       end;
+    end;
+
+    function computedCancelLabel: string;
+    begin
+       asm
+         return this.cancelLabel || this.cancellabel || 'Close';
+       end;
+    end;
+
+  methods:
+    procedure showModal;
+    begin
+       asm
+         this.isOpen = true;
+         this.show = true;
+       end;
+    end;
+
+    procedure show;
+    begin
+       asm
+         this.isOpen = true;
+         this.show = true;
+       end;
+    end;
+
+    procedure close;
+    begin
+       asm
+         this.isOpen = false;
+         this.show = false;
+         this.$emit('close');
+       end;
+    end;
+
+    procedure confirm;
+    begin
+       asm
+         this.isOpen = false;
+         this.show = false;
+         this.$emit('ok');
+       end;
+    end;
+
+    procedure handleBackdropClick;
+    begin
+       asm this.close(); end;
+    end;
+</script>
+
+<style>
+.bui-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  padding: 16px;
+  box-sizing: border-box;
+}
+.bui-modal-content {
+  background: var(--bui-card-bg, #fff);
+  color: var(--bui-text, #1e293b);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+  overflow: hidden;
+  animation: bui-scale-in 0.2s ease-out;
+  box-sizing: border-box;
+}
+@keyframes bui-scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.bui-modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--bui-border, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+.bui-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--bui-text-muted, #64748b);
+  padding: 0 4px;
+}
+.bui-modal-close:hover {
+  color: var(--bui-text, #1e293b);
+}
+.bui-modal-body { 
+  padding: 18px; 
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.bui-modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--bui-border, #e2e8f0);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: var(--bui-card-footer-bg, #f8fafc);
+}
+</style>

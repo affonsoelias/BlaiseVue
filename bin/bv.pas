@@ -3025,6 +3025,730 @@ begin
   end;
 end;
 
+procedure CmdDesktop(const SubCmd, AppName: string);
+var
+  DesktopDir, AssetsDir, BinDir, UnitsDir: string;
+  CleanName, DisplayName: string;
+  LprFile, LpiFile, WebUIFile, BridgeFile, ReadmeFile: string;
+  LprContent, LpiContent, WebUIContent, BridgeContent, ReadmeContent: string;
+  i: Integer;
+  SearchRec: TSearchRec;
+  FoundLpr: string;
+  ExeExt: string;
+  TargetExe: string;
+begin
+  WriteLn('=== BlaiseVue 3.5 Desktop (WebUI & Lazarus IDE) ===');
+
+  DisplayName := AppName;
+  if DisplayName = '' then DisplayName := 'BlaiseVue Desktop';
+
+  CleanName := '';
+  for i := 1 to Length(DisplayName) do
+  begin
+    if (DisplayName[i] in ['a'..'z', 'A'..'Z', '0'..'9']) then
+      CleanName := CleanName + DisplayName[i]
+    else if CleanName <> '' then
+      CleanName := CleanName + '_';
+  end;
+  if CleanName = '' then CleanName := 'DesktopApp';
+  if CleanName[1] in ['0'..'9'] then CleanName := 'App' + CleanName;
+
+  DesktopDir := GetCurrentDir + DirectorySeparator + 'desktop';
+  AssetsDir := DesktopDir + DirectorySeparator + 'assets';
+  BinDir := DesktopDir + DirectorySeparator + 'bin';
+  UnitsDir := DesktopDir + DirectorySeparator + 'units';
+
+  {$IFDEF MSWINDOWS}
+  ExeExt := '.exe';
+  {$ELSE}
+  ExeExt := '';
+  {$ENDIF}
+
+  if (SubCmd = 'init') then
+  begin
+    WriteLn('Initializing native Desktop project in desktop/ ...');
+    ForceDir(DesktopDir);
+    ForceDir(AssetsDir);
+    ForceDir(BinDir);
+    ForceDir(UnitsDir);
+
+    LprFile := DesktopDir + DirectorySeparator + CleanName + '.lpr';
+    LpiFile := DesktopDir + DirectorySeparator + CleanName + '.lpi';
+    WebUIFile := DesktopDir + DirectorySeparator + 'webui.pas';
+    BridgeFile := DesktopDir + DirectorySeparator + 'uDesktopBridge.pas';
+    ReadmeFile := DesktopDir + DirectorySeparator + 'README.md';
+
+    // 1. webui.pas
+    if not FileExists(WebUIFile) then
+    begin
+      WebUIContent :=
+        'unit webui;' + #10 +
+        '' + #10 +
+        '{$mode objfpc}{$H+}' + #10 +
+        '' + #10 +
+        'interface' + #10 +
+        '' + #10 +
+        'uses' + #10 +
+        '  SysUtils, DynLibs;' + #10 +
+        '' + #10 +
+        'const' + #10 +
+        '  NoBrowser = 0;' + #10 +
+        '  AnyBrowser = 1;' + #10 +
+        '  Chrome = 2;' + #10 +
+        '  Firefox = 3;' + #10 +
+        '  Edge = 4;' + #10 +
+        '  Safari = 5;' + #10 +
+        '  Chromium = 6;' + #10 +
+        '  Opera = 7;' + #10 +
+        '  Brave = 8;' + #10 +
+        '  Vivaldi = 9;' + #10 +
+        '  Yandex = 10;' + #10 +
+        '  Epic = 11;' + #10 +
+        '' + #10 +
+        'type' + #10 +
+        '  PWebUIEvent = ^TWebUIEvent;' + #10 +
+        '  TWebUIEvent = record' + #10 +
+        '    window: Size_t;' + #10 +
+        '    event_type: Size_t;' + #10 +
+        '    element: PChar;' + #10 +
+        '    event_number: Size_t;' + #10 +
+        '    bind_id: Size_t;' + #10 +
+        '    client_id: Size_t;' + #10 +
+        '    connection_id: Size_t;' + #10 +
+        '    cookies: PChar;' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  TWebUIBindCallback = procedure(e: PWebUIEvent); cdecl;' + #10 +
+        '' + #10 +
+        'var' + #10 +
+        '  webui_new_window: function(): Size_t; cdecl;' + #10 +
+        '  webui_show: function(window: Size_t; const content: PChar): Boolean; cdecl;' + #10 +
+        '  webui_show_browser: function(window: Size_t; const content: PChar; browser: Cardinal): Boolean; cdecl;' + #10 +
+        '  webui_bind: function(window: Size_t; const element: PChar; func: TWebUIBindCallback): Size_t; cdecl;' + #10 +
+        '  webui_wait: procedure(); cdecl;' + #10 +
+        '  webui_close: procedure(window: Size_t); cdecl;' + #10 +
+        '  webui_exit: procedure(); cdecl;' + #10 +
+        '  webui_set_title: procedure(window: Size_t; const title: PChar); cdecl;' + #10 +
+        '  webui_set_size: procedure(window: Size_t; width, height: Cardinal); cdecl;' + #10 +
+        '  webui_set_position: procedure(window: Size_t; x, y: Cardinal); cdecl;' + #10 +
+        '  webui_run: procedure(window: Size_t; const script: PChar); cdecl;' + #10 +
+        '  webui_script: function(window: Size_t; const script: PChar; timeout: Size_t; buffer: PChar; buffer_len: Size_t): Boolean; cdecl;' + #10 +
+        '  webui_set_kiosk: procedure(window: Size_t; status: Boolean); cdecl;' + #10 +
+        '  webui_get_string: function(e: PWebUIEvent): PChar; cdecl;' + #10 +
+        '  webui_get_int: function(e: PWebUIEvent): Int64; cdecl;' + #10 +
+        '  webui_get_bool: function(e: PWebUIEvent): Boolean; cdecl;' + #10 +
+        '  webui_get_size: function(e: PWebUIEvent): Size_t; cdecl;' + #10 +
+        '  webui_return_string: procedure(e: PWebUIEvent; const str: PChar); cdecl;' + #10 +
+        '  webui_return_int: procedure(e: PWebUIEvent; num: Int64); cdecl;' + #10 +
+        '  webui_return_bool: procedure(e: PWebUIEvent; b: Boolean); cdecl;' + #10 +
+        '  webui_is_shown: function(window: Size_t): Boolean; cdecl;' + #10 +
+        '' + #10 +
+        'function InitWebUI(const LibPath: string = ''''): Boolean;' + #10 +
+        'procedure FreeWebUI;' + #10 +
+        'function IsWebUIAvailable: Boolean;' + #10 +
+        '' + #10 +
+        'implementation' + #10 +
+        '' + #10 +
+        'var' + #10 +
+        '  WebUILibHandle: TLibHandle = NilHandle;' + #10 +
+        '' + #10 +
+        'function IsWebUIAvailable: Boolean;' + #10 +
+        'begin' + #10 +
+        '  Result := (WebUILibHandle <> NilHandle);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'function InitWebUI(const LibPath: string): Boolean;' + #10 +
+        'var' + #10 +
+        '  TargetLib: string;' + #10 +
+        'begin' + #10 +
+        '  Result := False;' + #10 +
+        '  if WebUILibHandle <> NilHandle then Exit(True);' + #10 +
+        '' + #10 +
+        '  TargetLib := LibPath;' + #10 +
+        '  if TargetLib = '''' then' + #10 +
+        '  begin' + #10 +
+        '    {$IFDEF MSWINDOWS}' + #10 +
+        '    TargetLib := ''webui-2.dll'';' + #10 +
+        '    if not FileExists(TargetLib) then' + #10 +
+        '      TargetLib := ExtractFilePath(ParamStr(0)) + ''webui-2.dll'';' + #10 +
+        '    if not FileExists(TargetLib) then' + #10 +
+        '      TargetLib := ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''webui-2.dll'';' + #10 +
+        '    {$ELSE}' + #10 +
+        '      {$IFDEF DARWIN}' + #10 +
+        '      TargetLib := ''libwebui-2.dylib'';' + #10 +
+        '      {$ELSE}' + #10 +
+        '      TargetLib := ''libwebui-2.so'';' + #10 +
+        '      {$ENDIF}' + #10 +
+        '    {$ENDIF}' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  WebUILibHandle := SafeLoadLibrary(TargetLib);' + #10 +
+        '  if WebUILibHandle = NilHandle then Exit(False);' + #10 +
+        '' + #10 +
+        '  Pointer(webui_new_window) := GetProcedureAddress(WebUILibHandle, ''webui_new_window'');' + #10 +
+        '  Pointer(webui_show) := GetProcedureAddress(WebUILibHandle, ''webui_show'');' + #10 +
+        '  Pointer(webui_show_browser) := GetProcedureAddress(WebUILibHandle, ''webui_show_browser'');' + #10 +
+        '  Pointer(webui_bind) := GetProcedureAddress(WebUILibHandle, ''webui_bind'');' + #10 +
+        '  Pointer(webui_wait) := GetProcedureAddress(WebUILibHandle, ''webui_wait'');' + #10 +
+        '  Pointer(webui_close) := GetProcedureAddress(WebUILibHandle, ''webui_close'');' + #10 +
+        '  Pointer(webui_exit) := GetProcedureAddress(WebUILibHandle, ''webui_exit'');' + #10 +
+        '  Pointer(webui_set_title) := GetProcedureAddress(WebUILibHandle, ''webui_set_title'');' + #10 +
+        '  Pointer(webui_set_size) := GetProcedureAddress(WebUILibHandle, ''webui_set_size'');' + #10 +
+        '  Pointer(webui_set_position) := GetProcedureAddress(WebUILibHandle, ''webui_set_position'');' + #10 +
+        '  Pointer(webui_run) := GetProcedureAddress(WebUILibHandle, ''webui_run'');' + #10 +
+        '  Pointer(webui_script) := GetProcedureAddress(WebUILibHandle, ''webui_script'');' + #10 +
+        '  Pointer(webui_set_kiosk) := GetProcedureAddress(WebUILibHandle, ''webui_set_kiosk'');' + #10 +
+        '  Pointer(webui_get_string) := GetProcedureAddress(WebUILibHandle, ''webui_get_string'');' + #10 +
+        '  Pointer(webui_get_int) := GetProcedureAddress(WebUILibHandle, ''webui_get_int'');' + #10 +
+        '  Pointer(webui_get_bool) := GetProcedureAddress(WebUILibHandle, ''webui_get_bool'');' + #10 +
+        '  Pointer(webui_get_size) := GetProcedureAddress(WebUILibHandle, ''webui_get_size'');' + #10 +
+        '  Pointer(webui_return_string) := GetProcedureAddress(WebUILibHandle, ''webui_return_string'');' + #10 +
+        '  Pointer(webui_return_int) := GetProcedureAddress(WebUILibHandle, ''webui_return_int'');' + #10 +
+        '  Pointer(webui_return_bool) := GetProcedureAddress(WebUILibHandle, ''webui_return_bool'');' + #10 +
+        '  Pointer(webui_is_shown) := GetProcedureAddress(WebUILibHandle, ''webui_is_shown'');' + #10 +
+        '' + #10 +
+        '  Result := Assigned(webui_new_window) and Assigned(webui_show) and Assigned(webui_wait);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure FreeWebUI;' + #10 +
+        'begin' + #10 +
+        '  if WebUILibHandle <> NilHandle then' + #10 +
+        '  begin' + #10 +
+        '    UnloadLibrary(WebUILibHandle);' + #10 +
+        '    WebUILibHandle := NilHandle;' + #10 +
+        '  end;' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'finalization' + #10 +
+        '  FreeWebUI;' + #10 +
+        '' + #10 +
+        'end.' + #10;
+      WriteStringToFile(WebUIFile, WebUIContent);
+      WriteLn('  [+] Created desktop/webui.pas (Dynamic WebUI C Loader)');
+    end
+    else
+      WriteLn('  [i] desktop/webui.pas already exists.');
+
+    // 2. uDesktopBridge.pas
+    if not FileExists(BridgeFile) then
+    begin
+      BridgeContent :=
+        'unit uDesktopBridge;' + #10 +
+        '' + #10 +
+        '{$mode objfpc}{$H+}' + #10 +
+        '' + #10 +
+        'interface' + #10 +
+        '' + #10 +
+        'uses' + #10 +
+        '  SysUtils, Classes, webui;' + #10 +
+        '' + #10 +
+        'procedure RegisterDesktopBridge(AWindow: Size_t);' + #10 +
+        'procedure HandleMinimize(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleMaximize(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleClose(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleSetTitle(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleSetFullScreen(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleNotify(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleOpenURL(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleOpenFileDialog(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleSaveFileDialog(e: PWebUIEvent); cdecl;' + #10 +
+        'procedure HandleGetSystemInfo(e: PWebUIEvent); cdecl;' + #10 +
+        '' + #10 +
+        'implementation' + #10 +
+        '' + #10 +
+        'procedure HandleMinimize(e: PWebUIEvent); cdecl;' + #10 +
+        'begin' + #10 +
+        '  WriteLn(''[uDesktopBridge] Minimize window requested'');' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleMaximize(e: PWebUIEvent); cdecl;' + #10 +
+        'begin' + #10 +
+        '  WriteLn(''[uDesktopBridge] Maximize window requested'');' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleClose(e: PWebUIEvent); cdecl;' + #10 +
+        'begin' + #10 +
+        '  WriteLn(''[uDesktopBridge] Close window requested'');' + #10 +
+        '  if Assigned(webui_close) and (e <> nil) then' + #10 +
+        '    webui_close(e^.window);' + #10 +
+        '  if Assigned(webui_exit) then' + #10 +
+        '    webui_exit();' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleSetTitle(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  NewTitle: PChar;' + #10 +
+        'begin' + #10 +
+        '  if Assigned(webui_get_string) and (e <> nil) then' + #10 +
+        '  begin' + #10 +
+        '    NewTitle := webui_get_string(e);' + #10 +
+        '    if Assigned(webui_set_title) and (NewTitle <> nil) then' + #10 +
+        '      webui_set_title(e^.window, NewTitle);' + #10 +
+        '  end;' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleSetFullScreen(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  Status: Boolean;' + #10 +
+        'begin' + #10 +
+        '  if Assigned(webui_get_bool) and (e <> nil) then' + #10 +
+        '  begin' + #10 +
+        '    Status := webui_get_bool(e);' + #10 +
+        '    if Assigned(webui_set_kiosk) then' + #10 +
+        '      webui_set_kiosk(e^.window, Status);' + #10 +
+        '  end;' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleNotify(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  Title: PChar;' + #10 +
+        'begin' + #10 +
+        '  if Assigned(webui_get_string) and (e <> nil) then' + #10 +
+        '  begin' + #10 +
+        '    Title := webui_get_string(e);' + #10 +
+        '    WriteLn(''[uDesktopBridge] Desktop Notification: '', Title);' + #10 +
+        '  end;' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleOpenURL(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  URL: PChar;' + #10 +
+        'begin' + #10 +
+        '  if Assigned(webui_get_string) and (e <> nil) then' + #10 +
+        '  begin' + #10 +
+        '    URL := webui_get_string(e);' + #10 +
+        '    WriteLn(''[uDesktopBridge] Open URL: '', URL);' + #10 +
+        '  end;' + #10 +
+        '  if Assigned(webui_return_bool) then webui_return_bool(e, True);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleOpenFileDialog(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  MockResult: string;' + #10 +
+        'begin' + #10 +
+        '  MockResult := ''{"name":"document.txt","path":"/path/to/document.txt","size":1024}'';' + #10 +
+        '  if Assigned(webui_return_string) and (e <> nil) then' + #10 +
+        '    webui_return_string(e, PChar(MockResult));' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleSaveFileDialog(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  MockResult: string;' + #10 +
+        'begin' + #10 +
+        '  MockResult := ''{"saved":true,"filename":"exported_data.json"}'';' + #10 +
+        '  if Assigned(webui_return_string) and (e <> nil) then' + #10 +
+        '    webui_return_string(e, PChar(MockResult));' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure HandleGetSystemInfo(e: PWebUIEvent); cdecl;' + #10 +
+        'var' + #10 +
+        '  SysInfoJSON: string;' + #10 +
+        '  OSName: string;' + #10 +
+        'begin' + #10 +
+        '  {$IFDEF MSWINDOWS}' + #10 +
+        '  OSName := ''Windows'';' + #10 +
+        '  {$ELSE}' + #10 +
+        '    {$IFDEF DARWIN}' + #10 +
+        '    OSName := ''macOS'';' + #10 +
+        '    {$ELSE}' + #10 +
+        '    OSName := ''Linux'';' + #10 +
+        '    {$ENDIF}' + #10 +
+        '  {$ENDIF}' + #10 +
+        '' + #10 +
+        '  SysInfoJSON := ''{'' +' + #10 +
+        '    ''"platform":"'' + OSName + ''",'' +' + #10 +
+        '    ''"framework":"BlaiseVue 3.5 Desktop (WebUI + Lazarus)",'' +' + #10 +
+        '    ''"compiler":"Free Pascal '' + {$I %FPCVERSION%} + ''",'' +' + #10 +
+        '    ''"arch":"'' + {$I %FPCTARGETCPU%} + ''",'' +' + #10 +
+        '    ''"isDesktop":true'' +' + #10 +
+        '    ''}'';' + #10 +
+        '' + #10 +
+        '  if Assigned(webui_return_string) and (e <> nil) then' + #10 +
+        '    webui_return_string(e, PChar(SysInfoJSON));' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure RegisterDesktopBridge(AWindow: Size_t);' + #10 +
+        'begin' + #10 +
+        '  if not Assigned(webui_bind) then Exit;' + #10 +
+        '' + #10 +
+        '  webui_bind(AWindow, ''bv_minimize'', @HandleMinimize);' + #10 +
+        '  webui_bind(AWindow, ''bv_maximize'', @HandleMaximize);' + #10 +
+        '  webui_bind(AWindow, ''bv_close'', @HandleClose);' + #10 +
+        '  webui_bind(AWindow, ''bv_set_title'', @HandleSetTitle);' + #10 +
+        '  webui_bind(AWindow, ''bv_set_fullscreen'', @HandleSetFullScreen);' + #10 +
+        '  webui_bind(AWindow, ''bv_notify'', @HandleNotify);' + #10 +
+        '  webui_bind(AWindow, ''bv_open_url'', @HandleOpenURL);' + #10 +
+        '  webui_bind(AWindow, ''bv_open_file_dialog'', @HandleOpenFileDialog);' + #10 +
+        '  webui_bind(AWindow, ''bv_save_file_dialog'', @HandleSaveFileDialog);' + #10 +
+        '  webui_bind(AWindow, ''bv_get_system_info'', @HandleGetSystemInfo);' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'end.' + #10;
+      WriteStringToFile(BridgeFile, BridgeContent);
+      WriteLn('  [+] Created desktop/uDesktopBridge.pas (Native Desktop Bridge)');
+    end
+    else
+      WriteLn('  [i] desktop/uDesktopBridge.pas already exists.');
+
+    // 3. <CleanName>.lpr
+    if not FileExists(LprFile) then
+    begin
+      LprContent :=
+        'program ' + CleanName + ';' + #10 +
+        '' + #10 +
+        '{$mode objfpc}{$H+}' + #10 +
+        '' + #10 +
+        'uses' + #10 +
+        '  {$IFDEF UNIX}' + #10 +
+        '  cthreads,' + #10 +
+        '  {$ENDIF}' + #10 +
+        '  SysUtils, Classes, Process, webui, uDesktopBridge;' + #10 +
+        '' + #10 +
+        'const' + #10 +
+        '  APP_TITLE = ''' + DisplayName + ''';' + #10 +
+        '  DEFAULT_WIDTH = 1280;' + #10 +
+        '  DEFAULT_HEIGHT = 800;' + #10 +
+        '' + #10 +
+        'var' + #10 +
+        '  MainWindow: Size_t;' + #10 +
+        '  IndexPath: string;' + #10 +
+        '  AssetsDir: string;' + #10 +
+        '' + #10 +
+        'function FindAppModeBrowser(const TargetURL: string; out BrowserCmd: string): Boolean;' + #10 +
+        'var' + #10 +
+        '  EdgePath, ChromePath, BravePath: string;' + #10 +
+        'begin' + #10 +
+        '  Result := False;' + #10 +
+        '  BrowserCmd := '''';' + #10 +
+        '' + #10 +
+        '  {$IFDEF MSWINDOWS}' + #10 +
+        '  EdgePath := GetEnvironmentVariable(''ProgramFiles(x86)'') + ''\Microsoft\Edge\Application\msedge.exe'';' + #10 +
+        '  if not FileExists(EdgePath) then' + #10 +
+        '    EdgePath := GetEnvironmentVariable(''ProgramFiles'') + ''\Microsoft\Edge\Application\msedge.exe'';' + #10 +
+        '' + #10 +
+        '  ChromePath := GetEnvironmentVariable(''ProgramFiles'') + ''\Google\Chrome\Application\chrome.exe'';' + #10 +
+        '  if not FileExists(ChromePath) then' + #10 +
+        '    ChromePath := GetEnvironmentVariable(''ProgramFiles(x86)'') + ''\Google\Chrome\Application\chrome.exe'';' + #10 +
+        '  if not FileExists(ChromePath) then' + #10 +
+        '    ChromePath := GetEnvironmentVariable(''LocalAppData'') + ''\Google\Chrome\Application\chrome.exe'';' + #10 +
+        '' + #10 +
+        '  BravePath := GetEnvironmentVariable(''ProgramFiles'') + ''\BraveSoftware\Brave-Browser\Application\brave.exe'';' + #10 +
+        '' + #10 +
+        '  if FileExists(EdgePath) then' + #10 +
+        '  begin' + #10 +
+        '    BrowserCmd := EdgePath;' + #10 +
+        '    Exit(True);' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  if FileExists(ChromePath) then' + #10 +
+        '  begin' + #10 +
+        '    BrowserCmd := ChromePath;' + #10 +
+        '    Exit(True);' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  if FileExists(BravePath) then' + #10 +
+        '  begin' + #10 +
+        '    BrowserCmd := BravePath;' + #10 +
+        '    Exit(True);' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  BrowserCmd := ''cmd.exe'';' + #10 +
+        '  Result := True;' + #10 +
+        '  {$ELSE}' + #10 +
+        '  BrowserCmd := ''xdg-open'';' + #10 +
+        '  Result := True;' + #10 +
+        '  {$ENDIF}' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'procedure LaunchNativeBrowserApp(const TargetURL: string);' + #10 +
+        'var' + #10 +
+        '  BCmd: string;' + #10 +
+        '  Proc: TProcess;' + #10 +
+        'begin' + #10 +
+        '  WriteLn(''[BlaiseVue Desktop] Launching native Browser App mode...'');' + #10 +
+        '  if FindAppModeBrowser(TargetURL, BCmd) then' + #10 +
+        '  begin' + #10 +
+        '    Proc := TProcess.Create(nil);' + #10 +
+        '    try' + #10 +
+        '      Proc.Executable := BCmd;' + #10 +
+        '      if BCmd = ''cmd.exe'' then' + #10 +
+        '      begin' + #10 +
+        '        Proc.Parameters.Add(''/c'');' + #10 +
+        '        Proc.Parameters.Add(''start'');' + #10 +
+        '        Proc.Parameters.Add('''''''');' + #10 +
+        '        Proc.Parameters.Add(TargetURL);' + #10 +
+        '      end' + #10 +
+        '      else' + #10 +
+        '      begin' + #10 +
+        '        Proc.Parameters.Add(''--app='' + TargetURL);' + #10 +
+        '        Proc.Parameters.Add(''--window-size='' + IntToStr(DEFAULT_WIDTH) + '','' + IntToStr(DEFAULT_HEIGHT));' + #10 +
+        '      end;' + #10 +
+        '      Proc.Options := [poWaitOnExit];' + #10 +
+        '      Proc.Execute;' + #10 +
+        '    finally' + #10 +
+        '      Proc.Free;' + #10 +
+        '    end;' + #10 +
+        '  end;' + #10 +
+        'end;' + #10 +
+        '' + #10 +
+        'begin' + #10 +
+        '  WriteLn(''===================================================='');' + #10 +
+        '  WriteLn(''  '' + APP_TITLE + '' - BlaiseVue 3.5 Desktop'');' + #10 +
+        '  WriteLn(''===================================================='');' + #10 +
+        '' + #10 +
+        '  AssetsDir := ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''assets'';' + #10 +
+        '  if not DirectoryExists(AssetsDir) then' + #10 +
+        '    AssetsDir := ExtractFilePath(ParamStr(0)) + ''assets'';' + #10 +
+        '  if not DirectoryExists(AssetsDir) then' + #10 +
+        '    AssetsDir := GetCurrentDir + DirectorySeparator + ''assets'';' + #10 +
+        '' + #10 +
+        '  IndexPath := AssetsDir + DirectorySeparator + ''index.html'';' + #10 +
+        '  if not FileExists(IndexPath) then' + #10 +
+        '  begin' + #10 +
+        '    WriteLn(''[ERROR] Assets not found: '', IndexPath);' + #10 +
+        '    WriteLn(''Please run "bv desktop sync" to copy frontend assets.'');' + #10 +
+        '    Halt(1);' + #10 +
+        '  end;' + #10 +
+        '' + #10 +
+        '  WriteLn(''[i] Assets found: '', IndexPath);' + #10 +
+        '' + #10 +
+        '  if InitWebUI then' + #10 +
+        '  begin' + #10 +
+        '    WriteLn(''[+] Initialized WebUI runtime successfully!'');' + #10 +
+        '    MainWindow := webui_new_window();' + #10 +
+        '    RegisterDesktopBridge(MainWindow);' + #10 +
+        '    webui_set_title(MainWindow, PChar(APP_TITLE));' + #10 +
+        '    webui_set_size(MainWindow, DEFAULT_WIDTH, DEFAULT_HEIGHT);' + #10 +
+        '' + #10 +
+        '    WriteLn(''[+] Opening desktop window via WebUI...'');' + #10 +
+        '    webui_show(MainWindow, PChar(IndexPath));' + #10 +
+        '    webui_wait();' + #10 +
+        '    WriteLn(''[i] Desktop window closed.'');' + #10 +
+        '  end' + #10 +
+        '  else' + #10 +
+        '  begin' + #10 +
+        '    WriteLn(''[i] WebUI library (webui-2.dll) not found in binary folder.'');' + #10 +
+        '    WriteLn(''[i] Gracefully falling back to native Browser App Mode (Edge/Chrome/Chromium)...'');' + #10 +
+        '    LaunchNativeBrowserApp(''file:///'' + StringReplace(ExpandFileName(IndexPath), ''\'', ''/'', [rfReplaceAll]));' + #10 +
+        '  end;' + #10 +
+        'end.' + #10;
+      WriteStringToFile(LprFile, LprContent);
+      WriteLn('  [+] Created desktop/' + CleanName + '.lpr (Free Pascal Main Entry)');
+    end
+    else
+      WriteLn('  [i] desktop/' + CleanName + '.lpr already exists.');
+
+    // 4. <CleanName>.lpi
+    if not FileExists(LpiFile) then
+    begin
+      LpiContent :=
+        '<?xml version="1.0" encoding="UTF-8"?>' + #10 +
+        '<CONFIG>' + #10 +
+        '  <ProjectOptions>' + #10 +
+        '    <Version Value="12"/>' + #10 +
+        '    <General>' + #10 +
+        '      <Flags>' + #10 +
+        '        <MainUnitHasCreateFormStatements Value="False"/>' + #10 +
+        '        <MainUnitHasTitleStatement Value="False"/>' + #10 +
+        '        <Scaled Value="True"/>' + #10 +
+        '      </Flags>' + #10 +
+        '      <SessionStorage Value="InProjectDir"/>' + #10 +
+        '      <Title Value="' + CleanName + '"/>' + #10 +
+        '      <ResourceType Value="res"/>' + #10 +
+        '      <UseXPManifest Value="True"/>' + #10 +
+        '      <XPManifest>' + #10 +
+        '        <DpiAware Value="True"/>' + #10 +
+        '      </XPManifest>' + #10 +
+        '    </General>' + #10 +
+        '    <BuildModes>' + #10 +
+        '      <Item Name="Default" Default="True"/>' + #10 +
+        '    </BuildModes>' + #10 +
+        '    <PublishOptions>' + #10 +
+        '      <Version Value="2"/>' + #10 +
+        '      <UseFileFilters Value="True"/>' + #10 +
+        '    </PublishOptions>' + #10 +
+        '    <RunParams>' + #10 +
+        '      <FormatVersion Value="2"/>' + #10 +
+        '    </RunParams>' + #10 +
+        '    <Units>' + #10 +
+        '      <Unit>' + #10 +
+        '        <Filename Value="' + CleanName + '.lpr"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '      </Unit>' + #10 +
+        '      <Unit>' + #10 +
+        '        <Filename Value="webui.pas"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '        <UnitName Value="webui"/>' + #10 +
+        '      </Unit>' + #10 +
+        '      <Unit>' + #10 +
+        '        <Filename Value="uDesktopBridge.pas"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '        <UnitName Value="uDesktopBridge"/>' + #10 +
+        '      </Unit>' + #10 +
+        '    </Units>' + #10 +
+        '  </ProjectOptions>' + #10 +
+        '  <CompilerOptions>' + #10 +
+        '    <Version Value="11"/>' + #10 +
+        '    <Target>' + #10 +
+        '      <Filename Value="bin/' + CleanName + '"/>' + #10 +
+        '    </Target>' + #10 +
+        '    <SearchPaths>' + #10 +
+        '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
+        '      <UnitOutputDirectory Value="units"/>' + #10 +
+        '    </SearchPaths>' + #10 +
+        '    <CodeGeneration>' + #10 +
+        '      <Optimizations>' + #10 +
+        '        <OptimizationLevel Value="2"/>' + #10 +
+        '      </Optimizations>' + #10 +
+        '    </CodeGeneration>' + #10 +
+        '  </CompilerOptions>' + #10 +
+        '</CONFIG>' + #10;
+      WriteStringToFile(LpiFile, LpiContent);
+      WriteLn('  [+] Created desktop/' + CleanName + '.lpi (Lazarus IDE Project)');
+    end
+    else
+      WriteLn('  [i] desktop/' + CleanName + '.lpi already exists.');
+
+    // 5. README.md
+    if not FileExists(ReadmeFile) then
+    begin
+      ReadmeContent :=
+        '# ' + DisplayName + ' (BlaiseVue 3.5 Desktop)' + #10 +
+        '' + #10 +
+        'Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **WebUI**.' + #10 +
+        '' + #10 +
+        '## Structure' + #10 +
+        '- `' + CleanName + '.lpi`: Lazarus Project File (open in Lazarus IDE and press F9).' + #10 +
+        '- `' + CleanName + '.lpr`: Main Free Pascal program entry point.' + #10 +
+        '- `webui.pas`: WebUI C dynamic library loader.' + #10 +
+        '- `uDesktopBridge.pas`: Native Pascal RPC bridge handlers for `$desktop`.' + #10 +
+        '- `assets/`: Synchronized frontend build (`dist/`).' + #10 +
+        '- `bin/`: Compiled native executable.' + #10 +
+        '- `units/`: Free Pascal compiled unit cache (`.ppu`, `.o`).' + #10 +
+        '' + #10 +
+        '## Quick Commands' + #10 +
+        '```bash' + #10 +
+        '# 1. Sync frontend to desktop assets' + #10 +
+        'bv desktop sync' + #10 +
+        '' + #10 +
+        '# 2. Build native binary with Free Pascal' + #10 +
+        'bv desktop build' + #10 +
+        '' + #10 +
+        '# 3. Launch desktop app' + #10 +
+        'bv desktop run' + #10 +
+        '```' + #10;
+      WriteStringToFile(ReadmeFile, ReadmeContent);
+      WriteLn('  [+] Created desktop/README.md');
+    end;
+
+    WriteLn('');
+    WriteLn('Desktop project scaffolded successfully!');
+    WriteLn('Next steps:');
+    WriteLn('  1. Run "bv desktop sync"  to compile frontend and copy dist/ to desktop/assets/');
+    WriteLn('  2. Run "bv desktop build" to compile native binary with Free Pascal');
+    WriteLn('  3. Run "bv desktop run"   to start your native desktop app');
+    WriteLn('  Or open desktop/' + CleanName + '.lpi in Lazarus IDE and press F9!');
+  end
+  else if (SubCmd = 'sync') then
+  begin
+    WriteLn('Synchronizing BlaiseVue dist/ with native Desktop assets...');
+    CmdRunBuild;
+    ForceDir(AssetsDir);
+    CopyDir(GetCurrentDir + DirectorySeparator + 'dist', AssetsDir, []);
+    WriteLn('  [+] Desktop assets synchronized successfully in desktop/assets/ !');
+  end
+  else if (SubCmd = 'build') then
+  begin
+    WriteLn('Building native Desktop application with Free Pascal...');
+    CmdDesktop('sync', AppName);
+
+    FoundLpr := '';
+    if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
+    begin
+      FoundLpr := SearchRec.Name;
+      FindClose(SearchRec);
+    end;
+
+    if FoundLpr = '' then
+    begin
+      WriteLn('Error: No .lpr project file found in desktop/ directory. Run "bv desktop init" first.');
+      Halt(1);
+    end;
+
+    CleanName := ChangeFileExt(FoundLpr, '');
+    WriteLn('  Compiling ' + FoundLpr + ' with FPC...');
+
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && fpc -O2 -FEbin -FUunits ' + FoundLpr);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && fpc -O2 -FEbin -FUunits ' + FoundLpr + '"');
+    {$ENDIF}
+
+    TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+    if FileExists(TargetExe) then
+    begin
+      WriteLn('  [SUCCESS] Native binary built: desktop/bin/' + CleanName + ExeExt);
+    end
+    else
+    begin
+      WriteLn('  [WARNING] Binary not found at expected location: ' + TargetExe);
+    end;
+  end
+  else if (SubCmd = 'run') then
+  begin
+    FoundLpr := '';
+    if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
+    begin
+      FoundLpr := SearchRec.Name;
+      FindClose(SearchRec);
+    end;
+
+    if FoundLpr = '' then
+    begin
+      WriteLn('No desktop project found. Initializing first...');
+      CmdDesktop('init', AppName);
+      if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
+      begin
+        FoundLpr := SearchRec.Name;
+        FindClose(SearchRec);
+      end;
+    end;
+
+    CleanName := ChangeFileExt(FoundLpr, '');
+    TargetExe := BinDir + DirectorySeparator + CleanName + ExeExt;
+
+    if not FileExists(TargetExe) then
+    begin
+      WriteLn('Target binary not found. Building desktop app...');
+      CmdDesktop('build', AppName);
+    end;
+
+    if FileExists(TargetExe) then
+    begin
+      WriteLn('Launching native desktop app: ' + TargetExe);
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c cd /d "' + BinDir + '" && "' + TargetExe + '"');
+      {$ELSE}
+      ExecuteProcess('sh', '-c "cd ' + BinDir + ' && ./' + CleanName + '"');
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('Error: Failed to launch desktop app. Binary could not be found.');
+      Halt(1);
+    end;
+  end
+  else
+  begin
+    WriteLn('Usage: bv desktop <init [name]|sync|build|run>');
+  end;
+end;
+
 // =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
@@ -3069,6 +3793,10 @@ begin
     WriteLn('    bv mobile sync         Syncs dist/ with native Android assets');
     WriteLn('    bv mobile open         Syncs and opens Android Studio');
     WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
+    WriteLn('    bv desktop init [name] Scaffolds WebUI & Lazarus desktop project in desktop/');
+    WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
+    WriteLn('    bv desktop build       Compiles native desktop binary using Free Pascal');
+    WriteLn('    bv desktop run         Syncs, builds and launches the desktop app');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -3264,6 +3992,15 @@ begin
       Halt(1);
     end;
     CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+  else if Cmd = 'desktop' then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv desktop <init [name]|sync|build|run>');
+      Halt(1);
+    end;
+    CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3));
   end
   else
   begin

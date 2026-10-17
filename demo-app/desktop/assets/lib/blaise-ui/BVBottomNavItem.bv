@@ -1,0 +1,71 @@
+<template>
+  <a :class="'bui-bottom-nav-item' + (active ? ' active' : '')" :href="href" @click="handleClick">
+    <span class="bui-bottom-nav-icon" v-if="icon">{{ icon }}</span>
+    <span class="bui-bottom-nav-label">{{ label }}</span>
+  </a>
+</template>
+
+<script>
+  {
+    BVBottomNavItem - Item for Bottom Navigation Bar
+    ------------------------------------------------
+    Props:
+    - href: String target link
+    - label: String item text
+    - icon: String icon symbol or emoji
+    - active: Boolean is current active item
+  }
+
+  props:
+    href: string = '#/';
+    label: string = 'Item';
+    icon: string = '';
+    active: boolean = false;
+
+  data:
+    href: string = '#/';
+    label: string = 'Item';
+    icon: string = '';
+    active: boolean = false;
+
+  created:
+    begin
+      asm
+        var self = this;
+        var updateActive = function() {
+          var curHash = window.location.hash || '#/';
+          if (self.href && self.href.indexOf('#') !== -1) {
+            var targetHash = self.href.substring(self.href.indexOf('#'));
+            self.active = (curHash === targetHash || (targetHash !== '#/' && curHash.indexOf(targetHash) === 0));
+          }
+        };
+        updateActive();
+        window.addEventListener('hashchange', updateActive);
+      end;
+    end;
+
+  methods:
+    procedure handleClick(e: JSValue);
+    begin
+      asm
+        var target = (this && this.href) || (_this && _this.href);
+        if (!target && e && e.currentTarget) {
+          target = e.currentTarget.getAttribute('href');
+        }
+        if (target) {
+          if (target.indexOf('#') !== -1) {
+            if (e && e.preventDefault) e.preventDefault();
+            var hashPart = target.substring(target.indexOf('#'));
+            if (window.__BV_CORE__ && window.__BV_CORE__.router) {
+              window.__BV_CORE__.router.Push(hashPart.replace(/^#/, ''));
+            } else {
+              window.location.hash = hashPart;
+            }
+          } else {
+            window.location.href = target;
+          }
+        }
+        this.$emit('click', e);
+      end;
+    end;
+</script>

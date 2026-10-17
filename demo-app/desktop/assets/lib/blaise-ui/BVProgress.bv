@@ -1,0 +1,49 @@
+<template>
+  <div class="bui-progress">
+    <div class="bui-progress-bar" 
+         :class="barClass"
+         :style="barStyle">
+       <span v-if="showText">{{ value }}%</span>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVProgress - Progress Bar Indicator
+    -----------------------------------
+    Props:
+    - value: Integer (0-100)
+    - variant: String (primary, success, info, danger, warning)
+    - label: Boolean (Show percentage text)
+  }
+  
+  props:
+    value: integer = 0;
+    variant: string = 'primary';
+    label: boolean = true;
+
+  computed:
+    function barClass: string;
+    begin
+       asm
+         var v = this.variant || 'primary';
+         return 'bui-progress-bar bui-progress-' + v;
+       end;
+    end;
+
+    function barStyle: string;
+    begin
+       asm
+         var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
+         return 'width: ' + pct + '%;';
+       end;
+    end;
+
+    function showText: boolean;
+    begin
+       asm
+         return this.label !== false && this.label !== 'false';
+       end;
+    end;
+</script>

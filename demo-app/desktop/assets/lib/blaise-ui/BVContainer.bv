@@ -1,0 +1,17 @@
+<template>
+  <div class="bui-container" :class="{ 'bui-container-fluid': fluid }">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVContainer - Responsive Layout Container
+    -----------------------------------------
+    Props:
+    - fluid: Boolean (full 100% width)
+  }
+
+  props:
+    fluid: boolean = false;
+</script>

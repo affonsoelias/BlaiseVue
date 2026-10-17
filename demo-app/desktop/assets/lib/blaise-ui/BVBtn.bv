@@ -1,0 +1,53 @@
+<template>
+  <button 
+    class="bui-btn" 
+    :class="btnClass" 
+    :disabled="disabled"
+    @click="handleClick">
+    <slot>{{ label }}</slot>
+  </button>
+</template>
+
+<script>
+  {
+    BVBtn - Actionable Button Component
+    -----------------------------------
+    Props:
+    - label: String button text fallback
+    - variant: String color theme
+    - size: String (sm, md, lg)
+    - disabled: Boolean
+    - outline: Boolean
+  }
+
+  props:
+    label: string = '';
+    variant: string = 'primary';
+    size: string = 'md';
+    disabled: boolean = false;
+    outline: boolean = false;
+
+  computed:
+    function btnClass: string;
+    begin
+      asm
+        var v = this.variant || 'primary';
+        var isOut = Boolean(this.outline) || v.startsWith('outline-');
+        var cleanV = v.replace('outline-', '');
+        var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
+        var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
+        return 'bui-btn ' + variantClass + s;
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+        if (!isDisabled) {
+          this.$emit('click', ev);
+        }
+      end;
+    end;
+</script>

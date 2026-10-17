@@ -1,0 +1,41 @@
+<template>
+  <li class="bui-nav-item">
+     <a class="bui-nav-link" :class="{ active: active }" :href="href || '#'" @click="handleClick">
+        <slot>{{ label }}</slot>
+     </a>
+  </li>
+</template>
+
+<script>
+  {
+    BVNavItem - Navigation Link
+    ---------------------------
+    Props:
+    - href: Target URL or hash
+    - label: Text label
+    - active: boolean
+  }
+  
+  props:
+    href: string = '';
+    label: string = '';
+    active: boolean = false;
+
+  methods:
+    procedure handleClick(ev: TJSEvent);
+    begin
+       asm 
+         if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
+           if (ev && ev.preventDefault) ev.preventDefault();
+         }
+         this.$emit('click', ev); 
+       end;
+    end;
+</script>
+
+<style>
+.bui-nav-link {
+  cursor: pointer;
+  user-select: none;
+}
+</style>

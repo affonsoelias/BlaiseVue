@@ -105,6 +105,13 @@ Gerencia o ciclo de desenvolvimento móvel com Capacitor:
 - **`bv mobile open`**: Abre o projeto móvel no Android Studio.
 - **`bv mobile build`**: Compila o pacote nativo APK utilizando o Gradle Wrapper (`assembleDebug`).
 
+### 6. `bv desktop` (Fase 3: Plataforma Desktop Multiplataforma WebUI & Lazarus IDE)
+Gerencia o ciclo de desenvolvimento desktop nativo com Free Pascal e WebUI:
+- **`bv desktop init [name]`**: Gera a estrutura de projeto Lazarus (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `README.md`) na pasta `desktop/`.
+- **`bv desktop sync`**: Sincroniza o build de produção (`dist/`) com os assets da aplicação desktop (`desktop/assets/`).
+- **`bv desktop build`**: Compila o binário nativo executável (`desktop/bin/<AppName>.exe`) utilizando o compilador Free Pascal (`fpc`).
+- **`bv desktop run`**: Sincroniza, compila e inicializa a aplicação desktop nativa (com suporte ao runtime WebUI ou fallback para o modo janela de aplicativo do Edge/Chrome).
+
 ---
 
 ## 🧹 Maintenance Commands

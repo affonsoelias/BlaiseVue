@@ -1,0 +1,52 @@
+<template>
+  <div class="bui-accordion">
+    <div class="bui-accordion-item" b-for="item in items">
+      <h3 class="bui-accordion-header">
+        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" 
+                :class="{ active: activeId == item.id }">
+          {{ item.title }}
+        </button>
+      </h3>
+      <div class="bui-accordion-body" b-show="activeId == item.id">
+        {{ item.content }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVAccordion - Interactive Accordion Component
+    --------------------------------------------
+    Props:
+    - items: Array of { id, title, content }
+    - initialActiveId: String
+  }
+  
+  props:
+    items: JSValue = nil;
+    initialActiveId: string = '';
+    initialactiveid: string = '';
+
+  data:
+    activeId: string = '';
+
+  created:
+    begin
+       asm
+         this.activeId = String(this.initialActiveId || this.initialactiveid || '');
+       end;
+    end;
+
+  methods:
+    procedure toggle(id: string);
+    begin
+       asm
+         if (this.activeId === id) {
+           this.activeId = '';
+         } else {
+           this.activeId = id;
+         }
+       end;
+    end;
+</script>
