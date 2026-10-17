@@ -272,5 +272,51 @@
       "end;"
     ],
     "description": "Insert a Pascal function in computed: section"
+  },
+  "Mobile Camera Photo Capture ($mobile.camera)": {
+    "prefix": "bv-mobile-camera",
+    "body": [
+      "procedure capturePhoto(ev: JSValue);",
+      "begin",
+      "  if Boolean(window['$mobile'] && window['$mobile']['camera']) then",
+      "  begin",
+      "    window['$mobile']['camera'].takePhoto(procedure(imgUrl: JSValue)",
+      "      begin",
+      "        this['${1:photoUrl}'] := imgUrl;",
+      "      end);",
+      "  end;",
+      "end;"
+    ],
+    "description": "Capture camera photo via Capacitor with Web fallback"
+  },
+  "Mobile Geolocation GPS ($mobile.geolocation)": {
+    "prefix": "bv-mobile-geo",
+    "body": [
+      "procedure fetchLocation(ev: JSValue);",
+      "begin",
+      "  if Boolean(window['$mobile'] && window['$mobile']['geolocation']) then",
+      "  begin",
+      "    window['$mobile']['geolocation'].getCurrentPosition(procedure(pos: JSValue)",
+      "      begin",
+      "        console.log('Latitude:', pos['coords']['latitude']);",
+      "        console.log('Longitude:', pos['coords']['longitude']);",
+      "      end);",
+      "  end;",
+      "end;"
+    ],
+    "description": "Get GPS coordinates via Capacitor with Web fallback"
+  },
+  "Mobile Haptics Feedback ($mobile.haptics)": {
+    "prefix": "bv-mobile-haptics",
+    "body": [
+      "procedure triggerFeedback;",
+      "begin",
+      "  if Boolean(window['$mobile'] && window['$mobile']['haptics']) then",
+      "  begin",
+      "    window['$mobile']['haptics'].impact('${1|medium,light,heavy|}');",
+      "  end;",
+      "end;"
+    ],
+    "description": "Trigger haptic vibration feedback on mobile device"
   }
 }

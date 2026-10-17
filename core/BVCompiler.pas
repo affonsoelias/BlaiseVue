@@ -59,6 +59,9 @@ initialization
          if (window.__BV_CORE__.wasm && !Data.FData['$wasm']) {
             Data.FData['$wasm'] = window.__BV_CORE__.wasm;
          }
+         if (window.__BV_CORE__.mobile && !Data.FData['$mobile']) {
+            Data.FData['$mobile'] = window.__BV_CORE__.mobile;
+         }
       }
 
       if (Data && !Data.Evaluate) {
@@ -445,6 +448,9 @@ initialization
                 if (window.__BV_CORE__.wasm && !d.$wasm) {
                    d.$wasm = window.__BV_CORE__.wasm;
                 }
+                if (window.__BV_CORE__.mobile && !d.$mobile) {
+                   d.$mobile = window.__BV_CORE__.mobile;
+                }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -815,6 +821,9 @@ initialization
             }
             if (window.__BV_CORE__.wasm) {
                pRef['$wasm'] = window.__BV_CORE__.wasm;
+            }
+            if (window.__BV_CORE__.mobile) {
+               pRef['$mobile'] = window.__BV_CORE__.mobile;
             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);

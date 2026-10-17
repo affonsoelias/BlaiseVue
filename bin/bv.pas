@@ -2902,6 +2902,101 @@ begin
   end;
 end;
 
+procedure CmdMobile(const SubCmd, AppName, AppId: string);
+var
+  CapConfigFile, ActualAppName, ActualAppId, ConfigContent: string;
+begin
+  WriteLn('=== BlaiseVue 3.5 Mobile (Capacitor Engine) ===');
+
+  ActualAppName := AppName;
+  if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
+
+  ActualAppId := AppId;
+  if ActualAppId = '' then ActualAppId := 'com.blaisevue.app';
+
+  if (SubCmd = 'init') then
+  begin
+    WriteLn('Initializing Capacitor for BlaiseVue...');
+    CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
+    
+    // 1. Generate capacitor.config.json if not present
+    if not FileExists(CapConfigFile) then
+    begin
+      ConfigContent := '{' + #10 +
+        '  "appId": "' + ActualAppId + '",' + #10 +
+        '  "appName": "' + ActualAppName + '",' + #10 +
+        '  "webDir": "dist",' + #10 +
+        '  "bundledWebRuntime": false' + #10 +
+        '}';
+      WriteStringToFile(CapConfigFile, ConfigContent);
+      WriteLn('  [+] Generated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
+    end
+    else
+      WriteLn('  [i] capacitor.config.json already exists.');
+
+    // 2. Ensure @capacitor/core and @capacitor/cli are installed
+    WriteLn('  [+] Installing Capacitor dependencies (@capacitor/core, @capacitor/cli, @capacitor/android)...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
+    {$ELSE}
+    ExecuteProcess('npm', 'install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
+    {$ENDIF}
+
+    // 3. Add Android platform if not present
+    if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'android') then
+    begin
+      WriteLn('  [+] Adding Android native project (npx cap add android)...');
+      CmdRunBuild;
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c npx cap add android');
+      {$ELSE}
+      ExecuteProcess('npx', 'cap add android');
+      {$ENDIF}
+    end
+    else
+      WriteLn('  [i] Native android/ directory already initialized.');
+
+    WriteLn('');
+    WriteLn('Mobile initialization complete!');
+    WriteLn('Run "bv mobile open" to launch Android Studio.');
+  end
+  else if (SubCmd = 'sync') then
+  begin
+    WriteLn('Synchronizing BlaiseVue dist/ with native Android platform...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android');
+    {$ELSE}
+    ExecuteProcess('npx', 'cap sync android');
+    {$ENDIF}
+    WriteLn('Mobile assets synchronized successfully!');
+  end
+  else if (SubCmd = 'open') or (SubCmd = 'run') then
+  begin
+    WriteLn('Syncing and launching Android Studio...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android && npx cap open android');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "npx cap sync android && npx cap open android"');
+    {$ENDIF}
+  end
+  else if (SubCmd = 'build') then
+  begin
+    WriteLn('Compiling native Android Debug APK...');
+    CmdRunBuild;
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap sync android && cd android && gradlew.bat assembleDebug');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "npx cap sync android && cd android && ./gradlew assembleDebug"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+  end;
+end;
+
 // =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
@@ -2942,6 +3037,10 @@ begin
     WriteLn('    bv theme use <name>    Switches active project theme in index.html');
     WriteLn('    bv extension [install|package] Installs or packages the official VS Code extension');
     WriteLn('    bv vsix                Packages standalone VS Code extension (.vsix)');
+    WriteLn('    bv mobile init [name] [id] Configures Capacitor and scaffolds Android project');
+    WriteLn('    bv mobile sync         Syncs dist/ with native Android assets');
+    WriteLn('    bv mobile open         Syncs and opens Android Studio');
+    WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -3128,6 +3227,15 @@ begin
       CmdExtension(LowerCase(ParamStr(2)))
     else
       CmdExtension('install');
+  end
+  else if Cmd = 'mobile' then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv mobile <init [name] [id]|sync|open|build>');
+      Halt(1);
+    end;
+    CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
   else
   begin

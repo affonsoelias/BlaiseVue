@@ -195,6 +195,21 @@ const GLOBALS_DOCS = {
       '  res := window[\'$wasm\'].call(\'calculate\', [1000]);\n' +
       '```'
     )
+  },
+  '$mobile': {
+    label: '$mobile',
+    detail: 'BlaiseVue Mobile & Capacitor Hardware Engine (v3.5+)',
+    documentation: new vscode.MarkdownString(
+      '**`$mobile`**\n\n' +
+      'Unified Object Pascal access to native mobile hardware via Capacitor:\n' +
+      '- `$mobile.camera.takePhoto(onSuccess, onError)`\n' +
+      '- `$mobile.geolocation.getCurrentPosition(onSuccess, onError)`\n' +
+      '- `$mobile.haptics.vibrate(durationMs)` / `.impact(\'heavy\')`\n' +
+      '- `$mobile.device.getInfo(onSuccess)`\n' +
+      '- `$mobile.statusBar.setBackgroundColor(\'#1a252f\')`\n' +
+      '- `$mobile.isNative()`: Boolean\n' +
+      '- `$mobile.getPlatform()`: \'android\' | \'ios\' | \'web\'\n'
+    )
   }
 };
 
@@ -346,6 +361,16 @@ function activate(context) {
     vscode.window.showInformationMessage(`✅ Component ${cleanName}.bv created successfully!`);
   });
 
+  // 8. Register Command: bv mobile sync
+  const cmdMobileSync = vscode.commands.registerCommand('blaisevue.mobileSync', () => {
+    runTerminalCommand('bv mobile sync');
+  });
+
+  // 9. Register Command: bv mobile open
+  const cmdMobileOpen = vscode.commands.registerCommand('blaisevue.mobileOpen', () => {
+    runTerminalCommand('bv mobile open');
+  });
+
   context.subscriptions.push(
     hoverProvider,
     completionProvider,
@@ -353,7 +378,9 @@ function activate(context) {
     cmdBuild,
     cmdTest,
     cmdDoc,
-    cmdNewComp
+    cmdNewComp,
+    cmdMobileSync,
+    cmdMobileOpen
   );
 }
 

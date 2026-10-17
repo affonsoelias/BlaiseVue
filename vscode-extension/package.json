@@ -93,6 +93,16 @@
         "command": "blaisevue.newComponent",
         "title": "BlaiseVue: Create New Component (.bv)",
         "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.mobileSync",
+        "title": "BlaiseVue: Sync Mobile Assets (Capacitor)",
+        "category": "BlaiseVue"
+      },
+      {
+        "command": "blaisevue.mobileOpen",
+        "title": "BlaiseVue: Open in Android Studio",
+        "category": "BlaiseVue"
       }
     ],
     "menus": {
