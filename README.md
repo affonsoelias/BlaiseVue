@@ -59,7 +59,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
 
 ```bash
 # === Development & Server ===
-bv serve                   # Starts development server with HMR on http://localhost:8080
+bv dev                     # Starts development server with HMR on http://localhost:8080 (alias: bv serve)
+bv serve                   # Starts development server with HMR
 bv run dev                 # Builds project in development mode with cache-busting
 bv run build               # Builds optimized production bundle in dist/
 bv run preview             # Local HTTP preview of production build (port 5000)
@@ -99,12 +100,13 @@ bv desktop run [target]    # Launches desktop app in Debug mode (with console)
 bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
 
 # === Backend & Full-Stack (Synopse mORMot 2) ===
-bv create <name> --fullstack # Scaffolds full-stack app with mORMot 2 native backend
-bv server init             # Scaffolds mORMot 2 backend server in server/
-bv server build            # Compiles Debug native server with Free Pascal
-bv server build --release  # Compiles optimized Release native server (-O3, stripped)
-bv server run              # Starts native backend server on port 8090
-bv server status           # Queries /api/status health endpoint
+bv create <name> --mormot  # Scaffolds full-stack app with mORMot 2 native backend (--fullstack / -m)
+bv mormot init             # Scaffolds mORMot 2 backend server in server/
+bv mormot build            # Compiles Debug native server with Free Pascal
+bv mormot build --release  # Compiles optimized Release native server (-O3, stripped)
+bv mormot run              # Starts native backend server on port 8090
+bv mormot status           # Queries /api/status health endpoint
+                           # (Note: bv server commands preserved as aliases)
 
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
@@ -124,7 +126,7 @@ Our architectural evolution roadmap:
   - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
   - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
-  - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv server init|build|run|status`, `--fullstack`, `$api`, `$ws`).
+  - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv mormot init|build|run|status`, `--mormot`, `$api`, `$ws`).
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).

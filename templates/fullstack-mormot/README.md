@@ -11,7 +11,7 @@ High-performance native Pascal backend server powered by **Synopse mORMot 2**, e
 - **RESTful Endpoints**: Clean JSON data contracts using records and `TDocVariantData`.
 - **Automatic CORS**: Pre-configured headers for development (`http://localhost:5173`) and production.
 - **Static SPA Hosting**: Serves the compiled BlaiseVue frontend from `../dist/` with HTML5 History API fallback routing.
-- **Full Lazarus & CLI Compatibility**: Open and compile in Lazarus IDE or build headlessly via `bv server build`.
+- **Full Lazarus & CLI Compatibility**: Open and compile in Lazarus IDE or build headlessly via `bv mormot build`.
 
 ---
 
@@ -35,13 +35,13 @@ server/
 2. Open `server/server.lpi` (**Project -> Open Project**).
 3. If not already installed, make sure the `mormot2` package is registered in Lazarus:
    - Go to **Package -> Open Package File (.lpk)**.
-   - Select `C:\ComponenteLazarus\mORMot2\packages\lazarus\mormot2.lpk`.
+   - Select `<BlaiseVue-Root>\vendor\mormot2\packages\lazarus\mormot2.lpk` (or your local mORMot 2 installation).
    - Click **Compile** and optionally **Use -> Install**.
 4. Set your build mode to **Debug** or **Release** in **Project Options**.
 5. Press **F9** (Run) or **Shift+F9** (Build).
 
 > [!TIP]
-> The `server.lpi` project includes fallback unit paths to `C:\ComponenteLazarus\mORMot2\src\...` so it compiles smoothly even before installing the package.
+> BlaiseVue bundles mORMot 2.4 directly in `vendor/mormot2/`, enabling zero-configuration builds out of the box!
 
 ---
 
@@ -51,20 +51,23 @@ The BlaiseVue CLI (`bv`) provides convenient commands to build and run the nativ
 
 ```bash
 # Build debug binary (bin/server.exe)
-bv server build
+bv mormot build
 
 # Build optimized production binary (-O3, stripped symbols)
-bv server build --release
+bv mormot build --release
 
 # Run the native server (port 8090)
-bv server run
+bv mormot run
 
 # Run on a custom port
-bv server run -- --port 8080
+bv mormot run --port 8080
 
 # Check backend health and status
-bv server status
+bv mormot status
 ```
+
+> [!NOTE]
+> The legacy `bv server` command is preserved as a backward-compatible alias.
 
 ---
 

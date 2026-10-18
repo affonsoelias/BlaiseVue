@@ -193,12 +193,13 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
 - **Reactive Client Service (`$api` & `$ws`)**:
   - Injected `$api` and `$ws` helpers in BlaiseVue component scopes with automatic header injection, bearer token handling, and reactive data synchronization.
 - **Shared Pascal Contracts**: Share data structures and record definitions directly between the backend and frontend (`ServerModels.pas`).
-- **CLI Commands (`bv server`)**:
-  - `bv create <name> --fullstack`: Scaffolds full-stack app with mORMot 2 backend.
-  - `bv server init`: Scaffolds `server/` directory.
-  - `bv server build [--release]`: Compiles native server binary with Free Pascal.
-  - `bv server run [--port <p>]`: Starts native server on port 8090.
-  - `bv server status`: Queries health endpoint `/api/status`.
+- **CLI Commands (`bv mormot`)**:
+  - `bv create <name> --mormot`: Scaffolds full-stack app with mORMot 2 backend (`--fullstack` / `-m` alias).
+  - `bv mormot init`: Scaffolds `server/` directory.
+  - `bv mormot build [--release]`: Compiles native server binary with Free Pascal.
+  - `bv mormot run [--port <p>]`: Starts native server on port 8090.
+  - `bv mormot status`: Queries health endpoint `/api/status`.
+  - *(Note: `bv server` commands are preserved as backward-compatible aliases)*
 
 ---
 

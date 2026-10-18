@@ -1425,14 +1425,18 @@ begin
     WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
   end;
 
-  // Check if --fullstack or -f flag was passed
+  // Check if --mormot, --fullstack, -m, or -f flag was passed
   IsFullStack := False;
   for i := 2 to ParamCount do
   begin
-    if (LowerCase(ParamStr(i)) = '--fullstack') or
+    if (LowerCase(ParamStr(i)) = '--mormot') or
+       (LowerCase(ParamStr(i)) = '-m') or
+       (LowerCase(ParamStr(i)) = '--fullstack') or
        (LowerCase(ParamStr(i)) = '-f') or
        (LowerCase(ParamStr(i)) = '--template=fullstack-mormot') or
-       ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and (LowerCase(ParamStr(i + 1)) = 'fullstack-mormot')) then
+       (LowerCase(ParamStr(i)) = '--template=mormot') or
+       ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and
+        ((LowerCase(ParamStr(i + 1)) = 'fullstack-mormot') or (LowerCase(ParamStr(i + 1)) = 'mormot'))) then
     begin
       IsFullStack := True;
       Break;
@@ -1458,10 +1462,10 @@ begin
   WriteLn('');
   WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
-  WriteLn('  bv run dev');
+  WriteLn('  bv dev');
   if IsFullStack then
   begin
-    WriteLn('  bv server run          # Starts the native mORMot 2 backend on port 8090');
+    WriteLn('  bv mormot run          # Starts the native mORMot 2 backend on port 8090');
   end;
 end;
 
@@ -4827,9 +4831,9 @@ begin
     WriteLn('  [+] Full-Stack mORMot 2 server template scaffolded successfully in server/ !');
     WriteLn('');
     WriteLn('Next steps:');
-    WriteLn('  1. Run "bv build" to compile your reactive frontend to dist/');
-    WriteLn('  2. Run "bv server build" (or "bv server build --release") to compile the native server');
-    WriteLn('  3. Run "bv server run" to launch the server on port 8090');
+    WriteLn('  1. Run "bv build" (or "bv run build") to compile your reactive frontend to dist/');
+    WriteLn('  2. Run "bv mormot build" (or "bv mormot build --release") to compile the native server');
+    WriteLn('  3. Run "bv mormot run" to launch the server on port 8090');
     WriteLn('  Or open server/server.lpi in Lazarus IDE and press F9!');
   end
   else if (SubCmd = 'build') then
@@ -4901,7 +4905,7 @@ begin
     if FileExists(TargetExe) then
     begin
       WriteLn('  [SUCCESS] Native mORMot 2 server compiled successfully: ' + TargetExe);
-      WriteLn('  [TIP] Run "bv server run" to start the server.');
+      WriteLn('  [TIP] Run "bv mormot run" to start the server.');
     end
     else
     begin
@@ -4961,7 +4965,7 @@ begin
         on E: Exception do
         begin
           WriteLn('[-] Server is OFFLINE or unreachable on port ' + PortArg + ': ' + E.Message);
-          WriteLn('    Start it using: bv server run');
+          WriteLn('    Start it using: bv mormot run');
         end;
       end;
     finally
@@ -4970,7 +4974,7 @@ begin
   end
   else
   begin
-    WriteLn('Usage: bv server <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
     WriteLn('  run [--port <port>]   Launches native server');
@@ -4997,6 +5001,7 @@ begin
     WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
     WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
     WriteLn('    bv run ssg             Pre-renders all routes into static HTML (SSG)');
+    WriteLn('    bv dev                 Starts development server with HMR (alias: bv serve)');
     WriteLn('    bv serve               Starts development server with HMR');
     WriteLn('    bv doc [--serve]       Generates interactive component documentation & playground');
     WriteLn('    bv wasm <info|benchmark> WebAssembly acceleration and performance benchmarks');
@@ -5026,10 +5031,10 @@ begin
     WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
     WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
     WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
-    WriteLn('    bv server init         Scaffolds mORMot 2 backend server in server/');
-    WriteLn('    bv server build [--release] Compiles native server binary with Free Pascal');
-    WriteLn('    bv server run [--port <p>] Starts native backend server (default: 8090)');
-    WriteLn('    bv server status [--port <p>] Queries running server health endpoint (/api/status)');
+    WriteLn('    bv mormot init         Scaffolds mORMot 2 backend server in server/');
+    WriteLn('    bv mormot build [--release] Compiles native server binary with Free Pascal');
+    WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
+    WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -5063,7 +5068,7 @@ begin
     WriteLn('Warning: "bv build" has been renamed to "bv run dev".');
     CmdBuild;
   end
-  else if Cmd = 'serve' then
+  else if (Cmd = 'serve') or (Cmd = 'dev') then
   begin
     CmdServe;
   end
@@ -5237,11 +5242,11 @@ begin
     end;
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
-  else if Cmd = 'server' then
+  else if (Cmd = 'mormot') or (Cmd = 'server') then
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv server <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
       Halt(1);
     end;
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));

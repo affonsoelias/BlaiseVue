@@ -1,4 +1,4 @@
-# 37. Full-Stack Pascal with mORMot 2 (bv server) - Phase 4
+# 37. Full-Stack Pascal with mORMot 2 (bv mormot) - Phase 4
 
 **Phase 4 of the BlaiseVue Universal Platform (v3.5)** brings **Full-Stack Pascal** capability by uniting the modern reactive web frontend of **BlaiseVue** with the world's fastest native Object Pascal backend framework: **Synopse mORMot 2**.
 
@@ -31,32 +31,35 @@ With this architecture, Pascal developers can write **both frontend components a
 
 ---
 
-## 🛠️ CLI Commands (`bv server`)
+## 🛠️ CLI Commands (`bv mormot`)
 
 The BlaiseVue CLI provides end-to-end tooling to scaffold, build, run, and inspect the native mORMot 2 server.
 
 ```bash
 # 1. Create a full-stack project with backend from scratch:
-bv create my-fullstack-app --fullstack
+bv create my-fullstack-app --mormot     # or: --fullstack / -m
 
 # 2. Or initialize the mORMot 2 backend inside an existing project:
-bv server init
+bv mormot init
 
 # 3. DEBUG Build Mode (includes debug symbols and diagnostic output):
-bv server build
+bv mormot build
 
 # 4. RELEASE Build Mode (maximum compiler optimization -O3, stripped symbols):
-bv server build --release
+bv mormot build --release
 
 # 5. Launch the native server:
-bv server run                          # Starts on default port 8090
-bv server run --port 8080              # Starts on custom port 8080
-bv server run --release                # Builds (if needed) and starts release binary
+bv mormot run                          # Starts on default port 8090
+bv mormot run --port 8080              # Starts on custom port 8080
+bv mormot run --release                # Builds (if needed) and starts release binary
 
 # 6. Check running server status and health:
-bv server status                       # Queries http://localhost:8090/api/status
-bv server status --port 8080           # Queries custom port
+bv mormot status                       # Queries http://localhost:8090/api/status
+bv mormot status --port 8080           # Queries custom port
 ```
+
+> [!NOTE]
+> The legacy command `bv server` is fully preserved as a backward-compatible alias.
 
 ---
 
