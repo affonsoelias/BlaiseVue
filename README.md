@@ -164,6 +164,9 @@ BlaiseVue/
 │   ├── blaise-ui/             # 20+ native UI components & styles
 │   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
 │   └── blaise-icons/          # Bootstrap Icons fonts & stylesheet
+├── vendor/                    # Embedded compiler & backend engines
+│   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
+│   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework
 ├── devtools/                  # Manifest V3 Chrome/Edge DevTools extension
 ├── doc/
 │   ├── Documentation/         # 33 comprehensive technical manuals + API Reference

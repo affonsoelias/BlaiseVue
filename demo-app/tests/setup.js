@@ -25,6 +25,8 @@ let candidates = [
   resolve(process.cwd(), 'demo-app', 'dist', 'js', 'rtl.js'),
   resolve(process.cwd(), 'dist', 'js', 'rtl.js'),
   resolve(process.cwd(), '..', 'demo-app', 'dist', 'js', 'rtl.js'),
+  resolve(process.cwd(), 'vendor', 'pas2js', 'pas2js-win64-x86_64-3.2.0', 'packages', 'rtl', 'src', 'rtl.js'),
+  resolve(process.cwd(), '..', 'vendor', 'pas2js', 'pas2js-win64-x86_64-3.2.0', 'packages', 'rtl', 'src', 'rtl.js'),
   resolve(process.cwd(), 'pas2js', 'pas2js-win64-x86_64-3.2.0', 'packages', 'rtl', 'src', 'rtl.js'),
   resolve(process.cwd(), '..', 'pas2js', 'pas2js-win64-x86_64-3.2.0', 'packages', 'rtl', 'src', 'rtl.js')
 ];
