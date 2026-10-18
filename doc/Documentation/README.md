@@ -3,6 +3,10 @@
 
 BlaiseVue is an enterprise-grade, reactive framework that combines the strong typing and architectural robustness of **Object Pascal** with the simplicity, ergonomics, and reactivity of **Vue.js**.
 
+<p align="center">
+  <img src="../images/blaisevue-showcase.png" alt="BlaiseVue Multiplatform Showcase (Web, Desktop, Mobile)" width="100%">
+</p>
+
 ---
 
 ## ⚔️ What's New in Version 3.5 (The Universal Release)
