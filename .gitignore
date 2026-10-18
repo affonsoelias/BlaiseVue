@@ -56,6 +56,10 @@ demo-app/dist/js/*.js
 demo-app/generated/
 demo-app/rtl.js
 my-app/
+deploy/
+**/deploy/
+*.zip
+
 
 # 🍎 OS Files
 .DS_Store

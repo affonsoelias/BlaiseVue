@@ -199,6 +199,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   - `bv mormot build [--release]`: Compiles native server binary with Free Pascal.
   - `bv mormot run [--port <p>]`: Starts native server on port 8090.
   - `bv mormot status`: Queries health endpoint `/api/status`.
+  - `bv mormot deploy [--zip]`: Packages standalone zero-dependency production bundle in `deploy/`.
   - *(Note: `bv server` commands are preserved as backward-compatible aliases)*
 
 ---

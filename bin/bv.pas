@@ -3010,7 +3010,7 @@ begin
     WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
     ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
     {$IFDEF WINDOWS}
-    ExecuteProcess('powershell', '-ExecutionPolicy Bypass -File "' + ScriptPath + '"');
+    ExecuteProcess('powershell', '-File "' + ScriptPath + '"');
     {$ELSE}
     ExecuteProcess('sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ' + ExtDir + '/* ~/.vscode/extensions/blaisevue-vscode/"');
     {$ENDIF}
@@ -4773,11 +4773,13 @@ end;
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
   ServerDir, BinDir, LibDir, TemplateDir: string;
+  ProjectRoot, DeployDir, DistDir, ZipFile: string;
   LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
-  IsRelease: Boolean;
+  IsRelease, HasZip: Boolean;
   i: Integer;
   HttpClient: TFPHTTPClient;
   StatusResp: string;
+  F: TextFile;
 
   procedure ParseArg(const A: string);
   var
@@ -4789,18 +4791,31 @@ var
       IsRelease := True
     else if (S = '--debug') or (S = '-d') or (S = 'debug') then
       IsRelease := False
+    else if (S = '--zip') or (S = '-z') or (S = 'zip') then
+      HasZip := True
     else if (Copy(S, 1, 7) = '--port=') then
-      PortArg := Copy(A, 8, MaxInt);
+      PortArg := Copy(A, 8, MaxInt)
+    else if (Copy(S, 1, 6) = '--out=') then
+      DeployDir := Copy(A, 7, MaxInt);
   end;
 
 begin
-  ServerDir := GetCurrentDir + DirectorySeparator + 'server';
+  ProjectRoot := GetCurrentDir;
+  if not DirectoryExists(ProjectRoot + DirectorySeparator + 'server') and
+     FileExists(ProjectRoot + DirectorySeparator + 'server.lpr') then
+  begin
+    ProjectRoot := ExpandFileName(ProjectRoot + DirectorySeparator + '..');
+  end;
+
+  ServerDir := ProjectRoot + DirectorySeparator + 'server';
   BinDir := ServerDir + DirectorySeparator + 'bin';
   LibDir := ServerDir + DirectorySeparator + 'lib';
   LprFile := ServerDir + DirectorySeparator + 'server.lpr';
   TargetExe := BinDir + DirectorySeparator + 'server' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
   TemplateDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
+  DeployDir := ProjectRoot + DirectorySeparator + 'deploy';
   IsRelease := False;
+  HasZip := False;
   PortArg := '';
 
   for i := 2 to ParamCount do
@@ -4810,9 +4825,17 @@ begin
       if i + 1 <= ParamCount then
         PortArg := ParamStr(i + 1);
     end
+    else if (ParamStr(i) = '--out') or (ParamStr(i) = '-o') then
+    begin
+      if i + 1 <= ParamCount then
+        DeployDir := ParamStr(i + 1);
+    end
     else
       ParseArg(ParamStr(i));
   end;
+
+  ParseArg(Arg1);
+  ParseArg(Arg2);
 
   if (SubCmd = 'init') then
   begin
@@ -4972,13 +4995,146 @@ begin
       HttpClient.Free;
     end;
   end
+  else if (SubCmd = 'deploy') then
+  begin
+    if PortArg = '' then
+      PortArg := '8090';
+
+    WriteLn('================================================================');
+    WriteLn('  BlaiseVue + mORMot 2 Production Deployment Packager');
+    WriteLn('================================================================');
+    WriteLn('');
+
+    if not FileExists(LprFile) then
+    begin
+      WriteLn('[!] No server project found in server/. Initializing first...');
+      CmdServer('init');
+    end;
+
+    // 1. Build frontend in production mode
+    WriteLn('[1/4] Compiling reactive frontend (bv run build)...');
+    ChDir(ProjectRoot);
+    CmdRunBuild;
+    DistDir := ProjectRoot + DirectorySeparator + 'dist';
+    if not DirectoryExists(DistDir) then
+    begin
+      WriteLn('[ERROR] Frontend production build failed. dist/ folder not found.');
+      Halt(1);
+    end;
+    WriteLn('  [+] Frontend compiled with production hashes in dist/');
+    WriteLn('');
+
+    // 2. Build native backend in RELEASE mode
+    WriteLn('[2/4] Compiling native mORMot 2 server (bv mormot build --release)...');
+    CmdServer('build', '--release');
+    if not FileExists(TargetExe) then
+    begin
+      WriteLn('[ERROR] Server compilation failed: ' + TargetExe);
+      Halt(1);
+    end;
+    WriteLn('  [+] Native server binary built in: ' + TargetExe);
+    WriteLn('');
+
+    // 3. Assemble deployment directory
+    WriteLn('[3/4] Assembling standalone deployment package in: ' + DeployDir);
+    if DirectoryExists(DeployDir) then
+      DeleteDir(DeployDir);
+    ForceDir(DeployDir);
+    ForceDir(DeployDir + DirectorySeparator + 'dist');
+
+    // Copy server binary
+    CopyFile(TargetExe, DeployDir + DirectorySeparator + ExtractFileName(TargetExe));
+
+    // Copy dist/ contents
+    CopyDir(DistDir, DeployDir + DirectorySeparator + 'dist', []);
+
+    // Create start.bat (Windows)
+    AssignFile(F, DeployDir + DirectorySeparator + 'start.bat');
+    Rewrite(F);
+    WriteLn(F, '@echo off');
+    WriteLn(F, 'title BlaiseVue Server (Port ' + PortArg + ')');
+    WriteLn(F, 'echo ====================================================');
+    WriteLn(F, 'echo  Starting BlaiseVue mORMot 2 Native Server...');
+    WriteLn(F, 'echo  Port: ' + PortArg);
+    WriteLn(F, 'echo  Hosting API and Static Frontend from ./dist');
+    WriteLn(F, 'echo ====================================================');
+    WriteLn(F, ExtractFileName(TargetExe) + ' --port ' + PortArg);
+    WriteLn(F, 'if errorlevel 1 pause');
+    CloseFile(F);
+
+    // Create start.sh (Linux/macOS)
+    AssignFile(F, DeployDir + DirectorySeparator + 'start.sh');
+    Rewrite(F);
+    WriteLn(F, '#!/bin/sh');
+    WriteLn(F, 'echo "===================================================="');
+    WriteLn(F, 'echo " Starting BlaiseVue mORMot 2 Native Server..."');
+    WriteLn(F, 'echo " Port: ' + PortArg + '"');
+    WriteLn(F, 'echo " Hosting API and Static Frontend from ./dist"');
+    WriteLn(F, 'echo "===================================================="');
+    WriteLn(F, 'chmod +x ./' + ExtractFileName(TargetExe));
+    WriteLn(F, './' + ExtractFileName(TargetExe) + ' --port ' + PortArg);
+    CloseFile(F);
+
+    // Create README.txt
+    AssignFile(F, DeployDir + DirectorySeparator + 'README.txt');
+    Rewrite(F);
+    WriteLn(F, 'BlaiseVue Full-Stack Standalone Deployment Package');
+    WriteLn(F, '==================================================');
+    WriteLn(F, '');
+    WriteLn(F, 'This deployment directory is 100% self-contained and ready to copy to your server.');
+    WriteLn(F, 'No Node.js, npm, or Free Pascal installation required on the production host!');
+    WriteLn(F, '');
+    WriteLn(F, 'How to run on the server:');
+    WriteLn(F, '  Windows: Double-click start.bat (or run "' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
+    WriteLn(F, '  Linux:   Run "./start.sh" (or "./' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
+    WriteLn(F, '');
+    WriteLn(F, 'Files:');
+    WriteLn(F, '  - ' + ExtractFileName(TargetExe) + ' : Native mORMot 2 backend executable');
+    WriteLn(F, '  - dist/            : Compiled reactive SPA frontend');
+    WriteLn(F, '  - start.bat        : Windows startup script');
+    WriteLn(F, '  - start.sh         : Linux startup script');
+    CloseFile(F);
+
+    WriteLn('  [+] Deployment directory assembled successfully!');
+    WriteLn('');
+
+    // 4. Create ZIP archive if requested
+    if HasZip then
+    begin
+      ZipFile := ProjectRoot + DirectorySeparator + 'deploy.zip';
+      if FileExists(ZipFile) then
+        DeleteFile(ZipFile);
+      WriteLn('[4/4] Packaging standalone archive: ' + ZipFile);
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c powershell -NoProfile -Command "Compress-Archive -Path ''' + DeployDir + '\*'' -DestinationPath ''' + ZipFile + ''' -Force"');
+      {$ELSE}
+      ExecuteProcess('sh', '-c "cd ''' + DeployDir + ''' && zip -r ''' + ZipFile + ''' ."');
+      {$ENDIF}
+      if FileExists(ZipFile) then
+        WriteLn('  [SUCCESS] Archive created: ' + ZipFile)
+      else
+        WriteLn('  [!] Notice: ZIP packaging skipped (zip utility not found). The deploy/ directory is ready.');
+    end
+    else
+    begin
+      WriteLn('[4/4] Deployment directory ready: ' + DeployDir);
+      WriteLn('      Tip: Run "bv mormot deploy --zip" to automatically generate a deploy.zip archive.');
+    end;
+
+    WriteLn('');
+    WriteLn('================================================================');
+    WriteLn('  [SUCCESS] Application ready for production deployment!');
+    WriteLn('  Just copy "' + ExtractFileName(DeployDir) + '" to your server and run start.bat (or ./start.sh)');
+    WriteLn('================================================================');
+  end
   else
   begin
-    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
     WriteLn('  run [--port <port>]   Launches native server');
     WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
+    WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
   end;
 end;
 
@@ -5035,6 +5191,7 @@ begin
     WriteLn('    bv mormot build [--release] Compiles native server binary with Free Pascal');
     WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
     WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
+    WriteLn('    bv mormot deploy [--zip] [--port <p>] Assembles standalone production bundle in deploy/');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -5246,7 +5403,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
       Halt(1);
     end;
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));

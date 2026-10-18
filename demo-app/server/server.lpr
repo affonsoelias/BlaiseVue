@@ -31,10 +31,12 @@ begin
 
   // Intelligent resolution of dist/ folder
   DistPath := '..' + DirectorySeparator + 'dist';
-  if DirectoryExists(DistPath) then
-    DistPath := ExpandFileName(DistPath)
+  if DirectoryExists(ExtractFilePath(ParamStr(0)) + 'dist') then
+    DistPath := ExpandFileName(ExtractFilePath(ParamStr(0)) + 'dist')
   else if DirectoryExists('dist') then
     DistPath := ExpandFileName('dist')
+  else if DirectoryExists('..' + DirectorySeparator + 'dist') then
+    DistPath := ExpandFileName('..' + DirectorySeparator + 'dist')
   else if DirectoryExists(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
     DistPath := ExpandFileName(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist')
   else if DirectoryExists(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'dist') then

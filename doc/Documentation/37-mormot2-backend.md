@@ -56,10 +56,29 @@ bv mormot run --release                # Builds (if needed) and starts release b
 # 6. Check running server status and health:
 bv mormot status                       # Queries http://localhost:8090/api/status
 bv mormot status --port 8080           # Queries custom port
+
+# 7. Package standalone production bundle for deployment:
+bv mormot deploy                       # Generates standalone deploy/ directory
+bv mormot deploy --zip                 # Generates deploy/ and packages into deploy.zip
+bv mormot deploy --zip --port 80       # Customizes startup port in start.bat/start.sh
 ```
 
 > [!NOTE]
 > The legacy command `bv server` is fully preserved as a backward-compatible alias.
+
+---
+
+## 🚀 Standalone Production Deployment (`deploy/`)
+
+When running `bv mormot deploy`, BlaiseVue automates the complete production build pipeline:
+1. **Frontend Production Build**: Executes `bv run build`, generating minified JavaScript with cache-busting hashes in `dist/`.
+2. **Backend Native Release Build**: Compiles `server/server.lpr` with maximum Free Pascal optimizations (`-O3 -Xs`), producing a stripped native binary under 2 MB.
+3. **Standalone Folder Assembly**: Assembles `deploy/`:
+   - `server.exe` (or `server` on Linux)
+   - `dist/` (static SPA files)
+   - `start.bat` / `start.sh` (1-click startup scripts)
+   - `README.txt`
+4. **Zero Server Prerequisites**: The target production server **does not need Node.js, npm, Lazarus, or Free Pascal**. Simply copy `deploy/` or upload `deploy.zip`, extract, and launch!
 
 ---
 

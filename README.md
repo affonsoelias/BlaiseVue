@@ -106,6 +106,8 @@ bv mormot build            # Compiles Debug native server with Free Pascal
 bv mormot build --release  # Compiles optimized Release native server (-O3, stripped)
 bv mormot run              # Starts native backend server on port 8090
 bv mormot status           # Queries /api/status health endpoint
+bv mormot deploy           # Packages standalone production bundle in deploy/
+bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
                            # (Note: bv server commands preserved as aliases)
 
 # === Testing ===

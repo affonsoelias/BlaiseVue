@@ -64,6 +64,10 @@ bv mormot run --port 8080
 
 # Check backend health and status
 bv mormot status
+
+# Package standalone production bundle
+bv mormot deploy
+bv mormot deploy --zip
 ```
 
 > [!NOTE]
