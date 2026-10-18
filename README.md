@@ -129,9 +129,15 @@ Our architectural evolution roadmap:
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
   - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
   - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv mormot init|build|run|status`, `--mormot`, `$api`, `$ws`).
+- [ ] **v4.0 Enterprise Ecosystem & Developer Superpowers (Planned 📋)**:
+  - [ ] ⚡ **Phase 1: Full-Stack CRUD & ORM Generator**: Rapid entity scaffolding (`bv mormot crud <Model> <fields...>`) generating Pascal records, mORMot 2 ORM endpoints, and reactive frontend `<bv-data-grid>` views.
+  - [ ] 🔐 **Phase 2: Enterprise Authentication & Route Guards (`$auth`)**: Native JWT middleware, Argon2 password hashing, and reactive `this.$auth` with role-based routing guards.
+  - [ ] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
+  - [ ] 🐳 **Phase 4: Cloud-Native Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) producing ultra-lean (< 20 MB) Alpine/Scratch containers.
+  - [ ] 🎨 **Phase 5: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
 
 ---
 
