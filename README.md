@@ -185,25 +185,23 @@ BlaiseVue/
 ## 🏁 Quick Start
 
 ### 📋 Prerequisites
-- **FPC (Free Pascal Compiler 3.2+)**: Compiles the native CLI (`bv` / `bv.exe`) and desktop apps.
-- **Pas2JS (3.2.0+)**: Transpiles Object Pascal components to JavaScript.
-- **Node.js (v18+ LTS) & npm**: Powers the dev server with HMR (`bv serve`), Capacitor mobile workflows (`bv mobile`), and testing (`bv test`).
+- **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server/`).
+- **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv serve` / `bv dev`), automated testing (`bv test`), and mobile synchronization (`bv mobile`).
+- **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv mobile build`), managing emulators, and running `bv mobile open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.
+
+> [!NOTE]
+> **Pas2JS is pre-bundled**: You do **not** need to install `pas2js`. Official multi-platform binaries for Windows, Linux, and macOS are already included in `vendor/pas2js/`.
 
 ### 1. Compile the BlaiseVue CLI
-Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed:
+Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed (included with Lazarus):
 ```bash
 cd bin
 fpc -O2 bv.pas
 # Move bv or bv.exe to your PATH or use directly from bin/
 ```
 
-### 2. Set Up Pas2JS (Multi-platform)
-Download the [Pas2JS 3.2.0](https://getpas2js.freepascal.org) archive for your OS (Windows, Linux, or macOS) and extract it into a `pas2js/` folder at the repository root:
-- `/pas2js/pas2js-win64-x86_64-3.2.0/`
-- `/pas2js/pas2js-linux-x86_64-3.2.0/`
-- `/pas2js/pas2js-darwin-x86_64-3.2.0/`
-
-The CLI automatically detects your platform and invokes the matching compiler!
+### 2. Pre-bundled Pas2JS Compiler
+BlaiseVue comes with the `pas2js` transpiler already included under `vendor/pas2js/`. The CLI automatically detects your platform (Windows, Linux, macOS) with zero manual configuration required!
 
 ### 3. Launch the Demo App
 ```bash
