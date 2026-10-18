@@ -2,21 +2,25 @@
 
 ## Prerequisites
 
-1. **FPC** (3.2.2+): Free Pascal Compiler
-   - Required to compile the native BlaiseVue CLI (`bv` / `bv.exe`) and desktop applications.
-   - Usually installed along with Lazarus IDE or standalone from: https://www.freepascal.org
+1. **Lazarus IDE (or Free Pascal Compiler 3.2.2+)**:
+   - The recommended development environment for Object Pascal.
+   - Includes the **FPC** compiler required to build the native BlaiseVue CLI (`bv` / `bv.exe`), compile desktop applications (`desktop/`), and build high-performance mORMot 2 servers (`server/`).
+   - Download: https://www.lazarus-ide.org or https://www.freepascal.org
 
-2. **pas2js** (3.2.0+): Pascal → JavaScript Transpiler
-   - Transpiles your Object Pascal Single File Components into optimized JavaScript.
-   - Download: https://wiki.freepascal.org/pas2js or https://getpas2js.freepascal.org
-
-3. **Node.js** (v18+ LTS) & **npm**:
-   - Powers the development server with Hot Module Replacement (HMR) on port `8080` & WebSocket `8081` (`bv serve`).
+2. **Node.js (v18+ LTS) & npm**:
+   - Powers the development server with Hot Module Replacement (HMR) on port `8080` & WebSocket `8081` (`bv serve` / `bv dev`).
    - Serves local production previews and interactive documentation (`bv run preview`, `bv doc --serve`).
-   - Manages mobile scaffolding and synchronization via Capacitor (`bv mobile init`, `bv mobile sync`).
-   - Executes unit and end-to-end test suites (`bv test`, `bv test e2e` via Vitest).
-   - Packages the official VS Code extension (`bv vsix` via `@vscode/vsce`).
+   - Manages mobile project scaffolding and synchronization via Capacitor (`bv mobile init`, `bv mobile sync`).
+   - Executes the automated test suite (`bv test` via Vitest).
    - Download: https://nodejs.org (LTS version recommended). Must be accessible in your system PATH.
+
+3. **Android Studio (Recommended for Mobile Development)**:
+   - Required for building, running emulators, and generating native Android packages (`.apk` / `.aab`).
+   - Bundles the complete Android SDK, Build-Tools, Platform-Tools (`adb`), Android Virtual Devices (AVD emulators), and Java JDK 17/21 (`jbr`).
+   - Download: https://developer.android.com/studio
+
+> [!NOTE]
+> **Pas2JS is already bundled!** You do **not** need to download or install the `pas2js` transpiler separately. BlaiseVue includes official multi-platform binaries for Windows, Linux, and macOS pre-configured inside `vendor/pas2js/`.
 
 ## 🛠️ Step 1: Building the BlaiseVue CLI
 
@@ -31,15 +35,9 @@ The BlaiseVue CLI is written in pure Object Pascal. You must compile it once to 
 
 ---
 
-## ⚙️ Step 2: Setting up Pas2JS (Multi-platform)
+## ⚙️ Step 2: Bundled Pas2JS Compiler (Pre-configured)
 
-BlaiseVue bundles the `pas2js` transpiler inside `vendor/pas2js/` to convert your Pascal code to optimized JavaScript. To support multiple operating systems, the framework organizes binaries under `vendor/pas2js/` (with fallback to `pas2js/` in the root).
-
-### 📥 Download (Optional if not bundled)
-Visit [getpas2js.freepascal.org](https://getpas2js.freepascal.org) and download the latest **3.2.0** version for your system:
-- **Windows**: `pas2js-win64-x86_64-3.2.0.zip`
-- **Linux**: `pas2js-linux-x86_64-3.2.0.tar.gz`
-- **macOS**: `pas2js-darwin-x86_64-3.2.0.zip`
+BlaiseVue comes with the `pas2js` transpiler pre-bundled inside `vendor/pas2js/`. The CLI automatically detects your host operating system (Windows, Linux, or macOS) and invokes the corresponding binary directly from `vendor/pas2js/` with zero manual configuration required.
 
 ### 📂 Directory Structure
 The vendor directory structure is organized as follows:
