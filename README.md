@@ -134,10 +134,11 @@ Our architectural evolution roadmap:
   - [ ] 🔐 **Phase 2: Enterprise Authentication & Route Guards (`$auth`)**: Native JWT middleware, Argon2 password hashing, and reactive `this.$auth` with role-based routing guards.
   - [ ] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
   - [ ] 🐳 **Phase 4: Cloud-Native Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) producing ultra-lean (< 20 MB) Alpine/Scratch containers.
-  - [ ] 🎨 **Phase 5: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
+  - [ ] 📱 **Phase 5: Mobile-First Ecosystem (`blaise-ui-mobile`)**: Standalone Ionic Web Components package with Pascal controller wrappers (`BlaiseIonic.pas`), providing native iOS/Android look & feel for both mobile apps and web/PWA.
+  - [ ] 🎨 **Phase 6: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
 
 ---
 
@@ -163,7 +164,8 @@ BlaiseVue/
 ├── packages/                  # Official ecosystem packages
 │   ├── blaise-ui/             # 20+ native UI components & styles
 │   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
-│   └── blaise-icons/          # Bootstrap Icons fonts & stylesheet
+│   ├── blaise-icons/          # Bootstrap Icons fonts & stylesheet
+│   └── blaise-ui-mobile/      # (Planned) Mobile-first Ionic components & Pascal wrappers
 ├── vendor/                    # Embedded compiler & backend engines
 │   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework

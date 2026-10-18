@@ -1,6 +1,6 @@
-# 🛡️ Technical Roadmap: BlaiseVue 2.5 & 3.0 (The Next Frontier)
+# 🛡️ Technical Roadmap: BlaiseVue Platform (v2.0 - v4.0)
 
-This document defines the technical strategy, architectural goals, and specifications for the next major evolution of the framework: **BlaiseVue 2.5 and 3.0**.
+This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
 > **Current Status**: 🚀 **BlaiseVue 3.0 Delivered (✅ Completed)**. All architectural goals for Version 3.0 (`bv doc` generator, WebAssembly acceleration via `BVWasm`, SSG pre-rendering, Reactive Hydration, and Headless E2E testing) are fully implemented and verified with 130 unit tests across 12 test suites.
@@ -250,7 +250,8 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers)
-  └── Phase 5: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
+  ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile)
+  └── Phase 6: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
 ```
 
 ---
@@ -315,7 +316,27 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🎨 Pillar 5: BlaiseVue Studio Dashboard (`bv studio`)
+### 📱 Pillar 5: Mobile-First Ecosystem (`blaise-ui-mobile`)
+**Goal**: Provide a native-feeling mobile component kit powered by Ionic Web Components (`@ionic/core`) with strongly typed Object Pascal wrappers, usable interchangeably across Mobile (Capacitor/Android), Web (PWAs), and Desktop (Electron).
+- **Unified Architecture**:
+  - Lives inside `packages/blaise-ui-mobile/` alongside `packages/blaise-ui/`, maintaining a single unified project structure (no extra project flags needed).
+  - Web Components (`<ion-app>`, `<ion-header>`, `<ion-toolbar>`, `<ion-content>`, `<ion-card>`, `<ion-button>`, `<ion-tabs>`) render natively in modern browser DOM and mobile WebViews without React/Angular dependencies.
+  - Automatic platform-adaptive styling: switches seamlessly between **iOS (Cupertino)** and **Android (Material Design)** themes.
+- **Strongly Typed Pascal Controllers (`BlaiseIonic.pas`)**:
+  - High-level Pascal controllers for mobile dialogs, notifications, and loaders without requiring raw JavaScript bindings:
+    ```pascal
+    TIonicToast.Show('Record saved successfully!', 2000);
+    TIonicAlert.Confirm('Confirm Action', 'Are you sure you want to proceed?', @OnConfirm);
+    TIonicLoading.Present('Synchronizing with mORMot 2...');
+    TIonicActionSheet.Show('Options', ['Edit', 'Share', 'Delete'], @OnActionSelected);
+    ```
+- **Offline-First & Zero CDN Overhead**:
+  - Localized `@ionic/core` assets packaged inside project distribution, ensuring instant mobile startup (<50ms) even in airplane mode.
+  - Seamless hardware integration when paired with `bv mobile` (Capacitor native plugins for Camera, Biometrics, Geolocation, and Push Notifications).
+
+---
+
+### 🎨 Pillar 6: BlaiseVue Studio Dashboard (`bv studio`)
 **Goal**: A visual web-based cockpit for the developer during development.
 - **Dashboard URL**: `http://localhost:9000`
 - **Visual Features**:
