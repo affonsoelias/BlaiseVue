@@ -6,8 +6,10 @@ The `bv.exe` is the native command-line orchestrator of BlaiseVue, responsible f
 
 ## 🏗️ Development and Serving Commands
 
-### 1. `bv serve` (Development Server with Instant HMR)
+### 1. `bv dev` / `bv serve` (Development Server with Instant HMR)
 Launches the integrated development server with live Hot Module Replacement:
+- **`bv dev`**: Modern standard command to boot the dev server with HMR.
+- **`bv serve`**: Legacy alias fully supported for backward compatibility.
 - **HTTP Server**: Serves your application bundle locally at `http://localhost:8080`.
 - **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
 - **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and sends an in-place patch to the browser without reloading the page or losing state.
@@ -84,7 +86,7 @@ BlaiseVue includes an integrated package manager and library system:
 
 ---
 
-## ⚡ Next-Gen Enterprise & Phase 1 / Phase 2 / Phase 3 Commands
+## ⚡ Next-Gen Enterprise & Universal Platform (Phases 1-4) Commands
 
 ### 1. `bv doc [--serve]` (Interactive Documentation & Component Playground)
 Parses the AST of all `.bv` components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at `dist/docs/index.html`. Optionally boots a dedicated HTTP documentation server with `--serve`.
@@ -148,6 +150,34 @@ Manages the native desktop development lifecycle with Free Pascal and WebUI:
 | **All Platforms** | `bv desktop build all --release` | - | Segregated Binaries for Win, Linux, Mac | `desktop/bin/<platform>/` |
 
 See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
+
+### 7. `bv mormot` (Phase 4: Full-Stack Pascal with Synopse mORMot 2)
+Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
+- **`bv create <name> --mormot`**: Scaffolds a full-stack project with both reactive frontend and native mORMot 2 backend.
+- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
+- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
+  - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
+  - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
+- **`bv mormot run [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090) with static SPA hosting and REST API.
+- **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`).
+- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
+  - Compiles frontend in production mode (`bv run build`).
+  - Compiles backend in release mode (`bv mormot build --release`).
+  - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
+  - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
+  - **Zero Server Prerequisites**: No Node.js, npm, Free Pascal, or Lazarus required on the target server!
+
+| mORMot Command | Subcommand / Flag | Action / Output |
+|---|---|---|
+| `bv mormot init` | - | Scaffolds native backend in `server/` |
+| `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
+| `bv mormot build` | `--release` | Compiles optimized Release server |
+| `bv mormot run` | `[--port <p>]` | Starts server on port (default: 8090) |
+| `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check |
+| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
+| `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
+
+See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
 
 ---
 
