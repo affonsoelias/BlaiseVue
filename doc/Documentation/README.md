@@ -74,7 +74,7 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
-- [Technical Roadmap (v3.0 & v3.5)](99-roadmap-v3.md)
+- [Technical Roadmap (v2.0 - v4.0)](99-roadmap.md)
 
 ---
 
