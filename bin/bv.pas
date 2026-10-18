@@ -97,21 +97,31 @@ begin
   Result := GetSDKPath + 'packages' + DirectorySeparator;
 end;
 
+{ Returns the base directory for pas2js, checking vendor/pas2js first then legacy pas2js/ }
+function GetPas2JSRoot: string;
+begin
+  if DirectoryExists(GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js') then
+    Result := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' + DirectorySeparator
+  else
+    Result := GetSDKPath + 'pas2js' + DirectorySeparator;
+end;
+
 { Returns the absolute path to the pas2js compiler executable based on OS }
 function GetPas2JSPath: string;
 var
-  OSFolder: string;
+  OSFolder, Base: string;
 begin
+  Base := GetPas2JSRoot;
   {$IFDEF WINDOWS}
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
-    Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
+    Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
   {$ELSE}
     {$IFDEF LINUX}
       OSFolder := 'pas2js-linux-x86_64-3.2.0'; // Default to x64
     {$ELSE}
       OSFolder := 'pas2js-darwin-x86_64-3.2.0'; // Default to x64
     {$ENDIF}
-    Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js';
+    Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js';
   {$ENDIF}
 end;
 
@@ -129,14 +139,15 @@ begin
       OSFolder := 'pas2js-darwin-x86_64-3.2.0';
     {$ENDIF}
   {$ENDIF}
-  Result := GetSDKPath + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+  Result := GetPas2JSRoot + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
 end;
 
 function GetRTLPath: string;
 var
-  SDK, OSFolder: string;
+  Base, SDK, OSFolder: string;
 begin
   SDK := GetSDKPath;
+  Base := GetPas2JSRoot;
   {$IFDEF WINDOWS}
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
   {$ELSE}
@@ -148,12 +159,12 @@ begin
   {$ENDIF}
   
   // 1. Prioritize the platform-specific RTL bundled with the transpiler
-  if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
-    Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
+  if FileExists(Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
+    Exit(Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
   
   // 2. Fallback to the Pas2JS bin folder
-  if FileExists(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
-    Exit(SDK + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
+  if FileExists(Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
+    Exit(Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
     
   // 3. Last fallback: check the SDK root if a standalone version was placed there
   if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');

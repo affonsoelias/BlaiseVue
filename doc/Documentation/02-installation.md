@@ -33,30 +33,32 @@ The BlaiseVue CLI is written in pure Object Pascal. You must compile it once to 
 
 ## ⚙️ Step 2: Setting up Pas2JS (Multi-platform)
 
-BlaiseVue uses the `pas2js` transpiler to convert your Pascal code to optimized JavaScript. To support multiple operating systems, the framework expects a `pas2js/` folder in the root directory.
+BlaiseVue bundles the `pas2js` transpiler inside `vendor/pas2js/` to convert your Pascal code to optimized JavaScript. To support multiple operating systems, the framework organizes binaries under `vendor/pas2js/` (with fallback to `pas2js/` in the root).
 
-### 📥 Download
+### 📥 Download (Optional if not bundled)
 Visit [getpas2js.freepascal.org](https://getpas2js.freepascal.org) and download the latest **3.2.0** version for your system:
 - **Windows**: `pas2js-win64-x86_64-3.2.0.zip`
 - **Linux**: `pas2js-linux-x86_64-3.2.0.tar.gz`
 - **macOS**: `pas2js-darwin-x86_64-3.2.0.zip`
 
 ### 📂 Directory Structure
-Extract the contents so that your project root looks like this:
+The vendor directory structure is organized as follows:
 
 ```text
 /BlaiseVue
-├── bin/          <-- CLI source
+├── bin/          <-- CLI source & executable
 ├── core/         <-- Framework core
-├── pas2js/       <-- Multi-platform binaries
-│   ├── pas2js-win64-x86_64-3.2.0/
-│   ├── pas2js-linux-x86_64-3.2.0/
-│   └── pas2js-darwin-x86_64-3.2.0/
+├── vendor/       <-- Embedded third-party engines
+│   ├── pas2js/   <-- Multi-platform pas2js binaries & RTL
+│   │   ├── pas2js-win64-x86_64-3.2.0/
+│   │   ├── pas2js-linux-x86_64-3.2.0/
+│   │   └── pas2js-darwin-x86_64-3.2.0/
+│   └── mormot2/  <-- Synopse mORMot 2.4 framework
 ├── bv.exe        <-- Compiled CLI
 └── README.md
 ```
 
-The CLI will automatically detect your OS and use the corresponding folder.
+The CLI will automatically detect your OS and use the corresponding folder inside `vendor/pas2js/`.
 
 ## Installing BlaiseVue
 
