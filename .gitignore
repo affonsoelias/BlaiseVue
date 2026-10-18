@@ -14,6 +14,8 @@ bin/*.ppu
 bin/*.dcu
 bin/*.rsj
 bin/lib/
+**/server/bin/
+**/server/lib/
 
 # 🏰 Pascal Build Artifacts (Global)
 *.o
@@ -34,9 +36,14 @@ bin/lib/
 temp/
 obj/
 
-# Ensure essential tools in pas2js/ are tracked!
+# Ensure essential tools in pas2js/ and vendor/ are tracked!
 !pas2js/
 !pas2js/**
+!vendor/
+!vendor/**
+!vendor/**/*.o
+!vendor/**/*.obj
+!vendor/**/*.a
 
 # 📊 Local Logs & Trace
 compile_log.txt
@@ -49,6 +56,10 @@ demo-app/dist/js/*.js
 demo-app/generated/
 demo-app/rtl.js
 my-app/
+deploy/
+**/deploy/
+*.zip
+
 
 # 🍎 OS Files
 .DS_Store

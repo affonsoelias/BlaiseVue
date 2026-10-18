@@ -66,10 +66,11 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 32. [32. SSG & Static Pre-rendering with Reactive Hydration](32-ssg-and-hydration.md)
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md)
 
-### 🚀 BlaiseVue 3.5 Universal Platform (Phase 1, 2 & 3)
+### 🚀 BlaiseVue 3.5 Universal Platform (Phase 1, 2, 3 & 4)
 34. [34. VS Code Extension & Professional DX (.vsix) - Phase 1](34-vscode-extension.md)
 35. [35. Hybrid Mobile Platform & Capacitor (bv mobile) - Phase 2](35-mobile-capacitor.md)
 36. [36. Multiplatform Desktop & Lazarus IDE (bv desktop) - Phase 3](36-desktop-webui.md)
+37. [37. Full-Stack Pascal with mORMot 2 (bv mormot) - Phase 4](37-mormot2-backend.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
@@ -80,23 +81,32 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 ## 🛠️ CLI Quick Reference
 
 ```bash
-# Start development server with instant HMR and WebSocket
-bv serve
+# Start development server with instant HMR (alias: bv serve)
+bv dev
 
-# Run express development build with cache busting
+# Run development build with cache busting
 bv run dev
 
 # Run automated unit test suite with Vitest
 bv test
-
-# Scaffold a new unit test in tests/
-bv new t MyComponent
 
 # Build optimized production bundle
 bv run build
 
 # Clean build artifacts (dist/ and generated/)
 bv clean
+
+# === Mobile & Desktop ===
+bv mobile init [name] [id]             # Configure Capacitor & scaffold mobile/
+bv mobile run android --emulator       # Launch on Android emulator
+bv desktop run [windows|linux]         # Launch native desktop app
+
+# === Full-Stack mORMot 2 Backend ===
+bv mormot init                         # Scaffolds native backend in server/
+bv mormot build [--release]            # Compiles native server binary
+bv mormot run [--port <p>]             # Starts native server (default: 8090)
+bv mormot status                       # Queries /api/status health endpoint
+bv mormot deploy [--zip]               # Packages standalone bundle into deploy/ and deploy.zip
 ```
 
 ---

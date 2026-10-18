@@ -2,12 +2,21 @@
 
 ## Prerequisites
 
-1. **pas2js** (3.2.0+): Pascal → JavaScript Transpiler
-   - Download: https://wiki.freepascal.org/pas2js
-   - Must be in the system PATH
+1. **FPC** (3.2.2+): Free Pascal Compiler
+   - Required to compile the native BlaiseVue CLI (`bv` / `bv.exe`) and desktop applications.
+   - Usually installed along with Lazarus IDE or standalone from: https://www.freepascal.org
 
-2. **FPC** (3.2.2+): Free Pascal Compiler (to compile the CLI)
-   - Usually installed along with Lazarus
+2. **pas2js** (3.2.0+): Pascal → JavaScript Transpiler
+   - Transpiles your Object Pascal Single File Components into optimized JavaScript.
+   - Download: https://wiki.freepascal.org/pas2js or https://getpas2js.freepascal.org
+
+3. **Node.js** (v18+ LTS) & **npm**:
+   - Powers the development server with Hot Module Replacement (HMR) on port `8080` & WebSocket `8081` (`bv serve`).
+   - Serves local production previews and interactive documentation (`bv run preview`, `bv doc --serve`).
+   - Manages mobile scaffolding and synchronization via Capacitor (`bv mobile init`, `bv mobile sync`).
+   - Executes unit and end-to-end test suites (`bv test`, `bv test e2e` via Vitest).
+   - Packages the official VS Code extension (`bv vsix` via `@vscode/vsce`).
+   - Download: https://nodejs.org (LTS version recommended). Must be accessible in your system PATH.
 
 ## 🛠️ Step 1: Building the BlaiseVue CLI
 

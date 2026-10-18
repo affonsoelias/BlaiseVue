@@ -59,7 +59,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
 
 ```bash
 # === Development & Server ===
-bv serve                   # Starts development server with HMR on http://localhost:8080
+bv dev                     # Starts development server with HMR on http://localhost:8080 (alias: bv serve)
+bv serve                   # Starts development server with HMR
 bv run dev                 # Builds project in development mode with cache-busting
 bv run build               # Builds optimized production bundle in dist/
 bv run preview             # Local HTTP preview of production build (port 5000)
@@ -98,6 +99,17 @@ bv desktop build [target] --release # Compiles Release native binary (pure GUI -
 bv desktop run [target]    # Launches desktop app in Debug mode (with console)
 bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
 
+# === Backend & Full-Stack (Synopse mORMot 2) ===
+bv create <name> --mormot  # Scaffolds full-stack app with mORMot 2 native backend (--fullstack / -m)
+bv mormot init             # Scaffolds mORMot 2 backend server in server/
+bv mormot build            # Compiles Debug native server with Free Pascal
+bv mormot build --release  # Compiles optimized Release native server (-O3, stripped)
+bv mormot run              # Starts native backend server on port 8090
+bv mormot status           # Queries /api/status health endpoint
+bv mormot deploy           # Packages standalone production bundle in deploy/
+bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
+                           # (Note: bv server commands preserved as aliases)
+
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
 ```
@@ -112,14 +124,20 @@ Our architectural evolution roadmap:
 - [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
 - [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
 - [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
-- [x] **v3.5 Universal Pascal Platform (Phase 1, 2 & 3 Complete)**:
+- [x] **v3.5 Universal Pascal Platform (100% Complete - Phases 1, 2, 3 & 4 Delivered)**:
   - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
   - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
-  - [ ] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`--template fullstack-mormot`).
+  - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv mormot init|build|run|status`, `--mormot`, `$api`, `$ws`).
+- [ ] **v4.0 Enterprise Ecosystem & Developer Superpowers (Planned 📋)**:
+  - [ ] ⚡ **Phase 1: Full-Stack CRUD & ORM Generator**: Rapid entity scaffolding (`bv mormot crud <Model> <fields...>`) generating Pascal records, mORMot 2 ORM endpoints, and reactive frontend `<bv-data-grid>` views.
+  - [ ] 🔐 **Phase 2: Enterprise Authentication & Route Guards (`$auth`)**: Native JWT middleware, Argon2 password hashing, and reactive `this.$auth` with role-based routing guards.
+  - [ ] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
+  - [ ] 🐳 **Phase 4: Cloud-Native Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) producing ultra-lean (< 20 MB) Alpine/Scratch containers.
+  - [ ] 🎨 **Phase 5: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap (v3.0 & v3.5)](doc/Documentation/99-roadmap-v3.md) and [Desktop Documentation](doc/Documentation/36-desktop-webui.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap-v3.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
 
 ---
 
@@ -138,6 +156,9 @@ BlaiseVue/
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
 │   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
 │   ├── BVStore.pas            # Centralized state management ($store)
+│   ├── BVClient.pas           # REST ($api) & WebSocket ($ws) client helpers
+├── templates/                 # Scaffolding templates
+│   ├── fullstack-mormot/      # High-performance mORMot 2 server template
 │   └── BVDevTools.pas         # Bridge to browser DevTools extension (v3.0)
 ├── packages/                  # Official ecosystem packages
 │   ├── blaise-ui/             # 20+ native UI components & styles
@@ -153,6 +174,11 @@ BlaiseVue/
 ---
 
 ## 🏁 Quick Start
+
+### 📋 Prerequisites
+- **FPC (Free Pascal Compiler 3.2+)**: Compiles the native CLI (`bv` / `bv.exe`) and desktop apps.
+- **Pas2JS (3.2.0+)**: Transpiles Object Pascal components to JavaScript.
+- **Node.js (v18+ LTS) & npm**: Powers the dev server with HMR (`bv serve`), Capacitor mobile workflows (`bv mobile`), and testing (`bv test`).
 
 ### 1. Compile the BlaiseVue CLI
 Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed:

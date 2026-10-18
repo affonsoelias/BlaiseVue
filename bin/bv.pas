@@ -161,6 +161,30 @@ begin
   Result := '';
 end;
 
+{ Checks whether a system command/executable is available on the PATH }
+function HasCommand(const ACmd: string): Boolean;
+var
+  OutStr: string;
+begin
+  OutStr := '';
+  {$IFDEF WINDOWS}
+  Result := RunCommand('cmd.exe', ['/c', 'where ' + ACmd], OutStr);
+  if not Result then
+    Result := RunCommand('cmd.exe', ['/c', ACmd + ' --version'], OutStr);
+  {$ELSE}
+  Result := RunCommand('which', [ACmd], OutStr);
+  if not Result then
+    Result := RunCommand(ACmd, ['--version'], OutStr);
+  {$ENDIF}
+end;
+
+procedure PrintNodeRequiredError(const ActionDesc: string);
+begin
+  WriteLn('  [ERROR] Node.js is required to ' + ActionDesc + '.');
+  WriteLn('          Please install Node.js (v18+ LTS) from: https://nodejs.org');
+  WriteLn('          Ensure "node" and "npm" are accessible in your system PATH.');
+end;
+
 function PascalToKebab(const S: string): string;
 var
   i: Integer;
@@ -1265,6 +1289,9 @@ procedure CmdCreate(const ProjectName: string);
 var
   Base, TemplatePath: string;
   Content: string;
+  IsFullStack: Boolean;
+  TemplateMormotDir: string;
+  i: Integer;
 begin
   Base := GetCurrentDir + DirectorySeparator + ProjectName + DirectorySeparator;
   TemplatePath := GetSDKPath + 'demo-app' + DirectorySeparator;
@@ -1381,21 +1408,65 @@ begin
       WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
   end;
 
-  WriteLn('');
-  WriteLn('Installing dependencies (npm install)...');
-  
-  {$IFDEF WINDOWS}
-  ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
-  {$ELSE}
-  ExecuteProcess('npm', 'install --prefix "' + Base + '"');
-  {$ENDIF}
+  if HasCommand('npm') then
+  begin
+    WriteLn('');
+    WriteLn('Installing dependencies (npm install)...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
+    {$ELSE}
+    ExecuteProcess('npm', 'install --prefix "' + Base + '"');
+    {$ENDIF}
+  end
+  else
+  begin
+    WriteLn('');
+    WriteLn('  [WARNING] npm not found in system PATH.');
+    WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
+  end;
+
+  // Check if --mormot, --fullstack, -m, or -f flag was passed
+  IsFullStack := False;
+  for i := 2 to ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--mormot') or
+       (LowerCase(ParamStr(i)) = '-m') or
+       (LowerCase(ParamStr(i)) = '--fullstack') or
+       (LowerCase(ParamStr(i)) = '-f') or
+       (LowerCase(ParamStr(i)) = '--template=fullstack-mormot') or
+       (LowerCase(ParamStr(i)) = '--template=mormot') or
+       ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and
+        ((LowerCase(ParamStr(i + 1)) = 'fullstack-mormot') or (LowerCase(ParamStr(i + 1)) = 'mormot'))) then
+    begin
+      IsFullStack := True;
+      Break;
+    end;
+  end;
+
+  if IsFullStack then
+  begin
+    TemplateMormotDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
+    if DirectoryExists(TemplateMormotDir) then
+    begin
+      WriteLn('Scaffolding Full-Stack mORMot 2 backend server in ', ProjectName, '/server...');
+      ForceDir(Base + 'server');
+      CopyDir(TemplateMormotDir, Base + 'server', ['bin', 'lib']);
+      ForceDir(Base + 'server' + DirectorySeparator + 'bin');
+      ForceDir(Base + 'server' + DirectorySeparator + 'lib');
+      WriteLn('  [+] Full-Stack mORMot 2 backend scaffolded successfully.');
+    end;
+  end;
 
   WriteLn('');
   WriteLn('Project created successfully!');
   WriteLn('');
   WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
-  WriteLn('  bv run dev');
+  WriteLn('  bv dev');
+  if IsFullStack then
+  begin
+    WriteLn('  bv mormot run          # Starts the native mORMot 2 backend on port 8090');
+  end;
 end;
 
 // =====================================================================
@@ -2421,6 +2492,12 @@ end;
 procedure CmdServe;
 begin
   WriteLn('=== BlaiseVue 2.0 Dev Server (HMR Enabled) ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the development server with HMR');
+    Exit;
+  end;
+
   if FileExists(GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js') then
   begin
     WriteLn('  HMR WebSocket: ws://localhost:8081');
@@ -2452,6 +2529,13 @@ begin
     WriteLn('ERROR: /dist folder not found. Run "bv run build" first.');
     Exit;
   end;
+
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the preview server (npx http-server)');
+    Exit;
+  end;
+
   WriteLn('Serving /dist at http://localhost:5000...');
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c npx http-server dist -p 5000');
@@ -2504,6 +2588,12 @@ var
   GenPath, TestPath, UnitName, CorePath, RTLFile: string;
 begin
   WriteLn('=== BlaiseVue Unit Testing ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run the Vitest test runner');
+    Exit;
+  end;
+
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator;
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
   CorePath := GetCorePath;
@@ -2769,6 +2859,11 @@ begin
 
     if ServeMode then
     begin
+      if not HasCommand('node') then
+      begin
+        PrintNodeRequiredError('serve the interactive documentation playground (npx http-server)');
+        Exit;
+      end;
       WriteLn('Serving documentation playground on http://localhost:8085...');
       {$IFDEF WINDOWS}
       ExecuteProcess('cmd', '/c npx http-server dist/docs -p 8085 -c-1');
@@ -2885,6 +2980,11 @@ end;
 procedure CmdTestE2E;
 begin
   WriteLn('=== BlaiseVue 3.0 Headless E2E Test Suite ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('run headless E2E tests with Vitest');
+    Exit;
+  end;
   WriteLn('Executing end-to-end user journeys (Routing, Forms, Themes, Hydration)...');
   {$IFDEF WINDOWS}
   ExecuteProcess('cmd', '/c npx vitest run --testNamePattern="E2E|Integration|Hydration"');
@@ -2910,13 +3010,18 @@ begin
     WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
     ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
     {$IFDEF WINDOWS}
-    ExecuteProcess('powershell', '-ExecutionPolicy Bypass -File "' + ScriptPath + '"');
+    ExecuteProcess('powershell', '-File "' + ScriptPath + '"');
     {$ELSE}
     ExecuteProcess('sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ' + ExtDir + '/* ~/.vscode/extensions/blaisevue-vscode/"');
     {$ENDIF}
   end
   else if (Action = 'package') or (Action = 'vsix') then
   begin
+    if not HasCommand('node') then
+    begin
+      PrintNodeRequiredError('package the VS Code extension (@vscode/vsce)');
+      Exit;
+    end;
     WriteLn('Packaging BlaiseVue VS Code extension into .vsix...');
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
@@ -3257,6 +3362,11 @@ var
       end
       else
       begin
+        if not HasCommand('node') then
+        begin
+          PrintNodeRequiredError('launch the mobile app via Capacitor CLI');
+          Exit;
+        end;
         WriteLn('Launching via Capacitor CLI runner...');
         {$IFDEF WINDOWS}
         ExecuteProcess('cmd', '/c npx cap run android');
@@ -3364,6 +3474,15 @@ begin
 
   if TargetPlatform = '' then
     TargetPlatform := 'android';
+
+  if (SubCmd = 'init') or (SubCmd = 'sync') or (SubCmd = 'open') or (SubCmd = 'build') then
+  begin
+    if not HasCommand('node') then
+    begin
+      PrintNodeRequiredError('manage mobile projects with Capacitor');
+      Exit;
+    end;
+  end;
 
   if (SubCmd = 'init') then
   begin
@@ -4546,6 +4665,480 @@ begin
 end;
 
 // =====================================================================
+//  FULL-STACK PASCAL: mORMot 2 BACKEND SERVER
+// =====================================================================
+
+function FindMormot2Path: string;
+var
+  Candidate: string;
+  ConfigFile: string;
+
+  function IsValidMormot(const Dir: string): Boolean;
+  var
+    P: string;
+  begin
+    Result := False;
+    P := ExcludeTrailingPathDelimiter(Dir);
+    if (P <> '') and DirectoryExists(P) then
+    begin
+      if DirectoryExists(P + DirectorySeparator + 'src') and
+         FileExists(P + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas') then
+        Result := True;
+    end;
+  end;
+
+begin
+  Result := '';
+
+  // 1. Embedded vendor in BlaiseVue SDK: vendor/mormot2
+  Candidate := GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 2. Relative to current project or workspace: vendor/mormot2 or ../vendor/mormot2
+  Candidate := GetCurrentDir + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 3. Environment variable MORMOT2_PATH
+  Candidate := GetEnvironmentVariable('MORMOT2_PATH');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 4. Project or server configuration file: server/mormot.path or mormot.path
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
+
+  // 5. User local installation path on Windows (fallback)
+  Candidate := 'C:\ComponenteLazarus\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 6. Relative paths to workspace or BlaiseVue SDK
+  Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := ExpandFileName(GetSDKPath + '..' + DirectorySeparator + 'mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 5. Alternate drive paths on Windows
+  Candidate := 'C:\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := 'D:\ComponenteLazarus\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := 'D:\mORMot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  // 6. Common Unix locations
+  Candidate := '/opt/mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := '/usr/local/share/mormot2';
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+
+  Candidate := ExpandFileName('~/mORMot2');
+  if IsValidMormot(Candidate) then
+    Exit(Candidate);
+end;
+
+procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
+var
+  ServerDir, BinDir, LibDir, TemplateDir: string;
+  ProjectRoot, DeployDir, DistDir, ZipFile: string;
+  LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
+  IsRelease, HasZip: Boolean;
+  i: Integer;
+  HttpClient: TFPHTTPClient;
+  StatusResp: string;
+  F: TextFile;
+
+  procedure ParseArg(const A: string);
+  var
+    S: string;
+  begin
+    S := LowerCase(A);
+    if S = '' then Exit;
+    if (S = '--release') or (S = '-r') or (S = 'release') then
+      IsRelease := True
+    else if (S = '--debug') or (S = '-d') or (S = 'debug') then
+      IsRelease := False
+    else if (S = '--zip') or (S = '-z') or (S = 'zip') then
+      HasZip := True
+    else if (Copy(S, 1, 7) = '--port=') then
+      PortArg := Copy(A, 8, MaxInt)
+    else if (Copy(S, 1, 6) = '--out=') then
+      DeployDir := Copy(A, 7, MaxInt);
+  end;
+
+begin
+  ProjectRoot := GetCurrentDir;
+  if not DirectoryExists(ProjectRoot + DirectorySeparator + 'server') and
+     FileExists(ProjectRoot + DirectorySeparator + 'server.lpr') then
+  begin
+    ProjectRoot := ExpandFileName(ProjectRoot + DirectorySeparator + '..');
+  end;
+
+  ServerDir := ProjectRoot + DirectorySeparator + 'server';
+  BinDir := ServerDir + DirectorySeparator + 'bin';
+  LibDir := ServerDir + DirectorySeparator + 'lib';
+  LprFile := ServerDir + DirectorySeparator + 'server.lpr';
+  TargetExe := BinDir + DirectorySeparator + 'server' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+  TemplateDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
+  DeployDir := ProjectRoot + DirectorySeparator + 'deploy';
+  IsRelease := False;
+  HasZip := False;
+  PortArg := '';
+
+  for i := 2 to ParamCount do
+  begin
+    if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
+    begin
+      if i + 1 <= ParamCount then
+        PortArg := ParamStr(i + 1);
+    end
+    else if (ParamStr(i) = '--out') or (ParamStr(i) = '-o') then
+    begin
+      if i + 1 <= ParamCount then
+        DeployDir := ParamStr(i + 1);
+    end
+    else
+      ParseArg(ParamStr(i));
+  end;
+
+  ParseArg(Arg1);
+  ParseArg(Arg2);
+
+  if (SubCmd = 'init') then
+  begin
+    WriteLn('Initializing BlaiseVue mORMot 2 Native Backend Server in server/...');
+    if not DirectoryExists(TemplateDir) then
+    begin
+      WriteLn('Error: Fullstack mORMot template directory not found at: ' + TemplateDir);
+      Halt(1);
+    end;
+
+    ForceDir(ServerDir);
+    CopyDir(TemplateDir, ServerDir, ['bin', 'lib']);
+    ForceDir(BinDir);
+    ForceDir(LibDir);
+
+    WriteLn('  [+] Full-Stack mORMot 2 server template scaffolded successfully in server/ !');
+    WriteLn('');
+    WriteLn('Next steps:');
+    WriteLn('  1. Run "bv build" (or "bv run build") to compile your reactive frontend to dist/');
+    WriteLn('  2. Run "bv mormot build" (or "bv mormot build --release") to compile the native server');
+    WriteLn('  3. Run "bv mormot run" to launch the server on port 8090');
+    WriteLn('  Or open server/server.lpi in Lazarus IDE and press F9!');
+  end
+  else if (SubCmd = 'build') then
+  begin
+    if not FileExists(LprFile) then
+    begin
+      WriteLn('No server project found in server/. Initializing first...');
+      CmdServer('init');
+    end;
+
+    MormotPath := FindMormot2Path;
+    if MormotPath = '' then
+    begin
+      WriteLn('[!] Error: Synopse mORMot 2 installation not found.');
+      WriteLn('    BlaiseVue searched:');
+      WriteLn('    - Environment variable MORMOT2_PATH');
+      WriteLn('    - C:\ComponenteLazarus\mORMot2');
+      WriteLn('    - Local config file server/mormot.path');
+      WriteLn('    - ../mORMot2, /opt/mormot2, ~/mORMot2');
+      WriteLn('');
+      WriteLn('    To fix:');
+      WriteLn('    1. Set MORMOT2_PATH to your mORMot 2 directory:');
+      WriteLn('       set MORMOT2_PATH=C:\ComponenteLazarus\mORMot2');
+      WriteLn('    2. Or create server/mormot.path containing your mORMot 2 directory path.');
+      Halt(1);
+    end;
+
+    ForceDir(BinDir);
+    ForceDir(LibDir);
+
+    WriteLn('Building BlaiseVue mORMot 2 Native Server...');
+    WriteLn('  [+] mORMot 2 Path: ' + MormotPath);
+    if IsRelease then
+      WriteLn('  [+] Mode: RELEASE (Optimized -O3, stripped symbols)')
+    else
+      WriteLn('  [+] Mode: DEBUG (-O2, debug symbols active)');
+
+    FpcCmd := 'fpc -MObjFPC -Sh ';
+    if IsRelease then
+      FpcCmd := FpcCmd + '-O3 -Xs -dRELEASE '
+    else
+      FpcCmd := FpcCmd + '-O2 -g -gl -dDEBUG ';
+
+    FpcCmd := FpcCmd +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src" ' +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'core" ' +
+      '-Fi"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'net" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'core" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'net" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'app" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'crypt" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'db" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'lib" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'orm" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'rest" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'soa" ' +
+      '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'misc" ';
+
+    {$IFDEF WINDOWS}
+    if DirectoryExists(MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64') then
+      FpcCmd := FpcCmd + '-Fl"' + MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64" ';
+    FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
+    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && ' + FpcCmd);
+    {$ELSE}
+    FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
+    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ' + FpcCmd + '"');
+    {$ENDIF}
+
+    if FileExists(TargetExe) then
+    begin
+      WriteLn('  [SUCCESS] Native mORMot 2 server compiled successfully: ' + TargetExe);
+      WriteLn('  [TIP] Run "bv mormot run" to start the server.');
+    end
+    else
+    begin
+      WriteLn('  [ERROR] Server compilation failed. Check FPC compiler output above.');
+      Halt(1);
+    end;
+  end
+  else if (SubCmd = 'run') then
+  begin
+    if not FileExists(TargetExe) or IsRelease then
+    begin
+      CmdServer('build', Arg1, Arg2);
+    end;
+
+    if not FileExists(TargetExe) then
+    begin
+      WriteLn('Error: Server binary not found: ' + TargetExe);
+      Halt(1);
+    end;
+
+    ExtraArgs := '';
+    if PortArg <> '' then
+      ExtraArgs := ' --port ' + PortArg;
+
+    WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
+    WriteLn('Executable: ' + TargetExe);
+    WriteLn('');
+
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ./bin/server' + ExtraArgs + '"');
+    {$ENDIF}
+  end
+  else if (SubCmd = 'status') then
+  begin
+    PortArg := '8090';
+    for i := 2 to ParamCount do
+    begin
+      if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
+      begin
+        if i + 1 <= ParamCount then
+          PortArg := ParamStr(i + 1);
+      end
+      else if Copy(ParamStr(i), 1, 7) = '--port=' then
+        PortArg := Copy(ParamStr(i), 8, MaxInt);
+    end;
+
+    WriteLn('Checking BlaiseVue mORMot 2 server status on http://localhost:' + PortArg + '/api/status ...');
+    HttpClient := TFPHTTPClient.Create(nil);
+    try
+      try
+        StatusResp := HttpClient.Get('http://localhost:' + PortArg + '/api/status');
+        WriteLn('[+] Server is ONLINE!');
+        WriteLn(StatusResp);
+      except
+        on E: Exception do
+        begin
+          WriteLn('[-] Server is OFFLINE or unreachable on port ' + PortArg + ': ' + E.Message);
+          WriteLn('    Start it using: bv mormot run');
+        end;
+      end;
+    finally
+      HttpClient.Free;
+    end;
+  end
+  else if (SubCmd = 'deploy') then
+  begin
+    if PortArg = '' then
+      PortArg := '8090';
+
+    WriteLn('================================================================');
+    WriteLn('  BlaiseVue + mORMot 2 Production Deployment Packager');
+    WriteLn('================================================================');
+    WriteLn('');
+
+    if not FileExists(LprFile) then
+    begin
+      WriteLn('[!] No server project found in server/. Initializing first...');
+      CmdServer('init');
+    end;
+
+    // 1. Build frontend in production mode
+    WriteLn('[1/4] Compiling reactive frontend (bv run build)...');
+    ChDir(ProjectRoot);
+    CmdRunBuild;
+    DistDir := ProjectRoot + DirectorySeparator + 'dist';
+    if not DirectoryExists(DistDir) then
+    begin
+      WriteLn('[ERROR] Frontend production build failed. dist/ folder not found.');
+      Halt(1);
+    end;
+    WriteLn('  [+] Frontend compiled with production hashes in dist/');
+    WriteLn('');
+
+    // 2. Build native backend in RELEASE mode
+    WriteLn('[2/4] Compiling native mORMot 2 server (bv mormot build --release)...');
+    CmdServer('build', '--release');
+    if not FileExists(TargetExe) then
+    begin
+      WriteLn('[ERROR] Server compilation failed: ' + TargetExe);
+      Halt(1);
+    end;
+    WriteLn('  [+] Native server binary built in: ' + TargetExe);
+    WriteLn('');
+
+    // 3. Assemble deployment directory
+    WriteLn('[3/4] Assembling standalone deployment package in: ' + DeployDir);
+    if DirectoryExists(DeployDir) then
+      DeleteDir(DeployDir);
+    ForceDir(DeployDir);
+    ForceDir(DeployDir + DirectorySeparator + 'dist');
+
+    // Copy server binary
+    CopyFile(TargetExe, DeployDir + DirectorySeparator + ExtractFileName(TargetExe));
+
+    // Copy dist/ contents
+    CopyDir(DistDir, DeployDir + DirectorySeparator + 'dist', []);
+
+    // Create start.bat (Windows)
+    AssignFile(F, DeployDir + DirectorySeparator + 'start.bat');
+    Rewrite(F);
+    WriteLn(F, '@echo off');
+    WriteLn(F, 'title BlaiseVue Server (Port ' + PortArg + ')');
+    WriteLn(F, 'echo ====================================================');
+    WriteLn(F, 'echo  Starting BlaiseVue mORMot 2 Native Server...');
+    WriteLn(F, 'echo  Port: ' + PortArg);
+    WriteLn(F, 'echo  Hosting API and Static Frontend from ./dist');
+    WriteLn(F, 'echo ====================================================');
+    WriteLn(F, ExtractFileName(TargetExe) + ' --port ' + PortArg);
+    WriteLn(F, 'if errorlevel 1 pause');
+    CloseFile(F);
+
+    // Create start.sh (Linux/macOS)
+    AssignFile(F, DeployDir + DirectorySeparator + 'start.sh');
+    Rewrite(F);
+    WriteLn(F, '#!/bin/sh');
+    WriteLn(F, 'echo "===================================================="');
+    WriteLn(F, 'echo " Starting BlaiseVue mORMot 2 Native Server..."');
+    WriteLn(F, 'echo " Port: ' + PortArg + '"');
+    WriteLn(F, 'echo " Hosting API and Static Frontend from ./dist"');
+    WriteLn(F, 'echo "===================================================="');
+    WriteLn(F, 'chmod +x ./' + ExtractFileName(TargetExe));
+    WriteLn(F, './' + ExtractFileName(TargetExe) + ' --port ' + PortArg);
+    CloseFile(F);
+
+    // Create README.txt
+    AssignFile(F, DeployDir + DirectorySeparator + 'README.txt');
+    Rewrite(F);
+    WriteLn(F, 'BlaiseVue Full-Stack Standalone Deployment Package');
+    WriteLn(F, '==================================================');
+    WriteLn(F, '');
+    WriteLn(F, 'This deployment directory is 100% self-contained and ready to copy to your server.');
+    WriteLn(F, 'No Node.js, npm, or Free Pascal installation required on the production host!');
+    WriteLn(F, '');
+    WriteLn(F, 'How to run on the server:');
+    WriteLn(F, '  Windows: Double-click start.bat (or run "' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
+    WriteLn(F, '  Linux:   Run "./start.sh" (or "./' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
+    WriteLn(F, '');
+    WriteLn(F, 'Files:');
+    WriteLn(F, '  - ' + ExtractFileName(TargetExe) + ' : Native mORMot 2 backend executable');
+    WriteLn(F, '  - dist/            : Compiled reactive SPA frontend');
+    WriteLn(F, '  - start.bat        : Windows startup script');
+    WriteLn(F, '  - start.sh         : Linux startup script');
+    CloseFile(F);
+
+    WriteLn('  [+] Deployment directory assembled successfully!');
+    WriteLn('');
+
+    // 4. Create ZIP archive if requested
+    if HasZip then
+    begin
+      ZipFile := ProjectRoot + DirectorySeparator + 'deploy.zip';
+      if FileExists(ZipFile) then
+        DeleteFile(ZipFile);
+      WriteLn('[4/4] Packaging standalone archive: ' + ZipFile);
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c powershell -NoProfile -Command "Compress-Archive -Path ''' + DeployDir + '\*'' -DestinationPath ''' + ZipFile + ''' -Force"');
+      {$ELSE}
+      ExecuteProcess('sh', '-c "cd ''' + DeployDir + ''' && zip -r ''' + ZipFile + ''' ."');
+      {$ENDIF}
+      if FileExists(ZipFile) then
+        WriteLn('  [SUCCESS] Archive created: ' + ZipFile)
+      else
+        WriteLn('  [!] Notice: ZIP packaging skipped (zip utility not found). The deploy/ directory is ready.');
+    end
+    else
+    begin
+      WriteLn('[4/4] Deployment directory ready: ' + DeployDir);
+      WriteLn('      Tip: Run "bv mormot deploy --zip" to automatically generate a deploy.zip archive.');
+    end;
+
+    WriteLn('');
+    WriteLn('================================================================');
+    WriteLn('  [SUCCESS] Application ready for production deployment!');
+    WriteLn('  Just copy "' + ExtractFileName(DeployDir) + '" to your server and run start.bat (or ./start.sh)');
+    WriteLn('================================================================');
+  end
+  else
+  begin
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
+    WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
+    WriteLn('  build [--release]     Compiles native server with Free Pascal');
+    WriteLn('  run [--port <port>]   Launches native server');
+    WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
+    WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
+  end;
+end;
+
+// =====================================================================
 //  MAIN ENTRY POINT
 // =====================================================================
 
@@ -4564,6 +5157,7 @@ begin
     WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
     WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
     WriteLn('    bv run ssg             Pre-renders all routes into static HTML (SSG)');
+    WriteLn('    bv dev                 Starts development server with HMR (alias: bv serve)');
     WriteLn('    bv serve               Starts development server with HMR');
     WriteLn('    bv doc [--serve]       Generates interactive component documentation & playground');
     WriteLn('    bv wasm <info|benchmark> WebAssembly acceleration and performance benchmarks');
@@ -4593,6 +5187,11 @@ begin
     WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
     WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
     WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
+    WriteLn('    bv mormot init         Scaffolds mORMot 2 backend server in server/');
+    WriteLn('    bv mormot build [--release] Compiles native server binary with Free Pascal');
+    WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
+    WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
+    WriteLn('    bv mormot deploy [--zip] [--port <p>] Assembles standalone production bundle in deploy/');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -4626,7 +5225,7 @@ begin
     WriteLn('Warning: "bv build" has been renamed to "bv run dev".');
     CmdBuild;
   end
-  else if Cmd = 'serve' then
+  else if (Cmd = 'serve') or (Cmd = 'dev') then
   begin
     CmdServe;
   end
@@ -4799,6 +5398,15 @@ begin
       Halt(1);
     end;
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+  else if (Cmd = 'mormot') or (Cmd = 'server') then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
+      Halt(1);
+    end;
+    CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
   else
   begin
