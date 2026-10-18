@@ -1,0 +1,45 @@
+unit ServerModels;
+
+{
+  ServerModels - Shared Data Transfer Objects (DTO) & Records
+  -----------------------------------------------------------
+  Definitions of data contracts shared across the mORMot 2
+  backend services and serialized as JSON for the BlaiseVue
+  reactive frontend.
+}
+
+{$I mormot.defines.inc}
+
+interface
+
+uses
+  sysutils,
+  mormot.core.base;
+
+type
+  { Shared Item Record }
+  TBlaiseItem = record
+    ID: Integer;
+    Title: RawUtf8;
+    Category: RawUtf8;
+    Done: Boolean;
+    CreatedAt: RawUtf8;
+  end;
+  TBlaiseItemDynArray = array of TBlaiseItem;
+
+  { Server Status DTO }
+  TServerStatus = record
+    Status: RawUtf8;
+    Framework: RawUtf8;
+    Engine: RawUtf8;
+    Version: RawUtf8;
+    Port: Integer;
+    UptimeSeconds: Int64;
+    RequestsServed: Int64;
+    ActiveWebSockets: Integer;
+    ItemsCount: Integer;
+  end;
+
+implementation
+
+end.

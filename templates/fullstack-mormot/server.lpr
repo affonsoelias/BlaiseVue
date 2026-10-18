@@ -28,7 +28,17 @@ var
   i: Integer;
 begin
   Port := '8090';
+
+  // Intelligent resolution of dist/ folder
   DistPath := '..' + DirectorySeparator + 'dist';
+  if DirectoryExists(DistPath) then
+    DistPath := ExpandFileName(DistPath)
+  else if DirectoryExists('dist') then
+    DistPath := ExpandFileName('dist')
+  else if DirectoryExists(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist') then
+    DistPath := ExpandFileName(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '..' + DirectorySeparator + 'dist')
+  else if DirectoryExists(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'dist') then
+    DistPath := ExpandFileName(ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + 'dist');
 
   // Parse command line arguments
   i := 1;
@@ -80,7 +90,12 @@ begin
   try
     App := TBlaiseServerApp.Create(Port, DistPath);
     try
-      ReadLn;
+      try
+        ReadLn;
+      except
+        while True do
+          Sleep(1000);
+      end;
     finally
       WriteLn(#10'[+] Shutting down mORMot 2 server...');
       App.Free;

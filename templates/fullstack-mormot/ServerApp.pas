@@ -156,12 +156,23 @@ end;
 
 function TBlaiseServerApp.DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
 var
-  LocalFile, DistIndex: string;
+  LocalFile, DistIndex, Ext: string;
   Doc: TDocVariantData;
   NewTitle, NewCat: RawUtf8;
   V: Variant;
+  CleanUrl: RawUtf8;
+  qPos: Integer;
 begin
   Inc(FRequestCount);
+
+  // 0. Extract CleanUrl without query parameters (?v=... or #anchor)
+  CleanUrl := Ctxt.Url;
+  qPos := Pos('?', CleanUrl);
+  if qPos > 0 then
+    CleanUrl := Copy(CleanUrl, 1, qPos - 1);
+  qPos := Pos('#', CleanUrl);
+  if qPos > 0 then
+    CleanUrl := Copy(CleanUrl, 1, qPos - 1);
 
   // 1. CORS Pre-flight and Headers
   Ctxt.OutCustomHeaders := 'Access-Control-Allow-Origin: *'#13#10 +
@@ -175,7 +186,7 @@ begin
   end;
 
   // 2. REST API: GET /api/status
-  if (Ctxt.Method = 'GET') and (Ctxt.Url = '/api/status') then
+  if (Ctxt.Method = 'GET') and (CleanUrl = '/api/status') then
   begin
     Ctxt.OutContentType := JSON_CONTENT_TYPE;
     Ctxt.OutContent :=
@@ -192,7 +203,7 @@ begin
   end;
 
   // 3. REST API: GET /api/items
-  if (Ctxt.Method = 'GET') and (Ctxt.Url = '/api/items') then
+  if (Ctxt.Method = 'GET') and (CleanUrl = '/api/items') then
   begin
     Ctxt.OutContentType := JSON_CONTENT_TYPE;
     Ctxt.OutContent := ItemsToJson;
@@ -201,7 +212,7 @@ begin
   end;
 
   // 4. REST API: POST /api/items
-  if (Ctxt.Method = 'POST') and (Ctxt.Url = '/api/items') then
+  if (Ctxt.Method = 'POST') and (CleanUrl = '/api/items') then
   begin
     NewTitle := 'New Task';
     NewCat := 'General';
@@ -229,15 +240,29 @@ begin
   // 5. Static File Server & SPA History Fallback
   if (FDistPath <> '') and DirectoryExists(FDistPath) then
   begin
-    if (Ctxt.Url <> '') and (Ctxt.Url <> '/') then
+    if (CleanUrl <> '') and (CleanUrl <> '/') then
     begin
-      LocalFile := FDistPath + DirectorySeparator + StringReplace(Copy(Ctxt.Url, 2, MaxInt), '/', DirectorySeparator, [rfReplaceAll]);
+      LocalFile := FDistPath + DirectorySeparator + StringReplace(Copy(CleanUrl, 2, MaxInt), '/', DirectorySeparator, [rfReplaceAll]);
       if FileExists(LocalFile) and not DirectoryExists(LocalFile) then
       begin
         Exit(Ctxt.SetOutFile(LocalFile, False));
       end;
+
+      // If a specific file asset (.js, .css, .png, etc.) was requested but not found on disk,
+      // return 404 instead of returning index.html (which would cause JavaScript syntax errors).
+      Ext := LowerCase(ExtractFileExt(LocalFile));
+      if (Ext = '.js') or (Ext = '.css') or (Ext = '.png') or (Ext = '.jpg') or (Ext = '.jpeg') or
+         (Ext = '.svg') or (Ext = '.ico') or (Ext = '.woff') or (Ext = '.woff2') or (Ext = '.ttf') or
+         (Ext = '.eot') or (Ext = '.map') or (Ext = '.json') or (Ext = '.wasm') then
+      begin
+        Ctxt.OutContentType := TEXT_CONTENT_TYPE;
+        Ctxt.OutContent := '404 File Not Found: ' + CleanUrl;
+        Result := HTTP_NOTFOUND;
+        Exit;
+      end;
     end;
 
+    // SPA History API fallback: returns index.html for client-side routes
     DistIndex := FDistPath + DirectorySeparator + 'index.html';
     if FileExists(DistIndex) then
     begin
