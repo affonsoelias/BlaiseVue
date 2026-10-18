@@ -14,8 +14,8 @@ bin/*.ppu
 bin/*.dcu
 bin/*.rsj
 bin/lib/
-server/bin/
-server/lib/
+**/server/bin/
+**/server/lib/
 
 # 🏰 Pascal Build Artifacts (Global)
 *.o
