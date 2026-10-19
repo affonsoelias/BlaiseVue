@@ -47,12 +47,15 @@ BlaiseVue features a modular package architecture located in `/packages`:
 | **`blaise-ui`** | Native Bootstrap-inspired component kit | `<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-datagrid>`, `<bv-chart>`, `<bv-toast>`, `<bv-navbar>`, `<bv-tabs>` |
 | **`blaise-themes`** | 9 Bootswatch themes + reactive theme management | Flatly, Darkly, Cosmo, Cyborg, Lux, Pulse, Solar, Vapor, Zephyr, `<bv-theme-toggle>`, `<bv-theme-select>`, `$theme` |
 | **`blaise-icons`** | Bootstrap Icons library (fonts + CSS) | `<bv-icon name="heart-fill" size="24px" color="red">`, 2,000+ vector icons |
+| **`blaise-charts`** *(Planned v4.0)* | Reactive Chart.js data visualization suite | `<bv-chart>`, 8 chart types (bar, line, pie, radar, etc.), strongly typed Pascal datasets & auto-updating canvas |
+| **`blaise-ui-mobile`** *(Planned v4.0)* | Mobile-first Ionic components & Pascal wrappers | `<ion-app>`, `<ion-toolbar>`, iOS/Android adaptive themes, `TIonicToast`, `TIonicAlert` |
 
 Install packages directly into your project via the CLI:
 ```bash
 bv lib install themes   # Installs Bootswatch themes and switcher components
 bv lib install icons    # Installs Bootstrap Icons fonts and stylesheets
 bv lib install ui       # Installs the complete BlaiseUI component suite
+bv lib install charts   # (Planned v4.0) Installs Chart.js data visualization suite
 ```
 
 ---
@@ -139,7 +142,8 @@ Our architectural evolution roadmap:
   - [ ] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
   - [ ] 🐳 **Phase 4: Cloud-Native Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) producing ultra-lean (< 20 MB) Alpine/Scratch containers.
   - [ ] 📱 **Phase 5: Mobile-First Ecosystem (`blaise-ui-mobile`)**: Standalone Ionic Web Components package with Pascal controller wrappers (`BlaiseIonic.pas`), providing native iOS/Android look & feel for both mobile apps and web/PWA.
-  - [ ] 🎨 **Phase 6: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
+  - [ ] 📊 **Phase 6: Data Visualization & Analytics (`blaise-charts`)**: Dedicated Chart.js package with strongly typed Pascal dataset configuration (`BlaiseCharts.pas`), reactive `<bv-chart>` component, and hardware-accelerated 60 FPS canvas rendering.
+  - [ ] 🎨 **Phase 7: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
@@ -169,6 +173,7 @@ BlaiseVue/
 │   ├── blaise-ui/             # 20+ native UI components & styles
 │   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
 │   ├── blaise-icons/          # Bootstrap Icons fonts & stylesheet
+│   ├── blaise-charts/         # (Planned) Reactive Chart.js visualization & Pascal wrappers
 │   └── blaise-ui-mobile/      # (Planned) Mobile-first Ionic components & Pascal wrappers
 ├── vendor/                    # Embedded compiler & backend engines
 │   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
