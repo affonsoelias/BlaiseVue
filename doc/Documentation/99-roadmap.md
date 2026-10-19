@@ -251,7 +251,8 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers)
   ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile)
-  └── Phase 6: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
+  ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records)
+  └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
 ```
 
 ---
@@ -336,7 +337,43 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🎨 Pillar 6: BlaiseVue Studio Dashboard (`bv studio`)
+### 📊 Pillar 6: Data Visualization & Analytics Suite (`blaise-charts`)
+**Goal**: Provide an official, reactive charting library powered by **Chart.js** with high-performance HTML5 `<canvas>` rendering and strongly typed Object Pascal configuration classes.
+- **Hardware-Accelerated Universal Rendering**:
+  - Leverages HTML5 `<canvas>` rendering at 60 FPS across Web (SPA/SSG), Desktop (WebUI), and Mobile (Capacitor/Android).
+  - Zero external CDN dependencies (bundled UMD script for 100% offline capability in apps and desktop).
+- **Reactive `<bv-chart>` Component**:
+  - Declarative template syntax with automatic reactivity:
+    ```html
+    <bv-chart type="bar" :data="SalesData" :options="ChartOptions" height="300" />
+    ```
+  - Automatically watches bound Pascal reactive state and calls `chart.update()` with smooth animations on changes.
+- **Strongly Typed Pascal API (`BlaiseCharts.pas`)**:
+  - Eliminates raw JavaScript manipulation with Pascal records and helper classes:
+    ```pascal
+    type
+      TDashboard = class(TBVComponent)
+      public
+        SalesData: TBVChartData;
+        procedure LoadData;
+        procedure Mounted; override;
+      end;
+
+    procedure TDashboard.LoadData;
+    begin
+      SalesData.Labels := ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
+      SalesData.AddDataset('Revenue 2026', [15000, 22000, 31000, 48000, 52000], '#36A2EB');
+    end;
+    ```
+- **Supported Chart Types**:
+  - Bar, Line, Area, Pie, Doughnut, Radar, Polar Area, Scatter, and Bubble charts.
+  - Native dark/light theme awareness integrated with `packages/blaise-themes`.
+- **CLI Package Management**:
+  - Can be added to any project via `bv lib install charts` or bundled in `packages/blaise-charts`.
+
+---
+
+### 🎨 Pillar 7: BlaiseVue Studio Dashboard (`bv studio`)
 **Goal**: A visual web-based cockpit for the developer during development.
 - **Dashboard URL**: `http://localhost:9000`
 - **Visual Features**:
