@@ -6,6 +6,7 @@
         <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
         <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
+        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>
         <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t('nav.home') }}</a>
         <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t('nav.about') }}</a>
         <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t('nav.pro') }}</a>
@@ -26,6 +27,7 @@
       <div class="nav-links">
         <a href="#/customers">📦 Customers</a>
         <a href="#/products">📦 Products</a>
+        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>
         <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/">{{ $t('nav.home') }}</a>
         <a href="#/about">{{ $t('nav.about') }}</a>
@@ -71,6 +73,7 @@
       <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>
+      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>
     </bv-bottom-nav>
@@ -228,6 +231,7 @@
       '/login': 'login-view-page';
       '/customers': 'customer-view-page';
       '/products': 'product-view-page';
+      '/mobile': 'mobile-view-page';
       '/': 'home-page';
       '/about': 'about-page';
       '/form': 'formulario-page';

@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -58,6 +58,8 @@ begin
   Register_uLibBootstrap;
   asm console.log("[Init] Registering uLoginView..."); end;
   Register_uLoginView;
+  asm console.log("[Init] Registering uMobileView..."); end;
+  Register_uMobileView;
   asm console.log("[Init] Registering uProductView..."); end;
   Register_uProductView;
   asm console.log("[Init] Registering uProFeatures..."); end;
@@ -179,6 +181,7 @@ begin
     '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
     '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' +
     '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' +
+    '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' +
     '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +
     '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(''nav.pro'') }}</a>' +
@@ -199,6 +202,7 @@ begin
     '      <div class="nav-links">' +
     '        <a href="#/customers">📦 Customers</a>' +
     '        <a href="#/products">📦 Products</a>' +
+    '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' +
     '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about">{{ $t(''nav.about'') }}</a>' +
@@ -244,6 +248,7 @@ begin
     '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' +
     '    </bv-bottom-nav>' +
@@ -411,6 +416,11 @@ begin
   r := TJSObject.new;
   r['path'] := '/products';
   r['component'] := 'product-view-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/mobile';
+  r['component'] := 'mobile-view-page';
   routesArr.push(r);
 
   r := TJSObject.new;
