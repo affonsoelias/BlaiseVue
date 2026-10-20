@@ -4781,6 +4781,1264 @@ begin
     Exit(Candidate);
 end;
 
+// =====================================================================
+//  FULL-STACK CRUD & ORM GENERATOR (bv mormot crud)
+// =====================================================================
+
+procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = ''); forward;
+
+type
+  TCrudFieldKind = (cfkString, cfkInteger, cfkFloat, cfkBoolean, cfkDate);
+
+  TCrudField = record
+    Name: string;
+    PascalName: string;
+    Kind: TCrudFieldKind;
+    PascalType: string;
+    JsType: string;
+    BvType: string;
+    DefaultValPascal: string;
+    DefaultValJs: string;
+    SampleValPascal: string;
+    SampleValJson: string;
+    InputType: string;
+  end;
+  TCrudFieldArray = array of TCrudField;
+
+function Pluralize(const S: string): string;
+var
+  L: Integer;
+  End2: string;
+begin
+  L := Length(S);
+  if L = 0 then Exit('');
+  if (L >= 2) and (LowerCase(Copy(S, L, 1)) = 'y') and
+     not (LowerCase(Copy(S, L - 1, 1))[1] in ['a', 'e', 'i', 'o', 'u']) then
+  begin
+    Result := Copy(S, 1, L - 1) + 'ies';
+    Exit;
+  end;
+  if L >= 2 then
+    End2 := LowerCase(Copy(S, L - 1, 2))
+  else
+    End2 := '';
+  if (End2 = 'ch') or (End2 = 'sh') or (End2 = 'ss') or
+     (LowerCase(Copy(S, L, 1)) = 's') or
+     (LowerCase(Copy(S, L, 1)) = 'x') or
+     (LowerCase(Copy(S, L, 1)) = 'z') then
+  begin
+    Result := S + 'es';
+    Exit;
+  end;
+  Result := S + 's';
+end;
+
+function CapitalizeWord(const S: string): string;
+begin
+  if S = '' then Exit('');
+  Result := UpperCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
+end;
+
+function CamelCaseWord(const S: string): string;
+begin
+  if S = '' then Exit('');
+  Result := LowerCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
+end;
+
+function ParseCrudField(const Spec: string; FieldIndex: Integer; const ModelName: string): TCrudField;
+var
+  ColonPos: Integer;
+  FName, FType: string;
+begin
+  ColonPos := Pos(':', Spec);
+  if ColonPos > 0 then
+  begin
+    FName := Trim(Copy(Spec, 1, ColonPos - 1));
+    FType := LowerCase(Trim(Copy(Spec, ColonPos + 1, MaxInt)));
+  end
+  else
+  begin
+    FName := Trim(Spec);
+    FType := 'string';
+  end;
+
+  Result.Name := CamelCaseWord(FName);
+  Result.PascalName := CapitalizeWord(FName);
+
+  if (FType = 'int') or (FType = 'integer') or (FType = 'int64') or (FType = 'cardinal') then
+  begin
+    Result.Kind := cfkInteger;
+    Result.PascalType := 'Integer';
+    Result.JsType := 'number';
+    Result.BvType := 'integer';
+    Result.DefaultValPascal := '0';
+    Result.DefaultValJs := '0';
+    Result.SampleValPascal := IntToStr(FieldIndex * 15 + 10);
+    Result.SampleValJson := IntToStr(FieldIndex * 15 + 10);
+    Result.InputType := 'number';
+  end
+  else if (FType = 'currency') or (FType = 'double') or (FType = 'float') or (FType = 'real') or (FType = 'number') then
+  begin
+    Result.Kind := cfkFloat;
+    Result.PascalType := 'Double';
+    Result.JsType := 'number';
+    Result.BvType := 'double';
+    Result.DefaultValPascal := '0.0';
+    Result.DefaultValJs := '0.0';
+    Result.SampleValPascal := IntToStr(FieldIndex * 25 + 19) + '.99';
+    Result.SampleValJson := IntToStr(FieldIndex * 25 + 19) + '.99';
+    Result.InputType := 'number';
+  end
+  else if (FType = 'bool') or (FType = 'boolean') then
+  begin
+    Result.Kind := cfkBoolean;
+    Result.PascalType := 'Boolean';
+    Result.JsType := 'boolean';
+    Result.BvType := 'boolean';
+    Result.DefaultValPascal := 'True';
+    Result.DefaultValJs := 'true';
+    if (FieldIndex mod 2 = 0) then
+    begin
+      Result.SampleValPascal := 'True';
+      Result.SampleValJson := 'true';
+    end
+    else
+    begin
+      Result.SampleValPascal := 'False';
+      Result.SampleValJson := 'false';
+    end;
+    Result.InputType := 'checkbox';
+  end
+  else if (FType = 'date') or (FType = 'datetime') or (FType = 'time') then
+  begin
+    Result.Kind := cfkDate;
+    Result.PascalType := 'RawUtf8';
+    Result.JsType := 'string';
+    Result.BvType := 'string';
+    Result.DefaultValPascal := '''''';
+    Result.DefaultValJs := '''''';
+    Result.SampleValPascal := '''2026-10-1' + IntToStr(FieldIndex + 1) + '''';
+    Result.SampleValJson := '"2026-10-1' + IntToStr(FieldIndex + 1) + '"';
+    Result.InputType := 'date';
+  end
+  else
+  begin
+    // Default string
+    Result.Kind := cfkString;
+    Result.PascalType := 'RawUtf8';
+    Result.JsType := 'string';
+    Result.BvType := 'string';
+    Result.DefaultValPascal := '''''';
+    Result.DefaultValJs := '''''';
+    if LowerCase(FName) = 'category' then
+    begin
+      case FieldIndex mod 3 of
+        0: begin Result.SampleValPascal := '''Hardware'''; Result.SampleValJson := '"Hardware"'; end;
+        1: begin Result.SampleValPascal := '''Software'''; Result.SampleValJson := '"Software"'; end;
+        else begin Result.SampleValPascal := '''Cloud'''; Result.SampleValJson := '"Cloud"'; end;
+      end;
+    end
+    else
+    begin
+      Result.SampleValPascal := '''' + ModelName + ' Sample ' + IntToStr(FieldIndex + 1) + '''';
+      Result.SampleValJson := '"' + ModelName + ' Sample ' + IntToStr(FieldIndex + 1) + '"';
+    end;
+    Result.InputType := 'text';
+  end;
+end;
+
+function GenerateCrudPascalUnit(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
+const
+  Q = #39;
+var
+  i, j: Integer;
+  PluralLower, ModelLower: string;
+begin
+  PluralLower := LowerCase(PluralName);
+  ModelLower := LowerCase(ModelName);
+
+  Result := 'unit Crud' + ModelName + ';' + #13#10 +
+    #13#10 +
+    '{' + #13#10 +
+    '  Crud' + ModelName + ' - High-Performance mORMot 2 CRUD Service' + #13#10 +
+    '  ----------------------------------------------------' + #13#10 +
+    '  Auto-generated by BlaiseVue CLI (bv mormot crud ' + ModelName + ')' + #13#10 +
+    '  Provides high-throughput RESTful endpoints and real-time WebSockets:' + #13#10 +
+    '  - GET    /api/' + PluralLower + '      : List all ' + PluralLower + #13#10 +
+    '  - GET    /api/' + PluralLower + '/:id  : Get single ' + ModelLower + ' by ID' + #13#10 +
+    '  - POST   /api/' + PluralLower + '      : Create new ' + ModelLower + #13#10 +
+    '  - PUT    /api/' + PluralLower + '/:id  : Update ' + ModelLower + ' by ID' + #13#10 +
+    '  - DELETE /api/' + PluralLower + '/:id  : Delete ' + ModelLower + ' by ID' + #13#10 +
+    '}' + #13#10 +
+    #13#10 +
+    '{$I mormot.defines.inc}' + #13#10 +
+    #13#10 +
+    'interface' + #13#10 +
+    #13#10 +
+    'uses' + #13#10 +
+    '  sysutils,' + #13#10 +
+    '  classes,' + #13#10 +
+    '  variants,' + #13#10 +
+    '  mormot.core.base,' + #13#10 +
+    '  mormot.core.os,' + #13#10 +
+    '  mormot.core.text,' + #13#10 +
+    '  mormot.core.variants,' + #13#10 +
+    '  mormot.core.json,' + #13#10 +
+    '  mormot.net.http,' + #13#10 +
+    '  ServerModels;' + #13#10 +
+    #13#10 +
+    'type' + #13#10 +
+    '  TBroadcastEventProc = procedure(const EventName, DataJson: RawUtf8) of object;' + #13#10 +
+    #13#10 +
+    '  TCrud' + ModelName + 'Service = class' + #13#10 +
+    '  private' + #13#10 +
+    '    FItems: T' + ModelName + 'DynArray;' + #13#10 +
+    '    FNextId: Integer;' + #13#10 +
+    '    FOnBroadcast: TBroadcastEventProc;' + #13#10 +
+    '    function ItemToJson(const AItem: T' + ModelName + '): RawUtf8;' + #13#10 +
+    '    function FindIndexById(AId: Integer): Integer;' + #13#10 +
+    '  public' + #13#10 +
+    '    constructor Create;' + #13#10 +
+    '    destructor Destroy; override;' + #13#10 +
+    '    function GetAllJson: RawUtf8;' + #13#10 +
+    '    function GetByIdJson(AId: Integer; out AJson: RawUtf8): Boolean;' + #13#10 +
+    '    function CreateItemFromJson(const AJson: RawUtf8; out ANewId: Integer; out AItemJson: RawUtf8): Boolean;' + #13#10 +
+    '    function UpdateItemFromJson(AId: Integer; const AJson: RawUtf8; out AItemJson: RawUtf8): Boolean;' + #13#10 +
+    '    function DeleteItem(AId: Integer): Boolean;' + #13#10 +
+    '    function HandleRequest(Ctxt: THttpServerRequestAbstract; const CleanUrl: RawUtf8; out HttpResult: cardinal): Boolean;' + #13#10 +
+    '    property OnBroadcast: TBroadcastEventProc read FOnBroadcast write FOnBroadcast;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    'implementation' + #13#10 +
+    #13#10 +
+    '{ TCrud' + ModelName + 'Service }' + #13#10 +
+    #13#10 +
+    'constructor TCrud' + ModelName + 'Service.Create;' + #13#10 +
+    'begin' + #13#10 +
+    '  inherited Create;' + #13#10 +
+    '  FNextId := 1;' + #13#10 +
+    '  SetLength(FItems, 3);' + #13#10;
+
+  for j := 0 to 2 do
+  begin
+    Result := Result +
+      '  // Seed item ' + IntToStr(j + 1) + #13#10 +
+      '  FItems[' + IntToStr(j) + '].ID := FNextId;' + #13#10 +
+      '  Inc(FNextId);' + #13#10;
+    for i := 0 to High(Fields) do
+    begin
+      case Fields[i].Kind of
+        cfkString:
+          if LowerCase(Fields[i].Name) = 'category' then
+          begin
+            case j of
+              0: Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'General' + Q + ';' + #13#10;
+              1: Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'Premium' + Q + ';' + #13#10;
+              else Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'Enterprise' + Q + ';' + #13#10;
+            end;
+          end
+          else
+            Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + ModelName + ' ' + IntToStr(j + 1) + Q + ';' + #13#10;
+        cfkInteger:
+          Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + IntToStr((j + 1) * 20) + ';' + #13#10;
+        cfkFloat:
+          Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + IntToStr((j + 1) * 35) + '.50;' + #13#10;
+        cfkBoolean:
+          if j < 2 then
+            Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := True;' + #13#10
+          else
+            Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := False;' + #13#10;
+        cfkDate:
+          Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + '2026-10-0' + IntToStr(j + 1) + Q + ';' + #13#10;
+      end;
+    end;
+    Result := Result + '  FItems[' + IntToStr(j) + '].CreatedAt := DateTimeToStr(Now);' + #13#10;
+  end;
+
+  Result := Result + 'end;' + #13#10 +
+    #13#10 +
+    'destructor TCrud' + ModelName + 'Service.Destroy;' + #13#10 +
+    'begin' + #13#10 +
+    '  SetLength(FItems, 0);' + #13#10 +
+    '  inherited Destroy;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.FindIndexById(AId: Integer): Integer;' + #13#10 +
+    'var' + #13#10 +
+    '  i: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := -1;' + #13#10 +
+    '  for i := 0 to High(FItems) do' + #13#10 +
+    '    if FItems[i].ID = AId then' + #13#10 +
+    '      Exit(i);' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.ItemToJson(const AItem: T' + ModelName + '): RawUtf8;' + #13#10 +
+    'var' + #13#10 +
+    '  SNum: string;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := ' + Q + '{"id":' + Q + ' + IntToStr(AItem.ID);' + #13#10;
+
+  for i := 0 to High(Fields) do
+  begin
+    case Fields[i].Kind of
+      cfkString, cfkDate:
+        Result := Result +
+          '  Result := Result + ' + Q + ',"' + Fields[i].Name + '":"' + Q + ' + StringReplace(StringReplace(AItem.' + Fields[i].PascalName + ', ' + Q + '\' + Q + ', ' + Q + '\\' + Q + ', [rfReplaceAll]), ' + Q + '"' + Q + ', ' + Q + '\"' + Q + ', [rfReplaceAll]) + ' + Q + '"' + Q + ';' + #13#10;
+      cfkInteger:
+        Result := Result +
+          '  Result := Result + ' + Q + ',"' + Fields[i].Name + '":' + Q + ' + IntToStr(AItem.' + Fields[i].PascalName + ');' + #13#10;
+      cfkFloat:
+        Result := Result +
+          '  Str(AItem.' + Fields[i].PascalName + ':0:2, SNum);' + #13#10 +
+          '  Result := Result + ' + Q + ',"' + Fields[i].Name + '":' + Q + ' + RawUtf8(Trim(SNum));' + #13#10;
+      cfkBoolean:
+        Result := Result +
+          '  if AItem.' + Fields[i].PascalName + ' then' + #13#10 +
+          '    Result := Result + ' + Q + ',"' + Fields[i].Name + '":true' + Q + #13#10 +
+          '  else' + #13#10 +
+          '    Result := Result + ' + Q + ',"' + Fields[i].Name + '":false' + Q + ';' + #13#10;
+    end;
+  end;
+
+  Result := Result +
+    '  Result := Result + ' + Q + ',"createdAt":"' + Q + ' + AItem.CreatedAt + ' + Q + '"}' + Q + ';' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.GetAllJson: RawUtf8;' + #13#10 +
+    'var' + #13#10 +
+    '  i: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := ' + Q + '[' + Q + ';' + #13#10 +
+    '  for i := 0 to High(FItems) do' + #13#10 +
+    '  begin' + #13#10 +
+    '    if i > 0 then Result := Result + ' + Q + ',' + Q + ';' + #13#10 +
+    '    Result := Result + ItemToJson(FItems[i]);' + #13#10 +
+    '  end;' + #13#10 +
+    '  Result := Result + ' + Q + ']' + Q + ';' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.GetByIdJson(AId: Integer; out AJson: RawUtf8): Boolean;' + #13#10 +
+    'var' + #13#10 +
+    '  Idx: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Idx := FindIndexById(AId);' + #13#10 +
+    '  if Idx >= 0 then' + #13#10 +
+    '  begin' + #13#10 +
+    '    AJson := ItemToJson(FItems[Idx]);' + #13#10 +
+    '    Result := True;' + #13#10 +
+    '  end' + #13#10 +
+    '  else' + #13#10 +
+    '  begin' + #13#10 +
+    '    AJson := ' + Q + Q + ';' + #13#10 +
+    '    Result := False;' + #13#10 +
+    '  end;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.CreateItemFromJson(const AJson: RawUtf8; out ANewId: Integer; out AItemJson: RawUtf8): Boolean;' + #13#10 +
+    'var' + #13#10 +
+    '  Doc: TDocVariantData;' + #13#10 +
+    '  V: Variant;' + #13#10 +
+    '  Idx: Integer;' + #13#10 +
+    '  NewItem: T' + ModelName + ';' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := False;' + #13#10 +
+    '  ANewId := 0;' + #13#10 +
+    '  AItemJson := ' + Q + Q + ';' + #13#10 +
+    '  Doc.InitJson(AJson);' + #13#10 +
+    '  try' + #13#10 +
+    '    NewItem.ID := FNextId;' + #13#10 +
+    '    Inc(FNextId);' + #13#10;
+
+  for i := 0 to High(Fields) do
+  begin
+    case Fields[i].Kind of
+      cfkString:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + 'New ' + ModelName + Q + ');' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
+      cfkInteger:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', 0);' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := Integer(V);' + #13#10;
+      cfkFloat:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', 0.0);' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := Double(V);' + #13#10;
+      cfkBoolean:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', True);' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := Boolean(V);' + #13#10;
+      cfkDate:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', DateToStr(Now));' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
+    end;
+  end;
+
+  Result := Result +
+    '    NewItem.CreatedAt := DateTimeToStr(Now);' + #13#10 +
+    '    Idx := Length(FItems);' + #13#10 +
+    '    SetLength(FItems, Idx + 1);' + #13#10 +
+    '    FItems[Idx] := NewItem;' + #13#10 +
+    '    ANewId := NewItem.ID;' + #13#10 +
+    '    AItemJson := ItemToJson(NewItem);' + #13#10 +
+    '    Result := True;' + #13#10 +
+    '  finally' + #13#10 +
+    '    Doc.Clear;' + #13#10 +
+    '  end;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.UpdateItemFromJson(AId: Integer; const AJson: RawUtf8; out AItemJson: RawUtf8): Boolean;' + #13#10 +
+    'var' + #13#10 +
+    '  Doc: TDocVariantData;' + #13#10 +
+    '  V: Variant;' + #13#10 +
+    '  Idx: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := False;' + #13#10 +
+    '  AItemJson := ' + Q + Q + ';' + #13#10 +
+    '  Idx := FindIndexById(AId);' + #13#10 +
+    '  if Idx < 0 then Exit;' + #13#10 +
+    '  Doc.InitJson(AJson);' + #13#10 +
+    '  try' + #13#10;
+
+  for i := 0 to High(Fields) do
+  begin
+    case Fields[i].Kind of
+      cfkString, cfkDate:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
+          '    FItems[Idx].' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
+      cfkInteger:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
+          '    FItems[Idx].' + Fields[i].PascalName + ' := Integer(V);' + #13#10;
+      cfkFloat:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
+          '    FItems[Idx].' + Fields[i].PascalName + ' := Double(V);' + #13#10;
+      cfkBoolean:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
+          '    FItems[Idx].' + Fields[i].PascalName + ' := Boolean(V);' + #13#10;
+    end;
+  end;
+
+  Result := Result +
+    '    AItemJson := ItemToJson(FItems[Idx]);' + #13#10 +
+    '    Result := True;' + #13#10 +
+    '  finally' + #13#10 +
+    '    Doc.Clear;' + #13#10 +
+    '  end;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.DeleteItem(AId: Integer): Boolean;' + #13#10 +
+    'var' + #13#10 +
+    '  Idx, i: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := False;' + #13#10 +
+    '  Idx := FindIndexById(AId);' + #13#10 +
+    '  if Idx < 0 then Exit;' + #13#10 +
+    '  for i := Idx to High(FItems) - 1 do' + #13#10 +
+    '    FItems[i] := FItems[i + 1];' + #13#10 +
+    '  SetLength(FItems, Length(FItems) - 1);' + #13#10 +
+    '  Result := True;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'function TCrud' + ModelName + 'Service.HandleRequest(Ctxt: THttpServerRequestAbstract; const CleanUrl: RawUtf8; out HttpResult: cardinal): Boolean;' + #13#10 +
+    'var' + #13#10 +
+    '  BasePath, IdStr, OutJson, NewJson: RawUtf8;' + #13#10 +
+    '  ItemId, ValCode, NewId: Integer;' + #13#10 +
+    'begin' + #13#10 +
+    '  Result := False;' + #13#10 +
+    '  BasePath := ' + Q + '/api/' + PluralLower + Q + ';' + #13#10 +
+    '  if (CleanUrl <> BasePath) and (Copy(CleanUrl, 1, Length(BasePath) + 1) <> BasePath + ' + Q + '/' + Q + ') then' + #13#10 +
+    '    Exit;' + #13#10 +
+    #13#10 +
+    '  Result := True;' + #13#10 +
+    '  Ctxt.OutContentType := JSON_CONTENT_TYPE;' + #13#10 +
+    #13#10 +
+    '  // 1. GET /api/' + PluralLower + #13#10 +
+    '  if (Ctxt.Method = ' + Q + 'GET' + Q + ') and (CleanUrl = BasePath) then' + #13#10 +
+    '  begin' + #13#10 +
+    '    Ctxt.OutContent := GetAllJson;' + #13#10 +
+    '    HttpResult := HTTP_SUCCESS;' + #13#10 +
+    '    Exit;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    '  // 2. GET /api/' + PluralLower + '/:id' + #13#10 +
+    '  if (Ctxt.Method = ' + Q + 'GET' + Q + ') and (Copy(CleanUrl, 1, Length(BasePath) + 1) = BasePath + ' + Q + '/' + Q + ') then' + #13#10 +
+    '  begin' + #13#10 +
+    '    IdStr := Copy(CleanUrl, Length(BasePath) + 2, MaxInt);' + #13#10 +
+    '    Val(string(IdStr), ItemId, ValCode);' + #13#10 +
+    '    if (ValCode = 0) and GetByIdJson(ItemId, OutJson) then' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := OutJson;' + #13#10 +
+    '      HttpResult := HTTP_SUCCESS;' + #13#10 +
+    '    end' + #13#10 +
+    '    else' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"error":"' + ModelName + ' not found","id":' + Q + ' + IdStr + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_NOTFOUND;' + #13#10 +
+    '    end;' + #13#10 +
+    '    Exit;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    '  // 3. POST /api/' + PluralLower + #13#10 +
+    '  if (Ctxt.Method = ' + Q + 'POST' + Q + ') and (CleanUrl = BasePath) then' + #13#10 +
+    '  begin' + #13#10 +
+    '    if CreateItemFromJson(Ctxt.InContent, NewId, NewJson) then' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"success":true,"id":' + Q + ' + IntToStr(NewId) + ' + Q + ',"data":' + Q + ' + NewJson + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_CREATED;' + #13#10 +
+    '      if Assigned(FOnBroadcast) then' + #13#10 +
+    '        FOnBroadcast(' + Q + ModelLower + '_created' + Q + ', NewJson);' + #13#10 +
+    '    end' + #13#10 +
+    '    else' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"error":"Failed to create ' + ModelLower + '"}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_BADREQUEST;' + #13#10 +
+    '    end;' + #13#10 +
+    '    Exit;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    '  // 4. PUT /api/' + PluralLower + '/:id' + #13#10 +
+    '  if (Ctxt.Method = ' + Q + 'PUT' + Q + ') and (Copy(CleanUrl, 1, Length(BasePath) + 1) = BasePath + ' + Q + '/' + Q + ') then' + #13#10 +
+    '  begin' + #13#10 +
+    '    IdStr := Copy(CleanUrl, Length(BasePath) + 2, MaxInt);' + #13#10 +
+    '    Val(string(IdStr), ItemId, ValCode);' + #13#10 +
+    '    if (ValCode = 0) and UpdateItemFromJson(ItemId, Ctxt.InContent, NewJson) then' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"success":true,"id":' + Q + ' + IntToStr(ItemId) + ' + Q + ',"data":' + Q + ' + NewJson + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_SUCCESS;' + #13#10 +
+    '      if Assigned(FOnBroadcast) then' + #13#10 +
+    '        FOnBroadcast(' + Q + ModelLower + '_updated' + Q + ', NewJson);' + #13#10 +
+    '    end' + #13#10 +
+    '    else' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"error":"' + ModelName + ' not found or invalid payload","id":' + Q + ' + IdStr + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_NOTFOUND;' + #13#10 +
+    '    end;' + #13#10 +
+    '    Exit;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    '  // 5. DELETE /api/' + PluralLower + '/:id' + #13#10 +
+    '  if (Ctxt.Method = ' + Q + 'DELETE' + Q + ') and (Copy(CleanUrl, 1, Length(BasePath) + 1) = BasePath + ' + Q + '/' + Q + ') then' + #13#10 +
+    '  begin' + #13#10 +
+    '    IdStr := Copy(CleanUrl, Length(BasePath) + 2, MaxInt);' + #13#10 +
+    '    Val(string(IdStr), ItemId, ValCode);' + #13#10 +
+    '    if (ValCode = 0) and DeleteItem(ItemId) then' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"success":true,"id":' + Q + ' + IntToStr(ItemId) + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_SUCCESS;' + #13#10 +
+    '      if Assigned(FOnBroadcast) then' + #13#10 +
+    '        FOnBroadcast(' + Q + ModelLower + '_deleted' + Q + ', ' + Q + '{"id":' + Q + ' + IntToStr(ItemId) + ' + Q + '}' + Q + ');' + #13#10 +
+    '    end' + #13#10 +
+    '    else' + #13#10 +
+    '    begin' + #13#10 +
+    '      Ctxt.OutContent := ' + Q + '{"error":"' + ModelName + ' not found","id":' + Q + ' + IdStr + ' + Q + '}' + Q + ';' + #13#10 +
+    '      HttpResult := HTTP_NOTFOUND;' + #13#10 +
+    '    end;' + #13#10 +
+    '    Exit;' + #13#10 +
+    '  end;' + #13#10 +
+    #13#10 +
+    '  Ctxt.OutContent := ' + Q + '{"error":"Method not allowed"}' + Q + ';' + #13#10 +
+    '  HttpResult := HTTP_BADREQUEST;' + #13#10 +
+    'end;' + #13#10 +
+    #13#10 +
+    'end.' + #13#10;
+end;
+
+function GenerateCrudBVView(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
+const
+  Q = #39;
+var
+  i: Integer;
+  PluralLower, KebabName: string;
+  InitFieldsStr, TableHeadersStr, TableCellsStr, FormFieldsStr: string;
+begin
+  PluralLower := LowerCase(PluralName);
+  KebabName := PascalToKebab(ModelName + 'View');
+
+  // Build InitFieldsStr
+  InitFieldsStr := '';
+  for i := 0 to High(Fields) do
+  begin
+    if i > 0 then InitFieldsStr := InitFieldsStr + ',' + #13#10 + '          ';
+    InitFieldsStr := InitFieldsStr + Fields[i].Name + ': ' + Fields[i].DefaultValJs;
+  end;
+
+  // Build TableHeadersStr
+  TableHeadersStr := '';
+  for i := 0 to High(Fields) do
+    TableHeadersStr := TableHeadersStr + '            <th>' + Fields[i].PascalName + '</th>' + #13#10;
+
+  // Build TableCellsStr
+  TableCellsStr := '';
+  for i := 0 to High(Fields) do
+  begin
+    case Fields[i].Kind of
+      cfkString:
+        TableCellsStr := TableCellsStr + '            <td><strong>{{ item.' + Fields[i].Name + ' }}</strong></td>' + #13#10;
+      cfkInteger:
+        TableCellsStr := TableCellsStr + '            <td><span class="badge-num">{{ item.' + Fields[i].Name + ' }}</span></td>' + #13#10;
+      cfkFloat:
+        TableCellsStr := TableCellsStr + '            <td><span class="badge-price">$ {{ Number(item.' + Fields[i].Name + ').toFixed(2) }}</span></td>' + #13#10;
+      cfkBoolean:
+        TableCellsStr := TableCellsStr + '            <td><span class="status-pill" :class="{ ''pill-active'': item.' + Fields[i].Name + ', ''pill-inactive'': !item.' + Fields[i].Name + ' }">{{ item.' + Fields[i].Name + ' ? ''Active'' : ''Inactive'' }}</span></td>' + #13#10;
+      cfkDate:
+        TableCellsStr := TableCellsStr + '            <td>{{ item.' + Fields[i].Name + ' }}</td>' + #13#10;
+    end;
+  end;
+
+  // Build FormFieldsStr
+  FormFieldsStr := '';
+  for i := 0 to High(Fields) do
+  begin
+    FormFieldsStr := FormFieldsStr + '          <div class="form-group">' + #13#10;
+    if Fields[i].Kind = cfkBoolean then
+    begin
+      FormFieldsStr := FormFieldsStr +
+        '            <label class="checkbox-container">' + #13#10 +
+        '              <input type="checkbox" b-model="form.' + Fields[i].Name + '" />' + #13#10 +
+        '              <span>' + Fields[i].PascalName + ' Active</span>' + #13#10 +
+        '            </label>' + #13#10;
+    end
+    else
+    begin
+      FormFieldsStr := FormFieldsStr +
+        '            <label class="form-label">' + Fields[i].PascalName + ':</label>' + #13#10;
+      case Fields[i].Kind of
+        cfkString:
+          FormFieldsStr := FormFieldsStr + '            <input type="text" class="form-control" b-model="form.' + Fields[i].Name + '" placeholder="Enter ' + Fields[i].Name + '..." />' + #13#10;
+        cfkInteger:
+          FormFieldsStr := FormFieldsStr + '            <input type="number" class="form-control" b-model="form.' + Fields[i].Name + '" placeholder="0" />' + #13#10;
+        cfkFloat:
+          FormFieldsStr := FormFieldsStr + '            <input type="number" step="0.01" class="form-control" b-model="form.' + Fields[i].Name + '" placeholder="0.00" />' + #13#10;
+        cfkDate:
+          FormFieldsStr := FormFieldsStr + '            <input type="date" class="form-control" b-model="form.' + Fields[i].Name + '" />' + #13#10;
+      end;
+    end;
+    FormFieldsStr := FormFieldsStr + '          </div>' + #13#10;
+  end;
+
+  Result :=
+    '<template>' + #13#10 +
+    '  <div class="' + KebabName + '-page">' + #13#10 +
+    '    <!-- HEADER SECTION -->' + #13#10 +
+    '    <div class="crud-header">' + #13#10 +
+    '      <div>' + #13#10 +
+    '        <h1 class="crud-title">📦 ' + ModelName + ' Management</h1>' + #13#10 +
+    '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + #13#10 +
+    '      </div>' + #13#10 +
+    '      <div class="crud-header-btns">' + #13#10 +
+    '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New ' + ModelName + '</button>' + #13#10 +
+    '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + #13#10 +
+    '      </div>' + #13#10 +
+    '    </div>' + #13#10 +
+    #13#10 +
+    '    <!-- REAL-TIME SYNC & STATS BAR -->' + #13#10 +
+    '    <div class="crud-stats-bar">' + #13#10 +
+    '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + #13#10 +
+    '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> ' + PluralLower + '</span>' + #13#10 +
+    '    </div>' + #13#10 +
+    #13#10 +
+    '    <!-- SEARCH & FILTER TOOLBAR -->' + #13#10 +
+    '    <div class="crud-toolbar">' + #13#10 +
+    '      <input' + #13#10 +
+    '        type="text"' + #13#10 +
+    '        class="crud-search-input"' + #13#10 +
+    '        placeholder="🔍 Search ' + PluralLower + ' by any keyword..."' + #13#10 +
+    '        b-model="searchQuery"' + #13#10 +
+    '      />' + #13#10 +
+    '    </div>' + #13#10 +
+    #13#10 +
+    '    <!-- RESPONSIVE DATA TABLE -->' + #13#10 +
+    '    <div class="crud-table-wrap">' + #13#10 +
+    '      <table class="crud-table">' + #13#10 +
+    '        <thead>' + #13#10 +
+    '          <tr>' + #13#10 +
+    '            <th style="width: 70px;">ID</th>' + #13#10 +
+    TableHeadersStr +
+    '            <th>Created</th>' + #13#10 +
+    '            <th style="width: 170px; text-align: center;">Actions</th>' + #13#10 +
+    '          </tr>' + #13#10 +
+    '        </thead>' + #13#10 +
+    '        <tbody>' + #13#10 +
+    '          <tr b-for="item in filteredItems">' + #13#10 +
+    '            <td class="cell-id">#{{ item.id }}</td>' + #13#10 +
+    TableCellsStr +
+    '            <td class="cell-date">{{ item.createdAt }}</td>' + #13#10 +
+    '            <td class="cell-actions">' + #13#10 +
+    '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + #13#10 +
+    '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + #13#10 +
+    '            </td>' + #13#10 +
+    '          </tr>' + #13#10 +
+    '        </tbody>' + #13#10 +
+    '      </table>' + #13#10 +
+    #13#10 +
+    '      <!-- EMPTY STATE -->' + #13#10 +
+    '      <div class="crud-empty" v-if="filteredItems.length === 0">' + #13#10 +
+    '        <div class="empty-icon">📂</div>' + #13#10 +
+    '        <h3>No ' + PluralLower + ' found</h3>' + #13#10 +
+    '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + #13#10 +
+    '        <p v-if="!searchQuery">Click "➕ New ' + ModelName + '" above to add your first record!</p>' + #13#10 +
+    '      </div>' + #13#10 +
+    '    </div>' + #13#10 +
+    #13#10 +
+    '    <!-- MODAL DIALOG -->' + #13#10 +
+    '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + #13#10 +
+    '      <div class="crud-modal">' + #13#10 +
+    '        <div class="modal-header">' + #13#10 +
+    '          <h3>{{ isEditing ? ' + Q + '✏️ Edit ' + Q + ' + modelTitle : ' + Q + '➕ New ' + Q + ' + modelTitle }}</h3>' + #13#10 +
+    '          <button class="modal-close-btn" @click="closeModal">✕</button>' + #13#10 +
+    '        </div>' + #13#10 +
+    '        <div class="modal-body">' + #13#10 +
+    FormFieldsStr +
+    '          <div class="form-error-banner" v-if="formError">' + #13#10 +
+    '            ⚠️ {{ formError }}' + #13#10 +
+    '          </div>' + #13#10 +
+    '        </div>' + #13#10 +
+    '        <div class="modal-footer">' + #13#10 +
+    '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + #13#10 +
+    '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + #13#10 +
+    '            {{ isEditing ? ' + Q + 'Save Changes' + Q + ' : ' + Q + 'Create ' + Q + ' + modelTitle }}' + #13#10 +
+    '          </button>' + #13#10 +
+    '        </div>' + #13#10 +
+    '      </div>' + #13#10 +
+    '    </div>' + #13#10 +
+    '  </div>' + #13#10 +
+    '</template>' + #13#10 +
+    #13#10 +
+    '<script>' + #13#10 +
+    '  {' + #13#10 +
+    '    ' + ModelName + 'View.bv - High-Performance Reactive CRUD View' + #13#10 +
+    '    ---------------------------------------------------------' + #13#10 +
+    '    Auto-generated by BlaiseVue CLI (bv mormot crud ' + ModelName + ')' + #13#10 +
+    '    Features: Real-time WebSockets ($ws), Full REST ($api), Instant Search & Validation' + #13#10 +
+    '  }' + #13#10 +
+    #13#10 +
+    '  data:' + #13#10 +
+    '    modelTitle: string = ' + Q + ModelName + Q + ';' + #13#10 +
+    '    apiEndpoint: string = ' + Q + PluralLower + Q + ';' + #13#10 +
+    '    items: JSValue = [];' + #13#10 +
+    '    searchQuery: string = ' + Q + Q + ';' + #13#10 +
+    '    isModalOpen: boolean = false;' + #13#10 +
+    '    isEditing: boolean = false;' + #13#10 +
+    '    currentEditId: integer = 0;' + #13#10 +
+    '    formError: string = ' + Q + Q + ';' + #13#10 +
+    '    form: JSValue = nil;' + #13#10 +
+    #13#10 +
+    '  computed:' + #13#10 +
+    '    function filteredItems: JSValue;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        let list = this.items || [];' + #13#10 +
+    '        let q = (this.searchQuery || ' + Q + Q + ').toLowerCase().trim();' + #13#10 +
+    '        if (!q) return list;' + #13#10 +
+    '        return list.filter(function(item) {' + #13#10 +
+    '          return Object.values(item).some(function(v) {' + #13#10 +
+    '            return String(v).toLowerCase().indexOf(q) !== -1;' + #13#10 +
+    '          });' + #13#10 +
+    '        });' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '  methods:' + #13#10 +
+    '    procedure resetForm;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        this.form = {' + #13#10 +
+    '          ' + InitFieldsStr + #13#10 +
+    '        };' + #13#10 +
+    '        this.formError = ' + Q + Q + ';' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure openCreateModal;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        this.resetForm();' + #13#10 +
+    '        this.isEditing = false;' + #13#10 +
+    '        this.currentEditId = 0;' + #13#10 +
+    '        this.isModalOpen = true;' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure openEditModal(item: JSValue);' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        this.form = Object.assign({}, item);' + #13#10 +
+    '        this.currentEditId = item.id;' + #13#10 +
+    '        this.isEditing = true;' + #13#10 +
+    '        this.formError = ' + Q + Q + ';' + #13#10 +
+    '        this.isModalOpen = true;' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure closeModal;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        this.isModalOpen = false;' + #13#10 +
+    '        this.formError = ' + Q + Q + ';' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure fetchItems;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        var self = this;' + #13#10 +
+    '        var ep = ' + Q + '/api/' + Q + ' + this.apiEndpoint;' + #13#10 +
+    '        var p = (this.$api && typeof this.$api.get === ' + Q + 'function' + Q + ')' + #13#10 +
+    '          ? this.$api.get(ep)' + #13#10 +
+    '          : fetch(' + Q + 'http://localhost:8090' + Q + ' + ep).then(function(r) { return r.json(); });' + #13#10 +
+    #13#10 +
+    '        Promise.resolve(p).then(function(data) {' + #13#10 +
+    '          if (Array.isArray(data)) {' + #13#10 +
+    '            self.items = data;' + #13#10 +
+    '          } else if (data && Array.isArray(data.items)) {' + #13#10 +
+    '            self.items = data.items;' + #13#10 +
+    '          }' + #13#10 +
+    '        }).catch(function(err) {' + #13#10 +
+    '          console.error(' + Q + 'Error fetching ' + Q + ' + self.apiEndpoint + ' + Q + ':' + Q + ', err);' + #13#10 +
+    '        });' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure saveItem;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        var self = this;' + #13#10 +
+    '        if (!this.form) return;' + #13#10 +
+    '        var isEdit = Boolean(this.isEditing);' + #13#10 +
+    '        var id = this.currentEditId;' + #13#10 +
+    '        var ep = ' + Q + '/api/' + Q + ' + this.apiEndpoint + (isEdit ? (' + Q + '/' + Q + ' + id) : ' + Q + Q + ');' + #13#10 +
+    '        var method = isEdit ? ' + Q + 'put' + Q + ' : ' + Q + 'post' + Q + ';' + #13#10 +
+    #13#10 +
+    '        var p = (this.$api && typeof this.$api[method] === ' + Q + 'function' + Q + ')' + #13#10 +
+    '          ? this.$api[method](ep, this.form)' + #13#10 +
+    '          : fetch(' + Q + 'http://localhost:8090' + Q + ' + ep, {' + #13#10 +
+    '              method: method.toUpperCase(),' + #13#10 +
+    '              headers: { ' + Q + 'Content-Type' + Q + ': ' + Q + 'application/json' + Q + ' },' + #13#10 +
+    '              body: JSON.stringify(this.form)' + #13#10 +
+    '            }).then(function(r) { return r.json(); });' + #13#10 +
+    #13#10 +
+    '        Promise.resolve(p).then(function(resp) {' + #13#10 +
+    '          self.isModalOpen = false;' + #13#10 +
+    '          self.fetchItems();' + #13#10 +
+    '        }).catch(function(err) {' + #13#10 +
+    '          self.formError = ' + Q + 'Failed to save: ' + Q + ' + (err.message || err);' + #13#10 +
+    '        });' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure deleteItem(id: integer);' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        if (!confirm(' + Q + 'Are you sure you want to delete this ' + Q + ' + this.modelTitle + ' + Q + '?' + Q + ')) return;' + #13#10 +
+    '        var self = this;' + #13#10 +
+    '        var ep = ' + Q + '/api/' + Q + ' + this.apiEndpoint + ' + Q + '/' + Q + ' + id;' + #13#10 +
+    #13#10 +
+    '        var p = (this.$api && typeof this.$api.delete === ' + Q + 'function' + Q + ')' + #13#10 +
+    '          ? this.$api.delete(ep)' + #13#10 +
+    '          : fetch(' + Q + 'http://localhost:8090' + Q + ' + ep, { method: ' + Q + 'DELETE' + Q + ' }).then(function(r) { return r.json(); });' + #13#10 +
+    #13#10 +
+    '        Promise.resolve(p).then(function() {' + #13#10 +
+    '          self.fetchItems();' + #13#10 +
+    '        }).catch(function(err) {' + #13#10 +
+    '          alert(' + Q + 'Failed to delete: ' + Q + ' + (err.message || err));' + #13#10 +
+    '        });' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    procedure setupWebSocket;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        var self = this;' + #13#10 +
+    '        if (!this.$ws) return;' + #13#10 +
+    '        if (typeof this.$ws.connect === ' + Q + 'function' + Q + ') {' + #13#10 +
+    '          this.$ws.connect();' + #13#10 +
+    '        }' + #13#10 +
+    '        var pfx = String(this.modelTitle).toLowerCase();' + #13#10 +
+    '        if (typeof this.$ws.on === ' + Q + 'function' + Q + ') {' + #13#10 +
+    '          this.$ws.on(pfx + ' + Q + '_created' + Q + ', function(d) {' + #13#10 +
+    '            console.log(' + Q + '⚡ Real-time ' + Q + ' + pfx + ' + Q + ' created:' + Q + ', d);' + #13#10 +
+    '            self.fetchItems();' + #13#10 +
+    '          });' + #13#10 +
+    '          this.$ws.on(pfx + ' + Q + '_updated' + Q + ', function(d) {' + #13#10 +
+    '            console.log(' + Q + '⚡ Real-time ' + Q + ' + pfx + ' + Q + ' updated:' + Q + ', d);' + #13#10 +
+    '            self.fetchItems();' + #13#10 +
+    '          });' + #13#10 +
+    '          this.$ws.on(pfx + ' + Q + '_deleted' + Q + ', function(d) {' + #13#10 +
+    '            console.log(' + Q + '⚡ Real-time ' + Q + ' + pfx + ' + Q + ' deleted:' + Q + ', d);' + #13#10 +
+    '            self.fetchItems();' + #13#10 +
+    '          });' + #13#10 +
+    '        }' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '  mounted:' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        this.resetForm();' + #13#10 +
+    '        this.fetchItems();' + #13#10 +
+    '        this.setupWebSocket();' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
+    '</script>' + #13#10 +
+    #13#10 +
+    '<style>' + #13#10 +
+    '  .' + KebabName + '-page { padding: 24px; max-width: 1200px; margin: 0 auto; }' + #13#10 +
+    '  .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }' + #13#10 +
+    '  .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }' + #13#10 +
+    '  .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }' + #13#10 +
+    '  .crud-header-btns { display: flex; gap: 8px; }' + #13#10 +
+    '  .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }' + #13#10 +
+    '  .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }' + #13#10 +
+    '  .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }' + #13#10 +
+    '  .crud-toolbar { margin-bottom: 16px; }' + #13#10 +
+    '  .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }' + #13#10 +
+    '  .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }' + #13#10 +
+    '  .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }' + #13#10 +
+    '  .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }' + #13#10 +
+    '  .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }' + #13#10 +
+    '  .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }' + #13#10 +
+    '  .crud-table tr:hover { background: #f8fafc; }' + #13#10 +
+    '  .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }' + #13#10 +
+    '  .cell-date { font-size: 12px; color: #94a3b8; }' + #13#10 +
+    '  .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }' + #13#10 +
+    '  .badge-price { font-weight: 700; color: #16a34a; }' + #13#10 +
+    '  .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }' + #13#10 +
+    '  .pill-active { background: #dcfce7; color: #15803d; }' + #13#10 +
+    '  .pill-inactive { background: #fee2e2; color: #b91c1c; }' + #13#10 +
+    '  .cell-actions { display: flex; gap: 6px; justify-content: center; }' + #13#10 +
+    '  .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }' + #13#10 +
+    '  .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }' + #13#10 +
+    '  .edit-btn:hover { background: #e2e8f0; }' + #13#10 +
+    '  .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }' + #13#10 +
+    '  .del-btn:hover { background: #fee2e2; }' + #13#10 +
+    '  .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }' + #13#10 +
+    '  .empty-icon { font-size: 42px; margin-bottom: 8px; }' + #13#10 +
+    '  .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }' + #13#10 +
+    '  .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }' + #13#10 +
+    '  @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }' + #13#10 +
+    '  .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }' + #13#10 +
+    '  .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }' + #13#10 +
+    '  .modal-close-btn:hover { color: #1e293b; }' + #13#10 +
+    '  .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }' + #13#10 +
+    '  .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }' + #13#10 +
+    '  .form-group { margin-bottom: 14px; }' + #13#10 +
+    '  .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }' + #13#10 +
+    '  .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }' + #13#10 +
+    '  .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }' + #13#10 +
+    '  .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }' + #13#10 +
+    '  .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }' + #13#10 +
+    '  .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }' + #13#10 +
+    '  .bui-btn-primary { background: #42b883; color: white; }' + #13#10 +
+    '  .bui-btn-primary:hover { background: #33a06f; }' + #13#10 +
+    '  .bui-btn-secondary { background: #e2e8f0; color: #334155; }' + #13#10 +
+    '  .bui-btn-secondary:hover { background: #cbd5e1; }' + #13#10 +
+    '</style>' + #13#10;
+end;
+
+procedure UpdateServerModels(const ModelsFile, ModelName: string; const Fields: TCrudFieldArray);
+var
+  Content, NewRecord: string;
+  PosImpl: Integer;
+  i: Integer;
+begin
+  if not FileExists(ModelsFile) then Exit;
+  Content := ReadFileToString(ModelsFile);
+
+  if Pos('T' + ModelName + ' = record', Content) > 0 then
+  begin
+    WriteLn('  [-] T' + ModelName + ' is already declared in server/ServerModels.pas (skipping)');
+    Exit;
+  end;
+
+  NewRecord :=
+    '  { Shared ' + ModelName + ' Record }' + #13#10 +
+    '  T' + ModelName + ' = record' + #13#10 +
+    '    ID: Integer;' + #13#10;
+
+  for i := 0 to High(Fields) do
+    NewRecord := NewRecord + '    ' + Fields[i].PascalName + ': ' + Fields[i].PascalType + ';' + #13#10;
+
+  NewRecord := NewRecord +
+    '    CreatedAt: RawUtf8;' + #13#10 +
+    '  end;' + #13#10 +
+    '  T' + ModelName + 'DynArray = array of T' + ModelName + ';' + #13#10#13#10;
+
+  PosImpl := Pos('implementation', Content);
+  if PosImpl > 0 then
+    Content := Copy(Content, 1, PosImpl - 1) + NewRecord + Copy(Content, PosImpl, MaxInt)
+  else
+    Content := Content + #13#10 + NewRecord;
+
+  WriteStringToFile(ModelsFile, Content);
+  WriteLn('  [+] Registered T' + ModelName + ' record & DTO in server/ServerModels.pas');
+end;
+
+procedure UpdateServerApp(const ServerAppFile, ModelName, PluralName: string);
+var
+  Content: string;
+  PosMarker: Integer;
+  CrudUnit, PluralLower: string;
+begin
+  if not FileExists(ServerAppFile) then Exit;
+  Content := ReadFileToString(ServerAppFile);
+  CrudUnit := 'Crud' + ModelName;
+  PluralLower := LowerCase(PluralName);
+
+  // 1. In uses: add Crud<ModelName>
+  if Pos(CrudUnit, Content) = 0 then
+  begin
+    if Pos('ServerModels;', Content) > 0 then
+      Content := StringReplace(Content, 'ServerModels;', 'ServerModels, ' + CrudUnit + ';', [])
+    else if Pos('ServerModels,', Content) > 0 then
+      Content := StringReplace(Content, 'ServerModels,', 'ServerModels, ' + CrudUnit + ',', []);
+  end;
+
+  // 2. In private fields: add FCrud<ModelName>
+  if Pos('FCrud' + ModelName + ':', Content) = 0 then
+  begin
+    PosMarker := Pos('FItems: TBlaiseItemDynArray;', Content);
+    if PosMarker > 0 then
+    begin
+      Insert('    FCrud' + ModelName + ': TCrud' + ModelName + 'Service;' + #13#10,
+        Content, PosMarker + Length('FItems: TBlaiseItemDynArray;' + #13#10));
+    end;
+  end;
+
+  // 3. In constructor Create: instantiate FCrud<ModelName>
+  if Pos('FCrud' + ModelName + ' :=', Content) = 0 then
+  begin
+    PosMarker := Pos('FServer := TWebSocketServer.Create', Content);
+    if PosMarker > 0 then
+    begin
+      Insert('  FCrud' + ModelName + ' := TCrud' + ModelName + 'Service.Create;' + #13#10 +
+             '  FCrud' + ModelName + '.OnBroadcast := BroadcastEvent;' + #13#10 + '  ',
+             Content, PosMarker);
+    end;
+  end;
+
+  // 4. In destructor Destroy: free FCrud<ModelName>
+  if Pos('FCrud' + ModelName + '.Free;', Content) = 0 then
+  begin
+    PosMarker := Pos('FServer.Free;', Content);
+    if PosMarker > 0 then
+    begin
+      Insert('  FCrud' + ModelName + '.Free;' + #13#10 + '  ', Content, PosMarker);
+    end;
+  end;
+
+  // 5. In DoRequest: handle REST routing
+  if Pos('FCrud' + ModelName + '.HandleRequest', Content) = 0 then
+  begin
+    PosMarker := Pos('// 5. Static File Server', Content);
+    if PosMarker > 0 then
+    begin
+      Insert('  // ' + ModelName + ' CRUD REST API: /api/' + PluralLower + #13#10 +
+             '  if FCrud' + ModelName + '.HandleRequest(Ctxt, CleanUrl, Result) then' + #13#10 +
+             '    Exit;' + #13#10#13#10,
+             Content, PosMarker);
+    end;
+  end;
+
+  WriteStringToFile(ServerAppFile, Content);
+  WriteLn('  [+] Integrated TCrud' + ModelName + 'Service into server/ServerApp.pas');
+end;
+
+procedure UpdateAppRoutes(const AppFile, ModelName, PluralName: string);
+const
+  Q = #39;
+var
+  Content, RouteLine, NavLine, DrawerLine: string;
+  PluralLower, KebabName: string;
+  PosMarker: Integer;
+begin
+  if not FileExists(AppFile) then Exit;
+  Content := ReadFileToString(AppFile);
+
+  PluralLower := LowerCase(PluralName);
+  KebabName := PascalToKebab(ModelName + 'View');
+
+  // 1. Add route in router: routes:
+  RouteLine := Q + '/' + PluralLower + Q + ': ' + Q + KebabName + '-page' + Q + ';';
+  if Pos(Q + '/' + PluralLower + Q, Content) = 0 then
+  begin
+    PosMarker := Pos('routes:', Content);
+    if PosMarker > 0 then
+    begin
+      Insert(#13#10 + '      ' + RouteLine, Content, PosMarker + Length('routes:'));
+    end;
+  end;
+
+  // 2. Add link to navbar <div class="nav-links">
+  NavLine := '<a href="#/' + PluralLower + '">📦 ' + PluralName + '</a>';
+  if Pos('href="#/' + PluralLower + '"', Content) = 0 then
+  begin
+    PosMarker := Pos('<div class="nav-links">', Content);
+    if PosMarker > 0 then
+    begin
+      Insert(#13#10 + '        ' + NavLine, Content, PosMarker + Length('<div class="nav-links">'));
+    end;
+  end;
+
+  // 3. Add link to drawer <div class="drawer-nav"> if drawer exists
+  DrawerLine := '<a href="#/' + PluralLower + '" class="drawer-link" @click="closeDrawer">📦 ' + PluralName + '</a>';
+  if (Pos('<div class="drawer-nav">', Content) > 0) and (Pos('href="#/' + PluralLower + '" class="drawer-link"', Content) = 0) then
+  begin
+    PosMarker := Pos('<div class="drawer-nav">', Content);
+    Insert(#13#10 + '        ' + DrawerLine, Content, PosMarker + Length('<div class="drawer-nav">'));
+  end;
+
+  WriteStringToFile(AppFile, Content);
+  WriteLn('  [+] Registered route /' + PluralLower + ' & navigation in src/app.bv');
+end;
+
+procedure CmdMormotCrud(const ProjectRoot: string);
+var
+  ServerDir, ModelsFile, ServerAppFile, CrudFile, ViewsDir, ViewFile, AppFile: string;
+  ModelName, PluralName: string;
+  Fields: TCrudFieldArray;
+  FieldCount: Integer;
+  i: Integer;
+  Spec: string;
+begin
+  if (ParamCount < 3) or (Trim(ParamStr(3)) = '') or (ParamStr(3) = '--help') or (ParamStr(3) = '-h') then
+  begin
+    WriteLn('');
+    WriteLn('  BlaiseVue Full-Stack CRUD & ORM Generator (bv mormot crud)');
+    WriteLn('  ==========================================================');
+    WriteLn('  Usage:');
+    WriteLn('    bv mormot crud <ModelName> [field:type...]');
+    WriteLn('');
+    WriteLn('  Arguments:');
+    WriteLn('    <ModelName>     Pascal model name in PascalCase (e.g. Product, Customer, Order)');
+    WriteLn('    [field:type...] Field definitions in name:type format');
+    WriteLn('');
+    WriteLn('  Supported Field Types:');
+    WriteLn('    string          Text / RawUtf8 (e.g. name:string, category:string)');
+    WriteLn('    integer         Whole numbers (e.g. stock:integer, quantity:int)');
+    WriteLn('    currency        Floating point / decimal (e.g. price:currency, total:double)');
+    WriteLn('    boolean         Boolean flag (e.g. active:boolean, enabled:bool)');
+    WriteLn('    date            ISO Date string (e.g. dueDate:date, createdAt:date)');
+    WriteLn('');
+    WriteLn('  Examples:');
+    WriteLn('    bv mormot crud Product name:string price:currency stock:integer category:string');
+    WriteLn('    bv mormot crud Customer name:string email:string phone:string active:boolean');
+    WriteLn('    bv mormot crud Task title:string priority:integer done:boolean dueDate:date');
+    WriteLn('');
+    Halt(0);
+  end;
+
+  ModelName := CapitalizeWord(Trim(ParamStr(3)));
+  PluralName := Pluralize(ModelName);
+
+  // Parse field definitions
+  FieldCount := 0;
+  SetLength(Fields, 0);
+
+  for i := 4 to ParamCount do
+  begin
+    Spec := Trim(ParamStr(i));
+    if Spec = '' then Continue;
+    if (Copy(Spec, 1, 2) = '--') or (Copy(Spec, 1, 1) = '-') then Continue;
+
+    // Skip if field is id (id is always primary key)
+    if (LowerCase(Spec) = 'id') or (LowerCase(Spec) = 'id:int') or (LowerCase(Spec) = 'id:integer') then
+      Continue;
+
+    Inc(FieldCount);
+    SetLength(Fields, FieldCount);
+    Fields[FieldCount - 1] := ParseCrudField(Spec, FieldCount - 1, ModelName);
+  end;
+
+  // If no fields provided, supply standard defaults
+  if FieldCount = 0 then
+  begin
+    SetLength(Fields, 4);
+    Fields[0] := ParseCrudField('name:string', 0, ModelName);
+    Fields[1] := ParseCrudField('category:string', 1, ModelName);
+    Fields[2] := ParseCrudField('price:currency', 2, ModelName);
+    Fields[3] := ParseCrudField('active:boolean', 3, ModelName);
+    FieldCount := 4;
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Full-Stack CRUD & ORM Generator: ' + ModelName);
+  WriteLn('======================================================================');
+  WriteLn('  Model:    ' + ModelName + ' (T' + ModelName + ')');
+  WriteLn('  Plural:   ' + PluralName + ' (/api/' + LowerCase(PluralName) + ')');
+  WriteLn('  Fields:   ' + IntToStr(FieldCount) + ' field(s)');
+  for i := 0 to High(Fields) do
+    WriteLn('    - ' + Fields[i].Name + ': ' + Fields[i].PascalType + ' (' + Fields[i].BvType + ')');
+  WriteLn('----------------------------------------------------------------------');
+
+  ServerDir := ProjectRoot + DirectorySeparator + 'server';
+  ModelsFile := ServerDir + DirectorySeparator + 'ServerModels.pas';
+  ServerAppFile := ServerDir + DirectorySeparator + 'ServerApp.pas';
+  CrudFile := ServerDir + DirectorySeparator + 'Crud' + ModelName + '.pas';
+  ViewsDir := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'views';
+  ViewFile := ViewsDir + DirectorySeparator + ModelName + 'View.bv';
+  AppFile := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
+
+  // 1. Ensure server/ exists
+  WriteLn('[1/5] Checking mORMot 2 backend server in server/...');
+  if not DirectoryExists(ServerDir) or not FileExists(ModelsFile) or not FileExists(ServerAppFile) then
+  begin
+    WriteLn('  [!] server/ not found. Initializing backend scaffolding first...');
+    CmdServer('init');
+  end
+  else
+    WriteLn('  [+] Backend server project found in server/');
+
+  // 2. Update ServerModels.pas
+  WriteLn('[2/5] Registering T' + ModelName + ' record & DTO in server/ServerModels.pas...');
+  UpdateServerModels(ModelsFile, ModelName, Fields);
+
+  // 3. Generate Crud<ModelName>.pas
+  WriteLn('[3/5] Generating high-throughput mORMot 2 CRUD service in server/Crud' + ModelName + '.pas...');
+  WriteStringToFile(CrudFile, GenerateCrudPascalUnit(ModelName, PluralName, Fields));
+  WriteLn('  [+] Created server/Crud' + ModelName + '.pas');
+
+  // 4. Update ServerApp.pas
+  WriteLn('[4/5] Wiring Crud' + ModelName + ' endpoints and WebSockets into server/ServerApp.pas...');
+  UpdateServerApp(ServerAppFile, ModelName, PluralName);
+
+  // 5. Generate <ModelName>View.bv & Update app.bv
+  WriteLn('[5/5] Generating reactive Single File Component & routes...');
+  ForceDir(ViewsDir);
+  WriteStringToFile(ViewFile, GenerateCrudBVView(ModelName, PluralName, Fields));
+  WriteLn('  [+] Created src/views/' + ModelName + 'View.bv');
+
+  UpdateAppRoutes(AppFile, ModelName, PluralName);
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  [SUCCESS] Full-Stack CRUD for ' + ModelName + ' generated successfully!');
+  WriteLn('======================================================================');
+  WriteLn('');
+  WriteLn('Generated Artifacts:');
+  WriteLn('  Backend:');
+  WriteLn('    - server/ServerModels.pas   : T' + ModelName + ' record & DTO contracts');
+  WriteLn('    - server/Crud' + ModelName + '.pas: High-performance mORMot 2 CRUD service');
+  WriteLn('    - server/ServerApp.pas      : Wired /api/' + LowerCase(PluralName) + ' endpoints & WebSockets');
+  WriteLn('  Frontend:');
+  WriteLn('    - src/views/' + ModelName + 'View.bv : Reactive CRUD Single File Component');
+  WriteLn('    - src/app.bv                   : Registered route "/' + LowerCase(PluralName) + '" & nav links');
+  WriteLn('');
+  WriteLn('Next steps:');
+  WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
+  WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
+  WriteLn('  3. Start full-stack server:  bv mormot run');
+  WriteLn('');
+end;
+
+
+
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 var
   ServerDir, BinDir, LibDir, TemplateDir: string;
@@ -4848,7 +6106,12 @@ begin
   ParseArg(Arg1);
   ParseArg(Arg2);
 
-  if (SubCmd = 'init') then
+  if (SubCmd = 'crud') then
+  begin
+    CmdMormotCrud(ProjectRoot);
+    Exit;
+  end
+  else if (SubCmd = 'init') then
   begin
     WriteLn('Initializing BlaiseVue mORMot 2 Native Backend Server in server/...');
     if not DirectoryExists(TemplateDir) then
@@ -5140,12 +6403,14 @@ begin
   end
   else
   begin
-    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
     WriteLn('  run [--port <port>]   Launches native server');
     WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
     WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
+
+    WriteLn('  crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
   end;
 end;
 
@@ -5203,6 +6468,8 @@ begin
     WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
     WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
     WriteLn('    bv mormot deploy [--zip] [--port <p>] Assembles standalone production bundle in deploy/');
+
+    WriteLn('    bv mormot crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -5414,7 +6681,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]>');
       Halt(1);
     end;
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));

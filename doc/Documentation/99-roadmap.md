@@ -245,8 +245,8 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (bv mormot init/build/run/deploy) (✅ Completed)
        │
        ▼
-[ v4.0 - Enterprise Ecosystem & Developer Superpowers (Planned 📋) ]
-  ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid)
+[ v4.0 - Enterprise Ecosystem & Developer Superpowers (In Progress 🚀) ]
+  ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid) (✅ Completed)
   ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers)
@@ -263,7 +263,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### ⚡ Pillar 1: Full-Stack CRUD & ORM Generator (`bv mormot crud`)
+### ⚡ Pillar 1: Full-Stack CRUD & ORM Generator (`bv mormot crud`) (✅ Completed)
 **Goal**: Reduce the creation time of standard database-driven CRUD modules from hours to seconds.
 - **One-Command Scaffolding**:
   ```bash

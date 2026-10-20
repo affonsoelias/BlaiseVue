@@ -295,6 +295,75 @@ end.
 
 ---
 
+## ⚡ Full-Stack CRUD & ORM Generator (`bv mormot crud`)
+
+With **Phase 1 of BlaiseVue 4.0**, developer velocity is multiplied through the **Full-Stack CRUD & ORM Generator**. In a single command, BlaiseVue generates the entire stack: typed Pascal backend contracts, an ultra-fast mORMot 2 REST API service with real-time WebSocket notifications, a reactive Single File Component with data tables and modal dialogs, and route registration in `src/app.bv`.
+
+### 1. Command Syntax & Supported Types
+
+```bash
+bv mormot crud <ModelName> [field:type...]
+```
+
+| Type Identifier | Pascal Backend Type | JavaScript Frontend Type | Input Element |
+|---|---|---|---|
+| `string` / `text` | `RawUtf8` | `string` | `<input type="text">` |
+| `integer` / `int` / `int64` | `Integer` | `number` | `<input type="number">` |
+| `currency` / `double` / `float` | `Double` | `number` | `<input type="number" step="0.01">` |
+| `boolean` / `bool` | `Boolean` | `boolean` | `<input type="checkbox">` |
+| `date` / `datetime` | `RawUtf8` | `string` | `<input type="date">` |
+
+*(Note: `ID: Integer` and `CreatedAt: RawUtf8` are always automatically created and managed by the engine).*
+
+### 2. Concrete Examples
+
+```bash
+# E-Commerce Product Catalog
+bv mormot crud Product name:string price:currency stock:integer category:string
+
+# Customer Relationship Management (CRM)
+bv mormot crud Customer name:string email:string phone:string active:boolean
+
+# Project Management Tasks
+bv mormot crud Task title:string priority:integer done:boolean dueDate:date
+```
+
+### 3. What Gets Generated Automatically
+
+1. **`server/ServerModels.pas`**:
+   - Declares strongly typed Pascal records `T<Model>` and `T<Model>DynArray`.
+   - Formats serializable JSON contracts for seamless mORMot 2 data marshaling.
+
+2. **`server/Crud<ModelName>.pas`**:
+   - Implements `TCrud<ModelName>Service` with high-throughput RESTful endpoints:
+     - `GET    /api/<models>`: Lists all records serialized in microsecond JSON.
+     - `GET    /api/<models>/:id`: Fetches single record by ID.
+     - `POST   /api/<models>`: Inserts new record from JSON body and fires `<model>_created` WebSocket broadcast.
+     - `PUT    /api/<models>/:id`: Updates existing record and fires `<model>_updated` WebSocket broadcast.
+     - `DELETE /api/<models>/:id`: Removes record and fires `<model>_deleted` WebSocket broadcast.
+   - Generates 3 initial seed items for immediate testing upon creation.
+
+3. **`server/ServerApp.pas`**:
+   - Automatically registers unit in `uses`.
+   - Declares and instantiates `FCrud<Model>: TCrud<ModelName>Service;` in `Create`.
+   - Links real-time event broadcasting: `FCrud<Model>.OnBroadcast := BroadcastEvent;`.
+   - Wires incoming requests in `DoRequest`: `if FCrud<Model>.HandleRequest(Ctxt, CleanUrl, Result) then Exit;`.
+   - Safely frees instance in `Destroy`.
+
+4. **`src/views/<ModelName>View.bv`**:
+   - Responsive, modern data table with real-time sync indicators.
+   - Instant search and filtering across all record fields with zero latency.
+   - Add/Edit modal dialog with form inputs styled for the specific field types.
+   - Delete confirmation with instant feedback.
+   - Real-time WebSocket synchronization (`$ws.on`) updating the view seamlessly across multiple connected browser tabs.
+
+5. **`src/app.bv`**:
+   - Registers route in `router: routes:` (e.g. `'/products': 'product-view-page';`).
+   - Injects navigation link in top navbar `<div class="nav-links">`.
+   - Injects drawer navigation link in `<bv-drawer>`.
+
+---
+
 ## 🎯 Summary
 
 With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:

@@ -40,6 +40,28 @@ type
     ItemsCount: Integer;
   end;
 
+  { Shared Product Record }
+  TProduct = record
+    ID: Integer;
+    Name: RawUtf8;
+    Price: Double;
+    Stock: Integer;
+    Category: RawUtf8;
+    CreatedAt: RawUtf8;
+  end;
+  TProductDynArray = array of TProduct;
+
+  { Shared Customer Record }
+  TCustomer = record
+    ID: Integer;
+    Name: RawUtf8;
+    Email: RawUtf8;
+    Phone: RawUtf8;
+    Active: Boolean;
+    CreatedAt: RawUtf8;
+  end;
+  TCustomerDynArray = array of TCustomer;
+
 implementation
 
 end.

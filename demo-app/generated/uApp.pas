@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -48,12 +48,16 @@ begin
   Register_uAbout;
   asm console.log("[Init] Registering uCharts..."); end;
   Register_uCharts;
+  asm console.log("[Init] Registering uCustomerView..."); end;
+  Register_uCustomerView;
   asm console.log("[Init] Registering uFormulario..."); end;
   Register_uFormulario;
   asm console.log("[Init] Registering uHome..."); end;
   Register_uHome;
   asm console.log("[Init] Registering uLibBootstrap..."); end;
   Register_uLibBootstrap;
+  asm console.log("[Init] Registering uProductView..."); end;
+  Register_uProductView;
   asm console.log("[Init] Registering uProFeatures..."); end;
   Register_uProFeatures;
   asm console.log("[Init] Registering uShowcase..."); end;
@@ -144,6 +148,8 @@ begin
     '    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->' +
     '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' +
     '      <div class="drawer-nav">' +
+    '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' +
+    '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' +
     '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +
     '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(''nav.pro'') }}</a>' +
@@ -161,6 +167,8 @@ begin
     '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
     '      </div>' +
     '      <div class="nav-links">' +
+    '        <a href="#/customers">📦 Customers</a>' +
+    '        <a href="#/products">📦 Products</a>' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about">{{ $t(''nav.about'') }}</a>' +
     '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(''nav.pro'') }}</a>' +
@@ -357,6 +365,16 @@ begin
 ;
   routerOpts := TJSObject.new;
   routesArr := TJSArray.new;
+
+  r := TJSObject.new;
+  r['path'] := '/customers';
+  r['component'] := 'customer-view-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/products';
+  r['component'] := 'product-view-page';
+  routesArr.push(r);
 
   r := TJSObject.new;
   r['path'] := '/';

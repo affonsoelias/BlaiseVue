@@ -3,6 +3,8 @@
     <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->
     <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">
       <div class="drawer-nav">
+        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
+        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
         <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t('nav.home') }}</a>
         <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t('nav.about') }}</a>
         <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t('nav.pro') }}</a>
@@ -20,6 +22,8 @@
         <strong class="brand">BlaiseVue 3.0 TURBO</strong>
       </div>
       <div class="nav-links">
+        <a href="#/customers">📦 Customers</a>
+        <a href="#/products">📦 Products</a>
         <a href="#/">{{ $t('nav.home') }}</a>
         <a href="#/about">{{ $t('nav.about') }}</a>
         <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t('nav.pro') }}</a>
@@ -217,6 +221,8 @@
   { Router Configuration: Maps URI hashes to Component Tags }
   router:
     routes:
+      '/customers': 'customer-view-page';
+      '/products': 'product-view-page';
       '/': 'home-page';
       '/about': 'about-page';
       '/form': 'formulario-page';
