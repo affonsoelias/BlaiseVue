@@ -440,6 +440,46 @@ When an unauthenticated user attempts to access a protected route, the route gua
 
 ---
 
+## 📜 Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs` & `bv mormot docs`)
+
+BlaiseVue 4.0 provides instant, zero-configuration API documentation and interactive testing directly within the mORMot 2 server.
+
+### 1. Scaffolding with `bv mormot docs`
+
+To scaffold or update Swagger documentation in your project, run:
+
+```bash
+bv mormot docs
+```
+*(Alias: `bv mormot swagger`)*
+
+The CLI performs:
+1. **Service Generation**: Generates `server/SwaggerService.pas` containing the RFC-compliant OpenAPI 3.0.3 specification and styled Swagger UI explorer.
+2. **Server Wiring**: Integrates `TSwaggerService` into `server/ServerApp.pas` to handle `/api/docs` and `/api/openapi.json`.
+3. **Frontend Integration**: Adds quick documentation links in `src/app.bv` (navigation bar and drawer).
+
+---
+
+### 2. Live Endpoints
+
+| Endpoint | Content-Type | Description |
+|---|---|---|
+| `GET /api/docs` | `text/html` | Embedded interactive Swagger UI explorer |
+| `GET /api/openapi.json` | `application/json` | OpenAPI 3.0.3 machine-readable specification |
+| `GET /api/docs/swagger.json` | `application/json` | Alias for OpenAPI 3.0.3 specification |
+
+---
+
+### 3. Interactive Testing in Browser
+
+Visiting `http://localhost:8090/api/docs`:
+- **Interactive UI**: Fully functional Swagger UI bundle pre-configured to point to `/api/openapi.json`.
+- **JWT Authorization**: Click the **Authorize 🔓** button in the top right, enter your Bearer token (generated from `/api/auth/login`), and execute protected calls like `GET /api/auth/me` with a single click.
+- **One-Click "Try it out"**: Execute real `GET`, `POST`, `PUT`, and `DELETE` requests directly against the running native server without needing Postman, Insomnia, or external tools.
+- **Persistence**: Token authorization persists across page refreshes during your development session.
+
+---
+
 ## 🎯 Summary
 
 With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:

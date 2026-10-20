@@ -297,7 +297,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📜 Pillar 3: Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs`)
+### 📜 Pillar 3: Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs`) (✅ Completed)
 **Goal**: Instant, interactive API documentation and testing for teams and integrations.
 - **Zero-Config Swagger**: mORMot 2 server automatically reflects endpoints, request records, and response schemas.
 - **Built-in Swagger UI**: Visiting `http://localhost:8090/api/docs` renders an interactive Swagger explorer to test endpoints directly in the browser without third-party tools like Postman.

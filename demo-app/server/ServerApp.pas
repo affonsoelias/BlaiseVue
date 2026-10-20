@@ -30,7 +30,7 @@ uses
   mormot.net.server,
   mormot.net.ws.core,
   mormot.net.ws.server,
-  ServerModels, CrudCustomer, CrudProduct, AuthService;
+  ServerModels, CrudCustomer, CrudProduct, AuthService, SwaggerService;
 
 type
   { Real-time WebSocket Protocol for BlaiseVue clients }
@@ -54,6 +54,7 @@ type
     FCrudCustomer: TCrudCustomerService;
     FCrudProduct: TCrudProductService;
     FAuthService: TAuthService;
+    FSwaggerService: TSwaggerService;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -104,6 +105,7 @@ begin
     FCrudProduct := TCrudProductService.Create;
   FCrudProduct.OnBroadcast := BroadcastEvent;
   FAuthService := TAuthService.Create;
+  FSwaggerService := TSwaggerService.Create('BlaiseVue Full-Stack mORMot 2 API', '4.0.0', FPort);
   FAuthService.OnBroadcast := BroadcastEvent;
     FCrudCustomer := TCrudCustomerService.Create;
   FCrudCustomer.OnBroadcast := BroadcastEvent;
@@ -117,6 +119,7 @@ destructor TBlaiseServerApp.Destroy;
 begin
     FCrudProduct.Free;
   FAuthService.Free;
+  FSwaggerService.Free;
     FCrudCustomer.Free;
   FServer.Free;
   inherited Destroy;
@@ -249,7 +252,11 @@ begin
     Exit;
   end;
 
-    // Product CRUD REST API: /api/products
+    // Interactive OpenAPI 3.0 & Swagger UI: /api/docs, /api/openapi.json
+  if FSwaggerService.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Product CRUD REST API: /api/products
   if FCrudProduct.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
 

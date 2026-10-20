@@ -14,6 +14,7 @@
         <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t('nav.charts') }}</a>
         <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t('nav.showcase') }}</a>
         <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>
+        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>
       </div>
     </bv-drawer>
 
@@ -34,6 +35,7 @@
         <a href="#/charts" style="background: #42b883; color: white;">{{ $t('nav.charts') }}</a>
         <a href="#/showcase" style="background: #3498db; color: white;">{{ $t('nav.showcase') }}</a>
         <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>
+        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>
       </div>
       <div class="lang-switcher">
         <button class="lang-btn" :class="{ 'active-lang': $i18n.locale === 'pt' }" @click="$setLocale('pt')">🇧🇷 PT</button>
