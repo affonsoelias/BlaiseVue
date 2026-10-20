@@ -381,9 +381,24 @@ begin
     }
     if (window.__BV_CORE__.validation) {
        window.__BV_CORE__.validation.initDataValidation(pRef);
-       if (window.__BV_CORE__.api) pRef[''] = window.__BV_CORE__.api;
-       if (window.__BV_CORE__.ws) pRef[''] = window.__BV_CORE__.ws;
-       if (window.__BV_CORE__.auth) pRef[''] = window.__BV_CORE__.auth;
+    }
+    if (window.__BV_CORE__.mobile) {
+       pRef['$mobile'] = window.__BV_CORE__.mobile;
+    }
+    if (window.__BV_CORE__.desktop) {
+       pRef['$desktop'] = window.__BV_CORE__.desktop;
+    }
+    if (window.__BV_CORE__.api) {
+       pRef['$api'] = window.__BV_CORE__.api;
+    }
+    if (window.__BV_CORE__.ws) {
+       pRef['$ws'] = window.__BV_CORE__.ws;
+    }
+    if (window.__BV_CORE__.auth) {
+       pRef['$auth'] = window.__BV_CORE__.auth;
+    }
+    if (window.__BV_CORE__.ionic) {
+       pRef['$ionic'] = window.__BV_CORE__.ionic;
     }
 
     if (CompOpt.inject) {

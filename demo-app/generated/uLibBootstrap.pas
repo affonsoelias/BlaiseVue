@@ -182,7 +182,7 @@ begin
     '             </div>' +
     '          </div>' +
     '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' +
-    '             🛡️ <strong>BlaiseVue 3.0 TURBO</strong> &bull; Reatividade Pascal + WebAssembly' +
+    '             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly' +
     '          </div>' +
     '       </div>' +
     '    </bv-modal>' +

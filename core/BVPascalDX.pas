@@ -286,8 +286,8 @@ begin
   asm
     let arr = List || [];
     let q = (Query !== undefined && Query !== null ? String(Query) : '').toLowerCase().trim();
-    if (!q) { Result = arr; return; }
-    if (!Array.isArray(arr)) { Result = arr; return; }
+    if (!q) { Result = arr; return Result; }
+    if (!Array.isArray(arr)) { Result = arr; return Result; }
     
     Result = arr.filter(function(item) {
       if (!item) return false;
@@ -302,7 +302,7 @@ function RemoveItemById(List: JSValue; Id: Integer): JSValue;
 begin
   asm
     let arr = List || [];
-    if (!Array.isArray(arr)) { Result = arr; return; }
+    if (!Array.isArray(arr)) { Result = arr; return Result; }
     Result = arr.filter(function(item) {
       return item && item.id !== Id;
     });
@@ -313,7 +313,7 @@ function FindItemById(List: JSValue; Id: Integer): JSValue;
 begin
   asm
     let arr = List || [];
-    if (!Array.isArray(arr)) { Result = null; return; }
+    if (!Array.isArray(arr)) { Result = null; return Result; }
     let found = arr.find(function(item) {
       return item && item.id === Id;
     });
