@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -72,6 +72,8 @@ begin
   Register_uBVBarChart;
   asm console.log("[Init] Registering uBVBubbleChart..."); end;
   Register_uBVBubbleChart;
+  asm console.log("[Init] Registering uBVChart..."); end;
+  Register_uBVChart;
   asm console.log("[Init] Registering uBVDoughnutChart..."); end;
   Register_uBVDoughnutChart;
   asm console.log("[Init] Registering uBVLineChart..."); end;
@@ -90,8 +92,6 @@ begin
   Register_uBVAlert;
   asm console.log("[Init] Registering uBVBadge..."); end;
   Register_uBVBadge;
-  asm console.log("[Init] Registering uBVBar..."); end;
-  Register_uBVBar;
   asm console.log("[Init] Registering uBVBottomNav..."); end;
   Register_uBVBottomNav;
   asm console.log("[Init] Registering uBVBottomNavItem..."); end;
@@ -104,16 +104,12 @@ begin
   Register_uBVBtn;
   asm console.log("[Init] Registering uBVCard..."); end;
   Register_uBVCard;
-  asm console.log("[Init] Registering uBVChart..."); end;
-  Register_uBVChart;
   asm console.log("[Init] Registering uBVCol..."); end;
   Register_uBVCol;
   asm console.log("[Init] Registering uBVContainer..."); end;
   Register_uBVContainer;
   asm console.log("[Init] Registering uBVDataGrid..."); end;
   Register_uBVDataGrid;
-  asm console.log("[Init] Registering uBVDoughnut..."); end;
-  Register_uBVDoughnut;
   asm console.log("[Init] Registering uBVDrawer..."); end;
   Register_uBVDrawer;
   asm console.log("[Init] Registering uBVFormSelect..."); end;
@@ -124,8 +120,6 @@ begin
   Register_uBVInput;
   asm console.log("[Init] Registering uBVInputGroup..."); end;
   Register_uBVInputGroup;
-  asm console.log("[Init] Registering uBVLine..."); end;
-  Register_uBVLine;
   asm console.log("[Init] Registering uBVListGroup..."); end;
   Register_uBVListGroup;
   asm console.log("[Init] Registering uBVListGroupItem..."); end;
@@ -138,14 +132,8 @@ begin
   Register_uBVNavItem;
   asm console.log("[Init] Registering uBVPagination..."); end;
   Register_uBVPagination;
-  asm console.log("[Init] Registering uBVPie..."); end;
-  Register_uBVPie;
-  asm console.log("[Init] Registering uBVPolarArea..."); end;
-  Register_uBVPolarArea;
   asm console.log("[Init] Registering uBVProgress..."); end;
   Register_uBVProgress;
-  asm console.log("[Init] Registering uBVRadar..."); end;
-  Register_uBVRadar;
   asm console.log("[Init] Registering uBVRow..."); end;
   Register_uBVRow;
   asm console.log("[Init] Registering uBVSpinner..."); end;

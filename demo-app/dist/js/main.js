@@ -5145,10 +5145,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .section-container {     margin-bottom: 28px;   }   .package-section-header {     display: flex;     justify-content: space-between;     align-items: center;     padding: 16px 20px;     border-radius: 12px;     margin-bottom: 18px;     border: 1px solid transparent;   }   .ui-header {     background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);     border-color: #bbf7d0;   }   .charts-header {     background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);     border-color: #bfdbfe;   }   .badge-pkg {     font-size: 0.78rem;     font-weight: 700;     padding: 6px 12px;     border-radius: 20px;     text-transform: uppercase;     letter-spacing: 0.04em;   }   .badge-pkg-ui {     background: #10b981;     color: white;   }   .badge-pkg-charts {     background: #3b82f6;     color: white;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
+    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 Data Visualization Suite: BlaiseCharts & BlaiseUI" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Demonstração dos componentes de gráficos do ecossistema BlaiseVue: a suíte fortemente tipada (<strong>blaise-charts</strong>) e o componente genérico base (<strong>blaise-ui</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + "        </div>" + "      </div>" + "" + "      <!-- Seletor de visualização (Filtro de Abas) -->" + '      <div style="display: flex; gap: 8px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 16px; flex-wrap: wrap; align-items: center;">' + '        <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; margin-right: 6px;">Visualizar Pacotes:</span>' + '        <bv-btn variant="primary" @click="showAll">🌟 Ver Todos</bv-btn>' + '        <bv-btn variant="success" @click="showChartsOnly">📊 BlaiseCharts 4.0 (Tipado)</bv-btn>' + '        <bv-btn variant="info" @click="showUIOnly">📦 BlaiseUI (&lt;bv-chart&gt; Genérico)</bv-btn>' + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Status / Seleção:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- SEÇÃO 1: BLAISE-UI CHARTS (Componente Universal & Atalhos Legados) -->" + '    <div b-if="showBlaiseUI" class="section-container">' + '      <div class="package-section-header ui-header">' + '        <div style="text-align: left;">' + '          <h2 style="margin: 0; font-size: 1.35rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">' + "            📦 Pacote: <code>blaise-ui</code> (&lt;bv-chart&gt; Universal)" + "          </h2>" + '          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.88rem;">' + "            O componente universal <code>&lt;bv-chart&gt;</code> do BlaiseUI renderiza qualquer tipo de gráfico de forma dinâmica via prop <code>:type</code>." + "          </p>" + "        </div>" + '        <span class="badge-pkg badge-pkg-ui">Core UI Package</span>' + "      </div>" + "" + '      <div class="chart-grid">' + "        <!-- 1.1 bv-chart Dinâmico -->" + '        <div class="chart-item" style="grid-column: 1 / -1;">' + '          <div class="chart-header-row">' + "            <div>" + "              <h3>🎨 &lt;bv-chart&gt; Universal com Tipo Dinâmico em Execução</h3>" + '              <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #64748b;">' + '                Alterne o tipo do gráfico em tempo real através da prop <code>:type="{{ legacyType }}"</code>:' + "              </p>" + "            </div>" + '            <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '              <button class="btn-type-pill" @click="setLegacyType(\'bar\')">📊 Barras</button>' + '              <button class="btn-type-pill" @click="setLegacyType(\'line\')">📈 Linha</button>' + '              <button class="btn-type-pill" @click="setLegacyType(\'pie\')">🍕 Pizza</button>' + '              <button class="btn-type-pill" @click="setLegacyType(\'doughnut\')">🍩 Rosca</button>' + '              <button class="btn-type-pill" @click="setLegacyType(\'radar\')">🕸️ Radar</button>' + '              <button class="btn-type-pill" @click="setLegacyType(\'polarArea\')">❄️ Polar</button>' + "            </div>" + "          </div>" + '          <bv-chart :type="legacyType" :data="legacyData" :options="chartOptions" height="340px"></bv-chart>' + "        </div>" + "" + "        <!-- 1.2 bv-bar do blaise-ui -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>📊 &lt;bv-bar&gt; (Atalho BlaiseUI)</h3>" + '            <span class="badge-type">Bar Wrapper</span>' + "          </div>" + '          <bv-bar :data="legacyData" :options="chartOptions" height="280px"></bv-bar>' + "        </div>" + "" + "        <!-- 1.3 bv-line do blaise-ui -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>📈 &lt;bv-line&gt; (Atalho BlaiseUI)</h3>" + '            <span class="badge-type">Line Wrapper</span>' + "          </div>" + '          <bv-line :data="legacyLineData" :options="chartOptions" height="280px"></bv-line>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- SEÇÃO 2: BLAISE-CHARTS 4.0 (Suíte Especializada & Tipada em Pascal) -->" + '    <div b-if="showBlaiseCharts" class="section-container" style="margin-top: 32px;">' + '      <div class="package-section-header charts-header">' + '        <div style="text-align: left;">' + '          <h2 style="margin: 0; font-size: 1.35rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">' + "            📊 Pacote: <code>blaise-charts</code> (Suíte Especializada & Pascal Tipado)" + "          </h2>" + '          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.88rem;">' + "            Componentes especializados com suporte direto a classes Pascal <code>TBVChartData</code>, <code>TBVChartOptions</code> e paletas <code>TBVChartPalette</code>." + "          </p>" + "        </div>" + '        <span class="badge-pkg badge-pkg-charts">Dedicated Charts Suite</span>' + "      </div>" + "" + '      <div class="chart-grid">' + "        <!-- 2.1 Barras Tipadas (bv-bar-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '            <span class="badge-type">Bar / Column</span>' + "          </div>" + '          <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "        </div>" + "" + "        <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '            <span class="badge-type">Spline Line</span>' + "          </div>" + '          <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "        </div>" + "" + "        <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '            <span class="badge-type">Pie Chart</span>' + "          </div>" + '          <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "        </div>" + "" + "        <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '            <span class="badge-type">Doughnut</span>' + "          </div>" + '          <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "        </div>" + "" + "        <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '            <span class="badge-type">Polar Area</span>' + "          </div>" + '          <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "        </div>" + "" + "        <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '        <div class="chart-item">' + '          <div class="chart-header-row">' + "            <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '            <span class="badge-type">Radar Matrix</span>' + "          </div>" + '          <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Modo Claro\' : \'Modo Escuro\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Barras</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Linha</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pizza</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Rosca</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Barras (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -5160,13 +5160,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       d["pieData"] = null;
       d["doughnutData"] = null;
       d["radarData"] = null;
-      d["legacyData"] = null;
-      d["legacyLineData"] = null;
-      d["legacyType"] = "bar";
+      d["universalType"] = "bar";
       d["clickedPointInfo"] = "";
       d["currentPalette"] = "Emerald";
-      d["showBlaiseCharts"] = true;
-      d["showBlaiseUI"] = true;
+      d["isDarkMode"] = false;
       Result = d;
       return Result;
     };
@@ -5206,53 +5203,30 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       RadarModel.Labels(["Velocidade","Tipagem Pascal","Reatividade","Memória Baixa","Full-Stack","Multiplataforma"]);
       RadarModel.AddDataset$2("BlaiseVue 4.0",[98,100,95,92,97,96],"rgba(16, 185, 129, 0.3)","#10b981").Fill(true);
       _this["radarData"] = RadarModel.ToJS();
-      this.legacyData = {
-        labels: ['Frontend', 'Backend mORMot', 'Database SQLite', 'Mobile Capacitor', 'WebUI Desktop'],
-        datasets: [{
-          label: 'Taxa de Entrega (BlaiseUI <bv-chart>)',
-          data: [95, 98, 92, 88, 94],
-          backgroundColor: [
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(245, 158, 11, 0.7)',
-            'rgba(236, 72, 153, 0.7)',
-            'rgba(139, 92, 246, 0.7)'
-          ],
-          borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
-          borderWidth: 2
-        }]
+    };
+    m["setUniversalType"] = function (_this, newType) {
+      _this["universalType"] = newType;
+      _this["clickedPointInfo"] = "Tipo do <bv-chart> alterado para: " + newType;
+    };
+    m["toggleDarkMode"] = function (_this) {
+      var NewDark = false;
+      NewDark = !!(_this["isDarkMode"] == false);
+      _this["isDarkMode"] = NewDark;
+      if (this.chartOptions) {
+        if (!this.chartOptions.scales) this.chartOptions.scales = {};
+        if (!this.chartOptions.scales.x) this.chartOptions.scales.x = {};
+        if (!this.chartOptions.scales.y) this.chartOptions.scales.y = {};
+        const gridColor = NewDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+        const textColor = NewDark ? '#94a3b8' : '#64748b';
+        this.chartOptions.scales.x.grid = { color: gridColor };
+        this.chartOptions.scales.y.grid = { color: gridColor };
+        this.chartOptions.scales.x.ticks = { color: textColor };
+        this.chartOptions.scales.y.ticks = { color: textColor };
+        this.chartOptions = Object.assign({}, this.chartOptions);
       };
-      this.legacyLineData = {
-        labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-        datasets: [{
-          label: 'Throughput do Servidor (req/s)',
-          data: [4200, 6800, 5900, 8400, 9200, 11500, 8900],
-          fill: true,
-          backgroundColor: 'rgba(14, 165, 233, 0.25)',
-          borderColor: '#0ea5e9',
-          tension: 0.35,
-          borderWidth: 3
-        }]
-      };
-    };
-    m["showAll"] = function (_this) {
-      _this["showBlaiseCharts"] = true;
-      _this["showBlaiseUI"] = true;
-      _this["clickedPointInfo"] = "Exibindo todos os componentes (BlaiseCharts + BlaiseUI).";
-    };
-    m["showChartsOnly"] = function (_this) {
-      _this["showBlaiseCharts"] = true;
-      _this["showBlaiseUI"] = false;
-      _this["clickedPointInfo"] = "Filtrando apenas a suíte oficial blaise-charts.";
-    };
-    m["showUIOnly"] = function (_this) {
-      _this["showBlaiseCharts"] = false;
-      _this["showBlaiseUI"] = true;
-      _this["clickedPointInfo"] = "Filtrando apenas o componente <bv-chart> do blaise-ui.";
-    };
-    m["setLegacyType"] = function (_this, newType) {
-      _this["legacyType"] = newType;
-      _this["clickedPointInfo"] = "Tipo do <bv-chart> alterado dinamicamente para: " + newType;
+      if (NewDark) {
+        _this["clickedPointInfo"] = "Modo escuro ativado para escalas dos gráficos!"}
+       else _this["clickedPointInfo"] = "Modo claro ativado para escalas dos gráficos!";
     };
     m["randomizeData"] = function (_this) {
       var NewData = null;
@@ -5266,11 +5240,6 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
         this.barData.datasets[0].data = NewData;
         this.barData = Object.assign({}, this.barData);
-      }
-      if (this.legacyData && this.legacyData.datasets && this.legacyData.datasets[0]) {
-        const lData = [50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50)];
-        this.legacyData.datasets[0].data = lData;
-        this.legacyData = Object.assign({}, this.legacyData);
       };
       _this["clickedPointInfo"] = "Dados randomizados com sucesso!";
     };
@@ -6224,6 +6193,121 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
   };
 });
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVChart = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: var(--bui-radius);     border: 1px solid var(--bui-border);     box-shadow: 0 2px 10px rgba(0,0,0,0.04);   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["_dummy"] = 0;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("type");
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    m = new Object();
+    m["initChart"] = function (_this) {
+      if (this._initPending) return;
+      this._initPending = true;
+      requestAnimationFrame(() => {
+        const canvas = this.$refs.chartCanvas;
+        if (!canvas) { this._initPending = false; return; }
+        if (typeof Chart === 'undefined') {
+          console.warn('[BVChart] Chart.js is not loaded.');
+          this._initPending = false;
+          return;
+        }
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+          try { existingChart.destroy(); } catch(e) {}
+        }
+        this._chart = null;
+        function extractData(input) {
+          if (!input) return null;
+          if (typeof input.ToJS === 'function') return input.ToJS();
+          if (typeof input.toJS === 'function') return input.toJS();
+          if (input.FJS) return input.FJS;
+          return input;
+        }
+        const rawData = extractData(this.data);
+        if (!rawData || !rawData.datasets) { this._initPending = false; return; }
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { this._initPending = false; return; }
+        try {
+          const chartData = window.__BV_CORE__.unproxy(rawData);
+          const rawOpts = extractData(this.options);
+          const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
+            responsive: true,
+            maintainAspectRatio: false
+          };
+          this._chart = new Chart(ctx, {
+            type: this.type,
+            data: chartData,
+            options: chartOptions
+          });
+        } catch (e) {
+          console.error('[BVChart] Failed to initialize chart:', e);
+        } finally {
+          this._initPending = false;
+        }
+      });
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
+    };
+    comp["mounted"] = function (_this) {
+      this.initChart();
+    };
+    comp["watch"] = new Object();
+    comp["watch"]["data"] = function (_this, newVal) {
+      this._pendingData = newVal;
+      if (this._updatePending) return;
+      this._updatePending = true;
+      const delay = 50 + Math.random() * 100;
+      setTimeout(() => {
+        this._updatePending = false;
+        const dataToUse = this._pendingData;
+        if (this._chart && dataToUse && dataToUse.datasets) {
+          try {
+            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
+            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
+               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
+               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
+               this._chart.update();
+            } else {
+               this._chart.data = rawNewData;
+               this._chart.update('none');
+            }
+          } catch (e) {
+            console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
+            this.initChart();
+          }
+        } else {
+          this.initChart();
+        }
+      }, delay);
+    };
+    comp["watch"]["type"] = function (_this, newVal) {
+      this.initChart();
+    };
+    pas.BVComponents.RegisterComponent("bv-chart",comp);
+  };
+});
 rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -6496,31 +6580,6 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
-rtl.module("uBVBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="bar" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-bar",comp);
-  };
-});
 rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -6700,121 +6759,6 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-card",comp);
   };
 });
-rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVChart = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: var(--bui-radius);     border: 1px solid var(--bui-border);     box-shadow: 0 2px 10px rgba(0,0,0,0.04);   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="bui-chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["_dummy"] = 0;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("type");
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    m["initChart"] = function (_this) {
-      if (this._initPending) return;
-      this._initPending = true;
-      requestAnimationFrame(() => {
-        const canvas = this.$refs.chartCanvas;
-        if (!canvas) { this._initPending = false; return; }
-        if (typeof Chart === 'undefined') {
-          console.warn('[BVChart] Chart.js is not loaded.');
-          this._initPending = false;
-          return;
-        }
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-          try { existingChart.destroy(); } catch(e) {}
-        }
-        this._chart = null;
-        function extractData(input) {
-          if (!input) return null;
-          if (typeof input.ToJS === 'function') return input.ToJS();
-          if (typeof input.toJS === 'function') return input.toJS();
-          if (input.FJS) return input.FJS;
-          return input;
-        }
-        const rawData = extractData(this.data);
-        if (!rawData || !rawData.datasets) { this._initPending = false; return; }
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { this._initPending = false; return; }
-        try {
-          const chartData = window.__BV_CORE__.unproxy(rawData);
-          const rawOpts = extractData(this.options);
-          const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
-            responsive: true,
-            maintainAspectRatio: false
-          };
-          this._chart = new Chart(ctx, {
-            type: this.type,
-            data: chartData,
-            options: chartOptions
-          });
-        } catch (e) {
-          console.error('[BVChart] Failed to initialize chart:', e);
-        } finally {
-          this._initPending = false;
-        }
-      });
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
-    };
-    comp["mounted"] = function (_this) {
-      this.initChart();
-    };
-    comp["watch"] = new Object();
-    comp["watch"]["data"] = function (_this, newVal) {
-      this._pendingData = newVal;
-      if (this._updatePending) return;
-      this._updatePending = true;
-      const delay = 50 + Math.random() * 100;
-      setTimeout(() => {
-        this._updatePending = false;
-        const dataToUse = this._pendingData;
-        if (this._chart && dataToUse && dataToUse.datasets) {
-          try {
-            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
-            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
-               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
-               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-               this._chart.update();
-            } else {
-               this._chart.data = rawNewData;
-               this._chart.update('none');
-            }
-          } catch (e) {
-            console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
-            this.initChart();
-          }
-        } else {
-          this.initChart();
-        }
-      }, delay);
-    };
-    comp["watch"]["type"] = function (_this, newVal) {
-      this.initChart();
-    };
-    pas.BVComponents.RegisterComponent("bv-chart",comp);
-  };
-});
 rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -6952,31 +6896,6 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     pas.BVComponents.RegisterComponent("bv-data-grid",comp);
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
-  };
-});
-rtl.module("uBVDoughnut",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVDoughnut = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="doughnut" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-doughnut",comp);
   };
 });
 rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -7147,31 +7066,6 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-input-group",comp);
-  };
-});
-rtl.module("uBVLine",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVLine = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-line",comp);
   };
 });
 rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -7390,56 +7284,6 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBVPie",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPie = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-pie",comp);
-  };
-});
-rtl.module("uBVPolarArea",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPolarArea = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-polar-area",comp);
-  };
-});
 rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -7480,31 +7324,6 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     pas.BVComponents.RegisterComponent("bv-progress",comp);
-  };
-});
-rtl.module("uBVRadar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVRadar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="radar" :data="data" :options="options" :width="width" :height="height"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["props"].push("data");
-    comp["props"].push("options");
-    comp["props"].push("width");
-    comp["props"].push("height");
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-radar",comp);
   };
 });
 rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -8101,7 +7920,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -8164,6 +7983,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVBarChart.Register_uBVBarChart();
     console.log("[Init] Registering uBVBubbleChart...");
     pas.uBVBubbleChart.Register_uBVBubbleChart();
+    console.log("[Init] Registering uBVChart...");
+    pas.uBVChart.Register_uBVChart();
     console.log("[Init] Registering uBVDoughnutChart...");
     pas.uBVDoughnutChart.Register_uBVDoughnutChart();
     console.log("[Init] Registering uBVLineChart...");
@@ -8182,8 +8003,6 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVAlert.Register_uBVAlert();
     console.log("[Init] Registering uBVBadge...");
     pas.uBVBadge.Register_uBVBadge();
-    console.log("[Init] Registering uBVBar...");
-    pas.uBVBar.Register_uBVBar();
     console.log("[Init] Registering uBVBottomNav...");
     pas.uBVBottomNav.Register_uBVBottomNav();
     console.log("[Init] Registering uBVBottomNavItem...");
@@ -8196,16 +8015,12 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVBtn.Register_uBVBtn();
     console.log("[Init] Registering uBVCard...");
     pas.uBVCard.Register_uBVCard();
-    console.log("[Init] Registering uBVChart...");
-    pas.uBVChart.Register_uBVChart();
     console.log("[Init] Registering uBVCol...");
     pas.uBVCol.Register_uBVCol();
     console.log("[Init] Registering uBVContainer...");
     pas.uBVContainer.Register_uBVContainer();
     console.log("[Init] Registering uBVDataGrid...");
     pas.uBVDataGrid.Register_uBVDataGrid();
-    console.log("[Init] Registering uBVDoughnut...");
-    pas.uBVDoughnut.Register_uBVDoughnut();
     console.log("[Init] Registering uBVDrawer...");
     pas.uBVDrawer.Register_uBVDrawer();
     console.log("[Init] Registering uBVFormSelect...");
@@ -8216,8 +8031,6 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVInput.Register_uBVInput();
     console.log("[Init] Registering uBVInputGroup...");
     pas.uBVInputGroup.Register_uBVInputGroup();
-    console.log("[Init] Registering uBVLine...");
-    pas.uBVLine.Register_uBVLine();
     console.log("[Init] Registering uBVListGroup...");
     pas.uBVListGroup.Register_uBVListGroup();
     console.log("[Init] Registering uBVListGroupItem...");
@@ -8230,14 +8043,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVNavItem.Register_uBVNavItem();
     console.log("[Init] Registering uBVPagination...");
     pas.uBVPagination.Register_uBVPagination();
-    console.log("[Init] Registering uBVPie...");
-    pas.uBVPie.Register_uBVPie();
-    console.log("[Init] Registering uBVPolarArea...");
-    pas.uBVPolarArea.Register_uBVPolarArea();
     console.log("[Init] Registering uBVProgress...");
     pas.uBVProgress.Register_uBVProgress();
-    console.log("[Init] Registering uBVRadar...");
-    pas.uBVRadar.Register_uBVRadar();
     console.log("[Init] Registering uBVRow...");
     pas.uBVRow.Register_uBVRow();
     console.log("[Init] Registering uBVSpinner...");

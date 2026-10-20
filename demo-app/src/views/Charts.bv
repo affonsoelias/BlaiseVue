@@ -4,155 +4,99 @@
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="text-align: left;">
           <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">
-            📊 Data Visualization Suite: BlaiseCharts & BlaiseUI
+            📊 BlaiseCharts 4.0 - Data Visualization Suite
           </h1>
           <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">
-            Demonstração dos componentes de gráficos do ecossistema BlaiseVue: a suíte fortemente tipada (<strong>blaise-charts</strong>) e o componente genérico base (<strong>blaise-ui</strong>).
+            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>).
           </p>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>
           <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>
+          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? 'Modo Claro' : 'Modo Escuro' }}</bv-btn>
         </div>
-      </div>
-
-      <!-- Seletor de visualização (Filtro de Abas) -->
-      <div style="display: flex; gap: 8px; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 16px; flex-wrap: wrap; align-items: center;">
-        <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; margin-right: 6px;">Visualizar Pacotes:</span>
-        <bv-btn variant="primary" @click="showAll">🌟 Ver Todos</bv-btn>
-        <bv-btn variant="success" @click="showChartsOnly">📊 BlaiseCharts 4.0 (Tipado)</bv-btn>
-        <bv-btn variant="info" @click="showUIOnly">📦 BlaiseUI (&lt;bv-chart&gt; Genérico)</bv-btn>
       </div>
 
       <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">
-        <strong>🎯 Status / Seleção:</strong> {{ clickedPointInfo }}
+        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}
       </div>
     </div>
 
-    <!-- SEÇÃO 1: BLAISE-UI CHARTS (Componente Universal & Atalhos Legados) -->
-    <div b-if="showBlaiseUI" class="section-container">
-      <div class="package-section-header ui-header">
-        <div style="text-align: left;">
-          <h2 style="margin: 0; font-size: 1.35rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            📦 Pacote: <code>blaise-ui</code> (&lt;bv-chart&gt; Universal)
-          </h2>
-          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.88rem;">
-            O componente universal <code>&lt;bv-chart&gt;</code> do BlaiseUI renderiza qualquer tipo de gráfico de forma dinâmica via prop <code>:type</code>.
+    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->
+    <div class="chart-item universal-card" style="margin-bottom: 24px;">
+      <div class="chart-header-row">
+        <div>
+          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>
+          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">
+            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:
           </p>
         </div>
-        <span class="badge-pkg badge-pkg-ui">Core UI Package</span>
-      </div>
-
-      <div class="chart-grid">
-        <!-- 1.1 bv-chart Dinâmico -->
-        <div class="chart-item" style="grid-column: 1 / -1;">
-          <div class="chart-header-row">
-            <div>
-              <h3>🎨 &lt;bv-chart&gt; Universal com Tipo Dinâmico em Execução</h3>
-              <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: #64748b;">
-                Alterne o tipo do gráfico em tempo real através da prop <code>:type="{{ legacyType }}"</code>:
-              </p>
-            </div>
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button class="btn-type-pill" @click="setLegacyType('bar')">📊 Barras</button>
-              <button class="btn-type-pill" @click="setLegacyType('line')">📈 Linha</button>
-              <button class="btn-type-pill" @click="setLegacyType('pie')">🍕 Pizza</button>
-              <button class="btn-type-pill" @click="setLegacyType('doughnut')">🍩 Rosca</button>
-              <button class="btn-type-pill" @click="setLegacyType('radar')">🕸️ Radar</button>
-              <button class="btn-type-pill" @click="setLegacyType('polarArea')">❄️ Polar</button>
-            </div>
-          </div>
-          <bv-chart :type="legacyType" :data="legacyData" :options="chartOptions" height="340px"></bv-chart>
-        </div>
-
-        <!-- 1.2 bv-bar do blaise-ui -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>📊 &lt;bv-bar&gt; (Atalho BlaiseUI)</h3>
-            <span class="badge-type">Bar Wrapper</span>
-          </div>
-          <bv-bar :data="legacyData" :options="chartOptions" height="280px"></bv-bar>
-        </div>
-
-        <!-- 1.3 bv-line do blaise-ui -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>📈 &lt;bv-line&gt; (Atalho BlaiseUI)</h3>
-            <span class="badge-type">Line Wrapper</span>
-          </div>
-          <bv-line :data="legacyLineData" :options="chartOptions" height="280px"></bv-line>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="btn-type-pill" @click="setUniversalType('bar')">📊 Barras</button>
+          <button class="btn-type-pill" @click="setUniversalType('line')">📈 Linha</button>
+          <button class="btn-type-pill" @click="setUniversalType('pie')">🍕 Pizza</button>
+          <button class="btn-type-pill" @click="setUniversalType('doughnut')">🍩 Rosca</button>
+          <button class="btn-type-pill" @click="setUniversalType('radar')">🕸️ Radar</button>
+          <button class="btn-type-pill" @click="setUniversalType('polarArea')">❄️ Polar</button>
         </div>
       </div>
+      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>
     </div>
 
-    <!-- SEÇÃO 2: BLAISE-CHARTS 4.0 (Suíte Especializada & Tipada em Pascal) -->
-    <div b-if="showBlaiseCharts" class="section-container" style="margin-top: 32px;">
-      <div class="package-section-header charts-header">
-        <div style="text-align: left;">
-          <h2 style="margin: 0; font-size: 1.35rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-            📊 Pacote: <code>blaise-charts</code> (Suíte Especializada & Pascal Tipado)
-          </h2>
-          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.88rem;">
-            Componentes especializados com suporte direto a classes Pascal <code>TBVChartData</code>, <code>TBVChartOptions</code> e paletas <code>TBVChartPalette</code>.
-          </p>
+    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->
+    <div class="chart-grid">
+      <!-- 2.1 Barras (bv-bar-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>
+          <span class="badge-type">Bar / Column</span>
         </div>
-        <span class="badge-pkg badge-pkg-charts">Dedicated Charts Suite</span>
+        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>
       </div>
 
-      <div class="chart-grid">
-        <!-- 2.1 Barras Tipadas (bv-bar-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>
-            <span class="badge-type">Bar / Column</span>
-          </div>
-          <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>
+      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>
+          <span class="badge-type">Spline Line</span>
         </div>
+        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>
+      </div>
 
-        <!-- 2.2 Linhas & Tendências (bv-line-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>
-            <span class="badge-type">Spline Line</span>
-          </div>
-          <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>
+      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>
+          <span class="badge-type">Pie Chart</span>
         </div>
+        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>
+      </div>
 
-        <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>
-            <span class="badge-type">Pie Chart</span>
-          </div>
-          <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>
+      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>
+          <span class="badge-type">Doughnut</span>
         </div>
+        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>
+      </div>
 
-        <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>
-            <span class="badge-type">Doughnut</span>
-          </div>
-          <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>
+      <!-- 2.5 Área Polar (bv-polar-area-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>
+          <span class="badge-type">Polar Area</span>
         </div>
+        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>
+      </div>
 
-        <!-- 2.5 Área Polar (bv-polar-area-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>
-            <span class="badge-type">Polar Area</span>
-          </div>
-          <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>
+      <!-- 2.6 Radar / Competências (bv-radar-chart) -->
+      <div class="chart-item">
+        <div class="chart-header-row">
+          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>
+          <span class="badge-type">Radar Matrix</span>
         </div>
-
-        <!-- 2.6 Radar / Competências (bv-radar-chart) -->
-        <div class="chart-item">
-          <div class="chart-header-row">
-            <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>
-            <span class="badge-type">Radar Matrix</span>
-          </div>
-          <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>
-        </div>
+        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>
       </div>
     </div>
   </div>
@@ -167,13 +111,10 @@
     pieData: JSValue = null;
     doughnutData: JSValue = null;
     radarData: JSValue = null;
-    legacyData: JSValue = null;
-    legacyLineData: JSValue = null;
-    legacyType: string = 'bar';
+    universalType: string = 'bar';
     clickedPointInfo: string = '';
     currentPalette: string = 'Emerald';
-    showBlaiseCharts: boolean = true;
-    showBlaiseUI: boolean = true;
+    isDarkMode: boolean = false;
 
   methods:
     procedure initCharts;
@@ -196,7 +137,7 @@
                   .Legend('bottom');
       this['pieOptions'] := PieOptsModel.ToJS;
 
-      // 2. Bar Chart Data (Typed TBVChartData from BlaiseCharts)
+      // 2. Bar Chart Data (Typed TBVChartData)
       BarModel := TBVChartData.Create;
       BarModel.Labels(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']);
       BarModel.AddDataset('Vendas 2026', [14500, 21800, 18900, 27400, 31200, 42000], 'rgba(16, 185, 129, 0.6)', '#10b981');
@@ -230,66 +171,38 @@
       RadarModel.AddDataset('BlaiseVue 4.0', [98, 100, 95, 92, 97, 96], 'rgba(16, 185, 129, 0.3)', '#10b981')
                 .Fill(True);
       this['radarData'] := RadarModel.ToJS;
+    end;
 
-      // 7. BlaiseUI Legacy/Generic Chart Data (Direct JS Objects)
+    procedure setUniversalType(newType: string);
+    begin
+      this['universalType'] := newType;
+      this['clickedPointInfo'] := 'Tipo do <bv-chart> alterado para: ' + newType;
+    end;
+
+    procedure toggleDarkMode;
+    var
+      NewDark: Boolean;
+    begin
+      NewDark := not Boolean(this['isDarkMode']);
+      this['isDarkMode'] := NewDark;
       asm
-        this.legacyData = {
-          labels: ['Frontend', 'Backend mORMot', 'Database SQLite', 'Mobile Capacitor', 'WebUI Desktop'],
-          datasets: [{
-            label: 'Taxa de Entrega (BlaiseUI <bv-chart>)',
-            data: [95, 98, 92, 88, 94],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.7)',
-              'rgba(16, 185, 129, 0.7)',
-              'rgba(245, 158, 11, 0.7)',
-              'rgba(236, 72, 153, 0.7)',
-              'rgba(139, 92, 246, 0.7)'
-            ],
-            borderColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
-            borderWidth: 2
-          }]
-        };
-
-        this.legacyLineData = {
-          labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-          datasets: [{
-            label: 'Throughput do Servidor (req/s)',
-            data: [4200, 6800, 5900, 8400, 9200, 11500, 8900],
-            fill: true,
-            backgroundColor: 'rgba(14, 165, 233, 0.25)',
-            borderColor: '#0ea5e9',
-            tension: 0.35,
-            borderWidth: 3
-          }]
-        };
+        if (this.chartOptions) {
+          if (!this.chartOptions.scales) this.chartOptions.scales = {};
+          if (!this.chartOptions.scales.x) this.chartOptions.scales.x = {};
+          if (!this.chartOptions.scales.y) this.chartOptions.scales.y = {};
+          const gridColor = NewDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+          const textColor = NewDark ? '#94a3b8' : '#64748b';
+          this.chartOptions.scales.x.grid = { color: gridColor };
+          this.chartOptions.scales.y.grid = { color: gridColor };
+          this.chartOptions.scales.x.ticks = { color: textColor };
+          this.chartOptions.scales.y.ticks = { color: textColor };
+          this.chartOptions = Object.assign({}, this.chartOptions);
+        }
       end;
-    end;
-
-    procedure showAll;
-    begin
-      this['showBlaiseCharts'] := True;
-      this['showBlaiseUI'] := True;
-      this['clickedPointInfo'] := 'Exibindo todos os componentes (BlaiseCharts + BlaiseUI).';
-    end;
-
-    procedure showChartsOnly;
-    begin
-      this['showBlaiseCharts'] := True;
-      this['showBlaiseUI'] := False;
-      this['clickedPointInfo'] := 'Filtrando apenas a suíte oficial blaise-charts.';
-    end;
-
-    procedure showUIOnly;
-    begin
-      this['showBlaiseCharts'] := False;
-      this['showBlaiseUI'] := True;
-      this['clickedPointInfo'] := 'Filtrando apenas o componente <bv-chart> do blaise-ui.';
-    end;
-
-    procedure setLegacyType(newType: string);
-    begin
-      this['legacyType'] := newType;
-      this['clickedPointInfo'] := 'Tipo do <bv-chart> alterado dinamicamente para: ' + newType;
+      if NewDark then
+        this['clickedPointInfo'] := 'Modo escuro ativado para escalas dos gráficos!'
+      else
+        this['clickedPointInfo'] := 'Modo claro ativado para escalas dos gráficos!';
     end;
 
     procedure randomizeData;
@@ -307,11 +220,6 @@
         if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
           this.barData.datasets[0].data = NewData;
           this.barData = Object.assign({}, this.barData);
-        }
-        if (this.legacyData && this.legacyData.datasets && this.legacyData.datasets[0]) {
-          const lData = [50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50), 50 + Math.floor(Math.random() * 50)];
-          this.legacyData.datasets[0].data = lData;
-          this.legacyData = Object.assign({}, this.legacyData);
         }
       end;
       this['clickedPointInfo'] := 'Dados randomizados com sucesso!';
@@ -388,41 +296,10 @@
     margin-bottom: 24px;
     border: 1px solid #e2e8f0;
   }
-  .section-container {
-    margin-bottom: 28px;
-  }
-  .package-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 18px;
-    border: 1px solid transparent;
-  }
-  .ui-header {
-    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-    border-color: #bbf7d0;
-  }
-  .charts-header {
-    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-    border-color: #bfdbfe;
-  }
-  .badge-pkg {
-    font-size: 0.78rem;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .badge-pkg-ui {
-    background: #10b981;
-    color: white;
-  }
-  .badge-pkg-charts {
-    background: #3b82f6;
-    color: white;
+  .universal-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-top: 4px solid #3b82f6;
   }
   .chart-grid {
     display: grid;
