@@ -138,7 +138,7 @@ Our architectural evolution roadmap:
   - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
   - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
   - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv mormot init|build|run|status`, `--mormot`, `$api`, `$ws`).
-- [x] **v4.0 Enterprise Ecosystem & Developer Superpowers (100% Complete 🚀)**:
+- [ ] **v4.0 Enterprise Ecosystem & Developer Superpowers (Phases 1-7 Delivered ✅ | Phase 8 Planned 🔮)**:
   - [x] ⚡ **Phase 1: Full-Stack CRUD & ORM Generator**: Rapid entity scaffolding (`bv mormot crud <Model> <fields...>`) generating Pascal records, mORMot 2 ORM endpoints, and reactive frontend `<bv-data-grid>` views.
   - [x] 🔐 **Phase 2: Enterprise Authentication & Route Guards (`$auth`)**: Native JWT middleware, Argon2 password hashing, and reactive `this.$auth` with role-based routing guards.
   - [x] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
@@ -146,6 +146,7 @@ Our architectural evolution roadmap:
   - [x] 📱 **Phase 5: Mobile-First Ecosystem (`blaise-ui-mobile`)**: Standalone Ionic Web Components package with Pascal controller wrappers (`BlaiseIonic.pas`), providing native iOS/Android look & feel for both mobile apps and web/PWA.
   - [x] 📊 **Phase 6: Data Visualization & Analytics (`blaise-charts`)**: Dedicated Chart.js package with strongly typed Pascal dataset configuration (`BlaiseCharts.pas`), reactive `<bv-chart>` component, and hardware-accelerated 60 FPS canvas rendering.
   - [x] 🎨 **Phase 7: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
+  - [ ] 💎 **Phase 8: Idiomatic Object Pascal DX (Zero-ASM Architecture)**: Eradicate inline `asm` blocks from end-user views, establishing a 100% pure Object Pascal developer experience with strongly typed records, native state assignments, and idiomatic Pascal view controllers.
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
@@ -175,8 +176,8 @@ BlaiseVue/
 │   ├── blaise-ui/             # 20+ native UI components & styles
 │   ├── blaise-themes/         # 9 Bootswatch themes & theme switchers
 │   ├── blaise-icons/          # Bootstrap Icons fonts & stylesheet
-│   ├── blaise-charts/         # (Planned) Reactive Chart.js visualization & Pascal wrappers
-│   └── blaise-ui-mobile/      # (Planned) Mobile-first Ionic components & Pascal wrappers
+│   ├── blaise-charts/         # Reactive Chart.js visualization & Pascal wrappers
+│   └── blaise-ui-mobile/      # Mobile-first Ionic components & Pascal wrappers
 ├── vendor/                    # Embedded compiler & backend engines
 │   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework

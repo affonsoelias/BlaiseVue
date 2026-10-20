@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 3.0 Delivered (✅ Completed)**. All architectural goals for Version 3.0 (`bv doc` generator, WebAssembly acceleration via `BVWasm`, SSG pre-rendering, Reactive Hydration, and Headless E2E testing) are fully implemented and verified with 130 unit tests across 12 test suites.
+> **Current Status**: 🚀 **BlaiseVue 4.0 Ecosystem Delivered (Phases 1-7 ✅ Completed | Phase 8 Planned 🔮)**. Full-Stack CRUD (`bv mormot crud`), Enterprise Auth (`$auth`), Live OpenAPI (`/api/docs`), Cloud Micro-Containers (`bv mormot docker`), Mobile-First Ionic Suite (`blaise-ui-mobile`), Reactive Analytics (`blaise-charts`), and BlaiseVue Studio (`bv studio`) are fully delivered and verified with 326 automated tests across 22 test suites. Phase 8 (Idiomatic Object Pascal DX & Zero-ASM Architecture) is in active planning.
 
 ---
 
@@ -252,7 +252,8 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers) (✅ Completed)
   ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile) (✅ Completed)
   ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records) (✅ Completed)
-  └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow (✅ Completed)
+  ├── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow (✅ Completed)
+  └── Phase 8: Pure Pascal DX ───► Zero-ASM Application Architecture & 100% Idiomatic Object Pascal Views (Planned 🔮)
 ```
 
 ---
@@ -380,6 +381,49 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
   - Live Component Tree and reactive state inspector.
   - Real-time WebSocket event monitor (inspect incoming/outgoing frames).
   - One-click triggers for Unit Tests, Production Builds, and Standalone Deployment.
+
+---
+
+### 💎 Pillar 8: Idiomatic Object Pascal DX & Zero-ASM Application Architecture (Planned 🔮)
+**Goal**: Guarantee a 100% pure Object Pascal developer experience for end-user applications and views, completely eliminating reliance on inline `asm ... end;` blocks in business logic, reactive state handling, and view controllers.
+
+- **The Philosophy: Pascal-First Experience**:
+  - The core premise of BlaiseVue is to bring the power, type safety, and elegance of **Object Pascal** to modern reactive frontend and full-stack development.
+  - Low-level JavaScript interop and DOM plumbing belong strictly inside internal framework units (`core/`) and component libraries (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`).
+  - Application developers writing `.bv` views and components (`src/views/`, `src/components/`) should **never need to learn or write JavaScript** to build reactive applications.
+
+- **Key Architectural Deliverables**:
+  1. **Direct Reactive State Assignments in Pascal**:
+     - Modernize the compiler and reactive scope so that Pascal assignments directly mutate reactive state without requiring inline JS `this` access:
+       ```pascal
+       // ❌ Legacy / Prototype approach (to be eliminated from views):
+       // asm this.isModalOpen = true; this.currentEditId = 0; end;
+
+       // ✅ Pure, Idiomatic Object Pascal (Pillar 8 Standard):
+       isModalOpen := true;
+       currentEditId := 0;
+       formError := '';
+       ```
+  2. **Strongly Typed Records & Pascal DTOs**:
+     - Eradicate untyped JavaScript object literals (`this.form = { name: '', email: '' }`) from views in favor of strongly typed Pascal `record` definitions:
+       ```pascal
+       type
+         TCustomerForm = record
+           name: string;
+           email: string;
+           phone: string;
+           active: boolean;
+         end;
+       ```
+  3. **High-Level Pascal Runtime & UI Helpers**:
+     - Provide idiomatic Pascal controllers and helper methods for standard UI interactions:
+       - Dialog & Modal Controls: `Modal.Open;`, `Modal.Close;`
+       - SPA Routing Navigation: `Router.Push('/products');`, `Router.Back;`
+       - Form Actions: `Form.Reset;`, `Form.Validate;`
+       - User Notifications: `ShowToast('Success!', 2000);`, `ShowMessage('Saved!');`
+  4. **Systematic Demo-App Refactoring**:
+     - Audit every single view in `demo-app/src/views/` (`CustomerView.bv`, `ProductView.bv`, `About.bv`, `Formulario.bv`, `LibBootstrap.bv`, etc.).
+     - Replace all non-essential `asm ... end;` blocks with clean, expressive Object Pascal methods, turning the `demo-app` into the gold standard of pure Object Pascal frontend code.
 
 ---
 
