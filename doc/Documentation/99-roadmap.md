@@ -280,7 +280,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🔐 Pillar 2: Enterprise Authentication & Route Guards (`$auth`)
+### 🔐 Pillar 2: Enterprise Authentication & Route Guards (`$auth`) (✅ Completed)
 **Goal**: Out-of-the-box authentication, JWT session handling, and role-based access control.
 - **Scaffold Command**: `bv mormot auth`
 - **Frontend Integration (`this.$auth`)**:

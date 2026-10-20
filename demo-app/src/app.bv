@@ -3,6 +3,7 @@
     <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->
     <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">
       <div class="drawer-nav">
+        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
         <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
         <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t('nav.home') }}</a>
@@ -24,6 +25,7 @@
       <div class="nav-links">
         <a href="#/customers">📦 Customers</a>
         <a href="#/products">📦 Products</a>
+        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/">{{ $t('nav.home') }}</a>
         <a href="#/about">{{ $t('nav.about') }}</a>
         <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t('nav.pro') }}</a>
@@ -221,6 +223,7 @@
   { Router Configuration: Maps URI hashes to Component Tags }
   router:
     routes:
+      '/login': 'login-view-page';
       '/customers': 'customer-view-page';
       '/products': 'product-view-page';
       '/': 'home-page';

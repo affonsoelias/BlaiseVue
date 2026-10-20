@@ -98,6 +98,9 @@ begin
       if (window.__BV_CORE__.validation) {
         window.__BV_CORE__.validation.initDataValidation(this.FData);
       }
+      if (window.__BV_CORE__ && window.__BV_CORE__.auth) {
+        this.FData['$auth'] = window.__BV_CORE__.auth;
+      }
       this.Evaluate = function(expr, ev) {
         let d = this.FData || this;
         try {

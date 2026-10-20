@@ -30,7 +30,7 @@ uses
   mormot.net.server,
   mormot.net.ws.core,
   mormot.net.ws.server,
-  ServerModels, CrudCustomer, CrudProduct;
+  ServerModels, CrudCustomer, CrudProduct, AuthService;
 
 type
   { Real-time WebSocket Protocol for BlaiseVue clients }
@@ -53,6 +53,7 @@ type
     FItems: TBlaiseItemDynArray;
     FCrudCustomer: TCrudCustomerService;
     FCrudProduct: TCrudProductService;
+    FAuthService: TAuthService;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -102,6 +103,8 @@ begin
 
     FCrudProduct := TCrudProductService.Create;
   FCrudProduct.OnBroadcast := BroadcastEvent;
+  FAuthService := TAuthService.Create;
+  FAuthService.OnBroadcast := BroadcastEvent;
     FCrudCustomer := TCrudCustomerService.Create;
   FCrudCustomer.OnBroadcast := BroadcastEvent;
   FServer := TWebSocketServer.Create(FPort, nil, nil, 'blaisevue_fullstack', 4);
@@ -113,6 +116,7 @@ end;
 destructor TBlaiseServerApp.Destroy;
 begin
     FCrudProduct.Free;
+  FAuthService.Free;
     FCrudCustomer.Free;
   FServer.Free;
   inherited Destroy;
@@ -247,6 +251,10 @@ begin
 
     // Product CRUD REST API: /api/products
   if FCrudProduct.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Authentication REST API: /api/auth/*
+  if FAuthService.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
 
   // Customer CRUD REST API: /api/customers

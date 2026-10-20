@@ -364,6 +364,82 @@ bv mormot crud Task title:string priority:integer done:boolean dueDate:date
 
 ---
 
+## 🔐 Enterprise Authentication & Route Guards (`bv mormot auth`)
+
+BlaiseVue 4.0 includes an enterprise-grade security layer integrating native mORMot 2 server authentication with reactive frontend route guards and the `$auth` global helper.
+
+### 1. Scaffolding with `bv mormot auth`
+
+To generate complete authentication infrastructure in your project, simply run:
+
+```bash
+bv mormot auth
+```
+
+The CLI executes a 5-step automated workflow:
+1. **Server Verification**: Ensures the `server/` directory and mORMot 2 architecture exist.
+2. **Models Registration**: Injects `TAuthUser`, `TAuthUserDynArray`, `TUserWithPassword`, and `TUserWithPasswordDynArray` in `server/ServerModels.pas`.
+3. **Native Security Engine**: Generates `server/AuthService.pas` featuring salted SHA-256 password hashing and RFC 7519 HMAC-SHA256 JWT generation and validation without external libraries.
+4. **Endpoint Wiring**: Wires `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, and `/api/auth/register` directly into `server/ServerApp.pas` with real-time WebSocket broadcast (`user_logged_in`, `user_registered`).
+5. **Frontend View & Routing**: Creates `src/views/LoginView.bv`, registers route `'/login': 'login-view-page'`, and injects dynamic session links in `src/app.bv`.
+
+---
+
+### 2. Pre-Seeded Accounts
+
+Out-of-the-box seed accounts are created for development and testing:
+
+| Role | Email | Password | Permissions |
+|---|---|---|---|
+| **Admin** | `admin@blaisevue.dev` | `admin123` | Full administrative access, inherits all roles |
+| **Manager** | `manager@blaisevue.dev` | `manager123` | Management & moderation access |
+| **User** | `user@blaisevue.dev` | `user123` | Standard authenticated user |
+
+---
+
+### 3. Frontend `$auth` Helper API
+
+The reactive `$auth` helper is injected globally into all components and available as `this.$auth` or `$auth`:
+
+```typescript
+// Authentication
+$auth.login(email, password): Promise<{ success: boolean, token: string, user: TAuthUser }>
+$auth.logout(): void
+
+// Reactive State
+$auth.isAuthenticated: boolean
+$auth.user: { id: number, name: string, email: string, role: string, createdAt: string } | null
+$auth.token: string
+
+// Role-Based Access Control (RBAC)
+$auth.hasRole('admin' | 'manager' | 'user'): boolean
+
+// Navigation Guard Protection
+$auth.initRouterGuard(router): void
+```
+
+When a user logs in, the JWT token is automatically synchronized with:
+- `localStorage.getItem('bv_auth_token')`
+- `$api.setToken(token)` for automatic `Authorization: Bearer <token>` on all future REST calls
+- WebSocket connection headers
+
+---
+
+### 4. Route Guards (`requiresAuth`)
+
+Routes can be protected using route metadata:
+
+```pascal
+router:
+  routes:
+    '/dashboard': (component: 'dashboard-page', meta: (requiresAuth: true));
+    '/admin': (component: 'admin-page', meta: (requiresAuth: true, roles: ['admin']));
+```
+
+When an unauthenticated user attempts to access a protected route, the route guard intercepts the transition, saves the intended path in `$auth.redirectAfterLogin`, and smoothly redirects to `#/login`. Upon successful authentication, the user is automatically redirected back to their intended target!
+
+---
+
 ## 🎯 Summary
 
 With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:

@@ -28,6 +28,22 @@ type
   TBlaiseItemDynArray = array of TBlaiseItem;
 
   { Server Status DTO }
+  { User & Authentication Records }
+  TAuthUser = record
+    ID: Integer;
+    Name: RawUtf8;
+    Email: RawUtf8;
+    Role: RawUtf8;
+    CreatedAt: RawUtf8;
+  end;
+  TAuthUserDynArray = array of TAuthUser;
+
+  TUserWithPassword = record
+    User: TAuthUser;
+    PasswordHash: RawUtf8;
+  end;
+  TUserWithPasswordDynArray = array of TUserWithPassword;
+
   TServerStatus = record
     Status: RawUtf8;
     Framework: RawUtf8;

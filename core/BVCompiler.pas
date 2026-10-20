@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm, BVClient;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm, BVClient, BVAuth;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);
@@ -67,6 +67,9 @@ initialization
          }
          if (window.__BV_CORE__.ws && !Data.FData['$ws']) {
             Data.FData['$ws'] = window.__BV_CORE__.ws;
+         }
+         if (window.__BV_CORE__.auth && !Data.FData['$auth']) {
+            Data.FData['$auth'] = window.__BV_CORE__.auth;
          }
       }
 
@@ -848,6 +851,9 @@ initialization
             }
             if (window.__BV_CORE__.ws) {
                pRef['$ws'] = window.__BV_CORE__.ws;
+            }
+            if (window.__BV_CORE__.auth) {
+               pRef['$auth'] = window.__BV_CORE__.auth;
             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);

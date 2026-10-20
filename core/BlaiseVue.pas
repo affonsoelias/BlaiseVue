@@ -12,7 +12,7 @@ unit BlaiseVue;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient;
+uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient, BVAuth;
 
 type
   { 
@@ -115,6 +115,7 @@ begin
     if (window.__BV_CORE__.desktop && !d.FData.$desktop) d.FData.$desktop = window.__BV_CORE__.desktop;
     if (window.__BV_CORE__.api && !d.FData.$api) d.FData.$api = window.__BV_CORE__.api;
     if (window.__BV_CORE__.ws && !d.FData.$ws) d.FData.$ws = window.__BV_CORE__.ws;
+    if (window.__BV_CORE__.auth && !d.FData.$auth) d.FData.$auth = window.__BV_CORE__.auth;
     
     // Check for SSG Pre-rendered content for instant zero-flicker Hydration
     if (this.FRoot && (this.FRoot.hasAttribute('data-bv-ssg') || this.FRoot.querySelector('[data-bv-ssg]'))) {
