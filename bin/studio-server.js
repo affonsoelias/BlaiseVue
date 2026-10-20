@@ -2,6 +2,7 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { exec, execSync } from 'child_process';
 import { WebSocketServer } from 'ws';
 
@@ -18,7 +19,10 @@ if (process.env.STUDIO_PORT) {
 }
 
 const ROOT_DIR = process.cwd();
-const STUDIO_HTML_PATH = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), 'studio', 'index.html');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const STUDIO_DIR = path.resolve(__dirname, 'studio');
+const STUDIO_HTML_PATH = path.join(STUDIO_DIR, 'index.html');
 
 // Helper to scan directory recursively for .bv files
 function scanBVFiles(dir, fileList = []) {
@@ -109,6 +113,25 @@ const server = http.createServer((req, res) => {
     res.writeHead(204);
     res.end();
     return;
+  }
+
+  // Static Assets for Studio Dashboard
+  if (pathname === '/studio.js') {
+    const jsPath = path.join(STUDIO_DIR, 'studio.js');
+    if (fs.existsSync(jsPath)) {
+      res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+      res.end(fs.readFileSync(jsPath));
+      return;
+    }
+  }
+
+  if (pathname === '/studio.css') {
+    const cssPath = path.join(STUDIO_DIR, 'studio.css');
+    if (fs.existsSync(cssPath)) {
+      res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' });
+      res.end(fs.readFileSync(cssPath));
+      return;
+    }
   }
 
   // API Endpoints
