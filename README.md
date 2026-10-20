@@ -47,15 +47,16 @@ BlaiseVue features a modular package architecture located in `/packages`:
 | **`blaise-ui`** | Native Bootstrap-inspired component kit | `<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-datagrid>`, `<bv-chart>`, `<bv-toast>`, `<bv-navbar>`, `<bv-tabs>` |
 | **`blaise-themes`** | 9 Bootswatch themes + reactive theme management | Flatly, Darkly, Cosmo, Cyborg, Lux, Pulse, Solar, Vapor, Zephyr, `<bv-theme-toggle>`, `<bv-theme-select>`, `$theme` |
 | **`blaise-icons`** | Bootstrap Icons library (fonts + CSS) | `<bv-icon name="heart-fill" size="24px" color="red">`, 2,000+ vector icons |
-| **`blaise-charts`** *(Planned v4.0)* | Reactive Chart.js data visualization suite | `<bv-chart>`, 8 chart types (bar, line, pie, radar, etc.), strongly typed Pascal datasets & auto-updating canvas |
-| **`blaise-ui-mobile`** *(Planned v4.0)* | Mobile-first Ionic components & Pascal wrappers | `<ion-app>`, `<ion-toolbar>`, iOS/Android adaptive themes, `TIonicToast`, `TIonicAlert` |
+| **`blaise-charts`** | Reactive Chart.js data visualization suite | `<bv-chart>`, `<bv-bar-chart>`, `<bv-line-chart>`, `<bv-pie-chart>`, typed Pascal records (`TBVChartData`, `TBVChartOptions`, `TBVChartPalette`) |
+| **`blaise-ui-mobile`** | Mobile-first Ionic components & Pascal wrappers | `<bv-ion-app>`, `<bv-ion-toolbar>`, iOS/Android adaptive themes, `TIonicToast`, `TIonicAlert` |
 
 Install packages directly into your project via the CLI:
 ```bash
 bv lib install themes   # Installs Bootswatch themes and switcher components
 bv lib install icons    # Installs Bootstrap Icons fonts and stylesheets
 bv lib install ui       # Installs the complete BlaiseUI component suite
-bv lib install charts   # (Planned v4.0) Installs Chart.js data visualization suite
+bv lib install mobile   # Installs Ionic mobile components and Pascal controllers
+bv lib install charts   # Installs Chart.js data visualization suite
 ```
 
 ---

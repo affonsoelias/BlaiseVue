@@ -1067,19 +1067,25 @@ end;
 function GenerateAppUnit(const Parsed: TBVParsed; const AllUnits: TStringList): string;
 var
   UsesLine, RouteCode, DataCode, Val: string;
+  UniqueUnits: TStringList;
   i: Integer;
 begin
-  UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools';
-  if Parsed.HasRouter then
-    UsesLine := UsesLine + ', BVRouting';
-  if Parsed.ScriptUses <> '' then
-    UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
-  // Automatically import all compiled component units for auto-registration
-  for i := 0 to AllUnits.Count - 1 do
-  begin
-    if AllUnits[i] <> 'uApp' then
-      UsesLine := UsesLine + ', ' + AllUnits[i];
-  end;
+  UniqueUnits := TStringList.Create;
+  try
+    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools';
+    if Parsed.HasRouter then
+      UsesLine := UsesLine + ', BVRouting';
+    if Parsed.ScriptUses <> '' then
+      UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
+    // Automatically import all compiled component units for auto-registration
+    for i := 0 to AllUnits.Count - 1 do
+    begin
+      if (AllUnits[i] <> 'uApp') and (UniqueUnits.IndexOf(AllUnits[i]) < 0) then
+      begin
+        UniqueUnits.Add(AllUnits[i]);
+        UsesLine := UsesLine + ', ' + AllUnits[i];
+      end;
+    end;
 
   // Data fields
   DataCode := '';
@@ -1162,11 +1168,10 @@ begin
     GenerateStyleInjection(Parsed.Style);
 
   // Registra componentes
-  for i := 0 to AllUnits.Count - 1 do
+  for i := 0 to UniqueUnits.Count - 1 do
   begin
-    if AllUnits[i] <> 'uApp' then
-      Result := Result + '  asm console.log("[Init] Registering ' + AllUnits[i] + '..."); end;' + #10 +
-               '  ' + 'Register_' + AllUnits[i] + ';' + #10;
+    Result := Result + '  asm console.log("[Init] Registering ' + UniqueUnits[i] + '..."); end;' + #10 +
+             '  ' + 'Register_' + UniqueUnits[i] + ';' + #10;
   end;
 
   Result := Result + #10;
@@ -1220,6 +1225,9 @@ begin
     'end;' + #10 +
     #10 +
     'end.' + #10;
+  finally
+    UniqueUnits.Free;
+  end;
 end;
 
 { Generates the main entry point program (main.pas) }
@@ -2138,6 +2146,19 @@ begin
     end
     else
       DownloadURL := 'https://github.com/blaisevue/blaise-ui-mobile/releases/latest/download/blaise-ui-mobile.zip';
+  end
+  else if (AliasLower = 'charts') or (AliasLower = 'blaise-charts') then
+  begin
+    WriteLn('Installing official package: blaise-charts ...');
+    PkgSource := GetPackagesPath + 'blaise-charts';
+    if DirectoryExists(PkgSource) then
+    begin
+      CopyDir(PkgSource, LibPath + 'blaise-charts', []);
+      WriteLn('Package "blaise-charts" installed successfully in lib/blaise-charts/.');
+      Exit;
+    end
+    else
+      DownloadURL := 'https://github.com/blaisevue/blaise-charts/releases/latest/download/blaise-charts.zip';
   end
   else
     DownloadURL := URL;
@@ -8397,7 +8418,7 @@ begin
     WriteLn('    bv list v              Lists views');
     WriteLn('    bv list t              Lists test files');
     WriteLn('    bv lib list            Lists all installed components in lib/');
-    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile) or from URL');
+    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile, charts) or from URL');
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
     WriteLn('    bv theme list          Lists available installed themes');
     WriteLn('    bv theme use <name>    Switches active project theme in index.html');

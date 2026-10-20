@@ -1,6 +1,8 @@
 ﻿rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
+  this.MaxLongint = 0x7fffffff;
+  this.Maxint = 2147483647;
   rtl.createClass(this,"TObject",null,function () {
     this.$init = function () {
     };
@@ -11,12 +13,35 @@
     this.BeforeDestruction = function () {
     };
   });
+  this.Random = function (Range) {
+    return Math.floor(Math.random()*Range);
+  };
   this.Copy = function (S, Index, Size) {
     if (Index<1) Index = 1;
     return (Size>0) ? S.substring(Index-1,Index+Size-1) : "";
   };
+  this.Copy$1 = function (S, Index) {
+    if (Index<1) Index = 1;
+    return S.substr(Index-1);
+  };
+  this.Delete = function (S, Index, Size) {
+    var h = "";
+    if ((Index < 1) || (Index > S.get().length) || (Size <= 0)) return;
+    h = S.get();
+    S.set($mod.Copy(h,1,Index - 1) + $mod.Copy$1(h,Index + Size));
+  };
   this.Pos = function (Search, InString) {
     return InString.indexOf(Search)+1;
+  };
+  this.Insert = function (Insertion, Target, Index) {
+    var t = "";
+    if (Insertion === "") return;
+    t = Target.get();
+    if (Index < 1) {
+      Target.set(Insertion + t)}
+     else if (Index > t.length) {
+      Target.set(t + Insertion)}
+     else Target.set($mod.Copy(t,1,Index - 1) + Insertion + $mod.Copy(t,Index,t.length));
   };
   this.Assigned = function (V) {
     return (V!=undefined) && (V!=null) && (!rtl.isArray(V) || (V.length > 0));
@@ -45,6 +70,93 @@ rtl.module("SysUtils",["System","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  rtl.recNewT(this,"TFormatSettings",function () {
+    this.CurrencyDecimals = 0;
+    this.CurrencyFormat = 0;
+    this.CurrencyString = "";
+    this.DateSeparator = "\x00";
+    this.DecimalSeparator = "";
+    this.LongDateFormat = "";
+    this.LongTimeFormat = "";
+    this.NegCurrFormat = 0;
+    this.ShortDateFormat = "";
+    this.ShortTimeFormat = "";
+    this.ThousandSeparator = "";
+    this.TimeAMString = "";
+    this.TimePMString = "";
+    this.TimeSeparator = "\x00";
+    this.TwoDigitYearCenturyWindow = 0;
+    this.InitLocaleHandler = null;
+    this.$new = function () {
+      var r = Object.create(this);
+      r.DateTimeToStrFormat = rtl.arraySetLength(null,"",2);
+      r.LongDayNames = rtl.arraySetLength(null,"",7);
+      r.LongMonthNames = rtl.arraySetLength(null,"",12);
+      r.ShortDayNames = rtl.arraySetLength(null,"",7);
+      r.ShortMonthNames = rtl.arraySetLength(null,"",12);
+      return r;
+    };
+    this.$eq = function (b) {
+      return (this.CurrencyDecimals === b.CurrencyDecimals) && (this.CurrencyFormat === b.CurrencyFormat) && (this.CurrencyString === b.CurrencyString) && (this.DateSeparator === b.DateSeparator) && rtl.arrayEq(this.DateTimeToStrFormat,b.DateTimeToStrFormat) && (this.DecimalSeparator === b.DecimalSeparator) && (this.LongDateFormat === b.LongDateFormat) && rtl.arrayEq(this.LongDayNames,b.LongDayNames) && rtl.arrayEq(this.LongMonthNames,b.LongMonthNames) && (this.LongTimeFormat === b.LongTimeFormat) && (this.NegCurrFormat === b.NegCurrFormat) && (this.ShortDateFormat === b.ShortDateFormat) && rtl.arrayEq(this.ShortDayNames,b.ShortDayNames) && rtl.arrayEq(this.ShortMonthNames,b.ShortMonthNames) && (this.ShortTimeFormat === b.ShortTimeFormat) && (this.ThousandSeparator === b.ThousandSeparator) && (this.TimeAMString === b.TimeAMString) && (this.TimePMString === b.TimePMString) && (this.TimeSeparator === b.TimeSeparator) && (this.TwoDigitYearCenturyWindow === b.TwoDigitYearCenturyWindow);
+    };
+    this.$assign = function (s) {
+      this.CurrencyDecimals = s.CurrencyDecimals;
+      this.CurrencyFormat = s.CurrencyFormat;
+      this.CurrencyString = s.CurrencyString;
+      this.DateSeparator = s.DateSeparator;
+      this.DateTimeToStrFormat = s.DateTimeToStrFormat.slice(0);
+      this.DecimalSeparator = s.DecimalSeparator;
+      this.LongDateFormat = s.LongDateFormat;
+      this.LongDayNames = s.LongDayNames.slice(0);
+      this.LongMonthNames = s.LongMonthNames.slice(0);
+      this.LongTimeFormat = s.LongTimeFormat;
+      this.NegCurrFormat = s.NegCurrFormat;
+      this.ShortDateFormat = s.ShortDateFormat;
+      this.ShortDayNames = s.ShortDayNames.slice(0);
+      this.ShortMonthNames = s.ShortMonthNames.slice(0);
+      this.ShortTimeFormat = s.ShortTimeFormat;
+      this.ThousandSeparator = s.ThousandSeparator;
+      this.TimeAMString = s.TimeAMString;
+      this.TimePMString = s.TimePMString;
+      this.TimeSeparator = s.TimeSeparator;
+      this.TwoDigitYearCenturyWindow = s.TwoDigitYearCenturyWindow;
+      return this;
+    };
+    this.GetJSLocale = function () {
+      return Intl.DateTimeFormat().resolvedOptions().locale;
+    };
+    this.Create = function () {
+      var Result = $mod.TFormatSettings.$new();
+      Result.$assign($mod.TFormatSettings.Create$1($mod.TFormatSettings.GetJSLocale()));
+      return Result;
+    };
+    this.Create$1 = function (ALocale) {
+      var Result = $mod.TFormatSettings.$new();
+      Result.LongDayNames = $impl.DefaultLongDayNames.slice(0);
+      Result.ShortDayNames = $impl.DefaultShortDayNames.slice(0);
+      Result.ShortMonthNames = $impl.DefaultShortMonthNames.slice(0);
+      Result.LongMonthNames = $impl.DefaultLongMonthNames.slice(0);
+      Result.DateTimeToStrFormat[0] = "c";
+      Result.DateTimeToStrFormat[1] = "f";
+      Result.DateSeparator = "-";
+      Result.TimeSeparator = ":";
+      Result.ShortDateFormat = "yyyy-mm-dd";
+      Result.LongDateFormat = "ddd, yyyy-mm-dd";
+      Result.ShortTimeFormat = "hh:nn";
+      Result.LongTimeFormat = "hh:nn:ss";
+      Result.DecimalSeparator = ".";
+      Result.ThousandSeparator = ",";
+      Result.TimeAMString = "AM";
+      Result.TimePMString = "PM";
+      Result.TwoDigitYearCenturyWindow = 50;
+      Result.CurrencyFormat = 0;
+      Result.NegCurrFormat = 0;
+      Result.CurrencyDecimals = 2;
+      Result.CurrencyString = "$";
+      if ($mod.TFormatSettings.InitLocaleHandler != null) $mod.TFormatSettings.InitLocaleHandler($mod.UpperCase(ALocale),$mod.TFormatSettings.$clone(Result));
+      return Result;
+    };
+  },true);
   rtl.createClass(this,"Exception",pas.System.TObject,function () {
   });
   rtl.createClass(this,"EExternal",this.Exception,function () {
@@ -57,6 +169,12 @@ rtl.module("SysUtils",["System","JS"],function () {
   });
   rtl.createClass(this,"EAbstractError",this.Exception,function () {
   });
+  this.TrimLeft = function (S) {
+    return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'');
+  };
+  this.UpperCase = function (s) {
+    return s.toUpperCase();
+  };
   this.LowerCase = function (s) {
     return s.toLowerCase();
   };
@@ -65,20 +183,413 @@ rtl.module("SysUtils",["System","JS"],function () {
     Result = "" + Value;
     return Result;
   };
+  this.TryStrToInt$2 = function (S, res) {
+    var Result = false;
+    Result = $impl.IntTryStrToInt(S,res,$mod.FormatSettings.DecimalSeparator);
+    return Result;
+  };
+  this.StrToIntDef = function (S, aDef) {
+    var Result = 0;
+    var R = 0;
+    if ($mod.TryStrToInt$2(S,{get: function () {
+        return R;
+      }, set: function (v) {
+        R = v;
+      }})) {
+      Result = R}
+     else Result = aDef;
+    return Result;
+  };
+  this.TFloatFormat = {"0": "ffFixed", ffFixed: 0, "1": "ffGeneral", ffGeneral: 1, "2": "ffExponent", ffExponent: 2, "3": "ffNumber", ffNumber: 3, "4": "ffCurrency", ffCurrency: 4};
+  this.FloatToStr = function (Value) {
+    var Result = "";
+    Result = $mod.FloatToStr$1(Value,$mod.FormatSettings);
+    return Result;
+  };
+  this.FloatToStr$1 = function (Value, aSettings) {
+    var Result = "";
+    Result = $mod.FloatToStrF$1(Value,$mod.TFloatFormat.ffGeneral,15,0,aSettings);
+    return Result;
+  };
+  this.FloatToStrF$1 = function (Value, format, Precision, Digits, aSettings) {
+    var Result = "";
+    var TS = "";
+    var DS = "";
+    DS = aSettings.DecimalSeparator;
+    TS = aSettings.ThousandSeparator;
+    var $tmp = format;
+    if ($tmp === $mod.TFloatFormat.ffGeneral) {
+      Result = $impl.FormatGeneralFloat(Value,Precision,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffExponent) {
+      Result = $impl.FormatExponentFloat(Value,Precision,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffFixed) {
+      Result = $impl.FormatFixedFloat(Value,Digits,DS)}
+     else if ($tmp === $mod.TFloatFormat.ffNumber) {
+      Result = $impl.FormatNumberFloat(Value,Digits,DS,TS)}
+     else if ($tmp === $mod.TFloatFormat.ffCurrency) Result = $impl.FormatNumberCurrency(Value * 10000,Digits,aSettings);
+    if ((format !== $mod.TFloatFormat.ffCurrency) && (Result.length > 1) && (Result.charAt(0) === "-")) $impl.RemoveLeadingNegativeSign({get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},DS,TS);
+    return Result;
+  };
+  this.TimeSeparator = "\x00";
+  this.DateSeparator = "\x00";
+  this.ShortDateFormat = "";
+  this.LongDateFormat = "";
+  this.ShortTimeFormat = "";
+  this.LongTimeFormat = "";
+  this.DecimalSeparator = "";
+  this.ThousandSeparator = "";
+  this.TimeAMString = "";
+  this.TimePMString = "";
   this.ShortMonthNames = rtl.arraySetLength(null,"",12);
   this.LongMonthNames = rtl.arraySetLength(null,"",12);
   this.ShortDayNames = rtl.arraySetLength(null,"",7);
   this.LongDayNames = rtl.arraySetLength(null,"",7);
+  this.FormatSettings = this.TFormatSettings.$new();
+  this.CurrencyFormat = 0;
+  this.NegCurrFormat = 0;
+  this.CurrencyDecimals = 0;
+  this.CurrencyString = "";
   $mod.$implcode = function () {
     $impl.DefaultShortMonthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    $impl.maxdigits = 15;
+    $impl.ReplaceDecimalSep = function (S, DS) {
+      var Result = "";
+      var P = 0;
+      P = pas.System.Pos(".",S);
+      if (P > 0) {
+        Result = pas.System.Copy(S,1,P - 1) + DS + pas.System.Copy(S,P + 1,S.length - P)}
+       else Result = S;
+      return Result;
+    };
+    $impl.FormatGeneralFloat = function (Value, Precision, DS) {
+      var Result = "";
+      var P = 0;
+      var PE = 0;
+      var Q = 0;
+      var Exponent = 0;
+      if ((Precision === -1) || (Precision > 15)) Precision = 15;
+      Result = rtl.floatToStr(Value,Precision + 7);
+      Result = $mod.TrimLeft(Result);
+      P = pas.System.Pos(".",Result);
+      if (P === 0) return Result;
+      PE = pas.System.Pos("E",Result);
+      if (PE === 0) {
+        Result = $impl.ReplaceDecimalSep(Result,DS);
+        return Result;
+      };
+      Q = PE + 2;
+      Exponent = 0;
+      while (Q <= Result.length) {
+        Exponent = ((Exponent * 10) + Result.charCodeAt(Q - 1)) - 48;
+        Q += 1;
+      };
+      if (Result.charAt((PE + 1) - 1) === "-") Exponent = -Exponent;
+      if (((P + Exponent) < PE) && (Exponent > -6)) {
+        Result = rtl.strSetLength(Result,PE - 1);
+        if (Exponent >= 0) {
+          for (var $l = 0, $end = Exponent - 1; $l <= $end; $l++) {
+            Q = $l;
+            Result = rtl.setCharAt(Result,P - 1,Result.charAt((P + 1) - 1));
+            P += 1;
+          };
+          Result = rtl.setCharAt(Result,P - 1,".");
+          P = 1;
+          if (Result.charAt(P - 1) === "-") P += 1;
+          while ((Result.charAt(P - 1) === "0") && (P < Result.length) && (pas.System.Copy(Result,P + 1,DS.length) !== DS)) pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P,1);
+        } else {
+          pas.System.Insert(pas.System.Copy("00000",1,-Exponent),{get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P - 1);
+          Result = rtl.setCharAt(Result,P - Exponent - 1,Result.charAt(P - Exponent - 1 - 1));
+          Result = rtl.setCharAt(Result,P - 1,".");
+          if (Exponent !== -1) Result = rtl.setCharAt(Result,P - Exponent - 1 - 1,"0");
+        };
+        Q = Result.length;
+        while ((Q > 0) && (Result.charAt(Q - 1) === "0")) Q -= 1;
+        if (Result.charAt(Q - 1) === ".") Q -= 1;
+        if ((Q === 0) || ((Q === 1) && (Result.charAt(0) === "-"))) {
+          Result = "0"}
+         else Result = rtl.strSetLength(Result,Q);
+      } else {
+        while (Result.charAt(PE - 1 - 1) === "0") {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE - 1,1);
+          PE -= 1;
+        };
+        if (Result.charAt(PE - 1 - 1) === DS) {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE - 1,1);
+          PE -= 1;
+        };
+        if (Result.charAt((PE + 1) - 1) === "+") {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},PE + 1,1)}
+         else PE += 1;
+        while (Result.charAt((PE + 1) - 1) === "0") pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},PE + 1,1);
+      };
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatExponentFloat = function (Value, Precision, Digits, DS) {
+      var Result = "";
+      var P = 0;
+      DS = $mod.FormatSettings.DecimalSeparator;
+      if ((Precision === -1) || (Precision > 15)) Precision = 15;
+      Result = rtl.floatToStr(Value,Precision + 7);
+      while (Result.charAt(0) === " ") pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos("E",Result);
+      if (P === 0) {
+        Result = $impl.ReplaceDecimalSep(Result,DS);
+        return Result;
+      };
+      P += 2;
+      if (Digits > 4) Digits = 4;
+      Digits = (Result.length - P - Digits) + 1;
+      if (Digits < 0) {
+        pas.System.Insert(pas.System.Copy("0000",1,-Digits),{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P)}
+       else while ((Digits > 0) && (Result.charAt(P - 1) === "0")) {
+        pas.System.Delete({get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P,1);
+        if (P > Result.length) {
+          pas.System.Delete({get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P - 2,2);
+          break;
+        };
+        Digits -= 1;
+      };
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatFixedFloat = function (Value, Digits, DS) {
+      var Result = "";
+      if (Digits === -1) {
+        Digits = 2}
+       else if (Digits > 18) Digits = 18;
+      Result = rtl.floatToStr(Value,0,Digits);
+      if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      return Result;
+    };
+    $impl.FormatNumberFloat = function (Value, Digits, DS, TS) {
+      var Result = "";
+      var P = 0;
+      if (Digits === -1) {
+        Digits = 2}
+       else if (Digits > 15) Digits = 15;
+      Result = rtl.floatToStr(Value,0,Digits);
+      if ((Result !== "") && (Result.charAt(0) === " ")) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos(".",Result);
+      if (P <= 0) P = Result.length + 1;
+      Result = $impl.ReplaceDecimalSep(Result,DS);
+      P -= 3;
+      if ((TS !== "") && (TS !== "\x00")) while (P > 1) {
+        if (Result.charAt(P - 1 - 1) !== "-") pas.System.Insert(TS,{get: function () {
+            return Result;
+          }, set: function (v) {
+            Result = v;
+          }},P);
+        P -= 3;
+      };
+      return Result;
+    };
+    $impl.RemoveLeadingNegativeSign = function (AValue, DS, aThousandSeparator) {
+      var Result = false;
+      var i = 0;
+      var TS = "";
+      var StartPos = 0;
+      Result = false;
+      StartPos = 2;
+      TS = aThousandSeparator;
+      for (var $l = StartPos, $end = AValue.get().length; $l <= $end; $l++) {
+        i = $l;
+        Result = (AValue.get().charCodeAt(i - 1) in rtl.createSet(48,DS.charCodeAt(),69,43)) || (AValue.get().charAt(i - 1) === TS);
+        if (!Result) break;
+      };
+      if (Result && (AValue.get().charAt(0) === "-")) pas.System.Delete(AValue,1,1);
+      return Result;
+    };
+    $impl.FormatNumberCurrency = function (Value, Digits, aSettings) {
+      var Result = "";
+      var Negative = false;
+      var P = 0;
+      var CS = "";
+      var DS = "";
+      var TS = "";
+      DS = aSettings.DecimalSeparator;
+      TS = aSettings.ThousandSeparator;
+      CS = aSettings.CurrencyString;
+      if (Digits === -1) {
+        Digits = aSettings.CurrencyDecimals}
+       else if (Digits > 18) Digits = 18;
+      Result = rtl.floatToStr(Value / 10000,0,Digits);
+      Negative = Result.charAt(0) === "-";
+      if (Negative) pas.System.Delete({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},1,1);
+      P = pas.System.Pos(".",Result);
+      if (TS !== "") {
+        if (P !== 0) {
+          Result = $impl.ReplaceDecimalSep(Result,DS)}
+         else P = Result.length + 1;
+        P -= 3;
+        while (P > 1) {
+          pas.System.Insert(TS,{get: function () {
+              return Result;
+            }, set: function (v) {
+              Result = v;
+            }},P);
+          P -= 3;
+        };
+      };
+      if (Negative) $impl.RemoveLeadingNegativeSign({get: function () {
+          return Result;
+        }, set: function (v) {
+          Result = v;
+        }},DS,TS);
+      if (!Negative) {
+        var $tmp = aSettings.CurrencyFormat;
+        if ($tmp === 0) {
+          Result = CS + Result}
+         else if ($tmp === 1) {
+          Result = Result + CS}
+         else if ($tmp === 2) {
+          Result = CS + " " + Result}
+         else if ($tmp === 3) Result = Result + " " + CS;
+      } else {
+        var $tmp1 = aSettings.NegCurrFormat;
+        if ($tmp1 === 0) {
+          Result = "(" + CS + Result + ")"}
+         else if ($tmp1 === 1) {
+          Result = "-" + CS + Result}
+         else if ($tmp1 === 2) {
+          Result = CS + "-" + Result}
+         else if ($tmp1 === 3) {
+          Result = CS + Result + "-"}
+         else if ($tmp1 === 4) {
+          Result = "(" + Result + CS + ")"}
+         else if ($tmp1 === 5) {
+          Result = "-" + Result + CS}
+         else if ($tmp1 === 6) {
+          Result = Result + "-" + CS}
+         else if ($tmp1 === 7) {
+          Result = Result + CS + "-"}
+         else if ($tmp1 === 8) {
+          Result = "-" + Result + " " + CS}
+         else if ($tmp1 === 9) {
+          Result = "-" + CS + " " + Result}
+         else if ($tmp1 === 10) {
+          Result = Result + " " + CS + "-"}
+         else if ($tmp1 === 11) {
+          Result = CS + " " + Result + "-"}
+         else if ($tmp1 === 12) {
+          Result = CS + " " + "-" + Result}
+         else if ($tmp1 === 13) {
+          Result = Result + "-" + " " + CS}
+         else if ($tmp1 === 14) {
+          Result = "(" + CS + " " + Result + ")"}
+         else if ($tmp1 === 15) Result = "(" + Result + " " + CS + ")";
+      };
+      return Result;
+    };
+    $impl.IntTryStrToInt = function (S, res, aSep) {
+      var Result = false;
+      var Radix = 10;
+      var N = "";
+      var J = undefined;
+      N = S;
+      if ((pas.System.Pos(aSep,N) !== 0) || (pas.System.Pos(".",N) !== 0)) return false;
+      var $tmp = pas.System.Copy(N,1,1);
+      if ($tmp === "$") {
+        Radix = 16}
+       else if ($tmp === "&") {
+        Radix = 8}
+       else if ($tmp === "%") Radix = 2;
+      if ((Radix !== 16) && (pas.System.Pos("e",$mod.LowerCase(N)) !== 0)) return false;
+      if (Radix !== 10) pas.System.Delete({get: function () {
+          return N;
+        }, set: function (v) {
+          N = v;
+        }},1,1);
+      J = parseInt(N,Radix);
+      Result = !isNaN(J);
+      if (Result) res.set(rtl.trunc(J));
+      return Result;
+    };
+    $impl.InitGlobalFormatSettings = function () {
+      $mod.FormatSettings.$assign($mod.TFormatSettings.Create());
+      $mod.TimeSeparator = $mod.FormatSettings.TimeSeparator;
+      $mod.DateSeparator = $mod.FormatSettings.DateSeparator;
+      $mod.ShortDateFormat = $mod.FormatSettings.ShortDateFormat;
+      $mod.LongDateFormat = $mod.FormatSettings.LongDateFormat;
+      $mod.ShortTimeFormat = $mod.FormatSettings.ShortTimeFormat;
+      $mod.LongTimeFormat = $mod.FormatSettings.LongTimeFormat;
+      $mod.DecimalSeparator = $mod.FormatSettings.DecimalSeparator;
+      $mod.ThousandSeparator = $mod.FormatSettings.ThousandSeparator;
+      $mod.TimeAMString = $mod.FormatSettings.TimeAMString;
+      $mod.TimePMString = $mod.FormatSettings.TimePMString;
+      $mod.CurrencyFormat = $mod.FormatSettings.CurrencyFormat;
+      $mod.NegCurrFormat = $mod.FormatSettings.NegCurrFormat;
+      $mod.CurrencyDecimals = $mod.FormatSettings.CurrencyDecimals;
+      $mod.CurrencyString = $mod.FormatSettings.CurrencyString;
+    };
     $impl.DoClassRef = function (C) {
       if (C === null) ;
     };
   };
   $mod.$init = function () {
+    (function () {
+      $impl.InitGlobalFormatSettings();
+    })();
     $impl.DoClassRef($mod.EInvalidCast);
     $impl.DoClassRef($mod.EAbstractError);
     $impl.DoClassRef($mod.ERangeError);
@@ -4265,7 +4776,368 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("about-page",comp);
   };
 });
-rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVChartDataset",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FJS = null;
+    };
+    this.$final = function () {
+      this.FJS = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ALabel) {
+      this.FJS = new Object();
+      this.FJS["data"] = new Array();
+      if (ALabel !== "") this.FJS["label"] = ALabel;
+      this.FJS["borderWidth"] = 1;
+      return this;
+    };
+    this.SetData$1 = function (AData) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = rtl.length(AData) - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(AData[i]);
+      };
+      this.FJS["data"] = Arr;
+      Result = this;
+      return Result;
+    };
+    this.BackgroundColor = function (AColor) {
+      var Result = null;
+      this.FJS["backgroundColor"] = AColor;
+      Result = this;
+      return Result;
+    };
+    this.BackgroundColors = function (AColors) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = rtl.length(AColors) - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(AColors[i]);
+      };
+      this.FJS["backgroundColor"] = Arr;
+      Result = this;
+      return Result;
+    };
+    this.BorderColor = function (AColor) {
+      var Result = null;
+      this.FJS["borderColor"] = AColor;
+      Result = this;
+      return Result;
+    };
+    this.BorderColors = function (AColors) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = rtl.length(AColors) - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(AColors[i]);
+      };
+      this.FJS["borderColor"] = Arr;
+      Result = this;
+      return Result;
+    };
+    this.Fill = function (AFill) {
+      var Result = null;
+      this.FJS["fill"] = AFill;
+      Result = this;
+      return Result;
+    };
+    this.Tension = function (ATension) {
+      var Result = null;
+      this.FJS["tension"] = ATension;
+      Result = this;
+      return Result;
+    };
+    this.PointRadius = function (ARadius) {
+      var Result = null;
+      this.FJS["pointRadius"] = ARadius;
+      Result = this;
+      return Result;
+    };
+    this.ToJS = function () {
+      var Result = null;
+      Result = this.FJS;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVChartData",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FJS = null;
+    };
+    this.$final = function () {
+      this.FJS = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      this.FJS = new Object();
+      this.FJS["labels"] = new Array();
+      this.FJS["datasets"] = new Array();
+      return this;
+    };
+    this.Labels = function (ALabels) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = rtl.length(ALabels) - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(ALabels[i]);
+      };
+      this.FJS["labels"] = Arr;
+      Result = this;
+      return Result;
+    };
+    this.AddDataset = function (ADataset) {
+      var Result = null;
+      this.FJS["datasets"].push(ADataset.ToJS());
+      Result = ADataset;
+      return Result;
+    };
+    this.AddDataset$2 = function (ALabel, AData, ABgColor, ABorderColor) {
+      var Result = null;
+      var Ds = null;
+      Ds = $mod.TBVChartDataset.$create("Create$1",[ALabel]);
+      Ds.SetData$1(AData);
+      if (ABgColor !== "") {
+        Ds.BackgroundColor(ABgColor)}
+       else Ds.BackgroundColor($mod.TBVChartPalette.Color(this.DatasetCount(),0.4));
+      if (ABorderColor !== "") {
+        Ds.BorderColor(ABorderColor)}
+       else Ds.BorderColor($mod.TBVChartPalette.Color(this.DatasetCount(),1.0));
+      this.AddDataset(Ds);
+      Result = Ds;
+      return Result;
+    };
+    this.AddMultiColorDataset$1 = function (ALabel, AData, AColors) {
+      var Result = null;
+      var Ds = null;
+      Ds = $mod.TBVChartDataset.$create("Create$1",[ALabel]);
+      Ds.SetData$1(AData);
+      Ds.BackgroundColors(AColors);
+      Ds.BorderColors(AColors);
+      this.AddDataset(Ds);
+      Result = Ds;
+      return Result;
+    };
+    this.DatasetCount = function () {
+      var Result = 0;
+      if (this.FJS["datasets"] != null) {
+        Result = this.FJS["datasets"].length & 0xFFFFFFFF}
+       else Result = 0;
+      return Result;
+    };
+    this.ToJS = function () {
+      var Result = null;
+      Result = this.FJS;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVChartOptions",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FJS = null;
+    };
+    this.$final = function () {
+      this.FJS = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.EnsurePlugins = function () {
+      var Result = null;
+      if (this.FJS["plugins"] == null) this.FJS["plugins"] = new Object();
+      Result = this.FJS["plugins"];
+      return Result;
+    };
+    this.EnsureScales = function () {
+      var Result = null;
+      if (this.FJS["scales"] == null) this.FJS["scales"] = new Object();
+      Result = this.FJS["scales"];
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.FJS = new Object();
+      this.FJS["responsive"] = true;
+      this.FJS["maintainAspectRatio"] = false;
+      return this;
+    };
+    this.Responsive = function (AVal) {
+      var Result = null;
+      this.FJS["responsive"] = AVal;
+      Result = this;
+      return Result;
+    };
+    this.MaintainAspectRatio = function (AVal) {
+      var Result = null;
+      this.FJS["maintainAspectRatio"] = AVal;
+      Result = this;
+      return Result;
+    };
+    this.Legend = function (APosition, ADisplay) {
+      var Result = null;
+      var Plugins = null;
+      var LegObj = null;
+      Plugins = this.EnsurePlugins();
+      LegObj = new Object();
+      LegObj["display"] = ADisplay;
+      LegObj["position"] = APosition;
+      Plugins["legend"] = LegObj;
+      Result = this;
+      return Result;
+    };
+    this.Tooltip = function (AEnabled) {
+      var Result = null;
+      var Plugins = null;
+      var ToolObj = null;
+      Plugins = this.EnsurePlugins();
+      ToolObj = new Object();
+      ToolObj["enabled"] = AEnabled;
+      Plugins["tooltip"] = ToolObj;
+      Result = this;
+      return Result;
+    };
+    this.Scales = function (AXGrid, AYGrid, AYBeginAtZero) {
+      var Result = null;
+      var S = null;
+      var XObj = null;
+      var YObj = null;
+      var XGridObj = null;
+      var YGridObj = null;
+      var TicksObj = null;
+      S = this.EnsureScales();
+      XObj = new Object();
+      XGridObj = new Object();
+      XGridObj["display"] = AXGrid;
+      XObj["grid"] = XGridObj;
+      S["x"] = XObj;
+      YObj = new Object();
+      YGridObj = new Object();
+      YGridObj["display"] = AYGrid;
+      YObj["grid"] = YGridObj;
+      TicksObj = new Object();
+      TicksObj["beginAtZero"] = AYBeginAtZero;
+      YObj["ticks"] = TicksObj;
+      S["y"] = YObj;
+      Result = this;
+      return Result;
+    };
+    this.ToJS = function () {
+      var Result = null;
+      Result = this.FJS;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVChartPalette",pas.System.TObject,function () {
+    this.Color = function (AIndex, Alpha) {
+      var Result = "";
+      var Colors = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#ec4899","#6366f1"];
+      var Idx = 0;
+      Idx = Math.abs(AIndex) % 8;
+      if (Alpha < 1.0) {
+        Result = this.HexToRgba(Colors[Idx],Alpha)}
+       else Result = Colors[Idx];
+      return Result;
+    };
+    this.HexToRgba = function (AHex, Alpha) {
+      var Result = "";
+      var H = "";
+      var R = 0;
+      var G = 0;
+      var B = 0;
+      H = AHex;
+      if ((H.length > 0) && (H.charAt(0) === "#")) H = pas.System.Copy(H,2,2147483647);
+      if (H.length === 3) H = H.charAt(0) + H.charAt(0) + H.charAt(1) + H.charAt(1) + H.charAt(2) + H.charAt(2);
+      if (H.length === 6) {
+        R = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,1,2),0);
+        G = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,3,2),0);
+        B = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,5,2),0);
+        Result = "rgba(" + pas.SysUtils.IntToStr(R) + ", " + pas.SysUtils.IntToStr(G) + ", " + pas.SysUtils.IntToStr(B) + ", " + pas.SysUtils.FloatToStr(Alpha) + ")";
+      } else Result = AHex;
+      return Result;
+    };
+    this.Emerald = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#059669","#10b981","#34d399","#6ee7b7","#a7f3d0","#047857"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
+    this.Sunset = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#f43f5e","#fb923c","#facc15","#a855f7","#ec4899","#f97316"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
+    this.Neon = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#00f0ff","#ff007f","#7000ff","#00ff66","#ffe600","#ff3366"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
+    this.Cyberpunk = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#fcee0a","#00f0ff","#ff003c","#711c91","#133e7c","#0abdc6"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
+  });
+  $mod.$init = function () {
+    // Expose BlaiseCharts globally for window.$charts / __BV_CORE__.charts
+    if (typeof window !== 'undefined') {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+      window.__BV_CORE__.charts = {
+        types: {
+          bar: 'bar',
+          line: 'line',
+          pie: 'pie',
+          doughnut: 'doughnut',
+          radar: 'radar',
+          polarArea: 'polarArea',
+          scatter: 'scatter',
+          bubble: 'bubble'
+        }
+      };
+      window.$charts = window.__BV_CORE__.charts;
+    };
+  };
+});
+rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BlaiseCharts"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCharts = function () {
@@ -4273,10 +5145,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 20px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: white;     padding: 30px;     border-radius: 12px;     box-shadow: 0 4px 6px rgba(0,0,0,0.05);     margin-bottom: 30px;     text-align: center;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));     gap: 20px;   }   .chart-item {     background: white;     padding: 20px;     border-radius: 12px;     box-shadow: 0 2px 8px rgba(0,0,0,0.05);     display: flex;     flex-direction: column;     align-items: center;   }   .chart-item h3 {     margin-bottom: 20px;     color: #1e293b;     width: 100%;     border-bottom: 1px solid #e2e8f0;     padding-bottom: 10px;   }";
+    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + "      <h1>Dashboard de Gráficos (BlaiseUI Chart)</h1>" + "      <p>Todos os componentes abaixo são componentes reativos nativos do BlaiseUI alimentados por Chart.js.</p>" + "    </div>" + "" + '    <div class="chart-grid">' + "      <!-- 1. Barras -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Barras</h3>" + '        <bv-bar :data="barData" :options="chartOptions"></bv-bar>' + '        <bv-btn variant="primary" @click="randomizeData">Randomizar Dados</bv-btn>' + "      </div>" + "" + "      <!-- 2. Linhas -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Linha</h3>" + '        <bv-line :data="lineData" :options="chartOptions"></bv-line>' + "      </div>" + "" + "      <!-- 3. Pizza -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Pizza</h3>" + '        <bv-pie :data="pieData" :options="pieOptions"></bv-pie>' + "      </div>" + "" + "      <!-- 4. Rosca -->" + '      <div class="chart-item">' + "        <h3>Gráfico de Rosca (Doughnut)</h3>" + '        <bv-doughnut :data="pieData" :options="pieOptions"></bv-doughnut>' + "      </div>" + "" + "      <!-- 5. Área Polar -->" + '      <div class="chart-item">' + "        <h3>Área Polar</h3>" + '        <bv-polar-area :data="pieData" :options="pieOptions"></bv-polar-area>' + "      </div>" + "" + "      <!-- 6. Radar -->" + '      <div class="chart-item">' + "        <h3>Gráfico Radar</h3>" + '        <bv-radar :data="radarData" :options="chartOptions"></bv-radar>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Gráficos 100% reativos renderizados via HTML5 Canvas (Chart.js) com classes tipadas em Object Pascal." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + '    <div class="chart-grid">' + "      <!-- 1. Barras Tipadas (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (bv-bar-chart)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2. Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários Ativos & Conexões WS (bv-line-chart)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 3. Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (bv-pie-chart)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 4. Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (bv-doughnut-chart)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 5. Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (bv-polar-area-chart)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 6. Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (bv-radar-chart)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -4286,73 +5158,102 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       d["barData"] = null;
       d["lineData"] = null;
       d["pieData"] = null;
+      d["doughnutData"] = null;
       d["radarData"] = null;
+      d["clickedPointInfo"] = "";
+      d["currentPalette"] = "Emerald";
       Result = d;
       return Result;
     };
     m = new Object();
-    m["initData"] = function (_this) {
-      this.chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'top' },
-          tooltip: { enabled: true }
-        }
-      };
-      this.pieOptions = {
-        responsive: true,
-        maintainAspectRatio: false
-      };
-      this.barData = {
-        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-        datasets: [{
-          label: 'Vendas 2026',
-          data: [12, 19, 3, 5, 2, 3],
-          backgroundColor: 'rgba(66, 184, 131, 0.5)',
-          borderColor: '#42b883',
-          borderWidth: 1
-        }]
-      };
-      this.lineData = {
-        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-        datasets: [{
-          label: 'Usuários Ativos',
-          data: [65, 59, 80, 81, 56, 55],
-          fill: true,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.1
-        }]
-      };
-      this.pieData = {
-        labels: ['Red', 'Blue', 'Green'],
-        datasets: [{
-          data: [300, 50, 100],
-          backgroundColor: ['#ef4444', '#3b82f6', '#10b981']
-        }]
-      };
-      this.radarData = {
-        labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
-        datasets: [{
-          label: 'Dev A',
-          data: [65, 59, 90, 81, 56, 55, 40],
-          fill: true,
-          backgroundColor: 'rgba(66, 184, 131, 0.2)',
-          borderColor: '#42b883'
-        }]
-      };
+    m["initCharts"] = function (_this) {
+      var BarModel = null;
+      var LineModel = null;
+      var PieModel = null;
+      var DoughnutModel = null;
+      var RadarModel = null;
+      var OptsModel = null;
+      var PieOptsModel = null;
+      OptsModel = pas.BlaiseCharts.TBVChartOptions.$create("Create$1");
+      OptsModel.Responsive(true).MaintainAspectRatio(false).Legend("top",true).Tooltip(true).Scales(true,true,true);
+      _this["chartOptions"] = OptsModel.ToJS();
+      PieOptsModel = pas.BlaiseCharts.TBVChartOptions.$create("Create$1");
+      PieOptsModel.Responsive(true).MaintainAspectRatio(false).Legend("bottom",true);
+      _this["pieOptions"] = PieOptsModel.ToJS();
+      BarModel = pas.BlaiseCharts.TBVChartData.$create("Create$1");
+      BarModel.Labels(["Jan","Fev","Mar","Abr","Mai","Jun"]);
+      BarModel.AddDataset$2("Vendas 2026",[14500,21800,18900,27400,31200,42000],"rgba(16, 185, 129, 0.6)","#10b981");
+      BarModel.AddDataset$2("Metas 2026",[12000,18000,20000,25000,30000,38000],"rgba(59, 130, 246, 0.5)","#3b82f6");
+      _this["barData"] = BarModel.ToJS();
+      LineModel = pas.BlaiseCharts.TBVChartData.$create("Create$1");
+      LineModel.Labels(["00:00","04:00","08:00","12:00","16:00","20:00"]);
+      LineModel.AddDataset$2("Conexões WebSocket",[320,180,840,1920,2450,1880],"rgba(99, 102, 241, 0.2)","#6366f1").Fill(true).Tension(0.35).PointRadius(5);
+      _this["lineData"] = LineModel.ToJS();
+      PieModel = pas.BlaiseCharts.TBVChartData.$create("Create$1");
+      PieModel.Labels(["Web (SPA)","Desktop (WebUI)","Mobile (Capacitor)","Backend REST"]);
+      PieModel.AddMultiColorDataset$1("Requisições",[45,25,20,10],["#3b82f6","#10b981","#f59e0b","#8b5cf6"]);
+      _this["pieData"] = PieModel.ToJS();
+      DoughnutModel = pas.BlaiseCharts.TBVChartData.$create("Create$1");
+      DoughnutModel.Labels(["Windows x64","Linux ARM/x64","Android","macOS"]);
+      DoughnutModel.AddMultiColorDataset$1("Instalações",[52,28,14,6],["#06b6d4","#10b981","#ec4899","#f59e0b"]);
+      _this["doughnutData"] = DoughnutModel.ToJS();
+      RadarModel = pas.BlaiseCharts.TBVChartData.$create("Create$1");
+      RadarModel.Labels(["Velocidade","Tipagem Pascal","Reatividade","Memória Baixa","Full-Stack","Multiplataforma"]);
+      RadarModel.AddDataset$2("BlaiseVue 4.0",[98,100,95,92,97,96],"rgba(16, 185, 129, 0.3)","#10b981").Fill(true);
+      _this["radarData"] = RadarModel.ToJS();
     };
     m["randomizeData"] = function (_this) {
-      const newValues = Array.from({length: 6}, () => Math.floor(Math.random() * 20));
-      this.barData = {
-        ...this.barData,
-        datasets: [{ ...this.barData.datasets[0], data: newValues }]
+      var NewData = null;
+      var i = 0;
+      var Val = 0;
+      NewData = new Array();
+      for (i = 0; i <= 5; i++) {
+        Val = 10000 + pas.System.Random(35000);
+        NewData.push(Val);
+      };
+      if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
+        this.barData.datasets[0].data = NewData;
+        this.barData = Object.assign({}, this.barData);
+      };
+      _this["clickedPointInfo"] = "Dados randomizados com sucesso!";
+    };
+    m["togglePalette"] = function (_this) {
+      var Pal = null;
+      var Cur = "";
+      Cur = "" + _this["currentPalette"];
+      if (Cur === "Emerald") {
+        _this["currentPalette"] = "Sunset";
+        Pal = pas.BlaiseCharts.TBVChartPalette.Sunset(4,0.7);
+      } else if (Cur === "Sunset") {
+        _this["currentPalette"] = "Cyberpunk";
+        Pal = pas.BlaiseCharts.TBVChartPalette.Cyberpunk(4,0.7);
+      } else if (Cur === "Cyberpunk") {
+        _this["currentPalette"] = "Neon";
+        Pal = pas.BlaiseCharts.TBVChartPalette.Neon(4,0.7);
+      } else {
+        _this["currentPalette"] = "Emerald";
+        Pal = pas.BlaiseCharts.TBVChartPalette.Emerald(4,0.7);
+      };
+      if (this.pieData && this.pieData.datasets && this.pieData.datasets[0]) {
+        this.pieData.datasets[0].backgroundColor = Pal;
+        this.pieData.datasets[0].borderColor = Pal;
+        this.pieData = Object.assign({}, this.pieData);
+      }
+      if (this.doughnutData && this.doughnutData.datasets && this.doughnutData.datasets[0]) {
+        this.doughnutData.datasets[0].backgroundColor = Pal;
+        this.doughnutData.datasets[0].borderColor = Pal;
+        this.doughnutData = Object.assign({}, this.doughnutData);
+      };
+      _this["clickedPointInfo"] = "Paleta alterada para " + ("" + _this["currentPalette"]) + "!";
+    };
+    m["onPointClick"] = function (_this, ev) {
+      if (ev && ev.label !== undefined) {
+        this.clickedPointInfo = 'Categoria: "' + ev.label + '", Valor: ' + ev.value + ' (Série #' + (ev.datasetIndex + 1) + ')';
       };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      this.initData();
+      this.initCharts();
     };
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
@@ -5208,6 +6109,238 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
   };
 });
+rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBarChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="bar" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
+  };
+});
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBubbleChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="bubble" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
+  };
+});
+rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDoughnutChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="doughnut" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
+  };
+});
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVLineChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-line-chart",comp);
+  };
+});
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVPieChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
+  };
+});
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVPolarAreaChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
+  };
+});
+rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVRadarChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="radar" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
+  };
+});
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVScatterChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("data");
+    comp["props"].push("options");
+    comp["props"].push("width");
+    comp["props"].push("height");
+    comp["props"].push("themeAware");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+  };
+});
 rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -5553,12 +6686,21 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
           try { existingChart.destroy(); } catch(e) {}
         }
         this._chart = null;
-        if (!this.data || !this.data.datasets) { this._initPending = false; return; }
+        function extractData(input) {
+          if (!input) return null;
+          if (typeof input.ToJS === 'function') return input.ToJS();
+          if (typeof input.toJS === 'function') return input.toJS();
+          if (input.FJS) return input.FJS;
+          return input;
+        }
+        const rawData = extractData(this.data);
+        if (!rawData || !rawData.datasets) { this._initPending = false; return; }
         const ctx = canvas.getContext('2d');
         if (!ctx) { this._initPending = false; return; }
         try {
-          const chartData = window.__BV_CORE__.unproxy(this.data);
-          const chartOptions = this.options ? window.__BV_CORE__.unproxy(this.options) : {
+          const chartData = window.__BV_CORE__.unproxy(rawData);
+          const rawOpts = extractData(this.options);
+          const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
             responsive: true,
             maintainAspectRatio: false
           };
@@ -6902,7 +8044,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -6961,6 +8103,22 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uShowcase.Register_uShowcase();
     console.log("[Init] Registering uUserProfile...");
     pas.uUserProfile.Register_uUserProfile();
+    console.log("[Init] Registering uBVBarChart...");
+    pas.uBVBarChart.Register_uBVBarChart();
+    console.log("[Init] Registering uBVBubbleChart...");
+    pas.uBVBubbleChart.Register_uBVBubbleChart();
+    console.log("[Init] Registering uBVDoughnutChart...");
+    pas.uBVDoughnutChart.Register_uBVDoughnutChart();
+    console.log("[Init] Registering uBVLineChart...");
+    pas.uBVLineChart.Register_uBVLineChart();
+    console.log("[Init] Registering uBVPieChart...");
+    pas.uBVPieChart.Register_uBVPieChart();
+    console.log("[Init] Registering uBVPolarAreaChart...");
+    pas.uBVPolarAreaChart.Register_uBVPolarAreaChart();
+    console.log("[Init] Registering uBVRadarChart...");
+    pas.uBVRadarChart.Register_uBVRadarChart();
+    console.log("[Init] Registering uBVScatterChart...");
+    pas.uBVScatterChart.Register_uBVScatterChart();
     console.log("[Init] Registering uBVAccordion...");
     pas.uBVAccordion.Register_uBVAccordion();
     console.log("[Init] Registering uBVAlert...");

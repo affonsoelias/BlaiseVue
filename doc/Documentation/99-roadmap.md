@@ -251,7 +251,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs (✅ Completed)
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers) (✅ Completed)
   ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile) (✅ Completed)
-  ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records)
+  ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records) (✅ Completed)
   └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
 ```
 
@@ -337,7 +337,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📊 Pillar 6: Data Visualization & Analytics Suite (`blaise-charts`)
+### 📊 Pillar 6: Data Visualization & Analytics Suite (`blaise-charts`) (✅ Completed)
 **Goal**: Provide an official, reactive charting library powered by **Chart.js** with high-performance HTML5 `<canvas>` rendering and strongly typed Object Pascal configuration classes.
 - **Hardware-Accelerated Universal Rendering**:
   - Leverages HTML5 `<canvas>` rendering at 60 FPS across Web (SPA/SSG), Desktop (WebUI), and Mobile (Capacitor/Android).

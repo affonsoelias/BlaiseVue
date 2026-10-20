@@ -1,0 +1,22 @@
+<template>
+  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>
+</template>
+
+<script>
+  {
+    BVScatterChart - Dedicated XY Scatter Plot Component
+  }
+
+  props:
+    data: JSValue = null;
+    options: JSValue = null;
+    width: string = '100%';
+    height: string = '380px';
+    themeAware: boolean = true;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm this.$emit('chart-click', ev); end;
+    end;
+</script>

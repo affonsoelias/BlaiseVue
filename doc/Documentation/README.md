@@ -70,11 +70,13 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 32. [32. SSG & Static Pre-rendering with Reactive Hydration](32-ssg-and-hydration.md)
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md)
 
-### 🚀 BlaiseVue 3.5 Universal Platform (Phase 1, 2, 3 & 4)
+### 🚀 BlaiseVue 3.5 Universal Platform & 4.0 Ecosystem
 34. [34. VS Code Extension & Professional DX (.vsix) - Phase 1](34-vscode-extension.md)
 35. [35. Hybrid Mobile Platform & Capacitor (bv mobile) - Phase 2](35-mobile-capacitor.md)
 36. [36. Multiplatform Desktop & Lazarus IDE (bv desktop) - Phase 3](36-desktop-webui.md)
 37. [37. Full-Stack Pascal with mORMot 2 (bv mormot) - Phase 4](37-mormot2-backend.md)
+38. [38. Mobile-First Ecosystem (blaise-ui-mobile) - Phase 5](38-mobile-ionic.md)
+39. [39. Reactive Chart.js Suite (blaise-charts) - Phase 6](39-blaise-charts.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)

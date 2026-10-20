@@ -4,7 +4,7 @@ unit uCharts;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BlaiseCharts;
 
 procedure Register_uCharts;
 
@@ -17,52 +17,85 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.chart-dashboard {     padding: 20px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: white;     padding: 30px;     border-radius: 12px;     box-shadow: 0 4px 6px rgba(0,0,0,0.05);     margin-bottom: 30px;     text-align: center;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));     gap: 20px;   }   .chart-item {     background: white;     padding: 20px;     border-radius: 12px;     box-shadow: 0 2px 8px rgba(0,0,0,0.05);     display: flex;     flex-direction: column;     align-items: center;   }   .chart-item h3 {     margin-bottom: 20px;     color: #1e293b;     width: 100%;     border-bottom: 1px solid #e2e8f0;     padding-bottom: 10px;   }';
+  _styleEl.textContent := '.chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
     '  <div class="chart-dashboard">' +
     '    <div class="header-card">' +
-    '      <h1>Dashboard de Gráficos (BlaiseUI Chart)</h1>' +
-    '      <p>Todos os componentes abaixo são componentes reativos nativos do BlaiseUI alimentados por Chart.js.</p>' +
+    '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' +
+    '        <div style="text-align: left;">' +
+    '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' +
+    '            📊 BlaiseCharts 4.0 - Data Visualization Suite' +
+    '          </h1>' +
+    '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' +
+    '            Gráficos 100% reativos renderizados via HTML5 Canvas (Chart.js) com classes tipadas em Object Pascal.' +
+    '          </p>' +
+    '        </div>' +
+    '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' +
+    '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' +
+    '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' +
+    '        </div>' +
+    '      </div>' +
+    '' +
+    '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' +
+    '        <strong>🎯 Ponto Selecionado:</strong> {{ clickedPointInfo }}' +
+    '      </div>' +
     '    </div>' +
     '' +
     '    <div class="chart-grid">' +
-    '      <!-- 1. Barras -->' +
+    '      <!-- 1. Barras Tipadas (bv-bar-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Gráfico de Barras</h3>' +
-    '        <bv-bar :data="barData" :options="chartOptions"></bv-bar>' +
-    '        <bv-btn variant="primary" @click="randomizeData">Randomizar Dados</bv-btn>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>📊 Vendas Trimestrais (bv-bar-chart)</h3>' +
+    '          <span class="badge-type">Bar / Column</span>' +
+    '        </div>' +
+    '        <bv-bar-chart :data="barData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-bar-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2. Linhas -->' +
+    '      <!-- 2. Linhas & Tendências (bv-line-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Gráfico de Linha</h3>' +
-    '        <bv-line :data="lineData" :options="chartOptions"></bv-line>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>📈 Usuários Ativos & Conexões WS (bv-line-chart)</h3>' +
+    '          <span class="badge-type">Spline Line</span>' +
+    '        </div>' +
+    '        <bv-line-chart :data="lineData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-line-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 3. Pizza -->' +
+    '      <!-- 3. Pizza Proporcional (bv-pie-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Gráfico de Pizza</h3>' +
-    '        <bv-pie :data="pieData" :options="pieOptions"></bv-pie>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>🍕 Distribuição de Tráfego (bv-pie-chart)</h3>' +
+    '          <span class="badge-type">Pie Chart</span>' +
+    '        </div>' +
+    '        <bv-pie-chart :data="pieData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-pie-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 4. Rosca -->' +
+    '      <!-- 4. Rosca / Doughnut (bv-doughnut-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Gráfico de Rosca (Doughnut)</h3>' +
-    '        <bv-doughnut :data="pieData" :options="pieOptions"></bv-doughnut>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>🍩 Plataformas Suportadas (bv-doughnut-chart)</h3>' +
+    '          <span class="badge-type">Doughnut</span>' +
+    '        </div>' +
+    '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-doughnut-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 5. Área Polar -->' +
+    '      <!-- 5. Área Polar (bv-polar-area-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Área Polar</h3>' +
-    '        <bv-polar-area :data="pieData" :options="pieOptions"></bv-polar-area>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>❄️ Distribuição de Recursos (bv-polar-area-chart)</h3>' +
+    '          <span class="badge-type">Polar Area</span>' +
+    '        </div>' +
+    '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="320px" @chart-click="onPointClick"></bv-polar-area-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 6. Radar -->' +
+    '      <!-- 6. Radar / Competências (bv-radar-chart) -->' +
     '      <div class="chart-item">' +
-    '        <h3>Gráfico Radar</h3>' +
-    '        <bv-radar :data="radarData" :options="chartOptions"></bv-radar>' +
+    '        <div class="chart-header-row">' +
+    '          <h3>🕸️ Análise de Desempenho (bv-radar-chart)</h3>' +
+    '          <span class="badge-type">Radar Matrix</span>' +
+    '        </div>' +
+    '        <bv-radar-chart :data="radarData" :options="chartOptions" height="320px" @chart-click="onPointClick"></bv-radar-chart>' +
     '      </div>' +
     '    </div>' +
     '  </div>';
@@ -76,86 +109,144 @@ begin
     d['barData'] := null;
     d['lineData'] := null;
     d['pieData'] := null;
+    d['doughnutData'] := null;
     d['radarData'] := null;
+    d['clickedPointInfo'] := '';
+    d['currentPalette'] := 'Emerald';
     Result := d;
   end;
 
 
   m := TJSObject.new;
-  m['initData'] := procedure(_this: TJSObject)
+  m['initCharts'] := procedure(_this: TJSObject)
 
+    var
+      BarModel, LineModel, PieModel, DoughnutModel, RadarModel: TBVChartData;
+      OptsModel, PieOptsModel: TBVChartOptions;
     begin
-       asm
-         this.chartOptions = {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: {
-             legend: { position: 'top' },
-             tooltip: { enabled: true }
-           }
-         };
-         this.pieOptions = {
-           responsive: true,
-           maintainAspectRatio: false
-         };
-         this.barData = {
-           labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-           datasets: [{
-             label: 'Vendas 2026',
-             data: [12, 19, 3, 5, 2, 3],
-             backgroundColor: 'rgba(66, 184, 131, 0.5)',
-             borderColor: '#42b883',
-             borderWidth: 1
-           }]
-         };
-         this.lineData = {
-           labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-           datasets: [{
-             label: 'Usuários Ativos',
-             data: [65, 59, 80, 81, 56, 55],
-             fill: true,
-             borderColor: '#3b82f6',
-             backgroundColor: 'rgba(59, 130, 246, 0.1)',
-             tension: 0.1
-           }]
-         };
-         this.pieData = {
-           labels: ['Red', 'Blue', 'Green'],
-           datasets: [{
-             data: [300, 50, 100],
-             backgroundColor: ['#ef4444', '#3b82f6', '#10b981']
-           }]
-         };
-         this.radarData = {
-           labels: ['Eating', 'Drinking', 'Sleeping', 'Designing', 'Coding', 'Cycling', 'Running'],
-           datasets: [{
-             label: 'Dev A',
-             data: [65, 59, 90, 81, 56, 55, 40],
-             fill: true,
-             backgroundColor: 'rgba(66, 184, 131, 0.2)',
-             borderColor: '#42b883'
-           }]
-         };
-       end;
+      // 1. Chart Options
+      OptsModel := TBVChartOptions.Create;
+      OptsModel.Responsive(True)
+               .MaintainAspectRatio(False)
+               .Legend('top')
+               .Tooltip(True)
+               .Scales(True, True, True);
+      _this['chartOptions'] := OptsModel.ToJS;
+      PieOptsModel := TBVChartOptions.Create;
+      PieOptsModel.Responsive(True)
+                  .MaintainAspectRatio(False)
+                  .Legend('bottom');
+      _this['pieOptions'] := PieOptsModel.ToJS;
+      // 2. Bar Chart Data (Typed TBVChartData)
+      BarModel := TBVChartData.Create;
+      BarModel.Labels(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']);
+      BarModel.AddDataset('Vendas 2026', [14500, 21800, 18900, 27400, 31200, 42000], 'rgba(16, 185, 129, 0.6)', '#10b981');
+      BarModel.AddDataset('Metas 2026',  [12000, 18000, 20000, 25000, 30000, 38000], 'rgba(59, 130, 246, 0.5)', '#3b82f6');
+      _this['barData'] := BarModel.ToJS;
+      // 3. Line Chart Data (Typed TBVChartData)
+      LineModel := TBVChartData.Create;
+      LineModel.Labels(['00:00', '04:00', '08:00', '12:00', '16:00', '20:00']);
+      LineModel.AddDataset('Conexões WebSocket', [320, 180, 840, 1920, 2450, 1880], 'rgba(99, 102, 241, 0.2)', '#6366f1')
+               .Fill(True)
+               .Tension(0.35)
+               .PointRadius(5);
+      _this['lineData'] := LineModel.ToJS;
+      // 4. Pie Chart Data (Typed Multi-Color)
+      PieModel := TBVChartData.Create;
+      PieModel.Labels(['Web (SPA)', 'Desktop (WebUI)', 'Mobile (Capacitor)', 'Backend REST']);
+      PieModel.AddMultiColorDataset('Requisições', [45, 25, 20, 10], ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']);
+      _this['pieData'] := PieModel.ToJS;
+      // 5. Doughnut Chart Data
+      DoughnutModel := TBVChartData.Create;
+      DoughnutModel.Labels(['Windows x64', 'Linux ARM/x64', 'Android', 'macOS']);
+      DoughnutModel.AddMultiColorDataset('Instalações', [52, 28, 14, 6], ['#06b6d4', '#10b981', '#ec4899', '#f59e0b']);
+      _this['doughnutData'] := DoughnutModel.ToJS;
+      // 6. Radar Chart Data
+      RadarModel := TBVChartData.Create;
+      RadarModel.Labels(['Velocidade', 'Tipagem Pascal', 'Reatividade', 'Memória Baixa', 'Full-Stack', 'Multiplataforma']);
+      RadarModel.AddDataset('BlaiseVue 4.0', [98, 100, 95, 92, 97, 96], 'rgba(16, 185, 129, 0.3)', '#10b981')
+                .Fill(True);
+      _this['radarData'] := RadarModel.ToJS;
     end;
     
   m['randomizeData'] := procedure(_this: TJSObject)
 
+    var
+      NewData: TJSArray;
+      i, Val: Integer;
     begin
-       asm
-         const newValues = Array.from({length: 6}, () => Math.floor(Math.random() * 20));
-         this.barData = {
-           ...this.barData,
-           datasets: [{ ...this.barData.datasets[0], data: newValues }]
-         };
-       end;
+      NewData := TJSArray.new;
+      for i := 0 to 5 do
+      begin
+        Val := 10000 + Random(35000);
+        NewData.push(Val);
+      end;
+      asm
+        if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
+          this.barData.datasets[0].data = NewData;
+          this.barData = Object.assign({}, this.barData);
+        }
+      end;
+      _this['clickedPointInfo'] := 'Dados randomizados com sucesso!';
+    end;
+    
+  m['togglePalette'] := procedure(_this: TJSObject)
+
+    var
+      Pal: TJSArray;
+      Cur: string;
+    begin
+      Cur := String(_this['currentPalette']);
+      if Cur = 'Emerald' then
+      begin
+        _this['currentPalette'] := 'Sunset';
+        Pal := TBVChartPalette.Sunset(4, 0.7);
+      end
+      else if Cur = 'Sunset' then
+      begin
+        _this['currentPalette'] := 'Cyberpunk';
+        Pal := TBVChartPalette.Cyberpunk(4, 0.7);
+      end
+      else if Cur = 'Cyberpunk' then
+      begin
+        _this['currentPalette'] := 'Neon';
+        Pal := TBVChartPalette.Neon(4, 0.7);
+      end
+      else
+      begin
+        _this['currentPalette'] := 'Emerald';
+        Pal := TBVChartPalette.Emerald(4, 0.7);
+      end;
+      asm
+        if (this.pieData && this.pieData.datasets && this.pieData.datasets[0]) {
+          this.pieData.datasets[0].backgroundColor = Pal;
+          this.pieData.datasets[0].borderColor = Pal;
+          this.pieData = Object.assign({}, this.pieData);
+        }
+        if (this.doughnutData && this.doughnutData.datasets && this.doughnutData.datasets[0]) {
+          this.doughnutData.datasets[0].backgroundColor = Pal;
+          this.doughnutData.datasets[0].borderColor = Pal;
+          this.doughnutData = Object.assign({}, this.doughnutData);
+        }
+      end;
+      _this['clickedPointInfo'] := 'Paleta alterada para ' + String(_this['currentPalette']) + '!';
+    end;
+    
+  m['onPointClick'] := procedure(_this: TJSObject; ev: JSValue)
+
+    begin
+      asm
+        if (ev && ev.label !== undefined) {
+          this.clickedPointInfo = 'Categoria: "' + ev.label + '", Valor: ' + ev.value + ' (Série #' + (ev.datasetIndex + 1) + ')';
+        }
+      end;
     end;
 
   comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
     begin
-       asm this.initData(); end;
+      asm this.initCharts(); end;
     end;
 
     ;

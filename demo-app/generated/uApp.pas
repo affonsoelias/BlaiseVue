@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -68,6 +68,22 @@ begin
   Register_uShowcase;
   asm console.log("[Init] Registering uUserProfile..."); end;
   Register_uUserProfile;
+  asm console.log("[Init] Registering uBVBarChart..."); end;
+  Register_uBVBarChart;
+  asm console.log("[Init] Registering uBVBubbleChart..."); end;
+  Register_uBVBubbleChart;
+  asm console.log("[Init] Registering uBVDoughnutChart..."); end;
+  Register_uBVDoughnutChart;
+  asm console.log("[Init] Registering uBVLineChart..."); end;
+  Register_uBVLineChart;
+  asm console.log("[Init] Registering uBVPieChart..."); end;
+  Register_uBVPieChart;
+  asm console.log("[Init] Registering uBVPolarAreaChart..."); end;
+  Register_uBVPolarAreaChart;
+  asm console.log("[Init] Registering uBVRadarChart..."); end;
+  Register_uBVRadarChart;
+  asm console.log("[Init] Registering uBVScatterChart..."); end;
+  Register_uBVScatterChart;
   asm console.log("[Init] Registering uBVAccordion..."); end;
   Register_uBVAccordion;
   asm console.log("[Init] Registering uBVAlert..."); end;

@@ -54,13 +54,23 @@
            }
            this._chart = null;
 
-           if (!this.data || !this.data.datasets) { this._initPending = false; return; }
+           function extractData(input) {
+             if (!input) return null;
+             if (typeof input.ToJS === 'function') return input.ToJS();
+             if (typeof input.toJS === 'function') return input.toJS();
+             if (input.FJS) return input.FJS;
+             return input;
+           }
+
+           const rawData = extractData(this.data);
+           if (!rawData || !rawData.datasets) { this._initPending = false; return; }
            const ctx = canvas.getContext('2d');
            if (!ctx) { this._initPending = false; return; }
            
            try {
-             const chartData = window.__BV_CORE__.unproxy(this.data);
-             const chartOptions = this.options ? window.__BV_CORE__.unproxy(this.options) : {
+             const chartData = window.__BV_CORE__.unproxy(rawData);
+             const rawOpts = extractData(this.options);
+             const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
                responsive: true,
                maintainAspectRatio: false
              };
