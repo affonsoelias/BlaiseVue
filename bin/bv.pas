@@ -922,6 +922,9 @@ begin
 end;
 
 function GenerateLifecycleCode(const Key, RawCode: string): string;
+var
+  CleanCode: string;
+  pBegin: Integer;
 begin
   if Trim(RawCode) = '' then
   begin
@@ -932,10 +935,18 @@ begin
   // If it already has begin/end or variables, just wrap it. 
   // We use CleanPascalProps to ensure it matches Pascal standards for the Unit generation.
   Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10;
-  if (Pos('begin', LowerCase(RawCode)) > 0) or (Pos('var', LowerCase(RawCode)) > 0) then
-    Result := Result + CleanPascalProps(RawCode) + #10 + '    ;' + #10
+  CleanCode := CleanPascalProps(RawCode);
+  pBegin := Pos('begin', LowerCase(CleanCode));
+  if (pBegin > 0) or (Pos('var', LowerCase(CleanCode)) > 0) then
+  begin
+    if pBegin > 0 then
+    begin
+      Insert(#10 + '      asm if (!_this) _this = this; end;' + #10, CleanCode, pBegin + 5);
+    end;
+    Result := Result + CleanCode + #10 + '    ;' + #10;
+  end
   else
-    Result := Result + '    begin' + #10 + CleanPascalProps(RawCode) + #10 + '    end;' + #10;
+    Result := Result + '    begin' + #10 + '      asm if (!_this) _this = this; end;' + #10 + CleanCode + #10 + '    end;' + #10;
 end;
 
 function GenerateWatchCode(const RawCode: string): string;

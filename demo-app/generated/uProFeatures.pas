@@ -338,6 +338,8 @@ begin
     var
       rep: JSValue;
     begin
+      asm if (!_this) _this = this; end;
+
       _this['itens'] := NewArray;
       TJSArray(_this['itens']).push('⚡ Pascal');
       TJSArray(_this['itens']).push('🔥 BlaiseVue');
@@ -356,6 +358,8 @@ begin
     ;
   comp['updated'] := procedure(_this: TJSObject)
     begin
+      asm if (!_this) _this = this; end;
+
       WriteLn('[Lifecycle] Componente UPDATED! Pulso detectado.');
     end;
 

@@ -312,6 +312,8 @@ begin
 
   comp['created'] := procedure(_this: TJSObject)
     begin
+      asm if (!_this) _this = this; end;
+
       CallMethod(_this, 'initCharts');
     end;
 

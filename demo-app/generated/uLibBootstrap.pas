@@ -277,6 +277,8 @@ begin
       opts: TJSArray;
       o1, o2, o3: TJSObject;
     begin
+      asm if (!_this) _this = this; end;
+
       items := NewArray;
       q1 := NewObject; q1['id'] := 'q1'; q1['title'] := 'How does Shared State work?'; q1['content'] := 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.';
       q2 := NewObject; q2['id'] := 'q2'; q2['title'] := 'Unified Design System?'; q2['content'] := 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.';

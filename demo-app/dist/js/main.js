@@ -4120,7 +4120,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
              }); 
           }
       
-          if (CompOpt.created) CompOpt.created.call(pRef);
+          if (CompOpt.created) CompOpt.created.call(pRef, pRef);
           
           let cD = {
             FData: pRef,
@@ -4142,14 +4142,14 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
       
           let stopEffect = window.__BV_CORE__.effect(function() {
              let dummy = JSON.stringify(pRef);
-             if (CompOpt.updated) CompOpt.updated.call(pRef);
+             if (CompOpt.updated) CompOpt.updated.call(pRef, pRef);
           });
       
-          if (CompOpt.mounted) CompOpt.mounted.call(pRef);
+          if (CompOpt.mounted) CompOpt.mounted.call(pRef, pRef);
       
           rootPageEl['bvUnmount'] = function() {
              if (stopEffect && typeof stopEffect === 'function') stopEffect();
-             if (CompOpt.unmounted) CompOpt.unmounted.call(pRef);
+             if (CompOpt.unmounted) CompOpt.unmounted.call(pRef, pRef);
           };
     };
     this.Create$1 = function (Options) {
@@ -6445,6 +6445,7 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       pas.BVPascalDX.CallMethod(_this,"initCharts");
     };
     pas.BVComponents.RegisterComponent("charts-page",comp);
@@ -6521,6 +6522,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
       pas.BVPascalDX.CallMethod(_this,"resetForm");
       pas.BVPascalDX.CallMethod(_this,"fetchItems");
       pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
@@ -6697,6 +6699,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
       var o1 = null;
       var o2 = null;
       var o3 = null;
+      if (!_this) _this = this;
       items = pas.BVPascalDX.NewArray();
       q1 = pas.BVPascalDX.NewObject();
       q1["id"] = "q1";
@@ -6842,6 +6845,7 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
     };
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
@@ -6918,6 +6922,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
       pas.BVPascalDX.CallMethod(_this,"resetForm");
       pas.BVPascalDX.CallMethod(_this,"fetchItems");
       pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
@@ -7063,6 +7068,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["methods"] = m;
     comp["created"] = function (_this) {
       var rep = undefined;
+      if (!_this) _this = this;
       _this["itens"] = pas.BVPascalDX.NewArray();
       _this["itens"].push("⚡ Pascal");
       _this["itens"].push("🔥 BlaiseVue");
@@ -7077,6 +7083,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       };
     };
     comp["updated"] = function (_this) {
+      if (!_this) _this = this;
       pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
     };
     comp["inject"] = new Array();
@@ -7291,9 +7298,11 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
     };
     comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
       this.initChart();
     };
     comp["watch"] = new Object();
@@ -7535,6 +7544,7 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       this.activeId = String(this.initialActiveId || this.initialactiveid || '');
     };
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
@@ -7567,6 +7577,7 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       _this["visible"] = !(_this["show"] == false);
     };
     pas.BVComponents.RegisterComponent("bv-alert",comp);
@@ -7663,6 +7674,7 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       var self = this;
       var updateActive = function() {
         var curHash = window.location.hash || '#/';
@@ -7971,6 +7983,7 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       if ((_this["show"] == true) || (_this["show"] == "true")) {
         _this["isOpen"] = true}
        else _this["isOpen"] = false;
@@ -8189,6 +8202,7 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       if (this.show === true || this.show === 'true') {
         this.isOpen = true;
       } else {
@@ -8438,12 +8452,14 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     m = new Object();
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       if (typeof this.registerTab === 'function') {
         var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
         this.registerTab(t);
       };
     };
     comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
       if (typeof this.registerTab === 'function') {
         var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
         this.registerTab(t);
@@ -8488,6 +8504,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       this.tabs = [];
     };
     comp["provide"] = function (_this) {
@@ -8758,6 +8775,7 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       if (this.expanded === true || this.expanded === 'true') {
         this.isExpanded = true;
       };
@@ -9128,6 +9146,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
+      if (!_this) _this = this;
       _this["$store"]["appVersion"] = "3.0.0-TURBO";
       _this["$store"]["user"] = "Pascal Master 🚀";
       pas.BVPascalDX.I18nAddMessages("pt",'{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue 2.5","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue 3.0 Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');

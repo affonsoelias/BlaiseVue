@@ -411,7 +411,7 @@ begin
        }); 
     }
 
-    if (CompOpt.created) CompOpt.created.call(pRef);
+    if (CompOpt.created) CompOpt.created.call(pRef, pRef);
     
     let cD = {
       FData: pRef,
@@ -433,14 +433,14 @@ begin
 
     let stopEffect = window.__BV_CORE__.effect(function() {
        let dummy = JSON.stringify(pRef);
-       if (CompOpt.updated) CompOpt.updated.call(pRef);
+       if (CompOpt.updated) CompOpt.updated.call(pRef, pRef);
     });
 
-    if (CompOpt.mounted) CompOpt.mounted.call(pRef);
+    if (CompOpt.mounted) CompOpt.mounted.call(pRef, pRef);
 
     rootPageEl['bvUnmount'] = function() {
        if (stopEffect && typeof stopEffect === 'function') stopEffect();
-       if (CompOpt.unmounted) CompOpt.unmounted.call(pRef);
+       if (CompOpt.unmounted) CompOpt.unmounted.call(pRef, pRef);
     };
   end;
 end;

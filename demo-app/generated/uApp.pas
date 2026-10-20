@@ -295,6 +295,8 @@ begin
   comp := opts;
   comp['created'] := procedure(_this: TJSObject)
     begin
+      asm if (!_this) _this = this; end;
+
       TJSObject(_this['$store'])['appVersion'] := '3.0.0-TURBO';
       TJSObject(_this['$store'])['user'] := 'Pascal Master 🚀';
       I18nAddMessages('pt', '{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue 2.5","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue 3.0 Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');
