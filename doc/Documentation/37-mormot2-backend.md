@@ -108,17 +108,31 @@ my-project/
 
 The mORMot 2 backend can be opened and developed natively in **Lazarus IDE**:
 
+> [!IMPORTANT]
+> **mORMot 2 is pre-bundled with BlaiseVue** inside the embedded `vendor/mormot2/` directory! You do **not** need to download, clone, or install mORMot 2 from external repositories. Using this embedded version guarantees 100% compatibility with BlaiseVue's full-stack architecture, CLI code generation, and WebSocket protocols.
+
+### 📦 Installing the Embedded mORMot 2 Package in Lazarus:
+
 1. Launch **Lazarus IDE**.
-2. Go to **Project -> Open Project...** and select `server/server.lpi`.
-3. If not already registered, open and compile the mORMot 2 package:
-   - Go to **Package -> Open Package File (.lpk)...**
-   - Select `C:\ComponenteLazarus\mORMot2\packages\lazarus\mormot2.lpk`.
-   - Click **Compile**, then **Use -> Add to Project** (or **Install**).
-4. Choose your target build mode in **Project -> Project Options -> Build Modes** (`Debug` or `Release`).
-5. Press **F9** (Run) or **Shift+F9** (Build).
+2. Go to the menu: **Package -> Open Package File (.lpk)...**
+3. Select the package file from the **embedded framework `vendor/` directory**:
+   - **Windows**: `<BlaiseVue-Root>\vendor\mormot2\packages\lazarus\mormot2.lpk`
+   - **Linux / macOS**: `<BlaiseVue-Root>/vendor/mormot2/packages/lazarus/mormot2.lpk`
+   *(From an individual project directory, you can also use `..\vendor\mormot2\packages\lazarus\mormot2.lpk`)*
+4. In the package manager window:
+   - Click **Compile** to build the units.
+   - Click **Use -> Install** (or **Use -> Add to Project** if you prefer not to rebuild the entire Lazarus IDE).
+   - If you chose **Install**, Lazarus will prompt to recompile and restart with mORMot 2 registered.
+   *(Optional: If you also want the UI design controls, open and compile `vendor\mormot2\packages\lazarus\mormot2ui.lpk`)*
+
+### 🚀 Opening and Running the Server Project:
+
+1. In Lazarus IDE, go to **Project -> Open Project...** and select `server/server.lpi`.
+2. Choose your target build mode in **Project -> Project Options -> Build Modes** (`Debug` or `Release`).
+3. Press **F9** (Run) to compile and launch the server directly from Lazarus!
 
 > [!TIP]
-> The generated `server.lpi` includes pre-configured search paths pointing to `C:\ComponenteLazarus\mORMot2\src\...` (`core`, `net`, `db`, `crypt`, `rest`, `soa`, `orm`, `misc`), allowing immediate compilation even before package installation.
+> The generated `server.lpi` includes pre-configured relative search paths pointing directly to `vendor/mormot2/src/...` (`core`, `net`, `db`, `crypt`, `rest`, `soa`, `orm`, `misc`), allowing immediate compilation even before the package is globally installed in the IDE.
 
 ---
 
