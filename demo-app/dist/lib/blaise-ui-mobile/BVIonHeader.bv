@@ -1,0 +1,12 @@
+<template>
+  <header class="bui-ion-header">
+    <slot></slot>
+  </header>
+</template>
+
+<script>
+  {
+    BVIonHeader - Top Mobile Header Container
+    -----------------------------------------
+  }
+</script>

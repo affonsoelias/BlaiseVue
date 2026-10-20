@@ -118,6 +118,9 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         if (window.__BV_CORE__.validation) {
           window.__BV_CORE__.validation.initDataValidation(this.FData);
         }
+        if (window.__BV_CORE__ && window.__BV_CORE__.auth) {
+          this.FData['$auth'] = window.__BV_CORE__.auth;
+        }
         this.Evaluate = function(expr, ev) {
           let d = this.FData || this;
           try {
@@ -979,7 +982,367 @@ rtl.module("BVWasm",["System","JS","Web","SysUtils"],function () {
     $mod.TBVWasm.InitDefaultModules();
   };
 });
-rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore","BVValidation","BVI18n","BVTheme","BVWasm"],function () {
+rtl.module("BVClient",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVApi",pas.System.TObject,function () {
+    this.EnsureBridge = function () {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          if (!window.__BV_CORE__.api) {
+            window.__BV_CORE__.api = {
+              baseUrl: 'http://localhost:8090',
+              token: '',
+              headers: {},
+      
+              setBaseUrl: function(url) {
+                if (!url) return;
+                this.baseUrl = String(url).replace(/\/$/, '');
+              },
+      
+              setToken: function(t) {
+                this.token = t || '';
+              },
+      
+              clearToken: function() {
+                this.token = '';
+              },
+      
+              setHeader: function(k, v) {
+                if (k) this.headers[k] = v;
+              },
+      
+              request: function(method, url, body, options) {
+                options = options || {};
+                var fullUrl = (String(url).indexOf('http://') === 0 || String(url).indexOf('https://') === 0)
+                  ? url
+                  : (this.baseUrl + (String(url).indexOf('/') === 0 ? '' : '/') + url);
+      
+                var hdrs = Object.assign({
+                  'Accept': 'application/json'
+                }, this.headers, options.headers || {});
+      
+                if (this.token) {
+                  hdrs['Authorization'] = 'Bearer ' + this.token;
+                }
+      
+                var fetchOpts = {
+                  method: method,
+                  headers: hdrs
+                };
+      
+                if (body !== undefined && body !== null) {
+                  if (typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)) {
+                    hdrs['Content-Type'] = 'application/json';
+                    fetchOpts.body = JSON.stringify(body);
+                  } else {
+                    fetchOpts.body = body;
+                  }
+                }
+      
+                if (typeof fetch === 'function') {
+                  return fetch(fullUrl, fetchOpts).then(function(res) {
+                    var ct = res.headers.get('content-type') || '';
+                    if (ct.indexOf('application/json') !== -1) {
+                      return res.json().then(function(data) {
+                        if (!res.ok) {
+                          var err = new Error(data.message || data.error || ('HTTP ' + res.status));
+                          err.status = res.status;
+                          err.data = data;
+                          throw err;
+                        }
+                        return data;
+                      });
+                    }
+                    return res.text().then(function(text) {
+                      if (!res.ok) {
+                        var err = new Error(text || ('HTTP ' + res.status));
+                        err.status = res.status;
+                        throw err;
+                      }
+                      return text;
+                    });
+                  });
+                } else {
+                  return Promise.reject(new Error('Fetch API is not supported in this browser environment.'));
+                }
+              },
+      
+              get: function(url, options) {
+                return this.request('GET', url, null, options);
+              },
+      
+              post: function(url, body, options) {
+                return this.request('POST', url, body, options);
+              },
+      
+              put: function(url, body, options) {
+                return this.request('PUT', url, body, options);
+              },
+      
+              delete: function(url, options) {
+                return this.request('DELETE', url, null, options);
+              }
+            };
+          };
+    };
+  });
+  rtl.createClass(this,"TBVWebSocket",pas.System.TObject,function () {
+    this.EnsureBridge = function () {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          if (!window.__BV_CORE__.ws) {
+            window.__BV_CORE__.ws = {
+              socket: null,
+              listeners: {},
+              url: 'ws://localhost:8090/ws',
+              status: 'closed',
+      
+              connect: function(url) {
+                if (url) this.url = url;
+                var self = this;
+                if (this.socket && (this.socket.readyState === 0 || this.socket.readyState === 1)) {
+                  return this.socket;
+                }
+                try {
+                  this.status = 'connecting';
+                  this.socket = new WebSocket(this.url);
+                  this.socket.onopen = function(ev) {
+                    self.status = 'open';
+                    self.emit('open', ev);
+                  };
+                  this.socket.onmessage = function(ev) {
+                    var payload = ev.data;
+                    try { payload = JSON.parse(ev.data); } catch(e) {}
+                    self.emit('message', payload);
+                    if (payload && typeof payload === 'object' && payload.event) {
+                      self.emit(payload.event, payload.data !== undefined ? payload.data : payload);
+                    }
+                  };
+                  this.socket.onerror = function(err) {
+                    self.emit('error', err);
+                  };
+                  this.socket.onclose = function(ev) {
+                    self.status = 'closed';
+                    self.emit('close', ev);
+                  };
+                } catch(ex) {
+                  self.status = 'closed';
+                  console.warn('[BVClient WS] Connection attempt error:', ex);
+                }
+                return this.socket;
+              },
+      
+              send: function(data) {
+                if (!this.socket || this.socket.readyState !== 1) {
+                  console.warn('[BVClient WS] WebSocket is not connected.');
+                  return false;
+                }
+                var msg = (typeof data === 'object') ? JSON.stringify(data) : String(data);
+                this.socket.send(msg);
+                return true;
+              },
+      
+              on: function(event, callback) {
+                if (!this.listeners[event]) this.listeners[event] = [];
+                this.listeners[event].push(callback);
+              },
+      
+              off: function(event, callback) {
+                if (!this.listeners[event]) return;
+                if (!callback) {
+                  delete this.listeners[event];
+                  return;
+                }
+                this.listeners[event] = this.listeners[event].filter(function(cb) {
+                  return cb !== callback;
+                });
+              },
+      
+              emit: function(event, data) {
+                var cbs = this.listeners[event];
+                if (cbs) {
+                  for (var i = 0; i < cbs.length; i++) {
+                    try { cbs[i](data); } catch(e) { console.error(e); }
+                  }
+                }
+              },
+      
+              close: function() {
+                if (this.socket) {
+                  this.socket.close();
+                }
+                this.status = 'closed';
+              },
+      
+              isConnected: function() {
+                return this.socket && this.socket.readyState === 1;
+              }
+            };
+          };
+    };
+  });
+  $mod.$init = function () {
+    $mod.TBVApi.EnsureBridge();
+    $mod.TBVWebSocket.EnsureBridge();
+  };
+});
+rtl.module("BVAuth",["System","JS","Web","SysUtils","BVReactivity","BVClient"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVAuth",pas.System.TObject,function () {
+    this.EnsureBridge = function () {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          if (!window.__BV_CORE__.auth) {
+            let savedToken = '';
+            let savedUser = null;
+            try {
+              savedToken = localStorage.getItem('bv_auth_token') || '';
+              let uStr = localStorage.getItem('bv_auth_user');
+              if (uStr) savedUser = JSON.parse(uStr);
+            } catch(e) {}
+      
+            // If token exists, sync with $api immediately
+            if (savedToken && window.__BV_CORE__.api) {
+              window.__BV_CORE__.api.setToken(savedToken);
+            }
+      
+            window.__BV_CORE__.auth = {
+              token: savedToken,
+              user: savedUser,
+              redirectAfterLogin: '',
+              onAuthChange: null,
+      
+              get isAuthenticated() {
+                return Boolean(this.token && this.user);
+              },
+      
+              login: function(email, password) {
+                let self = this;
+                let p = (window.__BV_CORE__.api && typeof window.__BV_CORE__.api.post === 'function')
+                  ? window.__BV_CORE__.api.post('/api/auth/login', { email: email, password: password })
+                  : fetch('http://localhost:8090/api/auth/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: email, password: password })
+                    }).then(function(r) { return r.json(); });
+      
+                return Promise.resolve(p).then(function(resp) {
+                  if (resp && (resp.success || resp.token)) {
+                    self.token = resp.token;
+                    self.user = resp.user || { email: email, name: email.split('@')[0], role: 'user' };
+                    try {
+                      localStorage.setItem('bv_auth_token', self.token);
+                      localStorage.setItem('bv_auth_user', JSON.stringify(self.user));
+                    } catch(e) {}
+      
+                    if (window.__BV_CORE__.api) {
+                      window.__BV_CORE__.api.setToken(self.token);
+                    }
+                    if (typeof self.onAuthChange === 'function') {
+                      self.onAuthChange(self.user, self.token);
+                    }
+                    return resp;
+                  } else {
+                    let errMsg = (resp && (resp.error || resp.message)) || 'Invalid credentials';
+                    throw new Error(errMsg);
+                  }
+                });
+              },
+      
+              logout: function() {
+                let self = this;
+                if (this.token && window.__BV_CORE__.api) {
+                  try {
+                    let p = window.__BV_CORE__.api.post('/api/auth/logout', {});
+                    if (p && typeof p.catch === 'function') p.catch(function(){});
+                  } catch(e) {}
+                }
+                this.token = '';
+                this.user = null;
+                try {
+                  localStorage.removeItem('bv_auth_token');
+                  localStorage.removeItem('bv_auth_user');
+                } catch(e) {}
+      
+                if (window.__BV_CORE__.api) {
+                  window.__BV_CORE__.api.clearToken();
+                }
+                if (typeof this.onAuthChange === 'function') {
+                  this.onAuthChange(null, '');
+                }
+                if (typeof window !== 'undefined' && window.location && window.location.hash !== '#/login') {
+                  window.location.hash = '#/login';
+                }
+              },
+      
+              hasRole: function(role) {
+                if (!this.user) return false;
+                let uRole = String(this.user.role || '').toLowerCase();
+                let targetRole = String(role || '').toLowerCase();
+                if (uRole === 'admin') return true; // Admins inherit all privileges
+                if (uRole === targetRole) return true;
+                if (Array.isArray(this.user.roles)) {
+                  return this.user.roles.some(function(r) { return String(r).toLowerCase() === targetRole; });
+                }
+                return false;
+              },
+      
+              fetchMe: function() {
+                let self = this;
+                if (!this.token) return Promise.resolve(null);
+                let p = (window.__BV_CORE__.api && typeof window.__BV_CORE__.api.get === 'function')
+                  ? window.__BV_CORE__.api.get('/api/auth/me')
+                  : fetch('http://localhost:8090/api/auth/me', {
+                      headers: { 'Authorization': 'Bearer ' + this.token }
+                    }).then(function(r) { return r.json(); });
+      
+                return Promise.resolve(p).then(function(resp) {
+                  if (resp && (resp.user || resp.id)) {
+                    self.user = resp.user || resp;
+                    try { localStorage.setItem('bv_auth_user', JSON.stringify(self.user)); } catch(e) {}
+                    return self.user;
+                  }
+                  return null;
+                }).catch(function(err) {
+                  console.warn('[BVAuth] fetchMe failed:', err);
+                  return null;
+                });
+              },
+      
+              initRouterGuard: function(router) {
+                let self = this;
+                if (!router) return;
+                router.FBeforeEach = function(to, from) {
+                  let meta = to.meta || {};
+                  // Check requiresAuth
+                  if (meta.requiresAuth && !self.isAuthenticated) {
+                    console.log('[BVAuth Guard] Route ' + to.path + ' requires authentication. Redirecting to #/login');
+                    self.redirectAfterLogin = to.fullPath || to.path;
+                    return '#/login';
+                  }
+                  // Check roles
+                  if (meta.roles && Array.isArray(meta.roles) && meta.roles.length > 0) {
+                    let hasAny = meta.roles.some(function(r) { return self.hasRole(r); });
+                    if (!hasAny) {
+                      console.warn('[BVAuth Guard] Access denied to ' + to.path + ' for user role: ' + (self.user ? self.user.role : 'guest'));
+                      return '#/'; // Redirect to home
+                    }
+                  }
+                  // If already authenticated and going to /login, redirect to home
+                  if (to.path === '/login' && self.isAuthenticated) {
+                    return '#/';
+                  }
+                  return true;
+                };
+              }
+            };
+          };
+    };
+  });
+  $mod.$init = function () {
+    $mod.TBVAuth.EnsureBridge();
+  };
+});
+rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReactivity","BVStore","BVValidation","BVI18n","BVTheme","BVWasm","BVClient","BVAuth"],function () {
   "use strict";
   var $mod = this;
   $mod.$init = function () {
@@ -1011,6 +1374,18 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
              }
              if (window.__BV_CORE__.mobile && !Data.FData['$mobile']) {
                 Data.FData['$mobile'] = window.__BV_CORE__.mobile;
+             }
+             if (window.__BV_CORE__.api && !Data.FData['$api']) {
+                Data.FData['$api'] = window.__BV_CORE__.api;
+             }
+             if (window.__BV_CORE__.ws && !Data.FData['$ws']) {
+                Data.FData['$ws'] = window.__BV_CORE__.ws;
+             }
+             if (window.__BV_CORE__.auth && !Data.FData['$auth']) {
+                Data.FData['$auth'] = window.__BV_CORE__.auth;
+             }
+             if (window.__BV_CORE__.ionic && !Data.FData['$ionic']) {
+                Data.FData['$ionic'] = window.__BV_CORE__.ionic;
              }
           }
     
@@ -1044,11 +1419,13 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
         bv.unmount = function(el) {
            if (!el) return;
            if (el['bvUnmount']) el['bvUnmount']();
-           let children = el.querySelectorAll('*');
-           for (let i = 0; i < children.length; i++) {
-              if (children[i]['bvUnmount']) children[i]['bvUnmount']();
+           if (el.nodeType === 1 && el.querySelectorAll) {
+              let children = el.querySelectorAll('*');
+              for (let i = 0; i < children.length; i++) {
+                 if (children[i]['bvUnmount']) children[i]['bvUnmount']();
+              }
            }
-           el.remove();
+           if (el.remove) el.remove();
         };
     
         // Prevent redundant processing on managed nodes
@@ -1401,6 +1778,15 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                     if (window.__BV_CORE__.mobile && !d.$mobile) {
                        d.$mobile = window.__BV_CORE__.mobile;
                     }
+                    if (window.__BV_CORE__.api && !d.$api) {
+                       d.$api = window.__BV_CORE__.api;
+                    }
+                    if (window.__BV_CORE__.ws && !d.$ws) {
+                       d.$ws = window.__BV_CORE__.ws;
+                    }
+                     if (window.__BV_CORE__.ionic && !d.$ionic) {
+                        d.$ionic = window.__BV_CORE__.ionic;
+                     }
                     let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                        try {
                          let expr = e.trim();
@@ -1776,6 +2162,21 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (window.__BV_CORE__.mobile) {
                    pRef['$mobile'] = window.__BV_CORE__.mobile;
                 }
+                if (window.__BV_CORE__.desktop) {
+                   pRef['$desktop'] = window.__BV_CORE__.desktop;
+                }
+                if (window.__BV_CORE__.api) {
+                   pRef['$api'] = window.__BV_CORE__.api;
+                }
+                if (window.__BV_CORE__.ws) {
+                   pRef['$ws'] = window.__BV_CORE__.ws;
+                }
+                if (window.__BV_CORE__.auth) {
+                   pRef['$auth'] = window.__BV_CORE__.auth;
+                }
+                 if (window.__BV_CORE__.ionic) {
+                    pRef['$ionic'] = window.__BV_CORE__.ionic;
+                 }
                 if (window.__BV_CORE__.validation) {
                    window.__BV_CORE__.validation.initDataValidation(pRef);
                 }
@@ -2374,6 +2775,9 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           }
           if (window.__BV_CORE__.validation) {
              window.__BV_CORE__.validation.initDataValidation(pRef);
+             if (window.__BV_CORE__.api) pRef[''] = window.__BV_CORE__.api;
+             if (window.__BV_CORE__.ws) pRef[''] = window.__BV_CORE__.ws;
+             if (window.__BV_CORE__.auth) pRef[''] = window.__BV_CORE__.auth;
           }
       
           if (CompOpt.inject) {
@@ -2764,7 +3168,551 @@ rtl.module("BVMobile",["System","JS","Web","SysUtils","BVReactivity"],function (
         };
   };
 });
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile"],function () {
+rtl.module("BVDesktop",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (typeof window !== 'undefined') {
+          window.__BV_CORE__ = window.__BV_CORE__ || {};
+          let bv = window.__BV_CORE__;
+    
+          let desktopBridge = {
+            isDesktop: function() {
+              if (typeof window === 'undefined') return false;
+              if (window.webui) return true;
+              if (window.__BV_DESKTOP__ === true) return true;
+              if (navigator && navigator.userAgent && navigator.userAgent.indexOf('BlaiseVueDesktop') !== -1) return true;
+              return false;
+            },
+    
+            getPlatform: function() {
+              if (typeof navigator === 'undefined') return 'browser';
+              let ua = navigator.userAgent || '';
+              let plat = navigator.platform || '';
+              if (plat.indexOf('Win') !== -1 || ua.indexOf('Windows') !== -1) return 'windows';
+              if (plat.indexOf('Mac') !== -1 || ua.indexOf('Macintosh') !== -1) return 'macos';
+              if (plat.indexOf('Linux') !== -1 || ua.indexOf('Linux') !== -1) return 'linux';
+              return 'browser';
+            },
+    
+            window: {
+              minimize: function() {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_minimize');
+                } else {
+                  console.log('[BVDesktop] window.minimize() (no-op in browser)');
+                }
+              },
+    
+              maximize: function() {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_maximize');
+                } else {
+                  console.log('[BVDesktop] window.maximize() (no-op in browser)');
+                }
+              },
+    
+              close: function() {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_close');
+                } else {
+                  console.log('[BVDesktop] window.close()');
+                  try { window.close(); } catch(e) {}
+                }
+              },
+    
+              setTitle: function(title) {
+                if (typeof document !== 'undefined') document.title = title;
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_set_title', title);
+                }
+              },
+    
+              setFullScreen: function(val) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_set_fullscreen', !!val);
+                } else if (typeof document !== 'undefined') {
+                  if (val) {
+                    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+                  } else {
+                    if (document.exitFullscreen) document.exitFullscreen();
+                  }
+                }
+              }
+            },
+    
+            notification: {
+              show: function(title, body) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_notify', title, body);
+                } else if (typeof Notification !== 'undefined') {
+                  if (Notification.permission === 'granted') {
+                    new Notification(title, { body: body });
+                  } else if (Notification.permission !== 'denied') {
+                    Notification.requestPermission().then(function(perm) {
+                      if (perm === 'granted') new Notification(title, { body: body });
+                    });
+                  }
+                } else {
+                  console.log('[BVDesktop] Notification: ' + title + ' - ' + body);
+                }
+              }
+            },
+    
+            shell: {
+              openURL: function(url) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_open_url', url);
+                } else if (typeof window !== 'undefined') {
+                  try { window.open(url, '_blank', 'noopener,noreferrer'); } catch(e) {}
+                }
+              }
+            },
+    
+            dialog: {
+              openFile: function(onSuccess, onError) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_open_file_dialog').then(function(res) {
+                    if (typeof onSuccess === 'function') onSuccess(res);
+                  }).catch(function(err) {
+                    if (typeof onError === 'function') onError(err);
+                  });
+                } else if (typeof document !== 'undefined') {
+                  let fi = document.createElement('input');
+                  fi.type = 'file';
+                  fi.style.display = 'none';
+                  fi.onchange = function(e) {
+                    let f = e.target.files && e.target.files[0];
+                    if (f && typeof onSuccess === 'function') {
+                      onSuccess({ name: f.name, size: f.size, type: f.type });
+                    }
+                  };
+                  document.body.appendChild(fi);
+                  fi.click();
+                  setTimeout(function() { fi.remove(); }, 1000);
+                } else {
+                  if (typeof onError === 'function') onError(new Error('File dialog not supported'));
+                }
+              },
+    
+              saveFile: function(defaultName, onSuccess, onError) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_save_file_dialog', defaultName).then(function(res) {
+                    if (typeof onSuccess === 'function') onSuccess(res);
+                  }).catch(function(err) {
+                    if (typeof onError === 'function') onError(err);
+                  });
+                } else {
+                  if (typeof onSuccess === 'function') onSuccess(defaultName || 'download.txt');
+                }
+              }
+            },
+    
+            system: {
+              getInfo: function(onSuccess) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call('bv_get_system_info').then(function(res) {
+                    if (typeof onSuccess === 'function') onSuccess(res);
+                  });
+                } else {
+                  let info = {
+                    platform: desktopBridge.getPlatform(),
+                    userAgent: (typeof navigator !== 'undefined') ? navigator.userAgent : 'unknown',
+                    isDesktop: desktopBridge.isDesktop(),
+                    framework: 'BlaiseVue 3.5 Desktop',
+                    runtime: 'WebUI Engine (Free Pascal)'
+                  };
+                  if (typeof onSuccess === 'function') onSuccess(info);
+                }
+              }
+            },
+    
+            rpc: {
+              call: function(fnName, args, onSuccess, onError) {
+                if (window.webui && typeof window.webui.call === 'function') {
+                  window.webui.call(fnName, args)
+                    .then(function(res) {
+                      if (typeof onSuccess === 'function') onSuccess(res);
+                    })
+                    .catch(function(err) {
+                      if (typeof onError === 'function') onError(err);
+                    });
+                } else {
+                  console.log('[BVDesktop] RPC call to: ' + fnName, args);
+                  if (typeof onSuccess === 'function') onSuccess({ status: 'mock_browser_success', func: fnName, result: null });
+                }
+              }
+            }
+          };
+    
+          bv.desktop = desktopBridge;
+          window.$desktop = desktopBridge;
+        };
+  };
+});
+rtl.module("BlaiseIonic",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TIonicController",pas.System.TObject,function () {
+    this.EnsureBridge = function () {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          if (!window.__BV_CORE__.ionic) {
+            let activeMode = 'md';
+            // Detect platform
+            if (typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent || '')) {
+              activeMode = 'ios';
+            }
+      
+            let activeToastTimer = null;
+            let activeLoadingCount = 0;
+      
+            const ionicBridge = {
+              getMode: function() {
+                return activeMode;
+              },
+              setMode: function(m) {
+                activeMode = (m === 'ios') ? 'ios' : 'md';
+                if (typeof document !== 'undefined' && document.documentElement) {
+                  document.documentElement.setAttribute('mode', activeMode);
+                  if (activeMode === 'ios') {
+                    document.documentElement.classList.add('ionic-mode-ios');
+                    document.documentElement.classList.remove('ionic-mode-md');
+                  } else {
+                    document.documentElement.classList.add('ionic-mode-md');
+                    document.documentElement.classList.remove('ionic-mode-ios');
+                  }
+                }
+              },
+              get isIos() {
+                return activeMode === 'ios';
+              },
+              get isAndroid() {
+                return activeMode === 'md';
+              },
+      
+              // Toast controller
+              toast: {
+                show: function(msg, duration, pos, color) {
+                  this.dismiss();
+                  duration = (typeof duration === 'number') ? duration : 2000;
+                  pos = pos || 'bottom';
+                  color = color || 'dark';
+      
+                  if (typeof document === 'undefined') return;
+      
+                  let el = document.createElement('div');
+                  el.className = 'ionic-toast-wrapper ionic-toast-' + pos + ' ionic-toast-' + color;
+                  el.setAttribute('role', 'alert');
+                  el.innerHTML = '<div class="ionic-toast-message">' + msg + '</div>';
+      
+                  document.body.appendChild(el);
+      
+                  if (duration > 0) {
+                    activeToastTimer = setTimeout(() => {
+                      this.dismiss();
+                    }, duration);
+                  }
+                },
+                dismiss: function() {
+                  if (activeToastTimer) {
+                    clearTimeout(activeToastTimer);
+                    activeToastTimer = null;
+                  }
+                  if (typeof document !== 'undefined') {
+                    let existing = document.querySelectorAll('.ionic-toast-wrapper');
+                    for (let i = 0; i < existing.length; i++) {
+                      existing[i].remove();
+                    }
+                  }
+                }
+              },
+      
+              // Alert controller
+              alert: {
+                alert: function(title, msg, btnText) {
+                  this.dismiss();
+                  btnText = btnText || 'OK';
+                  if (typeof document === 'undefined') return;
+      
+                  let backdrop = document.createElement('div');
+                  backdrop.className = 'ionic-alert-backdrop';
+      
+                  let wrapper = document.createElement('div');
+                  wrapper.className = 'ionic-alert-wrapper mode-' + activeMode;
+                  wrapper.innerHTML = 
+                    '<div class="ionic-alert-head">' +
+                      '<h2 class="ionic-alert-title">' + title + '</h2>' +
+                      '<div class="ionic-alert-sub-title">' + (msg || '') + '</div>' +
+                    '</div>' +
+                    '<div class="ionic-alert-button-group">' +
+                      '<button type="button" class="ionic-alert-button bui-btn-ok">' + btnText + '</button>' +
+                    '</div>';
+      
+                  backdrop.appendChild(wrapper);
+                  document.body.appendChild(backdrop);
+      
+                  let okBtn = wrapper.querySelector('.bui-btn-ok');
+                  if (okBtn) {
+                    okBtn.addEventListener('click', () => {
+                      this.dismiss();
+                    });
+                  }
+                },
+                confirm: function(title, msg, onConfirm, onCancel) {
+                  this.dismiss();
+                  if (typeof document === 'undefined') return;
+      
+                  let backdrop = document.createElement('div');
+                  backdrop.className = 'ionic-alert-backdrop';
+      
+                  let wrapper = document.createElement('div');
+                  wrapper.className = 'ionic-alert-wrapper mode-' + activeMode;
+                  wrapper.innerHTML = 
+                    '<div class="ionic-alert-head">' +
+                      '<h2 class="ionic-alert-title">' + title + '</h2>' +
+                      '<div class="ionic-alert-sub-title">' + (msg || '') + '</div>' +
+                    '</div>' +
+                    '<div class="ionic-alert-button-group">' +
+                      '<button type="button" class="ionic-alert-button bui-btn-cancel">Cancel</button>' +
+                      '<button type="button" class="ionic-alert-button bui-btn-confirm">Confirm</button>' +
+                    '</div>';
+      
+                  backdrop.appendChild(wrapper);
+                  document.body.appendChild(backdrop);
+      
+                  let cancelBtn = wrapper.querySelector('.bui-btn-cancel');
+                  let confirmBtn = wrapper.querySelector('.bui-btn-confirm');
+      
+                  if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                      this.dismiss();
+                      if (typeof onCancel === 'function') onCancel();
+                    });
+                  }
+                  if (confirmBtn) {
+                    confirmBtn.addEventListener('click', () => {
+                      this.dismiss();
+                      if (typeof onConfirm === 'function') onConfirm();
+                    });
+                  }
+                },
+                prompt: function(title, msg, placeholder, onSubmit) {
+                  this.dismiss();
+                  placeholder = placeholder || '';
+                  if (typeof document === 'undefined') return;
+      
+                  let backdrop = document.createElement('div');
+                  backdrop.className = 'ionic-alert-backdrop';
+      
+                  let wrapper = document.createElement('div');
+                  wrapper.className = 'ionic-alert-wrapper mode-' + activeMode;
+                  wrapper.innerHTML = 
+                    '<div class="ionic-alert-head">' +
+                      '<h2 class="ionic-alert-title">' + title + '</h2>' +
+                      '<div class="ionic-alert-sub-title">' + (msg || '') + '</div>' +
+                    '</div>' +
+                    '<div class="ionic-alert-input-group">' +
+                      '<input type="text" class="ionic-alert-input" placeholder="' + placeholder + '">' +
+                    '</div>' +
+                    '<div class="ionic-alert-button-group">' +
+                      '<button type="button" class="ionic-alert-button bui-btn-cancel">Cancel</button>' +
+                      '<button type="button" class="ionic-alert-button bui-btn-submit">Submit</button>' +
+                    '</div>';
+      
+                  backdrop.appendChild(wrapper);
+                  document.body.appendChild(backdrop);
+      
+                  let cancelBtn = wrapper.querySelector('.bui-btn-cancel');
+                  let submitBtn = wrapper.querySelector('.bui-btn-submit');
+                  let inputEl = wrapper.querySelector('.ionic-alert-input');
+      
+                  if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                      this.dismiss();
+                    });
+                  }
+                  if (submitBtn) {
+                    submitBtn.addEventListener('click', () => {
+                      let val = inputEl ? inputEl.value : '';
+                      this.dismiss();
+                      if (typeof onSubmit === 'function') onSubmit(val);
+                    });
+                  }
+                },
+                dismiss: function() {
+                  if (typeof document !== 'undefined') {
+                    let existing = document.querySelectorAll('.ionic-alert-backdrop');
+                    for (let i = 0; i < existing.length; i++) {
+                      existing[i].remove();
+                    }
+                  }
+                }
+              },
+      
+              // Loading controller
+              loading: {
+                present: function(msg, duration) {
+                  this.dismiss();
+                  msg = msg || 'Loading...';
+                  activeLoadingCount = 1;
+      
+                  if (typeof document === 'undefined') return;
+      
+                  let backdrop = document.createElement('div');
+                  backdrop.className = 'ionic-loading-backdrop';
+      
+                  let box = document.createElement('div');
+                  box.className = 'ionic-loading-box mode-' + activeMode;
+                  box.innerHTML = 
+                    '<div class="ionic-loading-spinner"></div>' +
+                    '<div class="ionic-loading-content">' + msg + '</div>';
+      
+                  backdrop.appendChild(box);
+                  document.body.appendChild(backdrop);
+      
+                  if (duration && duration > 0) {
+                    setTimeout(() => {
+                      this.dismiss();
+                    }, duration);
+                  }
+                },
+                dismiss: function() {
+                  activeLoadingCount = 0;
+                  if (typeof document !== 'undefined') {
+                    let existing = document.querySelectorAll('.ionic-loading-backdrop');
+                    for (let i = 0; i < existing.length; i++) {
+                      existing[i].remove();
+                    }
+                  }
+                },
+                isLoading: function() {
+                  if (typeof document !== 'undefined') {
+                    return Boolean(document.querySelector('.ionic-loading-backdrop'));
+                  }
+                  return activeLoadingCount > 0;
+                }
+              },
+      
+              // ActionSheet controller
+              actionSheet: {
+                show: function(title, options, onSelect) {
+                  this.dismiss();
+                  if (typeof document === 'undefined') return;
+      
+                  let backdrop = document.createElement('div');
+                  backdrop.className = 'ionic-action-sheet-backdrop';
+      
+                  let wrapper = document.createElement('div');
+                  wrapper.className = 'ionic-action-sheet-wrapper mode-' + activeMode;
+      
+                  let headHtml = title ? ('<div class="ionic-action-sheet-title">' + title + '</div>') : '';
+                  let btnListHtml = '';
+                  let optArray = Array.isArray(options) ? options : [];
+                  for (let i = 0; i < optArray.length; i++) {
+                    btnListHtml += '<button type="button" class="ionic-action-sheet-button" data-index="' + i + '">' + optArray[i] + '</button>';
+                  }
+      
+                  wrapper.innerHTML = 
+                    '<div class="ionic-action-sheet-group">' +
+                      headHtml +
+                      btnListHtml +
+                    '</div>' +
+                    '<div class="ionic-action-sheet-group ionic-action-sheet-cancel-group">' +
+                      '<button type="button" class="ionic-action-sheet-button bui-btn-cancel">Cancel</button>' +
+                    '</div>';
+      
+                  backdrop.appendChild(wrapper);
+                  document.body.appendChild(backdrop);
+      
+                  // Wire option buttons
+                  let btns = wrapper.querySelectorAll('.ionic-action-sheet-button[data-index]');
+                  for (let j = 0; j < btns.length; j++) {
+                    btns[j].addEventListener('click', function(ev) {
+                      let idx = parseInt(this.getAttribute('data-index'), 10);
+                      let selectedVal = optArray[idx];
+                      ionicBridge.actionSheet.dismiss();
+                      if (typeof onSelect === 'function') {
+                        onSelect(selectedVal, idx);
+                      }
+                    });
+                  }
+      
+                  // Wire cancel button
+                  let cancelBtn = wrapper.querySelector('.bui-btn-cancel');
+                  if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                      this.dismiss();
+                    });
+                  }
+      
+                  // Backdrop click dismiss
+                  backdrop.addEventListener('click', function(ev) {
+                    if (ev.target === backdrop) {
+                      ionicBridge.actionSheet.dismiss();
+                    }
+                  });
+                },
+                dismiss: function() {
+                  if (typeof document !== 'undefined') {
+                    let existing = document.querySelectorAll('.ionic-action-sheet-backdrop');
+                    for (let i = 0; i < existing.length; i++) {
+                      existing[i].remove();
+                    }
+                  }
+                }
+              }
+            };
+      
+            // Set initial HTML mode attribute
+            ionicBridge.setMode(activeMode);
+      
+            // Attach PascalCase aliases
+            ionicBridge.toast.Show = ionicBridge.toast.show;
+            ionicBridge.toast.Dismiss = ionicBridge.toast.dismiss;
+      
+            ionicBridge.alert.Alert = ionicBridge.alert.alert;
+            ionicBridge.alert.Confirm = ionicBridge.alert.confirm;
+            ionicBridge.alert.Prompt = ionicBridge.alert.prompt;
+            ionicBridge.alert.Dismiss = ionicBridge.alert.dismiss;
+      
+            ionicBridge.loading.Present = ionicBridge.loading.present;
+            ionicBridge.loading.Dismiss = ionicBridge.loading.dismiss;
+            ionicBridge.loading.IsLoading = ionicBridge.loading.isLoading;
+      
+            ionicBridge.actionSheet.Show = ionicBridge.actionSheet.show;
+            ionicBridge.actionSheet.Dismiss = ionicBridge.actionSheet.dismiss;
+      
+            ionicBridge.GetMode = ionicBridge.getMode;
+            ionicBridge.SetMode = ionicBridge.setMode;
+            ionicBridge.IsIos = function() { return ionicBridge.getMode() === 'ios'; };
+            ionicBridge.IsAndroid = function() { return ionicBridge.getMode() === 'md'; };
+      
+            window.__BV_CORE__.ionic = ionicBridge;
+            window.$ionic = ionicBridge;
+      
+            // Global window controllers
+            window.TIonicToast = ionicBridge.toast;
+            window.TIonicAlert = ionicBridge.alert;
+            window.TIonicLoading = ionicBridge.loading;
+            window.TIonicActionSheet = ionicBridge.actionSheet;
+            window.TIonicController = ionicBridge;
+      
+            // Safe pas.BlaiseIonic registration for runtime interop
+            if (typeof window.pas === 'undefined') window.pas = {};
+            if (!window.pas.BlaiseIonic) window.pas.BlaiseIonic = {};
+            window.pas.BlaiseIonic.TIonicToast = ionicBridge.toast;
+            window.pas.BlaiseIonic.TIonicAlert = ionicBridge.alert;
+            window.pas.BlaiseIonic.TIonicLoading = ionicBridge.loading;
+            window.pas.BlaiseIonic.TIonicActionSheet = ionicBridge.actionSheet;
+            window.pas.BlaiseIonic.TIonicController = ionicBridge;
+          };
+    };
+  });
+  $mod.$init = function () {
+    $mod.TIonicController.EnsureBridge();
+  };
+});
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -2841,6 +3789,11 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       if (window.__BV_CORE__.theme && !d.FData.$theme) d.FData.$theme = window.__BV_CORE__.theme;
       if (window.__BV_CORE__.wasm && !d.FData.$wasm) d.FData.$wasm = window.__BV_CORE__.wasm;
       if (window.__BV_CORE__.mobile && !d.FData.$mobile) d.FData.$mobile = window.__BV_CORE__.mobile;
+      if (window.__BV_CORE__.desktop && !d.FData.$desktop) d.FData.$desktop = window.__BV_CORE__.desktop;
+      if (window.__BV_CORE__.api && !d.FData.$api) d.FData.$api = window.__BV_CORE__.api;
+      if (window.__BV_CORE__.ws && !d.FData.$ws) d.FData.$ws = window.__BV_CORE__.ws;
+      if (window.__BV_CORE__.auth && !d.FData.$auth) d.FData.$auth = window.__BV_CORE__.auth;
+      if (window.__BV_CORE__.ionic && !d.FData.$ionic) d.FData.$ionic = window.__BV_CORE__.ionic;
       
       // Check for SSG Pre-rendered content for instant zero-flicker Hydration
       if (this.FRoot && (this.FRoot.hasAttribute('data-bv-ssg') || this.FRoot.querySelector('[data-bv-ssg]'))) {
@@ -3404,6 +4357,155 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uCustomerView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Customer";
+      d["apiEndpoint"] = "customers";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      this.form = {
+        name: '',
+        email: '',
+        phone: '',
+        active: true
+      };
+      this.formError = '';
+    };
+    m["openCreateModal"] = function (_this) {
+      this.resetForm();
+      this.isEditing = false;
+      this.currentEditId = 0;
+      this.isModalOpen = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      this.form = Object.assign({}, item);
+      this.currentEditId = item.id;
+      this.isEditing = true;
+      this.formError = '';
+      this.isModalOpen = true;
+    };
+    m["closeModal"] = function (_this) {
+      this.isModalOpen = false;
+      this.formError = '';
+    };
+    m["fetchItems"] = function (_this) {
+      var self = this;
+      var ep = '/api/' + this.apiEndpoint;
+      var p = (this.$api && typeof this.$api.get === 'function')
+        ? this.$api.get(ep)
+        : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function(data) {
+        if (Array.isArray(data)) {
+          self.items = data;
+        } else if (data && Array.isArray(data.items)) {
+          self.items = data.items;
+        }
+      }).catch(function(err) {
+        console.error('Error fetching ' + self.apiEndpoint + ':', err);
+      });
+    };
+    m["saveItem"] = function (_this) {
+      var self = this;
+      if (!this.form) return;
+      var isEdit = Boolean(this.isEditing);
+      var id = this.currentEditId;
+      var ep = '/api/' + this.apiEndpoint + (isEdit ? ('/' + id) : '');
+      var method = isEdit ? 'put' : 'post';
+      var p = (this.$api && typeof this.$api[method] === 'function')
+        ? this.$api[method](ep, this.form)
+        : fetch('http://localhost:8090' + ep, {
+            method: method.toUpperCase(),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.form)
+          }).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function(resp) {
+        self.isModalOpen = false;
+        self.fetchItems();
+      }).catch(function(err) {
+        self.formError = 'Failed to save: ' + (err.message || err);
+      });
+    };
+    m["deleteItem"] = function (_this, id) {
+      if (!confirm('Are you sure you want to delete this ' + this.modelTitle + '?')) return;
+      var self = this;
+      var ep = '/api/' + this.apiEndpoint + '/' + id;
+      var p = (this.$api && typeof this.$api.delete === 'function')
+        ? this.$api.delete(ep)
+        : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function() {
+        self.fetchItems();
+      }).catch(function(err) {
+        alert('Failed to delete: ' + (err.message || err));
+      });
+    };
+    m["setupWebSocket"] = function (_this) {
+      var self = this;
+      if (!this.$ws) return;
+      if (typeof this.$ws.connect === 'function') {
+        this.$ws.connect();
+      }
+      var pfx = String(this.modelTitle).toLowerCase();
+      if (typeof this.$ws.on === 'function') {
+        this.$ws.on(pfx + '_created', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' created:', d);
+          self.fetchItems();
+        });
+        this.$ws.on(pfx + '_updated', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' updated:', d);
+          self.fetchItems();
+        });
+        this.$ws.on(pfx + '_deleted', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' deleted:', d);
+          self.fetchItems();
+        });
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      this.resetForm();
+      this.fetchItems();
+      this.setupWebSocket();
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      let list = this.items || [];
+      let q = (this.searchQuery || '').toLowerCase().trim();
+      if (!q) return list;
+      return list.filter(function(item) {
+        return Object.values(item).some(function(v) {
+          return String(v).toLowerCase().indexOf(q) !== -1;
+        });
+      });
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("customer-view-page",comp);
+  };
+});
 rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -3593,6 +4695,317 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
       ];
     };
     pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
+  };
+});
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uLoginView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-divider span { padding: 0 10px; }   .demo-buttons { display: flex; gap: 8px; }   .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }   .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }   .demo-user:hover { border-color: #10b981; color: #059669; }   .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }   .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }   .user-avatar { font-size: 32px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }   .role-admin { background: #ede9fe; color: #7c3aed; }   .role-manager { background: #dbeafe; color: #2563eb; }   .role-user { background: #e2e8f0; color: #475569; }   .logged-actions { display: flex; gap: 8px; }   .logged-actions .bui-btn { flex: 1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Autenticação BlaiseVue</h2>' + '        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">E-mail de Acesso:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="ex: admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Senha:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Entrar no Sistema 🚀</span>' + '          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Gerente" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 Usuário" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["email"] = "";
+      d["password"] = "";
+      d["errorMessage"] = "";
+      d["successMessage"] = "";
+      d["loading"] = false;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["quickLogin"] = function (_this, e, p) {
+      this.email = e;
+      this.password = p;
+      this.errorMessage = '';
+      this.submitLogin();
+    };
+    m["submitLogin"] = function (_this) {
+      var self = this;
+      if (!this.email || !this.password) {
+        this.errorMessage = 'Por favor, informe o e-mail e a senha.';
+        return;
+      }
+      this.loading = true;
+      this.errorMessage = '';
+      this.successMessage = '';
+      if (!this.$auth || typeof this.$auth.login !== 'function') {
+        this.errorMessage = 'Módulo $auth não inicializado.';
+        this.loading = false;
+        return;
+      }
+      this.$auth.login(this.email, this.password)
+        .then(function(resp) {
+          self.loading = false;
+          self.successMessage = 'Autenticado com sucesso como ' + (resp.user ? resp.user.name : self.email) + '!';
+          setTimeout(function() {
+            var target = (window.__BV_CORE__.auth && window.__BV_CORE__.auth.redirectAfterLogin)
+              ? window.__BV_CORE__.auth.redirectAfterLogin
+              : '#/';
+            window.__BV_CORE__.auth.redirectAfterLogin = '';
+            window.location.hash = target;
+          }, 600);
+        })
+        .catch(function(err) {
+          self.loading = false;
+          self.errorMessage = (err && err.message) ? err.message : 'Falha na autenticação. Verifique os dados.';
+        });
+    };
+    m["handleLogout"] = function (_this) {
+      if (this.$auth && typeof this.$auth.logout === 'function') {
+        this.$auth.logout();
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("login-view-page",comp);
+  };
+});
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uMobileView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Última Ação:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>" + "                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>" + "                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>" + "                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>" + "                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>" + "                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>" + "                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["currentMode"] = "md";
+      d["lastAction"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["setIosMode"] = function (_this) {
+      this.currentMode = 'ios';
+      if (window.$ionic) window.$ionic.setMode('ios');
+      this.lastAction = 'Modo visual alterado para 🍎 iOS (Cupertino)';
+    };
+    m["setMdMode"] = function (_this) {
+      this.currentMode = 'md';
+      if (window.$ionic) window.$ionic.setMode('md');
+      this.lastAction = 'Modo visual alterado para 🤖 Android (Material Design)';
+    };
+    m["showToast"] = function (_this) {
+      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+      if (ionic && ionic.toast) {
+        ionic.toast.show('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
+      }
+      this.lastAction = '🔔 TIonicToast.Show disparado com sucesso!';
+    };
+    m["showAlert"] = function (_this) {
+      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+      if (ionic && ionic.alert) {
+        ionic.alert.alert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
+      }
+      this.lastAction = '💬 TIonicAlert.Alert exibido!';
+    };
+    m["showConfirm"] = function (_this) {
+      let self = this;
+      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+      self.lastAction = '❓ TIonicAlert.Confirm aberto...';
+      if (ionic && ionic.alert) {
+        ionic.alert.confirm('Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?',
+          function() {
+            self.lastAction = '✅ Confirmação aceita! Dados sincronizados!';
+            if (ionic.toast) ionic.toast.show('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
+          },
+          function() {
+            self.lastAction = '❌ Operação cancelada pelo usuário.';
+          }
+        );
+      };
+    };
+    m["showLoading"] = function (_this) {
+      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+      if (ionic && ionic.loading) {
+        ionic.loading.present('Carregando registros...', 1800);
+      }
+      this.lastAction = '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
+    };
+    m["showActionSheet"] = function (_this) {
+      let self = this;
+      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+      self.lastAction = '📑 TIonicActionSheet.Show aberto...';
+      if (ionic && ionic.actionSheet) {
+        ionic.actionSheet.show('Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'],
+          function(opt, idx) {
+            self.lastAction = '👉 Opção selecionada no Action Sheet: ' + opt;
+            if (ionic.toast) ionic.toast.show('Selecionado: ' + opt, 1800, 'bottom', 'dark');
+          }
+        );
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (window.$ionic && typeof window.$ionic.getMode === 'function') {
+        this.currentMode = window.$ionic.getMode();
+      };
+    };
+    pas.BVComponents.RegisterComponent("mobile-view-page",comp);
+  };
+});
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uProductView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Product";
+      d["apiEndpoint"] = "products";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      this.form = {
+        name: '',
+        price: 0.0,
+        stock: 0,
+        category: ''
+      };
+      this.formError = '';
+    };
+    m["openCreateModal"] = function (_this) {
+      this.resetForm();
+      this.isEditing = false;
+      this.currentEditId = 0;
+      this.isModalOpen = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      this.form = Object.assign({}, item);
+      this.currentEditId = item.id;
+      this.isEditing = true;
+      this.formError = '';
+      this.isModalOpen = true;
+    };
+    m["closeModal"] = function (_this) {
+      this.isModalOpen = false;
+      this.formError = '';
+    };
+    m["fetchItems"] = function (_this) {
+      var self = this;
+      var ep = '/api/' + this.apiEndpoint;
+      var p = (this.$api && typeof this.$api.get === 'function')
+        ? this.$api.get(ep)
+        : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function(data) {
+        if (Array.isArray(data)) {
+          self.items = data;
+        } else if (data && Array.isArray(data.items)) {
+          self.items = data.items;
+        }
+      }).catch(function(err) {
+        console.error('Error fetching ' + self.apiEndpoint + ':', err);
+      });
+    };
+    m["saveItem"] = function (_this) {
+      var self = this;
+      if (!this.form) return;
+      var isEdit = Boolean(this.isEditing);
+      var id = this.currentEditId;
+      var ep = '/api/' + this.apiEndpoint + (isEdit ? ('/' + id) : '');
+      var method = isEdit ? 'put' : 'post';
+      var p = (this.$api && typeof this.$api[method] === 'function')
+        ? this.$api[method](ep, this.form)
+        : fetch('http://localhost:8090' + ep, {
+            method: method.toUpperCase(),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.form)
+          }).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function(resp) {
+        self.isModalOpen = false;
+        self.fetchItems();
+      }).catch(function(err) {
+        self.formError = 'Failed to save: ' + (err.message || err);
+      });
+    };
+    m["deleteItem"] = function (_this, id) {
+      if (!confirm('Are you sure you want to delete this ' + this.modelTitle + '?')) return;
+      var self = this;
+      var ep = '/api/' + this.apiEndpoint + '/' + id;
+      var p = (this.$api && typeof this.$api.delete === 'function')
+        ? this.$api.delete(ep)
+        : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
+      Promise.resolve(p).then(function() {
+        self.fetchItems();
+      }).catch(function(err) {
+        alert('Failed to delete: ' + (err.message || err));
+      });
+    };
+    m["setupWebSocket"] = function (_this) {
+      var self = this;
+      if (!this.$ws) return;
+      if (typeof this.$ws.connect === 'function') {
+        this.$ws.connect();
+      }
+      var pfx = String(this.modelTitle).toLowerCase();
+      if (typeof this.$ws.on === 'function') {
+        this.$ws.on(pfx + '_created', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' created:', d);
+          self.fetchItems();
+        });
+        this.$ws.on(pfx + '_updated', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' updated:', d);
+          self.fetchItems();
+        });
+        this.$ws.on(pfx + '_deleted', function(d) {
+          console.log('⚡ Real-time ' + pfx + ' deleted:', d);
+          self.fetchItems();
+        });
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      this.resetForm();
+      this.fetchItems();
+      this.setupWebSocket();
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      let list = this.items || [];
+      let q = (this.searchQuery || '').toLowerCase().trim();
+      if (!q) return list;
+      return list.filter(function(item) {
+        return Object.values(item).some(function(v) {
+          return String(v).toLowerCase().indexOf(q) !== -1;
+        });
+      });
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("product-view-page",comp);
   };
 });
 rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
@@ -5120,6 +6533,335 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonApp = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-app" :class="appClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("mode");
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["appClass"] = function (_this) {
+      var Result = undefined;
+      var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
+      return 'ionic-mode-' + m;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-app",comp);
+  };
+});
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-ion-badge" :class="\'bui-ion-badge-\' + color">' + "    <slot>{{ value }}</slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("color");
+    comp["props"].push("value");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
+  };
+});
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-btn"' + '    :class="btnClass"' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("label");
+    comp["props"].push("color");
+    comp["props"].push("fill");
+    comp["props"].push("expand");
+    comp["props"].push("disabled");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var f = this.fill || 'solid';
+      var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
+      return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-button",comp);
+  };
+});
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-card">' + '    <div class="bui-ion-card-header" b-if="title || subtitle">' + '      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>' + '      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>' + "    </div>" + '    <div class="bui-ion-card-content">' + "      <slot></slot>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("title");
+    comp["props"].push("subtitle");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-card",comp);
+  };
+});
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonContent = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <main class="bui-ion-content" :class="{ \'bui-ion-content-padding\': padding }">' + "    <slot></slot>" + "  </main>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("padding");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-content",comp);
+  };
+});
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonHeader = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <header class="bui-ion-header">' + "    <slot></slot>" + "  </header>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-header",comp);
+  };
+});
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div :class="wrapperClass">' + '    <div class="bui-ion-item" @click="handleClick">' + '      <div class="bui-ion-item-start" b-if="hasStart">' + '        <slot name="start"></slot>' + "      </div>" + '      <div class="bui-ion-item-content">' + '        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>' + '        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>' + "        <slot></slot>" + "      </div>" + '      <div class="bui-ion-item-end">' + '        <slot name="end"></slot>' + '        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>' + "      </div>" + "    </div>" + '    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">' + '      <slot name="expanded"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isExpanded"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("title");
+    comp["props"].push("subtitle");
+    comp["props"].push("detail");
+    comp["props"].push("expandable");
+    comp["props"].push("expanded");
+    comp["props"].push("hasStart");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (this.expandable === true || this.expandable === 'true') {
+        this.isExpanded = !this.isExpanded;
+        this.$emit('toggle', { expanded: this.isExpanded });
+      }
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (this.expanded === true || this.expanded === 'true') {
+        this.isExpanded = true;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
+      var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
+      return 'bui-ion-item-wrapper' + exp + open;
+      return Result;
+    };
+    comp["computed"]["detailClass"] = function (_this) {
+      var Result = undefined;
+      var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
+      return 'bui-ion-item-detail' + rot;
+      return Result;
+    };
+    comp["computed"]["showDetail"] = function (_this) {
+      var Result = undefined;
+      var d = Boolean(this.detail === true || this.detail === 'true');
+      var e = Boolean(this.expandable === true || this.expandable === 'true');
+      return d || e;
+      return Result;
+    };
+    comp["computed"]["isContentVisible"] = function (_this) {
+      var Result = undefined;
+      var exp = Boolean(this.expandable === true || this.expandable === 'true');
+      var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
+      return exp && open;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-item",comp);
+  };
+});
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonList = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-list" :class="{ \'bui-ion-list-inset\': inset }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("inset");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-list",comp);
+  };
+});
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabBar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-ion-tab-bar">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
+  };
+});
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-tab-button"' + '    :class="{ \'is-active\': active }"' + '    @click="handleClick">' + '    <slot name="icon"></slot>' + '    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>' + '    <slot name="badge"></slot>' + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("label");
+    comp["props"].push("active");
+    comp["props"].push("tab");
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
+  };
+});
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabs = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-tabs">' + '    <div class="bui-ion-tab-content">' + "      <slot></slot>" + "    </div>" + '    <slot name="bottom"></slot>' + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
+  };
+});
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTitle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <h1 class="bui-ion-title">' + "    <slot>{{ title }}</slot>" + "  </h1>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["props"].push("title");
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-title",comp);
+  };
+});
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonToolbar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-toolbar">' + '    <div class="bui-ion-toolbar-start">' + '      <slot name="start"></slot>' + "    </div>" + "    <slot></slot>" + '    <div class="bui-ion-toolbar-end">' + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
+  };
+});
 rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
   "use strict";
   var $mod = this;
@@ -5160,7 +6902,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uFormulario","uHome","uLibBootstrap","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVAccordion","uBVAlert","uBVBadge","uBVBar","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVChart","uBVCol","uBVContainer","uBVDataGrid","uBVDoughnut","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVLine","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVPie","uBVPolarArea","uBVProgress","uBVRadar","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -5199,12 +6941,20 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uAbout.Register_uAbout();
     console.log("[Init] Registering uCharts...");
     pas.uCharts.Register_uCharts();
+    console.log("[Init] Registering uCustomerView...");
+    pas.uCustomerView.Register_uCustomerView();
     console.log("[Init] Registering uFormulario...");
     pas.uFormulario.Register_uFormulario();
     console.log("[Init] Registering uHome...");
     pas.uHome.Register_uHome();
     console.log("[Init] Registering uLibBootstrap...");
     pas.uLibBootstrap.Register_uLibBootstrap();
+    console.log("[Init] Registering uLoginView...");
+    pas.uLoginView.Register_uLoginView();
+    console.log("[Init] Registering uMobileView...");
+    pas.uMobileView.Register_uMobileView();
+    console.log("[Init] Registering uProductView...");
+    pas.uProductView.Register_uProductView();
     console.log("[Init] Registering uProFeatures...");
     pas.uProFeatures.Register_uProFeatures();
     console.log("[Init] Registering uShowcase...");
@@ -5283,12 +7033,38 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVTabs.Register_uBVTabs();
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVIonApp...");
+    pas.uBVIonApp.Register_uBVIonApp();
+    console.log("[Init] Registering uBVIonBadge...");
+    pas.uBVIonBadge.Register_uBVIonBadge();
+    console.log("[Init] Registering uBVIonButton...");
+    pas.uBVIonButton.Register_uBVIonButton();
+    console.log("[Init] Registering uBVIonCard...");
+    pas.uBVIonCard.Register_uBVIonCard();
+    console.log("[Init] Registering uBVIonContent...");
+    pas.uBVIonContent.Register_uBVIonContent();
+    console.log("[Init] Registering uBVIonHeader...");
+    pas.uBVIonHeader.Register_uBVIonHeader();
+    console.log("[Init] Registering uBVIonItem...");
+    pas.uBVIonItem.Register_uBVIonItem();
+    console.log("[Init] Registering uBVIonList...");
+    pas.uBVIonList.Register_uBVIonList();
+    console.log("[Init] Registering uBVIonTabBar...");
+    pas.uBVIonTabBar.Register_uBVIonTabBar();
+    console.log("[Init] Registering uBVIonTabButton...");
+    pas.uBVIonTabButton.Register_uBVIonTabButton();
+    console.log("[Init] Registering uBVIonTabs...");
+    pas.uBVIonTabs.Register_uBVIonTabs();
+    console.log("[Init] Registering uBVIonTitle...");
+    pas.uBVIonTitle.Register_uBVIonTitle();
+    console.log("[Init] Registering uBVIonToolbar...");
+    pas.uBVIonToolbar.Register_uBVIonToolbar();
     console.log("[Init] Registering uBVThemeSelect...");
     pas.uBVThemeSelect.Register_uBVThemeSelect();
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v3.0 TURBO";
     methods = new Object();
@@ -5407,6 +7183,22 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     routerOpts = new Object();
     routesArr = new Array();
+    r = new Object();
+    r["path"] = "/login";
+    r["component"] = "login-view-page";
+    routesArr.push(r);
+    r = new Object();
+    r["path"] = "/customers";
+    r["component"] = "customer-view-page";
+    routesArr.push(r);
+    r = new Object();
+    r["path"] = "/products";
+    r["component"] = "product-view-page";
+    routesArr.push(r);
+    r = new Object();
+    r["path"] = "/mobile";
+    r["component"] = "mobile-view-page";
+    routesArr.push(r);
     r = new Object();
     r["path"] = "/";
     r["component"] = "home-page";

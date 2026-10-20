@@ -1,0 +1,103 @@
+<template>
+  <div :class="wrapperClass">
+    <div class="bui-ion-item" @click="handleClick">
+      <div class="bui-ion-item-start" b-if="hasStart">
+        <slot name="start"></slot>
+      </div>
+      <div class="bui-ion-item-content">
+        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>
+        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>
+        <slot></slot>
+      </div>
+      <div class="bui-ion-item-end">
+        <slot name="end"></slot>
+        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>
+      </div>
+    </div>
+    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">
+      <slot name="expanded"></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonItem - Mobile List Item Component with Accordion / Expandable Support
+    --------------------------------------------------------------------------
+    Props:
+    - title: string
+    - subtitle: string
+    - detail: boolean (renders › disclosure chevron)
+    - expandable: boolean (enables accordion expand/collapse on click)
+    - expanded: boolean (initial expanded state)
+    - hasStart: boolean
+  }
+
+  props:
+    title: string = '';
+    subtitle: string = '';
+    detail: boolean = false;
+    expandable: boolean = false;
+    expanded: boolean = false;
+    hasStart: boolean = false;
+
+  data:
+    isExpanded: boolean = false;
+
+  created:
+    begin
+      asm
+        if (this.expanded === true || this.expanded === 'true') {
+          this.isExpanded = true;
+        }
+      end;
+    end;
+
+  computed:
+    function wrapperClass: string;
+    begin
+      asm
+        var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
+        var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
+        return 'bui-ion-item-wrapper' + exp + open;
+      end;
+    end;
+
+    function detailClass: string;
+    begin
+      asm
+        var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
+        return 'bui-ion-item-detail' + rot;
+      end;
+    end;
+
+    function showDetail: boolean;
+    begin
+      asm
+        var d = Boolean(this.detail === true || this.detail === 'true');
+        var e = Boolean(this.expandable === true || this.expandable === 'true');
+        return d || e;
+      end;
+    end;
+
+    function isContentVisible: boolean;
+    begin
+      asm
+        var exp = Boolean(this.expandable === true || this.expandable === 'true');
+        var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
+        return exp && open;
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        if (this.expandable === true || this.expandable === 'true') {
+          this.isExpanded = !this.isExpanded;
+          this.$emit('toggle', { expanded: this.isExpanded });
+        }
+        this.$emit('click', ev);
+      end;
+    end;
+</script>

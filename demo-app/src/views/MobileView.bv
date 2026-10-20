@@ -3,9 +3,9 @@
     <bv-ion-app :mode="currentMode">
       <bv-ion-header>
         <bv-ion-toolbar>
-          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem" />
+          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>
           <div slot="end">
-            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === 'ios' ? 'primary' : 'success'" />
+            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === 'ios' ? 'primary' : 'success'"></bv-ion-badge>
           </div>
         </bv-ion-toolbar>
       </bv-ion-header>
@@ -13,13 +13,13 @@
       <bv-ion-content :padding="true">
         <!-- INTRO CARD -->
         <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">
-          <p style="margin-bottom: 12px; color: #4b5563; line-height: 1.5;">
+          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">
             Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android).
           </p>
 
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode" />
-            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode" />
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>
+            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>
           </div>
         </bv-ion-card>
 
@@ -29,32 +29,53 @@
             Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:
           </p>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
-            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast" />
-            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert" />
-            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm" />
-            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading" />
-            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet" />
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>
+            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>
+            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>
+            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>
+            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>
           </div>
 
-          <div b-if="lastAction" style="margin-top: 14px; padding: 10px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">
+          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">
             <strong>Última Ação:</strong> {{ lastAction }}
           </div>
         </bv-ion-card>
 
-        <!-- MOBILE LIST & INSET ITEMS -->
-        <bv-ion-card title="Listas e Itens Agrupados" subtitle="Inset List (<bv-ion-list :inset='true'>)">
+        <!-- EXPANDABLE ACCORDION LIST -->
+        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">
           <bv-ion-list :inset="true">
-            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :detail="true">
-              <bv-ion-badge value="Online" color="success" slot="end" />
+            <!-- ITEM 1 -->
+            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">
+              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>
+              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
+                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>
+                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>
+                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>
+                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>
+              </div>
             </bv-ion-item>
 
-            <bv-ion-item title="Armazenamento Local" subtitle="Cache de dados e ORM sincronizados" :detail="true">
-              <bv-ion-badge value="SQLite" color="primary" slot="end" />
+            <!-- ITEM 2 -->
+            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">
+              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>
+              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
+                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>
+                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>
+                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>
+                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>
+              </div>
             </bv-ion-item>
 
-            <bv-ion-item title="Plataforma de Execução" subtitle="Multiplataforma Web, Desktop e Android" :detail="true">
-              <bv-ion-badge value="Universal" color="dark" slot="end" />
+            <!-- ITEM 3 -->
+            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">
+              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>
+              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
+                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>
+                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>
+                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>
+                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>
+              </div>
             </bv-ion-item>
           </bv-ion-list>
         </bv-ion-card>
@@ -77,7 +98,7 @@
   created:
     begin
       asm
-        if (window.$ionic) {
+        if (window.$ionic && typeof window.$ionic.getMode === 'function') {
           this.currentMode = window.$ionic.getMode();
         }
       end;
@@ -89,7 +110,7 @@
       asm
         this.currentMode = 'ios';
         if (window.$ionic) window.$ionic.setMode('ios');
-        this.lastAction = 'Modo visual alterado para iOS (Cupertino)';
+        this.lastAction = 'Modo visual alterado para 🍎 iOS (Cupertino)';
       end;
     end;
 
@@ -98,23 +119,29 @@
       asm
         this.currentMode = 'md';
         if (window.$ionic) window.$ionic.setMode('md');
-        this.lastAction = 'Modo visual alterado para Android (Material Design)';
+        this.lastAction = 'Modo visual alterado para 🤖 Android (Material Design)';
       end;
     end;
 
     procedure showToast;
     begin
       asm
-        pas.BlaiseIonic.TIonicToast.Show('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
-        this.lastAction = 'TIonicToast.Show disparado!';
+        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+        if (ionic && ionic.toast) {
+          ionic.toast.show('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
+        }
+        this.lastAction = '🔔 TIonicToast.Show disparado com sucesso!';
       end;
     end;
 
     procedure showAlert;
     begin
       asm
-        pas.BlaiseIonic.TIonicAlert.Alert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
-        this.lastAction = 'TIonicAlert.Alert exibido!';
+        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+        if (ionic && ionic.alert) {
+          ionic.alert.alert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
+        }
+        this.lastAction = '💬 TIonicAlert.Alert exibido!';
       end;
     end;
 
@@ -122,24 +149,30 @@
     begin
       asm
         let self = this;
-        self.lastAction = 'TIonicAlert.Confirm aberto...';
-        pas.BlaiseIonic.TIonicAlert.Confirm('Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?',
-          function() {
-            self.lastAction = 'Confirmação aceita! Sincronizando...';
-            pas.BlaiseIonic.TIonicToast.Show('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
-          },
-          function() {
-            self.lastAction = 'Operação cancelada pelo usuário.';
-          }
-        );
+        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+        self.lastAction = '❓ TIonicAlert.Confirm aberto...';
+        if (ionic && ionic.alert) {
+          ionic.alert.confirm('Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?',
+            function() {
+              self.lastAction = '✅ Confirmação aceita! Dados sincronizados!';
+              if (ionic.toast) ionic.toast.show('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
+            },
+            function() {
+              self.lastAction = '❌ Operação cancelada pelo usuário.';
+            }
+          );
+        }
       end;
     end;
 
     procedure showLoading;
     begin
       asm
-        pas.BlaiseIonic.TIonicLoading.Present('Carregando registros...', 1800);
-        this.lastAction = 'TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
+        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+        if (ionic && ionic.loading) {
+          ionic.loading.present('Carregando registros...', 1800);
+        }
+        this.lastAction = '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
       end;
     end;
 
@@ -147,25 +180,29 @@
     begin
       asm
         let self = this;
-        self.lastAction = 'TIonicActionSheet.Show aberto...';
-        pas.BlaiseIonic.TIonicActionSheet.Show('Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'],
-          function(opt, idx) {
-            self.lastAction = 'Opção selecionada no Action Sheet: ' + opt;
-            pas.BlaiseIonic.TIonicToast.Show('Selecionado: ' + opt, 1800, 'bottom', 'dark');
-          }
-        );
+        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+        self.lastAction = '📑 TIonicActionSheet.Show aberto...';
+        if (ionic && ionic.actionSheet) {
+          ionic.actionSheet.show('Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'],
+            function(opt, idx) {
+              self.lastAction = '👉 Opção selecionada no Action Sheet: ' + opt;
+              if (ionic.toast) ionic.toast.show('Selecionado: ' + opt, 1800, 'bottom', 'dark');
+            }
+          );
+        }
       end;
     end;
 </script>
 
 <style>
   .mobile-view-container {
-    max-width: 720px;
+    max-width: 760px;
     margin: 0 auto;
     background: #ffffff;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     min-height: calc(100vh - 120px);
+    margin-bottom: 80px;
   }
 </style>

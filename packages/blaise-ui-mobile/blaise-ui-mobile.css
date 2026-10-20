@@ -297,20 +297,57 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
+.bui-ion-item-wrapper {
+  border-bottom: 0.5px solid var(--ion-border-color);
+  background-color: #ffffff;
+  transition: background-color 0.15s ease;
+}
+
+.bui-ion-item-wrapper:last-child {
+  border-bottom: none;
+}
+
+.bui-ion-item-wrapper.is-expandable .bui-ion-item {
+  cursor: pointer;
+}
+
+.bui-ion-item-wrapper.is-expandable .bui-ion-item:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
 .bui-ion-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
   min-height: 48px;
-  border-bottom: 0.5px solid var(--ion-border-color);
-  background-color: #ffffff;
+  background-color: transparent;
   color: var(--ion-text-color);
   box-sizing: border-box;
 }
 
-.bui-ion-item:last-child {
-  border-bottom: none;
+.bui-ion-item-detail {
+  display: inline-block;
+  font-size: 1.3rem;
+  line-height: 1;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #9ca3af;
+  user-select: none;
+}
+
+.bui-ion-item-detail.rotated {
+  transform: rotate(90deg);
+  color: var(--ion-color-primary);
+}
+
+.bui-ion-item-expandable-content {
+  padding: 14px 16px;
+  background-color: #f9fafb;
+  border-top: 0.5px dashed var(--ion-border-color);
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.5;
+  animation: ionicFadeIn 0.2s ease-out;
 }
 
 .bui-ion-item-start {

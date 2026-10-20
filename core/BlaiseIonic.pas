@@ -538,8 +538,45 @@ begin
       // Set initial HTML mode attribute
       ionicBridge.setMode(activeMode);
 
+      // Attach PascalCase aliases
+      ionicBridge.toast.Show = ionicBridge.toast.show;
+      ionicBridge.toast.Dismiss = ionicBridge.toast.dismiss;
+
+      ionicBridge.alert.Alert = ionicBridge.alert.alert;
+      ionicBridge.alert.Confirm = ionicBridge.alert.confirm;
+      ionicBridge.alert.Prompt = ionicBridge.alert.prompt;
+      ionicBridge.alert.Dismiss = ionicBridge.alert.dismiss;
+
+      ionicBridge.loading.Present = ionicBridge.loading.present;
+      ionicBridge.loading.Dismiss = ionicBridge.loading.dismiss;
+      ionicBridge.loading.IsLoading = ionicBridge.loading.isLoading;
+
+      ionicBridge.actionSheet.Show = ionicBridge.actionSheet.show;
+      ionicBridge.actionSheet.Dismiss = ionicBridge.actionSheet.dismiss;
+
+      ionicBridge.GetMode = ionicBridge.getMode;
+      ionicBridge.SetMode = ionicBridge.setMode;
+      ionicBridge.IsIos = function() { return ionicBridge.getMode() === 'ios'; };
+      ionicBridge.IsAndroid = function() { return ionicBridge.getMode() === 'md'; };
+
       window.__BV_CORE__.ionic = ionicBridge;
       window.$ionic = ionicBridge;
+
+      // Global window controllers
+      window.TIonicToast = ionicBridge.toast;
+      window.TIonicAlert = ionicBridge.alert;
+      window.TIonicLoading = ionicBridge.loading;
+      window.TIonicActionSheet = ionicBridge.actionSheet;
+      window.TIonicController = ionicBridge;
+
+      // Safe pas.BlaiseIonic registration for runtime interop
+      if (typeof window.pas === 'undefined') window.pas = {};
+      if (!window.pas.BlaiseIonic) window.pas.BlaiseIonic = {};
+      window.pas.BlaiseIonic.TIonicToast = ionicBridge.toast;
+      window.pas.BlaiseIonic.TIonicAlert = ionicBridge.alert;
+      window.pas.BlaiseIonic.TIonicLoading = ionicBridge.loading;
+      window.pas.BlaiseIonic.TIonicActionSheet = ionicBridge.actionSheet;
+      window.pas.BlaiseIonic.TIonicController = ionicBridge;
     }
   end;
 end;

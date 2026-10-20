@@ -1,0 +1,34 @@
+<template>
+  <button
+    class="bui-ion-tab-button"
+    :class="{ 'is-active': active }"
+    @click="handleClick">
+    <slot name="icon"></slot>
+    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>
+    <slot name="badge"></slot>
+  </button>
+</template>
+
+<script>
+  {
+    BVIonTabButton - Mobile Tab Navigation Button
+    --------------------------------------------
+    Props:
+    - label: string
+    - active: boolean
+    - tab: string
+  }
+
+  props:
+    label: string = '';
+    active: boolean = false;
+    tab: string = '';
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
+      end;
+    end;
+</script>

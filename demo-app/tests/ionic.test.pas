@@ -238,6 +238,21 @@ begin
           Expect(Wrapper.Find('.bui-ion-item-detail')).toBeDefined;
         end);
 
+      It('should toggle expandable content on bv-ion-item click', procedure
+        begin
+          ItemProps := TJSObject.new;
+          ItemProps['title'] := 'Server Details';
+          ItemProps['expandable'] := true;
+
+          Wrapper := Mount('bv-ion-item', ItemProps);
+          Expect(Wrapper.Find('.bui-ion-item')).toBeDefined;
+          Expect(Wrapper.Element.className).ToContain('is-expandable');
+
+          // Click item to toggle expanded
+          Wrapper.Find('.bui-ion-item').click();
+          Expect(Wrapper.Find('.bui-ion-item-detail').className).ToContain('rotated');
+        end);
+
       It('should render bv-ion-tab-button and emit tab-click event', procedure
         var
           ClickedTab: string;
