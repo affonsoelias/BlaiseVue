@@ -1,0 +1,15 @@
+<template>
+  <div class="bui-ion-tabs">
+    <div class="bui-ion-tab-content">
+      <slot></slot>
+    </div>
+    <slot name="bottom"></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonTabs - Mobile Tab View Container
+    -------------------------------------
+  }
+</script>

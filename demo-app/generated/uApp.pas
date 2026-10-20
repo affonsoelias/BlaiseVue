@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -138,6 +138,32 @@ begin
   Register_uBVTabs;
   asm console.log("[Init] Registering uBVToast..."); end;
   Register_uBVToast;
+  asm console.log("[Init] Registering uBVIonApp..."); end;
+  Register_uBVIonApp;
+  asm console.log("[Init] Registering uBVIonBadge..."); end;
+  Register_uBVIonBadge;
+  asm console.log("[Init] Registering uBVIonButton..."); end;
+  Register_uBVIonButton;
+  asm console.log("[Init] Registering uBVIonCard..."); end;
+  Register_uBVIonCard;
+  asm console.log("[Init] Registering uBVIonContent..."); end;
+  Register_uBVIonContent;
+  asm console.log("[Init] Registering uBVIonHeader..."); end;
+  Register_uBVIonHeader;
+  asm console.log("[Init] Registering uBVIonItem..."); end;
+  Register_uBVIonItem;
+  asm console.log("[Init] Registering uBVIonList..."); end;
+  Register_uBVIonList;
+  asm console.log("[Init] Registering uBVIonTabBar..."); end;
+  Register_uBVIonTabBar;
+  asm console.log("[Init] Registering uBVIonTabButton..."); end;
+  Register_uBVIonTabButton;
+  asm console.log("[Init] Registering uBVIonTabs..."); end;
+  Register_uBVIonTabs;
+  asm console.log("[Init] Registering uBVIonTitle..."); end;
+  Register_uBVIonTitle;
+  asm console.log("[Init] Registering uBVIonToolbar..."); end;
+  Register_uBVIonToolbar;
   asm console.log("[Init] Registering uBVThemeSelect..."); end;
   Register_uBVThemeSelect;
   asm console.log("[Init] Registering uBVThemeToggle..."); end;

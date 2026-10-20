@@ -2126,6 +2126,19 @@ begin
     else
       DownloadURL := 'https://github.com/blaisevue/blaise-ui/releases/latest/download/blaise-ui.zip';
   end
+  else if (AliasLower = 'mobile') or (AliasLower = 'blaise-ui-mobile') then
+  begin
+    WriteLn('Installing official package: blaise-ui-mobile ...');
+    PkgSource := GetPackagesPath + 'blaise-ui-mobile';
+    if DirectoryExists(PkgSource) then
+    begin
+      CopyDir(PkgSource, LibPath + 'blaise-ui-mobile', []);
+      WriteLn('Package "blaise-ui-mobile" installed successfully in lib/blaise-ui-mobile/.');
+      Exit;
+    end
+    else
+      DownloadURL := 'https://github.com/blaisevue/blaise-ui-mobile/releases/latest/download/blaise-ui-mobile.zip';
+  end
   else
     DownloadURL := URL;
 
@@ -8384,7 +8397,7 @@ begin
     WriteLn('    bv list v              Lists views');
     WriteLn('    bv list t              Lists test files');
     WriteLn('    bv lib list            Lists all installed components in lib/');
-    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui) or from URL');
+    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile) or from URL');
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
     WriteLn('    bv theme list          Lists available installed themes');
     WriteLn('    bv theme use <name>    Switches active project theme in index.html');

@@ -1,0 +1,26 @@
+<template>
+  <div class="bui-ion-app" :class="appClass">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonApp - Root Mobile Application Container
+    --------------------------------------------
+    Props:
+    - mode: string ('ios' | 'md' | '')
+  }
+
+  props:
+    mode: string = '';
+
+  computed:
+    function appClass: string;
+    begin
+      asm
+        var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
+        return 'ionic-mode-' + m;
+      end;
+    end;
+</script>

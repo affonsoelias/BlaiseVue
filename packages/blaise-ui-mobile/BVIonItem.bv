@@ -1,0 +1,34 @@
+<template>
+  <div class="bui-ion-item">
+    <div class="bui-ion-item-start" b-if="hasStart">
+      <slot name="start"></slot>
+    </div>
+    <div class="bui-ion-item-content">
+      <div class="bui-ion-item-title" b-if="title">{{ title }}</div>
+      <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>
+      <slot></slot>
+    </div>
+    <div class="bui-ion-item-end">
+      <slot name="end"></slot>
+      <span class="bui-ion-item-detail" b-if="detail">&rsaquo;</span>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonItem - Mobile List Item Component
+    --------------------------------------
+    Props:
+    - title: string
+    - subtitle: string
+    - detail: boolean
+    - hasStart: boolean
+  }
+
+  props:
+    title: string = '';
+    subtitle: string = '';
+    detail: boolean = false;
+    hasStart: boolean = false;
+</script>

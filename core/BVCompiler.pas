@@ -71,6 +71,9 @@ initialization
          if (window.__BV_CORE__.auth && !Data.FData['$auth']) {
             Data.FData['$auth'] = window.__BV_CORE__.auth;
          }
+         if (window.__BV_CORE__.ionic && !Data.FData['$ionic']) {
+            Data.FData['$ionic'] = window.__BV_CORE__.ionic;
+         }
       }
 
       if (Data && !Data.Evaluate) {
@@ -468,6 +471,9 @@ initialization
                 if (window.__BV_CORE__.ws && !d.$ws) {
                    d.$ws = window.__BV_CORE__.ws;
                 }
+                 if (window.__BV_CORE__.ionic && !d.$ionic) {
+                    d.$ionic = window.__BV_CORE__.ionic;
+                 }
                 let res = String(Node['b-orig-tpl']).replace(/\{\{([\s\S]+?)\}\}/g, function(m, e) {
                    try {
                      let expr = e.trim();
@@ -855,6 +861,9 @@ initialization
             if (window.__BV_CORE__.auth) {
                pRef['$auth'] = window.__BV_CORE__.auth;
             }
+             if (window.__BV_CORE__.ionic) {
+                pRef['$ionic'] = window.__BV_CORE__.ionic;
+             }
             if (window.__BV_CORE__.validation) {
                window.__BV_CORE__.validation.initDataValidation(pRef);
             }

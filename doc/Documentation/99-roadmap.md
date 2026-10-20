@@ -250,7 +250,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards (✅ Completed)
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs (✅ Completed)
   ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers) (✅ Completed)
-  ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile)
+  ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile) (✅ Completed)
   ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records)
   └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
 ```
@@ -317,7 +317,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📱 Pillar 5: Mobile-First Ecosystem (`blaise-ui-mobile`)
+### 📱 Pillar 5: Mobile-First Ecosystem (`blaise-ui-mobile`) (✅ Completed)
 **Goal**: Provide a native-feeling mobile component kit powered by Ionic Web Components (`@ionic/core`) with strongly typed Object Pascal wrappers, usable interchangeably across Mobile (Capacitor/Android), Web (PWAs), and Desktop (Electron).
 - **Unified Architecture**:
   - Lives inside `packages/blaise-ui-mobile/` alongside `packages/blaise-ui/`, maintaining a single unified project structure (no extra project flags needed).
