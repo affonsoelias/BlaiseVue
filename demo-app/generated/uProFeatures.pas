@@ -4,7 +4,7 @@ unit uProFeatures;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
 
 procedure Register_uProFeatures;
 
@@ -193,7 +193,7 @@ begin
   m['testarSlot'] := procedure(_this: TJSObject)
 
     begin
-      asm console.log("[Slot Test] O pai está falando!"); end;
+      WriteLn('[Slot Test] O pai está falando!');
     end;
     
   m['mudarVersao'] := procedure(_this: TJSObject)
@@ -220,9 +220,7 @@ begin
       end;
       TJSObject(_this['$store'])['appVersion'] := newVer;
       TJSObject(_this['$store'])['user'] := newUser;
-      asm
-        console.log("%c[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser, "color: #10b981; font-weight: bold; font-size: 13px;");
-      end;
+      WriteLn('[Store] Memória Central Atualizada! Versão: ' + newVer + ' | Usuário: ' + newUser);
     end;
     
   m['incrementar'] := procedure(_this: TJSObject)
@@ -239,104 +237,126 @@ begin
     
   m['embaralhar'] := procedure(_this: TJSObject)
 
+    var
+      Arr: TJSArray;
+      i, j: Integer;
+      Tmp: JSValue;
     begin
-      asm
-        if (Array.isArray(this.itens)) {
-          this.itens = this.itens.slice().sort(() => Math.random() - 0.5);
-        }
+      Arr := TJSArray(_this['itens']);
+      if Arr <> nil then
+      begin
+        for i := Arr.Length - 1 downto 1 do
+        begin
+          j := Random(i + 1);
+          Tmp := Arr[i];
+          Arr[i] := Arr[j];
+          Arr[j] := Tmp;
+        end;
+        _this['itens'] := ObjectAssign(NewArray, Arr);
       end;
     end;
     
   m['adicionarItem'] := procedure(_this: TJSObject)
 
+    var
+      Emojis: array[0..7] of string = ('⚡ Lightning', '🔥 Fire', '🚀 Rocket', '💎 Diamond', '🔮 Crystal', '🌟 Star', '🛡️ Shield', '🎯 Target');
+      Arr: TJSArray;
     begin
-      asm
-        if (Array.isArray(this.itens)) {
-          const emojis = ['⚡ Lightning', '🔥 Fire', '🚀 Rocket', '💎 Diamond', '🔮 Crystal', '🌟 Star', '🛡️ Shield', '🎯 Target'];
-          const rand = emojis[Math.floor(Math.random() * emojis.length)];
-          this.itens.push(rand + ' #' + (this.itens.length + 1));
-        }
-      end;
+      Arr := TJSArray(_this['itens']);
+      if Arr <> nil then
+        Arr.push(Emojis[Random(8)] + ' #' + IntToStr(Arr.Length + 1));
     end;
     
   m['removerItem'] := procedure(_this: TJSObject)
 
+    var
+      Arr: TJSArray;
     begin
-      asm
-        if (Array.isArray(this.itens) && this.itens.length > 0) {
-          this.itens.shift();
-        }
-      end;
+      Arr := TJSArray(_this['itens']);
+      if (Arr <> nil) and (Arr.Length > 0) then
+        Arr.shift;
     end;
     
   m['resetarLista'] := procedure(_this: TJSObject)
 
     begin
-      asm
-        this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
-      end;
+      _this['itens'] := NewArray;
+      TJSArray(_this['itens']).push('⚡ Pascal');
+      TJSArray(_this['itens']).push('🔥 BlaiseVue');
+      TJSArray(_this['itens']).push('🚀 WebAssembly');
+      TJSArray(_this['itens']).push('💎 HighPerf');
     end;
     
   m['calcularWasmFib'] := procedure(_this: TJSObject)
 
+    var
+      n, res: Integer;
+      t0, t1: Double;
     begin
-      asm
-        const n = parseInt(this.fibInput, 10) || 1;
-        const t0 = performance.now();
-        const res = this.$wasm.call('math', 'fib', n);
-        const t1 = performance.now();
-        this.wasmFibResult = res;
-        this.wasmFibTime = (t1 - t0).toFixed(3);
-      end;
+      n := StrToIntDef(String(_this['fibInput']), 1);
+      t0 := NowTimestampMs;
+      res := Integer(WasmCall(_this, 'math', 'fib', n));
+      t1 := NowTimestampMs;
+      _this['wasmFibResult'] := res;
+      _this['wasmFibTime'] := FormatFloat('0.000', t1 - t0);
     end;
     
   m['testarPrimoWasm'] := procedure(_this: TJSObject)
 
+    var
+      n: Integer;
+      isP: Integer;
     begin
-      asm
-        const n = parseInt(this.primeInput, 10) || 2;
-        const isP = this.$wasm.call('math', 'isPrime', n);
-        if (isP === 1) {
-          this.primeResult = n + ' é um NÚMERO PRIMO! 💎';
-        } else {
-          this.primeResult = n + ' NÃO é primo ❌';
-        }
-      end;
+      n := StrToIntDef(String(_this['primeInput']), 2);
+      isP := Integer(WasmCall(_this, 'math', 'isPrime', n));
+      if isP = 1 then
+        _this['primeResult'] := IntToStr(n) + ' é um NÚMERO PRIMO! 💎'
+      else
+        _this['primeResult'] := IntToStr(n) + ' NÃO é primo ❌';
     end;
     
   m['rodarBenchmark'] := procedure(_this: TJSObject)
 
+    var
+      n: Integer;
+      rep: JSValue;
     begin
-      asm
-        const n = parseInt(this.fibInput, 10) || 20;
-        const rep = this.$wasm.benchmark('math', 'fib', n, 1000);
-        this.benchJsTime = rep.jsDurationMs;
-        this.benchWasmTime = rep.wasmDurationMs;
-        this.benchSpeedup = rep.speedup + ' Mais Rápido! 🚀';
-        this.benchSummary = 'Executadas 1.000 iterações com sucesso no módulo math.';
+      n := StrToIntDef(String(_this['fibInput']), 20);
+      rep := WasmBenchmark(_this, 'math', 'fib', n, 1000);
+      if rep <> nil then
+      begin
+        _this['benchJsTime'] := GetFieldStr(rep, 'jsDurationMs');
+        _this['benchWasmTime'] := GetFieldStr(rep, 'wasmDurationMs');
+        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Mais Rápido! 🚀';
+        _this['benchSummary'] := 'Executadas 1.000 iterações com sucesso no módulo math.';
       end;
     end;
 
   comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
+    var
+      rep: JSValue;
     begin
-      asm
-        this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
-        if (this.$wasm) {
-          const rep = this.$wasm.benchmark('math', 'fib', 20, 1000);
-          this.benchJsTime = rep.jsDurationMs;
-          this.benchWasmTime = rep.wasmDurationMs;
-          this.benchSpeedup = rep.speedup + ' Mais Rápido! 🚀';
-          this.benchSummary = 'Módulo WebAssembly math ativo e operacional.';
-        }
+      _this['itens'] := NewArray;
+      TJSArray(_this['itens']).push('⚡ Pascal');
+      TJSArray(_this['itens']).push('🔥 BlaiseVue');
+      TJSArray(_this['itens']).push('🚀 WebAssembly');
+      TJSArray(_this['itens']).push('💎 HighPerf');
+      rep := WasmBenchmark(_this, 'math', 'fib', 20, 1000);
+      if rep <> nil then
+      begin
+        _this['benchJsTime'] := GetFieldStr(rep, 'jsDurationMs');
+        _this['benchWasmTime'] := GetFieldStr(rep, 'wasmDurationMs');
+        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Mais Rápido! 🚀';
+        _this['benchSummary'] := 'Módulo WebAssembly math ativo e operacional.';
       end;
     end;
 
     ;
   comp['updated'] := procedure(_this: TJSObject)
     begin
-      asm console.log("[Lifecycle] Componente UPDATED! Pulso detectado."); end;
+      WriteLn('[Lifecycle] Componente UPDATED! Pulso detectado.');
     end;
 
     ;

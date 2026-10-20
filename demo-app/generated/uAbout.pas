@@ -4,7 +4,7 @@ unit uAbout;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
 
 procedure Register_uAbout;
 
@@ -166,15 +166,12 @@ begin
         TJSArray(_this['tecnologias']).push(o2);
       end;
     end;
-    { Toggle authentication state using unsafe JS Proxy access (asm) }
+    { Toggle authentication state in pure Object Pascal }
     
   m['toggleLogin'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-         this.logado = !this.logado; 
-         console.log("[Method] logado toggle: ", this.logado);
-       end;
+      TJSObject(_this)['logado'] := not Boolean(TJSObject(_this)['logado']);
     end;
     { Adds a dynamic record to the reactive array }
     

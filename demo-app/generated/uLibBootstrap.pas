@@ -4,7 +4,7 @@ unit uLibBootstrap;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVRouting;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVRouting;
 
 procedure Register_uLibBootstrap;
 
@@ -211,115 +211,84 @@ begin
   m['clickNotif'] := procedure(_this: TJSObject; info: string)
 
     begin
-       asm 
-          this.lastAction = info;
-          if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
-            this.$refs.mainToast.showToast();
-          } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
-            this.$refs.mainToast.show();
-          }
-       end;
+      TJSObject(_this)['lastAction'] := info;
+      TriggerRef(_this, 'mainToast', 'show');
     end;
-    { Opens the modal using the component reference }
+    { Opens the modal using the component reference in pure Pascal }
     
   m['showModal'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
-            this.$refs.mainModal.showModal();
-          } else if (this.$refs.mainModal && this.$refs.mainModal.show) {
-            this.$refs.mainModal.show();
-          }
-       end;
+      TriggerRef(_this, 'mainModal', 'show');
     end;
     { Callback executed when the modal OK button is clicked }
     
   m['modalConfirm'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          this.libName = 'SYNC_' + Date.now();
-          this.lastAction = 'Modal Confirmed';
-          if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
-            this.$refs.mainToast.showToast();
-          } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
-            this.$refs.mainToast.show();
-          }
-       end;
+      TJSObject(_this)['libName'] := 'SYNC_' + NowTimestampStr;
+      TJSObject(_this)['lastAction'] := 'Modal Confirmed';
+      TriggerRef(_this, 'mainToast', 'show');
     end;
     { Updates the current page index from the pagination component }
     
   m['updatePage'] := procedure(_this: TJSObject; p: integer)
 
     begin
-       asm this.currentPage = p; end;
+      TJSObject(_this)['currentPage'] := p;
     end;
     
   m['tabChanged'] := procedure(_this: TJSObject; id: string)
 
     begin
-       asm console.log("Tab changed to: ", id); end;
+      WriteLn('Tab changed to: ', id);
     end;
     
   m['showDrawer'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          if (this.$refs.mainDrawer && this.$refs.mainDrawer.open) {
-            this.$refs.mainDrawer.open();
-          } else if (this.$refs.mainDrawer && this.$refs.mainDrawer.toggle) {
-            this.$refs.mainDrawer.toggle();
-          }
-       end;
+      TriggerRef(_this, 'mainDrawer', 'open');
     end;
     
   m['closeDrawer'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          if (this.$refs.mainDrawer && this.$refs.mainDrawer.close) {
-            this.$refs.mainDrawer.close();
-          }
-       end;
+      TriggerRef(_this, 'mainDrawer', 'close');
     end;
     
   m['openSettings'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          if (this.$refs.settingsModal && this.$refs.settingsModal.showModal) {
-            this.$refs.settingsModal.showModal();
-          } else if (this.$refs.settingsModal && this.$refs.settingsModal.show) {
-            this.$refs.settingsModal.show();
-          }
-       end;
+      TriggerRef(_this, 'settingsModal', 'show');
     end;
     
   m['applySettings'] := procedure(_this: TJSObject)
 
     begin
-       asm 
-          this.clickNotif('Configurações salvas!');
-       end;
+      CallMethod(_this, 'clickNotif', ['Configurações salvas!']);
     end;
 
   comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
+    var
+      items: TJSArray;
+      q1, q2, q3: TJSObject;
+      opts: TJSArray;
+      o1, o2, o3: TJSObject;
     begin
-       asm
-         this.faqItems = [
-           { id: 'q1', title: 'How does Shared State work?', content: 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.' },
-           { id: 'q2', title: 'Unified Design System?', content: 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.' },
-           { id: 'q3', title: 'JIT Optimization?', content: 'The compiler generates minimalist JavaScript bundles, resulting in instant load times.' }
-         ];
-         this.catOptions = [
-           { value: 'low', text: 'Low Priority' },
-           { value: 'med', text: 'Medium Priority' },
-           { value: 'high', text: 'High Priority (Critical)' }
-         ];
-       end;
+      items := NewArray;
+      q1 := NewObject; q1['id'] := 'q1'; q1['title'] := 'How does Shared State work?'; q1['content'] := 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.';
+      q2 := NewObject; q2['id'] := 'q2'; q2['title'] := 'Unified Design System?'; q2['content'] := 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.';
+      q3 := NewObject; q3['id'] := 'q3'; q3['content'] := 'The compiler generates minimalist JavaScript bundles, resulting in instant load times.'; q3['title'] := 'JIT Optimization?';
+      items.push(q1); items.push(q2); items.push(q3);
+      _this['faqItems'] := items;
+      opts := NewArray;
+      o1 := NewObject; o1['value'] := 'low'; o1['text'] := 'Low Priority';
+      o2 := NewObject; o2['value'] := 'med'; o2['text'] := 'Medium Priority';
+      o3 := NewObject; o3['value'] := 'high'; o3['text'] := 'High Priority (Critical)';
+      opts.push(o1); opts.push(o2); opts.push(o3);
+      _this['catOptions'] := opts;
     end;
 
     ;

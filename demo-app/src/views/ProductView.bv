@@ -128,161 +128,72 @@
   computed:
     function filteredItems: JSValue;
     begin
-      asm
-        let list = this.items || [];
-        let q = (this.searchQuery || '').toLowerCase().trim();
-        if (!q) return list;
-        return list.filter(function(item) {
-          return Object.values(item).some(function(v) {
-            return String(v).toLowerCase().indexOf(q) !== -1;
-          });
-        });
-      end;
+      Result := FilterByQuery(this.items, this.searchQuery);
     end;
 
   methods:
     procedure resetForm;
+    var
+      F: JSValue;
     begin
-      asm
-        this.form = {
-          name: '',
-          price: 0.0,
-          stock: 0,
-          category: ''
-        };
-        this.formError = '';
-      end;
+      F := NewObject;
+      SetField(F, 'name', '');
+      SetField(F, 'price', 0.0);
+      SetField(F, 'stock', 0);
+      SetField(F, 'category', '');
+      this.form := F;
+      this.formError := '';
     end;
 
     procedure openCreateModal;
     begin
-      asm
-        this.resetForm();
-        this.isEditing = false;
-        this.currentEditId = 0;
-        this.isModalOpen = true;
-      end;
+      this.resetForm();
+      this.isEditing := false;
+      this.currentEditId := 0;
+      this.isModalOpen := true;
     end;
 
     procedure openEditModal(item: JSValue);
     begin
-      asm
-        this.form = Object.assign({}, item);
-        this.currentEditId = item.id;
-        this.isEditing = true;
-        this.formError = '';
-        this.isModalOpen = true;
-      end;
+      this.form := ObjectAssign(NewObject, item);
+      this.currentEditId := GetFieldInt(item, 'id', 0);
+      this.isEditing := true;
+      this.formError := '';
+      this.isModalOpen := true;
     end;
 
     procedure closeModal;
     begin
-      asm
-        this.isModalOpen = false;
-        this.formError = '';
-      end;
+      this.isModalOpen := false;
+      this.formError := '';
     end;
 
     procedure fetchItems;
     begin
-      asm
-        var self = this;
-        var ep = '/api/' + this.apiEndpoint;
-        var p = (this.$api && typeof this.$api.get === 'function')
-          ? this.$api.get(ep)
-          : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
-
-        Promise.resolve(p).then(function(data) {
-          if (Array.isArray(data)) {
-            self.items = data;
-          } else if (data && Array.isArray(data.items)) {
-            self.items = data.items;
-          }
-        }).catch(function(err) {
-          console.error('Error fetching ' + self.apiEndpoint + ':', err);
-        });
-      end;
+      ApiFetch(this, '/api/' + String(this.apiEndpoint), 'items');
     end;
 
     procedure saveItem;
     begin
-      asm
-        var self = this;
-        if (!this.form) return;
-        var isEdit = Boolean(this.isEditing);
-        var id = this.currentEditId;
-        var ep = '/api/' + this.apiEndpoint + (isEdit ? ('/' + id) : '');
-        var method = isEdit ? 'put' : 'post';
-
-        var p = (this.$api && typeof this.$api[method] === 'function')
-          ? this.$api[method](ep, this.form)
-          : fetch('http://localhost:8090' + ep, {
-              method: method.toUpperCase(),
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(this.form)
-            }).then(function(r) { return r.json(); });
-
-        Promise.resolve(p).then(function(resp) {
-          self.isModalOpen = false;
-          self.fetchItems();
-        }).catch(function(err) {
-          self.formError = 'Failed to save: ' + (err.message || err);
-        });
-      end;
+      if not Boolean(this.form) then Exit;
+      ApiSave(this, '/api/' + String(this.apiEndpoint), Integer(this.currentEditId), Boolean(this.isEditing), this.form, 'fetchItems');
     end;
 
     procedure deleteItem(id: integer);
     begin
-      asm
-        if (!confirm('Are you sure you want to delete this ' + this.modelTitle + '?')) return;
-        var self = this;
-        var ep = '/api/' + this.apiEndpoint + '/' + id;
-
-        var p = (this.$api && typeof this.$api.delete === 'function')
-          ? this.$api.delete(ep)
-          : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
-
-        Promise.resolve(p).then(function() {
-          self.fetchItems();
-        }).catch(function(err) {
-          alert('Failed to delete: ' + (err.message || err));
-        });
-      end;
+      ApiDelete(this, '/api/' + String(this.apiEndpoint), id, 'Are you sure you want to delete this ' + String(this.modelTitle) + '?', 'fetchItems');
     end;
 
     procedure setupWebSocket;
     begin
-      asm
-        var self = this;
-        if (!this.$ws) return;
-        if (typeof this.$ws.connect === 'function') {
-          this.$ws.connect();
-        }
-        var pfx = String(this.modelTitle).toLowerCase();
-        if (typeof this.$ws.on === 'function') {
-          this.$ws.on(pfx + '_created', function(d) {
-            console.log('⚡ Real-time ' + pfx + ' created:', d);
-            self.fetchItems();
-          });
-          this.$ws.on(pfx + '_updated', function(d) {
-            console.log('⚡ Real-time ' + pfx + ' updated:', d);
-            self.fetchItems();
-          });
-          this.$ws.on(pfx + '_deleted', function(d) {
-            console.log('⚡ Real-time ' + pfx + ' deleted:', d);
-            self.fetchItems();
-          });
-        }
-      end;
+      ApiSetupRealtime(this, LowerCase(String(this.modelTitle)), 'fetchItems');
     end;
 
   mounted:
     begin
-      asm
-        this.resetForm();
-        this.fetchItems();
-        this.setupWebSocket();
-      end;
+      this.resetForm();
+      this.fetchItems();
+      this.setupWebSocket();
     end;
 </script>
 

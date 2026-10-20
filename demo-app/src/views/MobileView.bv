@@ -97,100 +97,69 @@
 
   created:
     begin
-      asm
-        if (window.$ionic && typeof window.$ionic.getMode === 'function') {
-          this.currentMode = window.$ionic.getMode();
-        }
-      end;
+      this.currentMode := IonicGetMode;
     end;
 
   methods:
     procedure setIosMode;
     begin
-      asm
-        this.currentMode = 'ios';
-        if (window.$ionic) window.$ionic.setMode('ios');
-        this.lastAction = 'Modo visual alterado para 🍎 iOS (Cupertino)';
-      end;
+      this.currentMode := 'ios';
+      IonicSetMode('ios');
+      this.lastAction := 'Modo visual alterado para 🍎 iOS (Cupertino)';
     end;
 
     procedure setMdMode;
     begin
-      asm
-        this.currentMode = 'md';
-        if (window.$ionic) window.$ionic.setMode('md');
-        this.lastAction = 'Modo visual alterado para 🤖 Android (Material Design)';
-      end;
+      this.currentMode := 'md';
+      IonicSetMode('md');
+      this.lastAction := 'Modo visual alterado para 🤖 Android (Material Design)';
     end;
 
     procedure showToast;
     begin
-      asm
-        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-        if (ionic && ionic.toast) {
-          ionic.toast.show('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
-        }
-        this.lastAction = '🔔 TIonicToast.Show disparado com sucesso!';
-      end;
+      IonicToast('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
+      this.lastAction := '🔔 TIonicToast.Show disparado com sucesso!';
     end;
 
     procedure showAlert;
     begin
-      asm
-        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-        if (ionic && ionic.alert) {
-          ionic.alert.alert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
-        }
-        this.lastAction = '💬 TIonicAlert.Alert exibido!';
-      end;
+      IonicAlert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
+      this.lastAction := '💬 TIonicAlert.Alert exibido!';
+    end;
+
+    procedure onConfirmOk;
+    begin
+      this.lastAction := '✅ Confirmação aceita! Dados sincronizados!';
+      IonicToast('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
+    end;
+
+    procedure onConfirmCancel;
+    begin
+      this.lastAction := '❌ Operação cancelada pelo usuário.';
     end;
 
     procedure showConfirm;
     begin
-      asm
-        let self = this;
-        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-        self.lastAction = '❓ TIonicAlert.Confirm aberto...';
-        if (ionic && ionic.alert) {
-          ionic.alert.confirm('Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?',
-            function() {
-              self.lastAction = '✅ Confirmação aceita! Dados sincronizados!';
-              if (ionic.toast) ionic.toast.show('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
-            },
-            function() {
-              self.lastAction = '❌ Operação cancelada pelo usuário.';
-            }
-          );
-        }
-      end;
+      this.lastAction := '❓ TIonicAlert.Confirm aberto...';
+      IonicConfirm(this, 'Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?', 'onConfirmOk', 'onConfirmCancel');
     end;
 
     procedure showLoading;
     begin
-      asm
-        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-        if (ionic && ionic.loading) {
-          ionic.loading.present('Carregando registros...', 1800);
-        }
-        this.lastAction = '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
-      end;
+      IonicLoading('Carregando registros...', 1800);
+      this.lastAction := '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
+    end;
+
+    procedure onSheetSelect(opt, idx: JSValue);
+    begin
+      this.lastAction := '👉 Opção selecionada no Action Sheet: ' + String(opt);
+      IonicToast('Selecionado: ' + String(opt), 1800, 'bottom', 'dark');
     end;
 
     procedure showActionSheet;
     begin
-      asm
-        let self = this;
-        let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-        self.lastAction = '📑 TIonicActionSheet.Show aberto...';
-        if (ionic && ionic.actionSheet) {
-          ionic.actionSheet.show('Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'],
-            function(opt, idx) {
-              self.lastAction = '👉 Opção selecionada no Action Sheet: ' + opt;
-              if (ionic.toast) ionic.toast.show('Selecionado: ' + opt, 1800, 'bottom', 'dark');
-            }
-          );
-        }
-      end;
+      this.lastAction := '📑 TIonicActionSheet.Show aberto...';
+      IonicActionSheet(this, 'Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'], 'onSheetSelect');
     end;
 </script>
 

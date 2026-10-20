@@ -384,7 +384,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 💎 Pillar 8: Idiomatic Object Pascal DX & Zero-ASM Application Architecture (Planned 🔮)
+### 💎 Pillar 8: Idiomatic Object Pascal DX & Zero-ASM Application Architecture (Completed ✅)
 **Goal**: Guarantee a 100% pure Object Pascal developer experience for end-user applications and views, completely eliminating reliance on inline `asm ... end;` blocks in business logic, reactive state handling, and view controllers.
 
 - **The Philosophy: Pascal-First Experience**:
@@ -392,38 +392,25 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
   - Low-level JavaScript interop and DOM plumbing belong strictly inside internal framework units (`core/`) and component libraries (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`).
   - Application developers writing `.bv` views and components (`src/views/`, `src/components/`) should **never need to learn or write JavaScript** to build reactive applications.
 
-- **Key Architectural Deliverables**:
-  1. **Direct Reactive State Assignments in Pascal**:
-     - Modernize the compiler and reactive scope so that Pascal assignments directly mutate reactive state without requiring inline JS `this` access:
-       ```pascal
-       // ❌ Legacy / Prototype approach (to be eliminated from views):
-       // asm this.isModalOpen = true; this.currentEditId = 0; end;
-
-       // ✅ Pure, Idiomatic Object Pascal (Pillar 8 Standard):
-       isModalOpen := true;
-       currentEditId := 0;
-       formError := '';
-       ```
-  2. **Strongly Typed Records & Pascal DTOs**:
-     - Eradicate untyped JavaScript object literals (`this.form = { name: '', email: '' }`) from views in favor of strongly typed Pascal `record` definitions:
-       ```pascal
-       type
-         TCustomerForm = record
-           name: string;
-           email: string;
-           phone: string;
-           active: boolean;
-         end;
-       ```
-  3. **High-Level Pascal Runtime & UI Helpers**:
-     - Provide idiomatic Pascal controllers and helper methods for standard UI interactions:
-       - Dialog & Modal Controls: `Modal.Open;`, `Modal.Close;`
-       - SPA Routing Navigation: `Router.Push('/products');`, `Router.Back;`
-       - Form Actions: `Form.Reset;`, `Form.Validate;`
-       - User Notifications: `ShowToast('Success!', 2000);`, `ShowMessage('Saved!');`
-  4. **Systematic Demo-App Refactoring**:
-     - Audit every single view in `demo-app/src/views/` (`CustomerView.bv`, `ProductView.bv`, `About.bv`, `Formulario.bv`, `LibBootstrap.bv`, etc.).
-     - Replace all non-essential `asm ... end;` blocks with clean, expressive Object Pascal methods, turning the `demo-app` into the gold standard of pure Object Pascal frontend code.
+- **Delivered Achievements**:
+  1. **Core Pascal DX Library (`core/BVPascalDX.pas`)**:
+     - Introduced an exhaustive suite of native Pascal procedures and functions:
+       - **Notifications & Dialogs**: `ShowToast`, `ShowAlert`, `Confirm`.
+       - **SPA Navigation**: `NavigateTo`, `GoBack`.
+       - **Method Dispatch & `$refs`**: `CallMethod`, `CallFunction`, `TriggerRef`.
+       - **Reactive Validation**: `ValidateForm`, `TouchValidation`, `ResetValidation`.
+       - **Full-Stack mORMot 2 & REST**: `ApiFetch`, `ApiSave`, `ApiDelete`, `ApiSetupRealtime`.
+       - **Authentication**: `AuthLogin`, `AuthLogout`.
+       - **Mobile Ecosystem**: `IonicGetMode`, `IonicSetMode`, `IonicToast`, `IonicAlert`, `IonicConfirm`, `IonicLoading`, `IonicActionSheet`.
+       - **WebAssembly Engine**: `WasmCall`, `WasmBenchmark`, `NowTimestampMs`.
+       - **Collections & Utils**: `FilterByQuery`, `RemoveItemById`, `FindItemById`, `NewObject`, `NewArray`, `ObjectAssign`.
+  2. **Upgraded CLI Preprocessor (`bin/bv.pas`)**:
+     - Upgraded `CleanPascalProps` to support argument-aware method dispatches (`this.resetForm()`, `this.clickNotif('...')`).
+     - Hardened ASM keyword parsing to respect strict word boundaries, preventing false positives with identifiers like `WasmCall`.
+  3. **100% Zero-ASM Eradication in `demo-app/`**:
+     - All views (`CustomerView.bv`, `ProductView.bv`, `LoginView.bv`, `MobileView.bv`, `Charts.bv`, `ProFeatures.bv`, `Formulario.bv`, `LibBootstrap.bv`, `About.bv`, `Showcase.bv`, `app.bv`) refactored to pure, idiomatic Object Pascal.
+  4. **Automated Vitest Test Suite**:
+     - Added `demo-app/tests/pascal_dx.test.pas`, bringing total automated coverage to 23 test suites and 336 passing unit tests.
 
 ---
 

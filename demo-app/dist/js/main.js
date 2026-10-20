@@ -1,6 +1,7 @@
 ﻿rtl.module("System",[],function () {
   "use strict";
   var $mod = this;
+  var $impl = $mod.$impl;
   this.MaxLongint = 0x7fffffff;
   this.Maxint = 2147483647;
   rtl.createClass(this,"TObject",null,function () {
@@ -13,8 +14,63 @@
     this.BeforeDestruction = function () {
     };
   });
+  this.vtInteger = 0;
+  this.vtExtended = 3;
+  this.vtWideChar = 9;
+  this.vtCurrency = 12;
+  this.vtUnicodeString = 18;
+  this.vtNativeInt = 19;
+  rtl.recNewT(this,"TVarRec",function () {
+    this.VType = 0;
+    this.VJSValue = undefined;
+    this.$eq = function (b) {
+      return (this.VType === b.VType) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue) && (this.VJSValue === b.VJSValue);
+    };
+    this.$assign = function (s) {
+      this.VType = s.VType;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      this.VJSValue = s.VJSValue;
+      return this;
+    };
+  });
+  this.VarRecs = function () {
+    var Result = [];
+    var i = 0;
+    var v = null;
+    Result = [];
+    while (i < arguments.length) {
+      v = $mod.TVarRec.$new();
+      v.VType = rtl.trunc(arguments[i]);
+      i += 1;
+      v.VJSValue = arguments[i];
+      i += 1;
+      Result.push($mod.TVarRec.$clone(v));
+    };
+    return Result;
+  };
   this.Random = function (Range) {
     return Math.floor(Math.random()*Range);
+  };
+  this.Trunc = function (A) {
+    if (!Math.trunc) {
+      Math.trunc = function(v) {
+        v = +v;
+        if (!isFinite(v)) return v;
+        return (v - v % 1) || (v < 0 ? -0 : v === 0 ? v : 0);
+      };
+    }
+    $mod.Trunc = Math.trunc;
+    return Math.trunc(A);
+  };
+  this.Int = function (A) {
+    var Result = 0.0;
+    Result = $mod.Trunc(A);
+    return Result;
   };
   this.Copy = function (S, Index, Size) {
     if (Index<1) Index = 1;
@@ -43,13 +99,88 @@
       Target.set(t + Insertion)}
      else Target.set($mod.Copy(t,1,Index - 1) + Insertion + $mod.Copy(t,Index,t.length));
   };
+  this.upcase = function (c) {
+    return c.toUpperCase();
+  };
+  this.val = function (S, NI, Code) {
+    NI.set($impl.valint(S,-9007199254740991,9007199254740991,Code));
+  };
+  this.val$6 = function (S, I, Code) {
+    I.set($impl.valint(S,-2147483648,2147483647,Code));
+  };
+  this.StringOfChar = function (c, l) {
+    var Result = "";
+    var i = 0;
+    if ((l>0) && c.repeat) return c.repeat(l);
+    Result = "";
+    for (var $l = 1, $end = l; $l <= $end; $l++) {
+      i = $l;
+      Result = Result + c;
+    };
+    return Result;
+  };
+  this.Writeln = function () {
+    var i = 0;
+    var l = 0;
+    var s = "";
+    l = arguments.length - 1;
+    if ($impl.WriteCallBack != null) {
+      for (var $l = 0, $end = l; $l <= $end; $l++) {
+        i = $l;
+        $impl.WriteCallBack(arguments[i],i === l);
+      };
+    } else {
+      s = $impl.WriteBuf;
+      for (var $l1 = 0, $end1 = l; $l1 <= $end1; $l1++) {
+        i = $l1;
+        s = s + ("" + arguments[i]);
+      };
+      console.log(s);
+      $impl.WriteBuf = "";
+    };
+  };
   this.Assigned = function (V) {
     return (V!=undefined) && (V!=null) && (!rtl.isArray(V) || (V.length > 0));
+  };
+  $mod.$implcode = function () {
+    $impl.WriteBuf = "";
+    $impl.WriteCallBack = null;
+    $impl.valint = function (S, MinVal, MaxVal, Code) {
+      var Result = 0;
+      var x = 0.0;
+      if (S === "") {
+        Code.set(1);
+        return Result;
+      };
+      x = Number(S);
+      if (isNaN(x)) {
+        var $tmp = $mod.Copy(S,1,1);
+        if ($tmp === "$") {
+          x = Number("0x" + $mod.Copy$1(S,2))}
+         else if ($tmp === "&") {
+          x = Number("0o" + $mod.Copy$1(S,2))}
+         else if ($tmp === "%") {
+          x = Number("0b" + $mod.Copy$1(S,2))}
+         else {
+          Code.set(1);
+          return Result;
+        };
+      };
+      if (isNaN(x) || (x !== $mod.Int(x))) {
+        Code.set(1)}
+       else if ((x < MinVal) || (x > MaxVal)) {
+        Code.set(2)}
+       else {
+        Result = $mod.Trunc(x);
+        Code.set(0);
+      };
+      return Result;
+    };
   };
   $mod.$init = function () {
     rtl.exitcode = 0;
   };
-});
+},[]);
 rtl.module("Types",["System"],function () {
   "use strict";
   var $mod = this;
@@ -66,10 +197,34 @@ rtl.module("Web",["System","Types","JS","weborworker"],function () {
   "use strict";
   var $mod = this;
 });
-rtl.module("SysUtils",["System","JS"],function () {
+rtl.module("RTLConsts",["System"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$resourcestrings = {SArgumentMissing: {org: 'Missing argument in format "%s"'}, SInvalidFormat: {org: 'Invalid format specifier : "%s"'}, SInvalidArgIndex: {org: 'Invalid argument index in format: "%s"'}, SErrInvalidInteger: {org: 'Invalid integer value: "%s"'}};
+});
+rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.FloatRecDigits = 19;
+  rtl.recNewT(this,"TFloatRec",function () {
+    this.Exponent = 0;
+    this.Negative = false;
+    this.$new = function () {
+      var r = Object.create(this);
+      r.Digits = rtl.arraySetLength(null,"\x00",19);
+      return r;
+    };
+    this.$eq = function (b) {
+      return (this.Exponent === b.Exponent) && (this.Negative === b.Negative) && rtl.arrayEq(this.Digits,b.Digits);
+    };
+    this.$assign = function (s) {
+      this.Exponent = s.Exponent;
+      this.Negative = s.Negative;
+      this.Digits = s.Digits.slice(0);
+      return this;
+    };
+  });
   rtl.recNewT(this,"TFormatSettings",function () {
     this.CurrencyDecimals = 0;
     this.CurrencyFormat = 0;
@@ -158,10 +313,32 @@ rtl.module("SysUtils",["System","JS"],function () {
     };
   },true);
   rtl.createClass(this,"Exception",pas.System.TObject,function () {
+    this.LogMessageOnCreate = false;
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.fMessage = "";
+      this.FJSError = null;
+    };
+    this.$final = function () {
+      this.FJSError = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (Msg) {
+      this.fMessage = Msg;
+      this.FJSError = new Error();
+      if (this.LogMessageOnCreate) pas.System.Writeln("Created exception ",this.$classname," with message: ",Msg);
+      return this;
+    };
+    this.CreateFmt = function (Msg, Args) {
+      this.Create$1($mod.Format(Msg,Args));
+      return this;
+    };
   });
   rtl.createClass(this,"EExternal",this.Exception,function () {
   });
   rtl.createClass(this,"EInvalidCast",this.Exception,function () {
+  });
+  rtl.createClass(this,"EConvertError",this.Exception,function () {
   });
   rtl.createClass(this,"EIntError",this.EExternal,function () {
   });
@@ -177,6 +354,221 @@ rtl.module("SysUtils",["System","JS"],function () {
   };
   this.LowerCase = function (s) {
     return s.toLowerCase();
+  };
+  this.Format = function (Fmt, Args) {
+    var Result = "";
+    Result = $mod.Format$1(Fmt,Args,$mod.FormatSettings);
+    return Result;
+  };
+  this.Format$1 = function (Fmt, Args, aSettings) {
+    var Result = "";
+    var ChPos = 0;
+    var OldPos = 0;
+    var ArgPos = 0;
+    var DoArg = 0;
+    var Len = 0;
+    var Hs = "";
+    var ToAdd = "";
+    var Index = 0;
+    var Width = 0;
+    var Prec = 0;
+    var Left = false;
+    var Fchar = "\x00";
+    var vq = 0;
+    function ReadFormat() {
+      var Result = "\x00";
+      var Value = 0;
+      function ReadInteger() {
+        var Code = 0;
+        var ArgN = 0;
+        if (Value !== -1) return;
+        OldPos = ChPos;
+        while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) <= "9") && (Fmt.charAt(ChPos - 1) >= "0")) ChPos += 1;
+        if (ChPos > Len) $impl.DoFormatError(1,Fmt);
+        if (Fmt.charAt(ChPos - 1) === "*") {
+          if (Index === 255) {
+            ArgN = ArgPos}
+           else {
+            ArgN = Index;
+            Index += 1;
+          };
+          if ((ChPos > OldPos) || (ArgN > (rtl.length(Args) - 1))) $impl.DoFormatError(1,Fmt);
+          ArgPos = ArgN + 1;
+          var $tmp = Args[ArgN].VType;
+          if ($tmp === 0) {
+            Value = Args[ArgN].VJSValue}
+           else if ($tmp === 19) {
+            Value = Args[ArgN].VJSValue}
+           else {
+            $impl.DoFormatError(1,Fmt);
+          };
+          ChPos += 1;
+        } else {
+          if (OldPos < ChPos) {
+            pas.System.val(pas.System.Copy(Fmt,OldPos,ChPos - OldPos),{get: function () {
+                return Value;
+              }, set: function (v) {
+                Value = v;
+              }},{get: function () {
+                return Code;
+              }, set: function (v) {
+                Code = v;
+              }});
+            if (Code > 0) $impl.DoFormatError(1,Fmt);
+          } else Value = -1;
+        };
+      };
+      function ReadIndex() {
+        if (Fmt.charAt(ChPos - 1) !== ":") {
+          ReadInteger()}
+         else Value = 0;
+        if (Fmt.charAt(ChPos - 1) === ":") {
+          if (Value === -1) $impl.DoFormatError(2,Fmt);
+          Index = Value;
+          Value = -1;
+          ChPos += 1;
+        };
+      };
+      function ReadLeft() {
+        if (Fmt.charAt(ChPos - 1) === "-") {
+          Left = true;
+          ChPos += 1;
+        } else Left = false;
+      };
+      function ReadWidth() {
+        ReadInteger();
+        if (Value !== -1) {
+          Width = Value;
+          Value = -1;
+        };
+      };
+      function ReadPrec() {
+        if (Fmt.charAt(ChPos - 1) === ".") {
+          ChPos += 1;
+          ReadInteger();
+          if (Value === -1) Value = 0;
+          Prec = Value;
+        };
+      };
+      Index = 255;
+      Width = -1;
+      Prec = -1;
+      Value = -1;
+      ChPos += 1;
+      if (Fmt.charAt(ChPos - 1) === "%") {
+        Result = "%";
+        return Result;
+      };
+      ReadIndex();
+      ReadLeft();
+      ReadWidth();
+      ReadPrec();
+      Result = pas.System.upcase(Fmt.charAt(ChPos - 1));
+      return Result;
+    };
+    function Checkarg(AT, err) {
+      var Result = false;
+      Result = false;
+      if (Index === 255) {
+        DoArg = ArgPos}
+       else DoArg = Index;
+      ArgPos = DoArg + 1;
+      if ((DoArg > (rtl.length(Args) - 1)) || (Args[DoArg].VType !== AT)) {
+        if (err) $impl.DoFormatError(3,Fmt);
+        ArgPos -= 1;
+        return Result;
+      };
+      Result = true;
+      return Result;
+    };
+    Result = "";
+    Len = Fmt.length;
+    ChPos = 1;
+    OldPos = 1;
+    ArgPos = 0;
+    while (ChPos <= Len) {
+      while ((ChPos <= Len) && (Fmt.charAt(ChPos - 1) !== "%")) ChPos += 1;
+      if (ChPos > OldPos) Result = Result + pas.System.Copy(Fmt,OldPos,ChPos - OldPos);
+      if (ChPos < Len) {
+        Fchar = ReadFormat();
+        var $tmp = Fchar;
+        if ($tmp === "D") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          if (ToAdd.charAt(0) !== "-") {
+            ToAdd = pas.System.StringOfChar("0",Index) + ToAdd}
+           else pas.System.Insert(pas.System.StringOfChar("0",Index + 1),{get: function () {
+              return ToAdd;
+            }, set: function (v) {
+              ToAdd = v;
+            }},2);
+        } else if ($tmp === "U") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToStr(Args[DoArg].VJSValue >>> 0)}
+           else if (Checkarg(19,true)) ToAdd = $mod.IntToStr(Args[DoArg].VJSValue);
+          Width = Math.abs(Width);
+          Index = Prec - ToAdd.length;
+          ToAdd = pas.System.StringOfChar("0",Index) + ToAdd;
+        } else if ($tmp === "E") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffExponent,3,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffExponent,3,Prec,aSettings);
+        } else if ($tmp === "F") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffFixed,9999,Prec,aSettings);
+        } else if ($tmp === "G") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffGeneral,Prec,3,aSettings);
+        } else if ($tmp === "N") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffNumber,9999,Prec,aSettings);
+        } else if ($tmp === "M") {
+          if (Checkarg(12,false)) {
+            ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue / 10000,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings)}
+           else if (Checkarg(3,true)) ToAdd = $mod.FloatToStrF$1(Args[DoArg].VJSValue,$mod.TFloatFormat.ffCurrency,9999,Prec,aSettings);
+        } else if ($tmp === "S") {
+          if (Checkarg(18,false)) {
+            Hs = Args[DoArg].VJSValue}
+           else if (Checkarg(9,true)) Hs = Args[DoArg].VJSValue;
+          Index = Hs.length;
+          if ((Prec !== -1) && (Index > Prec)) Index = Prec;
+          ToAdd = pas.System.Copy(Hs,1,Index);
+        } else if ($tmp === "P") {
+          if (Checkarg(0,false)) {
+            ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,8)}
+           else if (Checkarg(0,true)) ToAdd = $mod.IntToHex(Args[DoArg].VJSValue,16);
+        } else if ($tmp === "X") {
+          if (Checkarg(0,false)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 16;
+          } else if (Checkarg(19,true)) {
+            vq = Args[DoArg].VJSValue;
+            Index = 31;
+          };
+          if (Prec > Index) {
+            ToAdd = $mod.IntToHex(vq,Index)}
+           else {
+            Index = 1;
+            while ((rtl.shl(1,Index * 4) <= vq) && (Index < 16)) Index += 1;
+            if (Index > Prec) Prec = Index;
+            ToAdd = $mod.IntToHex(vq,Prec);
+          };
+        } else if ($tmp === "%") ToAdd = "%";
+        if (Width !== -1) if (ToAdd.length < Width) if (!Left) {
+          ToAdd = pas.System.StringOfChar(" ",Width - ToAdd.length) + ToAdd}
+         else ToAdd = ToAdd + pas.System.StringOfChar(" ",Width - ToAdd.length);
+        Result = Result + ToAdd;
+      };
+      ChPos += 1;
+      OldPos = ChPos;
+    };
+    return Result;
   };
   this.IntToStr = function (Value) {
     var Result = "";
@@ -200,7 +592,135 @@ rtl.module("SysUtils",["System","JS"],function () {
      else Result = aDef;
     return Result;
   };
+  this.StrToInt = function (S) {
+    var Result = 0;
+    var R = 0;
+    if (!$mod.TryStrToInt$2(S,{get: function () {
+        return R;
+      }, set: function (v) {
+        R = v;
+      }})) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SErrInvalidInteger"),pas.System.VarRecs(18,S)]);
+    Result = R;
+    return Result;
+  };
+  this.IntToHex = function (Value, Digits) {
+    var Result = "";
+    Result = "";
+    if (Value < 0) if (Value<0) Value = 0xFFFFFFFF + Value + 1;
+    Result=Value.toString(16);
+    Result = $mod.UpperCase(Result);
+    while (Result.length < Digits) Result = "0" + Result;
+    return Result;
+  };
   this.TFloatFormat = {"0": "ffFixed", ffFixed: 0, "1": "ffGeneral", ffGeneral: 1, "2": "ffExponent", ffExponent: 2, "3": "ffNumber", ffNumber: 3, "4": "ffCurrency", ffCurrency: 4};
+  var Rounds = "123456789:";
+  this.FloatToDecimal = function (Value, Precision, Decimals) {
+    var Result = $mod.TFloatRec.$new();
+    var Buffer = "";
+    var InfNan = "";
+    var OutPos = 0;
+    var error = 0;
+    var N = 0;
+    var L = 0;
+    var C = 0;
+    var GotNonZeroBeforeDot = false;
+    var BeforeDot = false;
+    Result.Negative = false;
+    Result.Exponent = 0;
+    for (C = 0; C <= 19; C++) Result.Digits[C] = "0";
+    if (Value === 0) return Result;
+    Buffer = rtl.floatToStr(Value,24);
+    N = 1;
+    L = Buffer.length;
+    while (Buffer.charAt(N - 1) === " ") N += 1;
+    Result.Negative = Buffer.charAt(N - 1) === "-";
+    if (Result.Negative) {
+      N += 1}
+     else if (Buffer.charAt(N - 1) === "+") N += 1;
+    if (L >= (N + 2)) {
+      InfNan = pas.System.Copy(Buffer,N,3);
+      if (InfNan === "Inf") {
+        Result.Digits[0] = "\x00";
+        Result.Exponent = 32767;
+        return Result;
+      };
+      if (InfNan === "Nan") {
+        Result.Digits[0] = "\x00";
+        Result.Exponent = -32768;
+        return Result;
+      };
+    };
+    OutPos = 0;
+    Result.Exponent = 0;
+    BeforeDot = true;
+    GotNonZeroBeforeDot = false;
+    while ((L >= N) && (Buffer.charAt(N - 1) !== "E")) {
+      if (Buffer.charAt(N - 1) === ".") {
+        BeforeDot = false}
+       else {
+        if (BeforeDot) {
+          Result.Exponent += 1;
+          Result.Digits[OutPos] = Buffer.charAt(N - 1);
+          if (Buffer.charAt(N - 1) !== "0") GotNonZeroBeforeDot = true;
+        } else Result.Digits[OutPos] = Buffer.charAt(N - 1);
+        OutPos += 1;
+      };
+      N += 1;
+    };
+    N += 1;
+    if (N <= L) {
+      pas.System.val$6(pas.System.Copy(Buffer,N,(L - N) + 1),{get: function () {
+          return C;
+        }, set: function (v) {
+          C = v;
+        }},{get: function () {
+          return error;
+        }, set: function (v) {
+          error = v;
+        }});
+      Result.Exponent += C;
+    };
+    N = OutPos;
+    L = 19;
+    while (N < L) {
+      Result.Digits[N] = "0";
+      N += 1;
+    };
+    if ((Decimals + Result.Exponent) < Precision) {
+      N = Decimals + Result.Exponent}
+     else N = Precision;
+    if (N >= L) N = L - 1;
+    if (N === 0) {
+      if (Result.Digits[0] >= "5") {
+        Result.Digits[0] = "1";
+        Result.Digits[1] = "\x00";
+        Result.Exponent += 1;
+      } else Result.Digits[0] = "\x00";
+    } else if (N > 0) {
+      if (Result.Digits[N] >= "5") {
+        do {
+          Result.Digits[N] = "\x00";
+          N -= 1;
+          Result.Digits[N] = Rounds.charAt(($mod.StrToInt(Result.Digits[N]) + 1) - 1);
+        } while (!((N === 0) || (Result.Digits[N] < ":")));
+        if (Result.Digits[0] === ":") {
+          Result.Digits[0] = "1";
+          Result.Exponent += 1;
+        };
+      } else {
+        Result.Digits[N] = "0";
+        while ((N > -1) && (Result.Digits[N] === "0")) {
+          Result.Digits[N] = "\x00";
+          N -= 1;
+        };
+      };
+    } else Result.Digits[0] = "\x00";
+    if ((Result.Digits[0] === "\x00") && !GotNonZeroBeforeDot) {
+      Result.Exponent = 0;
+      Result.Negative = false;
+    };
+    return Result;
+  };
   this.FloatToStr = function (Value) {
     var Result = "";
     Result = $mod.FloatToStr$1(Value,$mod.FormatSettings);
@@ -234,6 +754,279 @@ rtl.module("SysUtils",["System","JS"],function () {
       }},DS,TS);
     return Result;
   };
+  this.FormatFloat = function (Fmt, aValue) {
+    var Result = "";
+    Result = $mod.FormatFloat$1(Fmt,aValue,$mod.TFormatSettings.$clone($mod.FormatSettings));
+    return Result;
+  };
+  var MaxPrecision = 18;
+  this.FormatFloat$1 = function (Fmt, aValue, aSettings) {
+    var Result = "";
+    var E = 0.0;
+    var FV = $mod.TFloatRec.$new();
+    var Section = "";
+    var SectionLength = 0;
+    var ThousandSep = false;
+    var IsScientific = false;
+    var DecimalPos = 0;
+    var FirstDigit = 0;
+    var LastDigit = 0;
+    var RequestedDigits = 0;
+    var ExpSize = 0;
+    var Available = 0;
+    var Current = 0;
+    var PadZeroes = 0;
+    var DistToDecimal = 0;
+    function InitVars() {
+      E = aValue;
+      Section = "";
+      SectionLength = 0;
+      ThousandSep = false;
+      IsScientific = false;
+      DecimalPos = 0;
+      FirstDigit = 2147483647;
+      LastDigit = 0;
+      RequestedDigits = 0;
+      ExpSize = 0;
+      Available = -1;
+    };
+    function ToResult(AChar) {
+      Result = Result + AChar;
+    };
+    function AddToResult(AStr) {
+      Result = Result + AStr;
+    };
+    function WriteDigit(ADigit) {
+      if (ADigit === "\x00") return;
+      DistToDecimal -= 1;
+      if (DistToDecimal === -1) {
+        AddToResult(aSettings.DecimalSeparator);
+        ToResult(ADigit);
+      } else {
+        ToResult(ADigit);
+        if (ThousandSep && ((DistToDecimal % 3) === 0) && (DistToDecimal > 1)) AddToResult(aSettings.ThousandSeparator);
+      };
+    };
+    function GetDigit() {
+      var Result = "\x00";
+      Result = "\x00";
+      if (Current <= Available) {
+        Result = FV.Digits[Current];
+        Current += 1;
+      } else if (DistToDecimal <= LastDigit) {
+        DistToDecimal -= 1}
+       else Result = "0";
+      return Result;
+    };
+    function CopyDigit() {
+      if (PadZeroes === 0) {
+        WriteDigit(GetDigit())}
+       else if (PadZeroes < 0) {
+        PadZeroes += 1;
+        if (DistToDecimal <= FirstDigit) {
+          WriteDigit("0")}
+         else DistToDecimal -= 1;
+      } else {
+        while (PadZeroes > 0) {
+          WriteDigit(GetDigit());
+          PadZeroes -= 1;
+        };
+        WriteDigit(GetDigit());
+      };
+    };
+    function GetSections(SP) {
+      var Result = 0;
+      var FL = 0;
+      var i = 0;
+      var C = "\x00";
+      var Q = "\x00";
+      var inQuote = false;
+      Result = 1;
+      SP.get()[1] = -1;
+      SP.get()[2] = -1;
+      SP.get()[3] = -1;
+      inQuote = false;
+      Q = "\x00";
+      i = 1;
+      FL = Fmt.length;
+      while (i <= FL) {
+        C = Fmt.charAt(i - 1);
+        var $tmp = C;
+        if ($tmp === ";") {
+          if (!inQuote) {
+            if (Result > 3) throw $mod.Exception.$create("Create$1",["Invalid float format"]);
+            SP.get()[Result] = i;
+            Result += 1;
+          };
+        } else if (($tmp === '"') || ($tmp === "'")) {
+          if (inQuote) {
+            inQuote = C !== Q}
+           else {
+            inQuote = true;
+            Q = C;
+          };
+        };
+        i += 1;
+      };
+      if (SP.get()[Result] === -1) SP.get()[Result] = FL + 1;
+      return Result;
+    };
+    function AnalyzeFormat() {
+      var I = 0;
+      var Len = 0;
+      var Q = "\x00";
+      var C = "\x00";
+      var InQuote = false;
+      Len = Section.length;
+      I = 1;
+      InQuote = false;
+      Q = "\x00";
+      while (I <= Len) {
+        C = Section.charAt(I - 1);
+        if (C.charCodeAt() in rtl.createSet(34,39)) {
+          if (InQuote) {
+            InQuote = C !== Q}
+           else {
+            InQuote = true;
+            Q = C;
+          };
+        } else if (!InQuote) {
+          var $tmp = C;
+          if ($tmp === ".") {
+            if (DecimalPos === 0) DecimalPos = RequestedDigits + 1}
+           else if ($tmp === ",") {
+            ThousandSep = aSettings.ThousandSeparator !== "\x00"}
+           else if (($tmp === "e") || ($tmp === "E")) {
+            I += 1;
+            if (I < Len) {
+              C = Section.charAt(I - 1);
+              IsScientific = C.charCodeAt() in rtl.createSet(45,43);
+              if (IsScientific) while ((I < Len) && (Section.charAt((I + 1) - 1) === "0")) {
+                ExpSize += 1;
+                I += 1;
+              };
+              if (ExpSize > 4) ExpSize = 4;
+            };
+          } else if ($tmp === "#") {
+            RequestedDigits += 1}
+           else if ($tmp === "0") {
+            if (RequestedDigits < FirstDigit) FirstDigit = RequestedDigits + 1;
+            RequestedDigits += 1;
+            LastDigit = RequestedDigits + 1;
+          };
+        };
+        I += 1;
+      };
+      if (DecimalPos === 0) DecimalPos = RequestedDigits + 1;
+      LastDigit = DecimalPos - LastDigit;
+      if (LastDigit > 0) LastDigit = 0;
+      FirstDigit = DecimalPos - FirstDigit;
+      if (FirstDigit < 0) FirstDigit = 0;
+    };
+    function ValueOutSideScope() {
+      var Result = false;
+      Result = ((FV.Exponent >= 18) && !IsScientific) || (FV.Exponent === 0x7FF) || (FV.Exponent === 0x800);
+      return Result;
+    };
+    function CalcRunVars() {
+      var D = 0;
+      var P = 0;
+      if (IsScientific) {
+        P = RequestedDigits;
+        D = 9999;
+      } else {
+        P = 18;
+        D = (RequestedDigits - DecimalPos) + 1;
+      };
+      FV.$assign($mod.FloatToDecimal(aValue,P,D));
+      DistToDecimal = DecimalPos - 1;
+      if (IsScientific) {
+        PadZeroes = 0}
+       else {
+        PadZeroes = FV.Exponent - (DecimalPos - 1);
+        if (PadZeroes >= 0) DistToDecimal = FV.Exponent;
+      };
+      Available = -1;
+      while ((Available < 18) && (FV.Digits[Available + 1] !== "\x00")) Available += 1;
+    };
+    function FormatExponent(ASign, aExponent) {
+      var Result = "";
+      Result = $mod.IntToStr(aExponent);
+      Result = pas.System.StringOfChar("0",ExpSize - Result.length) + Result;
+      if (aExponent < 0) {
+        Result = "-" + Result}
+       else if ((aExponent > 0) && (ASign === "+")) Result = ASign + Result;
+      return Result;
+    };
+    var I = 0;
+    var S = 0;
+    var C = "\x00";
+    var Q = "\x00";
+    var PA = [];
+    var InLiteral = false;
+    PA = rtl.arraySetLength(PA,0,4);
+    Result = "";
+    InitVars();
+    if (E > 0) {
+      S = 1}
+     else if (E < 0) {
+      S = 2}
+     else S = 3;
+    PA[0] = 0;
+    I = GetSections({get: function () {
+        return PA;
+      }, set: function (v) {
+        PA = v;
+      }});
+    if ((I < S) || ((PA[S] - PA[S - 1]) === 0)) S = 1;
+    SectionLength = PA[S] - PA[S - 1] - 1;
+    Section = pas.System.Copy(Fmt,PA[S - 1] + 1,SectionLength);
+    Section = rtl.strSetLength(Section,SectionLength);
+    AnalyzeFormat();
+    CalcRunVars();
+    if ((SectionLength === 0) || ValueOutSideScope()) {
+      Section=E.toPrecision(15);
+      Result = Section;
+    };
+    I = 1;
+    Current = 0;
+    Q = " ";
+    InLiteral = false;
+    if (FV.Negative && (S === 1)) ToResult("-");
+    while (I <= SectionLength) {
+      C = Section.charAt(I - 1);
+      if (C.charCodeAt() in rtl.createSet(34,39)) {
+        if (InLiteral) {
+          InLiteral = C !== Q}
+         else {
+          InLiteral = true;
+          Q = C;
+        };
+      } else if (InLiteral) {
+        ToResult(C)}
+       else {
+        var $tmp = C;
+        if (($tmp === "0") || ($tmp === "#")) {
+          CopyDigit()}
+         else if (($tmp === ".") || ($tmp === ",")) {}
+        else if (($tmp === "e") || ($tmp === "E")) {
+          ToResult(C);
+          I += 1;
+          if (I <= Section.length) {
+            C = Section.charAt(I - 1);
+            if (C.charCodeAt() in rtl.createSet(43,45)) {
+              AddToResult(FormatExponent(C,(FV.Exponent - DecimalPos) + 1));
+              while ((I < SectionLength) && (Section.charAt((I + 1) - 1) === "0")) I += 1;
+            };
+          };
+        } else {
+          ToResult(C);
+        };
+      };
+      I += 1;
+    };
+    return Result;
+  };
   this.TimeSeparator = "\x00";
   this.DateSeparator = "\x00";
   this.ShortDateFormat = "";
@@ -258,6 +1051,17 @@ rtl.module("SysUtils",["System","JS"],function () {
     $impl.DefaultLongMonthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     $impl.DefaultShortDayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
     $impl.DefaultLongDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    $impl.feInvalidFormat = 1;
+    $impl.feMissingArgument = 2;
+    $impl.feInvalidArgIndex = 3;
+    $impl.DoFormatError = function (ErrCode, fmt) {
+      var $tmp = ErrCode;
+      if ($tmp === 1) {
+        throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidFormat"),pas.System.VarRecs(18,fmt)])}
+       else if ($tmp === 2) {
+        throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SArgumentMissing"),pas.System.VarRecs(18,fmt)])}
+       else if ($tmp === 3) throw $mod.EConvertError.$create("CreateFmt",[rtl.getResStr(pas.RTLConsts,"SInvalidArgIndex"),pas.System.VarRecs(18,fmt)]);
+    };
     $impl.maxdigits = 15;
     $impl.ReplaceDecimalSep = function (S, DS) {
       var Result = "";
@@ -4223,7 +5027,361 @@ rtl.module("BlaiseIonic",["System","JS","Web","SysUtils","BVReactivity"],functio
     $mod.TIonicController.EnsureBridge();
   };
 });
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic"],function () {
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.CallMethod = function (Instance, MethodName) {
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Instance[MethodName]();
+    };
+  };
+  this.CallMethod$1 = function (Instance, MethodName, Args) {
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Instance[MethodName].apply(Instance, Args);
+    };
+  };
+  this.TriggerRef = function (Instance, RefName, MethodName) {
+    var Result = false;
+    Result = false;
+    if (!Instance || !Instance.$refs) return;
+    let r = Instance.$refs[RefName];
+    if (!r) return;
+    
+    if (typeof r[MethodName] === 'function') {
+      r[MethodName]();
+      Result = true;
+    } else if (MethodName === 'show' && typeof r.showModal === 'function') {
+      r.showModal();
+      Result = true;
+    } else if (MethodName === 'show' && typeof r.showToast === 'function') {
+      r.showToast();
+      Result = true;
+    } else if (MethodName === 'open' && typeof r.toggle === 'function') {
+      r.toggle();
+      Result = true;
+    };
+    return Result;
+  };
+  this.ValidateForm = function (Instance) {
+    var Result = false;
+    if (Instance && typeof Instance.$validate === 'function') {
+      Result = Instance.$validate();
+    } else {
+      Result = true;
+    };
+    return Result;
+  };
+  this.TouchValidation = function (Instance) {
+    if (Instance && Instance.$v && typeof Instance.$v.$touch === 'function') {
+      Instance.$v.$touch();
+    };
+  };
+  this.ResetValidation = function (Instance) {
+    if (Instance && Instance.$v && typeof Instance.$v.$reset === 'function') {
+      Instance.$v.$reset();
+    };
+  };
+  this.NewObject = function () {
+    var Result = null;
+    Result = new Object();
+    return Result;
+  };
+  this.NewArray = function () {
+    var Result = null;
+    Result = new Array();
+    return Result;
+  };
+  this.ObjectAssign = function (Target, Source) {
+    var Result = undefined;
+    Result = Object.assign(Target || {}, Source || {});
+    return Result;
+  };
+  this.NowTimestampStr = function () {
+    var Result = "";
+    Result = String(Date.now());
+    return Result;
+  };
+  this.FilterByQuery = function (List, Query) {
+    var Result = undefined;
+    let arr = List || [];
+    let q = (Query !== undefined && Query !== null ? String(Query) : '').toLowerCase().trim();
+    if (!q) { Result = arr; return; }
+    if (!Array.isArray(arr)) { Result = arr; return; }
+    
+    Result = arr.filter(function(item) {
+      if (!item) return false;
+      return Object.values(item).some(function(v) {
+        return String(v).toLowerCase().indexOf(q) !== -1;
+      });
+    });
+    return Result;
+  };
+  this.ApiFetch = function (Instance, Endpoint, PropertyName) {
+    var self = Instance;
+        if (!self) return;
+        var ep = Endpoint;
+        var p = (self.$api && typeof self.$api.get === 'function')
+          ? self.$api.get(ep)
+          : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
+    
+        Promise.resolve(p).then(function(data) {
+          if (Array.isArray(data)) {
+            self[PropertyName] = data;
+          } else if (data && Array.isArray(data.items)) {
+            self[PropertyName] = data.items;
+          }
+        }).catch(function(err) {
+          console.error('Error fetching ' + ep + ':', err);
+        });
+  };
+  this.ApiSave = function (Instance, Endpoint, Id, IsEditing, formData, OnSuccessMethod, ErrorProp) {
+    var self = Instance;
+        if (!self || !FormData) return;
+        var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
+        var method = IsEditing ? 'put' : 'post';
+    
+        var p = (self.$api && typeof self.$api[method] === 'function')
+          ? self.$api[method](ep, FormData)
+          : fetch('http://localhost:8090' + ep, {
+              method: method.toUpperCase(),
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(FormData)
+            }).then(function(r) { return r.json(); });
+    
+        Promise.resolve(p).then(function(resp) {
+          self.isModalOpen = false;
+          if (OnSuccessMethod && typeof self[OnSuccessMethod] === 'function') {
+            self[OnSuccessMethod]();
+          }
+        }).catch(function(err) {
+          if (ErrorProp) {
+            self[ErrorProp] = 'Failed to save: ' + (err.message || err);
+          }
+        });
+  };
+  this.ApiDelete = function (Instance, Endpoint, Id, ConfirmMsg, OnSuccessMethod) {
+    var self = Instance;
+        if (!self) return;
+        if (ConfirmMsg && !confirm(ConfirmMsg)) return;
+        var ep = Endpoint + '/' + Id;
+    
+        var p = (self.$api && typeof self.$api.delete === 'function')
+          ? self.$api.delete(ep)
+          : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
+    
+        Promise.resolve(p).then(function() {
+          if (OnSuccessMethod && typeof self[OnSuccessMethod] === 'function') {
+            self[OnSuccessMethod]();
+          }
+        }).catch(function(err) {
+          alert('Failed to delete: ' + (err.message || err));
+        });
+  };
+  this.ApiSetupRealtime = function (Instance, ModelPrefix, RefreshMethod) {
+    var self = Instance;
+    if (!self || !self.$ws) return;
+    if (typeof self.$ws.connect === 'function') {
+      self.$ws.connect();
+    }
+    var pfx = String(ModelPrefix).toLowerCase();
+    if (typeof self.$ws.on === 'function') {
+      self.$ws.on(pfx + '_created', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+      self.$ws.on(pfx + '_updated', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+      self.$ws.on(pfx + '_deleted', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+    };
+  };
+  this.AuthLogin = function (Instance, Email, Password, DefaultRedirect) {
+    var self = Instance;
+        if (!self) return;
+        self.loading = true;
+        self.errorMessage = '';
+        self.successMessage = '';
+    
+        if (!self.$auth || typeof self.$auth.login !== 'function') {
+          self.errorMessage = 'Módulo $auth não inicializado.';
+          self.loading = false;
+          return;
+        }
+    
+        var e = (Email !== undefined && Email !== null) ? String(Email) : '';
+        var p = (Password !== undefined && Password !== null) ? String(Password) : '';
+    
+        self.$auth.login(e, p)
+          .then(function(resp) {
+            self.loading = false;
+            self.successMessage = 'Autenticado com sucesso como ' + (resp.user ? resp.user.name : e) + '!';
+            setTimeout(function() {
+              var target = (window.__BV_CORE__.auth && window.__BV_CORE__.auth.redirectAfterLogin)
+                ? window.__BV_CORE__.auth.redirectAfterLogin
+                : DefaultRedirect;
+              window.__BV_CORE__.auth.redirectAfterLogin = '';
+              window.location.hash = target;
+            }, 600);
+          })
+          .catch(function(err) {
+            self.loading = false;
+            self.errorMessage = (err && err.message) ? err.message : 'Falha na autenticação. Verifique os dados.';
+          });
+  };
+  this.AuthLogout = function (Instance) {
+    var self = Instance;
+    if (self && self.$auth && typeof self.$auth.logout === 'function') {
+      self.$auth.logout();
+    };
+  };
+  this.IonicGetMode = function () {
+    var Result = "";
+    if (window.$ionic && typeof window.$ionic.getMode === 'function') {
+      Result = window.$ionic.getMode();
+    } else {
+      Result = 'md';
+    };
+    return Result;
+  };
+  this.IonicSetMode = function (Mode) {
+    if (window.$ionic && typeof window.$ionic.setMode === 'function') {
+      window.$ionic.setMode(Mode);
+    };
+  };
+  this.IonicToast = function (Msg, Duration, Position, Color) {
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.toast && typeof ionic.toast.show === 'function') {
+      ionic.toast.show(Msg, Duration, Position, Color);
+    };
+  };
+  this.IonicAlert = function (Title, Subtitle, ButtonText) {
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.alert && typeof ionic.alert.alert === 'function') {
+      ionic.alert.alert(Title, Subtitle, ButtonText);
+    };
+  };
+  this.IonicConfirm = function (Instance, Title, Message, OnConfirmMethod, OnCancelMethod) {
+    let self = Instance;
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.alert && typeof ionic.alert.confirm === 'function') {
+      ionic.alert.confirm(Title, Message,
+        function() {
+          if (self && OnConfirmMethod && typeof self[OnConfirmMethod] === 'function') {
+            self[OnConfirmMethod]();
+          }
+        },
+        function() {
+          if (self && OnCancelMethod && typeof self[OnCancelMethod] === 'function') {
+            self[OnCancelMethod]();
+          }
+        }
+      );
+    };
+  };
+  this.IonicLoading = function (Message, Duration) {
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.loading && typeof ionic.loading.present === 'function') {
+      ionic.loading.present(Message, Duration);
+    };
+  };
+  this.IonicActionSheet = function (Instance, Title, Options, OnSelectMethod) {
+    let self = Instance;
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.actionSheet && typeof ionic.actionSheet.show === 'function') {
+      ionic.actionSheet.show(Title, Options, function(opt, idx) {
+        if (self && OnSelectMethod && typeof self[OnSelectMethod] === 'function') {
+          self[OnSelectMethod](opt, idx);
+        }
+      });
+    };
+  };
+  this.WasmCall = function (Instance, ModName, FuncName, Arg) {
+    var Result = undefined;
+    if (Instance && Instance.$wasm && typeof Instance.$wasm.call === 'function') {
+      Result = Instance.$wasm.call(ModName, FuncName, Arg);
+    } else {
+      Result = 0;
+    };
+    return Result;
+  };
+  this.WasmBenchmark = function (Instance, ModName, FuncName, Arg, Iterations) {
+    var Result = undefined;
+    if (Instance && Instance.$wasm && typeof Instance.$wasm.benchmark === 'function') {
+      Result = Instance.$wasm.benchmark(ModName, FuncName, Arg, Iterations);
+    } else {
+      Result = null;
+    };
+    return Result;
+  };
+  this.NowTimestampMs = function () {
+    var Result = 0.0;
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+      Result = performance.now();
+    } else {
+      Result = Date.now();
+    };
+    return Result;
+  };
+  this.UpdateChartDarkMode = function (OptionsObj, Dark) {
+    if (OptionsObj) {
+      if (!OptionsObj.scales) OptionsObj.scales = {};
+      if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
+      if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
+      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+      const textColor = Dark ? '#94a3b8' : '#64748b';
+      OptionsObj.scales.x.grid = { color: gridColor };
+      OptionsObj.scales.y.grid = { color: gridColor };
+      OptionsObj.scales.x.ticks = { color: textColor };
+      OptionsObj.scales.y.ticks = { color: textColor };
+    };
+  };
+  this.ThemeSet = function (ThemeName) {
+    if (window.$theme && typeof window.$theme.setTheme === 'function') {
+      window.$theme.setTheme(ThemeName);
+    };
+  };
+  this.I18nAddMessages = function (Locale, JsonStr) {
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.addMessages === 'function') {
+      try {
+        var obj = JSON.parse(JsonStr);
+        window.__BV_CORE__.i18n.addMessages(Locale, obj);
+      } catch(e) {
+        console.error('Invalid JSON for i18n messages:', e);
+      }
+    };
+  };
+  this.I18nSetLocale = function (Locale) {
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.setLocale === 'function') {
+      window.__BV_CORE__.i18n.setLocale(Locale);
+    };
+  };
+  this.GetFieldStr = function (Obj, PropName, DefaultVal) {
+    var Result = "";
+    if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
+      Result = String(Obj[PropName]);
+    } else {
+      Result = DefaultVal;
+    };
+    return Result;
+  };
+  this.GetFieldInt = function (Obj, PropName, DefaultVal) {
+    var Result = 0;
+    if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
+      let n = parseInt(Obj[PropName], 10);
+      Result = isNaN(n) ? DefaultVal : n;
+    } else {
+      Result = DefaultVal;
+    };
+    return Result;
+  };
+  this.SetField = function (Obj, PropName, Value) {
+    if (Obj && typeof Obj === 'object') {
+      Obj[PropName] = Value;
+    };
+  };
+});
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -4590,7 +5748,7 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
     $mod.InitDevTools();
   };
 });
-rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCard = function () {
@@ -4617,7 +5775,7 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("card",comp);
   };
 });
-rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCounter = function () {
@@ -4652,7 +5810,7 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormHeader = function () {
@@ -4682,7 +5840,7 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("form-header",comp);
   };
 });
-rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uInfoCard = function () {
@@ -4708,7 +5866,7 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("info-card",comp);
   };
 });
-rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uAbout = function () {
@@ -4750,8 +5908,7 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       };
     };
     m["toggleLogin"] = function (_this) {
-      this.logado = !this.logado; 
-      console.log("[Method] logado toggle: ", this.logado);
+      _this["logado"] = !!(_this["logado"] == false);
     };
     m["addTec"] = function (_this) {
       var o = null;
@@ -5137,7 +6294,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
     };
   };
 });
-rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BlaiseCharts"],function () {
+rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BlaiseCharts"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCharts = function () {
@@ -5212,18 +6369,8 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       var NewDark = false;
       NewDark = !!(_this["isDarkMode"] == false);
       _this["isDarkMode"] = NewDark;
-      if (this.chartOptions) {
-        if (!this.chartOptions.scales) this.chartOptions.scales = {};
-        if (!this.chartOptions.scales.x) this.chartOptions.scales.x = {};
-        if (!this.chartOptions.scales.y) this.chartOptions.scales.y = {};
-        const gridColor = NewDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-        const textColor = NewDark ? '#94a3b8' : '#64748b';
-        this.chartOptions.scales.x.grid = { color: gridColor };
-        this.chartOptions.scales.y.grid = { color: gridColor };
-        this.chartOptions.scales.x.ticks = { color: textColor };
-        this.chartOptions.scales.y.ticks = { color: textColor };
-        this.chartOptions = Object.assign({}, this.chartOptions);
-      };
+      pas.BVPascalDX.UpdateChartDarkMode(_this["chartOptions"],NewDark);
+      _this["chartOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["chartOptions"]);
       if (NewDark) {
         _this["clickedPointInfo"] = "Modo escuro ativado para escalas dos gráficos!"}
        else _this["clickedPointInfo"] = "Modo claro ativado para escalas dos gráficos!";
@@ -5232,20 +6379,27 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       var NewData = null;
       var i = 0;
       var Val = 0;
+      var Datasets = null;
+      var Ds0 = null;
       NewData = new Array();
       for (i = 0; i <= 5; i++) {
         Val = 10000 + pas.System.Random(35000);
         NewData.push(Val);
       };
-      if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
-        this.barData.datasets[0].data = NewData;
-        this.barData = Object.assign({}, this.barData);
+      if (_this["barData"] != null) {
+        Datasets = _this["barData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Ds0 = Datasets[0];
+          Ds0["data"] = NewData;
+          _this["barData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["barData"]);
+        };
       };
       _this["clickedPointInfo"] = "Dados randomizados com sucesso!";
     };
     m["togglePalette"] = function (_this) {
       var Pal = null;
       var Cur = "";
+      var Datasets = null;
       Cur = "" + _this["currentPalette"];
       if (Cur === "Emerald") {
         _this["currentPalette"] = "Sunset";
@@ -5260,31 +6414,43 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
         _this["currentPalette"] = "Emerald";
         Pal = pas.BlaiseCharts.TBVChartPalette.Emerald(4,0.7);
       };
-      if (this.pieData && this.pieData.datasets && this.pieData.datasets[0]) {
-        this.pieData.datasets[0].backgroundColor = Pal;
-        this.pieData.datasets[0].borderColor = Pal;
-        this.pieData = Object.assign({}, this.pieData);
-      }
-      if (this.doughnutData && this.doughnutData.datasets && this.doughnutData.datasets[0]) {
-        this.doughnutData.datasets[0].backgroundColor = Pal;
-        this.doughnutData.datasets[0].borderColor = Pal;
-        this.doughnutData = Object.assign({}, this.doughnutData);
+      if (_this["pieData"] != null) {
+        Datasets = _this["pieData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal;
+          Datasets[0]["borderColor"] = Pal;
+          _this["pieData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieData"]);
+        };
+      };
+      if (_this["doughnutData"] != null) {
+        Datasets = _this["doughnutData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal;
+          Datasets[0]["borderColor"] = Pal;
+          _this["doughnutData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["doughnutData"]);
+        };
       };
       _this["clickedPointInfo"] = "Paleta alterada para " + ("" + _this["currentPalette"]) + "!";
     };
     m["onPointClick"] = function (_this, ev) {
-      if (ev && ev.label !== undefined) {
-        this.clickedPointInfo = 'Categoria: "' + ev.label + '", Valor: ' + ev.value + ' (Série #' + (ev.datasetIndex + 1) + ')';
+      var Lbl = "";
+      var Val = "";
+      var DsIdx = "";
+      if (!(ev == false) && (pas.BVPascalDX.GetFieldStr(ev,"label","") !== "")) {
+        Lbl = pas.BVPascalDX.GetFieldStr(ev,"label","");
+        Val = pas.BVPascalDX.GetFieldStr(ev,"value","");
+        DsIdx = pas.SysUtils.IntToStr(pas.BVPascalDX.GetFieldInt(ev,"datasetIndex",0) + 1);
+        _this["clickedPointInfo"] = 'Categoria: "' + Lbl + '", Valor: ' + Val + " (Série #" + DsIdx + ")";
       };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      this.initCharts();
+      pas.BVPascalDX.CallMethod(_this,"initCharts");
     };
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCustomerView = function () {
@@ -5314,126 +6480,61 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m = new Object();
     m["resetForm"] = function (_this) {
-      this.form = {
-        name: '',
-        email: '',
-        phone: '',
-        active: true
-      };
-      this.formError = '';
+      var f = null;
+      f = pas.BVPascalDX.NewObject();
+      f["name"] = "";
+      f["email"] = "";
+      f["phone"] = "";
+      f["active"] = true;
+      _this["form"] = f;
+      _this["formError"] = "";
     };
     m["openCreateModal"] = function (_this) {
-      this.resetForm();
-      this.isEditing = false;
-      this.currentEditId = 0;
-      this.isModalOpen = true;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
     };
     m["openEditModal"] = function (_this, item) {
-      this.form = Object.assign({}, item);
-      this.currentEditId = item.id;
-      this.isEditing = true;
-      this.formError = '';
-      this.isModalOpen = true;
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
     };
     m["closeModal"] = function (_this) {
-      this.isModalOpen = false;
-      this.formError = '';
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
     };
     m["fetchItems"] = function (_this) {
-      var self = this;
-      var ep = '/api/' + this.apiEndpoint;
-      var p = (this.$api && typeof this.$api.get === 'function')
-        ? this.$api.get(ep)
-        : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function(data) {
-        if (Array.isArray(data)) {
-          self.items = data;
-        } else if (data && Array.isArray(data.items)) {
-          self.items = data.items;
-        }
-      }).catch(function(err) {
-        console.error('Error fetching ' + self.apiEndpoint + ':', err);
-      });
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
     };
     m["saveItem"] = function (_this) {
-      var self = this;
-      if (!this.form) return;
-      var isEdit = Boolean(this.isEditing);
-      var id = this.currentEditId;
-      var ep = '/api/' + this.apiEndpoint + (isEdit ? ('/' + id) : '');
-      var method = isEdit ? 'put' : 'post';
-      var p = (this.$api && typeof this.$api[method] === 'function')
-        ? this.$api[method](ep, this.form)
-        : fetch('http://localhost:8090' + ep, {
-            method: method.toUpperCase(),
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(this.form)
-          }).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function(resp) {
-        self.isModalOpen = false;
-        self.fetchItems();
-      }).catch(function(err) {
-        self.formError = 'Failed to save: ' + (err.message || err);
-      });
+      if (!!(_this["form"] == false)) return;
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
-      if (!confirm('Are you sure you want to delete this ' + this.modelTitle + '?')) return;
-      var self = this;
-      var ep = '/api/' + this.apiEndpoint + '/' + id;
-      var p = (this.$api && typeof this.$api.delete === 'function')
-        ? this.$api.delete(ep)
-        : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function() {
-        self.fetchItems();
-      }).catch(function(err) {
-        alert('Failed to delete: ' + (err.message || err));
-      });
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
     };
     m["setupWebSocket"] = function (_this) {
-      var self = this;
-      if (!this.$ws) return;
-      if (typeof this.$ws.connect === 'function') {
-        this.$ws.connect();
-      }
-      var pfx = String(this.modelTitle).toLowerCase();
-      if (typeof this.$ws.on === 'function') {
-        this.$ws.on(pfx + '_created', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' created:', d);
-          self.fetchItems();
-        });
-        this.$ws.on(pfx + '_updated', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' updated:', d);
-          self.fetchItems();
-        });
-        this.$ws.on(pfx + '_deleted', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' deleted:', d);
-          self.fetchItems();
-        });
-      };
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
-      this.resetForm();
-      this.fetchItems();
-      this.setupWebSocket();
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
     };
     comp["computed"] = new Object();
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      let list = this.items || [];
-      let q = (this.searchQuery || '').toLowerCase().trim();
-      if (!q) return list;
-      return list.filter(function(item) {
-        return Object.values(item).some(function(v) {
-          return String(v).toLowerCase().indexOf(q) !== -1;
-        });
-      });
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
       return Result;
     };
     pas.BVComponents.RegisterComponent("customer-view-page",comp);
   };
 });
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormulario = function () {
@@ -5474,7 +6575,7 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     m["enviar"] = function (_this) {
       var valido = false;
-      valido = this.$validate ? this.$validate() : true;
+      valido = pas.BVPascalDX.ValidateForm(_this);
       if (valido) {
         _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
       } else {
@@ -5486,20 +6587,20 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
       _this["email"] = "blaise@pascal.dev";
       _this["cidade"] = "Clermont-Ferrand";
       _this["msgSucesso"] = "";
-      if (this.$v && this.$v.$touch) this.$v.$touch();
+      pas.BVPascalDX.TouchValidation(_this);
     };
     m["limpar"] = function (_this) {
       _this["nome"] = "";
       _this["email"] = "";
       _this["cidade"] = "";
       _this["msgSucesso"] = "";
-      if (this.$v && this.$v.$reset) this.$v.$reset();
+      pas.BVPascalDX.ResetValidation(_this);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("formulario-page",comp);
   };
 });
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uHome = function () {
@@ -5529,7 +6630,7 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("home-page",comp);
   };
 });
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVRouting"],function () {
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVRouting"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLibBootstrap = function () {
@@ -5557,74 +6658,81 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m = new Object();
     m["clickNotif"] = function (_this, info) {
-      this.lastAction = info;
-      if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
-        this.$refs.mainToast.showToast();
-      } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
-        this.$refs.mainToast.show();
-      };
+      _this["lastAction"] = info;
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
     };
     m["showModal"] = function (_this) {
-      if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
-        this.$refs.mainModal.showModal();
-      } else if (this.$refs.mainModal && this.$refs.mainModal.show) {
-        this.$refs.mainModal.show();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
     };
     m["modalConfirm"] = function (_this) {
-      this.libName = 'SYNC_' + Date.now();
-      this.lastAction = 'Modal Confirmed';
-      if (this.$refs.mainToast && this.$refs.mainToast.showToast) {
-        this.$refs.mainToast.showToast();
-      } else if (this.$refs.mainToast && this.$refs.mainToast.show) {
-        this.$refs.mainToast.show();
-      };
+      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
+      _this["lastAction"] = "Modal Confirmed";
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
     };
     m["updatePage"] = function (_this, p) {
-      this.currentPage = p;
+      _this["currentPage"] = p;
     };
     m["tabChanged"] = function (_this, id) {
-      console.log("Tab changed to: ", id);
+      pas.System.Writeln("Tab changed to: ",id);
     };
     m["showDrawer"] = function (_this) {
-      if (this.$refs.mainDrawer && this.$refs.mainDrawer.open) {
-        this.$refs.mainDrawer.open();
-      } else if (this.$refs.mainDrawer && this.$refs.mainDrawer.toggle) {
-        this.$refs.mainDrawer.toggle();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","open");
     };
     m["closeDrawer"] = function (_this) {
-      if (this.$refs.mainDrawer && this.$refs.mainDrawer.close) {
-        this.$refs.mainDrawer.close();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","close");
     };
     m["openSettings"] = function (_this) {
-      if (this.$refs.settingsModal && this.$refs.settingsModal.showModal) {
-        this.$refs.settingsModal.showModal();
-      } else if (this.$refs.settingsModal && this.$refs.settingsModal.show) {
-        this.$refs.settingsModal.show();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"settingsModal","show");
     };
     m["applySettings"] = function (_this) {
-      this.clickNotif('Configurações salvas!');
+      pas.BVPascalDX.CallMethod$1(_this,"clickNotif",["Configurações salvas!"]);
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      this.faqItems = [
-        { id: 'q1', title: 'How does Shared State work?', content: 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.' },
-        { id: 'q2', title: 'Unified Design System?', content: 'BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.' },
-        { id: 'q3', title: 'JIT Optimization?', content: 'The compiler generates minimalist JavaScript bundles, resulting in instant load times.' }
-      ];
-      this.catOptions = [
-        { value: 'low', text: 'Low Priority' },
-        { value: 'med', text: 'Medium Priority' },
-        { value: 'high', text: 'High Priority (Critical)' }
-      ];
+      var items = null;
+      var q1 = null;
+      var q2 = null;
+      var q3 = null;
+      var opts = null;
+      var o1 = null;
+      var o2 = null;
+      var o3 = null;
+      items = pas.BVPascalDX.NewArray();
+      q1 = pas.BVPascalDX.NewObject();
+      q1["id"] = "q1";
+      q1["title"] = "How does Shared State work?";
+      q1["content"] = "BlaiseVue uses B-Store for centralized reactive state management in Pascal.";
+      q2 = pas.BVPascalDX.NewObject();
+      q2["id"] = "q2";
+      q2["title"] = "Unified Design System?";
+      q2["content"] = "BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.";
+      q3 = pas.BVPascalDX.NewObject();
+      q3["id"] = "q3";
+      q3["content"] = "The compiler generates minimalist JavaScript bundles, resulting in instant load times.";
+      q3["title"] = "JIT Optimization?";
+      items.push(q1);
+      items.push(q2);
+      items.push(q3);
+      _this["faqItems"] = items;
+      opts = pas.BVPascalDX.NewArray();
+      o1 = pas.BVPascalDX.NewObject();
+      o1["value"] = "low";
+      o1["text"] = "Low Priority";
+      o2 = pas.BVPascalDX.NewObject();
+      o2["value"] = "med";
+      o2["text"] = "Medium Priority";
+      o3 = pas.BVPascalDX.NewObject();
+      o3["value"] = "high";
+      o3["text"] = "High Priority (Critical)";
+      opts.push(o1);
+      opts.push(o2);
+      opts.push(o3);
+      _this["catOptions"] = opts;
     };
     pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
   };
 });
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLoginView = function () {
@@ -5650,52 +6758,26 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     };
     m = new Object();
     m["quickLogin"] = function (_this, e, p) {
-      this.email = e;
-      this.password = p;
-      this.errorMessage = '';
-      this.submitLogin();
+      _this["email"] = e;
+      _this["password"] = p;
+      _this["errorMessage"] = "";
+      pas.BVPascalDX.CallMethod(_this,"submitLogin");
     };
     m["submitLogin"] = function (_this) {
-      var self = this;
-      if (!this.email || !this.password) {
-        this.errorMessage = 'Por favor, informe o e-mail e a senha.';
+      if ((_this["email"] == "") || (_this["password"] == "")) {
+        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
         return;
-      }
-      this.loading = true;
-      this.errorMessage = '';
-      this.successMessage = '';
-      if (!this.$auth || typeof this.$auth.login !== 'function') {
-        this.errorMessage = 'Módulo $auth não inicializado.';
-        this.loading = false;
-        return;
-      }
-      this.$auth.login(this.email, this.password)
-        .then(function(resp) {
-          self.loading = false;
-          self.successMessage = 'Autenticado com sucesso como ' + (resp.user ? resp.user.name : self.email) + '!';
-          setTimeout(function() {
-            var target = (window.__BV_CORE__.auth && window.__BV_CORE__.auth.redirectAfterLogin)
-              ? window.__BV_CORE__.auth.redirectAfterLogin
-              : '#/';
-            window.__BV_CORE__.auth.redirectAfterLogin = '';
-            window.location.hash = target;
-          }, 600);
-        })
-        .catch(function(err) {
-          self.loading = false;
-          self.errorMessage = (err && err.message) ? err.message : 'Falha na autenticação. Verifique os dados.';
-        });
+      };
+      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
     };
     m["handleLogout"] = function (_this) {
-      if (this.$auth && typeof this.$auth.logout === 'function') {
-        this.$auth.logout();
-      };
+      pas.BVPascalDX.AuthLogout(_this);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uMobileView = function () {
@@ -5718,75 +6800,54 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     m = new Object();
     m["setIosMode"] = function (_this) {
-      this.currentMode = 'ios';
-      if (window.$ionic) window.$ionic.setMode('ios');
-      this.lastAction = 'Modo visual alterado para 🍎 iOS (Cupertino)';
+      _this["currentMode"] = "ios";
+      pas.BVPascalDX.IonicSetMode("ios");
+      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
     };
     m["setMdMode"] = function (_this) {
-      this.currentMode = 'md';
-      if (window.$ionic) window.$ionic.setMode('md');
-      this.lastAction = 'Modo visual alterado para 🤖 Android (Material Design)';
+      _this["currentMode"] = "md";
+      pas.BVPascalDX.IonicSetMode("md");
+      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
     };
     m["showToast"] = function (_this) {
-      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-      if (ionic && ionic.toast) {
-        ionic.toast.show('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
-      }
-      this.lastAction = '🔔 TIonicToast.Show disparado com sucesso!';
+      pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
+      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
     };
     m["showAlert"] = function (_this) {
-      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-      if (ionic && ionic.alert) {
-        ionic.alert.alert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
-      }
-      this.lastAction = '💬 TIonicAlert.Alert exibido!';
+      pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
+      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
+    };
+    m["onConfirmOk"] = function (_this) {
+      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
+      pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
+    };
+    m["onConfirmCancel"] = function (_this) {
+      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
     };
     m["showConfirm"] = function (_this) {
-      let self = this;
-      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-      self.lastAction = '❓ TIonicAlert.Confirm aberto...';
-      if (ionic && ionic.alert) {
-        ionic.alert.confirm('Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?',
-          function() {
-            self.lastAction = '✅ Confirmação aceita! Dados sincronizados!';
-            if (ionic.toast) ionic.toast.show('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
-          },
-          function() {
-            self.lastAction = '❌ Operação cancelada pelo usuário.';
-          }
-        );
-      };
+      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
+      pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
     };
     m["showLoading"] = function (_this) {
-      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-      if (ionic && ionic.loading) {
-        ionic.loading.present('Carregando registros...', 1800);
-      }
-      this.lastAction = '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
+      pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
+      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
+    };
+    m["onSheetSelect"] = function (_this, opt, idx) {
+      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
+      pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
     };
     m["showActionSheet"] = function (_this) {
-      let self = this;
-      let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
-      self.lastAction = '📑 TIonicActionSheet.Show aberto...';
-      if (ionic && ionic.actionSheet) {
-        ionic.actionSheet.show('Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'],
-          function(opt, idx) {
-            self.lastAction = '👉 Opção selecionada no Action Sheet: ' + opt;
-            if (ionic.toast) ionic.toast.show('Selecionado: ' + opt, 1800, 'bottom', 'dark');
-          }
-        );
-      };
+      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
+      pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      if (window.$ionic && typeof window.$ionic.getMode === 'function') {
-        this.currentMode = window.$ionic.getMode();
-      };
+      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
     };
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
   };
 });
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProductView = function () {
@@ -5816,126 +6877,61 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m = new Object();
     m["resetForm"] = function (_this) {
-      this.form = {
-        name: '',
-        price: 0.0,
-        stock: 0,
-        category: ''
-      };
-      this.formError = '';
+      var F = undefined;
+      F = pas.BVPascalDX.NewObject();
+      pas.BVPascalDX.SetField(F,"name","");
+      pas.BVPascalDX.SetField(F,"price",0.0);
+      pas.BVPascalDX.SetField(F,"stock",0);
+      pas.BVPascalDX.SetField(F,"category","");
+      _this["form"] = F;
+      _this["formError"] = "";
     };
     m["openCreateModal"] = function (_this) {
-      this.resetForm();
-      this.isEditing = false;
-      this.currentEditId = 0;
-      this.isModalOpen = true;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
     };
     m["openEditModal"] = function (_this, item) {
-      this.form = Object.assign({}, item);
-      this.currentEditId = item.id;
-      this.isEditing = true;
-      this.formError = '';
-      this.isModalOpen = true;
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
     };
     m["closeModal"] = function (_this) {
-      this.isModalOpen = false;
-      this.formError = '';
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
     };
     m["fetchItems"] = function (_this) {
-      var self = this;
-      var ep = '/api/' + this.apiEndpoint;
-      var p = (this.$api && typeof this.$api.get === 'function')
-        ? this.$api.get(ep)
-        : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function(data) {
-        if (Array.isArray(data)) {
-          self.items = data;
-        } else if (data && Array.isArray(data.items)) {
-          self.items = data.items;
-        }
-      }).catch(function(err) {
-        console.error('Error fetching ' + self.apiEndpoint + ':', err);
-      });
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
     };
     m["saveItem"] = function (_this) {
-      var self = this;
-      if (!this.form) return;
-      var isEdit = Boolean(this.isEditing);
-      var id = this.currentEditId;
-      var ep = '/api/' + this.apiEndpoint + (isEdit ? ('/' + id) : '');
-      var method = isEdit ? 'put' : 'post';
-      var p = (this.$api && typeof this.$api[method] === 'function')
-        ? this.$api[method](ep, this.form)
-        : fetch('http://localhost:8090' + ep, {
-            method: method.toUpperCase(),
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(this.form)
-          }).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function(resp) {
-        self.isModalOpen = false;
-        self.fetchItems();
-      }).catch(function(err) {
-        self.formError = 'Failed to save: ' + (err.message || err);
-      });
+      if (!!(_this["form"] == false)) return;
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
-      if (!confirm('Are you sure you want to delete this ' + this.modelTitle + '?')) return;
-      var self = this;
-      var ep = '/api/' + this.apiEndpoint + '/' + id;
-      var p = (this.$api && typeof this.$api.delete === 'function')
-        ? this.$api.delete(ep)
-        : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
-      Promise.resolve(p).then(function() {
-        self.fetchItems();
-      }).catch(function(err) {
-        alert('Failed to delete: ' + (err.message || err));
-      });
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
     };
     m["setupWebSocket"] = function (_this) {
-      var self = this;
-      if (!this.$ws) return;
-      if (typeof this.$ws.connect === 'function') {
-        this.$ws.connect();
-      }
-      var pfx = String(this.modelTitle).toLowerCase();
-      if (typeof this.$ws.on === 'function') {
-        this.$ws.on(pfx + '_created', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' created:', d);
-          self.fetchItems();
-        });
-        this.$ws.on(pfx + '_updated', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' updated:', d);
-          self.fetchItems();
-        });
-        this.$ws.on(pfx + '_deleted', function(d) {
-          console.log('⚡ Real-time ' + pfx + ' deleted:', d);
-          self.fetchItems();
-        });
-      };
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
-      this.resetForm();
-      this.fetchItems();
-      this.setupWebSocket();
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
     };
     comp["computed"] = new Object();
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      let list = this.items || [];
-      let q = (this.searchQuery || '').toLowerCase().trim();
-      if (!q) return list;
-      return list.filter(function(item) {
-        return Object.values(item).some(function(v) {
-          return String(v).toLowerCase().indexOf(q) !== -1;
-        });
-      });
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
       return Result;
     };
     pas.BVComponents.RegisterComponent("product-view-page",comp);
   };
 });
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProFeatures = function () {
@@ -5969,7 +6965,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m = new Object();
     m["testarSlot"] = function (_this) {
-      console.log("[Slot Test] O pai está falando!");
+      pas.System.Writeln("[Slot Test] O pai está falando!");
     };
     m["mudarVersao"] = function (_this) {
       var currentVer = "";
@@ -5988,7 +6984,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       };
       _this["$store"]["appVersion"] = newVer;
       _this["$store"]["user"] = newUser;
-      console.log("%c[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser, "color: #10b981; font-weight: bold; font-size: 13px;");
+      pas.System.Writeln("[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser);
     };
     m["incrementar"] = function (_this) {
       _this["contador"] = rtl.trunc(_this["contador"]) + 1;
@@ -5997,70 +6993,98 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["showElement"] = !!(_this["showElement"] == false);
     };
     m["embaralhar"] = function (_this) {
-      if (Array.isArray(this.itens)) {
-        this.itens = this.itens.slice().sort(() => Math.random() - 0.5);
+      var Arr = null;
+      var i = 0;
+      var j = 0;
+      var Tmp = undefined;
+      Arr = _this["itens"];
+      if (Arr !== null) {
+        for (var $l = Arr.length - 1; $l >= 1; $l--) {
+          i = $l;
+          j = pas.System.Random(i + 1);
+          Tmp = Arr[i];
+          Arr[i] = Arr[j];
+          Arr[j] = Tmp;
+        };
+        _this["itens"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewArray(),Arr);
       };
     };
     m["adicionarItem"] = function (_this) {
-      if (Array.isArray(this.itens)) {
-        const emojis = ['⚡ Lightning', '🔥 Fire', '🚀 Rocket', '💎 Diamond', '🔮 Crystal', '🌟 Star', '🛡️ Shield', '🎯 Target'];
-        const rand = emojis[Math.floor(Math.random() * emojis.length)];
-        this.itens.push(rand + ' #' + (this.itens.length + 1));
-      };
+      var Emojis = ["⚡ Lightning","🔥 Fire","🚀 Rocket","💎 Diamond","🔮 Crystal","🌟 Star","🛡️ Shield","🎯 Target"];
+      var Arr = null;
+      Arr = _this["itens"];
+      if (Arr !== null) Arr.push(Emojis[pas.System.Random(8)] + " #" + pas.SysUtils.IntToStr(Arr.length + 1));
     };
     m["removerItem"] = function (_this) {
-      if (Array.isArray(this.itens) && this.itens.length > 0) {
-        this.itens.shift();
-      };
+      var Arr = null;
+      Arr = _this["itens"];
+      if ((Arr !== null) && (Arr.length > 0)) Arr.shift();
     };
     m["resetarLista"] = function (_this) {
-      this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
     };
     m["calcularWasmFib"] = function (_this) {
-      const n = parseInt(this.fibInput, 10) || 1;
-      const t0 = performance.now();
-      const res = this.$wasm.call('math', 'fib', n);
-      const t1 = performance.now();
-      this.wasmFibResult = res;
-      this.wasmFibTime = (t1 - t0).toFixed(3);
+      var n = 0;
+      var res = 0;
+      var t0 = 0.0;
+      var t1 = 0.0;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],1);
+      t0 = pas.BVPascalDX.NowTimestampMs();
+      res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
+      t1 = pas.BVPascalDX.NowTimestampMs();
+      _this["wasmFibResult"] = res;
+      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
     };
     m["testarPrimoWasm"] = function (_this) {
-      const n = parseInt(this.primeInput, 10) || 2;
-      const isP = this.$wasm.call('math', 'isPrime', n);
+      var n = 0;
+      var isP = 0;
+      n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
+      isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
       if (isP === 1) {
-        this.primeResult = n + ' é um NÚMERO PRIMO! 💎';
-      } else {
-        this.primeResult = n + ' NÃO é primo ❌';
-      };
+        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " é um NÚMERO PRIMO! 💎"}
+       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " NÃO é primo ❌";
     };
     m["rodarBenchmark"] = function (_this) {
-      const n = parseInt(this.fibInput, 10) || 20;
-      const rep = this.$wasm.benchmark('math', 'fib', n, 1000);
-      this.benchJsTime = rep.jsDurationMs;
-      this.benchWasmTime = rep.wasmDurationMs;
-      this.benchSpeedup = rep.speedup + ' Mais Rápido! 🚀';
-      this.benchSummary = 'Executadas 1.000 iterações com sucesso no módulo math.';
+      var n = 0;
+      var rep = undefined;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Executadas 1.000 iterações com sucesso no módulo math.";
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
-      this.itens = ['⚡ Pascal', '🔥 BlaiseVue', '🚀 WebAssembly', '💎 HighPerf'];
-      if (this.$wasm) {
-        const rep = this.$wasm.benchmark('math', 'fib', 20, 1000);
-        this.benchJsTime = rep.jsDurationMs;
-        this.benchWasmTime = rep.wasmDurationMs;
-        this.benchSpeedup = rep.speedup + ' Mais Rápido! 🚀';
-        this.benchSummary = 'Módulo WebAssembly math ativo e operacional.';
+      var rep = undefined;
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Módulo WebAssembly math ativo e operacional.";
       };
     };
     comp["updated"] = function (_this) {
-      console.log("[Lifecycle] Componente UPDATED! Pulso detectado.");
+      pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
     };
     comp["inject"] = new Array();
     comp["inject"].push("getAmbiente");
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
-rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uShowcase = function () {
@@ -6082,16 +7106,15 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     };
     m = new Object();
     m["handleTheme"] = function (_this, ATheme) {
-      var link = document.getElementById('theme-link');
-      if (link) {
-         if (ATheme === 'default') {
-           link.href = 'css/lib/blaise-ui.css';
-         } else {
-           link.href = 'assets/themes/' + ATheme + '.min.css';
-         }
-         document.body.className = 'theme-' + ATheme;
-         document.head.appendChild(link);
-         console.log('BlaiseVue: Theme applied.');
+      var link = null;
+      link = document.getElementById("theme-link");
+      if (link !== null) {
+        if (ATheme === "default") {
+          link.setAttribute("href","css/lib/blaise-ui.css")}
+         else link.setAttribute("href","assets/themes/" + ATheme + ".min.css");
+        document.body.className = "theme-" + ATheme;
+        document.head.appendChild(link);
+        pas.System.Writeln("BlaiseVue: Theme applied.");
       };
       _this["currentThemeName"] = ATheme;
     };
@@ -6099,7 +7122,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uUserProfile = function () {
@@ -6135,7 +7158,7 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
   };
 });
-rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBarChart = function () {
@@ -6164,7 +7187,7 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBubbleChart = function () {
@@ -6193,7 +7216,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
   };
 });
-rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVChart = function () {
@@ -6308,7 +7331,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
-rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDoughnutChart = function () {
@@ -6337,7 +7360,7 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
   };
 });
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVLineChart = function () {
@@ -6366,7 +7389,7 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-line-chart",comp);
   };
 });
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPieChart = function () {
@@ -6395,7 +7418,7 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
   };
 });
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPolarAreaChart = function () {
@@ -6424,7 +7447,7 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
-rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRadarChart = function () {
@@ -6453,7 +7476,7 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVScatterChart = function () {
@@ -6482,7 +7505,7 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAccordion = function () {
@@ -6517,7 +7540,7 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
   };
 });
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAlert = function () {
@@ -6549,7 +7572,7 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-alert",comp);
   };
 });
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBadge = function () {
@@ -6580,7 +7603,7 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNav = function () {
@@ -6593,7 +7616,7 @@ rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
   };
 });
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNavItem = function () {
@@ -6654,7 +7677,7 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
   };
 });
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumb = function () {
@@ -6667,7 +7690,7 @@ rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
   };
 });
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumbItem = function () {
@@ -6693,7 +7716,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
   };
 });
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBtn = function () {
@@ -6736,7 +7759,7 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-btn",comp);
   };
 });
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCard = function () {
@@ -6759,7 +7782,7 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-card",comp);
   };
 });
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCol = function () {
@@ -6800,7 +7823,7 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-col",comp);
   };
 });
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVContainer = function () {
@@ -6822,7 +7845,7 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-container",comp);
   };
 });
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDataGrid = function () {
@@ -6898,7 +7921,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
 });
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDrawer = function () {
@@ -6955,7 +7978,7 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-drawer",comp);
   };
 });
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVFormSelect = function () {
@@ -6984,7 +8007,7 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-form-select",comp);
   };
 });
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIcon = function () {
@@ -7007,7 +8030,7 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-icon",comp);
   };
 });
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInput = function () {
@@ -7038,7 +8061,7 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-input",comp);
   };
 });
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInputGroup = function () {
@@ -7068,7 +8091,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-input-group",comp);
   };
 });
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroup = function () {
@@ -7081,7 +8104,7 @@ rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-list-group",comp);
   };
 });
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroupItem = function () {
@@ -7115,7 +8138,7 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVModal = function () {
@@ -7191,7 +8214,7 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavbar = function () {
@@ -7213,7 +8236,7 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
   };
 });
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavItem = function () {
@@ -7247,7 +8270,7 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-nav-item",comp);
   };
 });
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPagination = function () {
@@ -7284,7 +8307,7 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVProgress = function () {
@@ -7326,7 +8349,7 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRow = function () {
@@ -7370,7 +8393,7 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-row",comp);
   };
 });
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVSpinner = function () {
@@ -7393,7 +8416,7 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
   };
 });
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTab = function () {
@@ -7441,7 +8464,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTabs = function () {
@@ -7500,7 +8523,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-tabs",comp);
   };
 });
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVToast = function () {
@@ -7551,7 +8574,7 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonApp = function () {
@@ -7580,7 +8603,7 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-ion-app",comp);
   };
 });
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonBadge = function () {
@@ -7603,7 +8626,7 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
   };
 });
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonButton = function () {
@@ -7644,7 +8667,7 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonCard = function () {
@@ -7667,7 +8690,7 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
   };
 });
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonContent = function () {
@@ -7689,7 +8712,7 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
   };
 });
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonHeader = function () {
@@ -7702,7 +8725,7 @@ rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-header",comp);
   };
 });
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonItem = function () {
@@ -7770,7 +8793,7 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-item",comp);
   };
 });
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonList = function () {
@@ -7792,7 +8815,7 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
   };
 });
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabBar = function () {
@@ -7805,7 +8828,7 @@ rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
   };
 });
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabButton = function () {
@@ -7832,7 +8855,7 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
   };
 });
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabs = function () {
@@ -7845,7 +8868,7 @@ rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
   };
 });
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTitle = function () {
@@ -7867,7 +8890,7 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
   };
 });
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonToolbar = function () {
@@ -7880,7 +8903,7 @@ rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
   };
 });
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeSelect = function () {
@@ -7902,7 +8925,7 @@ rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-select",comp);
   };
 });
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils"],function () {
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeToggle = function () {
@@ -7920,7 +8943,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -8094,102 +9117,22 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     m["onThemeSelect"] = function (_this, e) {
       var sel = "";
       sel = "" + e["target"]["value"];
-      if (sel !== "") {
-        if (window.$theme) window.$theme.setTheme(sel);
-      };
+      if (sel !== "") pas.BVPascalDX.ThemeSet(sel);
     };
     m["toggleDrawer"] = function (_this) {
-      if (this.$refs.appDrawer && this.$refs.appDrawer.toggle) {
-        this.$refs.appDrawer.toggle();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"appDrawer","toggle");
     };
     m["closeDrawer"] = function (_this) {
-      if (this.$refs.appDrawer && this.$refs.appDrawer.close) {
-        this.$refs.appDrawer.close();
-      };
+      pas.BVPascalDX.TriggerRef(_this,"appDrawer","close");
     };
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
       _this["$store"]["appVersion"] = "3.0.0-TURBO";
       _this["$store"]["user"] = "Pascal Master 🚀";
-      if (window.__BV_CORE__.i18n) {
-        window.__BV_CORE__.i18n.addMessages('pt', {
-          nav: {
-            home: 'Início',
-            about: 'Sobre',
-            pro: 'Pro & Wasm ⚡',
-            form: 'Formulário 📋',
-            blaiseui: 'BlaiseUI Kit 🎨',
-            charts: 'Gráficos 📊',
-            showcase: 'Showcase ✨'
-          },
-          status: {
-            globalStore: 'Memória Global',
-            localeActive: 'Idioma Ativo',
-            theme: 'Tema'
-          },
-          form: {
-            title: 'Formulário de Validação Reativa',
-            subtitle: 'Demonstração de b-validate, $errors e $v no BlaiseVue 2.5',
-            name: 'Nome Completo',
-            email: 'E-mail Corporativo',
-            city: 'Cidade',
-            submit: 'Validar & Enviar 🚀',
-            reset: 'Limpar Formulário 🔄',
-            fillValid: 'Preencher Válido ✨',
-            statusValid: 'Válido ✅',
-            statusInvalid: 'Inválido ❌',
-            formState: 'Status do Formulário'
-          },
-          pro: {
-            title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
-            transitionTitle: '🎬 Lista com Animações FLIP (<transition-group>)',
-            shuffle: 'Embaralhar 🔀',
-            add: 'Adicionar Item ➕',
-            remove: 'Remover Primeiro ➖',
-            resetList: 'Resetar Lista 🔄'
-          }
-        });
-        window.__BV_CORE__.i18n.addMessages('en', {
-          nav: {
-            home: 'Home',
-            about: 'About',
-            pro: 'Pro & Wasm ⚡',
-            form: 'Form 📋',
-            blaiseui: 'BlaiseUI Kit 🎨',
-            charts: 'Charts 📊',
-            showcase: 'Showcase ✨'
-          },
-          status: {
-            globalStore: 'Global Store',
-            localeActive: 'Active Locale',
-            theme: 'Theme'
-          },
-          form: {
-            title: 'Reactive Form Validation',
-            subtitle: 'Demonstrating b-validate, $errors, and $v in BlaiseVue 2.5',
-            name: 'Full Name',
-            email: 'Corporate Email',
-            city: 'City',
-            submit: 'Validate & Submit 🚀',
-            reset: 'Reset Form 🔄',
-            fillValid: 'Fill Valid Sample ✨',
-            statusValid: 'Valid ✅',
-            statusInvalid: 'Invalid ❌',
-            formState: 'Form Status'
-          },
-          pro: {
-            title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
-            transitionTitle: '🎬 FLIP List Transitions (<transition-group>)',
-            shuffle: 'Shuffle 🔀',
-            add: 'Add Item ➕',
-            remove: 'Remove First ➖',
-            resetList: 'Reset List 🔄'
-          }
-        });
-        window.__BV_CORE__.i18n.setLocale('pt');
-      };
+      pas.BVPascalDX.I18nAddMessages("pt",'{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue 2.5","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue 3.0 Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');
+      pas.BVPascalDX.I18nAddMessages("en",'{"nav":{"home":"Home","about":"About","pro":"Pro & Wasm ⚡","form":"Form 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Charts 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Global Store","localeActive":"Active Locale","theme":"Theme"},"form":{"title":"Reactive Form Validation","subtitle":"Demonstrating b-validate, $errors, and $v in BlaiseVue 2.5","name":"Full Name","email":"Corporate Email","city":"City","submit":"Validate & Submit 🚀","reset":"Reset Form 🔄","fillValid":"Fill Valid Sample ✨","statusValid":"Valid ✅","statusInvalid":"Invalid ❌","formState":"Form Status"},"pro":{"title":"⚡ BlaiseVue 3.0 Pro & WebAssembly Engine","transitionTitle":"🎬 FLIP List Transitions (<transition-group>)","shuffle":"Shuffle 🔀","add":"Add Item ➕","remove":"Remove First ➖","resetList":"Reset List 🔄"}}');
+      pas.BVPascalDX.I18nSetLocale("pt");
     };
     comp["provide"] = function (_this) {
       var Result = null;
