@@ -385,6 +385,7 @@ procedure CmdDoc(const ServeMode: Boolean); forward;
 procedure CmdSSG; forward;
 procedure CmdWasm(const SubCmd: string); forward;
 procedure CmdTestE2E; forward;
+procedure CmdStudio; forward;
 
 { Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
@@ -2564,6 +2565,53 @@ begin
     ExecuteProcess('npx', 'http-server dist -p 8080 -c-1');
     {$ENDIF}
   end;
+end;
+
+procedure CmdStudio;
+var
+  PortArg: string;
+  StudioScript: string;
+  NoOpen: Boolean;
+  i: Integer;
+begin
+  WriteLn('=== BlaiseVue Studio 4.0 Developer Cockpit ===');
+  if not HasCommand('node') then
+  begin
+    PrintNodeRequiredError('launch BlaiseVue Studio');
+    Exit;
+  end;
+
+  PortArg := '9000';
+  NoOpen := False;
+
+  for i := 2 to ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--port') and (i < ParamCount) then
+      PortArg := ParamStr(i + 1)
+    else if LowerCase(ParamStr(i)) = '--no-open' then
+      NoOpen := True;
+  end;
+
+  StudioScript := GetSDKPath + 'bin' + DirectorySeparator + 'studio-server.js';
+  if not FileExists(StudioScript) then
+  begin
+    WriteLn('Error: studio-server.js not found at: ' + StudioScript);
+    Exit;
+  end;
+
+  WriteLn('  Dashboard: http://localhost:' + PortArg);
+  WriteLn('  WebSocket: ws://localhost:' + PortArg + '/ws');
+  WriteLn('');
+
+  {$IFDEF WINDOWS}
+  if not NoOpen then
+    ExecuteProcess('cmd', '/c start http://localhost:' + PortArg);
+  ExecuteProcess('cmd', '/c node "' + StudioScript + '" --port ' + PortArg);
+  {$ELSE}
+  if not NoOpen then
+    ExecuteProcess('xdg-open', 'http://localhost:' + PortArg);
+  ExecuteProcess('node', '"' + StudioScript + '" --port ' + PortArg);
+  {$ENDIF}
 end;
 
 procedure CmdRunPreview;
@@ -8442,6 +8490,7 @@ begin
     WriteLn('    bv mormot auth                 Scaffolds JWT authentication, AuthService, LoginView & route guards');
     WriteLn('    bv mormot docs | swagger       Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
     WriteLn('    bv mormot docker [--build]     Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
+    WriteLn('    bv studio [--port <p>] [--no-open] Launches BlaiseVue Studio developer cockpit (default: 9000)');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -8648,6 +8697,10 @@ begin
       Halt(1);
     end;
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+  else if Cmd = 'studio' then
+  begin
+    CmdStudio;
   end
   else if (Cmd = 'mormot') or (Cmd = 'server') then
   begin

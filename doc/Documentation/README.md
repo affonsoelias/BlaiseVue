@@ -77,6 +77,7 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 37. [37. Full-Stack Pascal with mORMot 2 (bv mormot) - Phase 4](37-mormot2-backend.md)
 38. [38. Mobile-First Ecosystem (blaise-ui-mobile) - Phase 5](38-mobile-ionic.md)
 39. [39. Reactive Chart.js Suite (blaise-charts) - Phase 6](39-blaise-charts.md)
+40. [40. BlaiseVue Studio Dashboard (bv studio) - Phase 7](40-blaise-studio.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
