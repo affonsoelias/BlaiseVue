@@ -1,0 +1,25 @@
+<template>
+  <div class="bui-ion-card">
+    <div class="bui-ion-card-header" b-if="title || subtitle">
+      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>
+      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>
+    </div>
+    <div class="bui-ion-card-content">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonCard - Mobile Card Component
+    ---------------------------------
+    Props:
+    - title: string
+    - subtitle: string
+  }
+
+  props:
+    title: string = '';
+    subtitle: string = '';
+</script>

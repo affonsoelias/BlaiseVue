@@ -381,6 +381,9 @@ begin
     }
     if (window.__BV_CORE__.validation) {
        window.__BV_CORE__.validation.initDataValidation(pRef);
+       if (window.__BV_CORE__.api) pRef[''] = window.__BV_CORE__.api;
+       if (window.__BV_CORE__.ws) pRef[''] = window.__BV_CORE__.ws;
+       if (window.__BV_CORE__.auth) pRef[''] = window.__BV_CORE__.auth;
     }
 
     if (CompOpt.inject) {

@@ -1,0 +1,17 @@
+<template>
+  <h1 class="bui-ion-title">
+    <slot>{{ title }}</slot>
+  </h1>
+</template>
+
+<script>
+  {
+    BVIonTitle - Mobile Header Title
+    --------------------------------
+    Props:
+    - title: string
+  }
+
+  props:
+    title: string = '';
+</script>

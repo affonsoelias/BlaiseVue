@@ -1,0 +1,19 @@
+<template>
+  <span class="bui-ion-badge" :class="'bui-ion-badge-' + color">
+    <slot>{{ value }}</slot>
+  </span>
+</template>
+
+<script>
+  {
+    BVIonBadge - Mobile Badge Pill
+    ------------------------------
+    Props:
+    - color: string ('primary' | 'success' | 'danger' | 'warning' | 'dark')
+    - value: string
+  }
+
+  props:
+    color: string = 'primary';
+    value: string = '';
+</script>

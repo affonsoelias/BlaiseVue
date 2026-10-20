@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uFormulario, uHome, uLibBootstrap, uProFeatures, uShowcase, uUserProfile, uBVAccordion, uBVAlert, uBVBadge, uBVBar, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVChart, uBVCol, uBVContainer, uBVDataGrid, uBVDoughnut, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVLine, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVPie, uBVPolarArea, uBVProgress, uBVRadar, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -48,26 +48,50 @@ begin
   Register_uAbout;
   asm console.log("[Init] Registering uCharts..."); end;
   Register_uCharts;
+  asm console.log("[Init] Registering uCustomerView..."); end;
+  Register_uCustomerView;
   asm console.log("[Init] Registering uFormulario..."); end;
   Register_uFormulario;
   asm console.log("[Init] Registering uHome..."); end;
   Register_uHome;
   asm console.log("[Init] Registering uLibBootstrap..."); end;
   Register_uLibBootstrap;
+  asm console.log("[Init] Registering uLoginView..."); end;
+  Register_uLoginView;
+  asm console.log("[Init] Registering uMobileView..."); end;
+  Register_uMobileView;
+  asm console.log("[Init] Registering uProductView..."); end;
+  Register_uProductView;
   asm console.log("[Init] Registering uProFeatures..."); end;
   Register_uProFeatures;
   asm console.log("[Init] Registering uShowcase..."); end;
   Register_uShowcase;
   asm console.log("[Init] Registering uUserProfile..."); end;
   Register_uUserProfile;
+  asm console.log("[Init] Registering uBVBarChart..."); end;
+  Register_uBVBarChart;
+  asm console.log("[Init] Registering uBVBubbleChart..."); end;
+  Register_uBVBubbleChart;
+  asm console.log("[Init] Registering uBVChart..."); end;
+  Register_uBVChart;
+  asm console.log("[Init] Registering uBVDoughnutChart..."); end;
+  Register_uBVDoughnutChart;
+  asm console.log("[Init] Registering uBVLineChart..."); end;
+  Register_uBVLineChart;
+  asm console.log("[Init] Registering uBVPieChart..."); end;
+  Register_uBVPieChart;
+  asm console.log("[Init] Registering uBVPolarAreaChart..."); end;
+  Register_uBVPolarAreaChart;
+  asm console.log("[Init] Registering uBVRadarChart..."); end;
+  Register_uBVRadarChart;
+  asm console.log("[Init] Registering uBVScatterChart..."); end;
+  Register_uBVScatterChart;
   asm console.log("[Init] Registering uBVAccordion..."); end;
   Register_uBVAccordion;
   asm console.log("[Init] Registering uBVAlert..."); end;
   Register_uBVAlert;
   asm console.log("[Init] Registering uBVBadge..."); end;
   Register_uBVBadge;
-  asm console.log("[Init] Registering uBVBar..."); end;
-  Register_uBVBar;
   asm console.log("[Init] Registering uBVBottomNav..."); end;
   Register_uBVBottomNav;
   asm console.log("[Init] Registering uBVBottomNavItem..."); end;
@@ -80,16 +104,12 @@ begin
   Register_uBVBtn;
   asm console.log("[Init] Registering uBVCard..."); end;
   Register_uBVCard;
-  asm console.log("[Init] Registering uBVChart..."); end;
-  Register_uBVChart;
   asm console.log("[Init] Registering uBVCol..."); end;
   Register_uBVCol;
   asm console.log("[Init] Registering uBVContainer..."); end;
   Register_uBVContainer;
   asm console.log("[Init] Registering uBVDataGrid..."); end;
   Register_uBVDataGrid;
-  asm console.log("[Init] Registering uBVDoughnut..."); end;
-  Register_uBVDoughnut;
   asm console.log("[Init] Registering uBVDrawer..."); end;
   Register_uBVDrawer;
   asm console.log("[Init] Registering uBVFormSelect..."); end;
@@ -100,8 +120,6 @@ begin
   Register_uBVInput;
   asm console.log("[Init] Registering uBVInputGroup..."); end;
   Register_uBVInputGroup;
-  asm console.log("[Init] Registering uBVLine..."); end;
-  Register_uBVLine;
   asm console.log("[Init] Registering uBVListGroup..."); end;
   Register_uBVListGroup;
   asm console.log("[Init] Registering uBVListGroupItem..."); end;
@@ -114,14 +132,8 @@ begin
   Register_uBVNavItem;
   asm console.log("[Init] Registering uBVPagination..."); end;
   Register_uBVPagination;
-  asm console.log("[Init] Registering uBVPie..."); end;
-  Register_uBVPie;
-  asm console.log("[Init] Registering uBVPolarArea..."); end;
-  Register_uBVPolarArea;
   asm console.log("[Init] Registering uBVProgress..."); end;
   Register_uBVProgress;
-  asm console.log("[Init] Registering uBVRadar..."); end;
-  Register_uBVRadar;
   asm console.log("[Init] Registering uBVRow..."); end;
   Register_uBVRow;
   asm console.log("[Init] Registering uBVSpinner..."); end;
@@ -132,6 +144,32 @@ begin
   Register_uBVTabs;
   asm console.log("[Init] Registering uBVToast..."); end;
   Register_uBVToast;
+  asm console.log("[Init] Registering uBVIonApp..."); end;
+  Register_uBVIonApp;
+  asm console.log("[Init] Registering uBVIonBadge..."); end;
+  Register_uBVIonBadge;
+  asm console.log("[Init] Registering uBVIonButton..."); end;
+  Register_uBVIonButton;
+  asm console.log("[Init] Registering uBVIonCard..."); end;
+  Register_uBVIonCard;
+  asm console.log("[Init] Registering uBVIonContent..."); end;
+  Register_uBVIonContent;
+  asm console.log("[Init] Registering uBVIonHeader..."); end;
+  Register_uBVIonHeader;
+  asm console.log("[Init] Registering uBVIonItem..."); end;
+  Register_uBVIonItem;
+  asm console.log("[Init] Registering uBVIonList..."); end;
+  Register_uBVIonList;
+  asm console.log("[Init] Registering uBVIonTabBar..."); end;
+  Register_uBVIonTabBar;
+  asm console.log("[Init] Registering uBVIonTabButton..."); end;
+  Register_uBVIonTabButton;
+  asm console.log("[Init] Registering uBVIonTabs..."); end;
+  Register_uBVIonTabs;
+  asm console.log("[Init] Registering uBVIonTitle..."); end;
+  Register_uBVIonTitle;
+  asm console.log("[Init] Registering uBVIonToolbar..."); end;
+  Register_uBVIonToolbar;
   asm console.log("[Init] Registering uBVThemeSelect..."); end;
   Register_uBVThemeSelect;
   asm console.log("[Init] Registering uBVThemeToggle..."); end;
@@ -144,6 +182,10 @@ begin
     '    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->' +
     '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' +
     '      <div class="drawer-nav">' +
+    '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
+    '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' +
+    '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' +
+    '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' +
     '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +
     '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(''nav.pro'') }}</a>' +
@@ -152,6 +194,7 @@ begin
     '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(''nav.showcase'') }}</a>' +
     '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' +
+    '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' +
     '      </div>' +
     '    </bv-drawer>' +
     '' +
@@ -161,6 +204,10 @@ begin
     '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
     '      </div>' +
     '      <div class="nav-links">' +
+    '        <a href="#/customers">📦 Customers</a>' +
+    '        <a href="#/products">📦 Products</a>' +
+    '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' +
+    '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about">{{ $t(''nav.about'') }}</a>' +
     '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(''nav.pro'') }}</a>' +
@@ -169,6 +216,7 @@ begin
     '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(''nav.showcase'') }}</a>' +
     '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' +
+    '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' +
     '      </div>' +
     '      <div class="lang-switcher">' +
     '        <button class="lang-btn" :class="{ ''active-lang'': $i18n.locale === ''pt'' }" @click="$setLocale(''pt'')">🇧🇷 PT</button>' +
@@ -204,6 +252,7 @@ begin
     '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' +
+    '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' +
     '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' +
     '    </bv-bottom-nav>' +
@@ -357,6 +406,26 @@ begin
 ;
   routerOpts := TJSObject.new;
   routesArr := TJSArray.new;
+
+  r := TJSObject.new;
+  r['path'] := '/login';
+  r['component'] := 'login-view-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/customers';
+  r['component'] := 'customer-view-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/products';
+  r['component'] := 'product-view-page';
+  routesArr.push(r);
+
+  r := TJSObject.new;
+  r['path'] := '/mobile';
+  r['component'] := 'mobile-view-page';
+  routesArr.push(r);
 
   r := TJSObject.new;
   r['path'] := '/';

@@ -30,7 +30,7 @@ uses
   mormot.net.server,
   mormot.net.ws.core,
   mormot.net.ws.server,
-  ServerModels;
+  ServerModels, CrudCustomer, CrudProduct, AuthService, SwaggerService;
 
 type
   { Real-time WebSocket Protocol for BlaiseVue clients }
@@ -51,6 +51,10 @@ type
     FStartTime: TDateTime;
     FRequestCount: Int64;
     FItems: TBlaiseItemDynArray;
+    FCrudCustomer: TCrudCustomerService;
+    FCrudProduct: TCrudProductService;
+    FAuthService: TAuthService;
+    FSwaggerService: TSwaggerService;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -98,6 +102,13 @@ begin
   AddItem('High-throughput REST API with mORMot 2', 'Backend', True);
   AddItem('Real-time WebSockets synchronization', 'FullStack', False);
 
+    FCrudProduct := TCrudProductService.Create;
+  FCrudProduct.OnBroadcast := BroadcastEvent;
+  FAuthService := TAuthService.Create;
+  FSwaggerService := TSwaggerService.Create('BlaiseVue Full-Stack mORMot 2 API', '4.0.0', FPort);
+  FAuthService.OnBroadcast := BroadcastEvent;
+    FCrudCustomer := TCrudCustomerService.Create;
+  FCrudCustomer.OnBroadcast := BroadcastEvent;
   FServer := TWebSocketServer.Create(FPort, nil, nil, 'blaisevue_fullstack', 4);
   FWSProtocol := TBlaiseWebSocketProtocol.CreateProtocol;
   FServer.WebSocketProtocols.Add(FWSProtocol);
@@ -106,6 +117,10 @@ end;
 
 destructor TBlaiseServerApp.Destroy;
 begin
+    FCrudProduct.Free;
+  FAuthService.Free;
+  FSwaggerService.Free;
+    FCrudCustomer.Free;
   FServer.Free;
   inherited Destroy;
 end;
@@ -237,7 +252,23 @@ begin
     Exit;
   end;
 
-  // 5. Static File Server & SPA History Fallback
+    // Interactive OpenAPI 3.0 & Swagger UI: /api/docs, /api/openapi.json
+  if FSwaggerService.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Product CRUD REST API: /api/products
+  if FCrudProduct.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Authentication REST API: /api/auth/*
+  if FAuthService.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Customer CRUD REST API: /api/customers
+  if FCrudCustomer.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+// 5. Static File Server & SPA History Fallback
   if (FDistPath <> '') and DirectoryExists(FDistPath) then
   begin
     if (CleanUrl <> '') and (CleanUrl <> '/') then

@@ -3,6 +3,10 @@
     <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->
     <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">
       <div class="drawer-nav">
+        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
+        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
+        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
+        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>
         <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t('nav.home') }}</a>
         <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t('nav.about') }}</a>
         <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t('nav.pro') }}</a>
@@ -11,6 +15,7 @@
         <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t('nav.charts') }}</a>
         <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t('nav.showcase') }}</a>
         <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>
+        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>
       </div>
     </bv-drawer>
 
@@ -20,6 +25,10 @@
         <strong class="brand">BlaiseVue 3.0 TURBO</strong>
       </div>
       <div class="nav-links">
+        <a href="#/customers">📦 Customers</a>
+        <a href="#/products">📦 Products</a>
+        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>
+        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/">{{ $t('nav.home') }}</a>
         <a href="#/about">{{ $t('nav.about') }}</a>
         <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t('nav.pro') }}</a>
@@ -28,6 +37,7 @@
         <a href="#/charts" style="background: #42b883; color: white;">{{ $t('nav.charts') }}</a>
         <a href="#/showcase" style="background: #3498db; color: white;">{{ $t('nav.showcase') }}</a>
         <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>
+        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>
       </div>
       <div class="lang-switcher">
         <button class="lang-btn" :class="{ 'active-lang': $i18n.locale === 'pt' }" @click="$setLocale('pt')">🇧🇷 PT</button>
@@ -63,6 +73,7 @@
       <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>
+      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>
       <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>
     </bv-bottom-nav>
@@ -217,6 +228,10 @@
   { Router Configuration: Maps URI hashes to Component Tags }
   router:
     routes:
+      '/login': 'login-view-page';
+      '/customers': 'customer-view-page';
+      '/products': 'product-view-page';
+      '/mobile': 'mobile-view-page';
       '/': 'home-page';
       '/about': 'about-page';
       '/form': 'formulario-page';

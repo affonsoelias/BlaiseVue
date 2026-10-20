@@ -1,0 +1,17 @@
+{
+  "name": "blaise-studio",
+  "version": "4.0.0",
+  "description": "BlaiseVue Studio - Real-time developer cockpit, WebSocket event monitor and visual workflow suite",
+  "main": "BlaiseStudio.pas",
+  "keywords": [
+    "blaisevue",
+    "studio",
+    "cockpit",
+    "devtools",
+    "websocket",
+    "pascal",
+    "mormot2"
+  ],
+  "author": "BlaiseVue Core Team",
+  "license": "MIT"
+}

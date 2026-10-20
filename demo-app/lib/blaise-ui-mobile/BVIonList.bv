@@ -1,0 +1,17 @@
+<template>
+  <div class="bui-ion-list" :class="{ 'bui-ion-list-inset': inset }">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonList - Mobile List Container
+    ---------------------------------
+    Props:
+    - inset: boolean
+  }
+
+  props:
+    inset: boolean = false;
+</script>

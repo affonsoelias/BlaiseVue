@@ -28,6 +28,22 @@ type
   TBlaiseItemDynArray = array of TBlaiseItem;
 
   { Server Status DTO }
+  { User & Authentication Records }
+  TAuthUser = record
+    ID: Integer;
+    Name: RawUtf8;
+    Email: RawUtf8;
+    Role: RawUtf8;
+    CreatedAt: RawUtf8;
+  end;
+  TAuthUserDynArray = array of TAuthUser;
+
+  TUserWithPassword = record
+    User: TAuthUser;
+    PasswordHash: RawUtf8;
+  end;
+  TUserWithPasswordDynArray = array of TUserWithPassword;
+
   TServerStatus = record
     Status: RawUtf8;
     Framework: RawUtf8;
@@ -39,6 +55,28 @@ type
     ActiveWebSockets: Integer;
     ItemsCount: Integer;
   end;
+
+  { Shared Product Record }
+  TProduct = record
+    ID: Integer;
+    Name: RawUtf8;
+    Price: Double;
+    Stock: Integer;
+    Category: RawUtf8;
+    CreatedAt: RawUtf8;
+  end;
+  TProductDynArray = array of TProduct;
+
+  { Shared Customer Record }
+  TCustomer = record
+    ID: Integer;
+    Name: RawUtf8;
+    Email: RawUtf8;
+    Phone: RawUtf8;
+    Active: Boolean;
+    CreatedAt: RawUtf8;
+  end;
+  TCustomerDynArray = array of TCustomer;
 
 implementation
 

@@ -605,14 +605,7 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* ==========================================================================
-   Charts
-   ========================================================================== */
-.bui-chart-wrapper {
-  position: relative;
-  width: 100%;
-  margin-bottom: 20px;
-}
+
 
 /* ==========================================================================
    Responsive Grid & Layout System (Container, Row, Col)

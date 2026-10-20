@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlaiseVue Studio 4.0 - Developer Cockpit</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --accent-rose: #f43f5e;
+      --border-color: #334155;
+      --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Bar */
+    .topbar {
+      height: 56px;
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-size: 0.72rem;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background-color: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      display: inline-block;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-success { background: var(--accent-emerald); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-outline { background: transparent; border-color: var(--border-color); color: var(--text-primary); }
+    .btn-outline:hover { background: var(--bg-tertiary); }
+
+    /* App Shell Layout */
+    .app-shell {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 240px;
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 8px;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-item:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .nav-item.active {
+      background-color: rgba(59, 130, 246, 0.15);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+    .nav-item .badge {
+      margin-left: auto;
+      font-size: 0.75rem;
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    /* Main Content Area */
+    .main-view {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      background-color: var(--bg-primary);
+    }
+
+    /* Cards & Stats */
+    .grid-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .stat-desc {
+      font-size: 0.8rem;
+      color: var(--accent-emerald);
+    }
+
+    /* Section Card */
+    .card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Split Pane for Component Tree */
+    .split-pane {
+      display: flex;
+      height: calc(100vh - 180px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+    }
+    .split-list {
+      width: 320px;
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    .search-box {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .search-input {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .comp-scroll {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .comp-item {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.12s;
+    }
+    .comp-item:hover { background-color: var(--bg-tertiary); }
+    .comp-item.active { background-color: rgba(59, 130, 246, 0.15); border-left: 3px solid var(--accent-blue); }
+    .comp-item-name { font-weight: 600; font-size: 0.88rem; }
+    .comp-item-tag { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
+    .comp-detail {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .data-table th, .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+    .data-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+    .badge-pill {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+    .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+
+    /* Code & Terminal */
+    pre.code-block {
+      background: var(--bg-primary);
+      padding: 16px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      color: #38bdf8;
+      line-height: 1.5;
+    }
+    .terminal-window {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #10b981;
+      height: 380px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* WebSocket Stream */
+    .ws-event-row {
+      display: flex;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      align-items: center;
+      font-family: var(--font-mono);
+    }
+    .ws-in { color: var(--accent-emerald); font-weight: 700; }
+    .ws-out { color: var(--accent-blue); font-weight: 700; }
+    .ws-event { color: var(--accent-purple); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">
+      <span>🛡️ BlaiseVue Studio</span>
+      <span class="brand-badge">v4.0 Cockpit</span>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span id="studioWsStatus">Studio Connected (ws://localhost:9000/ws)</span>
+      </div>
+      <button class="btn btn-primary" onclick="runBuild()">▶ Build App</button>
+      <button class="btn btn-success" onclick="runTests()">🧪 Run Tests</button>
+      <button class="btn btn-outline" onclick="pingMormot()">⚡ Ping mORMot 2</button>
+      <button class="btn btn-outline" onclick="toggleTheme()">🌓 Theme</button>
+    </div>
+  </header>
+
+  <!-- Shell Layout -->
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a class="nav-item active" data-tab="overview" onclick="switchTab('overview')">
+        <span>📊 Overview / Cockpit</span>
+      </a>
+      <a class="nav-item" data-tab="components" onclick="switchTab('components')">
+        <span>🌳 Component Tree</span>
+        <span class="badge" id="badgeCompCount">0</span>
+      </a>
+      <a class="nav-item" data-tab="websocket" onclick="switchTab('websocket')">
+        <span>⚡ WebSocket Live Monitor</span>
+        <span class="badge" id="badgeWsCount">0</span>
+      </a>
+      <a class="nav-item" data-tab="tests" onclick="switchTab('tests')">
+        <span>🧪 Vitest &amp; Console</span>
+      </a>
+      <a class="nav-item" data-tab="routes" onclick="switchTab('routes')">
+        <span>🌐 Routes &amp; API Explorer</span>
+        <span class="badge" id="badgeRoutesCount">0</span>
+      </a>
+    </aside>
+
+    <!-- Main Content Views -->
+    <main class="main-view">
+      
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview">
+        <div class="grid-stats">
+          <div class="stat-card">
+            <span class="stat-title">Componentes .bv</span>
+            <span class="stat-value" id="statComps">0</span>
+            <span class="stat-desc">Analisados no AST</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Rotas SPA</span>
+            <span class="stat-value" id="statRoutes">0</span>
+            <span class="stat-desc">HTML5 History API</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Linhas de Pascal</span>
+            <span class="stat-value" id="statPascalLines">34,600+</span>
+            <span class="stat-desc">Compiladas em 0.2s</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">mORMot 2 Server</span>
+            <span class="stat-value" id="statMormot" style="color: #10b981;">Online :8090</span>
+            <span class="stat-desc">Ultra-High Throughput</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">⚡ Ações Rápidas do Desenvolvedor</h2>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Dispare comandos CLI sem sair do navegador</span>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="runBuild()">🔨 Executar Build de Desenvolvimento (`bv run dev`)</button>
+            <button class="btn btn-success" onclick="runTests()">🧪 Rodar Suíte Vitest (`bv test`)</button>
+            <button class="btn btn-outline" onclick="syncMobile()">📱 Sincronizar Capacitor Android (`bv mobile sync`)</button>
+            <button class="btn btn-outline" onclick="syncDesktop()">🖥️ Sincronizar Desktop WebUI (`bv desktop sync`)</button>
+            <button class="btn btn-outline" onclick="scaffoldCrudDialog()">📦 Scaffolding CRUD mORMot 2</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🏗️ Arquitetura do Projeto Ativo</h2>
+            <span class="badge-pill badge-emerald">BlaiseVue 4.0 Multiplataforma</span>
+          </div>
+          <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);" id="projectOverviewDetails">
+            Carregando informações do projeto...
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: COMPONENT TREE & AST INSPECTOR -->
+      <section id="tab-components" style="display: none;">
+        <div class="split-pane">
+          <div class="split-list">
+            <div class="search-box">
+              <input type="text" class="search-input" id="compSearch" placeholder="🔍 Buscar componente..." oninput="filterComponents(this.value)">
+            </div>
+            <div class="comp-scroll" id="compList"></div>
+          </div>
+          <div class="comp-detail" id="compDetailView">
+            <div style="text-align: center; color: var(--text-muted); margin-top: 100px;">
+              Selecione um componente para inspecionar AST, props, eventos e código fonte.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: WEBSOCKET LIVE MONITOR -->
+      <section id="tab-websocket" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">⚡ Monitor de Tráfego WebSocket em Tempo Real</h2>
+              <p style="margin: 4px 0 0 0; font-size: 0.82rem; color: var(--text-muted);">
+                Inspeciona frames enviados e recebidos pelo cliente, devtools e conexões mORMot 2.
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-outline" onclick="sendMockPacket()">📨 Enviar Pacote Teste</button>
+              <button class="btn btn-outline" onclick="clearWsLog()">🗑️ Limpar Log</button>
+            </div>
+          </div>
+
+          <div style="max-height: 550px; overflow-y: auto;" id="wsStreamContainer">
+            <div class="ws-event-row">
+              <span class="ws-event">[SYSTEM]</span>
+              <span style="color: var(--text-muted);">Iniciando monitor WebSocket do BlaiseVue Studio...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: VITEST & TERMINAL RUNNER -->
+      <section id="tab-tests" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🧪 Console do Terminal &amp; Testes Automatizados</h2>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-success" onclick="runTests()">Executar Vitest</button>
+              <button class="btn btn-outline" onclick="clearConsole()">Limpar Console</button>
+            </div>
+          </div>
+          <div class="terminal-window" id="terminalOutput">[BlaiseVue Studio Console pronto]
+Clique em "Executar Vitest" ou "Build App" para acompanhar a execução aqui em tempo real.</div>
+        </div>
+      </section>
+
+      <!-- TAB 5: ROUTES & REST EXPLORER -->
+      <section id="tab-routes" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🌐 Rotas SPA Registradas</h2>
+            <span class="badge-pill badge-blue">Frontend Routing</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Caminho (URL)</th>
+                <th>Componente de Exibição</th>
+                <th>Requer Autenticação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="routesTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top: 24px;">
+          <div class="card-header">
+            <h2 class="card-title">⚙️ Endpoints REST do Backend mORMot 2</h2>
+            <span class="badge-pill badge-purple">High Throughput REST</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Método</th>
+                <th>Endpoint</th>
+                <th>Modelo / Módulo</th>
+                <th>Autenticação JWT</th>
+              </tr>
+            </thead>
+            <tbody id="mormotEndpointsBody">
+              <tr>
+                <td><span class="badge-pill badge-emerald">GET</span></td>
+                <td><code>/api/status</code></td>
+                <td>Server Core</td>
+                <td>Público</td>
+              </tr>
+              <tr>
+                <td><span class="badge-pill badge-blue">POST</span></td>
+                <td><code>/api/auth/login</code></td>
+                <td>AuthService</td>
+                <td>Público</td>
+              </tr>
+              <tr>
+                <td><span class="badge-pill badge-emerald">GET</span></td>
+                <td><code>/api/products</code></td>
+                <td>Product CRUD</td>
+                <td>Opcional</td>
+              </tr>
+              <tr>
+                <td><span class="badge-pill badge-blue">POST</span></td>
+                <td><code>/api/products</code></td>
+                <td>Product CRUD</td>
+                <td><span class="badge-pill badge-purple">JWT Bearer</span></td>
+              </tr>
+              <tr>
+                <td><span class="badge-pill badge-emerald">GET</span></td>
+                <td><code>/api/docs</code></td>
+                <td>SwaggerService (OpenAPI 3.0)</td>
+                <td>Público</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Studio External Script to prevent inline HTML parser termination -->
+  <script src="/studio.js"></script>
+</body>
+</html>

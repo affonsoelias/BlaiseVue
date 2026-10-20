@@ -198,22 +198,8 @@ Engineered around an adaptive 12-column grid system supporting any display resol
 
 ---
 
-### 6. Reactive Charts (`Chart.js`)
-BlaiseUI integrates reactive charting directly into the kit:
-- **`<bv-chart>`**: Master chart component supporting `:type="bar|line|pie|doughnut|radar|polarArea"`, `:data`, and `:options`.
-- **Specialized Direct Wrappers**:
-  - `<bv-bar :data="data" :options="options"></bv-bar>`
-  - `<bv-line :data="data" :options="options"></bv-line>`
-  - `<bv-pie :data="data" :options="options"></bv-pie>`
-  - `<bv-doughnut :data="data" :options="options"></bv-doughnut>`
-  - `<bv-polar-area :data="data" :options="options"></bv-polar-area>`
-  - `<bv-radar :data="data" :options="options"></bv-radar>`
-
-```html
-<template>
-  <bv-bar :data="salesData" :options="chartOptions"></bv-bar>
-</template>
-```
+### 6. Reactive Charts (`blaise-charts`)
+Data visualization and reactive Chart.js components are modularized into the dedicated official package **`packages/blaise-charts`** (`bv lib install charts`). See [39. Reactive Chart.js Suite](39-blaise-charts.md) for complete details.
 
 ---
 

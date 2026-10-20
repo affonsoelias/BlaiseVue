@@ -1,0 +1,12 @@
+<template>
+  <nav class="bui-ion-tab-bar">
+    <slot></slot>
+  </nav>
+</template>
+
+<script>
+  {
+    BVIonTabBar - Mobile Bottom Tab Bar
+    -----------------------------------
+  }
+</script>

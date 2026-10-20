@@ -108,17 +108,31 @@ my-project/
 
 The mORMot 2 backend can be opened and developed natively in **Lazarus IDE**:
 
+> [!IMPORTANT]
+> **mORMot 2 is pre-bundled with BlaiseVue** inside the embedded `vendor/mormot2/` directory! You do **not** need to download, clone, or install mORMot 2 from external repositories. Using this embedded version guarantees 100% compatibility with BlaiseVue's full-stack architecture, CLI code generation, and WebSocket protocols.
+
+### 📦 Installing the Embedded mORMot 2 Package in Lazarus:
+
 1. Launch **Lazarus IDE**.
-2. Go to **Project -> Open Project...** and select `server/server.lpi`.
-3. If not already registered, open and compile the mORMot 2 package:
-   - Go to **Package -> Open Package File (.lpk)...**
-   - Select `C:\ComponenteLazarus\mORMot2\packages\lazarus\mormot2.lpk`.
-   - Click **Compile**, then **Use -> Add to Project** (or **Install**).
-4. Choose your target build mode in **Project -> Project Options -> Build Modes** (`Debug` or `Release`).
-5. Press **F9** (Run) or **Shift+F9** (Build).
+2. Go to the menu: **Package -> Open Package File (.lpk)...**
+3. Select the package file from the **embedded framework `vendor/` directory**:
+   - **Windows**: `<BlaiseVue-Root>\vendor\mormot2\packages\lazarus\mormot2.lpk`
+   - **Linux / macOS**: `<BlaiseVue-Root>/vendor/mormot2/packages/lazarus/mormot2.lpk`
+   *(From an individual project directory, you can also use `..\vendor\mormot2\packages\lazarus\mormot2.lpk`)*
+4. In the package manager window:
+   - Click **Compile** to build the units.
+   - Click **Use -> Install** (or **Use -> Add to Project** if you prefer not to rebuild the entire Lazarus IDE).
+   - If you chose **Install**, Lazarus will prompt to recompile and restart with mORMot 2 registered.
+   *(Optional: If you also want the UI design controls, open and compile `vendor\mormot2\packages\lazarus\mormot2ui.lpk`)*
+
+### 🚀 Opening and Running the Server Project:
+
+1. In Lazarus IDE, go to **Project -> Open Project...** and select `server/server.lpi`.
+2. Choose your target build mode in **Project -> Project Options -> Build Modes** (`Debug` or `Release`).
+3. Press **F9** (Run) to compile and launch the server directly from Lazarus!
 
 > [!TIP]
-> The generated `server.lpi` includes pre-configured search paths pointing to `C:\ComponenteLazarus\mORMot2\src\...` (`core`, `net`, `db`, `crypt`, `rest`, `soa`, `orm`, `misc`), allowing immediate compilation even before package installation.
+> The generated `server.lpi` includes pre-configured relative search paths pointing directly to `vendor/mormot2/src/...` (`core`, `net`, `db`, `crypt`, `rest`, `soa`, `orm`, `misc`), allowing immediate compilation even before the package is globally installed in the IDE.
 
 ---
 
@@ -295,6 +309,246 @@ end.
 
 ---
 
+## ⚡ Full-Stack CRUD & ORM Generator (`bv mormot crud`)
+
+With **Phase 1 of BlaiseVue 4.0**, developer velocity is multiplied through the **Full-Stack CRUD & ORM Generator**. In a single command, BlaiseVue generates the entire stack: typed Pascal backend contracts, an ultra-fast mORMot 2 REST API service with real-time WebSocket notifications, a reactive Single File Component with data tables and modal dialogs, and route registration in `src/app.bv`.
+
+### 1. Command Syntax & Supported Types
+
+```bash
+bv mormot crud <ModelName> [field:type...]
+```
+
+| Type Identifier | Pascal Backend Type | JavaScript Frontend Type | Input Element |
+|---|---|---|---|
+| `string` / `text` | `RawUtf8` | `string` | `<input type="text">` |
+| `integer` / `int` / `int64` | `Integer` | `number` | `<input type="number">` |
+| `currency` / `double` / `float` | `Double` | `number` | `<input type="number" step="0.01">` |
+| `boolean` / `bool` | `Boolean` | `boolean` | `<input type="checkbox">` |
+| `date` / `datetime` | `RawUtf8` | `string` | `<input type="date">` |
+
+*(Note: `ID: Integer` and `CreatedAt: RawUtf8` are always automatically created and managed by the engine).*
+
+### 2. Concrete Examples
+
+```bash
+# E-Commerce Product Catalog
+bv mormot crud Product name:string price:currency stock:integer category:string
+
+# Customer Relationship Management (CRM)
+bv mormot crud Customer name:string email:string phone:string active:boolean
+
+# Project Management Tasks
+bv mormot crud Task title:string priority:integer done:boolean dueDate:date
+```
+
+### 3. What Gets Generated Automatically
+
+1. **`server/ServerModels.pas`**:
+   - Declares strongly typed Pascal records `T<Model>` and `T<Model>DynArray`.
+   - Formats serializable JSON contracts for seamless mORMot 2 data marshaling.
+
+2. **`server/Crud<ModelName>.pas`**:
+   - Implements `TCrud<ModelName>Service` with high-throughput RESTful endpoints:
+     - `GET    /api/<models>`: Lists all records serialized in microsecond JSON.
+     - `GET    /api/<models>/:id`: Fetches single record by ID.
+     - `POST   /api/<models>`: Inserts new record from JSON body and fires `<model>_created` WebSocket broadcast.
+     - `PUT    /api/<models>/:id`: Updates existing record and fires `<model>_updated` WebSocket broadcast.
+     - `DELETE /api/<models>/:id`: Removes record and fires `<model>_deleted` WebSocket broadcast.
+   - Generates 3 initial seed items for immediate testing upon creation.
+
+3. **`server/ServerApp.pas`**:
+   - Automatically registers unit in `uses`.
+   - Declares and instantiates `FCrud<Model>: TCrud<ModelName>Service;` in `Create`.
+   - Links real-time event broadcasting: `FCrud<Model>.OnBroadcast := BroadcastEvent;`.
+   - Wires incoming requests in `DoRequest`: `if FCrud<Model>.HandleRequest(Ctxt, CleanUrl, Result) then Exit;`.
+   - Safely frees instance in `Destroy`.
+
+4. **`src/views/<ModelName>View.bv`**:
+   - Responsive, modern data table with real-time sync indicators.
+   - Instant search and filtering across all record fields with zero latency.
+   - Add/Edit modal dialog with form inputs styled for the specific field types.
+   - Delete confirmation with instant feedback.
+   - Real-time WebSocket synchronization (`$ws.on`) updating the view seamlessly across multiple connected browser tabs.
+
+5. **`src/app.bv`**:
+   - Registers route in `router: routes:` (e.g. `'/products': 'product-view-page';`).
+   - Injects navigation link in top navbar `<div class="nav-links">`.
+   - Injects drawer navigation link in `<bv-drawer>`.
+
+---
+
+## 🔐 Enterprise Authentication & Route Guards (`bv mormot auth`)
+
+BlaiseVue 4.0 includes an enterprise-grade security layer integrating native mORMot 2 server authentication with reactive frontend route guards and the `$auth` global helper.
+
+### 1. Scaffolding with `bv mormot auth`
+
+To generate complete authentication infrastructure in your project, simply run:
+
+```bash
+bv mormot auth
+```
+
+The CLI executes a 5-step automated workflow:
+1. **Server Verification**: Ensures the `server/` directory and mORMot 2 architecture exist.
+2. **Models Registration**: Injects `TAuthUser`, `TAuthUserDynArray`, `TUserWithPassword`, and `TUserWithPasswordDynArray` in `server/ServerModels.pas`.
+3. **Native Security Engine**: Generates `server/AuthService.pas` featuring salted SHA-256 password hashing and RFC 7519 HMAC-SHA256 JWT generation and validation without external libraries.
+4. **Endpoint Wiring**: Wires `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, and `/api/auth/register` directly into `server/ServerApp.pas` with real-time WebSocket broadcast (`user_logged_in`, `user_registered`).
+5. **Frontend View & Routing**: Creates `src/views/LoginView.bv`, registers route `'/login': 'login-view-page'`, and injects dynamic session links in `src/app.bv`.
+
+---
+
+### 2. Pre-Seeded Accounts
+
+Out-of-the-box seed accounts are created for development and testing:
+
+| Role | Email | Password | Permissions |
+|---|---|---|---|
+| **Admin** | `admin@blaisevue.dev` | `admin123` | Full administrative access, inherits all roles |
+| **Manager** | `manager@blaisevue.dev` | `manager123` | Management & moderation access |
+| **User** | `user@blaisevue.dev` | `user123` | Standard authenticated user |
+
+---
+
+### 3. Frontend `$auth` Helper API
+
+The reactive `$auth` helper is injected globally into all components and available as `this.$auth` or `$auth`:
+
+```typescript
+// Authentication
+$auth.login(email, password): Promise<{ success: boolean, token: string, user: TAuthUser }>
+$auth.logout(): void
+
+// Reactive State
+$auth.isAuthenticated: boolean
+$auth.user: { id: number, name: string, email: string, role: string, createdAt: string } | null
+$auth.token: string
+
+// Role-Based Access Control (RBAC)
+$auth.hasRole('admin' | 'manager' | 'user'): boolean
+
+// Navigation Guard Protection
+$auth.initRouterGuard(router): void
+```
+
+When a user logs in, the JWT token is automatically synchronized with:
+- `localStorage.getItem('bv_auth_token')`
+- `$api.setToken(token)` for automatic `Authorization: Bearer <token>` on all future REST calls
+- WebSocket connection headers
+
+---
+
+### 4. Route Guards (`requiresAuth`)
+
+Routes can be protected using route metadata:
+
+```pascal
+router:
+  routes:
+    '/dashboard': (component: 'dashboard-page', meta: (requiresAuth: true));
+    '/admin': (component: 'admin-page', meta: (requiresAuth: true, roles: ['admin']));
+```
+
+When an unauthenticated user attempts to access a protected route, the route guard intercepts the transition, saves the intended path in `$auth.redirectAfterLogin`, and smoothly redirects to `#/login`. Upon successful authentication, the user is automatically redirected back to their intended target!
+
+---
+
+## 📜 Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs` & `bv mormot docs`)
+
+BlaiseVue 4.0 provides instant, zero-configuration API documentation and interactive testing directly within the mORMot 2 server.
+
+### 1. Scaffolding with `bv mormot docs`
+
+To scaffold or update Swagger documentation in your project, run:
+
+```bash
+bv mormot docs
+```
+*(Alias: `bv mormot swagger`)*
+
+The CLI performs:
+1. **Service Generation**: Generates `server/SwaggerService.pas` containing the RFC-compliant OpenAPI 3.0.3 specification and styled Swagger UI explorer.
+2. **Server Wiring**: Integrates `TSwaggerService` into `server/ServerApp.pas` to handle `/api/docs` and `/api/openapi.json`.
+3. **Frontend Integration**: Adds quick documentation links in `src/app.bv` (navigation bar and drawer).
+
+---
+
+### 2. Live Endpoints
+
+| Endpoint | Content-Type | Description |
+|---|---|---|
+| `GET /api/docs` | `text/html` | Embedded interactive Swagger UI explorer |
+| `GET /api/openapi.json` | `application/json` | OpenAPI 3.0.3 machine-readable specification |
+| `GET /api/docs/swagger.json` | `application/json` | Alias for OpenAPI 3.0.3 specification |
+
+---
+
+### 3. Interactive Testing in Browser
+
+Visiting `http://localhost:8090/api/docs`:
+- **Interactive UI**: Fully functional Swagger UI bundle pre-configured to point to `/api/openapi.json`.
+- **JWT Authorization**: Click the **Authorize 🔓** button in the top right, enter your Bearer token (generated from `/api/auth/login`), and execute protected calls like `GET /api/auth/me` with a single click.
+- **One-Click "Try it out"**: Execute real `GET`, `POST`, `PUT`, and `DELETE` requests directly against the running native server without needing Postman, Insomnia, or external tools.
+- **Persistence**: Token authorization persists across page refreshes during your development session.
+
+---
+
+## 🐳 Cloud-Native Micro-Containers (`bv mormot docker`)
+
+BlaiseVue 4.0 provides first-class support for containerized cloud deployment with zero runtime bloat. The CLI command `bv mormot docker` generates production-hardened container infrastructure optimized specifically for mORMot 2 and BlaiseVue apps.
+
+### 1. Scaffolding with `bv mormot docker`
+
+To scaffold containerization files in your project, run:
+
+```bash
+bv mormot docker
+```
+*(Alias: `bv mormot container`)*
+
+The CLI performs:
+1. **Docker Environment Detection**: Checks if `docker` is available in PATH via `HasCommand('docker')`. If Docker CLI is absent, it does not fail—it gracefully creates all required files and outputs an educational guide for cloud deployment.
+2. **Multi-Stage `Dockerfile`**: Generates a high-performance, two-stage Docker build:
+   - **Stage 1 (Builder)**: `debian:bookworm-slim` with Free Pascal Compiler (`fpc`), compiling a stripped, static 64-bit Linux binary (`fpc -O3 -Xs -XX`).
+   - **Stage 2 (Runtime)**: `alpine:3.20` containing only libc compatibility (`gcompat`, `libgcc`), CA certificates, and curl for healthchecks.
+   - **Security**: Creates a non-root system user and group (`blaise:blaise`, UID 1001).
+   - **Healthcheck**: Configures native health monitoring hitting `http://localhost:8090/api/status` every 30 seconds.
+   - **Total Image Size**: Under **20 MB** (compare to 800MB–1.2GB for typical Node.js/Python containers).
+3. **`docker-compose.yml`**: Generates ready-to-run container orchestration with port mapping `8090:8090`, restart policy `unless-stopped`, and healthcheck integration.
+4. **`.dockerignore`**: Pre-configures exclusion rules for local Windows/macOS binaries (`*.exe`, `*.o`, `*.ppu`), `node_modules/`, and git history to ensure lean and rapid builds.
+
+---
+
+### 2. Optional Build Flag (`--build`)
+
+If Docker is installed on the host machine, you can automatically build the image in one step:
+
+```bash
+bv mormot docker --build
+```
+
+---
+
+### 3. Container Commands Reference
+
+Once generated, run your containerized stack with standard Docker commands:
+
+```bash
+# Start container in background
+docker compose up -d
+
+# Check health status
+docker compose ps
+
+# View real-time logs
+docker compose logs -f
+
+# Stop container
+docker compose down
+```
+
+---
 ## 🎯 Summary
 
 With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:

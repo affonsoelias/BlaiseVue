@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 3.0 Delivered (✅ Completed)**. All architectural goals for Version 3.0 (`bv doc` generator, WebAssembly acceleration via `BVWasm`, SSG pre-rendering, Reactive Hydration, and Headless E2E testing) are fully implemented and verified with 130 unit tests across 12 test suites.
+> **Current Status**: 🚀 **BlaiseVue 4.0 Ecosystem Delivered (Phases 1-7 ✅ Completed | Phase 8 Planned 🔮)**. Full-Stack CRUD (`bv mormot crud`), Enterprise Auth (`$auth`), Live OpenAPI (`/api/docs`), Cloud Micro-Containers (`bv mormot docker`), Mobile-First Ionic Suite (`blaise-ui-mobile`), Reactive Analytics (`blaise-charts`), and BlaiseVue Studio (`bv studio`) are fully delivered and verified with 326 automated tests across 22 test suites. Phase 8 (Idiomatic Object Pascal DX & Zero-ASM Architecture) is in active planning.
 
 ---
 
@@ -245,14 +245,15 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (bv mormot init/build/run/deploy) (✅ Completed)
        │
        ▼
-[ v4.0 - Enterprise Ecosystem & Developer Superpowers (Planned 📋) ]
-  ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid)
-  ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards
-  ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs
-  ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers)
-  ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile)
-  ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records)
-  └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
+[ v4.0 - Enterprise Ecosystem & Developer Superpowers (In Progress 🚀) ]
+  ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid) (✅ Completed)
+  ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards (✅ Completed)
+  ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs (✅ Completed)
+  ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers) (✅ Completed)
+  ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile) (✅ Completed)
+  ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records) (✅ Completed)
+  ├── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow (✅ Completed)
+  └── Phase 8: Pure Pascal DX ───► Zero-ASM Application Architecture & 100% Idiomatic Object Pascal Views (Planned 🔮)
 ```
 
 ---
@@ -263,7 +264,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### ⚡ Pillar 1: Full-Stack CRUD & ORM Generator (`bv mormot crud`)
+### ⚡ Pillar 1: Full-Stack CRUD & ORM Generator (`bv mormot crud`) (✅ Completed)
 **Goal**: Reduce the creation time of standard database-driven CRUD modules from hours to seconds.
 - **One-Command Scaffolding**:
   ```bash
@@ -280,7 +281,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🔐 Pillar 2: Enterprise Authentication & Route Guards (`$auth`)
+### 🔐 Pillar 2: Enterprise Authentication & Route Guards (`$auth`) (✅ Completed)
 **Goal**: Out-of-the-box authentication, JWT session handling, and role-based access control.
 - **Scaffold Command**: `bv mormot auth`
 - **Frontend Integration (`this.$auth`)**:
@@ -297,14 +298,14 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📜 Pillar 3: Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs`)
+### 📜 Pillar 3: Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs`) (✅ Completed)
 **Goal**: Instant, interactive API documentation and testing for teams and integrations.
 - **Zero-Config Swagger**: mORMot 2 server automatically reflects endpoints, request records, and response schemas.
 - **Built-in Swagger UI**: Visiting `http://localhost:8090/api/docs` renders an interactive Swagger explorer to test endpoints directly in the browser without third-party tools like Postman.
 
 ---
 
-### 🐳 Pillar 4: Cloud-Native Micro-Containers (`bv mormot docker`)
+### 🐳 Pillar 4: Cloud-Native Micro-Containers (`bv mormot docker`) (✅ Completed)
 **Goal**: Package the entire full-stack application into sub-20 MB production containers.
 - **Command**: `bv mormot docker`
 - **Multi-Stage Dockerfile**:
@@ -317,7 +318,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📱 Pillar 5: Mobile-First Ecosystem (`blaise-ui-mobile`)
+### 📱 Pillar 5: Mobile-First Ecosystem (`blaise-ui-mobile`) (✅ Completed)
 **Goal**: Provide a native-feeling mobile component kit powered by Ionic Web Components (`@ionic/core`) with strongly typed Object Pascal wrappers, usable interchangeably across Mobile (Capacitor/Android), Web (PWAs), and Desktop (Electron).
 - **Unified Architecture**:
   - Lives inside `packages/blaise-ui-mobile/` alongside `packages/blaise-ui/`, maintaining a single unified project structure (no extra project flags needed).
@@ -337,7 +338,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 📊 Pillar 6: Data Visualization & Analytics Suite (`blaise-charts`)
+### 📊 Pillar 6: Data Visualization & Analytics Suite (`blaise-charts`) (✅ Completed)
 **Goal**: Provide an official, reactive charting library powered by **Chart.js** with high-performance HTML5 `<canvas>` rendering and strongly typed Object Pascal configuration classes.
 - **Hardware-Accelerated Universal Rendering**:
   - Leverages HTML5 `<canvas>` rendering at 60 FPS across Web (SPA/SSG), Desktop (WebUI), and Mobile (Capacitor/Android).
@@ -373,13 +374,56 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🎨 Pillar 7: BlaiseVue Studio Dashboard (`bv studio`)
+### 🎨 Pillar 7: BlaiseVue Studio Dashboard (`bv studio`) (✅ Completed)
 **Goal**: A visual web-based cockpit for the developer during development.
 - **Dashboard URL**: `http://localhost:9000`
 - **Visual Features**:
   - Live Component Tree and reactive state inspector.
   - Real-time WebSocket event monitor (inspect incoming/outgoing frames).
   - One-click triggers for Unit Tests, Production Builds, and Standalone Deployment.
+
+---
+
+### 💎 Pillar 8: Idiomatic Object Pascal DX & Zero-ASM Application Architecture (Planned 🔮)
+**Goal**: Guarantee a 100% pure Object Pascal developer experience for end-user applications and views, completely eliminating reliance on inline `asm ... end;` blocks in business logic, reactive state handling, and view controllers.
+
+- **The Philosophy: Pascal-First Experience**:
+  - The core premise of BlaiseVue is to bring the power, type safety, and elegance of **Object Pascal** to modern reactive frontend and full-stack development.
+  - Low-level JavaScript interop and DOM plumbing belong strictly inside internal framework units (`core/`) and component libraries (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`).
+  - Application developers writing `.bv` views and components (`src/views/`, `src/components/`) should **never need to learn or write JavaScript** to build reactive applications.
+
+- **Key Architectural Deliverables**:
+  1. **Direct Reactive State Assignments in Pascal**:
+     - Modernize the compiler and reactive scope so that Pascal assignments directly mutate reactive state without requiring inline JS `this` access:
+       ```pascal
+       // ❌ Legacy / Prototype approach (to be eliminated from views):
+       // asm this.isModalOpen = true; this.currentEditId = 0; end;
+
+       // ✅ Pure, Idiomatic Object Pascal (Pillar 8 Standard):
+       isModalOpen := true;
+       currentEditId := 0;
+       formError := '';
+       ```
+  2. **Strongly Typed Records & Pascal DTOs**:
+     - Eradicate untyped JavaScript object literals (`this.form = { name: '', email: '' }`) from views in favor of strongly typed Pascal `record` definitions:
+       ```pascal
+       type
+         TCustomerForm = record
+           name: string;
+           email: string;
+           phone: string;
+           active: boolean;
+         end;
+       ```
+  3. **High-Level Pascal Runtime & UI Helpers**:
+     - Provide idiomatic Pascal controllers and helper methods for standard UI interactions:
+       - Dialog & Modal Controls: `Modal.Open;`, `Modal.Close;`
+       - SPA Routing Navigation: `Router.Push('/products');`, `Router.Back;`
+       - Form Actions: `Form.Reset;`, `Form.Validate;`
+       - User Notifications: `ShowToast('Success!', 2000);`, `ShowMessage('Saved!');`
+  4. **Systematic Demo-App Refactoring**:
+     - Audit every single view in `demo-app/src/views/` (`CustomerView.bv`, `ProductView.bv`, `About.bv`, `Formulario.bv`, `LibBootstrap.bv`, etc.).
+     - Replace all non-essential `asm ... end;` blocks with clean, expressive Object Pascal methods, turning the `demo-app` into the gold standard of pure Object Pascal frontend code.
 
 ---
 
