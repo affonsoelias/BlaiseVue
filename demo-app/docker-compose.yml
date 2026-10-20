@@ -1,0 +1,26 @@
+# =====================================================================
+# BlaiseVue 4.0 Full-Stack Application - Docker Compose
+# =====================================================================
+
+version: '3.8'
+
+services:
+  blaisevue-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: blaisevue-mormot:latest
+    container_name: blaisevue-fullstack
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      - PORT=8090
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/api/status"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+

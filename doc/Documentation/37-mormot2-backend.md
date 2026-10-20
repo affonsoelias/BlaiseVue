@@ -480,6 +480,61 @@ Visiting `http://localhost:8090/api/docs`:
 
 ---
 
+## 🐳 Cloud-Native Micro-Containers (`bv mormot docker`)
+
+BlaiseVue 4.0 provides first-class support for containerized cloud deployment with zero runtime bloat. The CLI command `bv mormot docker` generates production-hardened container infrastructure optimized specifically for mORMot 2 and BlaiseVue apps.
+
+### 1. Scaffolding with `bv mormot docker`
+
+To scaffold containerization files in your project, run:
+
+```bash
+bv mormot docker
+```
+*(Alias: `bv mormot container`)*
+
+The CLI performs:
+1. **Docker Environment Detection**: Checks if `docker` is available in PATH via `HasCommand('docker')`. If Docker CLI is absent, it does not fail—it gracefully creates all required files and outputs an educational guide for cloud deployment.
+2. **Multi-Stage `Dockerfile`**: Generates a high-performance, two-stage Docker build:
+   - **Stage 1 (Builder)**: `debian:bookworm-slim` with Free Pascal Compiler (`fpc`), compiling a stripped, static 64-bit Linux binary (`fpc -O3 -Xs -XX`).
+   - **Stage 2 (Runtime)**: `alpine:3.20` containing only libc compatibility (`gcompat`, `libgcc`), CA certificates, and curl for healthchecks.
+   - **Security**: Creates a non-root system user and group (`blaise:blaise`, UID 1001).
+   - **Healthcheck**: Configures native health monitoring hitting `http://localhost:8090/api/status` every 30 seconds.
+   - **Total Image Size**: Under **20 MB** (compare to 800MB–1.2GB for typical Node.js/Python containers).
+3. **`docker-compose.yml`**: Generates ready-to-run container orchestration with port mapping `8090:8090`, restart policy `unless-stopped`, and healthcheck integration.
+4. **`.dockerignore`**: Pre-configures exclusion rules for local Windows/macOS binaries (`*.exe`, `*.o`, `*.ppu`), `node_modules/`, and git history to ensure lean and rapid builds.
+
+---
+
+### 2. Optional Build Flag (`--build`)
+
+If Docker is installed on the host machine, you can automatically build the image in one step:
+
+```bash
+bv mormot docker --build
+```
+
+---
+
+### 3. Container Commands Reference
+
+Once generated, run your containerized stack with standard Docker commands:
+
+```bash
+# Start container in background
+docker compose up -d
+
+# Check health status
+docker compose ps
+
+# View real-time logs
+docker compose logs -f
+
+# Stop container
+docker compose down
+```
+
+---
 ## 🎯 Summary
 
 With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:

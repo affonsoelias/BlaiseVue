@@ -247,9 +247,9 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
        ▼
 [ v4.0 - Enterprise Ecosystem & Developer Superpowers (In Progress 🚀) ]
   ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid) (✅ Completed)
-  ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards
-  ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs
-  ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers)
+  ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards (✅ Completed)
+  ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs (✅ Completed)
+  ├── Phase 4: Cloud Containers ──► bv mormot docker (< 20 MB Alpine/Scratch micro-containers) (✅ Completed)
   ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile)
   ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records)
   └── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow
@@ -304,7 +304,7 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-### 🐳 Pillar 4: Cloud-Native Micro-Containers (`bv mormot docker`)
+### 🐳 Pillar 4: Cloud-Native Micro-Containers (`bv mormot docker`) (✅ Completed)
 **Goal**: Package the entire full-stack application into sub-20 MB production containers.
 - **Command**: `bv mormot docker`
 - **Multi-Stage Dockerfile**:
