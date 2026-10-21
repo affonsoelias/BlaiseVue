@@ -94,6 +94,7 @@ type
     FSortField: string;
     FSortAscending: Boolean;
     FReactiveState: JSValue;
+    FModified: Boolean;
 
     FAfterScroll: TDataSetNotifyEvent;
     FBeforePost: TDataSetNotifyEvent;
@@ -128,6 +129,7 @@ type
     procedure MoveBy(Distance: Integer);
 
     { Editing & State Operations }
+    procedure CheckBrowseMode;
     procedure Append;
     procedure Insert;
     procedure Edit;
@@ -167,6 +169,7 @@ type
     property ChangeCount: Integer read GetChangeCount;
     property Filter: string read FFilter write SetFilter;
     property Filtered: Boolean read FFiltered;
+    property Modified: Boolean read FModified write FModified;
 
     { Events }
     property AfterScroll: TDataSetNotifyEvent read FAfterScroll write FAfterScroll;
@@ -257,6 +260,7 @@ begin
   if (FDataSet.State in [dsEdit, dsInsert]) and Assigned(FDataSet.FEditBuffer) then
   begin
     FDataSet.FEditBuffer[FFieldName] := AValue;
+    FDataSet.FModified := True;
     FDataSet.SyncReactiveState;
   end;
 end;
@@ -453,6 +457,7 @@ begin
   FFiltered := False;
   FSortField := '';
   FSortAscending := True;
+  FModified := False;
 
   { Initialize reactive state holder }
   FReactiveState := DefineReactive(TJSObject.new);
@@ -680,10 +685,20 @@ begin
   Result := FFields.AddField(AName, AType);
 end;
 
-procedure TBVDataSet.First;
+procedure TBVDataSet.CheckBrowseMode;
 begin
   if (FState in [dsEdit, dsInsert]) then
-    Post;
+  begin
+    if FModified then
+      Post
+    else
+      Cancel;
+  end;
+end;
+
+procedure TBVDataSet.First;
+begin
+  CheckBrowseMode;
 
   if FActiveRecords.length > 0 then
     FRecNo := 1
@@ -696,8 +711,7 @@ end;
 
 procedure TBVDataSet.Prior;
 begin
-  if (FState in [dsEdit, dsInsert]) then
-    Post;
+  CheckBrowseMode;
 
   if FRecNo > 1 then
     Dec(FRecNo);
@@ -708,8 +722,7 @@ end;
 
 procedure TBVDataSet.Next;
 begin
-  if (FState in [dsEdit, dsInsert]) then
-    Post;
+  CheckBrowseMode;
 
   if FRecNo < FActiveRecords.length then
     Inc(FRecNo);
@@ -720,8 +733,7 @@ end;
 
 procedure TBVDataSet.Last;
 begin
-  if (FState in [dsEdit, dsInsert]) then
-    Post;
+  CheckBrowseMode;
 
   if FActiveRecords.length > 0 then
     FRecNo := FActiveRecords.length
@@ -736,8 +748,7 @@ procedure TBVDataSet.MoveBy(Distance: Integer);
 var
   newPos: Integer;
 begin
-  if (FState in [dsEdit, dsInsert]) then
-    Post;
+  CheckBrowseMode;
 
   newPos := FRecNo + Distance;
   if newPos < 1 then newPos := 1;
@@ -754,8 +765,7 @@ var
   i: Integer;
   f: TBVField;
 begin
-  if (FState in [dsEdit, dsInsert]) then
-    Post;
+  CheckBrowseMode;
 
   obj := TJSObject.new;
   for i := 0 to FFields.Count - 1 do
@@ -773,6 +783,7 @@ begin
   FEditBuffer := obj;
   FOriginalBuffer := nil;
   FState := dsInsert;
+  FModified := False;
   SyncReactiveState;
 end;
 
@@ -804,6 +815,7 @@ begin
   FEditBuffer := clone;
   FOriginalBuffer := cur;
   FState := dsEdit;
+  FModified := False;
   SyncReactiveState;
 end;
 
@@ -860,6 +872,7 @@ begin
   FEditBuffer := nil;
   FOriginalBuffer := nil;
   FState := dsBrowse;
+  FModified := False;
   SyncReactiveState;
 
   if Assigned(FAfterPost) then FAfterPost(Self);
@@ -872,6 +885,7 @@ begin
   FEditBuffer := nil;
   FOriginalBuffer := nil;
   FState := dsBrowse;
+  FModified := False;
   SyncReactiveState;
 end;
 
@@ -950,6 +964,7 @@ var
   itemVal: string;
   item: TJSObject;
 begin
+  CheckBrowseMode;
   targetVal := String(AValue);
   for i := 0 to FActiveRecords.length - 1 do
   begin
@@ -1103,6 +1118,8 @@ begin
     dummyDS.Edit;
     dummyDS.Post;
     dummyDS.Cancel;
+    dummyDS.CheckBrowseMode;
+    dummyDS.Modified := False;
     dummyDS.Delete;
     dummyDS.Locate('', nil);
     dummyDS.SetFilter('');

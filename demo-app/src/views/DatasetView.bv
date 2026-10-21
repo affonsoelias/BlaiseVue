@@ -164,10 +164,40 @@
     end;
 
     procedure doAppend;
+    var
+      ds: JSValue;
     begin
-      DataSetAppend(this['productsDS']);
-      this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
-      ShowToast('Novo registro em modo de inserção (dsInsert)');
+      ds := this['productsDS'];
+      DataSetAppend(ds);
+      
+      asm
+        var nextNum = 1;
+        if (ds && ds.FRecords && ds.FRecords.length) {
+          nextNum = ds.FRecords.length + 1;
+        }
+        if (ds && ds.Current) {
+          ds.Current.title = 'Novo Produto ' + nextNum;
+          ds.Current.category = 'Hardware';
+          ds.Current.price = 99.90;
+          ds.Current.stock = 10;
+        }
+        if (ds) ds.FModified = true;
+        if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      end;
+      
+      this['deltaJSONStr'] := DataSetDeltaJSON(ds);
+      ShowToast('Novo registro iniciado (dsInsert). Preencha ou confirme em Salvar (Post)');
+      
+      asm
+        setTimeout(function() {
+          var el = document.querySelector('input[b-field="productsDS.title"]');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus();
+            if (el.select) el.select();
+          }
+        }, 100);
+      end;
     end;
 
     procedure doPost;

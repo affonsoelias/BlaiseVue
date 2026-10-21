@@ -5211,6 +5211,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       if (this.FDataSet.FState === $mod.TDataSetState.dsBrowse) this.FDataSet.Edit();
       if ((this.FDataSet.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FDataSet.FEditBuffer != null)) {
         this.FDataSet.FEditBuffer[this.FFieldName] = AValue;
+        this.FDataSet.FModified = true;
         this.FDataSet.SyncReactiveState();
       };
     };
@@ -5354,6 +5355,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FSortField = "";
       this.FSortAscending = false;
       this.FReactiveState = undefined;
+      this.FModified = false;
       this.FAfterScroll = null;
       this.FBeforePost = null;
       this.FAfterPost = null;
@@ -5468,6 +5470,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FFiltered = false;
       this.FSortField = "";
       this.FSortAscending = true;
+      this.FModified = false;
       this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
       this.SyncReactiveState();
       var self = this;
@@ -5593,7 +5596,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       return Result;
     };
     this.First = function () {
-      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      this.CheckBrowseMode();
       if (this.FActiveRecords.length > 0) {
         this.FRecNo = 1}
        else this.FRecNo = 0;
@@ -5601,30 +5604,37 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       if (this.FAfterScroll != null) this.FAfterScroll(this);
     };
     this.Prior = function () {
-      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      this.CheckBrowseMode();
       if (this.FRecNo > 1) this.FRecNo -= 1;
       this.SyncReactiveState();
       if (this.FAfterScroll != null) this.FAfterScroll(this);
     };
     this.Next = function () {
-      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      this.CheckBrowseMode();
       if (this.FRecNo < this.FActiveRecords.length) this.FRecNo += 1;
       this.SyncReactiveState();
       if (this.FAfterScroll != null) this.FAfterScroll(this);
     };
     this.Last = function () {
-      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      this.CheckBrowseMode();
       if (this.FActiveRecords.length > 0) {
         this.FRecNo = this.FActiveRecords.length}
        else this.FRecNo = 0;
       this.SyncReactiveState();
       if (this.FAfterScroll != null) this.FAfterScroll(this);
     };
+    this.CheckBrowseMode = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) {
+        if (this.FModified) {
+          this.Post()}
+         else this.Cancel();
+      };
+    };
     this.Append = function () {
       var obj = null;
       var i = 0;
       var f = null;
-      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      this.CheckBrowseMode();
       obj = new Object();
       for (var $l = 0, $end = this.FFields.Count() - 1; $l <= $end; $l++) {
         i = $l;
@@ -5643,6 +5653,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FEditBuffer = obj;
       this.FOriginalBuffer = null;
       this.FState = $mod.TDataSetState.dsInsert;
+      this.FModified = false;
       this.SyncReactiveState();
     };
     this.Insert = function () {
@@ -5663,6 +5674,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FEditBuffer = clone;
       this.FOriginalBuffer = cur;
       this.FState = $mod.TDataSetState.dsEdit;
+      this.FModified = false;
       this.SyncReactiveState();
     };
     this.Post = function () {
@@ -5700,6 +5712,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FEditBuffer = null;
       this.FOriginalBuffer = null;
       this.FState = $mod.TDataSetState.dsBrowse;
+      this.FModified = false;
       this.SyncReactiveState();
       if (this.FAfterPost != null) this.FAfterPost(this);
     };
@@ -5708,6 +5721,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FEditBuffer = null;
       this.FOriginalBuffer = null;
       this.FState = $mod.TDataSetState.dsBrowse;
+      this.FModified = false;
       this.SyncReactiveState();
     };
     this.Delete = function () {
@@ -5752,6 +5766,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       var targetVal = "";
       var itemVal = "";
       var item = null;
+      this.CheckBrowseMode();
       targetVal = "" + AValue;
       for (var $l = 0, $end = this.FActiveRecords.length - 1; $l <= $end; $l++) {
         i = $l;
@@ -5871,6 +5886,8 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
         dummyDS.Edit();
         dummyDS.Post();
         dummyDS.Cancel();
+        dummyDS.CheckBrowseMode();
+        dummyDS.FModified = false;
         dummyDS.Delete();
         dummyDS.Locate("",null);
         dummyDS.SetFilter("");
@@ -7699,9 +7716,31 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["doAppend"] = function (_this) {
-      pas.BVPascalDX.DataSetAppend(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      pas.BVPascalDX.ShowToast("Novo registro em modo de inserção (dsInsert)",2500);
+      var ds = undefined;
+      ds = _this["productsDS"];
+      pas.BVPascalDX.DataSetAppend(ds);
+      var nextNum = 1;
+      if (ds && ds.FRecords && ds.FRecords.length) {
+        nextNum = ds.FRecords.length + 1;
+      }
+      if (ds && ds.Current) {
+        ds.Current.title = 'Novo Produto ' + nextNum;
+        ds.Current.category = 'Hardware';
+        ds.Current.price = 99.90;
+        ds.Current.stock = 10;
+      }
+      if (ds) ds.FModified = true;
+      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
+      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha ou confirme em Salvar (Post)",2500);
+      setTimeout(function() {
+        var el = document.querySelector('input[b-field="productsDS.title"]');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+          if (el.select) el.select();
+        }
+      }, 100);
     };
     m["doPost"] = function (_this) {
       pas.BVPascalDX.DataSetPost(_this["productsDS"]);
@@ -9132,10 +9171,20 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       };
     };
     m["prevPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
+      if (rtl.trunc(_this["currentPage"]) > 1) {
+        _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
+        this._userPaging = true;
+        var self = this;
+        setTimeout(function() { self._userPaging = false; }, 400);
+      };
     };
     m["nextPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
+      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) {
+        _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
+        this._userPaging = true;
+        var self = this;
+        setTimeout(function() { self._userPaging = false; }, 400);
+      };
     };
     m["selectRow"] = function (_this, row) {
       var ds = this.dataset;
@@ -9227,6 +9276,13 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     comp["computed"]["pagedItems"] = function (_this) {
       var Result = undefined;
+      var ds = this.dataset;
+      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+        var targetPage = Math.ceil(ds.RecNo / this.pageSize);
+        if (targetPage > 0 && targetPage !== this.currentPage && !this._userPaging) {
+          this.currentPage = targetPage;
+        }
+      }
       let list = this.filteredItems || [];
       let start = (this.currentPage - 1) * this.pageSize;
       return list.slice(start, start + this.pageSize);

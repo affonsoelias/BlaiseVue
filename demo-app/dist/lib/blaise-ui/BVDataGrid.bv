@@ -137,6 +137,13 @@
     function pagedItems: JSValue;
     begin
       asm
+        var ds = this.dataset;
+        if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+          var targetPage = Math.ceil(ds.RecNo / this.pageSize);
+          if (targetPage > 0 && targetPage !== this.currentPage && !this._userPaging) {
+            this.currentPage = targetPage;
+          }
+        }
         let list = this.filteredItems || [];
         let start = (this.currentPage - 1) * this.pageSize;
         return list.slice(start, start + this.pageSize);
@@ -163,13 +170,27 @@
     procedure prevPage;
     begin
       if Integer(this['currentPage']) > 1 then
+      begin
         this['currentPage'] := Integer(this['currentPage']) - 1;
+        asm
+          this._userPaging = true;
+          var self = this;
+          setTimeout(function() { self._userPaging = false; }, 400);
+        end;
+      end;
     end;
 
     procedure nextPage;
     begin
       if Integer(this['currentPage']) < Integer(this['totalPages']) then
+      begin
         this['currentPage'] := Integer(this['currentPage']) + 1;
+        asm
+          this._userPaging = true;
+          var self = this;
+          setTimeout(function() { self._userPaging = false; }, 400);
+        end;
+      end;
     end;
 
     procedure selectRow(row: JSValue);
