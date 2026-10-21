@@ -139,9 +139,15 @@
       asm
         var ds = this.dataset;
         if (ds && ds.RecNo > 0 && this.pageSize > 0) {
-          var targetPage = Math.ceil(ds.RecNo / this.pageSize);
-          if (targetPage > 0 && targetPage !== this.currentPage && !this._userPaging) {
-            this.currentPage = targetPage;
+          var recNo = ds.RecNo;
+          if (this._lastRecNo === undefined) {
+            this._lastRecNo = recNo;
+          } else if (recNo !== this._lastRecNo) {
+            this._lastRecNo = recNo;
+            var targetPage = Math.ceil(recNo / this.pageSize);
+            if (targetPage > 0 && targetPage !== this.currentPage) {
+              this.currentPage = targetPage;
+            }
           }
         }
         let list = this.filteredItems || [];
@@ -170,27 +176,13 @@
     procedure prevPage;
     begin
       if Integer(this['currentPage']) > 1 then
-      begin
         this['currentPage'] := Integer(this['currentPage']) - 1;
-        asm
-          this._userPaging = true;
-          var self = this;
-          setTimeout(function() { self._userPaging = false; }, 400);
-        end;
-      end;
     end;
 
     procedure nextPage;
     begin
       if Integer(this['currentPage']) < Integer(this['totalPages']) then
-      begin
         this['currentPage'] := Integer(this['currentPage']) + 1;
-        asm
-          this._userPaging = true;
-          var self = this;
-          setTimeout(function() { self._userPaging = false; }, 400);
-        end;
-      end;
     end;
 
     procedure selectRow(row: JSValue);
@@ -204,6 +196,7 @@
             var keys = Object.keys(row);
             if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
           }
+          if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
         }
         this.selectedRow = row;
         if (typeof this.$emit === 'function') {

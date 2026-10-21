@@ -9171,20 +9171,10 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       };
     };
     m["prevPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) > 1) {
-        _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
-        this._userPaging = true;
-        var self = this;
-        setTimeout(function() { self._userPaging = false; }, 400);
-      };
+      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
     };
     m["nextPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) {
-        _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
-        this._userPaging = true;
-        var self = this;
-        setTimeout(function() { self._userPaging = false; }, 400);
-      };
+      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
     };
     m["selectRow"] = function (_this, row) {
       var ds = this.dataset;
@@ -9195,6 +9185,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
           var keys = Object.keys(row);
           if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
         }
+        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
       }
       this.selectedRow = row;
       if (typeof this.$emit === 'function') {
@@ -9278,9 +9269,15 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       var Result = undefined;
       var ds = this.dataset;
       if (ds && ds.RecNo > 0 && this.pageSize > 0) {
-        var targetPage = Math.ceil(ds.RecNo / this.pageSize);
-        if (targetPage > 0 && targetPage !== this.currentPage && !this._userPaging) {
-          this.currentPage = targetPage;
+        var recNo = ds.RecNo;
+        if (this._lastRecNo === undefined) {
+          this._lastRecNo = recNo;
+        } else if (recNo !== this._lastRecNo) {
+          this._lastRecNo = recNo;
+          var targetPage = Math.ceil(recNo / this.pageSize);
+          if (targetPage > 0 && targetPage !== this.currentPage) {
+            this.currentPage = targetPage;
+          }
         }
       }
       let list = this.filteredItems || [];
