@@ -115,7 +115,20 @@ begin
       };
       this.SetValue = function(k, val) {
         let d = this.FData || this;
-        d[k] = val;
+        if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+          window.__BV_CORE__.setDeepValue(d, k, val);
+        } else {
+          if (k && k.indexOf('.') > -1) {
+            let parts = k.split('.');
+            let curr = d;
+            for (let i = 0; i < parts.length - 1; i++) {
+              if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+              curr = curr[parts[i]];
+            }
+            curr[parts[parts.length - 1]] = val;
+          }
+          d[k] = val;
+        }
       };
     }
   end;
@@ -139,8 +152,24 @@ end;
 
 procedure TBlaiseData.SetValue(AKey: string; AVal: JSValue);
 begin
-  { Direct reactive assignment }
-  asm this.FData[AKey] = AVal; end;
+  { Direct reactive assignment supporting deep dot notation }
+  asm
+    var d = this.FData || this;
+    if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+      window.__BV_CORE__.setDeepValue(d, AKey, AVal);
+    } else {
+      if (AKey && AKey.indexOf('.') > -1) {
+        var parts = AKey.split('.');
+        var curr = d;
+        for (var i = 0; i < parts.length - 1; i++) {
+          if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+          curr = curr[parts[i]];
+        }
+        curr[parts[parts.length - 1]] = AVal;
+      }
+      d[AKey] = AVal;
+    }
+  end;
 end;
 
 initialization

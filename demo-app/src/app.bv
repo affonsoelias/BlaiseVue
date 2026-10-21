@@ -3,6 +3,7 @@
     <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->
     <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">
       <div class="drawer-nav">
+        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>
         <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
         <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
@@ -23,9 +24,10 @@
     <nav class="navbar">
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>
-        <strong class="brand">BlaiseVue 4.0</strong>
+        <strong class="brand">BlaiseVue 4.3</strong>
       </div>
       <div class="nav-links">
+        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>
         <a href="#/customers">📦 Customers</a>
         <a href="#/products">📦 Products</a>
         <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>

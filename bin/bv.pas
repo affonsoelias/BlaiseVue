@@ -5199,6 +5199,10 @@ begin
               else Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'Enterprise' + Q + ';' + #13#10;
             end;
           end
+          else if LowerCase(Fields[i].Name) = 'email' then
+            Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + LowerCase(ModelName) + IntToStr(j + 1) + '@example.com' + Q + ';' + #13#10
+          else if LowerCase(Fields[i].Name) = 'phone' then
+            Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + '(11) 98765-432' + IntToStr(j + 1) + Q + ';' + #13#10
           else
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + ModelName + ' ' + IntToStr(j + 1) + Q + ';' + #13#10;
         cfkInteger:
@@ -5316,9 +5320,14 @@ begin
   begin
     case Fields[i].Kind of
       cfkString:
-        Result := Result +
-          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + 'New ' + ModelName + Q + ');' + #13#10 +
-          '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
+        if (LowerCase(Fields[i].Name) = 'name') or (LowerCase(Fields[i].Name) = 'title') then
+          Result := Result +
+            '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + 'New ' + ModelName + Q + ');' + #13#10 +
+            '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10
+        else
+          Result := Result +
+            '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + '' + Q + ');' + #13#10 +
+            '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
       cfkInteger:
         Result := Result +
           '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', 0);' + #13#10 +

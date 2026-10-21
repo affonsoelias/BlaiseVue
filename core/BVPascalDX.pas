@@ -52,7 +52,7 @@ function FindItemById(List: JSValue; Id: Integer): JSValue;
 
 { --- Full-Stack mORMot 2 & API Client Helpers --- }
 procedure ApiFetch(Instance: JSValue; const Endpoint: string; const PropertyName: string = 'items');
-procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; AFormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
 procedure ApiDelete(Instance: JSValue; const Endpoint: string; Id: Integer; const ConfirmMsg: string = ''; const OnSuccessMethod: string = 'fetchItems');
 procedure ApiSetupRealtime(Instance: JSValue; const ModelPrefix: string; const RefreshMethod: string = 'fetchItems');
 
@@ -656,7 +656,7 @@ begin
   end;
 end;
 
-procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; AFormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
 begin
   asm
     var self = Instance;

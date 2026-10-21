@@ -93,7 +93,7 @@ initialization
       if (Data && !Data.SetValue) {
         Data.SetValue = function(k, val) {
           let d = (Data && Data.FData) ? Data.FData : Data;
-          d[k] = val;
+          bv.setDeepValue(d, k, val);
         };
       }
 
@@ -314,7 +314,7 @@ initialization
                          return f(this.FData, ev);
                       } catch(ex) { return undefined; }
                    },
-                   SetValue: function(k, val) { this.FData[k] = val; }
+                   SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
 
                 instEl.parentNode.replaceChild(newEl, instEl);
@@ -621,12 +621,24 @@ initialization
             if (opts) {
                // Component v-model (handled logic in step 9)
             } else {
-               el.value = Data.Evaluate(vmodel) || '';
-               const sync = function() { Data.SetValue(vmodel, this.value); };
+               const isCheck = (el.type === 'checkbox');
+               if (isCheck) {
+                 el.checked = Boolean(Data.Evaluate(vmodel));
+               } else {
+                 el.value = Data.Evaluate(vmodel) || '';
+               }
+               const sync = function() {
+                 const val = isCheck ? this.checked : this.value;
+                 Data.SetValue(vmodel, val);
+               };
                el.oninput = sync; el.onchange = sync; 
                bv.effect(function() {
                  let v = Data.Evaluate(vmodel);
-                 if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 if (isCheck) {
+                   if (el.checked !== Boolean(v)) el.checked = Boolean(v);
+                 } else {
+                   if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 }
                });
             }
           }
@@ -761,7 +773,7 @@ initialization
                           } catch(e2) { return undefined; }
                         }
                       },
-                      SetValue: function(k, val) { this.FData[k] = val; }
+                      SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                     };
                     bv.traverse(cl, ld, Methods);
                   });
@@ -1241,7 +1253,7 @@ initialization
                   } catch(e2) { return undefined; }
                 } 
               },
-              SetValue: function(k, val) { this.FData[k] = val; }
+              SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
             };
             
             bv.traverse(rEl, cD, opts.methods);
