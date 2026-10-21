@@ -4,7 +4,7 @@ unit uHome;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet;
 
 procedure Register_uHome;
 

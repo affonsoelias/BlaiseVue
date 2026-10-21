@@ -14,14 +14,14 @@
     <table class="bui-datagrid-table">
       <thead>
         <tr>
-          <th b-for="col in columns" @click="sortBy(col.key)">
+          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">
             {{ col.label }}
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr b-for="row in pagedItems">
-          <td b-for="col in columns">
+        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ 'bui-row-selected': (selectedRow === row || (dataset && dataset.Current === row)) }">
+          <td b-for="col in resolvedColumns">
             <slot name="cell" :row="row" :column="col" :value="row[col.key]">
               {{ row[col.key] }}
             </slot>
@@ -40,6 +40,7 @@
 
 <script>
   data:
+    dataset: JSValue = nil;
     items: JSValue = [];
     columns: JSValue = [];
     searchQuery: string = '';
@@ -47,26 +48,79 @@
     sortAsc: boolean = true;
     currentPage: integer = 1;
     pageSize: integer = 5;
+    selectedRow: JSValue = nil;
 
   computed:
+    function resolvedItems: JSValue;
+    begin
+      asm
+        var ds = this.dataset;
+        if (ds) {
+          if (Array.isArray(ds.Data)) return ds.Data;
+          if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+          if (Array.isArray(ds.FRecords)) return ds.FRecords;
+          if (Array.isArray(ds)) return ds;
+        }
+        return (this.items && Array.isArray(this.items)) ? this.items : [];
+      end;
+    end;
+
+    function resolvedColumns: JSValue;
+    begin
+      asm
+        if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+          return this.columns;
+        }
+        var ds = this.dataset;
+        if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+          return ds.Fields.ToArray();
+        }
+        var list = this.resolvedItems;
+        if (list && list.length > 0 && typeof list[0] === 'object') {
+          return Object.keys(list[0]).map(function(k) {
+            return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+          });
+        }
+        return [];
+      end;
+    end;
+
     function totalItems: integer;
     begin
       asm
-        Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+        Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
       end;
     end;
 
     function filteredItems: JSValue;
     begin
       asm
-        let list = this.items || [];
+        let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
         let q = (this.searchQuery || '').toLowerCase();
-        if (!q) return list;
-        return list.filter(function(item) {
-          return Object.values(item).some(function(v) {
-            return String(v).toLowerCase().indexOf(q) !== -1;
+        if (q) {
+          list = list.filter(function(item) {
+            return Object.values(item).some(function(v) {
+              return String(v).toLowerCase().indexOf(q) !== -1;
+            });
           });
-        });
+        }
+        let sk = this.sortKey;
+        let asc = this.sortAsc;
+        if (sk) {
+          list.sort(function(a, b) {
+            let va = (a && a[sk] !== undefined) ? a[sk] : '';
+            let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+            if (typeof va === 'number' && typeof vb === 'number') {
+              return asc ? (va - vb) : (vb - va);
+            }
+            let sa = String(va).toLowerCase();
+            let sb = String(vb).toLowerCase();
+            if (sa < sb) return asc ? -1 : 1;
+            if (sa > sb) return asc ? 1 : -1;
+            return 0;
+          });
+        }
+        return list;
       end;
     end;
 
@@ -114,5 +168,24 @@
     begin
       if Integer(this['currentPage']) < Integer(this['totalPages']) then
         this['currentPage'] := Integer(this['currentPage']) + 1;
+    end;
+
+    procedure selectRow(row: JSValue);
+    begin
+      asm
+        this.selectedRow = row;
+        var ds = this.dataset;
+        if (ds && row) {
+          if (row.id !== undefined && typeof ds.Locate === 'function') {
+            ds.Locate('id', row.id);
+          } else if (typeof ds.Locate === 'function') {
+            var keys = Object.keys(row);
+            if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+          }
+        }
+        if (typeof this.$emit === 'function') {
+          this.$emit('row-select', row);
+        }
+      end;
     end;
 </script>

@@ -578,7 +578,7 @@ initialization
           }
 
           // 3. Directive Collection
-          let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null;
+          let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null, vfield = null;
           let binds = [];
           let events = [];
           if (el.attributes) {
@@ -586,6 +586,7 @@ initialization
                let a = el.attributes[i];
                let n = a.name.toLowerCase();
                if (n === 'b-model' || n === 'v-model') vmodel = a.value;
+               else if (n === 'b-field' || n === 'v-field') vfield = a.value;
                else if (n === 'b-validate' || n === 'v-validate') vvalidate = a.value;
                else if (n.startsWith('b-validate:') || n.startsWith('v-validate:')) {
                   vvalidateField = n.startsWith('b-validate:') ? n.substring(11) : n.substring(11);
@@ -625,6 +626,47 @@ initialization
                el.oninput = sync; el.onchange = sync; 
                bv.effect(function() {
                  let v = Data.Evaluate(vmodel);
+                 if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+               });
+            }
+          }
+
+          // 5.1. b-field directive (Native LiveBindings with TBVDataSet)
+          if (vfield) {
+            el.removeAttribute('b-field'); el.removeAttribute('v-field');
+            if (!opts) {
+               let parts = vfield.split('.');
+               let dsExpr = parts[0];
+               let fieldName = parts.slice(1).join('.');
+
+               const getNativeFieldVal = function() {
+                 let ds = Data.Evaluate(dsExpr);
+                 if (!ds) return '';
+                 if (typeof ds.FieldByName === 'function') {
+                   return ds.FieldByName(fieldName).AsString;
+                 } else if (ds.Current) {
+                   return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                 }
+                 return '';
+               };
+
+               const setNativeFieldVal = function(val) {
+                 let ds = Data.Evaluate(dsExpr);
+                 if (!ds) return;
+                 if (typeof ds.FieldByName === 'function') {
+                   if (ds.StateStr === 'browse') ds.Edit();
+                   ds.FieldByName(fieldName).AsString = val;
+                 } else if (ds.Current) {
+                   ds.Current[fieldName] = val;
+                 }
+               };
+
+               el.value = getNativeFieldVal() || '';
+               const syncField = function() { setNativeFieldVal(this.value); };
+               el.oninput = syncField; el.onchange = syncField;
+
+               bv.effect(function() {
+                 let v = getNativeFieldVal();
                  if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                });
             }
@@ -1064,6 +1106,38 @@ initialization
                       let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
                       if (fObj && fObj.$dirty) fObj.$touch();
                    }
+                };
+             }
+
+                          if (vfield) {
+                let parts = vfield.split('.');
+                let dsExpr = parts[0];
+                let fieldName = parts.slice(1).join('.');
+
+                const getCompFieldVal = function() {
+                  let ds = Data.Evaluate(dsExpr);
+                  if (!ds) return '';
+                  if (typeof ds.FieldByName === 'function') {
+                    return ds.FieldByName(fieldName).AsString;
+                  } else if (ds.Current) {
+                    return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                  }
+                  return '';
+                };
+
+                bv.effect(function() {
+                  pRef['value'] = getCompFieldVal();
+                });
+
+                pRef['$onInput'] = function(val) {
+                  let ds = Data.Evaluate(dsExpr);
+                  if (!ds) return;
+                  if (typeof ds.FieldByName === 'function') {
+                    if (ds.StateStr === 'browse') ds.Edit();
+                    ds.FieldByName(fieldName).AsString = val;
+                  } else if (ds.Current) {
+                    ds.Current[fieldName] = val;
+                  }
                 };
              }
 

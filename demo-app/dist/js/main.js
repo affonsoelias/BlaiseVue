@@ -3206,7 +3206,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               }
     
               // 3. Directive Collection
-              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null;
+              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null, vfield = null;
               let binds = [];
               let events = [];
               if (el.attributes) {
@@ -3214,6 +3214,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    let a = el.attributes[i];
                    let n = a.name.toLowerCase();
                    if (n === 'b-model' || n === 'v-model') vmodel = a.value;
+                   else if (n === 'b-field' || n === 'v-field') vfield = a.value;
                    else if (n === 'b-validate' || n === 'v-validate') vvalidate = a.value;
                    else if (n.startsWith('b-validate:') || n.startsWith('v-validate:')) {
                       vvalidateField = n.startsWith('b-validate:') ? n.substring(11) : n.substring(11);
@@ -3253,6 +3254,47 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    el.oninput = sync; el.onchange = sync; 
                    bv.effect(function() {
                      let v = Data.Evaluate(vmodel);
+                     if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   });
+                }
+              }
+    
+              // 5.1. b-field directive (Native LiveBindings with TBVDataSet)
+              if (vfield) {
+                el.removeAttribute('b-field'); el.removeAttribute('v-field');
+                if (!opts) {
+                   let parts = vfield.split('.');
+                   let dsExpr = parts[0];
+                   let fieldName = parts.slice(1).join('.');
+    
+                   const getNativeFieldVal = function() {
+                     let ds = Data.Evaluate(dsExpr);
+                     if (!ds) return '';
+                     if (typeof ds.FieldByName === 'function') {
+                       return ds.FieldByName(fieldName).AsString;
+                     } else if (ds.Current) {
+                       return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                     }
+                     return '';
+                   };
+    
+                   const setNativeFieldVal = function(val) {
+                     let ds = Data.Evaluate(dsExpr);
+                     if (!ds) return;
+                     if (typeof ds.FieldByName === 'function') {
+                       if (ds.StateStr === 'browse') ds.Edit();
+                       ds.FieldByName(fieldName).AsString = val;
+                     } else if (ds.Current) {
+                       ds.Current[fieldName] = val;
+                     }
+                   };
+    
+                   el.value = getNativeFieldVal() || '';
+                   const syncField = function() { setNativeFieldVal(this.value); };
+                   el.oninput = syncField; el.onchange = syncField;
+    
+                   bv.effect(function() {
+                     let v = getNativeFieldVal();
                      if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                    });
                 }
@@ -3692,6 +3734,38 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
                           if (fObj && fObj.$dirty) fObj.$touch();
                        }
+                    };
+                 }
+    
+                              if (vfield) {
+                    let parts = vfield.split('.');
+                    let dsExpr = parts[0];
+                    let fieldName = parts.slice(1).join('.');
+    
+                    const getCompFieldVal = function() {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return '';
+                      if (typeof ds.FieldByName === 'function') {
+                        return ds.FieldByName(fieldName).AsString;
+                      } else if (ds.Current) {
+                        return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                      }
+                      return '';
+                    };
+    
+                    bv.effect(function() {
+                      pRef['value'] = getCompFieldVal();
+                    });
+    
+                    pRef['$onInput'] = function(val) {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return;
+                      if (typeof ds.FieldByName === 'function') {
+                        if (ds.StateStr === 'browse') ds.Edit();
+                        ds.FieldByName(fieldName).AsString = val;
+                      } else if (ds.Current) {
+                        ds.Current[fieldName] = val;
+                      }
                     };
                  }
     
@@ -5396,7 +5470,30 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
     };
   };
 });
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX"],function () {
+rtl.module("Classes",["System","RTLConsts","Types","SysUtils","JS"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  $mod.$implcode = function () {
+    $impl.ClassList = null;
+  };
+  $mod.$init = function () {
+    $impl.ClassList = new Object();
+  };
+},[]);
+rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  $mod.$init = function () {
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+    window.__BV_CORE__.dataset = {
+      TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
+      TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
+    };
+  };
+});
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -5763,7 +5860,7 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
     $mod.InitDevTools();
   };
 });
-rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCard = function () {
@@ -5790,7 +5887,7 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("card",comp);
   };
 });
-rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCounter = function () {
@@ -5825,7 +5922,7 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormHeader = function () {
@@ -5855,7 +5952,7 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("form-header",comp);
   };
 });
-rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uInfoCard = function () {
@@ -5881,7 +5978,7 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("info-card",comp);
   };
 });
-rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uAbout = function () {
@@ -6309,7 +6406,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
     };
   };
 });
-rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BlaiseCharts"],function () {
+rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCharts = function () {
@@ -6466,7 +6563,7 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCustomerView = function () {
@@ -6551,7 +6648,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("customer-view-page",comp);
   };
 });
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormulario = function () {
@@ -6617,7 +6714,7 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("formulario-page",comp);
   };
 });
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uHome = function () {
@@ -6647,7 +6744,7 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("home-page",comp);
   };
 });
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVRouting"],function () {
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLibBootstrap = function () {
@@ -6750,7 +6847,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
   };
 });
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLoginView = function () {
@@ -6795,7 +6892,7 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uMobileView = function () {
@@ -6866,7 +6963,7 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
   };
 });
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProductView = function () {
@@ -6951,7 +7048,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("product-view-page",comp);
   };
 });
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProFeatures = function () {
@@ -7106,7 +7203,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
-rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uShowcase = function () {
@@ -7144,7 +7241,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uUserProfile = function () {
@@ -7180,7 +7277,7 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
   };
 });
-rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBarChart = function () {
@@ -7209,7 +7306,7 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBubbleChart = function () {
@@ -7238,7 +7335,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
   };
 });
-rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVChart = function () {
@@ -7355,7 +7452,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
-rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDoughnutChart = function () {
@@ -7384,7 +7481,7 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
   };
 });
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVLineChart = function () {
@@ -7413,7 +7510,7 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-line-chart",comp);
   };
 });
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPieChart = function () {
@@ -7442,7 +7539,7 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
   };
 });
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPolarAreaChart = function () {
@@ -7471,7 +7568,7 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
-rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRadarChart = function () {
@@ -7500,7 +7597,7 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVScatterChart = function () {
@@ -7529,7 +7626,7 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAccordion = function () {
@@ -7565,7 +7662,7 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
   };
 });
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAlert = function () {
@@ -7598,7 +7695,7 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-alert",comp);
   };
 });
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBadge = function () {
@@ -7629,7 +7726,7 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNav = function () {
@@ -7642,7 +7739,7 @@ rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
   };
 });
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNavItem = function () {
@@ -7704,7 +7801,7 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
   };
 });
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumb = function () {
@@ -7717,7 +7814,7 @@ rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
   };
 });
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumbItem = function () {
@@ -7743,7 +7840,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
   };
 });
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBtn = function () {
@@ -7786,7 +7883,7 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-btn",comp);
   };
 });
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCard = function () {
@@ -7809,7 +7906,7 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-card",comp);
   };
 });
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCol = function () {
@@ -7850,7 +7947,7 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-col",comp);
   };
 });
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVContainer = function () {
@@ -7872,18 +7969,19 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-container",comp);
   };
 });
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDataGrid = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in columns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems">' + '          <td b-for="col in columns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow === row || (dataset && dataset.Current === row)) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
+      d["dataset"] = null;
       d["items"] = new Array();
       d["columns"] = new Array();
       d["searchQuery"] = "";
@@ -7891,6 +7989,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       d["sortAsc"] = true;
       d["currentPage"] = 1;
       d["pageSize"] = 5;
+      d["selectedRow"] = null;
       Result = d;
       return Result;
     };
@@ -7912,23 +8011,86 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     m["nextPage"] = function (_this) {
       if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
     };
+    m["selectRow"] = function (_this, row) {
+      this.selectedRow = row;
+      var ds = this.dataset;
+      if (ds && row) {
+        if (row.id !== undefined && typeof ds.Locate === 'function') {
+          ds.Locate('id', row.id);
+        } else if (typeof ds.Locate === 'function') {
+          var keys = Object.keys(row);
+          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+        }
+      }
+      if (typeof this.$emit === 'function') {
+        this.$emit('row-select', row);
+      };
+    };
     comp["methods"] = m;
     comp["computed"] = new Object();
+    comp["computed"]["resolvedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds)) return ds;
+      }
+      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        return this.columns;
+      }
+      var ds = this.dataset;
+      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+        return ds.Fields.ToArray();
+      }
+      var list = this.resolvedItems;
+      if (list && list.length > 0 && typeof list[0] === 'object') {
+        return Object.keys(list[0]).map(function(k) {
+          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+        });
+      }
+      return [];
+      return Result;
+    };
     comp["computed"]["totalItems"] = function (_this) {
       var Result = undefined;
-      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
       return Result;
     };
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      let list = this.items || [];
+      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
       let q = (this.searchQuery || '').toLowerCase();
-      if (!q) return list;
-      return list.filter(function(item) {
-        return Object.values(item).some(function(v) {
-          return String(v).toLowerCase().indexOf(q) !== -1;
+      if (q) {
+        list = list.filter(function(item) {
+          return Object.values(item).some(function(v) {
+            return String(v).toLowerCase().indexOf(q) !== -1;
+          });
         });
-      });
+      }
+      let sk = this.sortKey;
+      let asc = this.sortAsc;
+      if (sk) {
+        list.sort(function(a, b) {
+          let va = (a && a[sk] !== undefined) ? a[sk] : '';
+          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+          if (typeof va === 'number' && typeof vb === 'number') {
+            return asc ? (va - vb) : (vb - va);
+          }
+          let sa = String(va).toLowerCase();
+          let sb = String(vb).toLowerCase();
+          if (sa < sb) return asc ? -1 : 1;
+          if (sa > sb) return asc ? 1 : -1;
+          return 0;
+        });
+      }
+      return list;
       return Result;
     };
     comp["computed"]["totalPages"] = function (_this) {
@@ -7948,7 +8110,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
 });
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDrawer = function () {
@@ -8006,7 +8168,7 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-drawer",comp);
   };
 });
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVFormSelect = function () {
@@ -8035,7 +8197,7 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-form-select",comp);
   };
 });
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIcon = function () {
@@ -8058,7 +8220,7 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-icon",comp);
   };
 });
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInput = function () {
@@ -8089,7 +8251,7 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-input",comp);
   };
 });
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInputGroup = function () {
@@ -8119,7 +8281,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-input-group",comp);
   };
 });
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroup = function () {
@@ -8132,7 +8294,7 @@ rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-list-group",comp);
   };
 });
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroupItem = function () {
@@ -8166,7 +8328,7 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVModal = function () {
@@ -8243,7 +8405,7 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavbar = function () {
@@ -8265,7 +8427,7 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
   };
 });
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavItem = function () {
@@ -8299,7 +8461,7 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-nav-item",comp);
   };
 });
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPagination = function () {
@@ -8336,7 +8498,7 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVProgress = function () {
@@ -8378,7 +8540,7 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRow = function () {
@@ -8422,7 +8584,7 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-row",comp);
   };
 });
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVSpinner = function () {
@@ -8445,7 +8607,7 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
   };
 });
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTab = function () {
@@ -8495,7 +8657,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTabs = function () {
@@ -8555,7 +8717,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-tabs",comp);
   };
 });
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVToast = function () {
@@ -8606,7 +8768,7 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonApp = function () {
@@ -8635,7 +8797,7 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-ion-app",comp);
   };
 });
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonBadge = function () {
@@ -8658,7 +8820,7 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
   };
 });
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonButton = function () {
@@ -8699,7 +8861,7 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonCard = function () {
@@ -8722,7 +8884,7 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
   };
 });
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonContent = function () {
@@ -8744,7 +8906,7 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
   };
 });
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonHeader = function () {
@@ -8757,7 +8919,7 @@ rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-header",comp);
   };
 });
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonItem = function () {
@@ -8826,7 +8988,7 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-item",comp);
   };
 });
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonList = function () {
@@ -8848,7 +9010,7 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
   };
 });
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabBar = function () {
@@ -8861,7 +9023,7 @@ rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
   };
 });
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabButton = function () {
@@ -8888,7 +9050,7 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
   };
 });
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabs = function () {
@@ -8901,7 +9063,7 @@ rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
   };
 });
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTitle = function () {
@@ -8923,7 +9085,7 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
   };
 });
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonToolbar = function () {
@@ -8936,7 +9098,7 @@ rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
   };
 });
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeSelect = function () {
@@ -8958,7 +9120,7 @@ rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-select",comp);
   };
 });
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeToggle = function () {
@@ -8976,7 +9138,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {

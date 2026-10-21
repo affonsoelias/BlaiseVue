@@ -186,6 +186,13 @@
   color: var(--bui-text);
 }
 .bui-datagrid-table tr:hover { background: #f8fafc; }
+.bui-datagrid-table tr.bui-row-selected {
+  background: #e0f2fe !important;
+  font-weight: 500;
+}
+.bui-datagrid-table tr.bui-row-selected td {
+  border-bottom-color: #bae6fd;
+}
 .bui-datagrid-pagination {
   padding: 10px 16px;
   display: flex;

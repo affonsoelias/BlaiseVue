@@ -90,6 +90,26 @@ function GetFieldInt(Obj: JSValue; const PropName: string; DefaultVal: Integer =
 function GetFieldBool(Obj: JSValue; const PropName: string; DefaultVal: Boolean = False): Boolean;
 procedure SetField(Obj: JSValue; const PropName: string; Value: JSValue);
 
+{ --- LiveBindings & Reactive TBVDataSet Helpers (Phase 9 / 4.2) --- }
+function NewDataSet: JSValue;
+procedure DataSetLoad(DS: JSValue; Data: JSValue);
+procedure DataSetAppend(DS: JSValue);
+procedure DataSetEdit(DS: JSValue);
+procedure DataSetPost(DS: JSValue);
+procedure DataSetCancel(DS: JSValue);
+procedure DataSetDelete(DS: JSValue);
+procedure DataSetFirst(DS: JSValue);
+procedure DataSetPrior(DS: JSValue);
+procedure DataSetNext(DS: JSValue);
+procedure DataSetLast(DS: JSValue);
+function DataSetLocate(DS: JSValue; const AFieldName: string; AValue: JSValue): Boolean;
+procedure DataSetFilter(DS: JSValue; const AQuery: string);
+procedure DataSetSort(DS: JSValue; const AFieldName: string; Ascending: Boolean = True);
+function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
+procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
+function DataSetDeltaJSON(DS: JSValue): string;
+procedure DataSetApplyUpdates(DS: JSValue);
+
 implementation
 
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
@@ -361,6 +381,171 @@ begin
     if (Obj && typeof Obj === 'object') {
       Obj[PropName] = Value;
     }
+  end;
+end;
+
+{ --- LiveBindings & Reactive TBVDataSet Helpers (Phase 9 / 4.2) --- }
+
+function NewDataSet: JSValue;
+begin
+  asm
+    if (pas.BVDataSet && typeof pas.BVDataSet.CreateDataSet === 'function') {
+      Result = pas.BVDataSet.CreateDataSet();
+    } else if (pas.BVDataSet && pas.BVDataSet.TBVDataSet) {
+      var ctorName = pas.BVDataSet.TBVDataSet.Create$1 ? 'Create$1' : 'Create';
+      Result = pas.BVDataSet.TBVDataSet.$create(ctorName);
+    } else if (window.__BV_CORE__ && window.__BV_CORE__.dataset && typeof window.__BV_CORE__.dataset.CreateDataSet === 'function') {
+      Result = window.__BV_CORE__.dataset.CreateDataSet();
+    } else {
+      Result = null;
+    }
+  end;
+end;
+
+procedure DataSetLoad(DS: JSValue; Data: JSValue);
+begin
+  asm
+    if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+  end;
+end;
+
+procedure DataSetAppend(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Append === 'function') DS.Append();
+  end;
+end;
+
+procedure DataSetEdit(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Edit === 'function') DS.Edit();
+  end;
+end;
+
+procedure DataSetPost(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Post === 'function') DS.Post();
+  end;
+end;
+
+procedure DataSetCancel(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+  end;
+end;
+
+procedure DataSetDelete(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Delete === 'function') DS.Delete();
+  end;
+end;
+
+procedure DataSetFirst(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.First === 'function') DS.First();
+  end;
+end;
+
+procedure DataSetPrior(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Prior === 'function') DS.Prior();
+  end;
+end;
+
+procedure DataSetNext(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Next === 'function') DS.Next();
+  end;
+end;
+
+procedure DataSetLast(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.Last === 'function') DS.Last();
+  end;
+end;
+
+function DataSetLocate(DS: JSValue; const AFieldName: string; AValue: JSValue): Boolean;
+begin
+  asm
+    if (DS && typeof DS.Locate === 'function') {
+      Result = Boolean(DS.Locate(AFieldName, AValue));
+    } else {
+      Result = false;
+    }
+  end;
+end;
+
+procedure DataSetFilter(DS: JSValue; const AQuery: string);
+begin
+  asm
+    if (DS && typeof DS.SetFilter === 'function') DS.SetFilter(AQuery);
+  end;
+end;
+
+procedure DataSetSort(DS: JSValue; const AFieldName: string; Ascending: Boolean);
+begin
+  asm
+    if (DS && typeof DS.SortBy === 'function') DS.SortBy(AFieldName, Ascending);
+  end;
+end;
+
+function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
+begin
+  asm
+    if (!DS) return '';
+    if (typeof DS.FieldByName === 'function') {
+      var f = DS.FieldByName(AFieldName);
+      if (!f) return '';
+      Result = (typeof f.GetAsString === 'function') ? f.GetAsString() : (f.AsString !== undefined ? f.AsString : '');
+    } else if (DS.Current) {
+      Result = DS.Current[AFieldName] !== undefined ? DS.Current[AFieldName] : '';
+    } else {
+      Result = '';
+    }
+  end;
+end;
+
+procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
+begin
+  asm
+    if (!DS) return;
+    if (typeof DS.FieldByName === 'function') {
+      var st = (typeof DS.GetStateStr === 'function') ? DS.GetStateStr() : DS.StateStr;
+      if (st === 'browse') DS.Edit();
+      var f = DS.FieldByName(AFieldName);
+      if (f) {
+        if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+        else f.AsString = String(AValue);
+      }
+    } else if (DS.Current) {
+      DS.Current[AFieldName] = AValue;
+    }
+  end;
+end;
+
+function DataSetDeltaJSON(DS: JSValue): string;
+begin
+  asm
+    if (DS && typeof DS.GetDeltaJSON === 'function') {
+      Result = DS.GetDeltaJSON();
+    } else {
+      Result = '[]';
+    }
+  end;
+end;
+
+procedure DataSetApplyUpdates(DS: JSValue);
+begin
+  asm
+    if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
   end;
 end;
 
