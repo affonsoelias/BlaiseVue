@@ -12,7 +12,7 @@ unit BVPascalDX;
 
 interface
 
-uses JS, Web, SysUtils, BVDataSet;
+uses JS, Web, SysUtils, BVDataSet, BVRpc;
 
 { --- UI Notification & Dialog Helpers --- }
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
@@ -109,6 +109,16 @@ function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
 procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
 function DataSetDeltaJSON(DS: JSValue): string;
 procedure DataSetApplyUpdates(DS: JSValue);
+
+{ --- Type-Safe mORMot 2 Pascal RPC Helpers (BlaiseVue 4.3) --- }
+procedure RpcSetBaseUrl(const Url: string);
+procedure RpcSetToken(const Token: string);
+procedure RpcClearToken;
+procedure RpcSetTransport(const Transport: string);
+procedure RpcSetTimeout(TimeoutMs: Integer);
+procedure RpcSetUsePack(Enable: Boolean);
+function RpcCall(const ServiceName, MethodName: string; Params: JSValue = nil; OnSuccess: JSValue = nil; OnError: JSValue = nil): JSValue;
+function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue = nil): JSValue;
 
 implementation
 
@@ -612,6 +622,7 @@ begin
 end;
 
 procedure DataSetApplyUpdates(DS: JSValue);
+
 begin
   if (DS <> nil) and (TObject(DS) is TBVDataSet) then
     TBVDataSet(DS).ApplyUpdates
@@ -955,6 +966,46 @@ begin
   end;
 end;
 
+procedure RpcSetBaseUrl(const Url: string);
+begin
+  TBVRpcClient.SetBaseUrl(Url);
+end;
+
+procedure RpcSetToken(const Token: string);
+begin
+  TBVRpcClient.SetToken(Token);
+end;
+
+procedure RpcClearToken;
+begin
+  TBVRpcClient.ClearToken;
+end;
+
+procedure RpcSetTransport(const Transport: string);
+begin
+  TBVRpcClient.SetTransport(Transport);
+end;
+
+procedure RpcSetTimeout(TimeoutMs: Integer);
+begin
+  TBVRpcClient.SetTimeout(TimeoutMs);
+end;
+
+procedure RpcSetUsePack(Enable: Boolean);
+begin
+  TBVRpcClient.SetUsePack(Enable);
+end;
+
+function RpcCall(const ServiceName, MethodName: string; Params: JSValue; OnSuccess: JSValue; OnError: JSValue): JSValue;
+begin
+  Result := TBVRpcClient.Invoke(ServiceName, MethodName, Params, OnSuccess, OnError);
+end;
+
+function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue): JSValue;
+begin
+  Result := TBVRpcClient.InvokeAsync(ServiceName, MethodName, Params);
+end;
+
 procedure RetainDXDataSetSymbols;
 var
   dummy: JSValue;
@@ -979,6 +1030,14 @@ begin
     DataSetSetFieldVal(dummy, '', nil);
     DataSetDeltaJSON(dummy);
     DataSetApplyUpdates(dummy);
+    RpcSetBaseUrl('');
+    RpcSetToken('');
+    RpcClearToken;
+    RpcSetTransport('');
+    RpcSetTimeout(0);
+    RpcSetUsePack(False);
+    RpcCall('', '', nil, nil, nil);
+    RpcCallAsync('', '', nil);
   end;
 end;
 

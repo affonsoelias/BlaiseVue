@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.2 LiveBindings & Reactive TBVDataSet Delivered (Phases 1-8 + v4.1 + v4.2 ✅ 100% Completed | Next: v4.3 🛡️)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), and LiveBindings with in-memory `TBVDataSet` (`b-field`, navigation, CRUD buffering, delta tracking, and `<bv-datagrid>` integration) are fully delivered and verified with 393 automated tests across 24 test suites. Upcoming milestone: BlaiseVue 4.3 (End-to-End Type-Safe Pascal RPC with mORMot 2).
+> **Current Status**: 🚀 **BlaiseVue 4.3 End-to-End Type-Safe Pascal RPC with mORMot 2 Delivered (Phases 1-8 + v4.1 + v4.2 + v4.3 ✅ 100% Completed)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), LiveBindings with in-memory `TBVDataSet`, and End-to-End Type-Safe Pascal RPC with mORMot 2 (`ICustomerService`, `IProductService`, `ISystemService`, `ClientProxies.pas`, `TRpcDispatcher`, dual HTTP/WebSocket transport, and `bv mormot rpc`) are fully delivered and verified with 437 automated tests across 25 test suites.
 
 ---
 
@@ -492,8 +492,18 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered with 336
 
 ---
 
-### 🛡️ BlaiseVue 4.3: End-to-End Type-Safe Pascal RPC with mORMot 2
+### 🛡️ BlaiseVue 4.3: End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)
 **Goal**: Completely eliminate manual REST URLs, HTTP verb boilerplate, and string-based endpoints between client and server, establishing a 100% type-safe, compile-time verified RPC pipeline in pure Object Pascal.
+
+- **Detailed Documentation**: [`doc/Documentation/43-typesafe-rpc-mormot.md`](file:///c:/Users/Pichau/Documents/BlaiseVue/doc/Documentation/43-typesafe-rpc-mormot.md)
+- **Delivered Deliverables & Implementation**:
+  1. **Shared Service Contracts (`common/Services.pas`)**: `ICustomerService`, `IProductService`, `ISystemService` inheriting from `IInvokable`, with structured DTO records (`TCustomer`, `TProduct`, `TSystemInfo`).
+  2. **Automated Client Proxy Scaffolder (`bv mormot rpc`)**: CLI command in `bin/bv.pas` generating strongly typed client proxies in `common/ClientProxies.pas` and `generated/ClientProxies.pas` with both callback (`reference to procedure`) and Promise (`TJSPromise`) APIs.
+  3. **Core Client RPC Runtime (`core/BVRpc.pas`)**: `TBVRpcClient` and `TBVRemoteProxy` managing HTTP POST (`/api/rpc/:service/:method`), JSON-RPC 2.0 (`/api/rpc`), and bidirectional WebSocket frames (`rpc_call`/`rpc_response`), with automatic `$rpc` injection in `core/BlaiseVue.pas` and Pascal DX wrappers in `core/BVPascalDX.pas`.
+  4. **mORMot 2 Native Server SOA Dispatcher (`demo-app/server/RpcService.pas`)**: High-performance request router integrated into `TBlaiseServerApp.DoRequest` and `TBlaiseWebSocketProtocol.OnIncoming` in `ServerApp.pas`.
+  5. **Automated Test Coverage (`demo-app/tests/rpc.test.pas`)**: 8 comprehensive automated tests covering bridge configuration, JSON-RPC 2.0 dispatch, proxy singleton invocations, promises, WebSocket RPC, and pack mode (all 25 test suites passing with 437 tests).
+
+- **Architectural Specification**: Completely eliminate manual REST URLs, HTTP verb boilerplate, and string-based endpoints between client and server, establishing a 100% type-safe, compile-time verified RPC pipeline in pure Object Pascal.
 
 - **Architectural Specification**:
   1. **Shared Service Interfaces (`common/Services.pas`)**:

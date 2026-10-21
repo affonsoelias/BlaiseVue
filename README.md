@@ -120,6 +120,7 @@ bv mormot run              # Starts native backend server on port 8090
 bv mormot status           # Queries /api/status health endpoint
 bv mormot deploy           # Packages standalone production bundle in deploy/
 bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
+bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces
                            # (Note: bv server commands preserved as aliases)
 
 # === Testing ===
@@ -151,11 +152,11 @@ Our architectural evolution roadmap:
   - [x] 🎨 **Phase 7: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
   - [x] 💎 **Phase 8: Idiomatic Object Pascal DX (Zero-ASM Architecture)**: Eradicate inline `asm` blocks from end-user views, establishing a 100% pure Object Pascal developer experience with strongly typed records, native state assignments, and idiomatic Pascal view controllers.
 - [x] **v4.1 Component Catalog & Package Documentation (Completed ✅)**: Exhaustive documentation and interactive reference for all package components (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, `blaise-themes`) with props, events, slots, and copy-pasteable 100% Pascal snippets.
-- [ ] **v4.2 LiveBindings & Reactive `TBVDataSet` (Planned 🔮)**: Delphi/Lazarus-style in-memory dataset (`TBVMemTable` / `TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), IndexedDB offline cache, and native `<bv-datagrid>` integration.
-- [ ] **v4.3 End-to-End Type-Safe Pascal RPC (Planned 🔮)**: Shared service interfaces (`ICustomerService`) between mORMot 2 and BlaiseVue, automated client proxy scaffolding (`bv mormot rpc`), zero manual REST URLs, and compile-time API validation.
+- [x] **v4.2 LiveBindings & Reactive `TBVDataSet` (Completed ✅)**: Delphi/Lazarus-style in-memory dataset (`TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), delta tracking, and native `<bv-datagrid>` integration.
+- [x] **v4.3 End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)**: Shared service interfaces (`ICustomerService`, `IProductService`, `ISystemService`), automated client proxy scaffolding (`bv mormot rpc`), dual HTTP/WebSocket transport, and compile-time API validation.
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md), and [Type-Safe RPC Documentation](doc/Documentation/43-typesafe-rpc-mormot.md).
 
 ---
 

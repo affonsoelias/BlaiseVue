@@ -79,8 +79,10 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 39. [39. Reactive Chart.js Suite (blaise-charts) - Phase 6](39-blaise-charts.md)
 40. [40. BlaiseVue Studio Dashboard (bv studio) - Phase 7](40-blaise-studio.md)
 
-### 💎 BlaiseVue 4.1 Component Catalog & Packages
+### 💎 BlaiseVue 4.x Enterprise Architecture
 41. [41. Package Components Catalog & Developer Manual](41-package-components-catalog.md)
+42. [42. LiveBindings & Reactive TBVDataSet](42-livebindings-dataset.md)
+43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md)
 
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)

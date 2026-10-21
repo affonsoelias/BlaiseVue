@@ -9,6 +9,7 @@
       <div class="crud-header-btns">
         <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>
         <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>
+        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>
       </div>
     </div>
 
@@ -108,7 +109,7 @@
   </div>
 </template>
 
-<script>
+<script uses="Services, ClientProxies">
   {
     CustomerView.bv - High-Performance Reactive CRUD View
     ---------------------------------------------------------
@@ -168,6 +169,19 @@
     begin
       this.isModalOpen := false;
       this.formError := '';
+    end;
+
+    procedure fetchViaRpc;
+    begin
+      CustomerService.GetAll(procedure(Items: TCustomerDynArray)
+      begin
+        this.items := JSValue(Items);
+        ShowToast('Loaded ' + IntToStr(Length(Items)) + ' customers via Type-Safe Pascal RPC (mORMot 2)!');
+      end,
+      procedure(Err: string)
+      begin
+        ShowToast('RPC Error: ' + Err);
+      end);
     end;
 
     procedure fetchItems;
