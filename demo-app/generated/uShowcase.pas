@@ -4,7 +4,7 @@ unit uShowcase;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
 
 procedure Register_uShowcase;
 
@@ -96,19 +96,19 @@ begin
   m := TJSObject.new;
   m['handleTheme'] := procedure(_this: TJSObject; ATheme: string)
 
+    var
+      link: TJSHTMLElement;
     begin
-      asm
-         var link = document.getElementById('theme-link');
-         if (link) {
-            if (ATheme === 'default') {
-              link.href = 'css/lib/blaise-ui.css';
-            } else {
-              link.href = 'assets/themes/' + ATheme + '.min.css';
-            }
-            document.body.className = 'theme-' + ATheme;
-            document.head.appendChild(link);
-            console.log('BlaiseVue: Theme applied.');
-         }
+      link := TJSHTMLElement(document.getElementById('theme-link'));
+      if link <> nil then
+      begin
+        if ATheme = 'default' then
+          link['href'] := 'css/lib/blaise-ui.css'
+        else
+          link['href'] := 'assets/themes/' + ATheme + '.min.css';
+        document.body.className := 'theme-' + ATheme;
+        document.head.appendChild(link);
+        WriteLn('BlaiseVue: Theme applied.');
       end;
       _this['currentThemeName'] := ATheme;
     end;

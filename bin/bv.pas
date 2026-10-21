@@ -639,10 +639,10 @@ end;
 
 function CleanPascalProps(const S: string): string;
 var
-  i, j, k: Integer;
-  Identifier: string;
+  i, j, k, closeP, parenLevel: Integer;
+  Identifier, args, repStr: string;
   Res: string;
-  InQuote, InAsm: Boolean;
+  InQuote, InAsm, inQ: Boolean;
 begin
   Res := S;
   InQuote := False;
@@ -654,8 +654,13 @@ begin
     
     if not InQuote then
     begin
-       if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'asm') and ((i=1) or (not (Res[i-1] in ['a'..'z', '0'..'9']))) then InAsm := True;
-       if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'end') and (InAsm) then
+       if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'asm') and ((i=1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) then
+       begin
+          k := i + 3;
+          if (k > Length(Res)) or (Res[k] <= ' ') or (Res[k] = ';') then
+            InAsm := True;
+       end;
+       if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'end') and ((i=1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) and (InAsm) then
        begin
           k := i+3;
           while (k <= Length(Res)) and (Res[k] <= ' ') do Inc(k);
@@ -668,11 +673,55 @@ begin
        j := i + 5;
        while (j <= Length(Res)) and (Res[j] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(j);
        Identifier := Copy(Res, i + 5, j - (i + 5));
-       Delete(Res, i, j - i);
-       Insert('TJSObject(_this)[''' + Identifier + ''']', Res, i);
-       i := i + Length(Identifier) + 18;
+       k := j;
+       while (k <= Length(Res)) and (Res[k] = ' ') do Inc(k);
+       if (k <= Length(Res)) and (Res[k] = '(') then
+       begin
+          closeP := k + 1;
+          inQ := False;
+          parenLevel := 1;
+          while (closeP <= Length(Res)) and (parenLevel > 0) do
+          begin
+             if Res[closeP] = '''' then inQ := not inQ;
+             if not inQ then
+             begin
+                if Res[closeP] = '(' then Inc(parenLevel)
+                else if Res[closeP] = ')' then Dec(parenLevel);
+             end;
+             if parenLevel > 0 then Inc(closeP);
+          end;
+          if parenLevel = 0 then
+          begin
+             args := Trim(Copy(Res, k + 1, closeP - k - 1));
+             Delete(Res, i, (closeP + 1) - i);
+             if args = '' then
+             begin
+                repStr := 'CallMethod(_this, ''' + Identifier + ''')';
+             end
+             else
+             begin
+                repStr := 'CallMethod(_this, ''' + Identifier + ''', [' + args + '])';
+             end;
+             Insert(repStr, Res, i);
+             i := i + Length(repStr);
+          end
+          else
+          begin
+             Delete(Res, i, j - i);
+             repStr := 'TJSObject(_this)[''' + Identifier + ''']';
+             Insert(repStr, Res, i);
+             i := i + Length(repStr);
+          end;
+       end
+       else
+       begin
+          Delete(Res, i, j - i);
+          repStr := 'TJSObject(_this)[''' + Identifier + ''']';
+          Insert(repStr, Res, i);
+          i := i + Length(repStr);
+       end;
     end
-    else if (not InQuote) and (not InAsm) and (Copy(Res, i, 4) = 'this') and not (Res[i+4] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '.', '$']) then
+    else if (not InQuote) and (not InAsm) and (Copy(Res, i, 4) = 'this') and ((i = 1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) and not (Res[i+4] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '.', '$']) then
     begin
        Delete(Res, i, 4);
        Insert('_this', Res, i);
@@ -753,7 +802,7 @@ end;
 function GenerateMethodsCode(const RawCode: string): string;
 var
   Parts, SubParts: TStringList;
-  i, p: Integer;
+  i, p, pParen, pClose: Integer;
   Sig, Body, Name, Params, Block: string;
 begin
   Result := '';
@@ -769,8 +818,22 @@ begin
     begin
       Block := Copy(Block, p + 10, Length(Block)); // Depois de 'procedure '
       
-      // Encontra o fim da assinatura (primeiro ;)
-      p := Pos(';', Block);
+      // Encontra o fim da assinatura (primeiro ; fora de parenteses)
+      pParen := Pos('(', Block);
+      if (pParen > 0) and (pParen < Pos(';', Block)) then
+      begin
+         pClose := Pos(')', Block);
+         if pClose > 0 then
+         begin
+            p := pClose + 1;
+            while (p <= Length(Block)) and (Block[p] <> ';') do Inc(p);
+         end
+         else
+            p := Pos(';', Block);
+      end
+      else
+         p := Pos(';', Block);
+
       if p = 0 then Break;
       Sig := Trim(Copy(Block, 1, p - 1));
       
@@ -859,6 +922,9 @@ begin
 end;
 
 function GenerateLifecycleCode(const Key, RawCode: string): string;
+var
+  CleanCode: string;
+  pBegin: Integer;
 begin
   if Trim(RawCode) = '' then
   begin
@@ -869,10 +935,18 @@ begin
   // If it already has begin/end or variables, just wrap it. 
   // We use CleanPascalProps to ensure it matches Pascal standards for the Unit generation.
   Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10;
-  if (Pos('begin', LowerCase(RawCode)) > 0) or (Pos('var', LowerCase(RawCode)) > 0) then
-    Result := Result + CleanPascalProps(RawCode) + #10 + '    ;' + #10
+  CleanCode := CleanPascalProps(RawCode);
+  pBegin := Pos('begin', LowerCase(CleanCode));
+  if (pBegin > 0) or (Pos('var', LowerCase(CleanCode)) > 0) then
+  begin
+    if pBegin > 0 then
+    begin
+      Insert(#10 + '      asm if (!_this) _this = this; end;' + #10, CleanCode, pBegin + 5);
+    end;
+    Result := Result + CleanCode + #10 + '    ;' + #10;
+  end
   else
-    Result := Result + '    begin' + #10 + CleanPascalProps(RawCode) + #10 + '    end;' + #10;
+    Result := Result + '    begin' + #10 + '      asm if (!_this) _this = this; end;' + #10 + CleanCode + #10 + '    end;' + #10;
 end;
 
 function GenerateWatchCode(const RawCode: string): string;
@@ -1012,7 +1086,7 @@ function GenerateComponentUnit(const UnitName, TagName, BVFileName: string; cons
 var
   UsesLine: string;
 begin
-  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils';
+  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX';
   if Parsed.HasRouter then
     UsesLine := UsesLine + ', BVRouting';
   if Parsed.ScriptUses <> '' then
@@ -1073,7 +1147,7 @@ var
 begin
   UniqueUnits := TStringList.Create;
   try
-    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools';
+    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX';
     if Parsed.HasRouter then
       UsesLine := UsesLine + ', BVRouting';
     if Parsed.ScriptUses <> '' then

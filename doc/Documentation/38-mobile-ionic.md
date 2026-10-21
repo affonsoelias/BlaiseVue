@@ -4,6 +4,9 @@
 
 With `blaise-ui-mobile`, developers create responsive mobile apps with native touch feedback, smooth animations, safe area handling (notches and home bars), and automatic adaptive design switching between **iOS (Cupertino)** and **Android (Material Design)**.
 
+> [!TIP]
+> **Component Specs & API**: See [41. Package Components Catalog & Developer Manual](41-package-components-catalog.md#part-iii-blaiseui-mobile-suite-packagesblaise-ui-mobile) for the complete props, events, and slots reference for all 13 Ionic components.
+
 ---
 
 ## 📱 Architecture & Platform Adaptivity

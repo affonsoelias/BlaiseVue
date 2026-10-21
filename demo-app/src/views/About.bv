@@ -156,13 +156,10 @@
       end;
     end;
 
-    { Toggle authentication state using unsafe JS Proxy access (asm) }
+    { Toggle authentication state in pure Object Pascal }
     procedure toggleLogin;
     begin
-       asm 
-         this.logado = !this.logado; 
-         console.log("[Method] logado toggle: ", this.logado);
-       end;
+      this.logado := not Boolean(this.logado);
     end;
 
     { Adds a dynamic record to the reactive array }

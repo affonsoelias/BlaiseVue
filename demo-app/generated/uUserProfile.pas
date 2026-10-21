@@ -4,7 +4,7 @@ unit uUserProfile;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
 
 procedure Register_uUserProfile;
 

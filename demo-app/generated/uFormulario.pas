@@ -4,7 +4,7 @@ unit uFormulario;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX;
 
 procedure Register_uFormulario;
 
@@ -147,9 +147,7 @@ begin
     var
       valido: Boolean;
     begin
-      asm
-        valido = this.$validate ? this.$validate() : true;
-      end;
+      valido := ValidateForm(_this);
       if valido then
       begin
         _this['msgSucesso'] := '🎉 Parabéns ' + string(_this['nome']) + '! Formulário validado com sucesso.';
@@ -167,9 +165,7 @@ begin
       _this['email'] := 'blaise@pascal.dev'; 
       _this['cidade'] := 'Clermont-Ferrand';
       _this['msgSucesso'] := '';
-      asm
-        if (this.$v && this.$v.$touch) this.$v.$touch();
-      end;
+      TouchValidation(_this);
     end;
     
   m['limpar'] := procedure(_this: TJSObject)
@@ -179,9 +175,7 @@ begin
       _this['email'] := ''; 
       _this['cidade'] := '';
       _this['msgSucesso'] := '';
-      asm
-        if (this.$v && this.$v.$reset) this.$v.$reset();
-      end;
+      ResetValidation(_this);
     end;
 
   comp['methods'] := m;

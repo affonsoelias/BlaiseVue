@@ -1,6 +1,6 @@
-# 📖 BlaiseVue: API Technical Reference (v2.0)
+# 📖 BlaiseVue: API Technical Reference (v4.1)
 
-This document is the official technical reference for all directives, components, events, hooks, compiler attributes, and global objects supported by the BlaiseVue 2.0 runtime engine.
+This document is the official technical reference for all directives, components, events, hooks, compiler attributes, and global objects supported by the BlaiseVue 4.1 runtime engine.
 
 ---
 
@@ -84,6 +84,20 @@ Available directly in template expressions (`{{ $obj }}`) or via `this['$obj']` 
 | `$i18n` | `TJSObject` | Reactive i18n controller with active `locale`, `setLocale`, and `addMessages`. |
 | `$errors` | `TJSObject` | Reactive dictionary of validation error messages per input field. |
 | `$v` | `TJSObject` | Form validation controller (`$invalid`, `$dirty`, `$touch()`, `$reset()`, `$validate()`). |
+| `$theme` | `TBVTheme` | Reactive theme controller (`current`, `isDark`, `setTheme()`, `toggle()`). |
+| `$wasm` | `TBVWasmBridge` | WebAssembly acceleration bridge (`call()`, `benchmark()`). |
+| `$api` | `TBVApi` | Full-stack REST client connected to mORMot 2 (`get()`, `post()`, `put()`, `delete()`). |
+| `$ws` | `TBVWebSocket` | Real-time WebSocket connection to backend events (`on()`, `send()`). |
+| `$auth` | `TBVAuth` | Enterprise authentication and JWT state (`user`, `token`, `isAuthenticated`, `hasRole()`). |
+| `$ionic` | `TIonicController` | Mobile controller bridge (`toast`, `alert`, `confirm`, `getMode()`, `setMode()`). |
+| `$mobile` | `TJSObject` | Capacitor hybrid mobile bridge and native device plugins. |
+| `$desktop` | `TJSObject` | WebUI / Lazarus native desktop window controls and notifications. |
+
+---
+
+## 📦 Official Package Components Reference
+For the exhaustive technical specification of all 53+ official package components (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, and `blaise-themes`), including props, events, slots, and 100% Object Pascal (Zero-ASM) examples:
+- 📖 **[41. Package Components Catalog & Developer Manual](41-package-components-catalog.md)**
 
 
 ---

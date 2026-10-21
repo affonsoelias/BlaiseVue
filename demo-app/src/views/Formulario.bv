@@ -118,9 +118,7 @@
     var
       valido: Boolean;
     begin
-      asm
-        valido = this.$validate ? this.$validate() : true;
-      end;
+      valido := ValidateForm(this);
       if valido then
       begin
         this['msgSucesso'] := '🎉 Parabéns ' + string(this['nome']) + '! Formulário validado com sucesso.';
@@ -137,9 +135,7 @@
       this['email'] := 'blaise@pascal.dev'; 
       this['cidade'] := 'Clermont-Ferrand';
       this['msgSucesso'] := '';
-      asm
-        if (this.$v && this.$v.$touch) this.$v.$touch();
-      end;
+      TouchValidation(this);
     end;
 
     procedure limpar;
@@ -148,9 +144,7 @@
       this['email'] := ''; 
       this['cidade'] := '';
       this['msgSucesso'] := '';
-      asm
-        if (this.$v && this.$v.$reset) this.$v.$reset();
-      end;
+      ResetValidation(this);
     end;
 </script>
 

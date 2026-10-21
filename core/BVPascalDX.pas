@@ -1,0 +1,699 @@
+unit BVPascalDX;
+
+{
+  BVPascalDX - Idiomatic Object Pascal Developer Experience (Phase 8)
+  -------------------------------------------------------------------
+  Provides high-level, strongly-typed Pascal utilities, UI controllers,
+  and collection manipulation routines, eliminating the need for inline
+  asm ... end; blocks in application views and components.
+}
+
+{$mode objfpc}
+
+interface
+
+uses JS, Web, SysUtils;
+
+{ --- UI Notification & Dialog Helpers --- }
+procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
+procedure ShowAlert(const Msg: string);
+function Confirm(const Msg: string): Boolean;
+
+{ --- SPA Navigation Helpers --- }
+procedure NavigateTo(const Path: string);
+procedure GoBack;
+
+{ --- Method & Invocation Helpers --- }
+procedure CallMethod(Instance: JSValue; const MethodName: string); overload;
+procedure CallMethod(Instance: JSValue; const MethodName: string; const Args: array of JSValue); overload;
+function CallFunction(Instance: JSValue; const MethodName: string): JSValue; overload;
+function CallFunction(Instance: JSValue; const MethodName: string; const Args: array of JSValue): JSValue; overload;
+
+{ --- Component $refs Controller --- }
+function TriggerRef(Instance: JSValue; const RefName, MethodName: string): Boolean;
+
+{ --- Reactive Form Validation Helpers --- }
+function ValidateForm(Instance: JSValue): Boolean;
+procedure TouchValidation(Instance: JSValue);
+procedure ResetValidation(Instance: JSValue);
+
+{ --- Object & Array Helpers --- }
+function NewObject: TJSObject;
+function NewArray: TJSArray;
+function ObjectAssign(Target, Source: JSValue): JSValue;
+function JsonStringify(Value: JSValue): string;
+function JsonParse(const Str: string): JSValue;
+function NowTimestampStr: string;
+
+{ --- Collection & Filtering Helpers --- }
+function FilterByQuery(List: JSValue; Query: JSValue): JSValue;
+function RemoveItemById(List: JSValue; Id: Integer): JSValue;
+function FindItemById(List: JSValue; Id: Integer): JSValue;
+
+{ --- Full-Stack mORMot 2 & API Client Helpers --- }
+procedure ApiFetch(Instance: JSValue; const Endpoint: string; const PropertyName: string = 'items');
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+procedure ApiDelete(Instance: JSValue; const Endpoint: string; Id: Integer; const ConfirmMsg: string = ''; const OnSuccessMethod: string = 'fetchItems');
+procedure ApiSetupRealtime(Instance: JSValue; const ModelPrefix: string; const RefreshMethod: string = 'fetchItems');
+
+{ --- Enterprise Authentication ($auth) Helpers --- }
+procedure AuthLogin(Instance: JSValue; Email, Password: JSValue; const DefaultRedirect: string = '#/');
+procedure AuthLogout(Instance: JSValue);
+
+{ --- Mobile & Ionic Ecosystem ($ionic) Helpers --- }
+function IonicGetMode: string;
+procedure IonicSetMode(const Mode: string);
+procedure IonicToast(const Msg: string; Duration: Integer = 2500; const Position: string = 'bottom'; const Color: string = 'success');
+procedure IonicAlert(const Title, Subtitle, ButtonText: string);
+procedure IonicConfirm(Instance: JSValue; const Title, Message: string; const OnConfirmMethod: string; const OnCancelMethod: string = ''); overload;
+procedure IonicConfirm(const Title, Message: string; OnConfirm, OnCancel: TJSFunction); overload;
+procedure IonicLoading(const Message: string; Duration: Integer = 2000);
+procedure IonicActionSheet(Instance: JSValue; const Title: string; const Options: array of string; const OnSelectMethod: string); overload;
+procedure IonicActionSheet(const Title: string; const Options: array of string; OnSelect: TJSFunction); overload;
+
+{ --- WebAssembly Engine ($wasm) Helpers --- }
+function WasmCall(Instance: JSValue; const ModName, FuncName: string; Arg: Integer): JSValue;
+function WasmBenchmark(Instance: JSValue; const ModName, FuncName: string; Arg, Iterations: Integer): JSValue;
+function NowTimestampMs: Double;
+
+{ --- Chart & Visual Theming Helpers --- }
+procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
+procedure ThemeSet(const ThemeName: string);
+
+{ --- I18n Internationalization Helpers --- }
+procedure I18nAddMessages(const Locale: string; const JsonStr: string);
+procedure I18nSetLocale(const Locale: string);
+
+{ --- Dynamic Field Accessors --- }
+function GetFieldStr(Obj: JSValue; const PropName: string; const DefaultVal: string = ''): string;
+function GetFieldInt(Obj: JSValue; const PropName: string; DefaultVal: Integer = 0): Integer;
+function GetFieldBool(Obj: JSValue; const PropName: string; DefaultVal: Boolean = False): Boolean;
+procedure SetField(Obj: JSValue; const PropName: string; Value: JSValue);
+
+implementation
+
+procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
+begin
+  asm
+    try {
+      if (window.__BV_CORE__ && window.__BV_CORE__.ionic && window.__BV_CORE__.ionic.toast) {
+        window.__BV_CORE__.ionic.toast(Msg, DurationMs);
+        return;
+      }
+    } catch(e) {}
+    
+    let el = document.createElement('div');
+    el.className = 'bv-pascal-toast';
+    el.style.position = 'fixed';
+    el.style.bottom = '24px';
+    el.style.right = '24px';
+    el.style.backgroundColor = '#1e293b';
+    el.style.color = '#ffffff';
+    el.style.padding = '12px 20px';
+    el.style.borderRadius = '8px';
+    el.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.2)';
+    el.style.zIndex = '99999';
+    el.style.fontSize = '14px';
+    el.style.fontWeight = '500';
+    el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    el.innerText = Msg;
+    document.body.appendChild(el);
+    setTimeout(function() {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(10px)';
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }, DurationMs);
+  end;
+end;
+
+procedure ShowAlert(const Msg: string);
+begin
+  asm window.alert(Msg); end;
+end;
+
+function Confirm(const Msg: string): Boolean;
+begin
+  asm Result = window.confirm(Msg); end;
+end;
+
+procedure NavigateTo(const Path: string);
+begin
+  asm
+    if (window.__BV_CORE__ && window.__BV_CORE__.router) {
+      window.__BV_CORE__.router.push(Path);
+    } else {
+      window.location.hash = Path;
+    }
+  end;
+end;
+
+procedure GoBack;
+begin
+  asm window.history.back(); end;
+end;
+
+procedure CallMethod(Instance: JSValue; const MethodName: string);
+begin
+  asm
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Instance[MethodName]();
+    }
+  end;
+end;
+
+procedure CallMethod(Instance: JSValue; const MethodName: string; const Args: array of JSValue);
+begin
+  asm
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Instance[MethodName].apply(Instance, Args);
+    }
+  end;
+end;
+
+function CallFunction(Instance: JSValue; const MethodName: string): JSValue;
+begin
+  asm
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Result = Instance[MethodName]();
+    } else {
+      Result = null;
+    }
+  end;
+end;
+
+function CallFunction(Instance: JSValue; const MethodName: string; const Args: array of JSValue): JSValue;
+begin
+  asm
+    if (Instance && typeof Instance[MethodName] === 'function') {
+      Result = Instance[MethodName].apply(Instance, Args);
+    } else {
+      Result = null;
+    }
+  end;
+end;
+
+function TriggerRef(Instance: JSValue; const RefName, MethodName: string): Boolean;
+begin
+  asm
+    Result = false;
+    if (!Instance || !Instance.$refs) return;
+    let r = Instance.$refs[RefName];
+    if (!r) return;
+    
+    if (typeof r[MethodName] === 'function') {
+      r[MethodName]();
+      Result = true;
+    } else if (MethodName === 'show' && typeof r.showModal === 'function') {
+      r.showModal();
+      Result = true;
+    } else if (MethodName === 'show' && typeof r.showToast === 'function') {
+      r.showToast();
+      Result = true;
+    } else if (MethodName === 'open' && typeof r.toggle === 'function') {
+      r.toggle();
+      Result = true;
+    }
+  end;
+end;
+
+function ValidateForm(Instance: JSValue): Boolean;
+begin
+  asm
+    if (Instance && typeof Instance.$validate === 'function') {
+      Result = Instance.$validate();
+    } else {
+      Result = true;
+    }
+  end;
+end;
+
+procedure TouchValidation(Instance: JSValue);
+begin
+  asm
+    if (Instance && Instance.$v && typeof Instance.$v.$touch === 'function') {
+      Instance.$v.$touch();
+    }
+  end;
+end;
+
+procedure ResetValidation(Instance: JSValue);
+begin
+  asm
+    if (Instance && Instance.$v && typeof Instance.$v.$reset === 'function') {
+      Instance.$v.$reset();
+    }
+  end;
+end;
+
+function NewObject: TJSObject;
+begin
+  Result := TJSObject.new;
+end;
+
+function NewArray: TJSArray;
+begin
+  Result := TJSArray.new;
+end;
+
+function ObjectAssign(Target, Source: JSValue): JSValue;
+begin
+  asm Result = Object.assign(Target || {}, Source || {}); end;
+end;
+
+function JsonStringify(Value: JSValue): string;
+begin
+  asm Result = JSON.stringify(Value); end;
+end;
+
+function JsonParse(const Str: string): JSValue;
+begin
+  asm
+    try {
+      Result = JSON.parse(Str);
+    } catch(e) {
+      Result = null;
+    }
+  end;
+end;
+
+function NowTimestampStr: string;
+begin
+  asm Result = String(Date.now()); end;
+end;
+
+function FilterByQuery(List: JSValue; Query: JSValue): JSValue;
+begin
+  asm
+    let arr = List || [];
+    let q = (Query !== undefined && Query !== null ? String(Query) : '').toLowerCase().trim();
+    if (!q) { Result = arr; return Result; }
+    if (!Array.isArray(arr)) { Result = arr; return Result; }
+    
+    Result = arr.filter(function(item) {
+      if (!item) return false;
+      return Object.values(item).some(function(v) {
+        return String(v).toLowerCase().indexOf(q) !== -1;
+      });
+    });
+  end;
+end;
+
+function RemoveItemById(List: JSValue; Id: Integer): JSValue;
+begin
+  asm
+    let arr = List || [];
+    if (!Array.isArray(arr)) { Result = arr; return Result; }
+    Result = arr.filter(function(item) {
+      return item && item.id !== Id;
+    });
+  end;
+end;
+
+function FindItemById(List: JSValue; Id: Integer): JSValue;
+begin
+  asm
+    let arr = List || [];
+    if (!Array.isArray(arr)) { Result = null; return Result; }
+    let found = arr.find(function(item) {
+      return item && item.id === Id;
+    });
+    Result = found || null;
+  end;
+end;
+
+function GetFieldStr(Obj: JSValue; const PropName: string; const DefaultVal: string = ''): string;
+begin
+  asm
+    if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
+      Result = String(Obj[PropName]);
+    } else {
+      Result = DefaultVal;
+    }
+  end;
+end;
+
+function GetFieldInt(Obj: JSValue; const PropName: string; DefaultVal: Integer = 0): Integer;
+begin
+  asm
+    if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
+      let n = parseInt(Obj[PropName], 10);
+      Result = isNaN(n) ? DefaultVal : n;
+    } else {
+      Result = DefaultVal;
+    }
+  end;
+end;
+
+function GetFieldBool(Obj: JSValue; const PropName: string; DefaultVal: Boolean = False): Boolean;
+begin
+  asm
+    if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
+      Result = Boolean(Obj[PropName]);
+    } else {
+      Result = DefaultVal;
+    }
+  end;
+end;
+
+procedure SetField(Obj: JSValue; const PropName: string; Value: JSValue);
+begin
+  asm
+    if (Obj && typeof Obj === 'object') {
+      Obj[PropName] = Value;
+    }
+  end;
+end;
+
+procedure ApiFetch(Instance: JSValue; const Endpoint: string; const PropertyName: string = 'items');
+begin
+  asm
+    var self = Instance;
+    if (!self) return;
+    var ep = Endpoint;
+    var p = (self.$api && typeof self.$api.get === 'function')
+      ? self.$api.get(ep)
+      : fetch('http://localhost:8090' + ep).then(function(r) { return r.json(); });
+
+    Promise.resolve(p).then(function(data) {
+      if (Array.isArray(data)) {
+        self[PropertyName] = data;
+      } else if (data && Array.isArray(data.items)) {
+        self[PropertyName] = data.items;
+      }
+    }).catch(function(err) {
+      console.error('Error fetching ' + ep + ':', err);
+    });
+  end;
+end;
+
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+begin
+  asm
+    var self = Instance;
+    if (!self || !FormData) return;
+    var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
+    var method = IsEditing ? 'put' : 'post';
+
+    var p = (self.$api && typeof self.$api[method] === 'function')
+      ? self.$api[method](ep, FormData)
+      : fetch('http://localhost:8090' + ep, {
+          method: method.toUpperCase(),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(FormData)
+        }).then(function(r) { return r.json(); });
+
+    Promise.resolve(p).then(function(resp) {
+      self.isModalOpen = false;
+      if (OnSuccessMethod && typeof self[OnSuccessMethod] === 'function') {
+        self[OnSuccessMethod]();
+      }
+    }).catch(function(err) {
+      if (ErrorProp) {
+        self[ErrorProp] = 'Failed to save: ' + (err.message || err);
+      }
+    });
+  end;
+end;
+
+procedure ApiDelete(Instance: JSValue; const Endpoint: string; Id: Integer; const ConfirmMsg: string = ''; const OnSuccessMethod: string = 'fetchItems');
+begin
+  asm
+    var self = Instance;
+    if (!self) return;
+    if (ConfirmMsg && !confirm(ConfirmMsg)) return;
+    var ep = Endpoint + '/' + Id;
+
+    var p = (self.$api && typeof self.$api.delete === 'function')
+      ? self.$api.delete(ep)
+      : fetch('http://localhost:8090' + ep, { method: 'DELETE' }).then(function(r) { return r.json(); });
+
+    Promise.resolve(p).then(function() {
+      if (OnSuccessMethod && typeof self[OnSuccessMethod] === 'function') {
+        self[OnSuccessMethod]();
+      }
+    }).catch(function(err) {
+      alert('Failed to delete: ' + (err.message || err));
+    });
+  end;
+end;
+
+procedure ApiSetupRealtime(Instance: JSValue; const ModelPrefix: string; const RefreshMethod: string = 'fetchItems');
+begin
+  asm
+    var self = Instance;
+    if (!self || !self.$ws) return;
+    if (typeof self.$ws.connect === 'function') {
+      self.$ws.connect();
+    }
+    var pfx = String(ModelPrefix).toLowerCase();
+    if (typeof self.$ws.on === 'function') {
+      self.$ws.on(pfx + '_created', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+      self.$ws.on(pfx + '_updated', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+      self.$ws.on(pfx + '_deleted', function(d) {
+        if (typeof self[RefreshMethod] === 'function') self[RefreshMethod]();
+      });
+    }
+  end;
+end;
+
+procedure AuthLogin(Instance: JSValue; Email, Password: JSValue; const DefaultRedirect: string = '#/');
+begin
+  asm
+    var self = Instance;
+    if (!self) return;
+    self.loading = true;
+    self.errorMessage = '';
+    self.successMessage = '';
+
+    if (!self.$auth || typeof self.$auth.login !== 'function') {
+      self.errorMessage = 'Módulo $auth não inicializado.';
+      self.loading = false;
+      return;
+    }
+
+    var e = (Email !== undefined && Email !== null) ? String(Email) : '';
+    var p = (Password !== undefined && Password !== null) ? String(Password) : '';
+
+    self.$auth.login(e, p)
+      .then(function(resp) {
+        self.loading = false;
+        self.successMessage = 'Autenticado com sucesso como ' + (resp.user ? resp.user.name : e) + '!';
+        setTimeout(function() {
+          var target = (window.__BV_CORE__.auth && window.__BV_CORE__.auth.redirectAfterLogin)
+            ? window.__BV_CORE__.auth.redirectAfterLogin
+            : DefaultRedirect;
+          window.__BV_CORE__.auth.redirectAfterLogin = '';
+          window.location.hash = target;
+        }, 600);
+      })
+      .catch(function(err) {
+        self.loading = false;
+        self.errorMessage = (err && err.message) ? err.message : 'Falha na autenticação. Verifique os dados.';
+      });
+  end;
+end;
+
+procedure AuthLogout(Instance: JSValue);
+begin
+  asm
+    var self = Instance;
+    if (self && self.$auth && typeof self.$auth.logout === 'function') {
+      self.$auth.logout();
+    }
+  end;
+end;
+
+function IonicGetMode: string;
+begin
+  asm
+    if (window.$ionic && typeof window.$ionic.getMode === 'function') {
+      Result = window.$ionic.getMode();
+    } else {
+      Result = 'md';
+    }
+  end;
+end;
+
+procedure IonicSetMode(const Mode: string);
+begin
+  asm
+    if (window.$ionic && typeof window.$ionic.setMode === 'function') {
+      window.$ionic.setMode(Mode);
+    }
+  end;
+end;
+
+procedure IonicToast(const Msg: string; Duration: Integer = 2500; const Position: string = 'bottom'; const Color: string = 'success');
+begin
+  asm
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.toast && typeof ionic.toast.show === 'function') {
+      ionic.toast.show(Msg, Duration, Position, Color);
+    }
+  end;
+end;
+
+procedure IonicAlert(const Title, Subtitle, ButtonText: string);
+begin
+  asm
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.alert && typeof ionic.alert.alert === 'function') {
+      ionic.alert.alert(Title, Subtitle, ButtonText);
+    }
+  end;
+end;
+
+procedure IonicConfirm(Instance: JSValue; const Title, Message: string; const OnConfirmMethod: string; const OnCancelMethod: string = '');
+begin
+  asm
+    let self = Instance;
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.alert && typeof ionic.alert.confirm === 'function') {
+      ionic.alert.confirm(Title, Message,
+        function() {
+          if (self && OnConfirmMethod && typeof self[OnConfirmMethod] === 'function') {
+            self[OnConfirmMethod]();
+          }
+        },
+        function() {
+          if (self && OnCancelMethod && typeof self[OnCancelMethod] === 'function') {
+            self[OnCancelMethod]();
+          }
+        }
+      );
+    }
+  end;
+end;
+
+procedure IonicConfirm(const Title, Message: string; OnConfirm, OnCancel: TJSFunction);
+begin
+  asm
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.alert && typeof ionic.alert.confirm === 'function') {
+      ionic.alert.confirm(Title, Message, OnConfirm, OnCancel);
+    }
+  end;
+end;
+
+procedure IonicLoading(const Message: string; Duration: Integer = 2000);
+begin
+  asm
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.loading && typeof ionic.loading.present === 'function') {
+      ionic.loading.present(Message, Duration);
+    }
+  end;
+end;
+
+procedure IonicActionSheet(Instance: JSValue; const Title: string; const Options: array of string; const OnSelectMethod: string);
+begin
+  asm
+    let self = Instance;
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.actionSheet && typeof ionic.actionSheet.show === 'function') {
+      ionic.actionSheet.show(Title, Options, function(opt, idx) {
+        if (self && OnSelectMethod && typeof self[OnSelectMethod] === 'function') {
+          self[OnSelectMethod](opt, idx);
+        }
+      });
+    }
+  end;
+end;
+
+procedure IonicActionSheet(const Title: string; const Options: array of string; OnSelect: TJSFunction);
+begin
+  asm
+    let ionic = window.$ionic || (window.__BV_CORE__ && window.__BV_CORE__.ionic);
+    if (ionic && ionic.actionSheet && typeof ionic.actionSheet.show === 'function') {
+      ionic.actionSheet.show(Title, Options, OnSelect);
+    }
+  end;
+end;
+
+function WasmCall(Instance: JSValue; const ModName, FuncName: string; Arg: Integer): JSValue;
+begin
+  asm
+    if (Instance && Instance.$wasm && typeof Instance.$wasm.call === 'function') {
+      Result = Instance.$wasm.call(ModName, FuncName, Arg);
+    } else {
+      Result = 0;
+    }
+  end;
+end;
+
+function WasmBenchmark(Instance: JSValue; const ModName, FuncName: string; Arg, Iterations: Integer): JSValue;
+begin
+  asm
+    if (Instance && Instance.$wasm && typeof Instance.$wasm.benchmark === 'function') {
+      Result = Instance.$wasm.benchmark(ModName, FuncName, Arg, Iterations);
+    } else {
+      Result = null;
+    }
+  end;
+end;
+
+function NowTimestampMs: Double;
+begin
+  asm
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+      Result = performance.now();
+    } else {
+      Result = Date.now();
+    }
+  end;
+end;
+
+procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
+begin
+  asm
+    if (OptionsObj) {
+      if (!OptionsObj.scales) OptionsObj.scales = {};
+      if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
+      if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
+      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+      const textColor = Dark ? '#94a3b8' : '#64748b';
+      OptionsObj.scales.x.grid = { color: gridColor };
+      OptionsObj.scales.y.grid = { color: gridColor };
+      OptionsObj.scales.x.ticks = { color: textColor };
+      OptionsObj.scales.y.ticks = { color: textColor };
+    }
+  end;
+end;
+
+procedure ThemeSet(const ThemeName: string);
+begin
+  asm
+    if (window.$theme && typeof window.$theme.setTheme === 'function') {
+      window.$theme.setTheme(ThemeName);
+    }
+  end;
+end;
+
+procedure I18nAddMessages(const Locale: string; const JsonStr: string);
+begin
+  asm
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.addMessages === 'function') {
+      try {
+        var obj = JSON.parse(JsonStr);
+        window.__BV_CORE__.i18n.addMessages(Locale, obj);
+      } catch(e) {
+        console.error('Invalid JSON for i18n messages:', e);
+      }
+    }
+  end;
+end;
+
+procedure I18nSetLocale(const Locale: string);
+begin
+  asm
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.setLocale === 'function') {
+      window.__BV_CORE__.i18n.setLocale(Locale);
+    }
+  end;
+end;
+
+end.

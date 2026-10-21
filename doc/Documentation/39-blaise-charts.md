@@ -4,6 +4,9 @@
 
 Blaise Charts bridges the industry-standard **Chart.js** engine with strongly typed **Object Pascal** classes and records, delivering reactive, hardware-accelerated 60 FPS HTML5 `<canvas>` rendering across Web, Desktop (WebUI), and Mobile (Capacitor/Android) with zero CDN dependency.
 
+> [!TIP]
+> **Component Specs & API**: See [41. Package Components Catalog & Developer Manual](41-package-components-catalog.md#part-ii-blaisecharts-suite-packagesblaise-charts) for the complete props and events reference for all 9 chart components and typed Pascal API.
+
 ---
 
 ## 📊 Architecture & Hardware Acceleration

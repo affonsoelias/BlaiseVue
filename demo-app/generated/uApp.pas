@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVRouting, uCard, uCounter, uFormHeader, uInfoCard, uAbout, uCharts, uCustomerView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -193,7 +193,7 @@ begin
     '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(''nav.blaiseui'') }}</a>' +
     '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(''nav.showcase'') }}</a>' +
-    '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v3.0)</a>' +
+    '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' +
     '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' +
     '      </div>' +
     '    </bv-drawer>' +
@@ -201,7 +201,7 @@ begin
     '    <nav class="navbar">' +
     '      <div style="display: flex; align-items: center; gap: 8px;">' +
     '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' +
-    '        <strong class="brand">BlaiseVue 3.0 TURBO</strong>' +
+    '        <strong class="brand">BlaiseVue 4.0</strong>' +
     '      </div>' +
     '      <div class="nav-links">' +
     '        <a href="#/customers">📦 Customers</a>' +
@@ -215,7 +215,7 @@ begin
     '        <a href="#/bootstrap">{{ $t(''nav.blaiseui'') }}</a>' +
     '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(''nav.charts'') }}</a>' +
     '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(''nav.showcase'') }}</a>' +
-    '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v3.0)</a>' +
+    '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' +
     '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' +
     '      </div>' +
     '      <div class="lang-switcher">' +
@@ -263,7 +263,7 @@ begin
     '  </div>';
 
   data := TJSObject.new;
-  data['mensagem'] := 'BlaiseVue SPA v3.0 TURBO';
+  data['mensagem'] := 'BlaiseVue SPA v4.0 Enterprise';
 
   methods := TJSObject.new;
   m := methods;
@@ -274,31 +274,19 @@ begin
     begin
       sel := string(TJSObject(TJSObject(e)['target'])['value']);
       if sel <> '' then
-      begin
-        asm
-          if (window.$theme) window.$theme.setTheme(sel);
-        end;
-      end;
+        ThemeSet(sel);
     end;
     
   m['toggleDrawer'] := procedure(_this: TJSObject)
 
     begin
-      asm
-        if (this.$refs.appDrawer && this.$refs.appDrawer.toggle) {
-          this.$refs.appDrawer.toggle();
-        }
-      end;
+      TriggerRef(_this, 'appDrawer', 'toggle');
     end;
     
   m['closeDrawer'] := procedure(_this: TJSObject)
 
     begin
-      asm
-        if (this.$refs.appDrawer && this.$refs.appDrawer.close) {
-          this.$refs.appDrawer.close();
-        }
-      end;
+      TriggerRef(_this, 'appDrawer', 'close');
     end;
   { Router Configuration: Maps URI hashes to Component Tags }
 
@@ -307,87 +295,13 @@ begin
   comp := opts;
   comp['created'] := procedure(_this: TJSObject)
     begin
-      TJSObject(_this['$store'])['appVersion'] := '3.0.0-TURBO';
+      asm if (!_this) _this = this; end;
+
+      TJSObject(_this['$store'])['appVersion'] := '4.0.0-ENTERPRISE';
       TJSObject(_this['$store'])['user'] := 'Pascal Master 🚀';
-      asm
-        if (window.__BV_CORE__.i18n) {
-          window.__BV_CORE__.i18n.addMessages('pt', {
-            nav: {
-              home: 'Início',
-              about: 'Sobre',
-              pro: 'Pro & Wasm ⚡',
-              form: 'Formulário 📋',
-              blaiseui: 'BlaiseUI Kit 🎨',
-              charts: 'Gráficos 📊',
-              showcase: 'Showcase ✨'
-            },
-            status: {
-              globalStore: 'Memória Global',
-              localeActive: 'Idioma Ativo',
-              theme: 'Tema'
-            },
-            form: {
-              title: 'Formulário de Validação Reativa',
-              subtitle: 'Demonstração de b-validate, $errors e $v no BlaiseVue 2.5',
-              name: 'Nome Completo',
-              email: 'E-mail Corporativo',
-              city: 'Cidade',
-              submit: 'Validar & Enviar 🚀',
-              reset: 'Limpar Formulário 🔄',
-              fillValid: 'Preencher Válido ✨',
-              statusValid: 'Válido ✅',
-              statusInvalid: 'Inválido ❌',
-              formState: 'Status do Formulário'
-            },
-            pro: {
-              title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
-              transitionTitle: '🎬 Lista com Animações FLIP (<transition-group>)',
-              shuffle: 'Embaralhar 🔀',
-              add: 'Adicionar Item ➕',
-              remove: 'Remover Primeiro ➖',
-              resetList: 'Resetar Lista 🔄'
-            }
-          });
-          window.__BV_CORE__.i18n.addMessages('en', {
-            nav: {
-              home: 'Home',
-              about: 'About',
-              pro: 'Pro & Wasm ⚡',
-              form: 'Form 📋',
-              blaiseui: 'BlaiseUI Kit 🎨',
-              charts: 'Charts 📊',
-              showcase: 'Showcase ✨'
-            },
-            status: {
-              globalStore: 'Global Store',
-              localeActive: 'Active Locale',
-              theme: 'Theme'
-            },
-            form: {
-              title: 'Reactive Form Validation',
-              subtitle: 'Demonstrating b-validate, $errors, and $v in BlaiseVue 2.5',
-              name: 'Full Name',
-              email: 'Corporate Email',
-              city: 'City',
-              submit: 'Validate & Submit 🚀',
-              reset: 'Reset Form 🔄',
-              fillValid: 'Fill Valid Sample ✨',
-              statusValid: 'Valid ✅',
-              statusInvalid: 'Invalid ❌',
-              formState: 'Form Status'
-            },
-            pro: {
-              title: '⚡ BlaiseVue 3.0 Pro & WebAssembly Engine',
-              transitionTitle: '🎬 FLIP List Transitions (<transition-group>)',
-              shuffle: 'Shuffle 🔀',
-              add: 'Add Item ➕',
-              remove: 'Remove First ➖',
-              resetList: 'Reset List 🔄'
-            }
-          });
-          window.__BV_CORE__.i18n.setLocale('pt');
-        }
-      end;
+      I18nAddMessages('pt', '{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue 4.0","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue 4.0 Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');
+      I18nAddMessages('en', '{"nav":{"home":"Home","about":"About","pro":"Pro & Wasm ⚡","form":"Form 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Charts 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Global Store","localeActive":"Active Locale","theme":"Theme"},"form":{"title":"Reactive Form Validation","subtitle":"Demonstrating b-validate, $errors, and $v in BlaiseVue 4.0","name":"Full Name","email":"Corporate Email","city":"City","submit":"Validate & Submit 🚀","reset":"Reset Form 🔄","fillValid":"Fill Valid Sample ✨","statusValid":"Valid ✅","statusInvalid":"Invalid ❌","formState":"Form Status"},"pro":{"title":"⚡ BlaiseVue 4.0 Pro & WebAssembly Engine","transitionTitle":"🎬 FLIP List Transitions (<transition-group>)","shuffle":"Shuffle 🔀","add":"Add Item ➕","remove":"Remove First ➖","resetList":"Reset List 🔄"}}');
+      I18nSetLocale('pt');
     end;
 
     ;

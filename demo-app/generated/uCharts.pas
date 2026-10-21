@@ -4,7 +4,7 @@ unit uCharts;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BlaiseCharts;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BlaiseCharts;
 
 procedure Register_uCharts;
 
@@ -208,20 +208,8 @@ begin
     begin
       NewDark := not Boolean(_this['isDarkMode']);
       _this['isDarkMode'] := NewDark;
-      asm
-        if (this.chartOptions) {
-          if (!this.chartOptions.scales) this.chartOptions.scales = {};
-          if (!this.chartOptions.scales.x) this.chartOptions.scales.x = {};
-          if (!this.chartOptions.scales.y) this.chartOptions.scales.y = {};
-          const gridColor = NewDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-          const textColor = NewDark ? '#94a3b8' : '#64748b';
-          this.chartOptions.scales.x.grid = { color: gridColor };
-          this.chartOptions.scales.y.grid = { color: gridColor };
-          this.chartOptions.scales.x.ticks = { color: textColor };
-          this.chartOptions.scales.y.ticks = { color: textColor };
-          this.chartOptions = Object.assign({}, this.chartOptions);
-        }
-      end;
+      UpdateChartDarkMode(_this['chartOptions'], NewDark);
+      _this['chartOptions'] := ObjectAssign(NewObject, _this['chartOptions']);
       if NewDark then
         _this['clickedPointInfo'] := 'Modo escuro ativado para escalas dos gráficos!'
       else
@@ -233,6 +221,8 @@ begin
     var
       NewData: TJSArray;
       i, Val: Integer;
+      Datasets: TJSArray;
+      Ds0: TJSObject;
     begin
       NewData := TJSArray.new;
       for i := 0 to 5 do
@@ -240,11 +230,15 @@ begin
         Val := 10000 + Random(35000);
         NewData.push(Val);
       end;
-      asm
-        if (this.barData && this.barData.datasets && this.barData.datasets[0]) {
-          this.barData.datasets[0].data = NewData;
-          this.barData = Object.assign({}, this.barData);
-        }
+      if _this['barData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          Ds0 := TJSObject(Datasets[0]);
+          Ds0['data'] := NewData;
+          _this['barData'] := ObjectAssign(NewObject, _this['barData']);
+        end;
       end;
       _this['clickedPointInfo'] := 'Dados randomizados com sucesso!';
     end;
@@ -254,6 +248,7 @@ begin
     var
       Pal: TJSArray;
       Cur: string;
+      Datasets: TJSArray;
     begin
       Cur := String(_this['currentPalette']);
       if Cur = 'Emerald' then
@@ -276,28 +271,40 @@ begin
         _this['currentPalette'] := 'Emerald';
         Pal := TBVChartPalette.Emerald(4, 0.7);
       end;
-      asm
-        if (this.pieData && this.pieData.datasets && this.pieData.datasets[0]) {
-          this.pieData.datasets[0].backgroundColor = Pal;
-          this.pieData.datasets[0].borderColor = Pal;
-          this.pieData = Object.assign({}, this.pieData);
-        }
-        if (this.doughnutData && this.doughnutData.datasets && this.doughnutData.datasets[0]) {
-          this.doughnutData.datasets[0].backgroundColor = Pal;
-          this.doughnutData.datasets[0].borderColor = Pal;
-          this.doughnutData = Object.assign({}, this.doughnutData);
-        }
+      if _this['pieData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['pieData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := Pal;
+          _this['pieData'] := ObjectAssign(NewObject, _this['pieData']);
+        end;
+      end;
+      if _this['doughnutData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['doughnutData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := Pal;
+          _this['doughnutData'] := ObjectAssign(NewObject, _this['doughnutData']);
+        end;
       end;
       _this['clickedPointInfo'] := 'Paleta alterada para ' + String(_this['currentPalette']) + '!';
     end;
     
   m['onPointClick'] := procedure(_this: TJSObject; ev: JSValue)
 
+    var
+      Lbl, Val, DsIdx: string;
     begin
-      asm
-        if (ev && ev.label !== undefined) {
-          this.clickedPointInfo = 'Categoria: "' + ev.label + '", Valor: ' + ev.value + ' (Série #' + (ev.datasetIndex + 1) + ')';
-        }
+      if Boolean(ev) and (GetFieldStr(ev, 'label') <> '') then
+      begin
+        Lbl := GetFieldStr(ev, 'label');
+        Val := GetFieldStr(ev, 'value');
+        DsIdx := IntToStr(GetFieldInt(ev, 'datasetIndex', 0) + 1);
+        _this['clickedPointInfo'] := 'Categoria: "' + Lbl + '", Valor: ' + Val + ' (Série #' + DsIdx + ')';
       end;
     end;
 
@@ -305,7 +312,9 @@ begin
 
   comp['created'] := procedure(_this: TJSObject)
     begin
-      asm this.initCharts(); end;
+      asm if (!_this) _this = this; end;
+
+      CallMethod(_this, 'initCharts');
     end;
 
     ;

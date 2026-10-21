@@ -104,59 +104,25 @@
   methods:
     procedure quickLogin(e, p: string);
     begin
-      asm
-        this.email = e;
-        this.password = p;
-        this.errorMessage = '';
-        this.submitLogin();
-      end;
+      this.email := e;
+      this.password := p;
+      this.errorMessage := '';
+      this.submitLogin();
     end;
 
     procedure submitLogin;
     begin
-      asm
-        var self = this;
-        if (!this.email || !this.password) {
-          this.errorMessage = 'Por favor, informe o e-mail e a senha.';
-          return;
-        }
-
-        this.loading = true;
-        this.errorMessage = '';
-        this.successMessage = '';
-
-        if (!this.$auth || typeof this.$auth.login !== 'function') {
-          this.errorMessage = 'Módulo $auth não inicializado.';
-          this.loading = false;
-          return;
-        }
-
-        this.$auth.login(this.email, this.password)
-          .then(function(resp) {
-            self.loading = false;
-            self.successMessage = 'Autenticado com sucesso como ' + (resp.user ? resp.user.name : self.email) + '!';
-            setTimeout(function() {
-              var target = (window.__BV_CORE__.auth && window.__BV_CORE__.auth.redirectAfterLogin)
-                ? window.__BV_CORE__.auth.redirectAfterLogin
-                : '#/';
-              window.__BV_CORE__.auth.redirectAfterLogin = '';
-              window.location.hash = target;
-            }, 600);
-          })
-          .catch(function(err) {
-            self.loading = false;
-            self.errorMessage = (err && err.message) ? err.message : 'Falha na autenticação. Verifique os dados.';
-          });
+      if (this.email = '') or (this.password = '') then
+      begin
+        this.errorMessage := 'Por favor, informe o e-mail e a senha.';
+        Exit;
       end;
+      AuthLogin(this, this.email, this.password, '#/');
     end;
 
     procedure handleLogout;
     begin
-      asm
-        if (this.$auth && typeof this.$auth.logout === 'function') {
-          this.$auth.logout();
-        }
-      end;
+      AuthLogout(this);
     end;
 </script>
 
