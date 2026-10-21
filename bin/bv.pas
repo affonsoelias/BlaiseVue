@@ -1132,6 +1132,10 @@ begin
     '  RegisterComponent(''' + TagName + ''', comp);' + #10;
   if TagName = 'bv-data-grid' then
     Result := Result + '  RegisterComponent(''bv-datagrid'', comp);' + #10;
+  if TagName = 'data-set-view-page' then
+    Result := Result + '  RegisterComponent(''dataset-view-page'', comp);' + #10;
+  if TagName = 'dataset-view-page' then
+    Result := Result + '  RegisterComponent(''data-set-view-page'', comp);' + #10;
   Result := Result +
     'end;' + #10 +
     #10 +
