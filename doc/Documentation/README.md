@@ -1,4 +1,4 @@
-# 🛡️ BlaiseVue Framework v3.5
+# 🛡️ BlaiseVue Framework v4.1
 **The Universal Pascal Platform: Web, Mobile, Desktop, and Full-Stack.**
 
 BlaiseVue is an enterprise-grade, reactive framework that combines the strong typing and architectural robustness of **Object Pascal** with the simplicity, ergonomics, and reactivity of **Vue.js**.
@@ -70,7 +70,7 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 32. [32. SSG & Static Pre-rendering with Reactive Hydration](32-ssg-and-hydration.md)
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md)
 
-### 🚀 BlaiseVue 3.5 Universal Platform & 4.0 Ecosystem
+### 🚀 BlaiseVue 3.5 & 4.0 Ecosystem
 34. [34. VS Code Extension & Professional DX (.vsix) - Phase 1](34-vscode-extension.md)
 35. [35. Hybrid Mobile Platform & Capacitor (bv mobile) - Phase 2](35-mobile-capacitor.md)
 36. [36. Multiplatform Desktop & Lazarus IDE (bv desktop) - Phase 3](36-desktop-webui.md)
@@ -79,9 +79,12 @@ BlaiseVue 3.5 expands the platform across multiple form factors:
 39. [39. Reactive Chart.js Suite (blaise-charts) - Phase 6](39-blaise-charts.md)
 40. [40. BlaiseVue Studio Dashboard (bv studio) - Phase 7](40-blaise-studio.md)
 
+### 💎 BlaiseVue 4.1 Component Catalog & Packages
+41. [41. Package Components Catalog & Developer Manual](41-package-components-catalog.md)
+
 ### 📖 References & Roadmaps
 - [API Technical Reference](api-reference.md)
-- [Technical Roadmap (v2.0 - v4.0)](99-roadmap.md)
+- [Technical Roadmap (v2.0 - v4.3)](99-roadmap.md)
 
 ---
 
