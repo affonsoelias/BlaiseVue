@@ -9,6 +9,14 @@
     };
     this.$final = function () {
     };
+    this.Create = function () {
+      return this;
+    };
+    this.Destroy = function () {
+    };
+    this.Free = function () {
+      this.$destroy("Destroy");
+    };
     this.AfterConstruction = function () {
     };
     this.BeforeDestruction = function () {
@@ -346,6 +354,9 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
   });
   rtl.createClass(this,"EAbstractError",this.Exception,function () {
   });
+  this.Trim = function (S) {
+    return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'').replace(/[\s\uFEFF\xA0\x00-\x1f]+$/,'');
+  };
   this.TrimLeft = function (S) {
     return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'');
   };
@@ -5116,9 +5127,756 @@ rtl.module("BlaiseIonic",["System","JS","Web","SysUtils","BVReactivity"],functio
     $mod.TIonicController.EnsureBridge();
   };
 });
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
+rtl.module("Classes",["System","RTLConsts","Types","SysUtils","JS"],function () {
   "use strict";
   var $mod = this;
+  var $impl = $mod.$impl;
+  $mod.$implcode = function () {
+    $impl.ClassList = null;
+  };
+  $mod.$init = function () {
+    $impl.ClassList = new Object();
+  };
+},[]);
+rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.TDataSetState = {"0": "dsInactive", dsInactive: 0, "1": "dsBrowse", dsBrowse: 1, "2": "dsEdit", dsEdit: 2, "3": "dsInsert", dsInsert: 3};
+  this.TFieldType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftString", ftString: 1, "2": "ftInteger", ftInteger: 2, "3": "ftFloat", ftFloat: 3, "4": "ftBoolean", ftBoolean: 4, "5": "ftDate", ftDate: 5, "6": "ftDateTime", ftDateTime: 6};
+  rtl.createClass(this,"TBVField",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FFieldName = "";
+      this.FFieldType = 0;
+      this.FRequired = false;
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ADataSet, AName, AType) {
+      pas.System.TObject.Create.call(this);
+      this.FDataSet = ADataSet;
+      this.FFieldName = AName;
+      this.FFieldType = AType;
+      this.FRequired = false;
+      var self = this;
+      Object.defineProperty(self, 'AsString', {
+        get: function() { return self.GetAsString(); },
+        set: function(v) { self.SetAsString(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'Value', {
+        get: function() { return self.GetValue(); },
+        set: function(v) { self.SetValue(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsInteger', {
+        get: function() { return self.GetAsInteger(); },
+        set: function(v) { self.SetAsInteger(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsFloat', {
+        get: function() { return self.GetAsFloat(); },
+        set: function(v) { self.SetAsFloat(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsBoolean', {
+        get: function() { return self.GetAsBoolean(); },
+        set: function(v) { self.SetAsBoolean(v); },
+        configurable: true
+      });
+      return this;
+    };
+    this.GetValue = function () {
+      var Result = undefined;
+      var cur = null;
+      if (!(this.FDataSet != null)) return null;
+      if ((this.FDataSet.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FDataSet.FEditBuffer != null)) {
+        Result = this.FDataSet.FEditBuffer[this.FFieldName];
+        return Result;
+      };
+      cur = this.FDataSet.GetCurrent();
+      if ((cur != null) && (cur[this.FFieldName] != undefined)) {
+        Result = cur[this.FFieldName]}
+       else Result = null;
+      return Result;
+    };
+    this.SetValue = function (AValue) {
+      if (!(this.FDataSet != null)) return;
+      if (this.FDataSet.FState === $mod.TDataSetState.dsBrowse) this.FDataSet.Edit();
+      if ((this.FDataSet.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FDataSet.FEditBuffer != null)) {
+        this.FDataSet.FEditBuffer[this.FFieldName] = AValue;
+        this.FDataSet.SyncReactiveState();
+      };
+    };
+    this.GetAsString = function () {
+      var Result = "";
+      var v = undefined;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) {
+        Result = ""}
+       else Result = "" + v;
+      return Result;
+    };
+    this.SetAsString = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsInteger = function () {
+      var Result = 0;
+      var v = undefined;
+      var n = 0;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return 0;
+      var parsed = parseInt(v, 10);
+      n = isNaN(parsed) ? 0 : parsed;
+      Result = n;
+      return Result;
+    };
+    this.SetAsInteger = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsFloat = function () {
+      var Result = 0.0;
+      var v = undefined;
+      var d = 0.0;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return 0.0;
+      var parsed = parseFloat(v);
+      d = isNaN(parsed) ? 0.0 : parsed;
+      Result = d;
+      return Result;
+    };
+    this.SetAsFloat = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsBoolean = function () {
+      var Result = false;
+      var v = undefined;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return false;
+      Result = Boolean(v === true || v === 'true' || v === 1 || v === '1');
+      return Result;
+    };
+    this.SetAsBoolean = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetIsNull = function () {
+      var Result = false;
+      var v = undefined;
+      v = this.GetValue();
+      Result = (v == null) || (v == undefined) || (("" + v) === "");
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVFields",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FItems = null;
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      this.FItems = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ADataSet) {
+      pas.System.TObject.Create.call(this);
+      this.FDataSet = ADataSet;
+      this.FItems = new Array();
+      return this;
+    };
+    this.Count = function () {
+      var Result = 0;
+      Result = this.FItems.length;
+      return Result;
+    };
+    this.FieldByName = function (AName) {
+      var Result = null;
+      var f = null;
+      f = this.FindField(AName);
+      if (!(f != null)) f = this.AddField(AName,$mod.TFieldType.ftString);
+      Result = f;
+      return Result;
+    };
+    this.FindField = function (AName) {
+      var Result = null;
+      var i = 0;
+      var target = "";
+      var f = null;
+      target = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+      for (var $l = 0, $end = this.FItems.length - 1; $l <= $end; $l++) {
+        i = $l;
+        f = rtl.getObject(this.FItems[i]);
+        if (pas.SysUtils.LowerCase(f.FFieldName) === target) return f;
+      };
+      Result = null;
+      return Result;
+    };
+    this.AddField = function (AName, AType) {
+      var Result = null;
+      var f = null;
+      f = this.FindField(AName);
+      if (f != null) {
+        f.FFieldType = AType;
+        return f;
+      };
+      f = $mod.TBVField.$create("Create$1",[this.FDataSet,AName,AType]);
+      this.FItems.push(f);
+      Result = f;
+      return Result;
+    };
+    this.Item = function (AIndex) {
+      var Result = null;
+      if ((AIndex >= 0) && (AIndex < this.FItems.length)) {
+        Result = rtl.getObject(this.FItems[AIndex])}
+       else Result = null;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVDataSet",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FFields = null;
+      this.FRecords = null;
+      this.FActiveRecords = null;
+      this.FRecNo = 0;
+      this.FState = 0;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FDelta = null;
+      this.FFilter = "";
+      this.FFiltered = false;
+      this.FSortField = "";
+      this.FSortAscending = false;
+      this.FReactiveState = undefined;
+      this.FAfterScroll = null;
+      this.FBeforePost = null;
+      this.FAfterPost = null;
+      this.FBeforeDelete = null;
+      this.FAfterDelete = null;
+    };
+    this.$final = function () {
+      this.FFields = undefined;
+      this.FRecords = undefined;
+      this.FActiveRecords = undefined;
+      this.FEditBuffer = undefined;
+      this.FOriginalBuffer = undefined;
+      this.FDelta = undefined;
+      this.FAfterScroll = undefined;
+      this.FBeforePost = undefined;
+      this.FAfterPost = undefined;
+      this.FBeforeDelete = undefined;
+      this.FAfterDelete = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.SyncReactiveState = function () {
+      var rs = null;
+      var curObj = null;
+      rs = this.FReactiveState;
+      if (!(rs != null)) return;
+      rs["stateStr"] = this.GetStateStr();
+      rs["recNo"] = this.FRecNo;
+      rs["recordCount"] = this.GetRecordCount();
+      rs["bof"] = this.GetBof();
+      rs["eof"] = this.GetEof();
+      rs["isEmpty"] = this.GetIsEmpty();
+      rs["changeCount"] = this.FDelta.length;
+      if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
+        rs["current"] = this.FEditBuffer}
+       else {
+        curObj = this.GetActiveRecord(this.FRecNo - 1);
+        rs["current"] = curObj;
+      };
+    };
+    this.RebuildActiveRecords = function () {
+      var q = "";
+      var arr = null;
+      q = pas.SysUtils.LowerCase(pas.SysUtils.Trim(this.FFilter));
+      arr = new Array();
+      var src = this.FRecords || [];
+          var filtered = [];
+          var hasQuery = Boolean(q && q.length > 0);
+      
+          for (var i = 0; i < src.length; i++) {
+            var item = src[i];
+            if (!item) continue;
+            if (!hasQuery) {
+              filtered.push(item);
+            } else {
+              var match = false;
+              var vals = Object.values(item);
+              for (var j = 0; j < vals.length; j++) {
+                if (String(vals[j]).toLowerCase().indexOf(q) !== -1) {
+                  match = true;
+                  break;
+                }
+              }
+              if (match) filtered.push(item);
+            }
+          }
+      
+          var sk = this.FSortField;
+          var asc = this.FSortAscending;
+          if (sk) {
+            filtered.sort(function(a, b) {
+              var va = (a && a[sk] !== undefined) ? a[sk] : '';
+              var vb = (b && b[sk] !== undefined) ? b[sk] : '';
+              if (typeof va === 'number' && typeof vb === 'number') {
+                return asc ? (va - vb) : (vb - va);
+              }
+              var sa = String(va).toLowerCase();
+              var sb = String(vb).toLowerCase();
+              if (sa < sb) return asc ? -1 : 1;
+              if (sa > sb) return asc ? 1 : -1;
+              return 0;
+            });
+          }
+      
+          arr = filtered;
+      this.FActiveRecords = arr;
+      if (this.FActiveRecords.length === 0) {
+        this.FRecNo = 0}
+       else if (this.FRecNo > this.FActiveRecords.length) {
+        this.FRecNo = this.FActiveRecords.length}
+       else if (this.FRecNo < 1) this.FRecNo = 1;
+      this.SyncReactiveState();
+    };
+    this.GetActiveRecord = function (Index0) {
+      var Result = null;
+      if ((Index0 >= 0) && (Index0 < this.FActiveRecords.length)) {
+        Result = this.FActiveRecords[Index0]}
+       else Result = null;
+      return Result;
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.FFields = $mod.TBVFields.$create("Create$1",[this]);
+      this.FRecords = new Array();
+      this.FActiveRecords = new Array();
+      this.FDelta = new Array();
+      this.FRecNo = 0;
+      this.FState = $mod.TDataSetState.dsInactive;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FFilter = "";
+      this.FFiltered = false;
+      this.FSortField = "";
+      this.FSortAscending = true;
+      this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
+      this.SyncReactiveState();
+      var self = this;
+      Object.defineProperty(self, 'Current', { get: function() { return self.GetCurrent(); } });
+      Object.defineProperty(self, 'Data', { get: function() { return self.FActiveRecords; } });
+      Object.defineProperty(self, 'StateStr', { get: function() { return self.GetStateStr(); } });
+      Object.defineProperty(self, 'RecNo', { get: function() { return self.FRecNo; }, set: function(v) { self.FRecNo = v; self.SyncReactiveState(); } });
+      Object.defineProperty(self, 'RecordCount', { get: function() { return self.GetRecordCount(); } });
+      Object.defineProperty(self, 'Bof', { get: function() { return self.GetBof(); } });
+      Object.defineProperty(self, 'Eof', { get: function() { return self.GetEof(); } });
+      Object.defineProperty(self, 'ChangeCount', { get: function() { return self.GetChangeCount(); } });
+      return this;
+    };
+    this.GetBof = function () {
+      var Result = false;
+      Result = this.FRecNo <= 1;
+      return Result;
+    };
+    this.GetEof = function () {
+      var Result = false;
+      Result = this.FRecNo >= this.FActiveRecords.length;
+      return Result;
+    };
+    this.GetRecordCount = function () {
+      var Result = 0;
+      Result = this.FActiveRecords.length;
+      return Result;
+    };
+    this.GetIsEmpty = function () {
+      var Result = false;
+      Result = this.FActiveRecords.length === 0;
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = undefined;
+      if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
+        Result = this.FEditBuffer}
+       else Result = this.GetActiveRecord(this.FRecNo - 1);
+      return Result;
+    };
+    this.GetStateStr = function () {
+      var Result = "";
+      var $tmp = this.FState;
+      if ($tmp === $mod.TDataSetState.dsInactive) {
+        Result = "inactive"}
+       else if ($tmp === $mod.TDataSetState.dsBrowse) {
+        Result = "browse"}
+       else if ($tmp === $mod.TDataSetState.dsEdit) {
+        Result = "edit"}
+       else if ($tmp === $mod.TDataSetState.dsInsert) {
+        Result = "insert"}
+       else {
+        Result = "inactive";
+      };
+      return Result;
+    };
+    this.GetChangeCount = function () {
+      var Result = 0;
+      Result = this.FDelta.length;
+      return Result;
+    };
+    this.Destroy = function () {
+      rtl.free(this,"FFields");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.FieldByName = function (AName) {
+      var Result = null;
+      Result = this.FFields.FieldByName(AName);
+      return Result;
+    };
+    this.FindField = function (AName) {
+      var Result = null;
+      Result = this.FFields.FindField(AName);
+      return Result;
+    };
+    this.AddField = function (AName, AType) {
+      var Result = null;
+      Result = this.FFields.AddField(AName,AType);
+      return Result;
+    };
+    this.First = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      if (this.FActiveRecords.length > 0) {
+        this.FRecNo = 1}
+       else this.FRecNo = 0;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Prior = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      if (this.FRecNo > 1) this.FRecNo -= 1;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Next = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      if (this.FRecNo < this.FActiveRecords.length) this.FRecNo += 1;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Last = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      if (this.FActiveRecords.length > 0) {
+        this.FRecNo = this.FActiveRecords.length}
+       else this.FRecNo = 0;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Append = function () {
+      var obj = null;
+      var i = 0;
+      var f = null;
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) this.Post();
+      obj = new Object();
+      for (var $l = 0, $end = this.FFields.Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        f = this.FFields.Item(i);
+        var $tmp = f.FFieldType;
+        if ($tmp === $mod.TFieldType.ftInteger) {
+          obj[f.FFieldName] = 0}
+         else if ($tmp === $mod.TFieldType.ftFloat) {
+          obj[f.FFieldName] = 0.0}
+         else if ($tmp === $mod.TFieldType.ftBoolean) {
+          obj[f.FFieldName] = false}
+         else {
+          obj[f.FFieldName] = "";
+        };
+      };
+      this.FEditBuffer = obj;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsInsert;
+      this.SyncReactiveState();
+    };
+    this.Insert = function () {
+      this.Append();
+    };
+    this.Edit = function () {
+      var cur = null;
+      var clone = null;
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) return;
+      if (this.GetIsEmpty()) {
+        this.Append();
+        return;
+      };
+      cur = this.GetActiveRecord(this.FRecNo - 1);
+      if (!(cur != null)) return;
+      clone = new Object();
+      Object.assign(clone, cur);
+      this.FEditBuffer = clone;
+      this.FOriginalBuffer = cur;
+      this.FState = $mod.TDataSetState.dsEdit;
+      this.SyncReactiveState();
+    };
+    this.Post = function () {
+      var deltaItem = null;
+      var targetIdx = 0;
+      var curRec = null;
+      if (!(this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert))) return;
+      if (this.FBeforePost != null) this.FBeforePost(this);
+      deltaItem = new Object();
+      if (this.FState === $mod.TDataSetState.dsInsert) {
+        if (!this.FEditBuffer.id) {
+          var maxId = 0;
+          for (var i = 0; i < this.FRecords.length; i++) {
+            var rid = parseInt(this.FRecords[i].id, 10);
+            if (!isNaN(rid) && rid > maxId) maxId = rid;
+          }
+          this.FEditBuffer.id = maxId + 1;
+        };
+        this.FRecords.push(this.FEditBuffer);
+        deltaItem["action"] = "insert";
+        deltaItem["record"] = this.FEditBuffer;
+        this.FDelta.push(deltaItem);
+        this.RebuildActiveRecords();
+        this.FRecNo = this.FActiveRecords.length;
+      } else if (this.FState === $mod.TDataSetState.dsEdit) {
+        curRec = this.GetActiveRecord(this.FRecNo - 1);
+        targetIdx = this.FRecords.indexOf(curRec);
+        if (targetIdx !== -1) this.FRecords[targetIdx] = this.FEditBuffer;
+        deltaItem["action"] = "update";
+        deltaItem["oldRecord"] = this.FOriginalBuffer;
+        deltaItem["record"] = this.FEditBuffer;
+        this.FDelta.push(deltaItem);
+        this.RebuildActiveRecords();
+      };
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.SyncReactiveState();
+      if (this.FAfterPost != null) this.FAfterPost(this);
+    };
+    this.Cancel = function () {
+      if (!(this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert))) return;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.SyncReactiveState();
+    };
+    this.Delete = function () {
+      var curRec = null;
+      var targetIdx = 0;
+      var deltaItem = null;
+      if (this.GetIsEmpty()) return;
+      if (this.FBeforeDelete != null) this.FBeforeDelete(this);
+      curRec = this.GetActiveRecord(this.FRecNo - 1);
+      if (!(curRec != null)) return;
+      targetIdx = this.FRecords.indexOf(curRec);
+      if (targetIdx !== -1) this.FRecords.splice(targetIdx,1);
+      deltaItem = new Object();
+      deltaItem["action"] = "delete";
+      deltaItem["record"] = curRec;
+      this.FDelta.push(deltaItem);
+      this.RebuildActiveRecords();
+      if (this.FRecNo > this.FActiveRecords.length) this.FRecNo = this.FActiveRecords.length;
+      if ((this.FRecNo === 0) && (this.FActiveRecords.length > 0)) this.FRecNo = 1;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.SyncReactiveState();
+      if (this.FAfterDelete != null) this.FAfterDelete(this);
+    };
+    this.SetFilter = function (AQuery) {
+      this.FFilter = AQuery;
+      this.FFiltered = pas.SysUtils.Trim(AQuery) !== "";
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.ClearFilter = function () {
+      this.SetFilter("");
+    };
+    this.SortBy = function (AFieldName, Ascending) {
+      this.FSortField = AFieldName;
+      this.FSortAscending = Ascending;
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.Locate = function (AFieldName, AValue) {
+      var Result = false;
+      var i = 0;
+      var targetVal = "";
+      var itemVal = "";
+      var item = null;
+      targetVal = "" + AValue;
+      for (var $l = 0, $end = this.FActiveRecords.length - 1; $l <= $end; $l++) {
+        i = $l;
+        item = this.FActiveRecords[i];
+        if ((item != null) && (item[AFieldName] != undefined)) {
+          itemVal = "" + item[AFieldName];
+          if (itemVal === targetVal) {
+            this.FRecNo = i + 1;
+            this.SyncReactiveState();
+            if (this.FAfterScroll != null) this.FAfterScroll(this);
+            return true;
+          };
+        };
+      };
+      Result = false;
+      return Result;
+    };
+    this.LoadFromData = function (AData) {
+      var keys = null;
+      var i = 0;
+      if (!pas.System.Assigned(AData)) return;
+      this.FRecords = new Array();
+      keys = null;
+      var arr = Array.isArray(AData) ? AData : ((AData && Array.isArray(AData.items)) ? AData.items : [AData]);
+      for (var i = 0; i < arr.length; i++) {
+        this.FRecords.push(Object.assign({}, arr[i]));
+      }
+      if (this.FRecords.length > 0) {
+        keys = Object.keys(this.FRecords[0]);
+      };
+      if ((this.FFields.Count() === 0) && (keys != null)) {
+        for (var $l = 0, $end = keys.length - 1; $l <= $end; $l++) {
+          i = $l;
+          this.FFields.AddField("" + keys[i],$mod.TFieldType.ftString);
+        };
+      };
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.LoadFromJSON = function (AJsonStr) {
+      var parsed = undefined;
+      if (pas.SysUtils.Trim(AJsonStr) === "") return;
+      try {
+        parsed = JSON.parse(AJsonStr);
+      } catch(e) {
+        parsed = [];
+      };
+      this.LoadFromData(parsed);
+    };
+    this.ToJSON = function () {
+      var Result = "";
+      Result = JSON.stringify(this.FRecords || []);
+      return Result;
+    };
+    this.GetDeltaJSON = function () {
+      var Result = "";
+      Result = JSON.stringify(this.FDelta || []);
+      return Result;
+    };
+    this.ApplyUpdates = function () {
+      this.FDelta.length = 0;
+      this.SyncReactiveState();
+    };
+    this.SaveToStorage = function (AStorageKey) {
+      var json = "";
+      if (pas.SysUtils.Trim(AStorageKey) === "") return;
+      json = this.ToJSON();
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(AStorageKey, json);
+        }
+      } catch(e) {
+        console.warn('[BVDataSet] Failed to save to storage:', e);
+      };
+    };
+    this.LoadFromStorage = function (AStorageKey) {
+      var Result = false;
+      var json = "";
+      var found = false;
+      if (pas.SysUtils.Trim(AStorageKey) === "") return false;
+      found = false;
+      json = "";
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          var val = window.localStorage.getItem(AStorageKey);
+          if (val) {
+            json = val;
+            found = true;
+          }
+        }
+      } catch(e) {
+        found = false;
+      };
+      if (found) {
+        this.LoadFromJSON(json);
+        Result = true;
+      } else Result = false;
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.RetainDataSetSymbols = function () {
+      var dummyDS = null;
+      var dummyF = null;
+      if (false) {
+        dummyDS = $mod.TBVDataSet.$create("Create$1");
+        dummyDS.FieldByName("");
+        dummyDS.FindField("");
+        dummyDS.AddField("",$mod.TFieldType.ftString);
+        dummyDS.First();
+        dummyDS.Next();
+        dummyDS.Prior();
+        dummyDS.Last();
+        dummyDS.Append();
+        dummyDS.Insert();
+        dummyDS.Edit();
+        dummyDS.Post();
+        dummyDS.Cancel();
+        dummyDS.Delete();
+        dummyDS.Locate("",null);
+        dummyDS.SetFilter("");
+        dummyDS.ClearFilter();
+        dummyDS.SortBy("",true);
+        dummyDS.SaveToStorage("");
+        dummyDS.LoadFromStorage("");
+        dummyDS.ToJSON();
+        dummyDS.GetDeltaJSON();
+        dummyDS.ApplyUpdates();
+        dummyDS.LoadFromJSON("");
+        dummyDS.GetBof();
+        dummyDS.GetEof();
+        dummyDS.GetRecordCount();
+        dummyDS.GetIsEmpty();
+        dummyDS.GetCurrent();
+        dummyDS.GetStateStr();
+        dummyDS.GetChangeCount();
+        dummyF = dummyDS.FFields.FieldByName("");
+        dummyF.GetValue();
+        dummyF.SetValue(null);
+        dummyF.GetAsString();
+        dummyF.SetAsString("");
+        dummyF.GetAsInteger();
+        dummyF.SetAsInteger(0);
+        dummyF.GetAsFloat();
+        dummyF.SetAsFloat(0.0);
+        dummyF.GetAsBoolean();
+        dummyF.SetAsBoolean(false);
+        dummyF.GetIsNull();
+        dummyF.SetValue(null);
+        dummyF.SetAsString("");
+        dummyF.SetAsInteger(0);
+        dummyF.SetAsFloat(0.0);
+        dummyF.SetAsBoolean(false);
+        dummyDS = rtl.freeLoc(dummyDS);
+      };
+    };
+  };
+  $mod.$init = function () {
+    $impl.RetainDataSetSymbols();
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+    window.__BV_CORE__.dataset = {
+      TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
+      TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
+    };
+  };
+},[]);
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
   this.ShowToast = function (Msg, DurationMs) {
     try {
       if (window.__BV_CORE__ && window.__BV_CORE__.ionic && window.__BV_CORE__.ionic.toast) {
@@ -5515,81 +6273,190 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
   };
   this.NewDataSet = function () {
     var Result = undefined;
-    if (pas.BVDataSet && typeof pas.BVDataSet.CreateDataSet === 'function') {
-      Result = pas.BVDataSet.CreateDataSet();
-    } else if (pas.BVDataSet && pas.BVDataSet.TBVDataSet) {
-      var ctorName = pas.BVDataSet.TBVDataSet.Create$1 ? 'Create$1' : 'Create';
-      Result = pas.BVDataSet.TBVDataSet.$create(ctorName);
-    } else if (window.__BV_CORE__ && window.__BV_CORE__.dataset && typeof window.__BV_CORE__.dataset.CreateDataSet === 'function') {
-      Result = window.__BV_CORE__.dataset.CreateDataSet();
-    } else {
-      Result = null;
-    };
+    var ds = null;
+    ds = pas.BVDataSet.TBVDataSet.$create("Create$1");
+    Result = ds;
     return Result;
   };
   this.DataSetLoad = function (DS, Data) {
-    if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).LoadFromData(Data)}
+     else {
+      if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+    };
   };
   this.DataSetAppend = function (DS) {
-    if (DS && typeof DS.Append === 'function') DS.Append();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Append()}
+     else {
+      if (DS && typeof DS.Append === 'function') DS.Append();
+    };
+  };
+  this.DataSetEdit = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Edit()}
+     else {
+      if (DS && typeof DS.Edit === 'function') DS.Edit();
+    };
   };
   this.DataSetPost = function (DS) {
-    if (DS && typeof DS.Post === 'function') DS.Post();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Post()}
+     else {
+      if (DS && typeof DS.Post === 'function') DS.Post();
+    };
   };
   this.DataSetCancel = function (DS) {
-    if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Cancel()}
+     else {
+      if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+    };
   };
   this.DataSetDelete = function (DS) {
-    if (DS && typeof DS.Delete === 'function') DS.Delete();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Delete()}
+     else {
+      if (DS && typeof DS.Delete === 'function') DS.Delete();
+    };
   };
   this.DataSetFirst = function (DS) {
-    if (DS && typeof DS.First === 'function') DS.First();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).First()}
+     else {
+      if (DS && typeof DS.First === 'function') DS.First();
+    };
   };
   this.DataSetPrior = function (DS) {
-    if (DS && typeof DS.Prior === 'function') DS.Prior();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Prior()}
+     else {
+      if (DS && typeof DS.Prior === 'function') DS.Prior();
+    };
   };
   this.DataSetNext = function (DS) {
-    if (DS && typeof DS.Next === 'function') DS.Next();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Next()}
+     else {
+      if (DS && typeof DS.Next === 'function') DS.Next();
+    };
   };
   this.DataSetLast = function (DS) {
-    if (DS && typeof DS.Last === 'function') DS.Last();
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Last()}
+     else {
+      if (DS && typeof DS.Last === 'function') DS.Last();
+    };
+  };
+  this.DataSetLocate = function (DS, AFieldName, AValue) {
+    var Result = false;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).Locate(AFieldName,AValue)}
+     else {
+      Result = false;
+      if (DS && typeof DS.Locate === 'function') {
+        Result = Boolean(DS.Locate(AFieldName, AValue));
+      };
+    };
+    return Result;
+  };
+  this.DataSetFilter = function (DS, AQuery) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetFilter(AQuery)}
+     else {
+      if (DS && typeof DS.SetFilter === 'function') DS.SetFilter(AQuery);
+    };
+  };
+  this.DataSetSort = function (DS, AFieldName, Ascending) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SortBy(AFieldName,Ascending)}
+     else {
+      if (DS && typeof DS.SortBy === 'function') DS.SortBy(AFieldName, Ascending);
+    };
+  };
+  this.DataSetFieldVal = function (DS, AFieldName) {
+    var Result = undefined;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).FieldByName(AFieldName).GetValue()}
+     else {
+      Result = "";
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var f = DS.FieldByName(AFieldName);
+        if (!f) return;
+        Result = (typeof f.GetAsString === 'function') ? f.GetAsString() : (f.AsString !== undefined ? f.AsString : '');
+      } else if (DS.Current) {
+        Result = DS.Current[AFieldName] !== undefined ? DS.Current[AFieldName] : '';
+      };
+    };
+    return Result;
+  };
+  this.DataSetSetFieldVal = function (DS, AFieldName, AValue) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).FieldByName(AFieldName).SetValue(AValue)}
+     else {
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var st = (typeof DS.GetStateStr === 'function') ? DS.GetStateStr() : DS.StateStr;
+        if (st === 'browse') DS.Edit();
+        var f = DS.FieldByName(AFieldName);
+        if (f) {
+          if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+          else f.AsString = String(AValue);
+        }
+      } else if (DS.Current) {
+        DS.Current[AFieldName] = AValue;
+      };
+    };
   };
   this.DataSetDeltaJSON = function (DS) {
     var Result = "";
-    if (DS && typeof DS.GetDeltaJSON === 'function') {
-      Result = DS.GetDeltaJSON();
-    } else {
-      Result = '[]';
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetDeltaJSON()}
+     else {
+      Result = "[]";
+      if (DS && typeof DS.GetDeltaJSON === 'function') {
+        Result = DS.GetDeltaJSON();
+      };
     };
     return Result;
   };
   this.DataSetApplyUpdates = function (DS) {
-    if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
-  };
-});
-rtl.module("Classes",["System","RTLConsts","Types","SysUtils","JS"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  $mod.$implcode = function () {
-    $impl.ClassList = null;
-  };
-  $mod.$init = function () {
-    $impl.ClassList = new Object();
-  };
-},[]);
-rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"],function () {
-  "use strict";
-  var $mod = this;
-  $mod.$init = function () {
-    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
-    window.__BV_CORE__.dataset = {
-      TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
-      TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
-      CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ApplyUpdates()}
+     else {
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
     };
   };
-});
+  $mod.$implcode = function () {
+    $impl.RetainDXDataSetSymbols = function () {
+      var dummy = undefined;
+      if (false) {
+        dummy = $mod.NewDataSet();
+        $mod.DataSetLoad(dummy,null);
+        $mod.DataSetAppend(dummy);
+        $mod.DataSetEdit(dummy);
+        $mod.DataSetPost(dummy);
+        $mod.DataSetCancel(dummy);
+        $mod.DataSetDelete(dummy);
+        $mod.DataSetFirst(dummy);
+        $mod.DataSetPrior(dummy);
+        $mod.DataSetNext(dummy);
+        $mod.DataSetLast(dummy);
+        $mod.DataSetLocate(dummy,"",null);
+        $mod.DataSetFilter(dummy,"");
+        $mod.DataSetSort(dummy,"",true);
+        $mod.DataSetFieldVal(dummy,"");
+        $mod.DataSetSetFieldVal(dummy,"",null);
+        $mod.DataSetDeltaJSON(dummy);
+        $mod.DataSetApplyUpdates(dummy);
+      };
+    };
+  };
+  $mod.$init = function () {
+    $impl.RetainDXDataSetSymbols();
+  };
+},[]);
 rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -6756,7 +7623,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }   .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (`<bv-datagrid :dataset="productsDS" />`)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8192,9 +9059,6 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       var Result = null;
       var d = null;
       d = new Object();
-      d["dataset"] = null;
-      d["items"] = new Array();
-      d["columns"] = new Array();
       d["searchQuery"] = "";
       d["sortKey"] = "";
       d["sortAsc"] = true;
@@ -8204,6 +9068,10 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       Result = d;
       return Result;
     };
+    comp["props"] = new Array();
+    comp["props"].push("dataset");
+    comp["props"].push("items");
+    comp["props"].push("columns");
     m = new Object();
     m["handleSearch"] = function (_this) {
       _this["currentPage"] = 1;

@@ -34,6 +34,8 @@ type
     FFieldName: string;
     FFieldType: TFieldType;
     FRequired: Boolean;
+  public
+    constructor Create(ADataSet: TBVDataSet; const AName: string; AType: TFieldType = ftString);
     function GetValue: JSValue;
     procedure SetValue(AValue: JSValue);
     function GetAsString: string;
@@ -45,8 +47,6 @@ type
     function GetAsBoolean: Boolean;
     procedure SetAsBoolean(AValue: Boolean);
     function GetIsNull: Boolean;
-  public
-    constructor Create(ADataSet: TBVDataSet; const AName: string; AType: TFieldType = ftString);
     property FieldName: string read FFieldName;
     property FieldType: TFieldType read FFieldType write FFieldType;
     property Required: Boolean read FRequired write FRequired;
@@ -103,6 +103,9 @@ type
 
     procedure SyncReactiveState;
     procedure RebuildActiveRecords;
+    function GetActiveRecord(Index0: Integer): TJSObject;
+  public
+    constructor Create;
     function GetBof: Boolean;
     function GetEof: Boolean;
     function GetRecordCount: Integer;
@@ -110,9 +113,6 @@ type
     function GetCurrent: JSValue;
     function GetStateStr: string;
     function GetChangeCount: Integer;
-    function GetActiveRecord(Index0: Integer): TJSObject;
-  public
-    constructor Create;
     destructor Destroy; override;
 
     { Field Definitions }
@@ -926,31 +926,26 @@ end;
 
 procedure TBVDataSet.LoadFromData(AData: JSValue);
 var
-  arr: TJSArray;
-  firstObj: TJSObject;
   keys: TJSArray;
   i: Integer;
 begin
   if not Assigned(AData) then Exit;
 
-  asm
-    arr = Array.isArray(AData) ? AData : ((AData && Array.isArray(AData.items)) ? AData.items : [AData]);
-  end;
-
   FRecords := TJSArray.new;
+  keys := nil;
   asm
+    var arr = Array.isArray(AData) ? AData : ((AData && Array.isArray(AData.items)) ? AData.items : [AData]);
     for (var i = 0; i < arr.length; i++) {
       this.FRecords.push(Object.assign({}, arr[i]));
+    }
+    if (this.FRecords.length > 0) {
+      keys = Object.keys(this.FRecords[0]);
     }
   end;
 
   { Auto-register fields if none are explicitly declared }
-  if (FFields.Count = 0) and (FRecords.length > 0) then
+  if (FFields.Count = 0) and Assigned(keys) then
   begin
-    firstObj := TJSObject(FRecords[0]);
-    asm
-      keys = Object.keys(firstObj);
-    end;
     for i := 0 to keys.length - 1 do
       FFields.AddField(String(keys[i]), ftString);
   end;
@@ -1019,6 +1014,7 @@ var
 begin
   if Trim(AStorageKey) = '' then Exit(False);
   found := False;
+  json := '';
   asm
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -1042,7 +1038,67 @@ begin
     Result := False;
 end;
 
+procedure RetainDataSetSymbols;
+var
+  dummyDS: TBVDataSet;
+  dummyF: TBVField;
+begin
+  if False then
+  begin
+    dummyDS := TBVDataSet.Create;
+    dummyDS.FieldByName('');
+    dummyDS.FindField('');
+    dummyDS.AddField('');
+    dummyDS.First;
+    dummyDS.Next;
+    dummyDS.Prior;
+    dummyDS.Last;
+    dummyDS.Append;
+    dummyDS.Insert;
+    dummyDS.Edit;
+    dummyDS.Post;
+    dummyDS.Cancel;
+    dummyDS.Delete;
+    dummyDS.Locate('', nil);
+    dummyDS.SetFilter('');
+    dummyDS.ClearFilter;
+    dummyDS.SortBy('');
+    dummyDS.SaveToStorage('');
+    dummyDS.LoadFromStorage('');
+    dummyDS.ToJSON;
+    dummyDS.GetDeltaJSON;
+    dummyDS.ApplyUpdates;
+    dummyDS.LoadFromJSON('');
+    dummyDS.GetBof;
+    dummyDS.GetEof;
+    dummyDS.GetRecordCount;
+    dummyDS.GetIsEmpty;
+    dummyDS.GetCurrent;
+    dummyDS.GetStateStr;
+    dummyDS.GetChangeCount;
+    dummyF := dummyDS.Fields.FieldByName('');
+    dummyF.GetValue;
+    dummyF.SetValue(nil);
+    dummyF.GetAsString;
+    dummyF.SetAsString('');
+    dummyF.GetAsInteger;
+    dummyF.SetAsInteger(0);
+    dummyF.GetAsFloat;
+    dummyF.SetAsFloat(0.0);
+    dummyF.GetAsBoolean;
+    dummyF.SetAsBoolean(False);
+    dummyF.GetIsNull;
+    dummyF.Value := nil;
+    dummyF.AsString := '';
+    dummyF.AsInteger := 0;
+    dummyF.AsFloat := 0.0;
+    dummyF.AsBoolean := False;
+    dummyDS.Free;
+  end;
+end;
+
 initialization
+  RetainDataSetSymbols;
   asm
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
     window.__BV_CORE__.dataset = {

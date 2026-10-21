@@ -39,10 +39,12 @@
 </template>
 
 <script>
-  data:
+  props:
     dataset: JSValue = nil;
     items: JSValue = [];
     columns: JSValue = [];
+
+  data:
     searchQuery: string = '';
     sortKey: string = '';
     sortAsc: boolean = true;

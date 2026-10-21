@@ -12,7 +12,7 @@ unit BVPascalDX;
 
 interface
 
-uses JS, Web, SysUtils;
+uses JS, Web, SysUtils, BVDataSet;
 
 { --- UI Notification & Dialog Helpers --- }
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
@@ -387,165 +387,239 @@ end;
 { --- LiveBindings & Reactive TBVDataSet Helpers (Phase 9 / 4.2) --- }
 
 function NewDataSet: JSValue;
+var
+  ds: TBVDataSet;
 begin
-  asm
-    if (pas.BVDataSet && typeof pas.BVDataSet.CreateDataSet === 'function') {
-      Result = pas.BVDataSet.CreateDataSet();
-    } else if (pas.BVDataSet && pas.BVDataSet.TBVDataSet) {
-      var ctorName = pas.BVDataSet.TBVDataSet.Create$1 ? 'Create$1' : 'Create';
-      Result = pas.BVDataSet.TBVDataSet.$create(ctorName);
-    } else if (window.__BV_CORE__ && window.__BV_CORE__.dataset && typeof window.__BV_CORE__.dataset.CreateDataSet === 'function') {
-      Result = window.__BV_CORE__.dataset.CreateDataSet();
-    } else {
-      Result = null;
-    }
-  end;
+  ds := TBVDataSet.Create;
+  Result := ds;
 end;
 
 procedure DataSetLoad(DS: JSValue; Data: JSValue);
 begin
-  asm
-    if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).LoadFromData(Data)
+  else
+  begin
+    asm
+      if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+    end;
   end;
 end;
 
 procedure DataSetAppend(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Append === 'function') DS.Append();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Append
+  else
+  begin
+    asm
+      if (DS && typeof DS.Append === 'function') DS.Append();
+    end;
   end;
 end;
 
 procedure DataSetEdit(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Edit === 'function') DS.Edit();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Edit
+  else
+  begin
+    asm
+      if (DS && typeof DS.Edit === 'function') DS.Edit();
+    end;
   end;
 end;
 
 procedure DataSetPost(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Post === 'function') DS.Post();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Post
+  else
+  begin
+    asm
+      if (DS && typeof DS.Post === 'function') DS.Post();
+    end;
   end;
 end;
 
 procedure DataSetCancel(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Cancel
+  else
+  begin
+    asm
+      if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+    end;
   end;
 end;
 
 procedure DataSetDelete(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Delete === 'function') DS.Delete();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Delete
+  else
+  begin
+    asm
+      if (DS && typeof DS.Delete === 'function') DS.Delete();
+    end;
   end;
 end;
 
 procedure DataSetFirst(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.First === 'function') DS.First();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).First
+  else
+  begin
+    asm
+      if (DS && typeof DS.First === 'function') DS.First();
+    end;
   end;
 end;
 
 procedure DataSetPrior(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Prior === 'function') DS.Prior();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Prior
+  else
+  begin
+    asm
+      if (DS && typeof DS.Prior === 'function') DS.Prior();
+    end;
   end;
 end;
 
 procedure DataSetNext(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Next === 'function') DS.Next();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Next
+  else
+  begin
+    asm
+      if (DS && typeof DS.Next === 'function') DS.Next();
+    end;
   end;
 end;
 
 procedure DataSetLast(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.Last === 'function') DS.Last();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).Last
+  else
+  begin
+    asm
+      if (DS && typeof DS.Last === 'function') DS.Last();
+    end;
   end;
 end;
 
 function DataSetLocate(DS: JSValue; const AFieldName: string; AValue: JSValue): Boolean;
 begin
-  asm
-    if (DS && typeof DS.Locate === 'function') {
-      Result = Boolean(DS.Locate(AFieldName, AValue));
-    } else {
-      Result = false;
-    }
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).Locate(AFieldName, AValue)
+  else
+  begin
+    Result := False;
+    asm
+      if (DS && typeof DS.Locate === 'function') {
+        Result = Boolean(DS.Locate(AFieldName, AValue));
+      }
+    end;
   end;
 end;
 
 procedure DataSetFilter(DS: JSValue; const AQuery: string);
 begin
-  asm
-    if (DS && typeof DS.SetFilter === 'function') DS.SetFilter(AQuery);
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).SetFilter(AQuery)
+  else
+  begin
+    asm
+      if (DS && typeof DS.SetFilter === 'function') DS.SetFilter(AQuery);
+    end;
   end;
 end;
 
 procedure DataSetSort(DS: JSValue; const AFieldName: string; Ascending: Boolean);
 begin
-  asm
-    if (DS && typeof DS.SortBy === 'function') DS.SortBy(AFieldName, Ascending);
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).SortBy(AFieldName, Ascending)
+  else
+  begin
+    asm
+      if (DS && typeof DS.SortBy === 'function') DS.SortBy(AFieldName, Ascending);
+    end;
   end;
 end;
 
 function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
 begin
-  asm
-    if (!DS) return '';
-    if (typeof DS.FieldByName === 'function') {
-      var f = DS.FieldByName(AFieldName);
-      if (!f) return '';
-      Result = (typeof f.GetAsString === 'function') ? f.GetAsString() : (f.AsString !== undefined ? f.AsString : '');
-    } else if (DS.Current) {
-      Result = DS.Current[AFieldName] !== undefined ? DS.Current[AFieldName] : '';
-    } else {
-      Result = '';
-    }
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).FieldByName(AFieldName).Value
+  else
+  begin
+    Result := '';
+    asm
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var f = DS.FieldByName(AFieldName);
+        if (!f) return;
+        Result = (typeof f.GetAsString === 'function') ? f.GetAsString() : (f.AsString !== undefined ? f.AsString : '');
+      } else if (DS.Current) {
+        Result = DS.Current[AFieldName] !== undefined ? DS.Current[AFieldName] : '';
+      }
+    end;
   end;
 end;
 
 procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
 begin
-  asm
-    if (!DS) return;
-    if (typeof DS.FieldByName === 'function') {
-      var st = (typeof DS.GetStateStr === 'function') ? DS.GetStateStr() : DS.StateStr;
-      if (st === 'browse') DS.Edit();
-      var f = DS.FieldByName(AFieldName);
-      if (f) {
-        if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
-        else f.AsString = String(AValue);
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).FieldByName(AFieldName).Value := AValue
+  else
+  begin
+    asm
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var st = (typeof DS.GetStateStr === 'function') ? DS.GetStateStr() : DS.StateStr;
+        if (st === 'browse') DS.Edit();
+        var f = DS.FieldByName(AFieldName);
+        if (f) {
+          if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+          else f.AsString = String(AValue);
+        }
+      } else if (DS.Current) {
+        DS.Current[AFieldName] = AValue;
       }
-    } else if (DS.Current) {
-      DS.Current[AFieldName] = AValue;
-    }
+    end;
   end;
 end;
 
 function DataSetDeltaJSON(DS: JSValue): string;
 begin
-  asm
-    if (DS && typeof DS.GetDeltaJSON === 'function') {
-      Result = DS.GetDeltaJSON();
-    } else {
-      Result = '[]';
-    }
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).GetDeltaJSON
+  else
+  begin
+    Result := '[]';
+    asm
+      if (DS && typeof DS.GetDeltaJSON === 'function') {
+        Result = DS.GetDeltaJSON();
+      }
+    end;
   end;
 end;
 
 procedure DataSetApplyUpdates(DS: JSValue);
 begin
-  asm
-    if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).ApplyUpdates
+  else
+  begin
+    asm
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+    end;
   end;
 end;
 
@@ -880,5 +954,35 @@ begin
     }
   end;
 end;
+
+procedure RetainDXDataSetSymbols;
+var
+  dummy: JSValue;
+begin
+  if False then
+  begin
+    dummy := NewDataSet;
+    DataSetLoad(dummy, nil);
+    DataSetAppend(dummy);
+    DataSetEdit(dummy);
+    DataSetPost(dummy);
+    DataSetCancel(dummy);
+    DataSetDelete(dummy);
+    DataSetFirst(dummy);
+    DataSetPrior(dummy);
+    DataSetNext(dummy);
+    DataSetLast(dummy);
+    DataSetLocate(dummy, '', nil);
+    DataSetFilter(dummy, '');
+    DataSetSort(dummy, '', True);
+    DataSetFieldVal(dummy, '');
+    DataSetSetFieldVal(dummy, '', nil);
+    DataSetDeltaJSON(dummy);
+    DataSetApplyUpdates(dummy);
+  end;
+end;
+
+initialization
+  RetainDXDataSetSymbols;
 
 end.

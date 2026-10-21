@@ -40,7 +40,7 @@
     <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->
     <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (`<bv-datagrid :dataset="productsDS" />`)</h3>
+        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>
         <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>
       </div>
       
