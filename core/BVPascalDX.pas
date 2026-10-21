@@ -660,16 +660,17 @@ procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEdit
 begin
   asm
     var self = Instance;
-    if (!self || !FormData) return;
+    var dataPayload = (typeof AFormData !== 'undefined' && AFormData !== window.FormData) ? AFormData : ((typeof aformdata !== 'undefined' && aformdata !== window.FormData) ? aformdata : null);
+    if (!self || !dataPayload) return;
     var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
     var method = IsEditing ? 'put' : 'post';
 
     var p = (self.$api && typeof self.$api[method] === 'function')
-      ? self.$api[method](ep, FormData)
+      ? self.$api[method](ep, dataPayload)
       : fetch('http://localhost:8090' + ep, {
           method: method.toUpperCase(),
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(FormData)
+          body: JSON.stringify(dataPayload)
         }).then(function(r) { return r.json(); });
 
     Promise.resolve(p).then(function(resp) {

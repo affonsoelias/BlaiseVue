@@ -72,7 +72,7 @@
     </div>
 
     <!-- MODAL DIALOG -->
-    <div class="crud-modal-backdrop" v-if="isModalOpen">
+    <div class="crud-modal-backdrop" v-show="isModalOpen">
       <div class="crud-modal">
         <div class="modal-header">
           <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>

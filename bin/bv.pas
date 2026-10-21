@@ -5658,7 +5658,7 @@ begin
     '    </div>' + #13#10 +
     #13#10 +
     '    <!-- MODAL DIALOG -->' + #13#10 +
-    '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + #13#10 +
+    '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + #13#10 +
     '      <div class="crud-modal">' + #13#10 +
     '        <div class="modal-header">' + #13#10 +
     '          <h3>{{ isEditing ? ' + Q + '✏️ Edit ' + Q + ' + modelTitle : ' + Q + '➕ New ' + Q + ' + modelTitle }}</h3>' + #13#10 +
