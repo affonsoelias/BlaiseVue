@@ -662,6 +662,14 @@ begin
     var self = Instance;
     var dataPayload = (typeof AFormData !== 'undefined' && AFormData !== window.FormData) ? AFormData : ((typeof aformdata !== 'undefined' && aformdata !== window.FormData) ? aformdata : null);
     if (!self || !dataPayload) return;
+    if (self && typeof dataPayload === 'object' && dataPayload !== null) {
+      for (var k in self) {
+        if (k.indexOf('form.') === 0) {
+          var fieldKey = k.substring(5);
+          dataPayload[fieldKey] = self[k];
+        }
+      }
+    }
     var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
     var method = IsEditing ? 'put' : 'post';
 

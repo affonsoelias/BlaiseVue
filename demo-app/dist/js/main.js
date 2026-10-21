@@ -1499,6 +1499,25 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         bv.proxyCache = new WeakMap();
         if (!bv.components) bv.components = {}; // Safe Component registry
         
+        // Helper for deep property assignment (e.g. 'form.name')
+        bv.setDeepValue = function(target, path, val) {
+          if (!target || !path) return;
+          if (typeof path === 'string' && path.indexOf('.') > -1) {
+            let parts = path.split('.');
+            let curr = target;
+            for (let i = 0; i < parts.length - 1; i++) {
+              let part = parts[i];
+              if (!curr[part] || typeof curr[part] !== 'object') {
+                curr[part] = {};
+              }
+              curr = curr[part];
+            }
+            curr[parts[parts.length - 1]] = val;
+          } else {
+            target[path] = val;
+          }
+        };
+        
         // Core Effect Wrapper: Tracks deps while running
         bv.effect = function(fn) {
           const e = function() {
@@ -2452,7 +2471,11 @@ rtl.module("BVClient",["System","JS","Web","SysUtils","BVReactivity"],function (
                 }
                 try {
                   this.status = 'connecting';
-                  this.socket = new WebSocket(this.url);
+                  try {
+                    this.socket = new WebSocket(this.url, ['blaise-ws']);
+                  } catch(eProtocol) {
+                    this.socket = new WebSocket(this.url);
+                  }
                   this.socket.onopen = function(ev) {
                     self.status = 'open';
                     self.emit('open', ev);
@@ -2696,6 +2719,26 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
   $mod.$init = function () {
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
         const bv = window.__BV_CORE__;
+        
+        if (!bv.setDeepValue) {
+          bv.setDeepValue = function(target, path, val) {
+            if (!target || !path) return;
+            if (typeof path === 'string' && path.indexOf('.') > -1) {
+              let parts = path.split('.');
+              let curr = target;
+              for (let i = 0; i < parts.length - 1; i++) {
+                let part = parts[i];
+                if (!curr[part] || typeof curr[part] !== 'object') {
+                  curr[part] = {};
+                }
+                curr = curr[part];
+              }
+              curr[parts[parts.length - 1]] = val;
+            } else {
+              target[path] = val;
+            }
+          };
+        }
         
         // Application Entry Point: Mounts a template into the DOM
         bv.compile = function(Root, Data, Methods) {
@@ -3298,7 +3341,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                      if (isCheck) {
                        if (el.checked !== Boolean(v)) el.checked = Boolean(v);
                      } else {
-                       if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                       if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                      }
                    });
                 }
@@ -3340,7 +3383,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
                    bv.effect(function() {
                      let v = getNativeFieldVal();
-                     if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                     if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                    });
                 }
               }
@@ -4269,7 +4312,21 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
                 } catch(e2) { return undefined; }
               }
             },
-            SetValue: function(k, val) { pRef[k] = val; }
+            SetValue: function(k, val) {
+              if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+                window.__BV_CORE__.setDeepValue(pRef, k, val);
+              } else if (k && k.indexOf('.') > -1) {
+                let parts = k.split('.');
+                let curr = pRef;
+                for (let i = 0; i < parts.length - 1; i++) {
+                  if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+                  curr = curr[parts[i]];
+                }
+                curr[parts[parts.length - 1]] = val;
+              } else {
+                pRef[k] = val;
+              }
+            }
           };
           
           window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
@@ -6410,6 +6467,14 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
     var self = Instance;
         var dataPayload = (typeof AFormData !== 'undefined' && AFormData !== window.FormData) ? AFormData : ((typeof aformdata !== 'undefined' && aformdata !== window.FormData) ? aformdata : null);
         if (!self || !dataPayload) return;
+        if (self && typeof dataPayload === 'object' && dataPayload !== null) {
+          for (var k in self) {
+            if (k.indexOf('form.') === 0) {
+              var fieldKey = k.substring(5);
+              dataPayload[fieldKey] = self[k];
+            }
+          }
+        }
         var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
         var method = IsEditing ? 'put' : 'post';
     
@@ -8083,6 +8148,14 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
@@ -8619,6 +8692,14 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {

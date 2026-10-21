@@ -36,6 +36,26 @@ initialization
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
     const bv = window.__BV_CORE__;
     
+    if (!bv.setDeepValue) {
+      bv.setDeepValue = function(target, path, val) {
+        if (!target || !path) return;
+        if (typeof path === 'string' && path.indexOf('.') > -1) {
+          let parts = path.split('.');
+          let curr = target;
+          for (let i = 0; i < parts.length - 1; i++) {
+            let part = parts[i];
+            if (!curr[part] || typeof curr[part] !== 'object') {
+              curr[part] = {};
+            }
+            curr = curr[part];
+          }
+          curr[parts[parts.length - 1]] = val;
+        } else {
+          target[path] = val;
+        }
+      };
+    }
+    
     // Application Entry Point: Mounts a template into the DOM
     bv.compile = function(Root, Data, Methods) {
       if (!Root || Root['bvCompiled']) return;
@@ -637,7 +657,7 @@ initialization
                  if (isCheck) {
                    if (el.checked !== Boolean(v)) el.checked = Boolean(v);
                  } else {
-                   if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                  }
                });
             }
@@ -679,7 +699,7 @@ initialization
 
                bv.effect(function() {
                  let v = getNativeFieldVal();
-                 if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                });
             }
           }

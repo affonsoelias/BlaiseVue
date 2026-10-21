@@ -242,7 +242,11 @@ begin
           }
           try {
             this.status = 'connecting';
-            this.socket = new WebSocket(this.url);
+            try {
+              this.socket = new WebSocket(this.url, ['blaise-ws']);
+            } catch(eProtocol) {
+              this.socket = new WebSocket(this.url);
+            }
             this.socket.onopen = function(ev) {
               self.status = 'open';
               self.emit('open', ev);

@@ -183,6 +183,25 @@ initialization
     bv.proxyCache = new WeakMap();
     if (!bv.components) bv.components = {}; // Safe Component registry
     
+    // Helper for deep property assignment (e.g. 'form.name')
+    bv.setDeepValue = function(target, path, val) {
+      if (!target || !path) return;
+      if (typeof path === 'string' && path.indexOf('.') > -1) {
+        let parts = path.split('.');
+        let curr = target;
+        for (let i = 0; i < parts.length - 1; i++) {
+          let part = parts[i];
+          if (!curr[part] || typeof curr[part] !== 'object') {
+            curr[part] = {};
+          }
+          curr = curr[part];
+        }
+        curr[parts[parts.length - 1]] = val;
+      } else {
+        target[path] = val;
+      }
+    };
+    
     // Core Effect Wrapper: Tracks deps while running
     bv.effect = function(fn) {
       const e = function() {
