@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.0 Ecosystem Delivered (Phases 1-7 ✅ Completed | Phase 8 Planned 🔮)**. Full-Stack CRUD (`bv mormot crud`), Enterprise Auth (`$auth`), Live OpenAPI (`/api/docs`), Cloud Micro-Containers (`bv mormot docker`), Mobile-First Ionic Suite (`blaise-ui-mobile`), Reactive Analytics (`blaise-charts`), and BlaiseVue Studio (`bv studio`) are fully delivered and verified with 326 automated tests across 22 test suites. Phase 8 (Idiomatic Object Pascal DX & Zero-ASM Architecture) is in active planning.
+> **Current Status**: 🚀 **BlaiseVue 4.0 Ecosystem Delivered (Phases 1-8 ✅ 100% Completed | Next: v4.1, v4.2, v4.3 🔮)**. Full-Stack CRUD (`bv mormot crud`), Enterprise Auth (`$auth`), Live OpenAPI (`/api/docs`), Cloud Micro-Containers (`bv mormot docker`), Mobile-First Ionic Suite (`blaise-ui-mobile`), Reactive Analytics (`blaise-charts`), BlaiseVue Studio (`bv studio`), and Zero-ASM Pure Object Pascal DX (`BVPascalDX.pas`) are fully delivered and verified with 336 automated tests across 23 test suites. Upcoming milestones: BlaiseVue 4.1 (Package Component Documentation), 4.2 (LiveBindings & Reactive TBVDataSet), and 4.3 (End-to-End Type-Safe Pascal RPC).
 
 ---
 
@@ -411,6 +411,109 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
      - All views (`CustomerView.bv`, `ProductView.bv`, `LoginView.bv`, `MobileView.bv`, `Charts.bv`, `ProFeatures.bv`, `Formulario.bv`, `LibBootstrap.bv`, `About.bv`, `Showcase.bv`, `app.bv`) refactored to pure, idiomatic Object Pascal.
   4. **Automated Vitest Test Suite**:
      - Added `demo-app/tests/pascal_dx.test.pas`, bringing total automated coverage to 23 test suites and 336 passing unit tests.
+
+---
+
+## 🔮 The Next Horizon: BlaiseVue 4.1, 4.2 & 4.3 Specifications
+
+With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered with 336 passing tests), the platform enters its next phase of enterprise maturity:
+
+```
+                                  BLAISEVUE 4.x
+                                        │
+        ┌───────────────────────────────┼───────────────────────────────┐
+        ▼                               ▼                               ▼
+ [BlaiseVue 4.1]                 [BlaiseVue 4.2]                 [BlaiseVue 4.3]
+ Package Component                LiveBindings &                  Type-Safe RPC
+   Documentation                 Reactive TBVDataSet             with mORMot 2
+```
+
+---
+
+### 📚 BlaiseVue 4.1: Comprehensive Package Component Documentation & Catalog
+**Goal**: Create exhaustive, high-quality, and idiomatic documentation for every component in the official package ecosystem (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, and `blaise-themes`), enabling developers to build complete real-world applications with 100% pure Object Pascal.
+
+- **Scope & Coverage**:
+  1. **BlaiseUI Kit (`packages/blaise-ui`)**:
+     - Navigation & Layout: `BVNavbar`, `BVNavItem`, `BVDrawer`, `BVBreadcrumb`, `BVBreadcrumbItem`, `BVBottomNav`, `BVBottomNavItem`, `BVContainer`, `BVRow`, `BVCol`.
+     - Data Display & Feedback: `BVDataGrid`, `BVCard`, `BVBadge`, `BVAlert`, `BVToast`, `BVProgress`, `BVSpinner`, `BVAccordion`, `BVTabs`, `BVTab`.
+     - Forms & Inputs: `BVInput`, `BVInputGroup`, `BVFormSelect`, `BVBtn`, `BVModal`, `BVIcon`.
+  2. **BlaiseCharts (`packages/blaise-charts`)**:
+     - `BVChart`, `BVBarChart`, `BVLineChart`, `BVPieChart`, `BVDoughnutChart`, `BVRadarChart`, `BVPolarAreaChart`, `BVScatterChart`, `BVBubbleChart`.
+     - Typed dataset structures (`TBVChartData`, `TBVChartOptions`, `TBVChartDataset`, `TBVChartPalette`).
+  3. **BlaiseUI Mobile (`packages/blaise-ui-mobile`)**:
+     - `BVIonApp`, `BVIonHeader`, `BVIonToolbar`, `BVIonTitle`, `BVIonContent`, `BVIonList`, `BVIonItem`, `BVIonButton`, `BVIonBadge`, `BVIonCard`, `BVIonTabs`, `BVIonTabBar`, `BVIonTabButton`.
+     - Pascal controller bridge: `BlaiseIonic.pas` (`IonicToast`, `IonicAlert`, `IonicConfirm`, `IonicActionSheet`, `IonicLoading`, `IonicGetMode`, `IonicSetMode`).
+  4. **BlaiseThemes (`packages/blaise-themes`)**:
+     - `BVThemeToggle`, `BVThemeSelect`, Bootswatch dynamic loader, `$theme` reactive controller.
+
+- **Documentation Standard for Each Component**:
+  - **Overview & Use Cases**: When and how to employ the component.
+  - **Props Specification Table**: Property name, Pascal type (`string`, `integer`, `boolean`, `JSValue`), default value, and detailed description.
+  - **Events Specification Table**: Emitted events (`@click`, `@change`, `@select`, etc.), parameters passed, and listener signatures.
+  - **Slots Specification Table**: Default and named slots (`header`, `footer`, `icon`, etc.).
+  - **Real-World Pure Pascal Examples**: Complete copy-pasteable `.bv` snippets with `<template>`, `<script>` (zero-ASM), and `<style>`.
+
+---
+
+### ⚡ BlaiseVue 4.2: LiveBindings & Reactive `TBVDataSet` Architecture
+**Goal**: Bring the legendary productivity and elegance of Delphi/Lazarus data-aware components (`TClientDataSet`, `TBufDataset`, LiveBindings) to modern reactive web and universal applications.
+
+- **Architectural Specification**:
+  1. **Reactive `TBVDataSet` / `TBVMemTable` Engine (`core/BVDataSet.pas`)**:
+     - In-memory reactive dataset implementing standard Pascal record navigation and manipulation:
+       - **Navigation**: `First`, `Next`, `Prior`, `Last`, `Eof`, `Bof`, `RecNo`, `RecordCount`.
+       - **Editing & State**: `Append`, `Insert`, `Edit`, `Post`, `Cancel`, `Delete`, `State` (`dsBrowse`, `dsEdit`, `dsInsert`).
+       - **Filtering & Sorting**: `Filter`, `Filtered`, `SortOn([FieldNames])`, `Locate(FieldName, Value)`.
+       - **Fields**: Strongly typed field access (`FieldByName('Name').AsString`, `AsInteger`, `AsFloat`, `AsBoolean`).
+  2. **Reactive Two-Way LiveBindings Directive (`b-field`)**:
+     - Declarative binding between UI inputs and dataset fields:
+       ```html
+       <bv-input b-field="Customers.Name" label="Customer Name" />
+       <bv-input b-field="Customers.Email" label="Email Address" />
+       ```
+     - Automatic state tracking: changing input values immediately marks dataset as `dsEdit` and updates current record buffer.
+  3. **Seamless `<bv-datagrid>` Native Integration**:
+     - Bind entire datasets directly to grids:
+       ```html
+       <bv-datagrid :dataset="CustomerDataSet" :columns="gridColumns" />
+       ```
+     - Built-in pagination, sorting, row selection, and CRUD action buttons automatically hooked into the dataset methods.
+  4. **Offline Persistence & Local Caching**:
+     - Integrated IndexedDB adapter (`TBVDataSetIndexedDBAdapter`) for automatic offline persistence.
+     - Optimistic local commits with automatic background delta synchronization via WebSockets when connectivity is restored.
+
+---
+
+### 🛡️ BlaiseVue 4.3: End-to-End Type-Safe Pascal RPC with mORMot 2
+**Goal**: Completely eliminate manual REST URLs, HTTP verb boilerplate, and string-based endpoints between client and server, establishing a 100% type-safe, compile-time verified RPC pipeline in pure Object Pascal.
+
+- **Architectural Specification**:
+  1. **Shared Service Interfaces (`common/Services.pas`)**:
+     - Business logic contracts defined strictly via Object Pascal interfaces:
+       ```pascal
+       type
+         ICustomerService = interface(IInvokable)
+           ['{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}']
+           function GetAll: TCustomerList;
+           function GetById(Id: Integer): TCustomer;
+           function Save(const Customer: TCustomer): TCustomer;
+           function Delete(Id: Integer): Boolean;
+         end;
+       ```
+  2. **Automated Client Proxy Scaffolding (`bv mormot rpc`)**:
+     - CLI command analyzing mORMot 2 server interfaces and automatically generating strongly typed client proxies in `generated/ClientProxies.pas`.
+     - Transparent client invocation in `.bv` views:
+       ```pascal
+       CustomerService.GetAll(procedure(Items: TCustomerList)
+       begin
+         this.customers := Items;
+       end);
+       ```
+  3. **Compile-Time Validation**:
+     - Mismatched parameter types, renamed methods, or invalid signatures produce compiler errors during build time (`bv run dev`), preventing runtime API mismatches entirely.
+  4. **High-Throughput Binary Serialization**:
+     - Support for optimized JSON and binary pack serialization between mORMot 2 backend and Pas2JS frontend runtime, maximizing throughput for enterprise workloads.
 
 ---
 
