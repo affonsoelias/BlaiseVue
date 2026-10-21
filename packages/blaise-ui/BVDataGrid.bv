@@ -20,7 +20,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ 'bui-row-selected': (selectedRow === row || (dataset && dataset.Current === row)) }">
+        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ 'bui-row-selected': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }">
           <td b-for="col in resolvedColumns">
             <slot name="cell" :row="row" :column="col" :value="row[col.key]">
               {{ row[col.key] }}
@@ -175,7 +175,6 @@
     procedure selectRow(row: JSValue);
     begin
       asm
-        this.selectedRow = row;
         var ds = this.dataset;
         if (ds && row) {
           if (row.id !== undefined && typeof ds.Locate === 'function') {
@@ -185,6 +184,7 @@
             if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
           }
         }
+        this.selectedRow = row;
         if (typeof this.$emit === 'function') {
           this.$emit('row-select', row);
         }

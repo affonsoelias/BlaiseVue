@@ -5386,6 +5386,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       rs["eof"] = this.GetEof();
       rs["isEmpty"] = this.GetIsEmpty();
       rs["changeCount"] = this.FDelta.length;
+      rs["data"] = this.FActiveRecords;
       if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
         rs["current"] = this.FEditBuffer}
        else {
@@ -5470,14 +5471,58 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
       this.SyncReactiveState();
       var self = this;
-      Object.defineProperty(self, 'Current', { get: function() { return self.GetCurrent(); } });
-      Object.defineProperty(self, 'Data', { get: function() { return self.FActiveRecords; } });
-      Object.defineProperty(self, 'StateStr', { get: function() { return self.GetStateStr(); } });
-      Object.defineProperty(self, 'RecNo', { get: function() { return self.FRecNo; }, set: function(v) { self.FRecNo = v; self.SyncReactiveState(); } });
-      Object.defineProperty(self, 'RecordCount', { get: function() { return self.GetRecordCount(); } });
-      Object.defineProperty(self, 'Bof', { get: function() { return self.GetBof(); } });
-      Object.defineProperty(self, 'Eof', { get: function() { return self.GetEof(); } });
-      Object.defineProperty(self, 'ChangeCount', { get: function() { return self.GetChangeCount(); } });
+      Object.defineProperty(self, 'Current', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.current !== undefined) return self.FReactiveState.current;
+          return self.GetCurrent();
+        }
+      });
+      Object.defineProperty(self, 'Data', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.data !== undefined) return self.FReactiveState.data;
+          return self.FActiveRecords;
+        }
+      });
+      Object.defineProperty(self, 'StateStr', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.stateStr !== undefined) return self.FReactiveState.stateStr;
+          return self.GetStateStr();
+        }
+      });
+      Object.defineProperty(self, 'RecNo', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.recNo !== undefined) return self.FReactiveState.recNo;
+          return self.FRecNo;
+        },
+        set: function(v) {
+          self.FRecNo = v;
+          self.SyncReactiveState();
+        }
+      });
+      Object.defineProperty(self, 'RecordCount', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.recordCount !== undefined) return self.FReactiveState.recordCount;
+          return self.GetRecordCount();
+        }
+      });
+      Object.defineProperty(self, 'Bof', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.bof !== undefined) return self.FReactiveState.bof;
+          return self.GetBof();
+        }
+      });
+      Object.defineProperty(self, 'Eof', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.eof !== undefined) return self.FReactiveState.eof;
+          return self.GetEof();
+        }
+      });
+      Object.defineProperty(self, 'ChangeCount', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.changeCount !== undefined) return self.FReactiveState.changeCount;
+          return self.GetChangeCount();
+        }
+      });
       return this;
     };
     this.GetBof = function () {
@@ -9056,7 +9101,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow === row || (dataset && dataset.Current === row)) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -9093,7 +9138,6 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
     };
     m["selectRow"] = function (_this, row) {
-      this.selectedRow = row;
       var ds = this.dataset;
       if (ds && row) {
         if (row.id !== undefined && typeof ds.Locate === 'function') {
@@ -9103,6 +9147,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
           if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
         }
       }
+      this.selectedRow = row;
       if (typeof this.$emit === 'function') {
         this.$emit('row-select', row);
       };

@@ -460,14 +460,58 @@ begin
 
   asm
     var self = this;
-    Object.defineProperty(self, 'Current', { get: function() { return self.GetCurrent(); } });
-    Object.defineProperty(self, 'Data', { get: function() { return self.FActiveRecords; } });
-    Object.defineProperty(self, 'StateStr', { get: function() { return self.GetStateStr(); } });
-    Object.defineProperty(self, 'RecNo', { get: function() { return self.FRecNo; }, set: function(v) { self.FRecNo = v; self.SyncReactiveState(); } });
-    Object.defineProperty(self, 'RecordCount', { get: function() { return self.GetRecordCount(); } });
-    Object.defineProperty(self, 'Bof', { get: function() { return self.GetBof(); } });
-    Object.defineProperty(self, 'Eof', { get: function() { return self.GetEof(); } });
-    Object.defineProperty(self, 'ChangeCount', { get: function() { return self.GetChangeCount(); } });
+    Object.defineProperty(self, 'Current', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.current !== undefined) return self.FReactiveState.current;
+        return self.GetCurrent();
+      }
+    });
+    Object.defineProperty(self, 'Data', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.data !== undefined) return self.FReactiveState.data;
+        return self.FActiveRecords;
+      }
+    });
+    Object.defineProperty(self, 'StateStr', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.stateStr !== undefined) return self.FReactiveState.stateStr;
+        return self.GetStateStr();
+      }
+    });
+    Object.defineProperty(self, 'RecNo', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.recNo !== undefined) return self.FReactiveState.recNo;
+        return self.FRecNo;
+      },
+      set: function(v) {
+        self.FRecNo = v;
+        self.SyncReactiveState();
+      }
+    });
+    Object.defineProperty(self, 'RecordCount', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.recordCount !== undefined) return self.FReactiveState.recordCount;
+        return self.GetRecordCount();
+      }
+    });
+    Object.defineProperty(self, 'Bof', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.bof !== undefined) return self.FReactiveState.bof;
+        return self.GetBof();
+      }
+    });
+    Object.defineProperty(self, 'Eof', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.eof !== undefined) return self.FReactiveState.eof;
+        return self.GetEof();
+      }
+    });
+    Object.defineProperty(self, 'ChangeCount', {
+      get: function() {
+        if (self.FReactiveState && self.FReactiveState.changeCount !== undefined) return self.FReactiveState.changeCount;
+        return self.GetChangeCount();
+      }
+    });
   end;
 end;
 
@@ -500,6 +544,7 @@ begin
   rs['eof'] := GetEof;
   rs['isEmpty'] := GetIsEmpty;
   rs['changeCount'] := FDelta.length;
+  rs['data'] := FActiveRecords;
 
   if (FState in [dsEdit, dsInsert]) and Assigned(FEditBuffer) then
     rs['current'] := FEditBuffer
