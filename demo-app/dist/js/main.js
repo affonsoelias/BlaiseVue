@@ -9,6 +9,14 @@
     };
     this.$final = function () {
     };
+    this.Create = function () {
+      return this;
+    };
+    this.Destroy = function () {
+    };
+    this.Free = function () {
+      this.$destroy("Destroy");
+    };
     this.AfterConstruction = function () {
     };
     this.BeforeDestruction = function () {
@@ -346,6 +354,9 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
   });
   rtl.createClass(this,"EAbstractError",this.Exception,function () {
   });
+  this.Trim = function (S) {
+    return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'').replace(/[\s\uFEFF\xA0\x00-\x1f]+$/,'');
+  };
   this.TrimLeft = function (S) {
     return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'');
   };
@@ -3206,7 +3217,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               }
     
               // 3. Directive Collection
-              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null;
+              let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null, vfield = null;
               let binds = [];
               let events = [];
               if (el.attributes) {
@@ -3214,6 +3225,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    let a = el.attributes[i];
                    let n = a.name.toLowerCase();
                    if (n === 'b-model' || n === 'v-model') vmodel = a.value;
+                   else if (n === 'b-field' || n === 'v-field') vfield = a.value;
                    else if (n === 'b-validate' || n === 'v-validate') vvalidate = a.value;
                    else if (n.startsWith('b-validate:') || n.startsWith('v-validate:')) {
                       vvalidateField = n.startsWith('b-validate:') ? n.substring(11) : n.substring(11);
@@ -3253,6 +3265,47 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    el.oninput = sync; el.onchange = sync; 
                    bv.effect(function() {
                      let v = Data.Evaluate(vmodel);
+                     if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   });
+                }
+              }
+    
+              // 5.1. b-field directive (Native LiveBindings with TBVDataSet)
+              if (vfield) {
+                el.removeAttribute('b-field'); el.removeAttribute('v-field');
+                if (!opts) {
+                   let parts = vfield.split('.');
+                   let dsExpr = parts[0];
+                   let fieldName = parts.slice(1).join('.');
+    
+                   const getNativeFieldVal = function() {
+                     let ds = Data.Evaluate(dsExpr);
+                     if (!ds) return '';
+                     if (typeof ds.FieldByName === 'function') {
+                       return ds.FieldByName(fieldName).AsString;
+                     } else if (ds.Current) {
+                       return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                     }
+                     return '';
+                   };
+    
+                   const setNativeFieldVal = function(val) {
+                     let ds = Data.Evaluate(dsExpr);
+                     if (!ds) return;
+                     if (typeof ds.FieldByName === 'function') {
+                       if (ds.StateStr === 'browse') ds.Edit();
+                       ds.FieldByName(fieldName).AsString = val;
+                     } else if (ds.Current) {
+                       ds.Current[fieldName] = val;
+                     }
+                   };
+    
+                   el.value = getNativeFieldVal() || '';
+                   const syncField = function() { setNativeFieldVal(this.value); };
+                   el.oninput = syncField; el.onchange = syncField;
+    
+                   bv.effect(function() {
+                     let v = getNativeFieldVal();
                      if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                    });
                 }
@@ -3692,6 +3745,38 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
                           if (fObj && fObj.$dirty) fObj.$touch();
                        }
+                    };
+                 }
+    
+                              if (vfield) {
+                    let parts = vfield.split('.');
+                    let dsExpr = parts[0];
+                    let fieldName = parts.slice(1).join('.');
+    
+                    const getCompFieldVal = function() {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return '';
+                      if (typeof ds.FieldByName === 'function') {
+                        return ds.FieldByName(fieldName).AsString;
+                      } else if (ds.Current) {
+                        return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                      }
+                      return '';
+                    };
+    
+                    bv.effect(function() {
+                      pRef['value'] = getCompFieldVal();
+                    });
+    
+                    pRef['$onInput'] = function(val) {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return;
+                      if (typeof ds.FieldByName === 'function') {
+                        if (ds.StateStr === 'browse') ds.Edit();
+                        ds.FieldByName(fieldName).AsString = val;
+                      } else if (ds.Current) {
+                        ds.Current[fieldName] = val;
+                      }
                     };
                  }
     
@@ -4156,7 +4241,9 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
       
           let stopEffect = window.__BV_CORE__.effect(function() {
-             let dummy = JSON.stringify(pRef);
+             try {
+               Object.keys(pRef).forEach(function(k) { let _v = pRef[k]; });
+             } catch(e) {}
              if (CompOpt.updated) CompOpt.updated.call(pRef, pRef);
           });
       
@@ -5042,9 +5129,853 @@ rtl.module("BlaiseIonic",["System","JS","Web","SysUtils","BVReactivity"],functio
     $mod.TIonicController.EnsureBridge();
   };
 });
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
+rtl.module("Classes",["System","RTLConsts","Types","SysUtils","JS"],function () {
   "use strict";
   var $mod = this;
+  var $impl = $mod.$impl;
+  $mod.$implcode = function () {
+    $impl.ClassList = null;
+  };
+  $mod.$init = function () {
+    $impl.ClassList = new Object();
+  };
+},[]);
+rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.TDataSetState = {"0": "dsInactive", dsInactive: 0, "1": "dsBrowse", dsBrowse: 1, "2": "dsEdit", dsEdit: 2, "3": "dsInsert", dsInsert: 3};
+  this.TFieldType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftString", ftString: 1, "2": "ftInteger", ftInteger: 2, "3": "ftFloat", ftFloat: 3, "4": "ftBoolean", ftBoolean: 4, "5": "ftDate", ftDate: 5, "6": "ftDateTime", ftDateTime: 6};
+  rtl.createClass(this,"TBVField",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FFieldName = "";
+      this.FFieldType = 0;
+      this.FRequired = false;
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ADataSet, AName, AType) {
+      pas.System.TObject.Create.call(this);
+      this.FDataSet = ADataSet;
+      this.FFieldName = AName;
+      this.FFieldType = AType;
+      this.FRequired = false;
+      var self = this;
+      Object.defineProperty(self, 'AsString', {
+        get: function() { return self.GetAsString(); },
+        set: function(v) { self.SetAsString(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'Value', {
+        get: function() { return self.GetValue(); },
+        set: function(v) { self.SetValue(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsInteger', {
+        get: function() { return self.GetAsInteger(); },
+        set: function(v) { self.SetAsInteger(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsFloat', {
+        get: function() { return self.GetAsFloat(); },
+        set: function(v) { self.SetAsFloat(v); },
+        configurable: true
+      });
+      Object.defineProperty(self, 'AsBoolean', {
+        get: function() { return self.GetAsBoolean(); },
+        set: function(v) { self.SetAsBoolean(v); },
+        configurable: true
+      });
+      return this;
+    };
+    this.GetValue = function () {
+      var Result = undefined;
+      var cur = null;
+      if (!(this.FDataSet != null)) return null;
+      if ((this.FDataSet.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FDataSet.FEditBuffer != null)) {
+        Result = this.FDataSet.FEditBuffer[this.FFieldName];
+        return Result;
+      };
+      cur = this.FDataSet.GetCurrent();
+      if ((cur != null) && (cur[this.FFieldName] != undefined)) {
+        Result = cur[this.FFieldName]}
+       else Result = null;
+      return Result;
+    };
+    this.SetValue = function (AValue) {
+      if (!(this.FDataSet != null)) return;
+      if (this.FDataSet.FState === $mod.TDataSetState.dsBrowse) this.FDataSet.Edit();
+      if ((this.FDataSet.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FDataSet.FEditBuffer != null)) {
+        this.FDataSet.FEditBuffer[this.FFieldName] = AValue;
+        this.FDataSet.FModified = true;
+        this.FDataSet.SyncReactiveState();
+      };
+    };
+    this.GetAsString = function () {
+      var Result = "";
+      var v = undefined;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) {
+        Result = ""}
+       else Result = "" + v;
+      return Result;
+    };
+    this.SetAsString = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsInteger = function () {
+      var Result = 0;
+      var v = undefined;
+      var n = 0;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return 0;
+      var parsed = parseInt(v, 10);
+      n = isNaN(parsed) ? 0 : parsed;
+      Result = n;
+      return Result;
+    };
+    this.SetAsInteger = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsFloat = function () {
+      var Result = 0.0;
+      var v = undefined;
+      var d = 0.0;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return 0.0;
+      var parsed = parseFloat(v);
+      d = isNaN(parsed) ? 0.0 : parsed;
+      Result = d;
+      return Result;
+    };
+    this.SetAsFloat = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetAsBoolean = function () {
+      var Result = false;
+      var v = undefined;
+      v = this.GetValue();
+      if ((v == null) || (v == undefined)) return false;
+      Result = Boolean(v === true || v === 'true' || v === 1 || v === '1');
+      return Result;
+    };
+    this.SetAsBoolean = function (AValue) {
+      this.SetValue(AValue);
+    };
+    this.GetIsNull = function () {
+      var Result = false;
+      var v = undefined;
+      v = this.GetValue();
+      Result = (v == null) || (v == undefined) || (("" + v) === "");
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVFields",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FItems = null;
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      this.FItems = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ADataSet) {
+      pas.System.TObject.Create.call(this);
+      this.FDataSet = ADataSet;
+      this.FItems = new Array();
+      return this;
+    };
+    this.Count = function () {
+      var Result = 0;
+      Result = this.FItems.length;
+      return Result;
+    };
+    this.FieldByName = function (AName) {
+      var Result = null;
+      var f = null;
+      f = this.FindField(AName);
+      if (!(f != null)) f = this.AddField(AName,$mod.TFieldType.ftString);
+      Result = f;
+      return Result;
+    };
+    this.FindField = function (AName) {
+      var Result = null;
+      var i = 0;
+      var target = "";
+      var f = null;
+      target = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+      for (var $l = 0, $end = this.FItems.length - 1; $l <= $end; $l++) {
+        i = $l;
+        f = rtl.getObject(this.FItems[i]);
+        if (pas.SysUtils.LowerCase(f.FFieldName) === target) return f;
+      };
+      Result = null;
+      return Result;
+    };
+    this.AddField = function (AName, AType) {
+      var Result = null;
+      var f = null;
+      f = this.FindField(AName);
+      if (f != null) {
+        f.FFieldType = AType;
+        return f;
+      };
+      f = $mod.TBVField.$create("Create$1",[this.FDataSet,AName,AType]);
+      this.FItems.push(f);
+      Result = f;
+      return Result;
+    };
+    this.Item = function (AIndex) {
+      var Result = null;
+      if ((AIndex >= 0) && (AIndex < this.FItems.length)) {
+        Result = rtl.getObject(this.FItems[AIndex])}
+       else Result = null;
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVDataSet",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FFields = null;
+      this.FRecords = null;
+      this.FActiveRecords = null;
+      this.FRecNo = 0;
+      this.FState = 0;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FDelta = null;
+      this.FFilter = "";
+      this.FFiltered = false;
+      this.FSortField = "";
+      this.FSortAscending = false;
+      this.FReactiveState = undefined;
+      this.FModified = false;
+      this.FAfterScroll = null;
+      this.FBeforePost = null;
+      this.FAfterPost = null;
+      this.FBeforeDelete = null;
+      this.FAfterDelete = null;
+    };
+    this.$final = function () {
+      this.FFields = undefined;
+      this.FRecords = undefined;
+      this.FActiveRecords = undefined;
+      this.FEditBuffer = undefined;
+      this.FOriginalBuffer = undefined;
+      this.FDelta = undefined;
+      this.FAfterScroll = undefined;
+      this.FBeforePost = undefined;
+      this.FAfterPost = undefined;
+      this.FBeforeDelete = undefined;
+      this.FAfterDelete = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.SyncReactiveState = function () {
+      var rs = null;
+      var curObj = null;
+      rs = this.FReactiveState;
+      if (!(rs != null)) return;
+      rs["stateStr"] = this.GetStateStr();
+      rs["recNo"] = this.FRecNo;
+      rs["recordCount"] = this.GetRecordCount();
+      rs["bof"] = this.GetBof();
+      rs["eof"] = this.GetEof();
+      rs["isEmpty"] = this.GetIsEmpty();
+      rs["changeCount"] = this.FDelta.length;
+      rs["data"] = this.FActiveRecords;
+      if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
+        rs["current"] = this.FEditBuffer}
+       else {
+        curObj = this.GetActiveRecord(this.FRecNo - 1);
+        rs["current"] = curObj;
+      };
+    };
+    this.RebuildActiveRecords = function () {
+      var q = "";
+      var arr = null;
+      q = pas.SysUtils.LowerCase(pas.SysUtils.Trim(this.FFilter));
+      arr = new Array();
+      var src = this.FRecords || [];
+          var filtered = [];
+          var hasQuery = Boolean(q && q.length > 0);
+      
+          for (var i = 0; i < src.length; i++) {
+            var item = src[i];
+            if (!item) continue;
+            if (!hasQuery) {
+              filtered.push(item);
+            } else {
+              var match = false;
+              var vals = Object.values(item);
+              for (var j = 0; j < vals.length; j++) {
+                if (String(vals[j]).toLowerCase().indexOf(q) !== -1) {
+                  match = true;
+                  break;
+                }
+              }
+              if (match) filtered.push(item);
+            }
+          }
+      
+          var sk = this.FSortField;
+          var asc = this.FSortAscending;
+          if (sk) {
+            filtered.sort(function(a, b) {
+              var va = (a && a[sk] !== undefined) ? a[sk] : '';
+              var vb = (b && b[sk] !== undefined) ? b[sk] : '';
+              if (typeof va === 'number' && typeof vb === 'number') {
+                return asc ? (va - vb) : (vb - va);
+              }
+              var sa = String(va).toLowerCase();
+              var sb = String(vb).toLowerCase();
+              if (sa < sb) return asc ? -1 : 1;
+              if (sa > sb) return asc ? 1 : -1;
+              return 0;
+            });
+          }
+      
+          arr = filtered;
+      this.FActiveRecords = arr;
+      if (this.FActiveRecords.length === 0) {
+        this.FRecNo = 0}
+       else if (this.FRecNo > this.FActiveRecords.length) {
+        this.FRecNo = this.FActiveRecords.length}
+       else if (this.FRecNo < 1) this.FRecNo = 1;
+      this.SyncReactiveState();
+    };
+    this.GetActiveRecord = function (Index0) {
+      var Result = null;
+      if ((Index0 >= 0) && (Index0 < this.FActiveRecords.length)) {
+        Result = this.FActiveRecords[Index0]}
+       else Result = null;
+      return Result;
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.FFields = $mod.TBVFields.$create("Create$1",[this]);
+      this.FRecords = new Array();
+      this.FActiveRecords = new Array();
+      this.FDelta = new Array();
+      this.FRecNo = 0;
+      this.FState = $mod.TDataSetState.dsInactive;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FFilter = "";
+      this.FFiltered = false;
+      this.FSortField = "";
+      this.FSortAscending = true;
+      this.FModified = false;
+      this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
+      this.SyncReactiveState();
+      var self = this;
+      Object.defineProperty(self, 'Current', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.current !== undefined) return self.FReactiveState.current;
+          return self.GetCurrent();
+        }
+      });
+      Object.defineProperty(self, 'Data', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.data !== undefined) return self.FReactiveState.data;
+          return self.FActiveRecords;
+        }
+      });
+      Object.defineProperty(self, 'StateStr', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.stateStr !== undefined) return self.FReactiveState.stateStr;
+          return self.GetStateStr();
+        }
+      });
+      Object.defineProperty(self, 'RecNo', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.recNo !== undefined) return self.FReactiveState.recNo;
+          return self.FRecNo;
+        },
+        set: function(v) {
+          self.FRecNo = v;
+          self.SyncReactiveState();
+        }
+      });
+      Object.defineProperty(self, 'RecordCount', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.recordCount !== undefined) return self.FReactiveState.recordCount;
+          return self.GetRecordCount();
+        }
+      });
+      Object.defineProperty(self, 'Bof', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.bof !== undefined) return self.FReactiveState.bof;
+          return self.GetBof();
+        }
+      });
+      Object.defineProperty(self, 'Eof', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.eof !== undefined) return self.FReactiveState.eof;
+          return self.GetEof();
+        }
+      });
+      Object.defineProperty(self, 'ChangeCount', {
+        get: function() {
+          if (self.FReactiveState && self.FReactiveState.changeCount !== undefined) return self.FReactiveState.changeCount;
+          return self.GetChangeCount();
+        }
+      });
+      return this;
+    };
+    this.GetBof = function () {
+      var Result = false;
+      Result = this.FRecNo <= 1;
+      return Result;
+    };
+    this.GetEof = function () {
+      var Result = false;
+      Result = this.FRecNo >= this.FActiveRecords.length;
+      return Result;
+    };
+    this.GetRecordCount = function () {
+      var Result = 0;
+      Result = this.FActiveRecords.length;
+      return Result;
+    };
+    this.GetIsEmpty = function () {
+      var Result = false;
+      Result = this.FActiveRecords.length === 0;
+      return Result;
+    };
+    this.GetCurrent = function () {
+      var Result = undefined;
+      if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
+        Result = this.FEditBuffer}
+       else Result = this.GetActiveRecord(this.FRecNo - 1);
+      return Result;
+    };
+    this.GetStateStr = function () {
+      var Result = "";
+      var $tmp = this.FState;
+      if ($tmp === $mod.TDataSetState.dsInactive) {
+        Result = "inactive"}
+       else if ($tmp === $mod.TDataSetState.dsBrowse) {
+        Result = "browse"}
+       else if ($tmp === $mod.TDataSetState.dsEdit) {
+        Result = "edit"}
+       else if ($tmp === $mod.TDataSetState.dsInsert) {
+        Result = "insert"}
+       else {
+        Result = "inactive";
+      };
+      return Result;
+    };
+    this.GetChangeCount = function () {
+      var Result = 0;
+      Result = this.FDelta.length;
+      return Result;
+    };
+    this.Destroy = function () {
+      rtl.free(this,"FFields");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.FieldByName = function (AName) {
+      var Result = null;
+      Result = this.FFields.FieldByName(AName);
+      return Result;
+    };
+    this.FindField = function (AName) {
+      var Result = null;
+      Result = this.FFields.FindField(AName);
+      return Result;
+    };
+    this.AddField = function (AName, AType) {
+      var Result = null;
+      Result = this.FFields.AddField(AName,AType);
+      return Result;
+    };
+    this.First = function () {
+      this.CheckBrowseMode();
+      if (this.FActiveRecords.length > 0) {
+        this.FRecNo = 1}
+       else this.FRecNo = 0;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Prior = function () {
+      this.CheckBrowseMode();
+      if (this.FRecNo > 1) this.FRecNo -= 1;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Next = function () {
+      this.CheckBrowseMode();
+      if (this.FRecNo < this.FActiveRecords.length) this.FRecNo += 1;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.Last = function () {
+      this.CheckBrowseMode();
+      if (this.FActiveRecords.length > 0) {
+        this.FRecNo = this.FActiveRecords.length}
+       else this.FRecNo = 0;
+      this.SyncReactiveState();
+      if (this.FAfterScroll != null) this.FAfterScroll(this);
+    };
+    this.CheckBrowseMode = function () {
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) {
+        if (this.FModified) {
+          this.Post()}
+         else this.Cancel();
+      };
+    };
+    this.Append = function () {
+      var obj = null;
+      var i = 0;
+      var f = null;
+      this.CheckBrowseMode();
+      obj = new Object();
+      for (var $l = 0, $end = this.FFields.Count() - 1; $l <= $end; $l++) {
+        i = $l;
+        f = this.FFields.Item(i);
+        var $tmp = f.FFieldType;
+        if ($tmp === $mod.TFieldType.ftInteger) {
+          obj[f.FFieldName] = 0}
+         else if ($tmp === $mod.TFieldType.ftFloat) {
+          obj[f.FFieldName] = 0.0}
+         else if ($tmp === $mod.TFieldType.ftBoolean) {
+          obj[f.FFieldName] = false}
+         else {
+          obj[f.FFieldName] = "";
+        };
+      };
+      this.FEditBuffer = obj;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsInsert;
+      this.FModified = false;
+      this.SyncReactiveState();
+    };
+    this.Insert = function () {
+      this.Append();
+    };
+    this.Edit = function () {
+      var cur = null;
+      var clone = null;
+      if (this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) return;
+      if (this.GetIsEmpty()) {
+        this.Append();
+        return;
+      };
+      cur = this.GetActiveRecord(this.FRecNo - 1);
+      if (!(cur != null)) return;
+      clone = new Object();
+      Object.assign(clone, cur);
+      this.FEditBuffer = clone;
+      this.FOriginalBuffer = cur;
+      this.FState = $mod.TDataSetState.dsEdit;
+      this.FModified = false;
+      this.SyncReactiveState();
+    };
+    this.Post = function () {
+      var deltaItem = null;
+      var targetIdx = 0;
+      var curRec = null;
+      if (!(this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert))) return;
+      if (this.FBeforePost != null) this.FBeforePost(this);
+      deltaItem = new Object();
+      if (this.FState === $mod.TDataSetState.dsInsert) {
+        if (!this.FEditBuffer.id) {
+          var maxId = 0;
+          for (var i = 0; i < this.FRecords.length; i++) {
+            var rid = parseInt(this.FRecords[i].id, 10);
+            if (!isNaN(rid) && rid > maxId) maxId = rid;
+          }
+          this.FEditBuffer.id = maxId + 1;
+        };
+        this.FRecords.push(this.FEditBuffer);
+        deltaItem["action"] = "insert";
+        deltaItem["record"] = this.FEditBuffer;
+        this.FDelta.push(deltaItem);
+        this.RebuildActiveRecords();
+        this.FRecNo = this.FActiveRecords.length;
+      } else if (this.FState === $mod.TDataSetState.dsEdit) {
+        curRec = this.GetActiveRecord(this.FRecNo - 1);
+        targetIdx = this.FRecords.indexOf(curRec);
+        if (targetIdx !== -1) this.FRecords[targetIdx] = this.FEditBuffer;
+        deltaItem["action"] = "update";
+        deltaItem["oldRecord"] = this.FOriginalBuffer;
+        deltaItem["record"] = this.FEditBuffer;
+        this.FDelta.push(deltaItem);
+        this.RebuildActiveRecords();
+      };
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.FModified = false;
+      this.SyncReactiveState();
+      if (this.FAfterPost != null) this.FAfterPost(this);
+    };
+    this.Cancel = function () {
+      if (!(this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert))) return;
+      this.FEditBuffer = null;
+      this.FOriginalBuffer = null;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.FModified = false;
+      this.SyncReactiveState();
+    };
+    this.Delete = function () {
+      var curRec = null;
+      var targetIdx = 0;
+      var deltaItem = null;
+      if (this.GetIsEmpty()) return;
+      if (this.FBeforeDelete != null) this.FBeforeDelete(this);
+      curRec = this.GetActiveRecord(this.FRecNo - 1);
+      if (!(curRec != null)) return;
+      targetIdx = this.FRecords.indexOf(curRec);
+      if (targetIdx !== -1) this.FRecords.splice(targetIdx,1);
+      deltaItem = new Object();
+      deltaItem["action"] = "delete";
+      deltaItem["record"] = curRec;
+      this.FDelta.push(deltaItem);
+      this.RebuildActiveRecords();
+      if (this.FRecNo > this.FActiveRecords.length) this.FRecNo = this.FActiveRecords.length;
+      if ((this.FRecNo === 0) && (this.FActiveRecords.length > 0)) this.FRecNo = 1;
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.SyncReactiveState();
+      if (this.FAfterDelete != null) this.FAfterDelete(this);
+    };
+    this.SetFilter = function (AQuery) {
+      this.FFilter = AQuery;
+      this.FFiltered = pas.SysUtils.Trim(AQuery) !== "";
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.ClearFilter = function () {
+      this.SetFilter("");
+    };
+    this.SortBy = function (AFieldName, Ascending) {
+      this.FSortField = AFieldName;
+      this.FSortAscending = Ascending;
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.Locate = function (AFieldName, AValue) {
+      var Result = false;
+      var i = 0;
+      var targetVal = "";
+      var itemVal = "";
+      var item = null;
+      this.CheckBrowseMode();
+      targetVal = "" + AValue;
+      for (var $l = 0, $end = this.FActiveRecords.length - 1; $l <= $end; $l++) {
+        i = $l;
+        item = this.FActiveRecords[i];
+        if ((item != null) && (item[AFieldName] != undefined)) {
+          itemVal = "" + item[AFieldName];
+          if (itemVal === targetVal) {
+            this.FRecNo = i + 1;
+            this.SyncReactiveState();
+            if (this.FAfterScroll != null) this.FAfterScroll(this);
+            return true;
+          };
+        };
+      };
+      Result = false;
+      return Result;
+    };
+    this.LoadFromData = function (AData) {
+      var keys = null;
+      var i = 0;
+      if (!pas.System.Assigned(AData)) return;
+      this.FRecords = new Array();
+      keys = null;
+      var arr = Array.isArray(AData) ? AData : ((AData && Array.isArray(AData.items)) ? AData.items : [AData]);
+      for (var i = 0; i < arr.length; i++) {
+        this.FRecords.push(Object.assign({}, arr[i]));
+      }
+      if (this.FRecords.length > 0) {
+        keys = Object.keys(this.FRecords[0]);
+      };
+      if ((this.FFields.Count() === 0) && (keys != null)) {
+        for (var $l = 0, $end = keys.length - 1; $l <= $end; $l++) {
+          i = $l;
+          this.FFields.AddField("" + keys[i],$mod.TFieldType.ftString);
+        };
+      };
+      this.FState = $mod.TDataSetState.dsBrowse;
+      this.RebuildActiveRecords();
+      this.First();
+    };
+    this.LoadFromJSON = function (AJsonStr) {
+      var parsed = undefined;
+      if (pas.SysUtils.Trim(AJsonStr) === "") return;
+      try {
+        parsed = JSON.parse(AJsonStr);
+      } catch(e) {
+        parsed = [];
+      };
+      this.LoadFromData(parsed);
+    };
+    this.ToJSON = function () {
+      var Result = "";
+      Result = JSON.stringify(this.FRecords || []);
+      return Result;
+    };
+    this.GetDeltaJSON = function () {
+      var Result = "";
+      Result = JSON.stringify(this.FDelta || []);
+      return Result;
+    };
+    this.ApplyUpdates = function () {
+      this.FDelta.length = 0;
+      this.SyncReactiveState();
+    };
+    this.SaveToStorage = function (AStorageKey) {
+      var json = "";
+      if (pas.SysUtils.Trim(AStorageKey) === "") return;
+      json = this.ToJSON();
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(AStorageKey, json);
+        }
+      } catch(e) {
+        console.warn('[BVDataSet] Failed to save to storage:', e);
+      };
+    };
+    this.LoadFromStorage = function (AStorageKey) {
+      var Result = false;
+      var json = "";
+      var found = false;
+      if (pas.SysUtils.Trim(AStorageKey) === "") return false;
+      found = false;
+      json = "";
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          var val = window.localStorage.getItem(AStorageKey);
+          if (val) {
+            json = val;
+            found = true;
+          }
+        }
+      } catch(e) {
+        found = false;
+      };
+      if (found) {
+        this.LoadFromJSON(json);
+        Result = true;
+      } else Result = false;
+      return Result;
+    };
+  });
+  $mod.$implcode = function () {
+    $impl.RetainDataSetSymbols = function () {
+      var dummyDS = null;
+      var dummyF = null;
+      if (false) {
+        dummyDS = $mod.TBVDataSet.$create("Create$1");
+        dummyDS.FieldByName("");
+        dummyDS.FindField("");
+        dummyDS.AddField("",$mod.TFieldType.ftString);
+        dummyDS.First();
+        dummyDS.Next();
+        dummyDS.Prior();
+        dummyDS.Last();
+        dummyDS.Append();
+        dummyDS.Insert();
+        dummyDS.Edit();
+        dummyDS.Post();
+        dummyDS.Cancel();
+        dummyDS.CheckBrowseMode();
+        dummyDS.FModified = false;
+        dummyDS.Delete();
+        dummyDS.Locate("",null);
+        dummyDS.SetFilter("");
+        dummyDS.ClearFilter();
+        dummyDS.SortBy("",true);
+        dummyDS.SaveToStorage("");
+        dummyDS.LoadFromStorage("");
+        dummyDS.ToJSON();
+        dummyDS.GetDeltaJSON();
+        dummyDS.ApplyUpdates();
+        dummyDS.LoadFromJSON("");
+        dummyDS.GetBof();
+        dummyDS.GetEof();
+        dummyDS.GetRecordCount();
+        dummyDS.GetIsEmpty();
+        dummyDS.GetCurrent();
+        dummyDS.GetStateStr();
+        dummyDS.GetChangeCount();
+        dummyF = dummyDS.FFields.FieldByName("");
+        dummyF.GetValue();
+        dummyF.SetValue(null);
+        dummyF.GetAsString();
+        dummyF.SetAsString("");
+        dummyF.GetAsInteger();
+        dummyF.SetAsInteger(0);
+        dummyF.GetAsFloat();
+        dummyF.SetAsFloat(0.0);
+        dummyF.GetAsBoolean();
+        dummyF.SetAsBoolean(false);
+        dummyF.GetIsNull();
+        dummyF.SetValue(null);
+        dummyF.SetAsString("");
+        dummyF.SetAsInteger(0);
+        dummyF.SetAsFloat(0.0);
+        dummyF.SetAsBoolean(false);
+        dummyDS = rtl.freeLoc(dummyDS);
+      };
+    };
+  };
+  $mod.$init = function () {
+    $impl.RetainDataSetSymbols();
+    if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+    window.__BV_CORE__.dataset = {
+      TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
+      TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
+    };
+  };
+},[]);
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.ShowToast = function (Msg, DurationMs) {
+    try {
+      if (window.__BV_CORE__ && window.__BV_CORE__.ionic && window.__BV_CORE__.ionic.toast) {
+        window.__BV_CORE__.ionic.toast(Msg, DurationMs);
+        return;
+      }
+    } catch(e) {}
+    
+    let el = document.createElement('div');
+    el.className = 'bv-pascal-toast';
+    el.style.position = 'fixed';
+    el.style.bottom = '24px';
+    el.style.right = '24px';
+    el.style.backgroundColor = '#1e293b';
+    el.style.color = '#ffffff';
+    el.style.padding = '12px 20px';
+    el.style.borderRadius = '8px';
+    el.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.2)';
+    el.style.zIndex = '99999';
+    el.style.fontSize = '14px';
+    el.style.fontWeight = '500';
+    el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    el.innerText = Msg;
+    document.body.appendChild(el);
+    setTimeout(function() {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(10px)';
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }, DurationMs);
+  };
+  this.Confirm = function (Msg) {
+    var Result = false;
+    Result = window.confirm(Msg);
+    return Result;
+  };
   this.CallMethod = function (Instance, MethodName) {
     if (Instance && typeof Instance[MethodName] === 'function') {
       Instance[MethodName]();
@@ -5109,6 +6040,15 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
   this.ObjectAssign = function (Target, Source) {
     var Result = undefined;
     Result = Object.assign(Target || {}, Source || {});
+    return Result;
+  };
+  this.JsonParse = function (Str) {
+    var Result = undefined;
+    try {
+      Result = JSON.parse(Str);
+    } catch(e) {
+      Result = null;
+    };
     return Result;
   };
   this.NowTimestampStr = function () {
@@ -5395,8 +6335,193 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils"],function () {
       Obj[PropName] = Value;
     };
   };
-});
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX"],function () {
+  this.NewDataSet = function () {
+    var Result = undefined;
+    var ds = null;
+    ds = pas.BVDataSet.TBVDataSet.$create("Create$1");
+    Result = ds;
+    return Result;
+  };
+  this.DataSetLoad = function (DS, Data) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).LoadFromData(Data)}
+     else {
+      if (DS && typeof DS.LoadFromData === 'function') DS.LoadFromData(Data);
+    };
+  };
+  this.DataSetAppend = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Append()}
+     else {
+      if (DS && typeof DS.Append === 'function') DS.Append();
+    };
+  };
+  this.DataSetEdit = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Edit()}
+     else {
+      if (DS && typeof DS.Edit === 'function') DS.Edit();
+    };
+  };
+  this.DataSetPost = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Post()}
+     else {
+      if (DS && typeof DS.Post === 'function') DS.Post();
+    };
+  };
+  this.DataSetCancel = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Cancel()}
+     else {
+      if (DS && typeof DS.Cancel === 'function') DS.Cancel();
+    };
+  };
+  this.DataSetDelete = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Delete()}
+     else {
+      if (DS && typeof DS.Delete === 'function') DS.Delete();
+    };
+  };
+  this.DataSetFirst = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).First()}
+     else {
+      if (DS && typeof DS.First === 'function') DS.First();
+    };
+  };
+  this.DataSetPrior = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Prior()}
+     else {
+      if (DS && typeof DS.Prior === 'function') DS.Prior();
+    };
+  };
+  this.DataSetNext = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Next()}
+     else {
+      if (DS && typeof DS.Next === 'function') DS.Next();
+    };
+  };
+  this.DataSetLast = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).Last()}
+     else {
+      if (DS && typeof DS.Last === 'function') DS.Last();
+    };
+  };
+  this.DataSetLocate = function (DS, AFieldName, AValue) {
+    var Result = false;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).Locate(AFieldName,AValue)}
+     else {
+      Result = false;
+      if (DS && typeof DS.Locate === 'function') {
+        Result = Boolean(DS.Locate(AFieldName, AValue));
+      };
+    };
+    return Result;
+  };
+  this.DataSetFilter = function (DS, AQuery) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetFilter(AQuery)}
+     else {
+      if (DS && typeof DS.SetFilter === 'function') DS.SetFilter(AQuery);
+    };
+  };
+  this.DataSetSort = function (DS, AFieldName, Ascending) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SortBy(AFieldName,Ascending)}
+     else {
+      if (DS && typeof DS.SortBy === 'function') DS.SortBy(AFieldName, Ascending);
+    };
+  };
+  this.DataSetFieldVal = function (DS, AFieldName) {
+    var Result = undefined;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).FieldByName(AFieldName).GetValue()}
+     else {
+      Result = "";
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var f = DS.FieldByName(AFieldName);
+        if (!f) return;
+        Result = (typeof f.GetAsString === 'function') ? f.GetAsString() : (f.AsString !== undefined ? f.AsString : '');
+      } else if (DS.Current) {
+        Result = DS.Current[AFieldName] !== undefined ? DS.Current[AFieldName] : '';
+      };
+    };
+    return Result;
+  };
+  this.DataSetSetFieldVal = function (DS, AFieldName, AValue) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).FieldByName(AFieldName).SetValue(AValue)}
+     else {
+      if (!DS) return;
+      if (typeof DS.FieldByName === 'function') {
+        var st = (typeof DS.GetStateStr === 'function') ? DS.GetStateStr() : DS.StateStr;
+        if (st === 'browse') DS.Edit();
+        var f = DS.FieldByName(AFieldName);
+        if (f) {
+          if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+          else f.AsString = String(AValue);
+        }
+      } else if (DS.Current) {
+        DS.Current[AFieldName] = AValue;
+      };
+    };
+  };
+  this.DataSetDeltaJSON = function (DS) {
+    var Result = "";
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetDeltaJSON()}
+     else {
+      Result = "[]";
+      if (DS && typeof DS.GetDeltaJSON === 'function') {
+        Result = DS.GetDeltaJSON();
+      };
+    };
+    return Result;
+  };
+  this.DataSetApplyUpdates = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ApplyUpdates()}
+     else {
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+    };
+  };
+  $mod.$implcode = function () {
+    $impl.RetainDXDataSetSymbols = function () {
+      var dummy = undefined;
+      if (false) {
+        dummy = $mod.NewDataSet();
+        $mod.DataSetLoad(dummy,null);
+        $mod.DataSetAppend(dummy);
+        $mod.DataSetEdit(dummy);
+        $mod.DataSetPost(dummy);
+        $mod.DataSetCancel(dummy);
+        $mod.DataSetDelete(dummy);
+        $mod.DataSetFirst(dummy);
+        $mod.DataSetPrior(dummy);
+        $mod.DataSetNext(dummy);
+        $mod.DataSetLast(dummy);
+        $mod.DataSetLocate(dummy,"",null);
+        $mod.DataSetFilter(dummy,"");
+        $mod.DataSetSort(dummy,"",true);
+        $mod.DataSetFieldVal(dummy,"");
+        $mod.DataSetSetFieldVal(dummy,"",null);
+        $mod.DataSetDeltaJSON(dummy);
+        $mod.DataSetApplyUpdates(dummy);
+      };
+    };
+  };
+  $mod.$init = function () {
+    $impl.RetainDXDataSetSymbols();
+  };
+},[]);
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -5763,7 +6888,7 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
     $mod.InitDevTools();
   };
 });
-rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCard = function () {
@@ -5790,7 +6915,7 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("card",comp);
   };
 });
-rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCounter = function () {
@@ -5825,7 +6950,7 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormHeader = function () {
@@ -5855,7 +6980,7 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("form-header",comp);
   };
 });
-rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uInfoCard = function () {
@@ -5881,7 +7006,7 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("info-card",comp);
   };
 });
-rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uAbout = function () {
@@ -6309,7 +7434,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
     };
   };
 });
-rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BlaiseCharts"],function () {
+rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCharts = function () {
@@ -6466,7 +7591,7 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCustomerView = function () {
@@ -6551,7 +7676,143 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("customer-view-page",comp);
   };
 });
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uDatasetView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }   .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["productsDS"] = null;
+      d["searchQuery"] = "";
+      d["deltaJSONStr"] = "[]";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["navFirst"] = function (_this) {
+      pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navPrior"] = function (_this) {
+      pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navNext"] = function (_this) {
+      pas.BVPascalDX.DataSetNext(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navLast"] = function (_this) {
+      pas.BVPascalDX.DataSetLast(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doAppend"] = function (_this) {
+      var ds = undefined;
+      ds = _this["productsDS"];
+      pas.BVPascalDX.DataSetAppend(ds);
+      var nextNum = 1;
+      if (ds && ds.FRecords && ds.FRecords.length) {
+        nextNum = ds.FRecords.length + 1;
+      }
+      if (ds && ds.Current) {
+        ds.Current.title = 'Novo Produto ' + nextNum;
+        ds.Current.category = 'Hardware';
+        ds.Current.price = 99.90;
+        ds.Current.stock = 10;
+      }
+      if (ds) ds.FModified = true;
+      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
+      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha ou confirme em Salvar (Post)",2500);
+      setTimeout(function() {
+        var el = document.querySelector('input[b-field="productsDS.title"]');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+          if (el.select) el.select();
+        }
+      }, 100);
+    };
+    m["doPost"] = function (_this) {
+      pas.BVPascalDX.DataSetPost(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
+    };
+    m["doCancel"] = function (_this) {
+      pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
+    };
+    m["doDelete"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
+        pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
+      };
+    };
+    m["onSelectRow"] = function (_this, row) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["onFieldInput"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doApplyUpdates"] = function (_this) {
+      pas.BVPascalDX.DataSetApplyUpdates(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      pas.BVPascalDX.ShowToast("Deltas sincronizados com sucesso (ApplyUpdates)!",2500);
+    };
+    m["doSaveStorage"] = function (_this) {
+      if (this.productsDS && typeof this.productsDS.SaveToStorage === 'function') {
+        this.productsDS.SaveToStorage('demo_products_dataset');
+      };
+      pas.BVPascalDX.ShowToast("Dados salvos no LocalStorage com sucesso!",2500);
+    };
+    m["doLoadStorage"] = function (_this) {
+      var loaded = false;
+      loaded = false;
+      if (this.productsDS && typeof this.productsDS.LoadFromStorage === 'function') {
+        loaded = this.productsDS.LoadFromStorage('demo_products_dataset');
+      };
+      if (loaded) {
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        pas.BVPascalDX.ShowToast("Dados restaurados do LocalStorage com sucesso!",2500);
+      } else pas.BVPascalDX.ShowToast("Nenhum dado salvo anteriormente no LocalStorage.",2500);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var mockData = "";
+      if (!_this) _this = this;
+      _this["productsDS"] = pas.BVPascalDX.NewDataSet();
+      mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
+      pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["stateBadgeClass"] = function (_this) {
+      var Result = undefined;
+      var ds = this.productsDS;
+      if (!ds) return 'badge-secondary';
+      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
+      if (st === 'insert') return 'badge-warning';
+      if (st === 'edit') return 'badge-danger';
+      if (st === 'browse') return 'badge-success';
+      return 'badge-secondary';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("dataset-view-page",comp);
+    pas.BVComponents.RegisterComponent("data-set-view-page",comp);
+  };
+});
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormulario = function () {
@@ -6617,7 +7878,7 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("formulario-page",comp);
   };
 });
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uHome = function () {
@@ -6647,7 +7908,7 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("home-page",comp);
   };
 });
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVRouting"],function () {
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLibBootstrap = function () {
@@ -6750,7 +8011,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
   };
 });
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLoginView = function () {
@@ -6795,7 +8056,7 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uMobileView = function () {
@@ -6866,7 +8127,7 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
   };
 });
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProductView = function () {
@@ -6951,7 +8212,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("product-view-page",comp);
   };
 });
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProFeatures = function () {
@@ -7106,7 +8367,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
-rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uShowcase = function () {
@@ -7144,7 +8405,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uUserProfile = function () {
@@ -7180,7 +8441,7 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
   };
 });
-rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBarChart = function () {
@@ -7209,7 +8470,7 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBubbleChart = function () {
@@ -7238,7 +8499,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
   };
 });
-rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVChart = function () {
@@ -7355,7 +8616,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
-rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDoughnutChart = function () {
@@ -7384,7 +8645,7 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
   };
 });
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVLineChart = function () {
@@ -7413,7 +8674,7 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-line-chart",comp);
   };
 });
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPieChart = function () {
@@ -7442,7 +8703,7 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
   };
 });
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPolarAreaChart = function () {
@@ -7471,7 +8732,7 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
-rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRadarChart = function () {
@@ -7500,7 +8761,7 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVScatterChart = function () {
@@ -7529,7 +8790,7 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAccordion = function () {
@@ -7565,7 +8826,7 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
   };
 });
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAlert = function () {
@@ -7598,7 +8859,7 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-alert",comp);
   };
 });
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBadge = function () {
@@ -7629,7 +8890,7 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNav = function () {
@@ -7642,7 +8903,7 @@ rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
   };
 });
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNavItem = function () {
@@ -7704,7 +8965,7 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
   };
 });
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumb = function () {
@@ -7717,7 +8978,7 @@ rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
   };
 });
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumbItem = function () {
@@ -7743,7 +9004,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
   };
 });
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBtn = function () {
@@ -7786,7 +9047,7 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-btn",comp);
   };
 });
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCard = function () {
@@ -7809,7 +9070,7 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-card",comp);
   };
 });
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCol = function () {
@@ -7850,7 +9111,7 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-col",comp);
   };
 });
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVContainer = function () {
@@ -7872,28 +9133,31 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-container",comp);
   };
 });
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDataGrid = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in columns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems">' + '          <td b-for="col in columns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["items"] = new Array();
-      d["columns"] = new Array();
       d["searchQuery"] = "";
       d["sortKey"] = "";
       d["sortAsc"] = true;
       d["currentPage"] = 1;
       d["pageSize"] = 5;
+      d["selectedRow"] = null;
       Result = d;
       return Result;
     };
+    comp["props"] = new Array();
+    comp["props"].push("dataset");
+    comp["props"].push("items");
+    comp["props"].push("columns");
     m = new Object();
     m["handleSearch"] = function (_this) {
       _this["currentPage"] = 1;
@@ -7912,23 +9176,87 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     m["nextPage"] = function (_this) {
       if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
     };
+    m["selectRow"] = function (_this, row) {
+      var ds = this.dataset;
+      if (ds && row) {
+        if (row.id !== undefined && typeof ds.Locate === 'function') {
+          ds.Locate('id', row.id);
+        } else if (typeof ds.Locate === 'function') {
+          var keys = Object.keys(row);
+          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+        }
+        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
+      }
+      this.selectedRow = row;
+      if (typeof this.$emit === 'function') {
+        this.$emit('row-select', row);
+      };
+    };
     comp["methods"] = m;
     comp["computed"] = new Object();
+    comp["computed"]["resolvedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds)) return ds;
+      }
+      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        return this.columns;
+      }
+      var ds = this.dataset;
+      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+        return ds.Fields.ToArray();
+      }
+      var list = this.resolvedItems;
+      if (list && list.length > 0 && typeof list[0] === 'object') {
+        return Object.keys(list[0]).map(function(k) {
+          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+        });
+      }
+      return [];
+      return Result;
+    };
     comp["computed"]["totalItems"] = function (_this) {
       var Result = undefined;
-      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
       return Result;
     };
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      let list = this.items || [];
+      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
       let q = (this.searchQuery || '').toLowerCase();
-      if (!q) return list;
-      return list.filter(function(item) {
-        return Object.values(item).some(function(v) {
-          return String(v).toLowerCase().indexOf(q) !== -1;
+      if (q) {
+        list = list.filter(function(item) {
+          return Object.values(item).some(function(v) {
+            return String(v).toLowerCase().indexOf(q) !== -1;
+          });
         });
-      });
+      }
+      let sk = this.sortKey;
+      let asc = this.sortAsc;
+      if (sk) {
+        list.sort(function(a, b) {
+          let va = (a && a[sk] !== undefined) ? a[sk] : '';
+          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+          if (typeof va === 'number' && typeof vb === 'number') {
+            return asc ? (va - vb) : (vb - va);
+          }
+          let sa = String(va).toLowerCase();
+          let sb = String(vb).toLowerCase();
+          if (sa < sb) return asc ? -1 : 1;
+          if (sa > sb) return asc ? 1 : -1;
+          return 0;
+        });
+      }
+      return list;
       return Result;
     };
     comp["computed"]["totalPages"] = function (_this) {
@@ -7939,6 +9267,19 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     comp["computed"]["pagedItems"] = function (_this) {
       var Result = undefined;
+      var ds = this.dataset;
+      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+        var recNo = ds.RecNo;
+        if (this._lastRecNo === undefined) {
+          this._lastRecNo = recNo;
+        } else if (recNo !== this._lastRecNo) {
+          this._lastRecNo = recNo;
+          var targetPage = Math.ceil(recNo / this.pageSize);
+          if (targetPage > 0 && targetPage !== this.currentPage) {
+            this.currentPage = targetPage;
+          }
+        }
+      }
       let list = this.filteredItems || [];
       let start = (this.currentPage - 1) * this.pageSize;
       return list.slice(start, start + this.pageSize);
@@ -7948,7 +9289,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
 });
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDrawer = function () {
@@ -8006,7 +9347,7 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-drawer",comp);
   };
 });
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVFormSelect = function () {
@@ -8035,7 +9376,7 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-form-select",comp);
   };
 });
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIcon = function () {
@@ -8058,7 +9399,7 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-icon",comp);
   };
 });
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInput = function () {
@@ -8089,7 +9430,7 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-input",comp);
   };
 });
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInputGroup = function () {
@@ -8119,7 +9460,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-input-group",comp);
   };
 });
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroup = function () {
@@ -8132,7 +9473,7 @@ rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-list-group",comp);
   };
 });
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroupItem = function () {
@@ -8166,7 +9507,7 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVModal = function () {
@@ -8243,7 +9584,7 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavbar = function () {
@@ -8265,7 +9606,7 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
   };
 });
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavItem = function () {
@@ -8299,7 +9640,7 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-nav-item",comp);
   };
 });
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPagination = function () {
@@ -8336,7 +9677,7 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVProgress = function () {
@@ -8378,7 +9719,7 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRow = function () {
@@ -8422,7 +9763,7 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-row",comp);
   };
 });
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVSpinner = function () {
@@ -8445,7 +9786,7 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
   };
 });
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTab = function () {
@@ -8495,7 +9836,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTabs = function () {
@@ -8555,7 +9896,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-tabs",comp);
   };
 });
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVToast = function () {
@@ -8606,7 +9947,7 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonApp = function () {
@@ -8635,7 +9976,7 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-ion-app",comp);
   };
 });
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonBadge = function () {
@@ -8658,7 +9999,7 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
   };
 });
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonButton = function () {
@@ -8699,7 +10040,7 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonCard = function () {
@@ -8722,7 +10063,7 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
   };
 });
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonContent = function () {
@@ -8744,7 +10085,7 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
   };
 });
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonHeader = function () {
@@ -8757,7 +10098,7 @@ rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-header",comp);
   };
 });
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonItem = function () {
@@ -8826,7 +10167,7 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-item",comp);
   };
 });
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonList = function () {
@@ -8848,7 +10189,7 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
   };
 });
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabBar = function () {
@@ -8861,7 +10202,7 @@ rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
   };
 });
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabButton = function () {
@@ -8888,7 +10229,7 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
   };
 });
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabs = function () {
@@ -8901,7 +10242,7 @@ rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
   };
 });
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTitle = function () {
@@ -8923,7 +10264,7 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
   };
 });
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonToolbar = function () {
@@ -8936,7 +10277,7 @@ rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
   };
 });
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeSelect = function () {
@@ -8958,7 +10299,7 @@ rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-select",comp);
   };
 });
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX"],function () {
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeToggle = function () {
@@ -8976,7 +10317,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -9017,6 +10358,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uCharts.Register_uCharts();
     console.log("[Init] Registering uCustomerView...");
     pas.uCustomerView.Register_uCustomerView();
+    console.log("[Init] Registering uDatasetView...");
+    pas.uDatasetView.Register_uDatasetView();
     console.log("[Init] Registering uFormulario...");
     pas.uFormulario.Register_uFormulario();
     console.log("[Init] Registering uHome...");
@@ -9142,7 +10485,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.0</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.0</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();
@@ -9193,6 +10536,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     r = new Object();
     r["path"] = "/products";
     r["component"] = "product-view-page";
+    routesArr.push(r);
+    r = new Object();
+    r["path"] = "/dataset";
+    r["component"] = "dataset-view-page";
     routesArr.push(r);
     r = new Object();
     r["path"] = "/mobile";

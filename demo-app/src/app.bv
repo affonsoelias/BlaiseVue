@@ -6,6 +6,7 @@
         <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>
         <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>
+        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>
         <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>
         <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t('nav.home') }}</a>
         <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t('nav.about') }}</a>
@@ -27,6 +28,7 @@
       <div class="nav-links">
         <a href="#/customers">📦 Customers</a>
         <a href="#/products">📦 Products</a>
+        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>
         <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>
         <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Entrar' }}</a>
         <a href="#/">{{ $t('nav.home') }}</a>
@@ -143,6 +145,7 @@
       '/login': 'login-view-page';
       '/customers': 'customer-view-page';
       '/products': 'product-view-page';
+      '/dataset': 'dataset-view-page';
       '/mobile': 'mobile-view-page';
       '/': 'home-page';
       '/about': 'about-page';

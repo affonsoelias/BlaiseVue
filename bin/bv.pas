@@ -1086,7 +1086,7 @@ function GenerateComponentUnit(const UnitName, TagName, BVFileName: string; cons
 var
   UsesLine: string;
 begin
-  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX';
+  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet';
   if Parsed.HasRouter then
     UsesLine := UsesLine + ', BVRouting';
   if Parsed.ScriptUses <> '' then
@@ -1132,6 +1132,10 @@ begin
     '  RegisterComponent(''' + TagName + ''', comp);' + #10;
   if TagName = 'bv-data-grid' then
     Result := Result + '  RegisterComponent(''bv-datagrid'', comp);' + #10;
+  if TagName = 'data-set-view-page' then
+    Result := Result + '  RegisterComponent(''dataset-view-page'', comp);' + #10;
+  if TagName = 'dataset-view-page' then
+    Result := Result + '  RegisterComponent(''data-set-view-page'', comp);' + #10;
   Result := Result +
     'end;' + #10 +
     #10 +
@@ -1147,7 +1151,7 @@ var
 begin
   UniqueUnits := TStringList.Create;
   try
-    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX';
+    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet';
     if Parsed.HasRouter then
       UsesLine := UsesLine + ', BVRouting';
     if Parsed.ScriptUses <> '' then

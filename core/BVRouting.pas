@@ -447,7 +447,9 @@ begin
     window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
 
     let stopEffect = window.__BV_CORE__.effect(function() {
-       let dummy = JSON.stringify(pRef);
+       try {
+         Object.keys(pRef).forEach(function(k) { let _v = pRef[k]; });
+       } catch(e) {}
        if (CompOpt.updated) CompOpt.updated.call(pRef, pRef);
     });
 

@@ -12,7 +12,7 @@ unit BlaiseVue;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient, BVAuth, BlaiseIonic, BVPascalDX;
+uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient, BVAuth, BlaiseIonic, BVPascalDX, BVDataSet;
 
 type
   { 
