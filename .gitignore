@@ -35,6 +35,7 @@ bin/lib/
 # ⚙️ Embedded Tools & Resources
 temp/
 obj/
+*.running
 
 # Ensure essential tools in pas2js/ and vendor/ are tracked!
 !pas2js/
