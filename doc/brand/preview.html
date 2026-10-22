@@ -3,26 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlaiseVue: O Conceito Clássico da Mão e Pena Branca</title>
+  <title>BlaiseVue: A Mão Sombra & A Pena Branca</title>
   <style>
     :root {
-      --bg-primary: #0b0f19;
-      --bg-secondary: #131b2e;
-      --card-bg: #1e293b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-cyan: #00d2ff;
-      --accent-emerald: #00e676;
-      --border-color: #334155;
-    }
-
-    body.light-mode {
-      --bg-primary: #f8fafc;
-      --bg-secondary: #f1f5f9;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #0f172a;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
+      --dark-card: #0b0f19;
     }
 
     * {
@@ -33,255 +23,183 @@
     }
 
     body {
-      background-color: var(--bg-primary);
+      background-color: var(--bg-secondary);
       color: var(--text-main);
-      padding: 2.5rem;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      padding: 3rem 2rem;
     }
 
     header {
-      max-width: 1280px;
+      max-width: 1200px;
       margin: 0 auto 3rem auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 1.5rem;
+      text-align: center;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 2rem;
     }
 
     .brand-title h1 {
-      font-size: 2.3rem;
-      font-weight: 800;
+      font-size: 2.6rem;
+      font-weight: 900;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #ffffff, #cbd5e1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #000000;
+      font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
     .brand-title p {
       color: var(--text-muted);
-      margin-top: 0.3rem;
-      font-size: 1rem;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
     }
 
-    .controls button {
-      background: var(--card-bg);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s;
+    /* Hero Showcase: A Mão Sombra e Pena Branca */
+    .showcase-container {
+      max-width: 1200px;
+      margin: 0 auto 3.5rem auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
     }
 
-    .controls button:hover {
-      border-color: #cbd5e1;
-    }
-
-    .section-title {
-      max-width: 1280px;
-      margin: 2.5rem auto 1.5rem auto;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    .section-title h2 {
-      font-size: 1.6rem;
-      font-weight: 700;
-    }
-
-    /* Classical Hero Showcase */
-    .classic-hero {
-      max-width: 1280px;
-      margin: 0 auto 3rem auto;
-      background: var(--card-bg);
+    .art-card {
+      background: #ffffff;
       border: 1px solid var(--border-color);
       border-radius: 20px;
       padding: 2.5rem;
-      display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 3rem;
-      align-items: center;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .classic-img-box {
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-      background: #000;
-    }
-
-    .classic-img-box img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .classic-desc h2 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      color: var(--text-main);
-      font-family: Georgia, 'Times New Roman', Times, serif;
-    }
-
-    .classic-desc p {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-
-    .classic-features {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-
-    .classic-features li {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      font-size: 0.95rem;
-      color: var(--text-main);
-    }
-
-    .classic-features li span {
-      color: #cbd5e1;
-      font-weight: bold;
-    }
-
-    .grid-concepts {
-      max-width: 1280px;
-      margin: 0 auto 3rem auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2rem;
-    }
-
-    .concept-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
       transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .concept-card:hover {
+    .art-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
     }
 
-    .logo-container {
-      width: 220px;
-      height: 220px;
+    .badge {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 1.5rem;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .img-box {
+      width: 100%;
+      max-width: 380px;
+      height: 380px;
+      border-radius: 16px;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.02);
     }
 
-    .logo-container img, .logo-container svg {
+    .img-box img, .img-box svg {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
 
-    .concept-card h3 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-      text-align: center;
+    .art-card h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.6rem;
       font-family: Georgia, 'Times New Roman', Times, serif;
-    }
-
-    .concept-card p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      line-height: 1.5;
       text-align: center;
-      margin-bottom: 1.2rem;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 0.35rem 0.85rem;
-      border-radius: 9999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 1rem;
+    .art-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      text-align: center;
     }
 
-    .badge-classic {
-      background: rgba(255, 255, 255, 0.1);
-      color: #f8fafc;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* Scaling / Favicon simulation section */
+    /* Scaling section */
     .scale-section {
-      max-width: 1280px;
-      margin: 0 auto 3rem auto;
-      background: var(--card-bg);
+      max-width: 1200px;
+      margin: 0 auto 3.5rem auto;
+      background: #ffffff;
       border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 2rem;
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .scale-section h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
     .scale-row {
       display: flex;
       align-items: center;
-      gap: 2.5rem;
+      gap: 3rem;
       flex-wrap: wrap;
       margin-top: 1.5rem;
-      padding: 1.5rem;
-      background: var(--bg-secondary);
-      border-radius: 12px;
+      padding: 2rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
     }
 
     .scale-box {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.8rem;
     }
 
     .scale-box span {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--text-muted);
     }
 
-    /* Header banner preview */
+    /* Banner preview */
     .banner-preview {
-      max-width: 1280px;
-      margin: 0 auto 3rem auto;
-      background: #0f172a;
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #000000;
+      border-radius: 20px;
+      padding: 3rem 4rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 2.5rem;
+      gap: 3rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
     }
 
-    .banner-preview img {
-      width: 110px;
-      height: 110px;
+    .banner-preview .logo-badge {
+      width: 120px;
+      height: 120px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .banner-preview .logo-badge img {
+      width: 100%;
+      height: 100%;
     }
 
     .banner-text h2 {
-      font-size: 2.6rem;
+      font-size: 2.8rem;
       font-weight: 900;
       letter-spacing: 2px;
       color: #ffffff;
@@ -291,8 +209,8 @@
     .banner-text p {
       color: #94a3b8;
       font-size: 1.15rem;
-      margin-top: 0.3rem;
-      letter-spacing: 1px;
+      margin-top: 0.4rem;
+      letter-spacing: 1.5px;
     }
   </style>
 </head>
@@ -300,97 +218,77 @@
 
   <header>
     <div class="brand-title">
-      <h1>🖋️ BlaiseVue: A Mão Escura & A Pena Branca</h1>
-      <p>Estética clássica e atemporal inspirada nas gravuras e retratos do século XVII de Blaise Pascal</p>
-    </div>
-    <div class="controls">
-      <button onclick="toggleTheme()">🌓 Alternar Tema (Claro / Escuro)</button>
+      <h1>BLAISEVUE</h1>
+      <p>Conceito Minimalista: Mão Sombra com Pena Branca sobre Fundo Branco</p>
     </div>
   </header>
 
-  <!-- HERO CLÁSSICO: Gravura em Nanquim do Século XVII -->
-  <div class="classic-hero">
-    <div class="classic-img-box">
-      <img src="blaise-classic-engraving.jpg" alt="Gravura Clássica: Mão Escura Segurando Pena Branca">
-    </div>
-    <div class="classic-desc">
-      <span class="badge badge-classic">Gravura Clássica em Nanquim</span>
-      <h2>A Mão Escura & A Pena Branca</h2>
+  <!-- Grade de Destaque -->
+  <div class="showcase-container">
+
+    <!-- Card 1: Vetor SVG Minimalista -->
+    <div class="art-card">
+      <span class="badge">Vetor SVG Minimalista (Puro)</span>
+      <div class="img-box">
+        <img src="logo-shadow-hand-quill.svg" alt="Vetor Mão Sombra e Pena Branca">
+      </div>
+      <h2>1. O Vetor Silhueta & Contorno</h2>
       <p>
-        Exatamente como nos retratos a óleo e gravuras em metal do século XVII: a <strong>mão escura com hachuras clássicas</strong> segurando com serenidade a <strong>pena branca luminosa</strong> sobre pergaminho. Sem efeitos futuristas ou neons — pura arte gráfica atemporal.
+        Mão em <strong>preto sólido sem expressão (silhueta/sombra pura)</strong>, segurando a <strong>pena branca simplificada</strong> com <strong>contorno de contraste em preto espesso</strong> sobre fundo branco cristalino.
       </p>
-      <ul class="classic-features">
-        <li><span>✦</span> <strong>Contraste Absoluto:</strong> A silhueta da mão escura destaca imediatamente o branco puro e os detalhes da pena.</li>
-        <li><span>✦</span> <strong>Elegância de Livro Antigo:</strong> Remete aos manuscritos originais de Blaise Pascal (<em>Pensées</em> e <em>Lettres Provinciales</em>).</li>
-        <li><span>✦</span> <strong>Nobreza Editorial:</strong> Uma marca com peso de universidade clássica, alfarrábio e tipografia de alto padrão.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">
-    <h2>✒️ Versões Vetoriais do Selo Oficial (SVG)</h2>
-  </div>
-
-  <div class="grid-concepts">
-
-    <!-- Vetor 1: Medalhão Claro / Pergaminho -->
-    <div class="concept-card">
-      <span class="badge badge-classic">Versão Papel / Selo Claro</span>
-      <div class="logo-container">
-        <img src="logo-classic-quill.svg" alt="Selo Clássico Fundo Claro">
-      </div>
-      <h3>Selo Medalhão (Fundo Claro)</h3>
-      <p>Mão em preto profundo com punho de camisa clássica do século XVII, segurando a pena branca com ponta de tinteiro sobre medalhão de papel marfim.</p>
     </div>
 
-    <!-- Vetor 2: Medalhão Escuro / Noite -->
-    <div class="concept-card">
-      <span class="badge badge-classic">Versão Noturna / Dark Mode</span>
-      <div class="logo-container">
-        <img src="logo-classic-quill-dark.svg" alt="Selo Clássico Fundo Escuro">
+    <!-- Card 2: Emblema Gráfico Gerado -->
+    <div class="art-card">
+      <span class="badge">Arte Gráfica & Emblema</span>
+      <div class="img-box">
+        <img src="quill-shadow-hand-white.jpg" alt="Emblema Gráfico Mão Sombra">
       </div>
-      <h3>Selo Medalhão (Fundo Escuro)</h3>
-      <p>Mão em preto grafite com contornos prateados e punho rendado branco, segurando a pena branca que brilha com contraste perfeito.</p>
+      <h2>2. O Emblema Gráfico Clássico</h2>
+      <p>
+        Renderização com contornos fluídos inspirados no retrato de Pascal, com a mão em sombra escura homogênea e a pena branca destacada com borda de nanquim.
+      </p>
     </div>
 
   </div>
 
   <!-- Teste de Escala & Favicon -->
   <div class="scale-section">
-    <h2>🔍 Teste de Escala do Selo Clássico</h2>
+    <h2>🔍 Teste de Escala em Fundo Branco (Vetor SVG)</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      A silhueta preta com o contorno da pena branca garante contraste imediato e reconhecimento visual instantâneo em qualquer dimensão:
+    </p>
+
     <div class="scale-row">
       <div class="scale-box">
-        <img src="logo-classic-quill.svg" width="128" height="128" alt="128px">
-        <span>128x128 (Desktop / Documentação)</span>
+        <img src="logo-shadow-hand-quill.svg" width="128" height="128" alt="128px" style="border: 1px solid #e2e8f0; border-radius: 12px;">
+        <span>128x128 (Desktop / Docs)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-classic-quill.svg" width="64" height="64" alt="64px">
+        <img src="logo-shadow-hand-quill.svg" width="64" height="64" alt="64px" style="border: 1px solid #e2e8f0; border-radius: 8px;">
         <span>64x64 (Extensão VS Code)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-classic-quill.svg" width="32" height="32" alt="32px">
+        <img src="logo-shadow-hand-quill.svg" width="32" height="32" alt="32px" style="border: 1px solid #e2e8f0; border-radius: 6px;">
         <span>32x32 (App Icon)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-classic-quill.svg" width="16" height="16" alt="16px">
+        <img src="logo-shadow-hand-quill.svg" width="16" height="16" alt="16px" style="border: 1px solid #e2e8f0; border-radius: 4px;">
         <span>16x16 (Aba Favicon)</span>
       </div>
     </div>
   </div>
 
-  <!-- Banner Oficial Clássico -->
+  <!-- Simulação de Banner Oficial no GitHub -->
   <div class="banner-preview">
-    <img src="logo-classic-quill-dark.svg" alt="BlaiseVue Seal">
+    <div class="logo-badge">
+      <img src="logo-shadow-hand-quill.svg" alt="BlaiseVue Logo">
+    </div>
     <div class="banner-text">
       <h2>BLAISEVUE</h2>
       <p>THE OBJECT PASCAL REACTIVE FRAMEWORK</p>
     </div>
   </div>
 
-  <script>
-    function toggleTheme() {
-      document.body.classList.toggle('light-mode');
-    }
-  </script>
 </body>
 </html>

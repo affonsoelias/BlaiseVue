@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Clean Pure White Background -->
+  <rect width="512" height="512" rx="32" fill="#FFFFFF" />
+
+  <g transform="translate(10, 10)">
+    <!-- 1. BACK FINGERS / REST OF HAND (SOLID BLACK SHADOW) -->
+    <!-- Middle, Ring, Pinky curled underneath & Wrist -->
+    <path d="M 440, 410 
+             L 370, 395 
+             C 320, 375 280, 360 250, 370 
+             C 230, 375 220, 390 230, 410 
+             C 240, 430 265, 435 285, 430 
+             L 260, 445 
+             C 240, 455 220, 445 210, 425 
+             C 200, 405 205, 385 215, 365 
+             L 165, 375 
+             C 140, 385 130, 405 140, 425 
+             C 150, 445 175, 455 205, 450 
+             L 240, 455 
+             C 290, 465 370, 460 440, 450 Z" 
+          fill="#000000" />
+
+    <!-- 2. THE WHITE FEATHER QUILL (WITH BOLD BLACK CONTRAST OUTLINE) -->
+    <!-- Feather Silhouette (Pure White with Bold Black Border) -->
+    <path d="M 115, 425 
+             L 140, 370 
+             L 220, 260 
+             C 245, 215 280, 160 330, 105 
+             C 365, 65 425, 45 450, 60 
+             C 455, 95 410, 155 365, 205 
+             L 345, 200 
+             L 360, 225 
+             L 330, 235 
+             L 345, 260 
+             L 290, 305 
+             L 255, 310 
+             L 200, 365 
+             L 155, 395 Z" 
+          fill="#FFFFFF" 
+          stroke="#000000" 
+          stroke-width="7" 
+          stroke-linejoin="round" 
+          stroke-linecap="round" />
+
+    <!-- Left Vane Accent Notches -->
+    <path d="M 270, 205 L 245, 220 L 265, 228" fill="#FFFFFF" stroke="#000000" stroke-width="5" stroke-linejoin="round" />
+    <path d="M 225, 270 L 205, 285 L 222, 292" fill="#FFFFFF" stroke="#000000" stroke-width="5" stroke-linejoin="round" />
+
+    <!-- Center Feather Shaft (Rachis da Pena em Preto) -->
+    <path d="M 115, 425 L 435, 65" stroke="#000000" stroke-width="6" stroke-linecap="round" />
+
+    <!-- Stylized Feather Inner Barbs (Simple, Clean, Minimalist Black Lines) -->
+    <g stroke="#000000" stroke-width="3" stroke-linecap="round">
+      <line x1="330" y1="120" x2="380" y2="90" />
+      <line x1="345" y1="145" x2="400" y2="115" />
+      <line x1="340" y1="180" x2="385" y2="155" />
+      <line x1="315" y1="215" x2="355" y2="195" />
+      <line x1="285" y1="250" x2="320" y2="235" />
+      
+      <!-- Left Vane minimal lines -->
+      <line x1="290" y1="170" x2="260" y2="160" />
+      <line x1="250" y1="225" x2="225" y2="215" />
+    </g>
+
+    <!-- Metal Nib Tip (Ponta de Tinteiro) -->
+    <polygon points="115,425 128,390 102,402" fill="#FFFFFF" stroke="#000000" stroke-width="4.5" />
+    <line x1="115" y1="425" x2="120" y2="406" stroke="#000000" stroke-width="3" />
+    <circle cx="112" cy="430" r="4" fill="#000000" />
+
+    <!-- 3. FOREGROUND FINGERS (SOLID BLACK SHADOW SILHOUETTE) -->
+    <!-- Index Finger (Curved smoothly over the quill shaft) -->
+    <path d="M 330, 350 
+             C 300, 310 260, 275 220, 260 
+             C 185, 245 150, 255 135, 280 
+             C 125, 300 135, 325 160, 345 
+             C 185, 365 220, 375 240, 370 
+             C 270, 365 300, 355 330, 350 Z" 
+          fill="#000000" />
+
+    <!-- Thumb (Curving firmly from lower palm and pressing against the white quill) -->
+    <path d="M 300, 420 
+             C 260, 410 215, 380 180, 350 
+             C 165, 340 150, 345 155, 365 
+             C 160, 385 185, 415 215, 425 
+             C 245, 435 280, 430 300, 420 Z" 
+          fill="#000000" />
+
+    <!-- Forearm / Wrist Continuation -->
+    <path d="M 320, 350 
+             L 440, 390 
+             L 440, 450 
+             L 300, 420 Z" 
+          fill="#000000" />
+
+    <!-- Elegant Separator Slit between Thumb and Index (Linha de Espaço Branco Fina) -->
+    <path d="M 235, 370 C 215, 368 185, 352 165, 348" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" />
+  </g>
+</svg>
