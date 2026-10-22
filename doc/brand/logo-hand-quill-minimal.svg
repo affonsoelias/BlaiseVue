@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradient for Continuous Line Art -->
+    <linearGradient id="lineArtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <filter id="glowLine" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <g filter="url(#glowLine)">
+    <!-- Continuous Minimalist Line Art: The Hand of Blaise Writing the "V" -->
+    <!-- The Hand & Quill Silhouette formed by flowing lines -->
+    <!-- Wrist & Forearm -->
+    <path d="M 100, 430 
+             C 140, 410 180, 395 210, 390 
+             C 230, 385 245, 370 250, 345 
+             C 255, 320 235, 305 220, 315 
+             C 205, 325 200, 345 205, 365 
+             C 210, 380 230, 395 240, 400" 
+          fill="none" 
+          stroke="#E2E8F0" 
+          stroke-width="7" 
+          stroke-linecap="round" />
+
+    <!-- The Feather Quill (Slanted 45 degrees) -->
+    <path d="M 235, 410 
+             L 360, 150 
+             C 380, 110 420, 90 440, 105 
+             C 445, 130 420, 175 380, 215 
+             L 285, 310" 
+          fill="none" 
+          stroke="url(#lineArtGrad)" 
+          stroke-width="8" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- Quill Barbs Minimal Strokes -->
+    <path d="M 370, 140 C 400, 145 420, 155 410, 170" 
+          fill="none" stroke="#00D2FF" stroke-width="5" stroke-linecap="round" />
+    <path d="M 345, 185 C 375, 195 395, 205 380, 220" 
+          fill="none" stroke="#00D2FF" stroke-width="5" stroke-linecap="round" />
+
+    <!-- The Great Reactive 'V' Stroke Drawn by the Quill -->
+    <path d="M 140, 280 
+             L 235, 410 
+             L 390, 220" 
+          fill="none" 
+          stroke="url(#lineArtGrad)" 
+          stroke-width="12" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- Glowing Point of Contact -->
+    <circle cx="235" cy="410" r="9" fill="#FFFFFF" stroke="#00E676" stroke-width="4" />
+  </g>
+</svg>

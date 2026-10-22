@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlaiseVue: Coleção Oficial da Pena Digital</title>
+  <title>BlaiseVue: Identidade Visual & A Mão de Pascal</title>
   <style>
     :root {
       --bg-primary: #0b0f19;
@@ -82,7 +82,7 @@
 
     .section-title {
       max-width: 1280px;
-      margin: 2rem auto 1.5rem auto;
+      margin: 2.5rem auto 1.5rem auto;
       display: flex;
       align-items: center;
       gap: 0.8rem;
@@ -91,6 +91,71 @@
     .section-title h2 {
       font-size: 1.6rem;
       font-weight: 700;
+    }
+
+    /* Hero Showcase: A Mão de Pascal */
+    .hero-showcase {
+      max-width: 1280px;
+      margin: 0 auto 3rem auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      align-items: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-img-box {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.2);
+    }
+
+    .hero-img-box img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .hero-desc h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .hero-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.95rem;
+      color: var(--text-main);
+    }
+
+    .hero-features li span {
+      color: var(--accent-emerald);
+      font-weight: bold;
     }
 
     .grid-concepts {
@@ -110,7 +175,6 @@
       flex-direction: column;
       align-items: center;
       transition: transform 0.2s, box-shadow 0.2s;
-      position: relative;
     }
 
     .concept-card:hover {
@@ -240,151 +304,111 @@
 
   <header>
     <div class="brand-title">
-      <h1>✒️ BlaiseVue: Coleção Especial "A Pena Digital"</h1>
-      <p>Exploração das variações da pena de escrita de Blaise Pascal com o 'V' reativo da Web moderna</p>
+      <h1>🖋️ BlaiseVue: A Mão de Pascal & A Pena Digital</h1>
+      <p>Conceito clássico-minimalista: A mão de Blaise Pascal escrevendo o 'V' reativo da Web contemporânea</p>
     </div>
     <div class="controls">
       <button onclick="toggleTheme()">🌓 Alternar Tema (Claro / Escuro)</button>
     </div>
   </header>
 
+  <!-- HERO: A Mão de Blaise Pascal Escrevendo o V -->
+  <div class="hero-showcase">
+    <div class="hero-img-box">
+      <img src="blaisevue-hand-render-3d.jpg" alt="Render 3D: A Mão de Pascal Escrevendo">
+    </div>
+    <div class="hero-desc">
+      <span class="badge badge-star">Conceito Histórico & Tecnológico</span>
+      <h2>A Mão de Blaise Pascal</h2>
+      <p>
+        Inspirado nos retratos clássicos do século XVII de Blaise Pascal e dos filósofos escrevendo com penas sobre pergaminho. Reimaginado em uma estética minimalista de ponta, onde a pena desenha um traço radiante em neon ciano e esmeralda, formando o "V" de <strong>BlaiseVue</strong>.
+      </p>
+      <ul class="hero-features">
+        <li><span>✦</span> <strong>Tradição & Filosofia:</strong> A mão humana como símbolo da precisão e elegância do código em Object Pascal.</li>
+        <li><span>✦</span> <strong>O Traço Reativo:</strong> A tinta não é comum — é luz neon pulsante, representando a reatividade em tempo real.</li>
+        <li><span>✦</span> <strong>Identidade Única:</strong> Distingue imediatamente o BlaiseVue de qualquer outro framework no mundo.</li>
+      </ul>
+    </div>
+  </div>
+
   <div class="section-title">
-    <h2>✨ Variações Vetoriais da Pena Digital (SVG)</h2>
+    <h2>✨ Interpretações Vetoriais da Mão Escrevendo (SVG)</h2>
   </div>
 
   <div class="grid-concepts">
 
-    <!-- Variação 1: V2 Prisma & Asas -->
+    <!-- Vetor 1: Mão Silhueta com Traço V Neon -->
     <div class="concept-card">
-      <span class="badge badge-star">⭐ Aerodinâmica & V-Shape</span>
+      <span class="badge badge-star">⭐ Vetor Completo</span>
       <div class="logo-container">
-        <img src="logo-quill-v2-prism.svg" alt="Pena V2: Prisma & Asas">
+        <img src="logo-hand-quill.svg" alt="Mão com Pena Traçando V">
       </div>
-      <h3>Pena V2: Prisma & Asas</h3>
-      <p>Asas geométricas aerodinâmicas que se elevam formando um 'V' vibrante. Núcleo com pena de tinteiro em titânio e fenda emissora de luz esmeralda.</p>
+      <h3>1. O Traço Reativo</h3>
+      <p>A mão estilizada segura a pena de escrita enquanto sua ponta desliza e projeta o grande 'V' em neon esmeralda e ciano sobre a tela escura.</p>
     </div>
 
-    <!-- Variação 2: V4 Origami Minimal -->
+    <!-- Vetor 2: Mão em Linha Contínua Minimalista -->
     <div class="concept-card">
-      <span class="badge badge-star">⭐ Favicon de Alto Impacto</span>
+      <span class="badge badge-star">⭐ Minimalismo & Traço Contínuo</span>
       <div class="logo-container">
-        <img src="logo-quill-v4-minimal.svg" alt="Pena V4: Origami Minimal">
+        <img src="logo-hand-quill-minimal.svg" alt="Linha Contínua">
       </div>
-      <h3>Pena V4: Origami Minimalista</h3>
-      <p>Geometria pura e minimalista. Duas dobras angulares em degradê Pascal e Vue, com espaço negativo formando uma pena de caneta tinteiro clássica. Perfeito em 16px!</p>
+      <h3>2. Contorno em Linha Contínua</h3>
+      <p>Arte de linha pura e fluida. O contorno da mão e da pena se conecta em um único fluxo que culmina no vértice do 'V'.</p>
     </div>
 
-    <!-- Variação 3: V3 Circuitos & Dados -->
+    <!-- Vetor 3: V4 Origami Minimal -->
     <div class="concept-card">
-      <span class="badge badge-primary">Tech & Compilador</span>
+      <span class="badge badge-primary">Símbolo Favicon</span>
       <div class="logo-container">
-        <img src="logo-quill-v3-circuit.svg" alt="Pena V3: Circuitos">
+        <img src="logo-quill-v4-minimal.svg" alt="Pena V4 Origami">
       </div>
-      <h3>Pena V3: Circuitos & Dados</h3>
-      <p>As farpas da pena são trilhas de circuito digital com nós luminosos, simbolizando o fluxo de dados reativos e o pipeline do compilador Pas2JS.</p>
+      <h3>3. A Pena Origami (Foco na Pena)</h3>
+      <p>A versão geométrica purificada da pena. Se preferir usar o instrumento de escrita como ícone compacto para a aba do navegador.</p>
     </div>
 
-    <!-- Variação 4: V5 Pena & Escudo Crest -->
+    <!-- Vetor 4: V2 Prisma -->
     <div class="concept-card">
-      <span class="badge badge-primary">Brasão & Proteção</span>
+      <span class="badge badge-primary">Aerodinâmico</span>
       <div class="logo-container">
-        <img src="logo-quill-v5-shield.svg" alt="Pena V5: Pena & Escudo">
+        <img src="logo-quill-v2-prism.svg" alt="Pena V2 Prisma">
       </div>
-      <h3>Pena V5: O Brasão da Pena</h3>
-      <p>"A pena que protege": a silhueta da pena se funde a um escudo protetor, unindo a arte de escrever código à solidez da compilação estática.</p>
-    </div>
-
-    <!-- Variação 5: V1 Original -->
-    <div class="concept-card">
-      <span class="badge badge-primary">Conceito V1 Original</span>
-      <div class="logo-container">
-        <img src="logo-quill.svg" alt="Pena V1: A Pena Digital Original">
-      </div>
-      <h3>Pena V1: Pena Clássica Digital</h3>
-      <p>A pena tradicional do século XVII em camadas de lâminas digitais em azul e ciano, com o faixo reativo esmeralda na ponta.</p>
-    </div>
-
-  </div>
-
-  <div class="section-title">
-    <h2>💎 Renders Artísticos 3D (Titanium & Frosted Glass)</h2>
-  </div>
-
-  <div class="grid-concepts" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));">
-    
-    <div class="concept-card">
-      <span class="badge badge-star">Render 3D: Emblema em V</span>
-      <div class="logo-container" style="width: 240px; height: 240px;">
-        <img src="quill-render-3d-1.jpg" alt="Render 3D Pena 1" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-      </div>
-      <h3>Emblema 3D: Titânio & Laser 'V'</h3>
-      <p>Pena de escrita esculpida em titânio escovado com asas aerodinâmicas e fenda de luz neon ciano/esmeralda.</p>
-    </div>
-
-    <div class="concept-card">
-      <span class="badge badge-star">Render 3D: Vidro & Neons</span>
-      <div class="logo-container" style="width: 240px; height: 240px;">
-        <img src="quill-render-3d-2.jpg" alt="Render 3D Pena 2" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-      </div>
-      <h3>Emblema 3D: Prisma Lúmina</h3>
-      <p>Conceito óptico com pena em vidro fosco translúcido e reflexos sutis de piso.</p>
+      <h3>4. O Prisma e Asas</h3>
+      <p>Asas da pena que se abrem no formato da letra 'V' com fenda luminosa no centro da pena de titânio.</p>
     </div>
 
   </div>
 
   <!-- Teste de Escala & Favicon -->
   <div class="scale-section">
-    <h2>🔍 Teste de Escala & Favicon das Novas Penas</h2>
-    <p style="color: var(--text-muted); font-size: 0.95rem;">
-      Observe como a <strong>Pena V4 (Origami)</strong> e a <strong>Pena V2 (Prisma)</strong> mantêm 100% da clareza e leitura mesmo em míseros 16x16 pixels!
-    </p>
-
-    <!-- Escala V4 Origami -->
-    <h3 style="margin-top: 1.5rem; font-size: 1.1rem; color: var(--accent-cyan);">Pena V4 (Origami Minimalista):</h3>
+    <h2>🔍 Teste de Escala dos Novos Símbolos</h2>
     <div class="scale-row">
       <div class="scale-box">
-        <img src="logo-quill-v4-minimal.svg" width="128" height="128" alt="128px">
-        <span>128x128 (Desktop)</span>
+        <img src="logo-hand-quill.svg" width="128" height="128" alt="128px">
+        <span>128x128 (Desktop / Splash)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-quill-v4-minimal.svg" width="64" height="64" alt="64px">
-        <span>64x64 (VS Code)</span>
+        <img src="logo-hand-quill.svg" width="64" height="64" alt="64px">
+        <span>64x64 (VS Code Extension)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-hand-quill-minimal.svg" width="64" height="64" alt="64px">
+        <span>64x64 (Linha Contínua)</span>
       </div>
       <div class="scale-box">
         <img src="logo-quill-v4-minimal.svg" width="32" height="32" alt="32px">
-        <span>32x32 (App Icon)</span>
+        <span>32x32 (Favicon / App Icon)</span>
       </div>
       <div class="scale-box">
         <img src="logo-quill-v4-minimal.svg" width="16" height="16" alt="16px">
-        <span>16x16 (Favicon)</span>
-      </div>
-    </div>
-
-    <!-- Escala V2 Prisma -->
-    <h3 style="margin-top: 2rem; font-size: 1.1rem; color: var(--accent-emerald);">Pena V2 (Prisma & Asas):</h3>
-    <div class="scale-row">
-      <div class="scale-box">
-        <img src="logo-quill-v2-prism.svg" width="128" height="128" alt="128px">
-        <span>128x128 (Desktop)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-quill-v2-prism.svg" width="64" height="64" alt="64px">
-        <span>64x64 (VS Code)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-quill-v2-prism.svg" width="32" height="32" alt="32px">
-        <span>32x32 (App Icon)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-quill-v2-prism.svg" width="16" height="16" alt="16px">
-        <span>16x16 (Favicon)</span>
+        <span>16x16 (Aba do Navegador)</span>
       </div>
     </div>
   </div>
 
   <!-- Simulação de Banner Oficial -->
   <div class="banner-preview">
-    <img src="logo-quill-v4-minimal.svg" alt="BlaiseVue Logo">
+    <img src="logo-hand-quill.svg" alt="BlaiseVue Logo">
     <div class="banner-text">
       <h2>BlaiseVue</h2>
       <p>The Reactive Full-Stack Object Pascal Framework</p>
