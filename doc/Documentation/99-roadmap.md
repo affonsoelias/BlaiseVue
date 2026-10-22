@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.3 Delivered (100% Completed)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), LiveBindings with in-memory `TBVDataSet`, and End-to-End Type-Safe Pascal RPC with mORMot 2 (`ICustomerService`, `IProductService`, `ISystemService`, `ClientProxies.pas`, `TRpcDispatcher`, dual HTTP/WebSocket transport, and `bv mormot rpc`) are fully delivered and verified with 449 automated tests across 25 test suites. Next Milestone: **BlaiseVue 4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Pillars 1 to 4 Approved 🎯)**.
+> **Current Status**: 🚀 **BlaiseVue 4.3 Delivered (100% Completed)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), LiveBindings with in-memory `TBVDataSet`, and End-to-End Type-Safe Pascal RPC with mORMot 2 (`ICustomerService`, `IProductService`, `ISystemService`, `ClientProxies.pas`, `TRpcDispatcher`, dual HTTP/WebSocket transport, and `bv mormot rpc`) are fully delivered and verified with 449 automated tests across 25 test suites. Next Milestone: **BlaiseVue 4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Pillars 1 to 5 Approved 🎯)**.
 
 ---
 
@@ -539,7 +539,7 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
 ### 🚀 BlaiseVue 4.4: Enterprise Resilience, Native Templates & Offline Delta Sync (Approved 🎯)
 **Goal**: Elevate BlaiseVue into an uncompromising enterprise runtime by introducing compile-time template verification, native high-performance template evaluation, offline-first dataset synchronization with mORMot 2, relational master-detail code generation, and virtualized high-density data rendering.
 
-- **Status**: **Approved for Implementation (Pillars 1 to 4)**.
+- **Status**: **Approved for Implementation (Pillars 1 to 5)**.
 
 #### ⚡ Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates
 - **Compile-Time AST Verification**:
@@ -559,7 +559,18 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
   - Automatic WebSocket reconnect trigger: when the connection to mORMot 2 is re-established, the dataset sends its `FDelta` payload to the backend.
   - Server-side transactional resolution (`ApplyUpdates`) with conflict detection and automated client synchronization.
 
-#### 🔗 Pillar 3: Master-Detail & Relational CRUD Scaffolding (`bv mormot crud`)
+#### 🔗 Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)
+- **Pluggable Database Engines (Zero-Config SQLite + Production RDBMS)**:
+  - **SQLite3 as Default (Zero-Config)**: Creates local file database (`server/data.db`) out-of-the-box without requiring database server setup, Docker, or external daemon configuration.
+  - **Multi-Database CLI Flags**: Support for enterprise production database engines via `bv mormot init --db <engine>`:
+    ```bash
+    bv mormot init --db sqlite     # Embedded local file (default)
+    bv mormot init --db postgres   # High-throughput PostgreSQL connection (via native libpq/mORMot)
+    bv mormot init --db mysql      # MySQL & MariaDB
+    bv mormot init --db firebird   # Firebird SQL (traditional commercial Pascal standard)
+    ```
+  - **Environment-Driven Configuration (`.env`)**: Transparent database connection string resolution via `DATABASE_URL` (e.g. `postgres://user:pass@localhost:5432/dbname`) with fallback to local SQLite file.
+  - **100% Agnostic mORMot 2 ORM Layer**: Application `.bv` views and business logic remain strictly identical across databases, needing only the backend connection driver to switch between local development and cloud production.
 - **Relational Model Declarations in CLI**:
   - Scaffolds complex parent-child business models with foreign keys directly via CLI:
     ```bash
@@ -567,15 +578,42 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
     ```
 - **Backend Schema & Service Generation**:
   - Generates relational records and ORM tables in `ServerModels.pas` with foreign key integrity.
-  - Automatically scaffolds transactional master-detail endpoints and RPC interfaces (`IOrderService`).
+  - Automatically scaffolds transactional master-detail endpoints and RPC interfaces (`IOrderService`), ensuring atomic commits (rollback child items if parent fails).
 - **Frontend Master-Detail Views**:
-  - Generates dual-grid and nested responsive views where selecting a master row instantly synchronizes the reactive child dataset.
+  - Generates dual-grid and nested responsive views where selecting a master row instantly synchronizes the reactive child dataset, including automatic calculation of totals and line item subtotals.
 
 #### 🏎️ Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`
 - **DOM Node Virtualization (`<bv-virtual-scroll>`)**:
   - High-performance DOM recycling engine capable of rendering tables with 50,000 to 100,000+ records at a constant 60 FPS.
   - Keeps only visible rows (+ customizable buffer) in the browser DOM tree, drastically cutting memory consumption and preventing layout recalculation bottlenecks.
   - Seamlessly integrates with the reactive `TBVDataSet` cursor and selection models.
+
+---
+
+#### 📦 Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)
+- **Scaffolding Standalone Library Projects**:
+  - `bv create <name> --lib` scaffolds a dedicated library repository tailored for multi-component distribution.
+  - **Interactive License Chooser**: Prompts the developer to select an open-source or commercial license during scaffolding:
+    - 1) MIT (Permissive, recommended for open-source community packages)
+    - 2) Apache 2.0 (Permissive with patent grant protection)
+    - 3) GNU LGPL v3 (Traditional Pascal library copyleft standard)
+    - 4) Commercial / Proprietary (All rights reserved)
+    - 5) None
+    - CI/Non-interactive support via `--license <type>`.
+  - Generates standardized package structure with:
+    - `src/`: Reusable `.bv` components and Object Pascal units (`.pas`).
+    - `styles/`: Optional standalone CSS stylesheets.
+    - `demo/`: Isolated development playground running with instant HMR (`bv dev`) on `http://localhost:8080`.
+    - `tests/`: Autonomous test suite for the library executed with `bv test`.
+    - `package.json`: Machine-readable package metadata, SemVer versioning, and export mappings.
+- **Automated Distribution Command (`bv lib pack` / `bv lib dist`)**:
+  - **Pre-flight Automated Testing**: Automatically triggers `bv test` to guarantee 0 regressions before packing.
+  - **Clean Production Filtering**: Packages only distributable files (`src/`, `styles/`, `package.json`, `README.md`, `LICENSE`), stripping internal `demo/`, `tests/`, `.git/`, and compiler caches (`.o`, `.ppu`).
+  - **Release Artifact Generation**: Produces an optimized, standalone zip bundle in `dist/<name>-<version>.zip` with SHA-256 integrity verification.
+  - **Seamless Consumer Installation**: Any developer globally can immediately consume the package in their project using the native CLI command:
+    ```bash
+    bv lib install https://github.com/<author>/<package>
+    ```
 
 ---
 
