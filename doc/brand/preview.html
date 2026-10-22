@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlaiseVue Brand & Logo Showcase</title>
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #131b2e;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #00d2ff;
+      --accent-emerald: #00e676;
+      --border-color: #334155;
+    }
+
+    body.light-mode {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      padding: 2rem;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 3rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.5rem;
+    }
+
+    .brand-title h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+      font-size: 1rem;
+    }
+
+    .controls button {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .controls button:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .grid-concepts {
+      max-width: 1200px;
+      margin: 0 auto 3rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .concept-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .concept-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.15);
+    }
+
+    .logo-container {
+      width: 180px;
+      height: 180px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-container img, .logo-container svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .concept-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .concept-card p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+    }
+
+    .badge-primary {
+      background: rgba(0, 210, 255, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+
+    /* Scaling / Favicon simulation section */
+    .scale-section {
+      max-width: 1200px;
+      margin: 0 auto 3rem auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+
+    .scale-section h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .scale-row {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+
+    .scale-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .scale-box span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Header banner preview */
+    .banner-preview {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #0b0f19, #131b2e);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    .banner-preview img {
+      width: 100px;
+      height: 100px;
+    }
+
+    .banner-text h2 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    .banner-text p {
+      color: #94a3b8;
+      font-size: 1.1rem;
+      margin-top: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">
+      <h1>🛡️ BlaiseVue Brand Identity Showcase</h1>
+      <p>Exploração de conceitos visuais de logotipo para o framework oficial</p>
+    </div>
+    <div class="controls">
+      <button onclick="toggleTheme()">🌓 Alternar Tema (Claro / Escuro)</button>
+    </div>
+  </header>
+
+  <!-- Grid com os Conceitos -->
+  <div class="grid-concepts">
+
+    <!-- Conceito 1 -->
+    <div class="concept-card">
+      <span class="badge badge-primary">⭐ Recomendado (Oficial)</span>
+      <div class="logo-container">
+        <img src="logo-shield.svg" alt="Conceito 1: O Escudo Reativo">
+      </div>
+      <h3>1. O Escudo Reativo</h3>
+      <p>Combina a robustez e segurança de compilação estática do Pascal (escudo) com a agilidade cirúrgica do Vue (V neon em esmeralda e ciano).</p>
+    </div>
+
+    <!-- Conceito 2 -->
+    <div class="concept-card">
+      <span class="badge badge-primary">Matemático & Conceitual</span>
+      <div class="logo-container">
+        <img src="logo-triangle.svg" alt="Conceito 2: Triângulo de Pascal">
+      </div>
+      <h3>2. O Triângulo de Pascal</h3>
+      <p>Homenagem direta à invenção matemática de Blaise Pascal. A pirâmide invertida forma um 'V' com nós conectados que simbolizam o grafo de dependências reativas.</p>
+    </div>
+
+    <!-- Conceito 3 -->
+    <div class="concept-card">
+      <span class="badge badge-primary">Modern Monogram</span>
+      <div class="logo-container">
+        <img src="logo-monogram.svg" alt="Conceito 3: Monograma B+V">
+      </div>
+      <h3>3. O Monograma B+V</h3>
+      <p>Fita isométrica contínua que une o 'B' de Blaise ao 'V' de Vue, representando o Full-Stack unificado (Pascal no Servidor e Pascal no Navegador).</p>
+    </div>
+
+    <!-- Conceito 4 -->
+    <div class="concept-card">
+      <span class="badge badge-primary">Elegância Histórica</span>
+      <div class="logo-container">
+        <img src="logo-quill.svg" alt="Conceito 4: A Pena Digital">
+      </div>
+      <h3>4. A Pena Digital</h3>
+      <p>A pena clássica do século XVII de Blaise Pascal esculpida em arestas digitais agudas, onde a ponta da pena dispara o faixo de reatividade web.</p>
+    </div>
+
+    <!-- Conceito 5: Render 3D -->
+    <div class="concept-card" style="grid-column: span 1;">
+      <span class="badge badge-primary">Render 3D / Emblema</span>
+      <div class="logo-container">
+        <img src="blaisevue-concept-3d.jpg" alt="Conceito Render 3D" style="border-radius: 12px;">
+      </div>
+      <h3>5. Emblema Metálico 3D</h3>
+      <p>Visão tridimensional com acabamento em vidro/metal lapidado, iluminação ambiente azul e corte reativo em esmeralda.</p>
+    </div>
+
+  </div>
+
+  <!-- Teste de Escala & Favicon -->
+  <div class="scale-section">
+    <h2>🔍 Teste de Escala & Legibilidade (Conceito 1: Escudo Reativo)</h2>
+    <p style="color: var(--text-muted); font-size: 0.95rem;">
+      Um bom logotipo precisa ser imediatamente reconhecível desde o favicon da aba do navegador (16px) até ícones de aplicativos e banners em alta definição (512px).
+    </p>
+
+    <div class="scale-row">
+      <div class="scale-box">
+        <img src="logo-shield.svg" width="128" height="128" alt="128px">
+        <span>128x128 (Desktop App)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-shield.svg" width="64" height="64" alt="64px">
+        <span>64x64 (VS Code Extension)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-shield.svg" width="32" height="32" alt="32px">
+        <span>32x32 (App Launcher)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-shield.svg" width="16" height="16" alt="16px">
+        <span>16x16 (Browser Favicon)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simulação de Banner de Documentação / README -->
+  <div class="banner-preview">
+    <img src="logo-shield.svg" alt="BlaiseVue Logo">
+    <div class="banner-text">
+      <h2>BlaiseVue</h2>
+      <p>The Reactive Full-Stack Object Pascal Framework</p>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+    }
+  </script>
+</body>
+</html>

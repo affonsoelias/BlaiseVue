@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Cyan to Green Gradient -->
+    <linearGradient id="triGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <!-- Glowing Node Filter -->
+    <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Dark Disc for contrast -->
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <!-- Outer Angular V Chevron -->
+  <path d="M 80, 110 
+           L 256, 420 
+           L 432, 110 
+           L 360, 110 
+           L 256, 310 
+           L 152, 110 Z" 
+        fill="url(#triGrad)" 
+        opacity="0.85" />
+
+  <!-- Inner Reactive Dependency Edges (Pascal's Network) -->
+  <g stroke="#38BDF8" stroke-width="4" opacity="0.4" stroke-dasharray="6,4">
+    <line x1="152" y1="110" x2="256" y2="210" />
+    <line x1="360" y1="110" x2="256" y2="210" />
+    <line x1="204" y1="110" x2="256" y2="210" />
+    <line x1="308" y1="110" x2="256" y2="210" />
+    <line x1="256" y1="210" x2="256" y2="310" />
+    <line x1="256" y1="310" x2="256" y2="420" />
+  </g>
+
+  <!-- Pascal's Triangle Mathematical Nodes (Track & Trigger) -->
+  <!-- Top Row (Inputs / Props / Data) -->
+  <circle cx="152" cy="110" r="14" fill="#00F0FF" filter="url(#nodeGlow)" />
+  <circle cx="221" cy="110" r="10" fill="#38BDF8" />
+  <circle cx="291" cy="110" r="10" fill="#38BDF8" />
+  <circle cx="360" cy="110" r="14" fill="#00F0FF" filter="url(#nodeGlow)" />
+
+  <!-- Mid Row (Computed & Effects) -->
+  <circle cx="204" cy="210" r="12" fill="#00E676" filter="url(#nodeGlow)" />
+  <circle cx="308" cy="210" r="12" fill="#00E676" filter="url(#nodeGlow)" />
+  <circle cx="256" cy="210" r="16" fill="#FFFFFF" filter="url(#nodeGlow)" />
+
+  <!-- Lower Vertex (Surgical DOM Trigger) -->
+  <circle cx="256" cy="310" r="14" fill="#00F0FF" />
+  <circle cx="256" cy="420" r="18" fill="#FFFFFF" stroke="#00E676" stroke-width="6" filter="url(#nodeGlow)" />
+</svg>
