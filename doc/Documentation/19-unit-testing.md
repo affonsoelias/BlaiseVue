@@ -1,6 +1,6 @@
 # 🧪 PRO Unit Testing Module
 
-BlaiseVue 1.0 PRO includes a native testing engine written in Pascal, integrated with **Vitest** and **JSDOM**, allowing for the validation of SFC components with the same ease as modern frameworks like Vue/React.
+BlaiseVue includes a native testing engine written in Pascal, integrated with **Vitest** and **JSDOM**, allowing for the validation of SFC components with the same ease as modern frameworks like Vue/React.
 
 ---
 

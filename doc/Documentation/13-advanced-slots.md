@@ -105,7 +105,7 @@ Receive the data in the parent template using `b-slot:name="slotProps"`, `#name=
 
 ## 🔄 Slot Props Forwarding (Nested Slots)
 
-When nesting components (for example, wrapping a generic table inside a searchable card), BlaiseVue 2.0 forwards slot props seamlessly through multiple component layers:
+When nesting components (for example, wrapping a generic table inside a searchable card), BlaiseVue forwards slot props seamlessly through multiple component layers:
 
 ```html
 <!-- WrapperComponent.bv -->

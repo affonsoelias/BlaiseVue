@@ -1,6 +1,6 @@
 # 26. Reactive List Transitions (`<transition-group>`)
 
-BlaiseVue 2.5 introduces `<transition-group>`, enabling smooth CSS animations for entering, leaving, and reordering elements inside dynamic lists (`b-for`).
+BlaiseVue includes `<transition-group>`, enabling smooth CSS animations for entering, leaving, and reordering elements inside dynamic lists (`b-for`).
 
 ---
 

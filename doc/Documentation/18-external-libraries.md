@@ -1,6 +1,6 @@
 # 📦 Library Management (/lib)
 
-BlaiseVue PRO (v1.0+) introduces an **External Library Management** system with a "Zero Configuration" concept, allowing the creation and sharing of UI Kits and plugins without the need for manual imports.
+BlaiseVue includes an **External Library Management** system with a "Zero Configuration" concept, allowing the creation and sharing of UI Kits and plugins without the need for manual imports.
 
 ---
 

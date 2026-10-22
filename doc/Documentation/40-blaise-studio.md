@@ -1,6 +1,6 @@
 # 40. BlaiseVue Studio Dashboard (`bv studio` & `BlaiseStudio`)
 
-**Phase 7 of the BlaiseVue 4.0 Cloud & Mobile Ecosystem** introduces **BlaiseVue Studio** (`bv studio`) — an ultra-modern, visual developer cockpit and live telemetry hub for the BlaiseVue platform.
+**BlaiseVue Studio** (`bv studio`) is an ultra-modern, visual developer cockpit and live telemetry hub for the BlaiseVue platform.
 
 Operating at `http://localhost:9000`, BlaiseVue Studio provides visual component AST inspection, real-time WebSocket traffic monitoring, one-click execution of tests and builds, and live telemetry integration with Object Pascal applications.
 

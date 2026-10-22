@@ -1,6 +1,6 @@
 # 28. Themes & Bootswatch Integration (`blaise-themes`)
 
-BlaiseVue 2.6 introduces the official **`blaise-themes`** package, providing full support for Bootswatch themes, reactive runtime theme switching, dark/light mode toggling, and automatic persistent storage.
+BlaiseVue includes the official **`blaise-themes`** package, providing full support for Bootswatch themes, reactive runtime theme switching, dark/light mode toggling, and automatic persistent storage.
 
 ---
 

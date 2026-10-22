@@ -1,6 +1,6 @@
 # Global Mixins and Global Plugins in BlaiseVue 🛡️🔌
 
-BlaiseVue v1.0.0 introduces support for Global Mixins and Global Plugins, allowing you to extend the framework's functionality and share logic across all components.
+BlaiseVue supports Global Mixins and Global Plugins, allowing you to extend the framework's functionality and share logic across all components.
 
 ## 1. Global Mixins
 

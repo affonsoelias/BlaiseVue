@@ -1,6 +1,6 @@
 # 🔗 Sacred Link (Provide/Inject)
 
-BlaiseVue PRO offers native support for **Provide/Inject**, an advanced dependency injection technique for deeply nested components, eliminating the need to pass props manually through multiple levels (prop drilling).
+BlaiseVue offers native support for **Provide/Inject**, an advanced dependency injection technique for deeply nested components, eliminating the need to pass props manually through multiple levels (prop drilling).
 
 ---
 
@@ -33,7 +33,7 @@ In the component that holds the data (usually `app.bv`), use the `provide` block
 ```
 
 ### 2. Injecting Dependencies (Descendant Component)
-In the component that needs the data, list the desired keys in the `inject` block. BlaiseVue PRO will make them available reactively.
+In the component that needs the data, list the desired keys in the `inject` block. BlaiseVue will make them available reactively.
 
 ```pascal
 { MyWidget.bv }

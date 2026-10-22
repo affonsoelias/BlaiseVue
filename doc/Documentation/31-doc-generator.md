@@ -1,6 +1,6 @@
 # 📚 Automatic Documentation Generator & Playground (`bv doc`)
 
-BlaiseVue 3.0 includes an integrated, zero-configuration component catalog and interactive documentation generator powered by the CLI command `bv doc`.
+BlaiseVue includes an integrated, zero-configuration component catalog and interactive documentation generator powered by the CLI command `bv doc`.
 
 ---
 
@@ -26,7 +26,7 @@ bv doc
 
 The CLI will scan all `.bv` Single File Components and generate a self-contained, responsive SPA in `dist/docs/index.html`:
 ```text
-=== BlaiseVue 3.0 Documentation & Component Playground Generator ===
+=== BlaiseVue Documentation & Component Playground Generator ===
   Found 44 .bv component(s). Parsing AST metadata...
   [SUCCESS] Documentation generated at dist/docs/index.html (44 components analyzed)
 ```

@@ -1,6 +1,6 @@
-# 35. Hybrid Mobile Platform & Capacitor (bv mobile) - Phase 2
+# 35. Hybrid Mobile Platform & Capacitor (bv mobile)
 
-**Phase 2 of the BlaiseVue Universal Platform (v3.5)** enables native mobile application compilation and execution on **Android** and **iOS**, leveraging the modern **Capacitor** runtime together with the framework's native Pascal compiler.
+BlaiseVue enables native mobile application compilation and execution on **Android** and **iOS**, leveraging the modern **Capacitor** runtime together with the framework's native Pascal compiler.
 
 This architecture enables the exact same Object Pascal business logic and Single File Components (`.bv`) to run on the Web and packaged into native APKs for mobile phones and tablets.
 
@@ -48,7 +48,7 @@ my-project/
 │   │   ├── android/            # MyApp-debug.apk and MyApp-release.apk
 │   │   └── ios/                # MyApp.ipa
 │   └── README.md               # Mobile development instructions and commands
-├── desktop/                    # Lazarus / WebUI desktop project (Phase 3)
+├── desktop/                    # Lazarus / WebUI desktop project
 ├── src/                        # Shared .bv components and Object Pascal code
 └── dist/                       # Compiled production web bundle
 ```

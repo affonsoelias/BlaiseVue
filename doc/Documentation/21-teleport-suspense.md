@@ -1,6 +1,6 @@
 # 21. Teleport & Suspense
 
-BlaiseVue 2.0 introduces **Teleport** and **Suspense**, two powerful directives designed for advanced DOM management and asynchronous component orchestration.
+BlaiseVue provides **Teleport** and **Suspense**, two powerful directives designed for advanced DOM management and asynchronous component orchestration.
 
 ---
 

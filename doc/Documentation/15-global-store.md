@@ -1,6 +1,6 @@
 # 🧠 B-Store (Global Store / $store)
 
-BlaiseVue PRO resolves the "prop drilling" problem (passing data through multiple component levels) with **B-Store**: a reactive global state management system accessible from any point in the application.
+BlaiseVue resolves the "prop drilling" problem (passing data through multiple component levels) with **B-Store**: a reactive global state management system accessible from any point in the application.
 
 ---
 
@@ -25,7 +25,7 @@ You should populate the store in the `created` hook or the `provide` block of yo
   created:
     begin
        { Initialize global keys that will be used by the entire UI }
-       TJSObject(this['$store'])['appVersion'] := '1.0.0';
+       TJSObject(this['$store'])['appVersion'] := '4.3.0';
        TJSObject(this['$store'])['user'] := 'Pascal Master 🏆';
     end;
 </script>

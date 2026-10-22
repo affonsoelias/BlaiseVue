@@ -1,6 +1,6 @@
 # 42. LiveBindings & Dataset Reativo (`TBVDataSet`)
 
-O **BlaiseVue 4.2** introduz o motor enterprise de **LiveBindings** e **Dataset Reativo em Memória (`TBVDataSet`)**, unindo a semântica clássica de dados orientada a registros do **Delphi / Lazarus (`TClientDataSet` / `TDataSet`)** com o modelo reativo de ponta do **Vue 3 (`Proxy` e `effect`)**.
+O **BlaiseVue** conta com o motor enterprise de **LiveBindings** e **Dataset Reativo em Memória (`TBVDataSet`)**, unindo a semântica clássica de dados orientada a registros do **Delphi / Lazarus (`TClientDataSet` / `TDataSet`)** com o modelo reativo de ponta do **Vue 3 (`Proxy` e `effect`)**.
 
 Com o `TBVDataSet`, desenvolvedores Pascal criam aplicações empresariais com navegação por cursor, buffering de edição transacional, filtragem local em tempo real, ordenação por coluna, rastreamento offline de deltas e LiveBindings bidirecionais automáticos via diretiva `b-field`.
 
@@ -194,7 +194,7 @@ Além disso, persistência local no `localStorage` é provida por duas chamadas:
 
 ## 7. Zero-ASM Pascal DX (`BVPascalDX`)
 
-Para manter conformidade com a arquitetura Zero-ASM do BlaiseVue 4.0+, o unit `BVPascalDX` exporta utilitários fortemente tipados para manipulação de datasets em qualquer método de componente:
+Para manter conformidade com a arquitetura Zero-ASM do BlaiseVue, o unit `BVPascalDX` exporta utilitários fortemente tipados para manipulação de datasets em qualquer método de componente:
 
 | Rotina PascalDX | Equivalente Direto no DataSet |
 | :--- | :--- |

@@ -1,6 +1,6 @@
 # ✨ Native CSS Transitions (`<transition>`)
 
-Bring your interfaces to life with automatic animations! BlaiseVue Pro now natively processes the `<transition>` tag, inspired by the visual power of Vue.js.
+Bring your interfaces to life with automatic animations! BlaiseVue natively processes the `<transition>` tag, inspired by the visual power of Vue.js.
 
 ## The Challenge: Animating Dynamic Elements
 When using `b-if` or `b-show`, elements appear or disappear instantly. With the `<transition>` tag, BlaiseVue injects special CSS classes into the mount and unmount lifecycle, allowing for full smoothness in movement.

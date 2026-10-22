@@ -107,7 +107,7 @@ Links an HTML attribute to a reactive data (read-only).
 
 ---
 
-# 7. Structural and Style Directives (v1.1.0)
+# 7. Structural and Style Directives
 
 BlaiseVue offers directives for flow control and dynamic DOM manipulation.
 
