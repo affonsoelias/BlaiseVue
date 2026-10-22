@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+    <filter id="circuitGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <!-- Outer Protective Feather Geometry -->
+  <g transform="translate(0, 15)">
+    <!-- Circuit Traces (Left Side - Server & Logic) -->
+    <g stroke="#0284C7" stroke-width="6" stroke-linecap="round" fill="none">
+      <path d="M 256, 150 L 160, 120 L 120, 140" />
+      <path d="M 256, 210 L 170, 190 L 130, 220" />
+      <path d="M 256, 270 L 180, 260 L 150, 300" />
+      <path d="M 256, 330 L 200, 330 L 180, 360" />
+    </g>
+
+    <!-- Circuit Nodes Left -->
+    <circle cx="120" cy="140" r="8" fill="#38BDF8" filter="url(#circuitGlow)" />
+    <circle cx="130" cy="220" r="8" fill="#38BDF8" filter="url(#circuitGlow)" />
+    <circle cx="150" cy="300" r="8" fill="#38BDF8" filter="url(#circuitGlow)" />
+    <circle cx="180" cy="360" r="8" fill="#38BDF8" filter="url(#circuitGlow)" />
+
+    <!-- Circuit Traces (Right Side - Reactive Client & UI) -->
+    <g stroke="#00E676" stroke-width="6" stroke-linecap="round" fill="none">
+      <path d="M 256, 150 L 352, 120 L 392, 140" />
+      <path d="M 256, 210 L 342, 190 L 382, 220" />
+      <path d="M 256, 270 L 332, 260 L 362, 300" />
+      <path d="M 256, 330 L 312, 330 L 332, 360" />
+    </g>
+
+    <!-- Circuit Nodes Right -->
+    <circle cx="392" cy="140" r="8" fill="#00E676" filter="url(#circuitGlow)" />
+    <circle cx="382" cy="220" r="8" fill="#00E676" filter="url(#circuitGlow)" />
+    <circle cx="362" cy="300" r="8" fill="#00E676" filter="url(#circuitGlow)" />
+    <circle cx="332" cy="360" r="8" fill="#00E676" filter="url(#circuitGlow)" />
+
+    <!-- Central High-Precision Stylus Nib (The V-Shaft) -->
+    <path d="M 256, 70 
+             L 300, 240 
+             L 280, 370 
+             L 256, 420 
+             L 232, 370 
+             L 212, 240 Z" 
+          fill="url(#circuitGrad)" />
+
+    <!-- Inner Core & Slit -->
+    <path d="M 256, 100 L 280, 230 L 256, 340 L 232, 230 Z" fill="#0F172A" />
+    <circle cx="256" cy="300" r="6" fill="#FFFFFF" filter="url(#circuitGlow)" />
+    <line x1="256" y1="306" x2="256" y2="415" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Laser Dot Tip -->
+    <circle cx="256" cy="435" r="7" fill="#00F0FF" filter="url(#circuitGlow)" />
+  </g>
+</svg>

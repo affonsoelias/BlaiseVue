@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlaiseVue Brand & Logo Showcase</title>
+  <title>BlaiseVue: Coleção Oficial da Pena Digital</title>
   <style>
     :root {
       --bg-primary: #0b0f19;
@@ -35,12 +35,12 @@
     body {
       background-color: var(--bg-primary);
       color: var(--text-main);
-      padding: 2rem;
+      padding: 2.5rem;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     header {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto 3rem auto;
       display: flex;
       justify-content: space-between;
@@ -50,7 +50,7 @@
     }
 
     .brand-title h1 {
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       font-weight: 800;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
@@ -80,11 +80,24 @@
       border-color: var(--accent-cyan);
     }
 
+    .section-title {
+      max-width: 1280px;
+      margin: 2rem auto 1.5rem auto;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .section-title h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
     .grid-concepts {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto 3rem auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 1.5rem;
     }
 
@@ -92,21 +105,22 @@
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 1.5rem;
+      padding: 1.8rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
     }
 
     .concept-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.15);
+      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.18);
     }
 
     .logo-container {
-      width: 180px;
-      height: 180px;
+      width: 190px;
+      height: 190px;
       margin-bottom: 1.5rem;
       display: flex;
       align-items: center;
@@ -135,9 +149,9 @@
 
     .badge {
       display: inline-block;
-      padding: 0.3rem 0.8rem;
+      padding: 0.35rem 0.85rem;
       border-radius: 9999px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -150,9 +164,15 @@
       border: 1px solid rgba(0, 210, 255, 0.3);
     }
 
+    .badge-star {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
     /* Scaling / Favicon simulation section */
     .scale-section {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto 3rem auto;
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -160,15 +180,10 @@
       padding: 2rem;
     }
 
-    .scale-section h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1rem;
-    }
-
     .scale-row {
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 2.5rem;
       flex-wrap: wrap;
       margin-top: 1.5rem;
       padding: 1.5rem;
@@ -180,7 +195,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
     }
 
     .scale-box span {
@@ -190,8 +205,8 @@
 
     /* Header banner preview */
     .banner-preview {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 1280px;
+      margin: 0 auto 3rem auto;
       background: linear-gradient(135deg, #0b0f19, #131b2e);
       border: 1px solid var(--border-color);
       border-radius: 16px;
@@ -199,16 +214,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 2rem;
+      gap: 2.5rem;
     }
 
     .banner-preview img {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
     }
 
     .banner-text h2 {
-      font-size: 2.5rem;
+      font-size: 2.6rem;
       font-weight: 900;
       letter-spacing: -0.5px;
       color: #ffffff;
@@ -216,7 +231,7 @@
 
     .banner-text p {
       color: #94a3b8;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       margin-top: 0.3rem;
     }
   </style>
@@ -225,99 +240,151 @@
 
   <header>
     <div class="brand-title">
-      <h1>🛡️ BlaiseVue Brand Identity Showcase</h1>
-      <p>Exploração de conceitos visuais de logotipo para o framework oficial</p>
+      <h1>✒️ BlaiseVue: Coleção Especial "A Pena Digital"</h1>
+      <p>Exploração das variações da pena de escrita de Blaise Pascal com o 'V' reativo da Web moderna</p>
     </div>
     <div class="controls">
       <button onclick="toggleTheme()">🌓 Alternar Tema (Claro / Escuro)</button>
     </div>
   </header>
 
-  <!-- Grid com os Conceitos -->
+  <div class="section-title">
+    <h2>✨ Variações Vetoriais da Pena Digital (SVG)</h2>
+  </div>
+
   <div class="grid-concepts">
 
-    <!-- Conceito 1 -->
+    <!-- Variação 1: V2 Prisma & Asas -->
     <div class="concept-card">
-      <span class="badge badge-primary">⭐ Recomendado (Oficial)</span>
+      <span class="badge badge-star">⭐ Aerodinâmica & V-Shape</span>
       <div class="logo-container">
-        <img src="logo-shield.svg" alt="Conceito 1: O Escudo Reativo">
+        <img src="logo-quill-v2-prism.svg" alt="Pena V2: Prisma & Asas">
       </div>
-      <h3>1. O Escudo Reativo</h3>
-      <p>Combina a robustez e segurança de compilação estática do Pascal (escudo) com a agilidade cirúrgica do Vue (V neon em esmeralda e ciano).</p>
+      <h3>Pena V2: Prisma & Asas</h3>
+      <p>Asas geométricas aerodinâmicas que se elevam formando um 'V' vibrante. Núcleo com pena de tinteiro em titânio e fenda emissora de luz esmeralda.</p>
     </div>
 
-    <!-- Conceito 2 -->
+    <!-- Variação 2: V4 Origami Minimal -->
     <div class="concept-card">
-      <span class="badge badge-primary">Matemático & Conceitual</span>
+      <span class="badge badge-star">⭐ Favicon de Alto Impacto</span>
       <div class="logo-container">
-        <img src="logo-triangle.svg" alt="Conceito 2: Triângulo de Pascal">
+        <img src="logo-quill-v4-minimal.svg" alt="Pena V4: Origami Minimal">
       </div>
-      <h3>2. O Triângulo de Pascal</h3>
-      <p>Homenagem direta à invenção matemática de Blaise Pascal. A pirâmide invertida forma um 'V' com nós conectados que simbolizam o grafo de dependências reativas.</p>
+      <h3>Pena V4: Origami Minimalista</h3>
+      <p>Geometria pura e minimalista. Duas dobras angulares em degradê Pascal e Vue, com espaço negativo formando uma pena de caneta tinteiro clássica. Perfeito em 16px!</p>
     </div>
 
-    <!-- Conceito 3 -->
+    <!-- Variação 3: V3 Circuitos & Dados -->
     <div class="concept-card">
-      <span class="badge badge-primary">Modern Monogram</span>
+      <span class="badge badge-primary">Tech & Compilador</span>
       <div class="logo-container">
-        <img src="logo-monogram.svg" alt="Conceito 3: Monograma B+V">
+        <img src="logo-quill-v3-circuit.svg" alt="Pena V3: Circuitos">
       </div>
-      <h3>3. O Monograma B+V</h3>
-      <p>Fita isométrica contínua que une o 'B' de Blaise ao 'V' de Vue, representando o Full-Stack unificado (Pascal no Servidor e Pascal no Navegador).</p>
+      <h3>Pena V3: Circuitos & Dados</h3>
+      <p>As farpas da pena são trilhas de circuito digital com nós luminosos, simbolizando o fluxo de dados reativos e o pipeline do compilador Pas2JS.</p>
     </div>
 
-    <!-- Conceito 4 -->
+    <!-- Variação 4: V5 Pena & Escudo Crest -->
     <div class="concept-card">
-      <span class="badge badge-primary">Elegância Histórica</span>
+      <span class="badge badge-primary">Brasão & Proteção</span>
       <div class="logo-container">
-        <img src="logo-quill.svg" alt="Conceito 4: A Pena Digital">
+        <img src="logo-quill-v5-shield.svg" alt="Pena V5: Pena & Escudo">
       </div>
-      <h3>4. A Pena Digital</h3>
-      <p>A pena clássica do século XVII de Blaise Pascal esculpida em arestas digitais agudas, onde a ponta da pena dispara o faixo de reatividade web.</p>
+      <h3>Pena V5: O Brasão da Pena</h3>
+      <p>"A pena que protege": a silhueta da pena se funde a um escudo protetor, unindo a arte de escrever código à solidez da compilação estática.</p>
     </div>
 
-    <!-- Conceito 5: Render 3D -->
-    <div class="concept-card" style="grid-column: span 1;">
-      <span class="badge badge-primary">Render 3D / Emblema</span>
+    <!-- Variação 5: V1 Original -->
+    <div class="concept-card">
+      <span class="badge badge-primary">Conceito V1 Original</span>
       <div class="logo-container">
-        <img src="blaisevue-concept-3d.jpg" alt="Conceito Render 3D" style="border-radius: 12px;">
+        <img src="logo-quill.svg" alt="Pena V1: A Pena Digital Original">
       </div>
-      <h3>5. Emblema Metálico 3D</h3>
-      <p>Visão tridimensional com acabamento em vidro/metal lapidado, iluminação ambiente azul e corte reativo em esmeralda.</p>
+      <h3>Pena V1: Pena Clássica Digital</h3>
+      <p>A pena tradicional do século XVII em camadas de lâminas digitais em azul e ciano, com o faixo reativo esmeralda na ponta.</p>
+    </div>
+
+  </div>
+
+  <div class="section-title">
+    <h2>💎 Renders Artísticos 3D (Titanium & Frosted Glass)</h2>
+  </div>
+
+  <div class="grid-concepts" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));">
+    
+    <div class="concept-card">
+      <span class="badge badge-star">Render 3D: Emblema em V</span>
+      <div class="logo-container" style="width: 240px; height: 240px;">
+        <img src="quill-render-3d-1.jpg" alt="Render 3D Pena 1" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+      </div>
+      <h3>Emblema 3D: Titânio & Laser 'V'</h3>
+      <p>Pena de escrita esculpida em titânio escovado com asas aerodinâmicas e fenda de luz neon ciano/esmeralda.</p>
+    </div>
+
+    <div class="concept-card">
+      <span class="badge badge-star">Render 3D: Vidro & Neons</span>
+      <div class="logo-container" style="width: 240px; height: 240px;">
+        <img src="quill-render-3d-2.jpg" alt="Render 3D Pena 2" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+      </div>
+      <h3>Emblema 3D: Prisma Lúmina</h3>
+      <p>Conceito óptico com pena em vidro fosco translúcido e reflexos sutis de piso.</p>
     </div>
 
   </div>
 
   <!-- Teste de Escala & Favicon -->
   <div class="scale-section">
-    <h2>🔍 Teste de Escala & Legibilidade (Conceito 1: Escudo Reativo)</h2>
+    <h2>🔍 Teste de Escala & Favicon das Novas Penas</h2>
     <p style="color: var(--text-muted); font-size: 0.95rem;">
-      Um bom logotipo precisa ser imediatamente reconhecível desde o favicon da aba do navegador (16px) até ícones de aplicativos e banners em alta definição (512px).
+      Observe como a <strong>Pena V4 (Origami)</strong> e a <strong>Pena V2 (Prisma)</strong> mantêm 100% da clareza e leitura mesmo em míseros 16x16 pixels!
     </p>
 
+    <!-- Escala V4 Origami -->
+    <h3 style="margin-top: 1.5rem; font-size: 1.1rem; color: var(--accent-cyan);">Pena V4 (Origami Minimalista):</h3>
     <div class="scale-row">
       <div class="scale-box">
-        <img src="logo-shield.svg" width="128" height="128" alt="128px">
-        <span>128x128 (Desktop App)</span>
+        <img src="logo-quill-v4-minimal.svg" width="128" height="128" alt="128px">
+        <span>128x128 (Desktop)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-shield.svg" width="64" height="64" alt="64px">
-        <span>64x64 (VS Code Extension)</span>
+        <img src="logo-quill-v4-minimal.svg" width="64" height="64" alt="64px">
+        <span>64x64 (VS Code)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-shield.svg" width="32" height="32" alt="32px">
-        <span>32x32 (App Launcher)</span>
+        <img src="logo-quill-v4-minimal.svg" width="32" height="32" alt="32px">
+        <span>32x32 (App Icon)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-shield.svg" width="16" height="16" alt="16px">
-        <span>16x16 (Browser Favicon)</span>
+        <img src="logo-quill-v4-minimal.svg" width="16" height="16" alt="16px">
+        <span>16x16 (Favicon)</span>
+      </div>
+    </div>
+
+    <!-- Escala V2 Prisma -->
+    <h3 style="margin-top: 2rem; font-size: 1.1rem; color: var(--accent-emerald);">Pena V2 (Prisma & Asas):</h3>
+    <div class="scale-row">
+      <div class="scale-box">
+        <img src="logo-quill-v2-prism.svg" width="128" height="128" alt="128px">
+        <span>128x128 (Desktop)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-quill-v2-prism.svg" width="64" height="64" alt="64px">
+        <span>64x64 (VS Code)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-quill-v2-prism.svg" width="32" height="32" alt="32px">
+        <span>32x32 (App Icon)</span>
+      </div>
+      <div class="scale-box">
+        <img src="logo-quill-v2-prism.svg" width="16" height="16" alt="16px">
+        <span>16x16 (Favicon)</span>
       </div>
     </div>
   </div>
 
-  <!-- Simulação de Banner de Documentação / README -->
+  <!-- Simulação de Banner Oficial -->
   <div class="banner-preview">
-    <img src="logo-shield.svg" alt="BlaiseVue Logo">
+    <img src="logo-quill-v4-minimal.svg" alt="BlaiseVue Logo">
     <div class="banner-text">
       <h2>BlaiseVue</h2>
       <p>The Reactive Full-Stack Object Pascal Framework</p>
