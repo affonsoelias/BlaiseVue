@@ -34,7 +34,7 @@ Welcome to the official BlaiseVue course! Here you will learn how to build ultra
 
 ---
 
-### 🚀 BlaiseVue 2.0 & 2.6 Advanced Engineering:
+### 🚀 Advanced Engineering & Ecosystem:
 Explore the advanced architectural modules in the **[Official Technical Documentation](../Documentation/README.md)**:
 - **Module 13**: [Scoped Slots & Advanced Composition](../Documentation/13-advanced-slots.md)
 - **Module 14**: [HTML5 History Mode & Nested Sub-Routes](../Documentation/09-router.md)

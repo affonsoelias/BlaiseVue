@@ -30,7 +30,7 @@ Generates the production-ready distribution in `dist/`:
 
 ## 🏛️ Native Resource Scaffolding (`templates.res`)
 
-In BlaiseVue 2.0, the CLI's internal architecture was completely refactored to eliminate hardcoded template strings from the Pascal source code:
+The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded template strings:
 
 1. **Templates Directory**: All initial project files reside in [`bin/templates/`](file:///c:/Users/Pichau/Documents/BlaiseVue/bin/templates/):
    - `index.html` — Base HTML entry point.
@@ -97,10 +97,10 @@ Manages WebAssembly modules in the project and executes performance benchmarks c
 ### 3. `bv run ssg` (Static Site Generation & Pre-rendering)
 Pre-renders all registered application routes into static, SEO-friendly HTML files with zero-flicker reactive client-side hydration.
 
-### 4. `bv vsix` / `bv extension [install|package]` (Phase 1: VS Code Official Extension)
+### 4. `bv vsix` / `bv extension [install|package]` (VS Code Official Extension)
 Packages the official BlaiseVue extension into a standalone `.vsix` bundle for Visual Studio Code and VSCodium, featuring triple syntax highlighting, intelligent auto-completion, and an extensive snippet library. The `bv extension install` command installs the extension directly into the local editor.
 
-### 5. `bv mobile` (Phase 2: Hybrid Mobile Platform Android / iOS & Capacitor)
+### 5. `bv mobile` (Hybrid Mobile Platform Android / iOS & Capacitor)
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
 - **`bv mobile init [name] [id]`**: Scaffolds the mobile directory structure inside `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
 - **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
@@ -129,7 +129,7 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 | `bv mobile open android` | Android | - | Opens project in Android Studio |
 | `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
 
-### 6. `bv desktop` (Phase 3: Multiplatform Desktop WebUI & Lazarus IDE)
+### 6. `bv desktop` (Multiplatform Desktop WebUI & Lazarus IDE)
 Manages the native desktop development lifecycle with Free Pascal and WebUI:
 - **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
 - **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
@@ -151,7 +151,7 @@ Manages the native desktop development lifecycle with Free Pascal and WebUI:
 
 See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
 
-### 7. `bv mormot` (Phase 4: Full-Stack Pascal with Synopse mORMot 2)
+### 7. `bv mormot` (Full-Stack Pascal with Synopse mORMot 2)
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
 - **`bv create <name> --mormot`**: Scaffolds a full-stack project with both reactive frontend and native mORMot 2 backend.
 - **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.

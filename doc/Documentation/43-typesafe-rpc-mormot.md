@@ -1,6 +1,6 @@
 # 43. End-to-End Type-Safe Pascal RPC com mORMot 2
 
-O **BlaiseVue 4.3** introduz uma camada revolucionária de comunicação cliente-servidor: **End-to-End Type-Safe Pascal RPC**. Esta funcionalidade elimina por completo URLs REST manuais escritas como strings soltas, verbos HTTP manuais e boilerplates de requisição, unindo o backend nativo **mORMot 2 (FPC)** e o frontend reativo **BlaiseVue (Pas2JS)** em um único ecossistema 100% verificado em tempo de compilação.
+O **BlaiseVue** conta com uma camada revolucionária de comunicação cliente-servidor: **End-to-End Type-Safe Pascal RPC**. Esta funcionalidade elimina por completo URLs REST manuais escritas como strings soltas, verbos HTTP manuais e boilerplates de requisição, unindo o backend nativo **mORMot 2 (FPC)** e o frontend reativo **BlaiseVue (Pas2JS)** em um único ecossistema 100% verificado em tempo de compilação.
 
 ---
 
@@ -8,7 +8,7 @@ O **BlaiseVue 4.3** introduz uma camada revolucionária de comunicação cliente
 
 Na arquitetura tradicional baseada em REST string-based, qualquer renomeação de rota no backend ou alteração de tipo de parâmetro só é detectada em tempo de execução via erro `404 Not Found` ou `500 Internal Server Error`.
 
-Com o **BlaiseVue 4.3 RPC**:
+Com o **BlaiseVue Type-Safe RPC**:
 1. **Contratos Compartilhados (`common/Services.pas`)**: As interfaces de serviço herdam de `IInvokable` e usam DTOs estruturados (`record` e `array of T`), compartilhados entre o servidor nativo e o cliente web.
 2. **Proxies Fortemente Tipados (`ClientProxies.pas`)**: Gerados automaticamente pelo comando `bv mormot rpc`, oferecendo assinaturas fortemente tipadas tanto no estilo de **Callbacks fluídos** (`reference to procedure(...)`) quanto no padrão moderno de **Promises assíncronas** (`TJSPromise`).
 3. **Validação Estrita em Tempo de Compilação**: Se o servidor alterar a assinatura de um método ou um DTO, o compilador `pas2js` acusa erro imediato ao compilar o frontend (`bv run dev`), garantindo sincronia perfeita.
@@ -143,7 +143,7 @@ bv mormot rpc
 Saída:
 ```
 ======================================================================
-  BlaiseVue 4.3 End-to-End Type-Safe Pascal RPC with mORMot 2
+  BlaiseVue End-to-End Type-Safe Pascal RPC with mORMot 2
   (bv mormot rpc)
 ======================================================================
   Specification: Compile-Time Verified mORMot 2 SOA Client Proxies
@@ -327,7 +327,7 @@ type
 
 ## 7. Cobertura de Testes Automatizados
 
-A versão 4.3 inclui a suíte completa de testes unitários em `demo-app/tests/rpc.test.pas`:
+O BlaiseVue inclui a suíte completa de testes unitários em `demo-app/tests/rpc.test.pas`:
 - Verificação da ponte JS `window.__BV_CORE__.rpc`.
 - Injeção reativa do `$rpc` no núcleo do BlaiseVue.
 - Formatação e parsing de payload JSON-RPC 2.0.

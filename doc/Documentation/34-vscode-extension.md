@@ -1,10 +1,10 @@
-# 34. VS Code Extension & Professional DX (.vsix) - Phase 1
+# 34. VS Code Extension & Professional DX (.vsix)
 
-**Phase 1 of the BlaiseVue Universal Platform (v3.5)** delivers a first-class Developer Experience (DX) for modern Object Pascal full-stack development. The official extension for Visual Studio Code and Chromium-based editors (e.g. VSCodium) turns Single File Component (`.bv`) authoring into a seamless, productive workflow featuring intelligent auto-completion, visual syntax highlighting, and productive snippets.
+BlaiseVue delivers a first-class Developer Experience (DX) for modern Object Pascal full-stack development. The official extension for Visual Studio Code and Chromium-based editors (e.g. VSCodium) turns Single File Component (`.bv`) authoring into a seamless, productive workflow featuring intelligent auto-completion, visual syntax highlighting, and productive snippets.
 
 ---
 
-## 🎯 Phase 1 Objectives
+## 🎯 Key Capabilities & Objectives
 
 1. **Native `.bv` File Format Recognition**:
    - Triple hybrid syntax highlighting in a single document: HTML elements in `<template>`, modern Object Pascal in `<script>`, and CSS rules in `<style>`.
@@ -106,4 +106,4 @@ vscode-extension/
 └── README.md                  # Developer guide
 ```
 
-With Phase 1 complete, editing BlaiseVue applications in VS Code provides an ergonomic and professional developer experience comparable to mainstream web frameworks. 🛡️✨
+Editing BlaiseVue applications in VS Code provides an ergonomic and professional developer experience comparable to mainstream web frameworks. 🛡️✨

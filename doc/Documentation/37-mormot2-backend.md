@@ -1,6 +1,6 @@
-# 37. Full-Stack Pascal with mORMot 2 (bv mormot) - Phase 4
+# 37. Full-Stack Pascal with mORMot 2 (bv mormot)
 
-**Phase 4 of the BlaiseVue Universal Platform (v3.5)** brings **Full-Stack Pascal** capability by uniting the modern reactive web frontend of **BlaiseVue** with the world's fastest native Object Pascal backend framework: **Synopse mORMot 2**.
+BlaiseVue brings **Full-Stack Pascal** capability by uniting the modern reactive web frontend of **BlaiseVue** with the world's fastest native Object Pascal backend framework: **Synopse mORMot 2**.
 
 With this architecture, Pascal developers can write **both frontend components and backend microservices in 100% Pascal**:
 - **Frontend**: Reactive Single File Components (`.bv`), transpile to standard JavaScript/WebAssembly via `pas2js`.
@@ -148,7 +148,7 @@ begin
   Ctxt.OutContentType := JSON_CONTENT_TYPE;
   Ctxt.OutContent :=
     '{"status":"online"' +
-    ',"framework":"BlaiseVue 3.5 Full-Stack"' +
+    ',"framework":"BlaiseVue 4.3 Full-Stack"' +
     ',"engine":"Synopse mORMot 2"' +
     ',"port":' + FPort +
     ',"uptimeSeconds":' + IntToStr(SecondsBetween(Now, FStartTime)) +
@@ -209,7 +209,7 @@ end;
 
 ## 🌐 Frontend Reactivity: `$api` & `$ws`
 
-BlaiseVue 3.5 exposes `$api` and `$ws` directly inside all Single File Components and Object Pascal views:
+BlaiseVue exposes `$api` and `$ws` directly inside all Single File Components and Object Pascal views:
 
 ### REST Client (`$api`) API Methods
 
@@ -311,7 +311,7 @@ end.
 
 ## ⚡ Full-Stack CRUD & ORM Generator (`bv mormot crud`)
 
-With **Phase 1 of BlaiseVue 4.0**, developer velocity is multiplied through the **Full-Stack CRUD & ORM Generator**. In a single command, BlaiseVue generates the entire stack: typed Pascal backend contracts, an ultra-fast mORMot 2 REST API service with real-time WebSocket notifications, a reactive Single File Component with data tables and modal dialogs, and route registration in `src/app.bv`.
+With BlaiseVue, developer velocity is multiplied through the **Full-Stack CRUD & ORM Generator**. In a single command, BlaiseVue generates the entire stack: typed Pascal backend contracts, an ultra-fast mORMot 2 REST API service with real-time WebSocket notifications, a reactive Single File Component with data tables and modal dialogs, and route registration in `src/app.bv`.
 
 ### 1. Command Syntax & Supported Types
 
@@ -380,7 +380,7 @@ bv mormot crud Task title:string priority:integer done:boolean dueDate:date
 
 ## 🔐 Enterprise Authentication & Route Guards (`bv mormot auth`)
 
-BlaiseVue 4.0 includes an enterprise-grade security layer integrating native mORMot 2 server authentication with reactive frontend route guards and the `$auth` global helper.
+BlaiseVue includes an enterprise-grade security layer integrating native mORMot 2 server authentication with reactive frontend route guards and the `$auth` global helper.
 
 ### 1. Scaffolding with `bv mormot auth`
 
@@ -456,7 +456,7 @@ When an unauthenticated user attempts to access a protected route, the route gua
 
 ## 📜 Auto-Generated Swagger & OpenAPI 3.0 (`/api/docs` & `bv mormot docs`)
 
-BlaiseVue 4.0 provides instant, zero-configuration API documentation and interactive testing directly within the mORMot 2 server.
+BlaiseVue provides instant, zero-configuration API documentation and interactive testing directly within the mORMot 2 server.
 
 ### 1. Scaffolding with `bv mormot docs`
 
@@ -496,7 +496,7 @@ Visiting `http://localhost:8090/api/docs`:
 
 ## 🐳 Cloud-Native Micro-Containers (`bv mormot docker`)
 
-BlaiseVue 4.0 provides first-class support for containerized cloud deployment with zero runtime bloat. The CLI command `bv mormot docker` generates production-hardened container infrastructure optimized specifically for mORMot 2 and BlaiseVue apps.
+BlaiseVue provides first-class support for containerized cloud deployment with zero runtime bloat. The CLI command `bv mormot docker` generates production-hardened container infrastructure optimized specifically for mORMot 2 and BlaiseVue apps.
 
 ### 1. Scaffolding with `bv mormot docker`
 
@@ -551,7 +551,7 @@ docker compose down
 ---
 ## 🎯 Summary
 
-With **Phase 4**, BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:
+BlaiseVue delivers on the complete vision of **Full-Stack Pascal**:
 - **One language**: Pascal on the client, Pascal on the server.
 - **Ultra-lean**: No bulky runtimes or container layers needed.
 - **Blazing speed**: Free Pascal native machine code on the server, high-performance reactive JavaScript/WebAssembly in the browser.

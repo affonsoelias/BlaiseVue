@@ -1,6 +1,6 @@
 # ⚡ WebAssembly Acceleration Engine (`BVWasm`)
 
-BlaiseVue 3.0 introduces native support for **WebAssembly (Wasm)**, enabling high-performance computation directly in the browser with near-native binary execution speeds (2x to 10x faster than pure JavaScript).
+BlaiseVue provides native support for **WebAssembly (Wasm)**, enabling high-performance computation directly in the browser with near-native binary execution speeds (2x to 10x faster than pure JavaScript).
 
 ---
 
@@ -11,7 +11,7 @@ While the standard Pas2JS pipeline generates clean, optimized JavaScript, certai
 - Complex data sorting, array transformations, and large dataset filtering (100,000+ records).
 - Physics simulations, canvas graphics, and image processing.
 
-BlaiseVue 3.0 bridges Object Pascal to WebAssembly via `core/BVWasm.pas` and provides the reactive `$wasm` helper across all templates and component scopes.
+BlaiseVue bridges Object Pascal to WebAssembly via `core/BVWasm.pas` and provides the reactive `$wasm` helper across all templates and component scopes.
 
 ---
 
@@ -85,7 +85,7 @@ bv wasm benchmark
 
 Output:
 ```text
-=== BlaiseVue 3.0 WebAssembly Engine ===
+=== BlaiseVue WebAssembly Engine ===
 Running WebAssembly vs JavaScript benchmark...
   Module: math.fib(18)
   Iterations: 10,000

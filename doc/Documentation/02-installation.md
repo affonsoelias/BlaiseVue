@@ -97,7 +97,7 @@ bv
 
 Expected output:
 ```
-BlaiseVue CLI v1.0
+BlaiseVue CLI v4.3
 ==================
 
 Usage:

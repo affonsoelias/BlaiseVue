@@ -1,6 +1,6 @@
 # 22. Static Hoisting & Compiler Optimization
 
-In high-performance Single Page Applications, optimizing the re-rendering and patching cycles is critical. BlaiseVue 2.0 introduces **Static Hoisting and Compiler Pruning** in [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), reducing runtime overhead and eliminating redundant DOM diffing.
+In high-performance Single Page Applications, optimizing the re-rendering and patching cycles is critical. BlaiseVue features **Static Hoisting and Compiler Pruning** in [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCompiler.pas), reducing runtime overhead and eliminating redundant DOM diffing.
 
 ---
 
@@ -68,7 +68,7 @@ function render(ctx) {
 }
 ```
 
-### After Optimization (BlaiseVue 2.0 Static Hoisting)
+### After Optimization (Static Hoisting)
 Static subtrees are hoisted into a persistent variable:
 ```javascript
 // Hoisted outside render cycle
@@ -92,7 +92,7 @@ function render(ctx) {
 
 ## 📊 Performance Impact
 
-| Metric | Without Hoisting | With BlaiseVue 2.0 Hoisting | Improvement |
+| Metric | Without Hoisting | With Static Hoisting | Improvement |
 |---|---|---|---|
 | **Patch Time (1,000 items)** | ~14.2 ms | ~1.8 ms | **~8x faster** |
 | **Garbage Collection (GC)** | High (nodes recreated) | Minimal (persistent cache) | **~85% less memory churn** |

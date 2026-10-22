@@ -1,6 +1,6 @@
-# 36. Multiplatform Desktop & Lazarus IDE (bv desktop) - Phase 3
+# 36. Multiplatform Desktop & Lazarus IDE (bv desktop)
 
-**Phase 3 of the BlaiseVue Universal Platform (v3.5)** introduces native multiplatform desktop application development using **Free Pascal**, **Lazarus IDE**, and the **WebUI** library (with transparent fallback to system browser app mode).
+BlaiseVue supports native multiplatform desktop application development using **Free Pascal**, **Lazarus IDE**, and the **WebUI** library (with transparent fallback to system browser app mode).
 
 This architecture produces ultra-lightweight desktop binaries (**< 10 MB** on disk, **< 40 MB** RAM usage), eliminating the massive overhead of bundling Chromium/Electron and avoiding legacy GTK2 dependencies on Linux.
 

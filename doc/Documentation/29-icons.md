@@ -1,6 +1,6 @@
 # 29. Blaise Icons & Bootstrap Icons (`blaise-icons`)
 
-BlaiseVue 2.6 introduces the **`blaise-icons`** package, providing access to over 1,800+ vector icons powered by Bootstrap Icons, with zero external CDN dependency and complete backwards compatibility with the `<bv-icon>` component.
+BlaiseVue includes the **`blaise-icons`** package, providing access to over 2,000+ vector icons powered by Bootstrap Icons, with zero external CDN dependency and complete compatibility with the `<bv-icon>` component.
 
 ---
 

@@ -1,6 +1,6 @@
 # 🛡️ Module 11: Pro Features (Master Architecture)
 
-We've reached the last level of the journey! BlaiseVue Pro is not just about displaying data; it's about creating scalable architectures. In this module, you will learn how to handle the tools that major modern frameworks (like Vue and React) use to maintain giant applications.
+We've reached the last level of the journey! BlaiseVue is not just about displaying data; it's about creating scalable architectures. In this module, you will learn how to handle the tools that major modern frameworks (like Vue and React) use to maintain giant applications.
 
 ---
 
@@ -13,7 +13,7 @@ Use `<slot>` to leave holes and fill them from the parent component. If you have
 ---
 
 ## 2. ✨ Visual Experience (Transitions)
-Interfaces that jump on the screen without smoothness look amateur. BlaiseVue Pro automates animations with the `<transition>` tag.
+Interfaces that jump on the screen without smoothness look amateur. BlaiseVue automates animations with the `<transition>` tag.
 Just wrap your `b-if` with it, and the engine will inject CSS classes like `-enter-active` and `-leave-to` for you.
 
 ---
@@ -37,7 +37,7 @@ Use `provide` at the Root (App) and `inject` in those that need it. It's clean, 
 ---
 
 ## 6. 📦 Library Ecosystem (/lib)
-BlaiseVue PRO allows loading external libraries and UI kits (like **BlaiseUI**) simply by placing components inside the `/lib` folder.
+BlaiseVue allows loading external libraries and UI kits (like **BlaiseUI**) simply by placing components inside the `/lib` folder.
 - **Auto-Link**: Any library CSS (like `blaise-ui.css`) is automatically linked into `index.html`.
 - **Auto-Registration**: Library components like `<bv-btn>`, `<bv-modal>`, and `<bv-card>` are registered globally without needing manual `import` statements.
 

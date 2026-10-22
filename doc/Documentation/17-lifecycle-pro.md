@@ -1,6 +1,6 @@
 # 🔄 Advanced Lifecycle (Pro Lifecycle)
 
-BlaiseVue PRO offers full control over a component's existence, from birth (initialization) to death (destruction), through synchronous and asynchronous lifecycle hooks.
+BlaiseVue offers full control over a component's existence, from birth (initialization) to death (destruction), through synchronous and asynchronous lifecycle hooks.
 
 ---
 
@@ -53,7 +53,7 @@ updated:
 ```
 
 ### 4. `unmounted` Hook: Cleanup and Farewell
-BlaiseVue PRO automatically destroys all reactivity watchers (`Effects`) and removes the component from the tree. **Use this hook to avoid memory leaks.**
+BlaiseVue automatically destroys all reactivity watchers (`Effects`) and removes the component from the tree. **Use this hook to avoid memory leaks.**
 
 ```pascal
 unmounted:
@@ -66,7 +66,7 @@ unmounted:
 
 ---
 
-## 🛡️ BlaiseVue PRO Automatic Management
+## 🛡️ Automatic Lifecycle Management
 Unlike the Standard version, the **Pro Engine** performs a Deep Cleanup when unmounting:
 - **Leak Detection**: Stops orphaned reactive effects.
 - **Auto-Reference Wipe**: Clears the `$refs` dictionary to free up RAM in the browser.

@@ -67,7 +67,7 @@ In `src/app.bv`, define your routes and place the `<router-view>` tag where page
 
 ## 🗂️ 3. Nested Routes (Sub-Layouts)
 
-In large applications, pages often share sub-layouts (such as a sidebar navigation in an admin dashboard) where only the inner content changes. BlaiseVue 2.0 supports nested `<router-view>` components.
+In large applications, pages often share sub-layouts (such as a sidebar navigation in an admin dashboard) where only the inner content changes. BlaiseVue supports nested `<router-view>` components.
 
 ### Configuration with `children`
 ```pascal

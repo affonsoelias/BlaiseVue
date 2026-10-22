@@ -1,13 +1,13 @@
-# 41. Package Components Catalog & Developer Manual (BlaiseVue 4.1)
+# 41. Package Components Catalog & Developer Manual
 
-> **BlaiseVue 4.1 Official Component Reference**  
+> **BlaiseVue Official Component Reference**  
 > Complete technical manual, props specification, events, slots, and idiomatic 100% Object Pascal (Zero-ASM) examples for all official ecosystem packages.
 
 ---
 
 ## 📚 Ecosystem Overview & Package Architecture
 
-BlaiseVue 4.1 provides a modular, package-based component architecture located in `/packages` (and loaded dynamically into `lib/` in application projects):
+BlaiseVue provides a modular, package-based component architecture located in `/packages` (and loaded dynamically into `lib/` in application projects):
 
 ```text
 packages/
@@ -727,4 +727,4 @@ if Boolean(this['$theme']['isDark']) then
 
 ---
 
-🛡️ **"BlaiseVue 4.1: Unified Object Pascal Component Architecture for Enterprise Scale."** ✨🏆🚀
+🛡️ **"BlaiseVue: Unified Object Pascal Component Architecture for Enterprise Scale."** ✨🏆🚀

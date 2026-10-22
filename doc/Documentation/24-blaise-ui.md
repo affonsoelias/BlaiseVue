@@ -1,6 +1,6 @@
 # 24. BlaiseUI (Official Component Kit)
 
-**BlaiseUI** is the official, unified, and native component library of BlaiseVue 4.0 / 4.1. Built 100% in Object Pascal and Single File Components (`.bv`), it unifies the visual design system, form controls, navigation primitives, overlays, responsive grids, and enterprise data tables into a single cohesive package with zero external CSS dependencies.
+**BlaiseUI** is the official, unified, and native component library of BlaiseVue. Built 100% in Object Pascal and Single File Components (`.bv`), it unifies the visual design system, form controls, navigation primitives, overlays, responsive grids, and enterprise data tables into a single cohesive package with zero external CSS dependencies.
 
 > [!TIP]
 > **Complete API & Props Manual**: For the exhaustive props specification, events, slots, and 100% Object Pascal (Zero-ASM) examples for every single component across all packages, see [41. Package Components Catalog & Developer Manual](41-package-components-catalog.md).

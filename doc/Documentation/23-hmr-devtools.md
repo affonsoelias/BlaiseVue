@@ -1,6 +1,6 @@
 # 23. Hot Module Replacement (HMR) & DevTools
 
-BlaiseVue 2.0 brings an enterprise-grade developer experience with **Hot Module Replacement (HMR)** and an official **Browser DevTools Extension (Manifest V3)**.
+BlaiseVue provides an enterprise-grade developer experience with **Hot Module Replacement (HMR)** and an official **Browser DevTools Extension (Manifest V3)**.
 
 ---
 
@@ -9,7 +9,7 @@ BlaiseVue 2.0 brings an enterprise-grade developer experience with **Hot Module 
 ### The Developer Experience Challenge
 In traditional web development, editing a component forces a full browser reload. This destroys user input in forms, collapses open modals, and resets application state back to the initial screen.
 
-BlaiseVue 2.0 solves this with **Instant HMR**:
+BlaiseVue solves this with **Instant HMR**:
 - Modifying a `.bv` file re-transpiles only that specific component.
 - The browser updates the DOM, styles, and methods **in-place** without reloading the page.
 - The component's active reactive state (`this['State']`) is **fully preserved**.

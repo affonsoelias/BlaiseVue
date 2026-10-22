@@ -1,6 +1,6 @@
 # 39. Reactive Chart.js Suite (`blaise-charts` & `BlaiseCharts`)
 
-**Phase 6 of the BlaiseVue 4.0 Cloud & Mobile Ecosystem** introduces the official data visualization and analytics library: **`blaise-charts`** (`packages/blaise-charts`).
+BlaiseVue provides an official data visualization and analytics library: **`blaise-charts`** (`packages/blaise-charts`).
 
 Blaise Charts bridges the industry-standard **Chart.js** engine with strongly typed **Object Pascal** classes and records, delivering reactive, hardware-accelerated 60 FPS HTML5 `<canvas>` rendering across Web, Desktop (WebUI), and Mobile (Capacitor/Android) with zero CDN dependency.
 

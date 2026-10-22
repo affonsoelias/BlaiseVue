@@ -2,7 +2,7 @@
 
 In early versions of BlaiseVue, two auxiliary libraries were developed in the `lib/` directory to showcase external component integration: `bootstrap-bv` (Bootstrap 5 wrapper) and `chart-bv` (Chart.js wrapper).
 
-With the release of **BlaiseVue 2.0**, these libraries were consolidated into the official, native **[BlaiseUI](24-blaise-ui.md)** package, eliminating prefix ambiguity and external heavyweight CSS dependencies.
+BlaiseVue consolidates UI widgets into the official, native **[BlaiseUI](24-blaise-ui.md)** package, eliminating prefix ambiguity and external heavyweight CSS dependencies.
 
 ---
 

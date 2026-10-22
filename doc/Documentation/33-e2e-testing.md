@@ -1,6 +1,6 @@
 # 🧪 Headless End-to-End Test Suite (`bv test e2e`)
 
-BlaiseVue 3.0 introduces native support for **End-to-End (E2E) and Integration Testing**, ensuring critical user journeys work reliably across routing, form submissions, theme switches, and hydration.
+BlaiseVue includes native support for **End-to-End (E2E) and Integration Testing**, ensuring critical user journeys work reliably across routing, form submissions, theme switches, and hydration.
 
 ---
 
@@ -23,7 +23,7 @@ bv test e2e
 
 The test runner will compile and execute end-to-end integration flows:
 ```text
-=== BlaiseVue 3.0 Headless E2E Test Suite ===
+=== BlaiseVue Headless E2E Test Suite ===
 Executing end-to-end user journeys (Routing, Forms, Themes, Hydration)...
 
  RUN  v3.2.4 C:/Users/Pichau/Documents/BlaiseVue/demo-app

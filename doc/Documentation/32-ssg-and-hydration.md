@@ -1,6 +1,6 @@
 # 🚀 SSG & Static Pre-rendering with Reactive Hydration
 
-BlaiseVue 3.0 delivers **Static Site Generation (SSG)** and **Zero-Flicker Reactive Hydration**, achieving ultra-fast First Contentful Paint times (<50ms) and complete SEO crawlability.
+BlaiseVue delivers **Static Site Generation (SSG)** and **Zero-Flicker Reactive Hydration**, achieving ultra-fast First Contentful Paint times (<50ms) and complete SEO crawlability.
 
 ---
 
@@ -13,7 +13,7 @@ In standard Client-Side Single Page Applications (SPAs):
 
 ---
 
-## ⚡ The BlaiseVue 3.0 SSG Solution
+## ⚡ The BlaiseVue SSG Solution
 
 With `bv run ssg`, BlaiseVue statically evaluates your routing tree (`src/app.bv`) at build time:
 - Each route is pre-rendered into its own static HTML file (`dist/index.html`, `dist/about.html`, `dist/form.html`, etc.).
@@ -46,7 +46,7 @@ bv run ssg
 
 Console Output:
 ```text
-=== BlaiseVue 3.0 Static Site Generator (SSG & Pre-rendering) ===
+=== BlaiseVue Static Site Generator (SSG & Pre-rendering) ===
   Parsed app routes: 8 route(s) registered.
   [1/2] Running production compilation...
   [2/2] Pre-rendering route views into static HTML...

@@ -1,6 +1,6 @@
 # 38. Mobile-First Ecosystem (`blaise-ui-mobile` & `BlaiseIonic`)
 
-**Phase 5 of the BlaiseVue 4.0 Cloud & Mobile Ecosystem** introduces official mobile UI packaging and strongly typed Pascal controllers powered by the **Ionic Web Components** design language (`@ionic/core` aesthetics).
+BlaiseVue provides official mobile UI packaging and strongly typed Pascal controllers powered by the **Ionic Web Components** design language (`@ionic/core` aesthetics).
 
 With `blaise-ui-mobile`, developers create responsive mobile apps with native touch feedback, smooth animations, safe area handling (notches and home bars), and automatic adaptive design switching between **iOS (Cupertino)** and **Android (Material Design)**.
 

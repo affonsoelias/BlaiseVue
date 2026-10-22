@@ -1,6 +1,6 @@
 # 25. Form Validation Engine (`b-validate`)
 
-BlaiseVue 2.5 introduces a native, declarative, and typed form validation engine that removes boilerplate and simplifies input validation in enterprise applications.
+BlaiseVue provides a native, declarative, and typed form validation engine that removes boilerplate and simplifies input validation in enterprise applications.
 
 ---
 

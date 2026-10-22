@@ -1,6 +1,6 @@
-# 📖 BlaiseVue: API Technical Reference (v4.1)
+# 📖 BlaiseVue: API Technical Reference
 
-This document is the official technical reference for all directives, components, events, hooks, compiler attributes, and global objects supported by the BlaiseVue 4.1 runtime engine.
+This document is the official technical reference for all directives, components, events, hooks, compiler attributes, and global objects supported by the BlaiseVue runtime engine.
 
 ---
 
