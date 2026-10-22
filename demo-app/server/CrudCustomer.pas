@@ -62,25 +62,25 @@ begin
   // Seed item 1
   FItems[0].ID := FNextId;
   Inc(FNextId);
-  FItems[0].Name := 'Customer 1';
-  FItems[0].Email := 'Customer 1';
-  FItems[0].Phone := 'Customer 1';
+  FItems[0].Name := 'João Silva';
+  FItems[0].Email := 'joao.silva@empresa.com';
+  FItems[0].Phone := '(11) 98765-4321';
   FItems[0].Active := True;
   FItems[0].CreatedAt := DateTimeToStr(Now);
   // Seed item 2
   FItems[1].ID := FNextId;
   Inc(FNextId);
-  FItems[1].Name := 'Customer 2';
-  FItems[1].Email := 'Customer 2';
-  FItems[1].Phone := 'Customer 2';
+  FItems[1].Name := 'Maria Santos';
+  FItems[1].Email := 'maria.santos@tech.com';
+  FItems[1].Phone := '(21) 99876-5432';
   FItems[1].Active := True;
   FItems[1].CreatedAt := DateTimeToStr(Now);
   // Seed item 3
   FItems[2].ID := FNextId;
   Inc(FNextId);
-  FItems[2].Name := 'Customer 3';
-  FItems[2].Email := 'Customer 3';
-  FItems[2].Phone := 'Customer 3';
+  FItems[2].Name := 'Carlos Oliveira';
+  FItems[2].Email := 'carlos.oliveira@corp.com';
+  FItems[2].Phone := '(31) 97654-3210';
   FItems[2].Active := False;
   FItems[2].CreatedAt := DateTimeToStr(Now);
 end;
@@ -162,9 +162,9 @@ begin
     Inc(FNextId);
     V := Doc.GetValueOrDefault('name', 'New Customer');
     NewItem.Name := VariantToUtf8(V);
-    V := Doc.GetValueOrDefault('email', 'New Customer');
+    V := Doc.GetValueOrDefault('email', '');
     NewItem.Email := VariantToUtf8(V);
-    V := Doc.GetValueOrDefault('phone', 'New Customer');
+    V := Doc.GetValueOrDefault('phone', '');
     NewItem.Phone := VariantToUtf8(V);
     V := Doc.GetValueOrDefault('active', True);
     NewItem.Active := Boolean(V);

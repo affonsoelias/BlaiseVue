@@ -1,6 +1,9 @@
 <template>
   <div class="dataset-view-page">
     <!-- HEADER SECTION -->
+    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">
+      💡 Procurando o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>? <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!
+    </div>
     <div class="crud-header">
       <div>
         <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>

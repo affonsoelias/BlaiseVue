@@ -115,7 +115,20 @@ begin
       };
       this.SetValue = function(k, val) {
         let d = this.FData || this;
-        d[k] = val;
+        if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+          window.__BV_CORE__.setDeepValue(d, k, val);
+        } else {
+          if (k && k.indexOf('.') > -1) {
+            let parts = k.split('.');
+            let curr = d;
+            for (let i = 0; i < parts.length - 1; i++) {
+              if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+              curr = curr[parts[i]];
+            }
+            curr[parts[parts.length - 1]] = val;
+          }
+          d[k] = val;
+        }
       };
     }
   end;
@@ -139,8 +152,24 @@ end;
 
 procedure TBlaiseData.SetValue(AKey: string; AVal: JSValue);
 begin
-  { Direct reactive assignment }
-  asm this.FData[AKey] = AVal; end;
+  { Direct reactive assignment supporting deep dot notation }
+  asm
+    var d = this.FData || this;
+    if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+      window.__BV_CORE__.setDeepValue(d, AKey, AVal);
+    } else {
+      if (AKey && AKey.indexOf('.') > -1) {
+        var parts = AKey.split('.');
+        var curr = d;
+        for (var i = 0; i < parts.length - 1; i++) {
+          if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+          curr = curr[parts[i]];
+        }
+        curr[parts[parts.length - 1]] = AVal;
+      }
+      d[AKey] = AVal;
+    }
+  end;
 end;
 
 initialization
@@ -153,6 +182,25 @@ initialization
     bv.targetMap = new WeakMap(); // Dependency graph
     bv.proxyCache = new WeakMap();
     if (!bv.components) bv.components = {}; // Safe Component registry
+    
+    // Helper for deep property assignment (e.g. 'form.name')
+    bv.setDeepValue = function(target, path, val) {
+      if (!target || !path) return;
+      if (typeof path === 'string' && path.indexOf('.') > -1) {
+        let parts = path.split('.');
+        let curr = target;
+        for (let i = 0; i < parts.length - 1; i++) {
+          let part = parts[i];
+          if (!curr[part] || typeof curr[part] !== 'object') {
+            curr[part] = {};
+          }
+          curr = curr[part];
+        }
+        curr[parts[parts.length - 1]] = val;
+      } else {
+        target[path] = val;
+      }
+    };
     
     // Core Effect Wrapper: Tracks deps while running
     bv.effect = function(fn) {

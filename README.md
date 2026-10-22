@@ -11,10 +11,11 @@
 
 ---
 
-## 🌟 Version 4.0 - 4.2: The Enterprise Universal Release
+## 🌟 Version 4.0 - 4.3: The Enterprise Universal Release
 
 BlaiseVue 4.0 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, and zero-ASM pure Object Pascal DX:
 
+- **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
 - **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. Features in-memory cursor navigation (`First`, `Next`, `Prior`, `Last`, `RecNo`), transactional buffering (`Append`, `Edit`, `Post`, `Cancel`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), two-way `b-field` directive, offline delta tracking (`FDelta`, `GetDeltaJSON`), and native `<bv-datagrid :dataset="myDS">` integration.
 - **📚 Official Package Catalog & Documentation (v4.1)**: Master catalog covering 53+ production components across `@blaise-ui`, `@blaise-charts`, `@blaise-ui-mobile`, and `@blaise-themes`.
 - **💎 Idiomatic Object Pascal DX & Zero-ASM Architecture**: 100% pure Pascal application layer powered by `BVPascalDX.pas`. Application views and components run without inline `asm ... end;` blocks, providing type-safe reactive mutations, high-level dialogs (`ShowToast`, `Confirm`), full-stack REST/mORMot CRUD helpers (`ApiFetch`, `ApiSave`, `ApiDelete`, `ApiSetupRealtime`), and native auth/mobile/Wasm bindings.
@@ -120,6 +121,7 @@ bv mormot run              # Starts native backend server on port 8090
 bv mormot status           # Queries /api/status health endpoint
 bv mormot deploy           # Packages standalone production bundle in deploy/
 bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
+bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces
                            # (Note: bv server commands preserved as aliases)
 
 # === Testing ===
@@ -151,11 +153,16 @@ Our architectural evolution roadmap:
   - [x] 🎨 **Phase 7: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
   - [x] 💎 **Phase 8: Idiomatic Object Pascal DX (Zero-ASM Architecture)**: Eradicate inline `asm` blocks from end-user views, establishing a 100% pure Object Pascal developer experience with strongly typed records, native state assignments, and idiomatic Pascal view controllers.
 - [x] **v4.1 Component Catalog & Package Documentation (Completed ✅)**: Exhaustive documentation and interactive reference for all package components (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, `blaise-themes`) with props, events, slots, and copy-pasteable 100% Pascal snippets.
-- [ ] **v4.2 LiveBindings & Reactive `TBVDataSet` (Planned 🔮)**: Delphi/Lazarus-style in-memory dataset (`TBVMemTable` / `TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), IndexedDB offline cache, and native `<bv-datagrid>` integration.
-- [ ] **v4.3 End-to-End Type-Safe Pascal RPC (Planned 🔮)**: Shared service interfaces (`ICustomerService`) between mORMot 2 and BlaiseVue, automated client proxy scaffolding (`bv mormot rpc`), zero manual REST URLs, and compile-time API validation.
+- [x] **v4.2 LiveBindings & Reactive `TBVDataSet` (Completed ✅)**: Delphi/Lazarus-style in-memory dataset (`TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), delta tracking, and native `<bv-datagrid>` integration.
+- [x] **v4.3 End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)**: Shared service interfaces (`ICustomerService`, `IProductService`, `ISystemService`), automated client proxy scaffolding (`bv mormot rpc`), dual HTTP/WebSocket transport, and compile-time API validation.
+- [ ] **v4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Next Horizon 🎯)**:
+  - [ ] ⚡ **Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates**: Compile-time AST verification of template expressions against component declarations and compilation to native Pascal closures/methods.
+  - [ ] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence and automatic background delta synchronization with mORMot 2 via WebSockets upon reconnection.
+  - [ ] 🔗 **Pillar 3: Master-Detail & Relational CRUD Scaffolding (`bv mormot crud`)**: Automated code generation for foreign keys and parent-child master-detail views (`Order` -> `OrderItems`).
+  - [ ] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling capable of rendering 100,000+ records at a constant 60 FPS.
 
 > [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md).
+> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md), and [Type-Safe RPC Documentation](doc/Documentation/43-typesafe-rpc-mormot.md).
 
 ---
 

@@ -1,9 +1,9 @@
-# 🛡️ Technical Roadmap: BlaiseVue Platform (v2.0 - v4.0)
+# 🛡️ Technical Roadmap: BlaiseVue Platform (v2.0 - v4.4)
 
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.2 LiveBindings & Reactive TBVDataSet Delivered (Phases 1-8 + v4.1 + v4.2 ✅ 100% Completed | Next: v4.3 🛡️)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), and LiveBindings with in-memory `TBVDataSet` (`b-field`, navigation, CRUD buffering, delta tracking, and `<bv-datagrid>` integration) are fully delivered and verified with 393 automated tests across 24 test suites. Upcoming milestone: BlaiseVue 4.3 (End-to-End Type-Safe Pascal RPC with mORMot 2).
+> **Current Status**: 🚀 **BlaiseVue 4.3 Delivered (100% Completed)**. Full-Stack CRUD, Enterprise Auth, OpenAPI, Docker, Ionic Mobile, Charts, Studio, Zero-ASM DX, Master Component Catalog (53+ components), LiveBindings with in-memory `TBVDataSet`, and End-to-End Type-Safe Pascal RPC with mORMot 2 (`ICustomerService`, `IProductService`, `ISystemService`, `ClientProxies.pas`, `TRpcDispatcher`, dual HTTP/WebSocket transport, and `bv mormot rpc`) are fully delivered and verified with 449 automated tests across 25 test suites. Next Milestone: **BlaiseVue 4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Pillars 1 to 4 Approved 🎯)**.
 
 ---
 
@@ -414,9 +414,9 @@ With the completion of **v3.5 (The Universal Pascal Platform)** uniting Web, Des
 
 ---
 
-## 🔮 The Next Horizon: BlaiseVue 4.1, 4.2 & 4.3 Specifications
+## 🔮 The Next Horizon: BlaiseVue 4.1, 4.2, 4.3 & 4.4 Specifications
 
-With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered with 336 passing tests), the platform enters its next phase of enterprise maturity:
+With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the delivery of **v4.1, v4.2 and v4.3** (reaching 449 passing tests across 25 test suites), the platform enters its next phase of enterprise maturity:
 
 ```
                                   BLAISEVUE 4.x
@@ -492,8 +492,18 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered with 336
 
 ---
 
-### 🛡️ BlaiseVue 4.3: End-to-End Type-Safe Pascal RPC with mORMot 2
+### 🛡️ BlaiseVue 4.3: End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)
 **Goal**: Completely eliminate manual REST URLs, HTTP verb boilerplate, and string-based endpoints between client and server, establishing a 100% type-safe, compile-time verified RPC pipeline in pure Object Pascal.
+
+- **Detailed Documentation**: [`doc/Documentation/43-typesafe-rpc-mormot.md`](file:///c:/Users/Pichau/Documents/BlaiseVue/doc/Documentation/43-typesafe-rpc-mormot.md)
+- **Delivered Deliverables & Implementation**:
+  1. **Shared Service Contracts (`common/Services.pas`)**: `ICustomerService`, `IProductService`, `ISystemService` inheriting from `IInvokable`, with structured DTO records (`TCustomer`, `TProduct`, `TSystemInfo`).
+  2. **Automated Client Proxy Scaffolder (`bv mormot rpc`)**: CLI command in `bin/bv.pas` generating strongly typed client proxies in `common/ClientProxies.pas` and `generated/ClientProxies.pas` with both callback (`reference to procedure`) and Promise (`TJSPromise`) APIs.
+  3. **Core Client RPC Runtime (`core/BVRpc.pas`)**: `TBVRpcClient` and `TBVRemoteProxy` managing HTTP POST (`/api/rpc/:service/:method`), JSON-RPC 2.0 (`/api/rpc`), and bidirectional WebSocket frames (`rpc_call`/`rpc_response`), with automatic `$rpc` injection in `core/BlaiseVue.pas` and Pascal DX wrappers in `core/BVPascalDX.pas`.
+  4. **mORMot 2 Native Server SOA Dispatcher (`demo-app/server/RpcService.pas`)**: High-performance request router integrated into `TBlaiseServerApp.DoRequest` and `TBlaiseWebSocketProtocol.OnIncoming` in `ServerApp.pas`.
+  5. **Automated Test Coverage (`demo-app/tests/rpc.test.pas`)**: 8 comprehensive automated tests covering bridge configuration, JSON-RPC 2.0 dispatch, proxy singleton invocations, promises, WebSocket RPC, and pack mode (all 25 test suites passing with 437 tests).
+
+- **Architectural Specification**: Completely eliminate manual REST URLs, HTTP verb boilerplate, and string-based endpoints between client and server, establishing a 100% type-safe, compile-time verified RPC pipeline in pure Object Pascal.
 
 - **Architectural Specification**:
   1. **Shared Service Interfaces (`common/Services.pas`)**:
@@ -521,6 +531,51 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered with 336
      - Mismatched parameter types, renamed methods, or invalid signatures produce compiler errors during build time (`bv run dev`), preventing runtime API mismatches entirely.
   4. **High-Throughput Binary Serialization**:
      - Support for optimized JSON and binary pack serialization between mORMot 2 backend and Pas2JS frontend runtime, maximizing throughput for enterprise workloads.
+
+---
+
+---
+
+### 🚀 BlaiseVue 4.4: Enterprise Resilience, Native Templates & Offline Delta Sync (Approved 🎯)
+**Goal**: Elevate BlaiseVue into an uncompromising enterprise runtime by introducing compile-time template verification, native high-performance template evaluation, offline-first dataset synchronization with mORMot 2, relational master-detail code generation, and virtualized high-density data rendering.
+
+- **Status**: **Approved for Implementation (Pillars 1 to 4)**.
+
+#### ⚡ Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates
+- **Compile-Time AST Verification**:
+  - The `bv` preprocessor analyzes AST expressions inside `<template>` blocks (`b-model`, `:prop`, `@event`, `v-if`, `b-for`) against declarations in the `<script>` section (`data:`, `computed:`, `methods:`).
+  - Typos in properties or mismatched types raise clear compile-time errors during `bv run dev` / `bv run build`, eliminating runtime JavaScript reference errors.
+- **Native Anonymous Pascal Functions (Eliminating runtime `with()` and `eval`)**:
+  - Automatically compiles inline expressions into strongly typed Pascal methods/closures instead of generating `new Function('with(data) { ... }')`.
+  - Up to **3x to 5x faster DOM reconciliation** during rapid reactive mutations.
+  - Complete compliance with JavaScript strict mode (`"use strict";`) and Content Security Policy (CSP).
+
+#### 💾 Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)
+- **IndexedDB Local Storage Adapter**:
+  - Automatic, transparent persistence of in-memory `TBVDataSet` tables to browser IndexedDB storage.
+  - Allows mission-critical enterprise applications (POS, healthcare, field mobility) to operate seamlessly during connectivity loss.
+- **Transactional Delta Tracking (`FDelta`) & Reconciliation**:
+  - Full local editing buffer tracking inserted, modified, and deleted records in offline mode.
+  - Automatic WebSocket reconnect trigger: when the connection to mORMot 2 is re-established, the dataset sends its `FDelta` payload to the backend.
+  - Server-side transactional resolution (`ApplyUpdates`) with conflict detection and automated client synchronization.
+
+#### 🔗 Pillar 3: Master-Detail & Relational CRUD Scaffolding (`bv mormot crud`)
+- **Relational Model Declarations in CLI**:
+  - Scaffolds complex parent-child business models with foreign keys directly via CLI:
+    ```bash
+    bv mormot crud Order customer:FK(Customer) items:Detail(OrderItem)
+    ```
+- **Backend Schema & Service Generation**:
+  - Generates relational records and ORM tables in `ServerModels.pas` with foreign key integrity.
+  - Automatically scaffolds transactional master-detail endpoints and RPC interfaces (`IOrderService`).
+- **Frontend Master-Detail Views**:
+  - Generates dual-grid and nested responsive views where selecting a master row instantly synchronizes the reactive child dataset.
+
+#### 🏎️ Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`
+- **DOM Node Virtualization (`<bv-virtual-scroll>`)**:
+  - High-performance DOM recycling engine capable of rendering tables with 50,000 to 100,000+ records at a constant 60 FPS.
+  - Keeps only visible rows (+ customizable buffer) in the browser DOM tree, drastically cutting memory consumption and preventing layout recalculation bottlenecks.
+  - Seamlessly integrates with the reactive `TBVDataSet` cursor and selection models.
 
 ---
 

@@ -441,7 +441,21 @@ begin
           } catch(e2) { return undefined; }
         }
       },
-      SetValue: function(k, val) { pRef[k] = val; }
+      SetValue: function(k, val) {
+        if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+          window.__BV_CORE__.setDeepValue(pRef, k, val);
+        } else if (k && k.indexOf('.') > -1) {
+          let parts = k.split('.');
+          let curr = pRef;
+          for (let i = 0; i < parts.length - 1; i++) {
+            if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+            curr = curr[parts[i]];
+          }
+          curr[parts[parts.length - 1]] = val;
+        } else {
+          pRef[k] = val;
+        }
+      }
     };
     
     window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);

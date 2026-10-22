@@ -22,6 +22,15 @@
     this.BeforeDestruction = function () {
     };
   });
+  rtl.createClass(this,"TInterfacedObject",this.TObject,function () {
+    this.$init = function () {
+      $mod.TObject.$init.call(this);
+      this.fRefCount = 0;
+    };
+    this.BeforeDestruction = function () {
+      if (this.fRefCount !== 0) rtl.raiseE('EHeapMemoryError');
+    };
+  });
   this.vtInteger = 0;
   this.vtExtended = 3;
   this.vtWideChar = 9;
@@ -1461,7 +1470,20 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         };
         this.SetValue = function(k, val) {
           let d = this.FData || this;
-          d[k] = val;
+          if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+            window.__BV_CORE__.setDeepValue(d, k, val);
+          } else {
+            if (k && k.indexOf('.') > -1) {
+              let parts = k.split('.');
+              let curr = d;
+              for (let i = 0; i < parts.length - 1; i++) {
+                if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+                curr = curr[parts[i]];
+              }
+              curr[parts[parts.length - 1]] = val;
+            }
+            d[k] = val;
+          }
         };
       };
       return this;
@@ -1476,6 +1498,25 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         bv.targetMap = new WeakMap(); // Dependency graph
         bv.proxyCache = new WeakMap();
         if (!bv.components) bv.components = {}; // Safe Component registry
+        
+        // Helper for deep property assignment (e.g. 'form.name')
+        bv.setDeepValue = function(target, path, val) {
+          if (!target || !path) return;
+          if (typeof path === 'string' && path.indexOf('.') > -1) {
+            let parts = path.split('.');
+            let curr = target;
+            for (let i = 0; i < parts.length - 1; i++) {
+              let part = parts[i];
+              if (!curr[part] || typeof curr[part] !== 'object') {
+                curr[part] = {};
+              }
+              curr = curr[part];
+            }
+            curr[parts[parts.length - 1]] = val;
+          } else {
+            target[path] = val;
+          }
+        };
         
         // Core Effect Wrapper: Tracks deps while running
         bv.effect = function(fn) {
@@ -2430,7 +2471,11 @@ rtl.module("BVClient",["System","JS","Web","SysUtils","BVReactivity"],function (
                 }
                 try {
                   this.status = 'connecting';
-                  this.socket = new WebSocket(this.url);
+                  try {
+                    this.socket = new WebSocket(this.url, ['blaise-ws']);
+                  } catch(eProtocol) {
+                    this.socket = new WebSocket(this.url);
+                  }
                   this.socket.onopen = function(ev) {
                     self.status = 'open';
                     self.emit('open', ev);
@@ -2675,6 +2720,26 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
         const bv = window.__BV_CORE__;
         
+        if (!bv.setDeepValue) {
+          bv.setDeepValue = function(target, path, val) {
+            if (!target || !path) return;
+            if (typeof path === 'string' && path.indexOf('.') > -1) {
+              let parts = path.split('.');
+              let curr = target;
+              for (let i = 0; i < parts.length - 1; i++) {
+                let part = parts[i];
+                if (!curr[part] || typeof curr[part] !== 'object') {
+                  curr[part] = {};
+                }
+                curr = curr[part];
+              }
+              curr[parts[parts.length - 1]] = val;
+            } else {
+              target[path] = val;
+            }
+          };
+        }
+        
         // Application Entry Point: Mounts a template into the DOM
         bv.compile = function(Root, Data, Methods) {
           if (!Root || Root['bvCompiled']) return;
@@ -2732,7 +2797,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
           if (Data && !Data.SetValue) {
             Data.SetValue = function(k, val) {
               let d = (Data && Data.FData) ? Data.FData : Data;
-              d[k] = val;
+              bv.setDeepValue(d, k, val);
             };
           }
     
@@ -2953,7 +3018,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                              return f(this.FData, ev);
                           } catch(ex) { return undefined; }
                        },
-                       SetValue: function(k, val) { this.FData[k] = val; }
+                       SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                     };
     
                     instEl.parentNode.replaceChild(newEl, instEl);
@@ -3260,12 +3325,24 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (opts) {
                    // Component v-model (handled logic in step 9)
                 } else {
-                   el.value = Data.Evaluate(vmodel) || '';
-                   const sync = function() { Data.SetValue(vmodel, this.value); };
+                   const isCheck = (el.type === 'checkbox');
+                   if (isCheck) {
+                     el.checked = Boolean(Data.Evaluate(vmodel));
+                   } else {
+                     el.value = Data.Evaluate(vmodel) || '';
+                   }
+                   const sync = function() {
+                     const val = isCheck ? this.checked : this.value;
+                     Data.SetValue(vmodel, val);
+                   };
                    el.oninput = sync; el.onchange = sync; 
                    bv.effect(function() {
                      let v = Data.Evaluate(vmodel);
-                     if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                     if (isCheck) {
+                       if (el.checked !== Boolean(v)) el.checked = Boolean(v);
+                     } else {
+                       if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                     }
                    });
                 }
               }
@@ -3306,7 +3383,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
                    bv.effect(function() {
                      let v = getNativeFieldVal();
-                     if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                     if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                    });
                 }
               }
@@ -3400,7 +3477,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                               } catch(e2) { return undefined; }
                             }
                           },
-                          SetValue: function(k, val) { this.FData[k] = val; }
+                          SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                         };
                         bv.traverse(cl, ld, Methods);
                       });
@@ -3880,7 +3957,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       } catch(e2) { return undefined; }
                     } 
                   },
-                  SetValue: function(k, val) { this.FData[k] = val; }
+                  SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
                 
                 bv.traverse(rEl, cD, opts.methods);
@@ -4235,7 +4312,21 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
                 } catch(e2) { return undefined; }
               }
             },
-            SetValue: function(k, val) { pRef[k] = val; }
+            SetValue: function(k, val) {
+              if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
+                window.__BV_CORE__.setDeepValue(pRef, k, val);
+              } else if (k && k.indexOf('.') > -1) {
+                let parts = k.split('.');
+                let curr = pRef;
+                for (let i = 0; i < parts.length - 1; i++) {
+                  if (!curr[parts[i]] || typeof curr[parts[i]] !== 'object') curr[parts[i]] = {};
+                  curr = curr[parts[i]];
+                }
+                curr[parts[parts.length - 1]] = val;
+              } else {
+                pRef[k] = val;
+              }
+            }
           };
           
           window.__BV_CORE__.compile(rootPageEl, cD, CompOpt.methods);
@@ -5937,7 +6028,290 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
     };
   };
 },[]);
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function () {
+rtl.module("BVRpc",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVRemoteProxy",pas.System.TInterfacedObject,function () {
+    this.$init = function () {
+      pas.System.TInterfacedObject.$init.call(this);
+      this.FServiceName = "";
+    };
+    this.Create$1 = function (AServiceName) {
+      pas.System.TObject.Create.call(this);
+      this.FServiceName = AServiceName;
+      $mod.TBVRpcClient.EnsureBridge();
+      $mod.TBVRpcClient.RegisterService(AServiceName,this);
+      return this;
+    };
+    this.CallRemote = function (AMethodName, Params, OnSuccess, OnError) {
+      var Result = undefined;
+      Result = $mod.TBVRpcClient.Invoke(this.FServiceName,AMethodName,Params,OnSuccess,OnError);
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVRpcClient",pas.System.TObject,function () {
+    this.EnsureBridge = function () {
+      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          if (!window.__BV_CORE__.rpc) {
+            window.__BV_CORE__.rpc = {
+              baseUrl: 'http://localhost:8090/api/rpc',
+              token: '',
+              headers: {},
+              timeout: 10000,
+              transport: 'http',
+              usePack: false,
+              services: {},
+              idCounter: 0,
+              pendingCalls: {},
+      
+              setBaseUrl: function(url) {
+                if (!url) return;
+                this.baseUrl = String(url).replace(/\/$/, '');
+              },
+      
+              getBaseUrl: function() {
+                return this.baseUrl;
+              },
+      
+              setToken: function(t) {
+                this.token = t || '';
+              },
+      
+              clearToken: function() {
+                this.token = '';
+              },
+      
+              setHeader: function(k, v) {
+                if (k) this.headers[k] = v;
+              },
+      
+              setTimeout: function(ms) {
+                this.timeout = ms || 10000;
+              },
+      
+              setTransport: function(t) {
+                this.transport = (t === 'ws') ? 'ws' : 'http';
+              },
+      
+              getTransport: function() {
+                return this.transport;
+              },
+      
+              setUsePack: function(p) {
+                this.usePack = Boolean(p);
+              },
+      
+              getUsePack: function() {
+                return this.usePack;
+              },
+      
+              registerService: function(name, proxy) {
+                this.services[name] = proxy;
+              },
+      
+              getService: function(name) {
+                return this.services[name] || null;
+              },
+      
+              isWebSocketReady: function() {
+                return Boolean(window.__BV_CORE__.ws && window.__BV_CORE__.ws.isConnected());
+              },
+      
+              // Core RPC dispatcher
+              invoke: function(service, method, params, onSuccess, onError) {
+                var self = this;
+                var callId = ++this.idCounter;
+                var normParams = (params !== undefined && params !== null) ? params : [];
+                if (!Array.isArray(normParams)) {
+                  normParams = [normParams];
+                }
+      
+                var payload = {
+                  jsonrpc: '2.0',
+                  service: service,
+                  method: method,
+                  params: normParams,
+                  id: callId
+                };
+      
+                // 1. WebSocket Transport Branch
+                if (this.transport === 'ws' && this.isWebSocketReady()) {
+                  var wsPromise = new Promise(function(resolve, reject) {
+                    var timer = setTimeout(function() {
+                      delete self.pendingCalls[callId];
+                      var err = new Error('RPC Timeout after ' + self.timeout + 'ms: ' + service + '.' + method);
+                      err.code = -32000;
+                      if (onError) onError(err.message, -32000);
+                      reject(err);
+                    }, self.timeout);
+      
+                    self.pendingCalls[callId] = {
+                      resolve: function(val) {
+                        clearTimeout(timer);
+                        if (onSuccess) onSuccess(val);
+                        resolve(val);
+                      },
+                      reject: function(err) {
+                        clearTimeout(timer);
+                        var msg = (err && err.message) ? err.message : String(err);
+                        var code = (err && err.code) ? err.code : -32603;
+                        if (onError) onError(msg, code);
+                        reject(err);
+                      }
+                    };
+      
+                    window.__BV_CORE__.ws.send({
+                      event: 'rpc_call',
+                      data: payload
+                    });
+                  });
+                  return wsPromise;
+                }
+      
+                // 2. HTTP POST Transport Branch (Default & Resilient Fallback)
+                var url = this.baseUrl + '/' + encodeURIComponent(service) + '/' + encodeURIComponent(method);
+                var hdrs = Object.assign({
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'X-BlaiseVue-RPC': '2.0'
+                }, this.headers);
+      
+                if (this.usePack) {
+                  hdrs['X-BlaiseVue-Pack'] = '1';
+                }
+      
+                if (this.token) {
+                  hdrs['Authorization'] = 'Bearer ' + this.token;
+                }
+      
+                var fetchPromise;
+                if (typeof fetch === 'function') {
+                  var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                  var timeoutId = null;
+                  var fetchOpts = {
+                    method: 'POST',
+                    headers: hdrs,
+                    body: JSON.stringify(payload)
+                  };
+                  if (controller) {
+                    fetchOpts.signal = controller.signal;
+                    timeoutId = setTimeout(function() {
+                      controller.abort();
+                    }, self.timeout);
+                  }
+      
+                  fetchPromise = fetch(url, fetchOpts).then(function(res) {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    return res.json().then(function(data) {
+                      if (!res.ok) {
+                        var errMsg = (data && (data.error || data.message))
+                          ? (typeof data.error === 'object' ? data.error.message : (data.error || data.message))
+                          : ('HTTP ' + res.status);
+                        var httpErr = new Error(errMsg);
+                        httpErr.status = res.status;
+                        httpErr.data = data;
+                        httpErr.code = (data && data.error && data.error.code) ? data.error.code : res.status;
+                        throw httpErr;
+                      }
+                      if (data && data.error) {
+                        var rpcErr = new Error((typeof data.error === 'object') ? data.error.message : String(data.error));
+                        rpcErr.code = (typeof data.error === 'object' && data.error.code) ? data.error.code : -32603;
+                        throw rpcErr;
+                      }
+                      return (data && data.result !== undefined) ? data.result : data;
+                    });
+                  }).catch(function(err) {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    throw err;
+                  });
+                } else {
+                  fetchPromise = Promise.reject(new Error('Fetch API is not available'));
+                }
+      
+                fetchPromise.then(function(result) {
+                  if (typeof onSuccess === 'function') {
+                    try { onSuccess(result); } catch(e) { console.error('[BVRpc Callback Error]', e); }
+                  }
+                }).catch(function(err) {
+                  var msg = (err && err.message) ? err.message : String(err);
+                  var code = (err && err.code) ? err.code : -32603;
+                  if (typeof onError === 'function') {
+                    try { onError(msg, code); } catch(e) { console.error('[BVRpc Error Callback]', e); }
+                  } else {
+                    console.warn('[BVRpc Error]', service + '.' + method, msg);
+                  }
+                });
+      
+                return fetchPromise;
+              }
+            };
+      
+            // Set up WebSocket RPC response listener if WebSocket helper is available
+            if (window.__BV_CORE__.ws) {
+              window.__BV_CORE__.ws.on('rpc_response', function(resData) {
+                if (!resData) return;
+                var rpcObj = resData.data !== undefined ? resData.data : resData;
+                if (rpcObj && rpcObj.id && window.__BV_CORE__.rpc.pendingCalls[rpcObj.id]) {
+                  var pending = window.__BV_CORE__.rpc.pendingCalls[rpcObj.id];
+                  delete window.__BV_CORE__.rpc.pendingCalls[rpcObj.id];
+                  if (rpcObj.error) {
+                    var errObj = new Error(typeof rpcObj.error === 'object' ? rpcObj.error.message : String(rpcObj.error));
+                    errObj.code = (typeof rpcObj.error === 'object' && rpcObj.error.code) ? rpcObj.error.code : -32603;
+                    pending.reject(errObj);
+                  } else {
+                    pending.resolve(rpcObj.result !== undefined ? rpcObj.result : rpcObj);
+                  }
+                }
+              });
+            }
+          };
+    };
+    this.SetBaseUrl = function (Url) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.setBaseUrl(Url);
+    };
+    this.SetToken = function (Token) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.setToken(Token);
+    };
+    this.ClearToken = function () {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.clearToken();
+    };
+    this.SetTimeout = function (TimeoutMs) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.setTimeout(TimeoutMs);
+    };
+    this.SetTransport = function (ATransport) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.setTransport(ATransport);
+    };
+    this.SetUsePack = function (AValue) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.setUsePack(AValue);
+    };
+    this.Invoke = function (ServiceName, MethodName, Params, OnSuccess, OnError) {
+      var Result = undefined;
+      this.EnsureBridge();
+      Result = window.__BV_CORE__.rpc.invoke(ServiceName, MethodName, Params, OnSuccess, OnError);
+      return Result;
+    };
+    this.InvokeAsync = function (ServiceName, MethodName, Params) {
+      var Result = undefined;
+      this.EnsureBridge();
+      Result = window.__BV_CORE__.rpc.invoke(ServiceName, MethodName, Params);
+      return Result;
+    };
+    this.RegisterService = function (ServiceName, ServiceProxy) {
+      this.EnsureBridge();
+      window.__BV_CORE__.rpc.registerService(ServiceName, ServiceProxy);
+    };
+  });
+  $mod.$init = function () {
+    $mod.TBVRpcClient.EnsureBridge();
+  };
+});
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -6089,18 +6463,27 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function ()
           console.error('Error fetching ' + ep + ':', err);
         });
   };
-  this.ApiSave = function (Instance, Endpoint, Id, IsEditing, formData, OnSuccessMethod, ErrorProp) {
+  this.ApiSave = function (Instance, Endpoint, Id, IsEditing, AFormData, OnSuccessMethod, ErrorProp) {
     var self = Instance;
-        if (!self || !FormData) return;
+        var dataPayload = (typeof AFormData !== 'undefined' && AFormData !== window.FormData) ? AFormData : ((typeof aformdata !== 'undefined' && aformdata !== window.FormData) ? aformdata : null);
+        if (!self || !dataPayload) return;
+        if (self && typeof dataPayload === 'object' && dataPayload !== null) {
+          for (var k in self) {
+            if (k.indexOf('form.') === 0) {
+              var fieldKey = k.substring(5);
+              dataPayload[fieldKey] = self[k];
+            }
+          }
+        }
         var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
         var method = IsEditing ? 'put' : 'post';
     
         var p = (self.$api && typeof self.$api[method] === 'function')
-          ? self.$api[method](ep, FormData)
+          ? self.$api[method](ep, dataPayload)
           : fetch('http://localhost:8090' + ep, {
               method: method.toUpperCase(),
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(FormData)
+              body: JSON.stringify(dataPayload)
             }).then(function(r) { return r.json(); });
     
         Promise.resolve(p).then(function(resp) {
@@ -6492,6 +6875,34 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function ()
       if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
     };
   };
+  this.RpcSetBaseUrl = function (Url) {
+    pas.BVRpc.TBVRpcClient.SetBaseUrl(Url);
+  };
+  this.RpcSetToken = function (Token) {
+    pas.BVRpc.TBVRpcClient.SetToken(Token);
+  };
+  this.RpcClearToken = function () {
+    pas.BVRpc.TBVRpcClient.ClearToken();
+  };
+  this.RpcSetTransport = function (Transport) {
+    pas.BVRpc.TBVRpcClient.SetTransport(Transport);
+  };
+  this.RpcSetTimeout = function (TimeoutMs) {
+    pas.BVRpc.TBVRpcClient.SetTimeout(TimeoutMs);
+  };
+  this.RpcSetUsePack = function (Enable) {
+    pas.BVRpc.TBVRpcClient.SetUsePack(Enable);
+  };
+  this.RpcCall = function (ServiceName, MethodName, Params, OnSuccess, OnError) {
+    var Result = undefined;
+    Result = pas.BVRpc.TBVRpcClient.Invoke(ServiceName,MethodName,Params,OnSuccess,OnError);
+    return Result;
+  };
+  this.RpcCallAsync = function (ServiceName, MethodName, Params) {
+    var Result = undefined;
+    Result = pas.BVRpc.TBVRpcClient.InvokeAsync(ServiceName,MethodName,Params);
+    return Result;
+  };
   $mod.$implcode = function () {
     $impl.RetainDXDataSetSymbols = function () {
       var dummy = undefined;
@@ -6514,6 +6925,14 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function ()
         $mod.DataSetSetFieldVal(dummy,"",null);
         $mod.DataSetDeltaJSON(dummy);
         $mod.DataSetApplyUpdates(dummy);
+        $mod.RpcSetBaseUrl("");
+        $mod.RpcSetToken("");
+        $mod.RpcClearToken();
+        $mod.RpcSetTransport("");
+        $mod.RpcSetTimeout(0);
+        $mod.RpcSetUsePack(false);
+        $mod.RpcCall("","",null,null,null);
+        $mod.RpcCallAsync("","",null);
       };
     };
   };
@@ -6521,7 +6940,7 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet"],function ()
     $impl.RetainDXDataSetSymbols();
   };
 },[]);
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet"],function () {
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet","BVRpc"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -6603,6 +7022,7 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       if (window.__BV_CORE__.ws && !d.FData.$ws) d.FData.$ws = window.__BV_CORE__.ws;
       if (window.__BV_CORE__.auth && !d.FData.$auth) d.FData.$auth = window.__BV_CORE__.auth;
       if (window.__BV_CORE__.ionic && !d.FData.$ionic) d.FData.$ionic = window.__BV_CORE__.ionic;
+      if (window.__BV_CORE__.rpc && !d.FData.$rpc) d.FData.$rpc = window.__BV_CORE__.rpc;
       
       // Check for SSG Pre-rendered content for instant zero-flicker Hydration
       if (this.FRoot && (this.FRoot.hasAttribute('data-bv-ssg') || this.FRoot.querySelector('[data-bv-ssg]'))) {
@@ -7591,7 +8011,75 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("Services",["System","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.recNewT(this,"TCustomer",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
+  });
+});
+rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TCustomerServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"CustomerService");
+      return this;
+    };
+    this.GetAll$1 = function (OnSuccess, OnError) {
+      var Args = null;
+      Args = new Array();
+      this.CallRemote("GetAll",Args,OnSuccess,OnError);
+    };
+  });
+  rtl.createClass(this,"TProductServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"ProductService");
+      return this;
+    };
+  });
+  rtl.createClass(this,"TSystemServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"SystemService");
+      return this;
+    };
+  });
+  this.CustomerService = function () {
+    var Result = null;
+    if ($impl.GCustomerService === null) $impl.GCustomerService = $mod.TCustomerServiceClient.$create("Create$2");
+    Result = $impl.GCustomerService;
+    return Result;
+  };
+  this.ProductService = function () {
+    var Result = null;
+    if ($impl.GProductService === null) $impl.GProductService = $mod.TProductServiceClient.$create("Create$2");
+    Result = $impl.GProductService;
+    return Result;
+  };
+  this.SystemService = function () {
+    var Result = null;
+    if ($impl.GSystemService === null) $impl.GSystemService = $mod.TSystemServiceClient.$create("Create$2");
+    Result = $impl.GSystemService;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.GCustomerService = null;
+    $impl.GProductService = null;
+    $impl.GSystemService = null;
+  };
+  $mod.$init = function () {
+    $mod.CustomerService();
+    $mod.ProductService();
+    $mod.SystemService();
+  };
+},[]);
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCustomerView = function () {
@@ -7602,7 +8090,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -7647,11 +8135,27 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
       _this["isModalOpen"] = false;
       _this["formError"] = "";
     };
+    m["fetchViaRpc"] = function (_this) {
+      pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
+        _this["items"] = Items;
+        pas.BVPascalDX.ShowToast("Loaded " + pas.SysUtils.IntToStr(rtl.length(Items)) + " customers via Type-Safe Pascal RPC (mORMot 2)!",2500);
+      },function (Err) {
+        pas.BVPascalDX.ShowToast("RPC Error: " + Err,2500);
+      });
+    };
     m["fetchItems"] = function (_this) {
       pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
@@ -7687,7 +8191,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }   .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Procurando o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>? <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8138,7 +8642,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8188,6 +8692,14 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
@@ -10485,7 +10997,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.0</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.3</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();

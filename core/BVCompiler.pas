@@ -36,6 +36,26 @@ initialization
     if (!window.__BV_CORE__) window.__BV_CORE__ = {};
     const bv = window.__BV_CORE__;
     
+    if (!bv.setDeepValue) {
+      bv.setDeepValue = function(target, path, val) {
+        if (!target || !path) return;
+        if (typeof path === 'string' && path.indexOf('.') > -1) {
+          let parts = path.split('.');
+          let curr = target;
+          for (let i = 0; i < parts.length - 1; i++) {
+            let part = parts[i];
+            if (!curr[part] || typeof curr[part] !== 'object') {
+              curr[part] = {};
+            }
+            curr = curr[part];
+          }
+          curr[parts[parts.length - 1]] = val;
+        } else {
+          target[path] = val;
+        }
+      };
+    }
+    
     // Application Entry Point: Mounts a template into the DOM
     bv.compile = function(Root, Data, Methods) {
       if (!Root || Root['bvCompiled']) return;
@@ -93,7 +113,7 @@ initialization
       if (Data && !Data.SetValue) {
         Data.SetValue = function(k, val) {
           let d = (Data && Data.FData) ? Data.FData : Data;
-          d[k] = val;
+          bv.setDeepValue(d, k, val);
         };
       }
 
@@ -314,7 +334,7 @@ initialization
                          return f(this.FData, ev);
                       } catch(ex) { return undefined; }
                    },
-                   SetValue: function(k, val) { this.FData[k] = val; }
+                   SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
 
                 instEl.parentNode.replaceChild(newEl, instEl);
@@ -621,12 +641,24 @@ initialization
             if (opts) {
                // Component v-model (handled logic in step 9)
             } else {
-               el.value = Data.Evaluate(vmodel) || '';
-               const sync = function() { Data.SetValue(vmodel, this.value); };
+               const isCheck = (el.type === 'checkbox');
+               if (isCheck) {
+                 el.checked = Boolean(Data.Evaluate(vmodel));
+               } else {
+                 el.value = Data.Evaluate(vmodel) || '';
+               }
+               const sync = function() {
+                 const val = isCheck ? this.checked : this.value;
+                 Data.SetValue(vmodel, val);
+               };
                el.oninput = sync; el.onchange = sync; 
                bv.effect(function() {
                  let v = Data.Evaluate(vmodel);
-                 if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 if (isCheck) {
+                   if (el.checked !== Boolean(v)) el.checked = Boolean(v);
+                 } else {
+                   if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 }
                });
             }
           }
@@ -667,7 +699,7 @@ initialization
 
                bv.effect(function() {
                  let v = getNativeFieldVal();
-                 if (el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                });
             }
           }
@@ -761,7 +793,7 @@ initialization
                           } catch(e2) { return undefined; }
                         }
                       },
-                      SetValue: function(k, val) { this.FData[k] = val; }
+                      SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                     };
                     bv.traverse(cl, ld, Methods);
                   });
@@ -1241,7 +1273,7 @@ initialization
                   } catch(e2) { return undefined; }
                 } 
               },
-              SetValue: function(k, val) { this.FData[k] = val; }
+              SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
             };
             
             bv.traverse(rEl, cD, opts.methods);

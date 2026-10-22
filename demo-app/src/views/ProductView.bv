@@ -68,7 +68,7 @@
     </div>
 
     <!-- MODAL DIALOG -->
-    <div class="crud-modal-backdrop" v-if="isModalOpen">
+    <div class="crud-modal-backdrop" v-show="isModalOpen">
       <div class="crud-modal">
         <div class="modal-header">
           <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>
@@ -176,6 +176,16 @@
     procedure saveItem;
     begin
       if not Boolean(this.form) then Exit;
+      asm
+        if (this && this.form) {
+          for (var k in this) {
+            if (k.indexOf('form.') === 0) {
+              var fieldName = k.substring(5);
+              this.form[fieldName] = this[k];
+            }
+          }
+        }
+      end;
       ApiSave(this, '/api/' + String(this.apiEndpoint), Integer(this.currentEditId), Boolean(this.isEditing), this.form, 'fetchItems');
     end;
 

@@ -5,6 +5,7 @@ unit ServerApp;
   -------------------------------------------------------------------
   Engineered for the BlaiseVue Universal Framework to provide:
   - Ultra-fast native HTTP REST API endpoints
+  - Type-safe mORMot 2 SOA RPC services (/api/rpc/*)
   - Real-time bidirectional WebSockets (blaise-ws)
   - Automatic CORS handling for seamless local and remote dev
   - Static file hosting for dist/ with SPA History API fallback
@@ -30,15 +31,18 @@ uses
   mormot.net.server,
   mormot.net.ws.core,
   mormot.net.ws.server,
-  ServerModels, CrudCustomer, CrudProduct, AuthService, SwaggerService;
+  ServerModels, CrudCustomer, CrudProduct, AuthService, SwaggerService, RpcService;
 
 type
   { Real-time WebSocket Protocol for BlaiseVue clients }
   TBlaiseWebSocketProtocol = class(TWebSocketProtocolChat)
+  private
+    FRpcDispatcher: TRpcDispatcher;
   protected
     procedure OnIncoming(Sender: TWebSocketProcess; const Frame: TWebSocketFrame);
   public
-    constructor CreateProtocol;
+    constructor CreateProtocol(ARpcDispatcher: TRpcDispatcher = nil);
+    property RpcDispatcher: TRpcDispatcher read FRpcDispatcher write FRpcDispatcher;
   end;
 
   { Main mORMot 2 Full-Stack Server Application }
@@ -55,6 +59,7 @@ type
     FCrudProduct: TCrudProductService;
     FAuthService: TAuthService;
     FSwaggerService: TSwaggerService;
+    FRpcDispatcher: TRpcDispatcher;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -64,15 +69,17 @@ type
     procedure BroadcastEvent(const EventName, DataJson: RawUtf8);
     property Port: RawUtf8 read FPort;
     property RequestCount: Int64 read FRequestCount;
+    property RpcDispatcher: TRpcDispatcher read FRpcDispatcher;
   end;
 
 implementation
 
 { TBlaiseWebSocketProtocol }
 
-constructor TBlaiseWebSocketProtocol.CreateProtocol;
+constructor TBlaiseWebSocketProtocol.CreateProtocol(ARpcDispatcher: TRpcDispatcher);
 begin
   inherited Create('blaise-ws', '');
+  FRpcDispatcher := ARpcDispatcher;
   OnIncomingFrame := OnIncoming;
 end;
 
@@ -81,6 +88,8 @@ begin
   case Frame.opcode of
     focText, focBinary:
       begin
+        if (FRpcDispatcher <> nil) and FRpcDispatcher.HandleWebSocketFrame(Sender, Frame.payload) then
+          Exit;
         // Echo back incoming frame or dispatch to connected clients
         SendFrame(Sender, Frame);
       end;
@@ -102,25 +111,30 @@ begin
   AddItem('High-throughput REST API with mORMot 2', 'Backend', True);
   AddItem('Real-time WebSockets synchronization', 'FullStack', False);
 
-    FCrudProduct := TCrudProductService.Create;
+  FCrudProduct := TCrudProductService.Create;
   FCrudProduct.OnBroadcast := BroadcastEvent;
   FAuthService := TAuthService.Create;
   FSwaggerService := TSwaggerService.Create('BlaiseVue Full-Stack mORMot 2 API', '4.0.0', FPort);
   FAuthService.OnBroadcast := BroadcastEvent;
-    FCrudCustomer := TCrudCustomerService.Create;
+  FCrudCustomer := TCrudCustomerService.Create;
   FCrudCustomer.OnBroadcast := BroadcastEvent;
+
+  FRpcDispatcher := TRpcDispatcher.Create(FCrudCustomer, FCrudProduct, FAuthService);
+  FRpcDispatcher.OnBroadcast := BroadcastEvent;
+
   FServer := TWebSocketServer.Create(FPort, nil, nil, 'blaisevue_fullstack', 4);
-  FWSProtocol := TBlaiseWebSocketProtocol.CreateProtocol;
+  FWSProtocol := TBlaiseWebSocketProtocol.CreateProtocol(FRpcDispatcher);
   FServer.WebSocketProtocols.Add(FWSProtocol);
   FServer.OnRequest := DoRequest;
 end;
 
 destructor TBlaiseServerApp.Destroy;
 begin
-    FCrudProduct.Free;
+  FRpcDispatcher.Free;
+  FCrudProduct.Free;
   FAuthService.Free;
   FSwaggerService.Free;
-    FCrudCustomer.Free;
+  FCrudCustomer.Free;
   FServer.Free;
   inherited Destroy;
 end;
@@ -191,7 +205,7 @@ begin
 
   // 1. CORS Pre-flight and Headers
   Ctxt.OutCustomHeaders := 'Access-Control-Allow-Origin: *'#13#10 +
-                           'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With'#13#10 +
+                           'Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-BlaiseVue-RPC, X-BlaiseVue-Pack'#13#10 +
                            'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS';
   if Ctxt.Method = 'OPTIONS' then
   begin
@@ -206,7 +220,7 @@ begin
     Ctxt.OutContentType := JSON_CONTENT_TYPE;
     Ctxt.OutContent :=
       '{"status":"online"' +
-      ',"framework":"BlaiseVue 3.5 Full-Stack"' +
+      ',"framework":"BlaiseVue 4.3 Full-Stack"' +
       ',"engine":"Synopse mORMot 2"' +
       ',"port":' + FPort +
       ',"uptimeSeconds":' + IntToStr(SecondsBetween(Now, FStartTime)) +
@@ -252,8 +266,12 @@ begin
     Exit;
   end;
 
-    // Interactive OpenAPI 3.0 & Swagger UI: /api/docs, /api/openapi.json
+  // Interactive OpenAPI 3.0 & Swagger UI: /api/docs, /api/openapi.json
   if FSwaggerService.HandleRequest(Ctxt, CleanUrl, Result) then
+    Exit;
+
+  // Type-Safe mORMot 2 SOA RPC API: /api/rpc/*
+  if FRpcDispatcher.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
 
   // Product CRUD REST API: /api/products
@@ -268,7 +286,7 @@ begin
   if FCrudCustomer.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
 
-// 5. Static File Server & SPA History Fallback
+  // 5. Static File Server & SPA History Fallback
   if (FDistPath <> '') and DirectoryExists(FDistPath) then
   begin
     if (CleanUrl <> '') and (CleanUrl <> '/') then
@@ -303,7 +321,7 @@ begin
 
   // 6. Root Fallback
   Ctxt.OutContentType := TEXT_CONTENT_TYPE;
-  Ctxt.OutContent := 'BlaiseVue 3.5 + mORMot 2 Full-Stack Server Online (port ' + FPort + ')';
+  Ctxt.OutContent := 'BlaiseVue 4.3 + mORMot 2 Full-Stack Server Online (port ' + FPort + ')';
   Result := HTTP_SUCCESS;
 end;
 

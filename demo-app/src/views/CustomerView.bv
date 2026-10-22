@@ -9,10 +9,14 @@
       <div class="crud-header-btns">
         <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>
         <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>
+        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>
       </div>
     </div>
 
     <!-- REAL-TIME SYNC & STATS BAR -->
+    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">
+      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!
+    </div>
     <div class="crud-stats-bar">
       <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>
       <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>
@@ -68,7 +72,7 @@
     </div>
 
     <!-- MODAL DIALOG -->
-    <div class="crud-modal-backdrop" v-if="isModalOpen">
+    <div class="crud-modal-backdrop" v-show="isModalOpen">
       <div class="crud-modal">
         <div class="modal-header">
           <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>
@@ -108,7 +112,7 @@
   </div>
 </template>
 
-<script>
+<script uses="Services, ClientProxies">
   {
     CustomerView.bv - High-Performance Reactive CRUD View
     ---------------------------------------------------------
@@ -170,6 +174,19 @@
       this.formError := '';
     end;
 
+    procedure fetchViaRpc;
+    begin
+      CustomerService.GetAll(procedure(Items: TCustomerDynArray)
+      begin
+        this.items := JSValue(Items);
+        ShowToast('Loaded ' + IntToStr(Length(Items)) + ' customers via Type-Safe Pascal RPC (mORMot 2)!');
+      end,
+      procedure(Err: string)
+      begin
+        ShowToast('RPC Error: ' + Err);
+      end);
+    end;
+
     procedure fetchItems;
     begin
       ApiFetch(this, '/api/' + String(this.apiEndpoint), 'items');
@@ -178,6 +195,16 @@
     procedure saveItem;
     begin
       if not Boolean(this.form) then Exit;
+      asm
+        if (this && this.form) {
+          for (var k in this) {
+            if (k.indexOf('form.') === 0) {
+              var fieldName = k.substring(5);
+              this.form[fieldName] = this[k];
+            }
+          }
+        }
+      end;
       ApiSave(this, '/api/' + String(this.apiEndpoint), Integer(this.currentEditId), Boolean(this.isEditing), this.form, 'fetchItems');
     end;
 

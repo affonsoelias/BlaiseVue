@@ -12,7 +12,7 @@ unit BVPascalDX;
 
 interface
 
-uses JS, Web, SysUtils, BVDataSet;
+uses JS, Web, SysUtils, BVDataSet, BVRpc;
 
 { --- UI Notification & Dialog Helpers --- }
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
@@ -52,7 +52,7 @@ function FindItemById(List: JSValue; Id: Integer): JSValue;
 
 { --- Full-Stack mORMot 2 & API Client Helpers --- }
 procedure ApiFetch(Instance: JSValue; const Endpoint: string; const PropertyName: string = 'items');
-procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; AFormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
 procedure ApiDelete(Instance: JSValue; const Endpoint: string; Id: Integer; const ConfirmMsg: string = ''; const OnSuccessMethod: string = 'fetchItems');
 procedure ApiSetupRealtime(Instance: JSValue; const ModelPrefix: string; const RefreshMethod: string = 'fetchItems');
 
@@ -109,6 +109,16 @@ function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
 procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
 function DataSetDeltaJSON(DS: JSValue): string;
 procedure DataSetApplyUpdates(DS: JSValue);
+
+{ --- Type-Safe mORMot 2 Pascal RPC Helpers (BlaiseVue 4.3) --- }
+procedure RpcSetBaseUrl(const Url: string);
+procedure RpcSetToken(const Token: string);
+procedure RpcClearToken;
+procedure RpcSetTransport(const Transport: string);
+procedure RpcSetTimeout(TimeoutMs: Integer);
+procedure RpcSetUsePack(Enable: Boolean);
+function RpcCall(const ServiceName, MethodName: string; Params: JSValue = nil; OnSuccess: JSValue = nil; OnError: JSValue = nil): JSValue;
+function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue = nil): JSValue;
 
 implementation
 
@@ -612,6 +622,7 @@ begin
 end;
 
 procedure DataSetApplyUpdates(DS: JSValue);
+
 begin
   if (DS <> nil) and (TObject(DS) is TBVDataSet) then
     TBVDataSet(DS).ApplyUpdates
@@ -645,20 +656,29 @@ begin
   end;
 end;
 
-procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; FormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
+procedure ApiSave(Instance: JSValue; const Endpoint: string; Id: Integer; IsEditing: Boolean; AFormData: JSValue; const OnSuccessMethod: string = 'fetchItems'; const ErrorProp: string = 'formError');
 begin
   asm
     var self = Instance;
-    if (!self || !FormData) return;
+    var dataPayload = (typeof AFormData !== 'undefined' && AFormData !== window.FormData) ? AFormData : ((typeof aformdata !== 'undefined' && aformdata !== window.FormData) ? aformdata : null);
+    if (!self || !dataPayload) return;
+    if (self && typeof dataPayload === 'object' && dataPayload !== null) {
+      for (var k in self) {
+        if (k.indexOf('form.') === 0) {
+          var fieldKey = k.substring(5);
+          dataPayload[fieldKey] = self[k];
+        }
+      }
+    }
     var ep = Endpoint + (IsEditing ? ('/' + Id) : '');
     var method = IsEditing ? 'put' : 'post';
 
     var p = (self.$api && typeof self.$api[method] === 'function')
-      ? self.$api[method](ep, FormData)
+      ? self.$api[method](ep, dataPayload)
       : fetch('http://localhost:8090' + ep, {
           method: method.toUpperCase(),
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(FormData)
+          body: JSON.stringify(dataPayload)
         }).then(function(r) { return r.json(); });
 
     Promise.resolve(p).then(function(resp) {
@@ -955,6 +975,46 @@ begin
   end;
 end;
 
+procedure RpcSetBaseUrl(const Url: string);
+begin
+  TBVRpcClient.SetBaseUrl(Url);
+end;
+
+procedure RpcSetToken(const Token: string);
+begin
+  TBVRpcClient.SetToken(Token);
+end;
+
+procedure RpcClearToken;
+begin
+  TBVRpcClient.ClearToken;
+end;
+
+procedure RpcSetTransport(const Transport: string);
+begin
+  TBVRpcClient.SetTransport(Transport);
+end;
+
+procedure RpcSetTimeout(TimeoutMs: Integer);
+begin
+  TBVRpcClient.SetTimeout(TimeoutMs);
+end;
+
+procedure RpcSetUsePack(Enable: Boolean);
+begin
+  TBVRpcClient.SetUsePack(Enable);
+end;
+
+function RpcCall(const ServiceName, MethodName: string; Params: JSValue; OnSuccess: JSValue; OnError: JSValue): JSValue;
+begin
+  Result := TBVRpcClient.Invoke(ServiceName, MethodName, Params, OnSuccess, OnError);
+end;
+
+function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue): JSValue;
+begin
+  Result := TBVRpcClient.InvokeAsync(ServiceName, MethodName, Params);
+end;
+
 procedure RetainDXDataSetSymbols;
 var
   dummy: JSValue;
@@ -979,6 +1039,14 @@ begin
     DataSetSetFieldVal(dummy, '', nil);
     DataSetDeltaJSON(dummy);
     DataSetApplyUpdates(dummy);
+    RpcSetBaseUrl('');
+    RpcSetToken('');
+    RpcClearToken;
+    RpcSetTransport('');
+    RpcSetTimeout(0);
+    RpcSetUsePack(False);
+    RpcCall('', '', nil, nil, nil);
+    RpcCallAsync('', '', nil);
   end;
 end;
 
