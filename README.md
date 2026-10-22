@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/affonsoelias/BlaiseVue">
-    <img src="doc/brand/logo.png" alt="BlaiseVue Logo" width="160" height="160">
+    <img src="doc/brand/banner.png" alt="BlaiseVue: The Object Pascal Reactive Framework" width="100%">
   </a>
 </p>
 

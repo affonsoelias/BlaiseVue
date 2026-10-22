@@ -1,6 +1,6 @@
 <p align="center">
   <a href="../../README.md">
-    <img src="../brand/logo.png" alt="BlaiseVue Logo" width="120" height="120">
+    <img src="../brand/banner.png" alt="BlaiseVue: The Object Pascal Reactive Framework" width="100%">
   </a>
 </p>
 
