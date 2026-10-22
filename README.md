@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/affonsoelias/BlaiseVue">
+    <img src="doc/brand/logo.png" alt="BlaiseVue Logo" width="160" height="160">
+  </a>
+</p>
+
 # 🛡️ BlaiseVue: The Universal Reactive Framework for Object Pascal
 
 > **The Universal Reactive Framework for Object Pascal.**  
@@ -241,6 +247,9 @@ BlaiseVue is open-source and follows the standard **Lazarus / Free Pascal** lice
 - **The BlaiseVue Core (`core/`):** Licensed under the **Modified GNU LGPL v2.1** with a **Static Linking Exception**.
 
 This allows developers to build **commercial and proprietary applications** without having to open-source their proprietary code, while ensuring the framework runtime remains open and accessible to all. See the [LICENSE](LICENSE) file for details.
+
+### 🖋️ Brand Identity & Trademarks
+The BlaiseVue name, architecture, and the official **Shadow Hand & White Quill** logo are authored by **Elias Affonso**. For official brand assets, guidelines, and vector files, visit the [Brand Assets Directory](doc/brand/README.md).
 
 ---
 
