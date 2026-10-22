@@ -160,6 +160,7 @@ Our architectural evolution roadmap:
   - [ ] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence and automatic background delta synchronization with mORMot 2 via WebSockets upon reconnection.
   - [ ] 🔗 **Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)**: Automated scaffolding of foreign keys and master-detail views (`Order` -> `OrderItems`), coupled with pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
   - [ ] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling capable of rendering 100,000+ records at a constant 60 FPS.
+  - [ ] 📦 **Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)**: Scaffolding of standalone community libraries with interactive license prompt (MIT, Apache, LGPL), isolated HMR playground, autonomous tests, and distribution bundler.
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md), and [Type-Safe RPC Documentation](doc/Documentation/43-typesafe-rpc-mormot.md).
