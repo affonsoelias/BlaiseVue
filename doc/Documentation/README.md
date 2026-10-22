@@ -30,7 +30,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 2. [02. Installation & SDK Setup](02-installation.md) — System requirements, FPC setup, and pre-bundled Pas2JS compiler.
 3. [03. BlaiseCLI Technical Manual (bv.exe)](03-cli.md) — Complete command-line interface reference for scaffolding, building, and running apps.
 4. [04. Single File Component (.bv) Format](04-bv-format.md) — Structure of `<template>`, `<script>`, and `<style>` sections in `.bv` files.
-5. [05. The Reactive Engine & Proxies](05-reactivity.md) — Deep reactivity model, dependency tracking, effects, and proxies.
+5. [05. Reactivity Engine & State Management](05-reactivity.md) — Practical guide to state mutation, reactive arrays, computed caching, and dependency tracking proxies.
 6. [06. Data Binding & Directives](06-data-binding.md) — Two-way binding (`b-model`), conditionals (`v-if`), loops (`b-for`), and expressions.
 7. [07. Methods & Event Handling](07-methods-events.md) — Declarative event listeners (`@click`, `@input`), modifiers, and Pascal methods.
 8. [08. Component Basics & SFC](08-components.md) — Creating, declaring, and composing reusable reactive components.
