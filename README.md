@@ -158,7 +158,7 @@ Our architectural evolution roadmap:
 - [ ] **v4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Next Horizon 🎯)**:
   - [ ] ⚡ **Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates**: Compile-time AST verification of template expressions against component declarations and compilation to native Pascal closures/methods.
   - [ ] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence and automatic background delta synchronization with mORMot 2 via WebSockets upon reconnection.
-  - [ ] 🔗 **Pillar 3: Master-Detail & Relational CRUD Scaffolding (`bv mormot crud`)**: Automated code generation for foreign keys and parent-child master-detail views (`Order` -> `OrderItems`).
+  - [ ] 🔗 **Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)**: Automated scaffolding of foreign keys and master-detail views (`Order` -> `OrderItems`), coupled with pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
   - [ ] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling capable of rendering 100,000+ records at a constant 60 FPS.
 
 > [!TIP]

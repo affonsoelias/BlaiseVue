@@ -559,7 +559,18 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
   - Automatic WebSocket reconnect trigger: when the connection to mORMot 2 is re-established, the dataset sends its `FDelta` payload to the backend.
   - Server-side transactional resolution (`ApplyUpdates`) with conflict detection and automated client synchronization.
 
-#### 🔗 Pillar 3: Master-Detail & Relational CRUD Scaffolding (`bv mormot crud`)
+#### 🔗 Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)
+- **Pluggable Database Engines (Zero-Config SQLite + Production RDBMS)**:
+  - **SQLite3 as Default (Zero-Config)**: Creates local file database (`server/data.db`) out-of-the-box without requiring database server setup, Docker, or external daemon configuration.
+  - **Multi-Database CLI Flags**: Support for enterprise production database engines via `bv mormot init --db <engine>`:
+    ```bash
+    bv mormot init --db sqlite     # Embedded local file (default)
+    bv mormot init --db postgres   # High-throughput PostgreSQL connection (via native libpq/mORMot)
+    bv mormot init --db mysql      # MySQL & MariaDB
+    bv mormot init --db firebird   # Firebird SQL (traditional commercial Pascal standard)
+    ```
+  - **Environment-Driven Configuration (`.env`)**: Transparent database connection string resolution via `DATABASE_URL` (e.g. `postgres://user:pass@localhost:5432/dbname`) with fallback to local SQLite file.
+  - **100% Agnostic mORMot 2 ORM Layer**: Application `.bv` views and business logic remain strictly identical across databases, needing only the backend connection driver to switch between local development and cloud production.
 - **Relational Model Declarations in CLI**:
   - Scaffolds complex parent-child business models with foreign keys directly via CLI:
     ```bash
@@ -567,9 +578,9 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
     ```
 - **Backend Schema & Service Generation**:
   - Generates relational records and ORM tables in `ServerModels.pas` with foreign key integrity.
-  - Automatically scaffolds transactional master-detail endpoints and RPC interfaces (`IOrderService`).
+  - Automatically scaffolds transactional master-detail endpoints and RPC interfaces (`IOrderService`), ensuring atomic commits (rollback child items if parent fails).
 - **Frontend Master-Detail Views**:
-  - Generates dual-grid and nested responsive views where selecting a master row instantly synchronizes the reactive child dataset.
+  - Generates dual-grid and nested responsive views where selecting a master row instantly synchronizes the reactive child dataset, including automatic calculation of totals and line item subtotals.
 
 #### 🏎️ Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`
 - **DOM Node Virtualization (`<bv-virtual-scroll>`)**:
