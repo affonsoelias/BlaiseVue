@@ -24,7 +24,7 @@
     <nav class="navbar">
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>
-        <img src="logo.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle; border-radius: 6px; background: white; padding: 1px;">
+        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">
         <strong class="brand">BlaiseVue 4.3</strong>
       </div>
       <div class="nav-links">

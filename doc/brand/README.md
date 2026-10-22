@@ -24,7 +24,11 @@ All official visual assets are stored in this directory:
 
 | Asset | Format | Resolution | Description / Target |
 |---|---|---|---|
-| [`logo.png`](logo.png) | PNG | 354x340 | Master raster logo for documentation, README headers, and social previews. |
+| [`logo.png`](logo.png) | PNG | 354x340 | Master raster logo with pure white background for light themes and documents. |
+| [`logo-transparent.png`](logo-transparent.png) | PNG | 354x340 | Transparent background asset with white hand contour and black quill outline. |
+| [`logo-transparent.svg`](logo-transparent.svg) | SVG | Vector 512x512 | Transparent vector with white hand contour and black quill outline (universal mode). |
+| [`banner.png`](banner.png) | PNG | 1024x210 | Official horizontal black banner for READMEs and repository headers. |
+| [`banner.svg`](banner.svg) | SVG | Vector 1024x210 | Scalable vector banner. |
 | [`logo.svg`](logo.svg) | SVG | Vector 512x512 | Scalable vector graphic for web headers, icons, and print media. |
 | [`logo.jpg`](logo.jpg) | JPG | 354x340 | Compressed graphic version. |
 | [`preview.html`](preview.html) | HTML | Interactive | Brand showcase gallery with scaling simulations and banner previews. |
