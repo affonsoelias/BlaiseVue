@@ -63,7 +63,71 @@
       margin-bottom: 1rem;
     }
 
-    /* Main Showcase */
+    /* Transparent Universal Showcase */
+    .showcase-grid {
+      max-width: 1100px;
+      margin: 0 auto 3.5rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    .theme-preview-card {
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border-color);
+    }
+
+    .theme-preview-card.light {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .theme-preview-card.dark {
+      background: #0b0f19;
+      color: #ffffff;
+      border-color: #1e293b;
+    }
+
+    .theme-preview-card.navy {
+      background: #1e3a8a;
+      color: #ffffff;
+      border-color: #3b82f6;
+    }
+
+    .transparent-logo-container {
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .transparent-logo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .theme-preview-card h3 {
+      font-size: 1.3rem;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-preview-card p {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    /* Official Showcase */
     .official-showcase {
       max-width: 1100px;
       margin: 0 auto 3.5rem auto;
@@ -77,26 +141,6 @@
       box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
     }
 
-    .logo-hero-container {
-      width: 320px;
-      height: 320px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 1.5rem;
-      background: #ffffff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-      margin-bottom: 2rem;
-    }
-
-    .logo-hero-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
     .official-showcase h2 {
       font-size: 2rem;
       font-family: Georgia, 'Times New Roman', Times, serif;
@@ -107,7 +151,7 @@
     .official-showcase p {
       color: var(--text-muted);
       font-size: 1.05rem;
-      max-width: 620px;
+      max-width: 680px;
       text-align: center;
       line-height: 1.6;
     }
@@ -191,9 +235,6 @@
     .banner-logo {
       width: 130px;
       height: 130px;
-      background: #ffffff;
-      border-radius: 22px;
-      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -231,15 +272,44 @@
     </div>
   </header>
 
-  <!-- Main Showcase -->
+  <!-- Official Showcase -->
   <div class="official-showcase">
-    <div class="logo-hero-container">
-      <img src="logo.png" alt="Official BlaiseVue Logo">
-    </div>
-    <h2>The Shadow Hand & The White Quill</h2>
+    <h2>The Universal Logo: Transparent Mode</h2>
     <p>
-      The harmony between the classical intellectual heritage of Blaise Pascal and modern reactive software engineering: a timeless solid black shadow hand silhouette holding a pure white feather quill with bold contrast contours on a clean white background.
+      Equipped with a <strong>white outline around the black hand</strong> and a <strong>black outline around the white quill</strong>. This dual-contour technique ensures 100% legibility on light, dark, and colored backgrounds without any visual clipping.
     </p>
+  </div>
+
+  <!-- Real-world Background Tests -->
+  <div class="showcase-grid">
+    
+    <!-- Light Background -->
+    <div class="theme-preview-card light">
+      <div class="transparent-logo-container">
+        <img src="logo-transparent.png" alt="Logo on Light Background">
+      </div>
+      <h3>Light Theme</h3>
+      <p>The solid black hand stands out boldly, while the black contour keeps the white quill razor-sharp.</p>
+    </div>
+
+    <!-- Dark Mode Background -->
+    <div class="theme-preview-card dark">
+      <div class="transparent-logo-container">
+        <img src="logo-transparent.png" alt="Logo on Dark Background">
+      </div>
+      <h3>Dark Mode</h3>
+      <p>The crisp white hand outline ensures the black hand never blends into the dark background, while the white quill glows.</p>
+    </div>
+
+    <!-- Navy / Accent Background -->
+    <div class="theme-preview-card navy">
+      <div class="transparent-logo-container">
+        <img src="logo-transparent.png" alt="Logo on Navy Background">
+      </div>
+      <h3>Colored Surface</h3>
+      <p>Seamlessly integrates into navbars, headers, splash screens, and cards of any color palette.</p>
+    </div>
+
   </div>
 
   <!-- Assets Grid & Scalability Simulation -->
@@ -251,19 +321,19 @@
       <p>Pixel-crisp at any browser tab and operating system resolution:</p>
       <div class="scale-row">
         <div class="scale-box">
-          <img src="logo.png" width="96" height="96" alt="96px">
+          <img src="logo-transparent.png" width="96" height="96" alt="96px">
           <span>96x96</span>
         </div>
         <div class="scale-box">
-          <img src="logo.png" width="64" height="64" alt="64px">
+          <img src="logo-transparent.png" width="64" height="64" alt="64px">
           <span>64x64</span>
         </div>
         <div class="scale-box">
-          <img src="logo.png" width="32" height="32" alt="32px">
+          <img src="logo-transparent.png" width="32" height="32" alt="32px">
           <span>32x32</span>
         </div>
         <div class="scale-box">
-          <img src="logo.png" width="16" height="16" alt="16px">
+          <img src="logo-transparent.png" width="16" height="16" alt="16px">
           <span>16x16</span>
         </div>
       </div>
@@ -274,8 +344,9 @@
       <h3>Official Distribution Files</h3>
       <p>Organized in standard repository directories:</p>
       <ul style="text-align: left; font-size: 0.88rem; line-height: 2; color: #334155;">
-        <li>📁 <code>doc/brand/logo.png</code> (High-Resolution Master)</li>
-        <li>📁 <code>doc/brand/logo.svg</code> (Scalable Vector SVG)</li>
+        <li>📁 <code>doc/brand/logo-transparent.png</code> (Transparent Master)</li>
+        <li>📁 <code>doc/brand/logo-transparent.svg</code> (Transparent Vector)</li>
+        <li>📁 <code>doc/brand/logo.png</code> (Solid White Master)</li>
         <li>📁 <code>vscode-extension/icon.png</code> (128x128 VS Code Icon)</li>
         <li>📁 <code>demo-app/public/favicon.ico</code> (Multi-size Web Favicon)</li>
       </ul>
@@ -286,7 +357,7 @@
   <!-- Official GitHub Banner Simulation -->
   <div class="banner-preview">
     <div class="banner-logo">
-      <img src="logo.png" alt="BlaiseVue Logo">
+      <img src="logo-transparent.png" alt="BlaiseVue Logo">
     </div>
     <div class="banner-text">
       <h2>BLAISEVUE</h2>
