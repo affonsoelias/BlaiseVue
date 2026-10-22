@@ -3,16 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlaiseVue: A Mão Sombra & A Pena Branca</title>
+  <title>BlaiseVue: Logotipo Oficial Aprovado</title>
   <style>
     :root {
       --bg-primary: #ffffff;
       --bg-secondary: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
+      --text-main: #000000;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
-      --dark-card: #0b0f19;
+      --dark-card: #000000;
     }
 
     * {
@@ -29,7 +28,7 @@
     }
 
     header {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto 3rem auto;
       text-align: center;
       border-bottom: 2px solid var(--border-color);
@@ -37,9 +36,9 @@
     }
 
     .brand-title h1 {
-      font-size: 2.6rem;
+      font-size: 3rem;
       font-weight: 900;
-      letter-spacing: -0.5px;
+      letter-spacing: 3px;
       color: #000000;
       font-family: Georgia, 'Times New Roman', Times, serif;
     }
@@ -47,168 +46,176 @@
     .brand-title p {
       color: var(--text-muted);
       margin-top: 0.5rem;
-      font-size: 1.1rem;
+      font-size: 1.15rem;
+      letter-spacing: 1px;
     }
 
-    /* Hero Showcase: A Mão Sombra e Pena Branca */
-    .showcase-container {
-      max-width: 1200px;
+    .badge-approved {
+      display: inline-block;
+      padding: 0.5rem 1.4rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: #000000;
+      color: #ffffff;
+      margin-bottom: 1rem;
+    }
+
+    /* Main Showcase */
+    .official-showcase {
+      max-width: 1100px;
       margin: 0 auto 3.5rem auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-    }
-
-    .art-card {
       background: #ffffff;
       border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 2.5rem;
+      border-radius: 24px;
+      padding: 3.5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
     }
 
-    .art-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.4rem 1rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 1.5rem;
-      background: #000000;
-      color: #ffffff;
-    }
-
-    .img-box {
-      width: 100%;
-      max-width: 380px;
-      height: 380px;
-      border-radius: 16px;
-      overflow: hidden;
+    .logo-hero-container {
+      width: 320px;
+      height: 320px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #ffffff;
       border: 1px solid var(--border-color);
-      margin-bottom: 1.5rem;
-      box-shadow: inset 0 0 12px rgba(0,0,0,0.02);
+      border-radius: 20px;
+      padding: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
     }
 
-    .img-box img, .img-box svg {
+    .logo-hero-container img {
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
 
-    .art-card h2 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 0.6rem;
+    .official-showcase h2 {
+      font-size: 2rem;
       font-family: Georgia, 'Times New Roman', Times, serif;
-      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 0.6rem;
     }
 
-    .art-card p {
+    .official-showcase p {
       color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
+      font-size: 1.05rem;
+      max-width: 600px;
       text-align: center;
+      line-height: 1.6;
     }
 
-    /* Scaling section */
-    .scale-section {
-      max-width: 1200px;
+    /* Scales & Assets Section */
+    .assets-grid {
+      max-width: 1100px;
       margin: 0 auto 3.5rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .asset-card {
       background: #ffffff;
       border: 1px solid var(--border-color);
-      border-radius: 20px;
-      padding: 2.5rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      border-radius: 18px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
     }
 
-    .scale-section h2 {
-      font-size: 1.5rem;
-      font-weight: 800;
+    .asset-card h3 {
+      font-size: 1.15rem;
       margin-bottom: 0.5rem;
       font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
+    .asset-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Scales row */
     .scale-row {
       display: flex;
       align-items: center;
-      gap: 3rem;
+      gap: 2rem;
+      margin-top: 1rem;
       flex-wrap: wrap;
-      margin-top: 1.5rem;
-      padding: 2rem;
-      background: #f8fafc;
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
+      justify-content: center;
     }
 
     .scale-box {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.8rem;
+      gap: 0.5rem;
+    }
+
+    .scale-box img {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #ffffff;
     }
 
     .scale-box span {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       color: var(--text-muted);
     }
 
-    /* Banner preview */
+    /* GitHub Banner */
     .banner-preview {
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
       background: #000000;
       border-radius: 20px;
-      padding: 3rem 4rem;
+      padding: 3.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 3rem;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     }
 
-    .banner-preview .logo-badge {
-      width: 120px;
-      height: 120px;
+    .banner-logo {
+      width: 130px;
+      height: 130px;
       background: #ffffff;
-      border-radius: 24px;
-      padding: 10px;
+      border-radius: 22px;
+      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .banner-preview .logo-badge img {
+    .banner-logo img {
       width: 100%;
       height: 100%;
+      object-fit: contain;
     }
 
     .banner-text h2 {
-      font-size: 2.8rem;
+      font-size: 3rem;
       font-weight: 900;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       color: #ffffff;
       font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
     .banner-text p {
       color: #94a3b8;
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       margin-top: 0.4rem;
       letter-spacing: 1.5px;
     }
@@ -217,72 +224,69 @@
 <body>
 
   <header>
+    <span class="badge-approved">🏆 Logotipo Oficial Aprovado</span>
     <div class="brand-title">
       <h1>BLAISEVUE</h1>
-      <p>Conceito Minimalista: Mão Sombra com Pena Branca sobre Fundo Branco</p>
+      <p>The Reactive Full-Stack Object Pascal Framework</p>
     </div>
   </header>
 
-  <!-- Grade de Destaque -->
-  <div class="showcase-container">
-
-    <!-- Card 1: Vetor SVG Minimalista -->
-    <div class="art-card">
-      <span class="badge">Vetor SVG Minimalista (Puro)</span>
-      <div class="img-box">
-        <img src="logo-shadow-hand-quill.svg" alt="Vetor Mão Sombra e Pena Branca">
-      </div>
-      <h2>1. O Vetor Silhueta & Contorno</h2>
-      <p>
-        Mão em <strong>preto sólido sem expressão (silhueta/sombra pura)</strong>, segurando a <strong>pena branca simplificada</strong> com <strong>contorno de contraste em preto espesso</strong> sobre fundo branco cristalino.
-      </p>
+  <!-- Showcase Principal -->
+  <div class="official-showcase">
+    <div class="logo-hero-container">
+      <img src="logo.png" alt="Logotipo Oficial BlaiseVue">
     </div>
-
-    <!-- Card 2: Emblema Gráfico Gerado -->
-    <div class="art-card">
-      <span class="badge">Arte Gráfica & Emblema</span>
-      <div class="img-box">
-        <img src="quill-shadow-hand-white.jpg" alt="Emblema Gráfico Mão Sombra">
-      </div>
-      <h2>2. O Emblema Gráfico Clássico</h2>
-      <p>
-        Renderização com contornos fluídos inspirados no retrato de Pascal, com a mão em sombra escura homogênea e a pena branca destacada com borda de nanquim.
-      </p>
-    </div>
-
-  </div>
-
-  <!-- Teste de Escala & Favicon -->
-  <div class="scale-section">
-    <h2>🔍 Teste de Escala em Fundo Branco (Vetor SVG)</h2>
-    <p style="color: var(--text-muted); font-size: 0.95rem;">
-      A silhueta preta com o contorno da pena branca garante contraste imediato e reconhecimento visual instantâneo em qualquer dimensão:
+    <h2>A Mão Sombra & A Pena Branca</h2>
+    <p>
+      O casamento perfeito entre a herança intelectual de Blaise Pascal e a leveza da tecnologia reativa: silhueta pura e atemporal da mão segurando a pena branca com contorno marcante de contraste sobre fundo branco.
     </p>
-
-    <div class="scale-row">
-      <div class="scale-box">
-        <img src="logo-shadow-hand-quill.svg" width="128" height="128" alt="128px" style="border: 1px solid #e2e8f0; border-radius: 12px;">
-        <span>128x128 (Desktop / Docs)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-shadow-hand-quill.svg" width="64" height="64" alt="64px" style="border: 1px solid #e2e8f0; border-radius: 8px;">
-        <span>64x64 (Extensão VS Code)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-shadow-hand-quill.svg" width="32" height="32" alt="32px" style="border: 1px solid #e2e8f0; border-radius: 6px;">
-        <span>32x32 (App Icon)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-shadow-hand-quill.svg" width="16" height="16" alt="16px" style="border: 1px solid #e2e8f0; border-radius: 4px;">
-        <span>16x16 (Aba Favicon)</span>
-      </div>
-    </div>
   </div>
 
-  <!-- Simulação de Banner Oficial no GitHub -->
+  <!-- Grades de Arquivos Prontos & Escala -->
+  <div class="assets-grid">
+
+    <!-- Card 1: Favicon e Escalas -->
+    <div class="asset-card">
+      <h3>Favicon & Ícone de Sistema</h3>
+      <p>Nítido em todas as resoluções da aba e do sistema operacional:</p>
+      <div class="scale-row">
+        <div class="scale-box">
+          <img src="logo.png" width="96" height="96" alt="96px">
+          <span>96x96</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="64" height="64" alt="64px">
+          <span>64x64</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="32" height="32" alt="32px">
+          <span>32x32</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="16" height="16" alt="16px">
+          <span>16x16</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Arquivos Oficiais -->
+    <div class="asset-card">
+      <h3>Arquivos Gerados & Localização</h3>
+      <p>Integrados nas pastas oficiais do projeto:</p>
+      <ul style="text-align: left; font-size: 0.88rem; line-height: 2; color: #334155;">
+        <li>📁 <code>doc/brand/logo.png</code> (Alta Resolução)</li>
+        <li>📁 <code>doc/brand/logo.svg</code> (Vetor SVG)</li>
+        <li>📁 <code>vscode-extension/icon.png</code> (Ícone VS Code)</li>
+        <li>📁 <code>demo-app/public/favicon.ico</code> (Multi-size Web)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Banner Oficial no GitHub -->
   <div class="banner-preview">
-    <div class="logo-badge">
-      <img src="logo-shadow-hand-quill.svg" alt="BlaiseVue Logo">
+    <div class="banner-logo">
+      <img src="logo.png" alt="BlaiseVue Logo">
     </div>
     <div class="banner-text">
       <h2>BLAISEVUE</h2>
