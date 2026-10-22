@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Cyan to Emerald Gradient -->
+    <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="50%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <!-- Deep Blue Wing Gradient -->
+    <linearGradient id="deepBlueWing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+
+    <!-- Glowing Nib -->
+    <filter id="glowPrism" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="shadowPrism" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#00F0FF" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <g filter="url(#shadowPrism)" transform="translate(0, 5)">
+    <!-- Left Wing (Pascal Facet - Aerodynamic Feather) -->
+    <path d="M 256, 120 
+             L 100, 160 
+             L 145, 230 
+             L 200, 215 
+             L 140, 300 
+             L 220, 280 
+             L 180, 360 
+             L 256, 420 Z" 
+          fill="url(#deepBlueWing)" />
+
+    <!-- Right Wing (Vue Facet - Sharp Energetic Feather) -->
+    <path d="M 256, 120 
+             L 412, 160 
+             L 367, 230 
+             L 312, 215 
+             L 372, 300 
+             L 292, 280 
+             L 332, 360 
+             L 256, 420 Z" 
+          fill="url(#prismGrad)" />
+
+    <!-- Central Floating 'V' Inner Cutout -->
+    <path d="M 170, 175 
+             L 256, 320 
+             L 342, 175 
+             L 296, 175 
+             L 256, 245 
+             L 216, 175 Z" 
+          fill="#FFFFFF" 
+          opacity="0.9" />
+
+    <!-- Precision Titanium Nib (Center Fountain Pen Stylus) -->
+    <polygon points="256,220 286,370 256,438 226,370" 
+             fill="#0F172A" 
+             stroke="#00F0FF" 
+             stroke-width="5" />
+
+    <!-- Glowing Ink Slit & Breather Hole -->
+    <circle cx="256" cy="330" r="7" fill="#00E676" filter="url(#glowPrism)" />
+    <line x1="256" y1="337" x2="256" y2="435" stroke="#00F0FF" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Reactive Ink Drop/Spark -->
+    <circle cx="256" cy="454" r="6" fill="#00E676" filter="url(#glowPrism)" />
+  </g>
+</svg>

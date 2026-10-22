@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Radiant Neon Stroke Gradient -->
+    <linearGradient id="strokeNeonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="60%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <!-- Hand & Quill Subtle Gradients -->
+    <linearGradient id="handGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+
+    <linearGradient id="quillGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="50%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <filter id="neonStrokeGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="dropShadowHand" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <!-- The Written Reactive "V" on the canvas -->
+  <g filter="url(#neonStrokeGlow)">
+    <path d="M 120, 240 
+             L 230, 410 
+             L 420, 160" 
+          fill="none" 
+          stroke="url(#strokeNeonGrad)" 
+          stroke-width="14" 
+          stroke-linecap="round" 
+          stroke-linejoin="round" />
+
+    <!-- Spark / Active Ink Point at the start of the upstroke -->
+    <circle cx="230" cy="410" r="10" fill="#FFFFFF" />
+  </g>
+
+  <!-- Hand and Feather Quill Silhouette Group -->
+  <g filter="url(#dropShadowHand)" transform="translate(10, -10)">
+    
+    <!-- Feather Shaft & Barbs extending diagonally backwards -->
+    <path d="M 230, 410 
+             L 370, 110 
+             C 385, 75 425, 60 450, 80 
+             C 455, 115 415, 175 365, 235 
+             L 310, 285 Z" 
+          fill="url(#quillGrad)" 
+          opacity="0.9" />
+
+    <!-- Feather Serrations (Classic Pascal Quill Details) -->
+    <path d="M 395, 120 L 440, 130 L 380, 170 L 420, 185 L 360, 220" 
+          stroke="#0B0F19" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round" />
+
+    <!-- Quill Shaft Centerline -->
+    <line x1="230" y1="410" x2="430" y2="85" stroke="#E2E8F0" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Quill Metal Nib Collar -->
+    <polygon points="230,410 248,370 220,380" fill="#38BDF8" />
+    <polygon points="230,410 238,390 226,395" fill="#FFFFFF" />
+
+    <!-- Minimalist Hand (Thumb, Index and Hand Contour holding the pen) -->
+    <!-- Forearm & Palm contour -->
+    <path d="M 140, 490 
+             C 170, 440 200, 410 215, 395 
+             L 245, 385 
+             C 270, 385 295, 395 330, 440 
+             L 360, 490 Z" 
+          fill="#1E293B" 
+          stroke="#334155" 
+          stroke-width="3" />
+
+    <!-- Index Finger (Curved gracefully over the quill) -->
+    <path d="M 215, 395 
+             C 210, 365 220, 345 240, 340 
+             C 260, 335 285, 350 280, 380 
+             C 275, 400 255, 405 240, 402 Z" 
+          fill="url(#handGrad)" />
+
+    <!-- Thumb (Pinching the quill shaft) -->
+    <path d="M 190, 415 
+             C 195, 390 215, 385 230, 395 
+             C 240, 405 235, 425 215, 430 
+             C 195, 435 188, 425 190, 415 Z" 
+          fill="#E2E8F0" />
+
+    <!-- Subtle Cuff / Sleeve (17th Century Pascal Scholar Accent) -->
+    <path d="M 130, 495 C 160, 475 220, 475 250, 495" 
+          fill="none" 
+          stroke="#38BDF8" 
+          stroke-width="4" 
+          stroke-linecap="round" 
+          opacity="0.5" />
+  </g>
+
+  <!-- Glowing Particles / Emitted Ideas -->
+  <circle cx="210" cy="380" r="3" fill="#00F0FF" filter="url(#neonStrokeGlow)" />
+  <circle cx="260" cy="425" r="2.5" fill="#00E676" filter="url(#neonStrokeGlow)" />
+  <circle cx="160" cy="290" r="3" fill="#00F0FF" opacity="0.7" />
+  <circle cx="340" cy="240" r="3.5" fill="#00E676" opacity="0.8" />
+</svg>

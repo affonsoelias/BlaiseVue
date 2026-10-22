@@ -1,4 +1,8 @@
-# 🛡️ BlaiseVue Official VS Code Extension (v3.5)
+<p align="center">
+  <img src="icon.png" alt="BlaiseVue Extension Icon" width="100" height="100">
+</p>
+
+# 🛡️ BlaiseVue Official VS Code Extension
 
 The official **BlaiseVue Developer Experience (DX)** extension for Visual Studio Code and Cursor.
 

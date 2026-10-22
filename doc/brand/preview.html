@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlaiseVue: Official Brand Identity & Logo</title>
+  <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8fafc;
+      --text-main: #000000;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --dark-card: #000000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-secondary);
+      color: var(--text-main);
+      padding: 3rem 2rem;
+    }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto 3rem auto;
+      text-align: center;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 2rem;
+    }
+
+    .brand-title h1 {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #000000;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .brand-title p {
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-size: 1.15rem;
+      letter-spacing: 1px;
+    }
+
+    .badge-approved {
+      display: inline-block;
+      padding: 0.5rem 1.4rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: #000000;
+      color: #ffffff;
+      margin-bottom: 1rem;
+    }
+
+    /* Main Showcase */
+    .official-showcase {
+      max-width: 1100px;
+      margin: 0 auto 3.5rem auto;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+    }
+
+    .logo-hero-container {
+      width: 320px;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+    }
+
+    .logo-hero-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .official-showcase h2 {
+      font-size: 2rem;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+      letter-spacing: 1px;
+      margin-bottom: 0.6rem;
+    }
+
+    .official-showcase p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 620px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* Scales & Assets Section */
+    .assets-grid {
+      max-width: 1100px;
+      margin: 0 auto 3.5rem auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .asset-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .asset-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .asset-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Scales row */
+    .scale-row {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .scale-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .scale-box img {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .scale-box span {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    /* GitHub Banner */
+    .banner-preview {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #000000;
+      border-radius: 20px;
+      padding: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .banner-logo {
+      width: 130px;
+      height: 130px;
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .banner-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .banner-text h2 {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #ffffff;
+      font-family: Georgia, 'Times New Roman', Times, serif;
+    }
+
+    .banner-text p {
+      color: #94a3b8;
+      font-size: 1.2rem;
+      margin-top: 0.4rem;
+      letter-spacing: 1.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="badge-approved">🏆 Official Approved Logo</span>
+    <div class="brand-title">
+      <h1>BLAISEVUE</h1>
+      <p>The Universal Reactive Framework for Object Pascal</p>
+    </div>
+  </header>
+
+  <!-- Main Showcase -->
+  <div class="official-showcase">
+    <div class="logo-hero-container">
+      <img src="logo.png" alt="Official BlaiseVue Logo">
+    </div>
+    <h2>The Shadow Hand & The White Quill</h2>
+    <p>
+      The harmony between the classical intellectual heritage of Blaise Pascal and modern reactive software engineering: a timeless solid black shadow hand silhouette holding a pure white feather quill with bold contrast contours on a clean white background.
+    </p>
+  </div>
+
+  <!-- Assets Grid & Scalability Simulation -->
+  <div class="assets-grid">
+
+    <!-- Card 1: Favicon & Scaling -->
+    <div class="asset-card">
+      <h3>Favicon & System Scalability</h3>
+      <p>Pixel-crisp at any browser tab and operating system resolution:</p>
+      <div class="scale-row">
+        <div class="scale-box">
+          <img src="logo.png" width="96" height="96" alt="96px">
+          <span>96x96</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="64" height="64" alt="64px">
+          <span>64x64</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="32" height="32" alt="32px">
+          <span>32x32</span>
+        </div>
+        <div class="scale-box">
+          <img src="logo.png" width="16" height="16" alt="16px">
+          <span>16x16</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Generated Official Files -->
+    <div class="asset-card">
+      <h3>Official Distribution Files</h3>
+      <p>Organized in standard repository directories:</p>
+      <ul style="text-align: left; font-size: 0.88rem; line-height: 2; color: #334155;">
+        <li>📁 <code>doc/brand/logo.png</code> (High-Resolution Master)</li>
+        <li>📁 <code>doc/brand/logo.svg</code> (Scalable Vector SVG)</li>
+        <li>📁 <code>vscode-extension/icon.png</code> (128x128 VS Code Icon)</li>
+        <li>📁 <code>demo-app/public/favicon.ico</code> (Multi-size Web Favicon)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Official GitHub Banner Simulation -->
+  <div class="banner-preview">
+    <div class="banner-logo">
+      <img src="logo.png" alt="BlaiseVue Logo">
+    </div>
+    <div class="banner-text">
+      <h2>BLAISEVUE</h2>
+      <p>THE OBJECT PASCAL REACTIVE FRAMEWORK</p>
+    </div>
+  </div>
+
+</body>
+</html>

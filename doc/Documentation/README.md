@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="../../README.md">
+    <img src="../brand/logo.png" alt="BlaiseVue Logo" width="120" height="120">
+  </a>
+</p>
+
 # 🛡️ BlaiseVue 4.3 Documentation
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="monogramGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="35%" stop-color="#0284C7" />
+      <stop offset="70%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+
+    <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#0B0F19" />
+
+  <!-- Monogram Ribbon Group -->
+  <g transform="translate(10, 0)">
+    <!-- B Stem (Left Vertical Bar with Bevel) -->
+    <path d="M 110, 110 
+             L 170, 110 
+             L 170, 402 
+             L 110, 402 Z" 
+          fill="url(#monogramGrad)" />
+
+    <!-- Top Loop of 'B' -->
+    <path d="M 170, 110 
+             C 250, 110 270, 150 270, 195 
+             C 270, 240 240, 260 170, 260 
+             L 170, 205 
+             C 210, 205 220, 195 220, 185 
+             C 220, 165 200, 155 170, 155 Z" 
+          fill="#00D2FF" />
+
+    <!-- Lower Flow: 'B' bottom looping directly into the 'V' -->
+    <path d="M 170, 252 
+             C 260, 252 285, 290 285, 340 
+             C 285, 395 240, 402 170, 402 
+             L 170, 350 
+             C 215, 350 232, 345 232, 330 
+             C 232, 310 210, 300 170, 300 Z" 
+          fill="#0284C7" />
+
+    <!-- The Energetic 'V' Interlocking Wing -->
+    <path d="M 230, 160 
+             L 330, 402 
+             L 420, 160 
+             L 365, 160 
+             L 330, 280 
+             L 285, 160 Z" 
+          fill="url(#monogramGrad)" />
+
+    <!-- Subtle Depth Shadow -->
+    <polygon points="230,160 260,230 245,230" fill="url(#shadowGrad)" />
+  </g>
+</svg>
