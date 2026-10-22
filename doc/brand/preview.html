@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlaiseVue: Identidade Visual & A Mão de Pascal</title>
+  <title>BlaiseVue: O Conceito Clássico da Mão e Pena Branca</title>
   <style>
     :root {
       --bg-primary: #0b0f19;
@@ -53,7 +53,7 @@
       font-size: 2.3rem;
       font-weight: 800;
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -77,7 +77,7 @@
     }
 
     .controls button:hover {
-      border-color: var(--accent-cyan);
+      border-color: #cbd5e1;
     }
 
     .section-title {
@@ -93,8 +93,8 @@
       font-weight: 700;
     }
 
-    /* Hero Showcase: A Mão de Pascal */
-    .hero-showcase {
+    /* Classical Hero Showcase */
+    .classic-hero {
       max-width: 1280px;
       margin: 0 auto 3rem auto;
       background: var(--card-bg);
@@ -102,50 +102,49 @@
       border-radius: 20px;
       padding: 2.5rem;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
+      grid-template-columns: 440px 1fr;
+      gap: 3rem;
       align-items: center;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
     }
 
-    .hero-img-box {
+    .classic-img-box {
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid var(--border-color);
-      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.2);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      background: #000;
     }
 
-    .hero-img-box img {
+    .classic-img-box img {
       width: 100%;
-      height: 100%;
+      height: auto;
       display: block;
-      object-fit: cover;
     }
 
-    .hero-desc h2 {
-      font-size: 2rem;
+    .classic-desc h2 {
+      font-size: 2.2rem;
       font-weight: 800;
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, #ffffff, var(--accent-cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--text-main);
+      font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
-    .hero-desc p {
+    .classic-desc p {
       color: var(--text-muted);
       font-size: 1.05rem;
       line-height: 1.6;
       margin-bottom: 1.5rem;
     }
 
-    .hero-features {
+    .classic-features {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 0.8rem;
     }
 
-    .hero-features li {
+    .classic-features li {
       display: flex;
       align-items: center;
       gap: 0.8rem;
@@ -153,8 +152,8 @@
       color: var(--text-main);
     }
 
-    .hero-features li span {
-      color: var(--accent-emerald);
+    .classic-features li span {
+      color: #cbd5e1;
       font-weight: bold;
     }
 
@@ -162,15 +161,15 @@
       max-width: 1280px;
       margin: 0 auto 3rem auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
     }
 
     .concept-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 1.8rem;
+      padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -179,12 +178,12 @@
 
     .concept-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 30px rgba(0, 210, 255, 0.18);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
     }
 
     .logo-container {
-      width: 190px;
-      height: 190px;
+      width: 220px;
+      height: 220px;
       margin-bottom: 1.5rem;
       display: flex;
       align-items: center;
@@ -198,14 +197,15 @@
     }
 
     .concept-card h3 {
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       margin-bottom: 0.5rem;
       text-align: center;
+      font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
     .concept-card p {
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       line-height: 1.5;
       text-align: center;
       margin-bottom: 1.2rem;
@@ -222,16 +222,10 @@
       margin-bottom: 1rem;
     }
 
-    .badge-primary {
-      background: rgba(0, 210, 255, 0.15);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(0, 210, 255, 0.3);
-    }
-
-    .badge-star {
-      background: rgba(0, 230, 118, 0.15);
-      color: var(--accent-emerald);
-      border: 1px solid rgba(0, 230, 118, 0.3);
+    .badge-classic {
+      background: rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     /* Scaling / Favicon simulation section */
@@ -271,7 +265,7 @@
     .banner-preview {
       max-width: 1280px;
       margin: 0 auto 3rem auto;
-      background: linear-gradient(135deg, #0b0f19, #131b2e);
+      background: #0f172a;
       border: 1px solid var(--border-color);
       border-radius: 16px;
       padding: 3rem;
@@ -289,14 +283,16 @@
     .banner-text h2 {
       font-size: 2.6rem;
       font-weight: 900;
-      letter-spacing: -0.5px;
+      letter-spacing: 2px;
       color: #ffffff;
+      font-family: Georgia, 'Times New Roman', Times, serif;
     }
 
     .banner-text p {
       color: #94a3b8;
       font-size: 1.15rem;
       margin-top: 0.3rem;
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -304,114 +300,90 @@
 
   <header>
     <div class="brand-title">
-      <h1>🖋️ BlaiseVue: A Mão de Pascal & A Pena Digital</h1>
-      <p>Conceito clássico-minimalista: A mão de Blaise Pascal escrevendo o 'V' reativo da Web contemporânea</p>
+      <h1>🖋️ BlaiseVue: A Mão Escura & A Pena Branca</h1>
+      <p>Estética clássica e atemporal inspirada nas gravuras e retratos do século XVII de Blaise Pascal</p>
     </div>
     <div class="controls">
       <button onclick="toggleTheme()">🌓 Alternar Tema (Claro / Escuro)</button>
     </div>
   </header>
 
-  <!-- HERO: A Mão de Blaise Pascal Escrevendo o V -->
-  <div class="hero-showcase">
-    <div class="hero-img-box">
-      <img src="blaisevue-hand-render-3d.jpg" alt="Render 3D: A Mão de Pascal Escrevendo">
+  <!-- HERO CLÁSSICO: Gravura em Nanquim do Século XVII -->
+  <div class="classic-hero">
+    <div class="classic-img-box">
+      <img src="blaise-classic-engraving.jpg" alt="Gravura Clássica: Mão Escura Segurando Pena Branca">
     </div>
-    <div class="hero-desc">
-      <span class="badge badge-star">Conceito Histórico & Tecnológico</span>
-      <h2>A Mão de Blaise Pascal</h2>
+    <div class="classic-desc">
+      <span class="badge badge-classic">Gravura Clássica em Nanquim</span>
+      <h2>A Mão Escura & A Pena Branca</h2>
       <p>
-        Inspirado nos retratos clássicos do século XVII de Blaise Pascal e dos filósofos escrevendo com penas sobre pergaminho. Reimaginado em uma estética minimalista de ponta, onde a pena desenha um traço radiante em neon ciano e esmeralda, formando o "V" de <strong>BlaiseVue</strong>.
+        Exatamente como nos retratos a óleo e gravuras em metal do século XVII: a <strong>mão escura com hachuras clássicas</strong> segurando com serenidade a <strong>pena branca luminosa</strong> sobre pergaminho. Sem efeitos futuristas ou neons — pura arte gráfica atemporal.
       </p>
-      <ul class="hero-features">
-        <li><span>✦</span> <strong>Tradição & Filosofia:</strong> A mão humana como símbolo da precisão e elegância do código em Object Pascal.</li>
-        <li><span>✦</span> <strong>O Traço Reativo:</strong> A tinta não é comum — é luz neon pulsante, representando a reatividade em tempo real.</li>
-        <li><span>✦</span> <strong>Identidade Única:</strong> Distingue imediatamente o BlaiseVue de qualquer outro framework no mundo.</li>
+      <ul class="classic-features">
+        <li><span>✦</span> <strong>Contraste Absoluto:</strong> A silhueta da mão escura destaca imediatamente o branco puro e os detalhes da pena.</li>
+        <li><span>✦</span> <strong>Elegância de Livro Antigo:</strong> Remete aos manuscritos originais de Blaise Pascal (<em>Pensées</em> e <em>Lettres Provinciales</em>).</li>
+        <li><span>✦</span> <strong>Nobreza Editorial:</strong> Uma marca com peso de universidade clássica, alfarrábio e tipografia de alto padrão.</li>
       </ul>
     </div>
   </div>
 
   <div class="section-title">
-    <h2>✨ Interpretações Vetoriais da Mão Escrevendo (SVG)</h2>
+    <h2>✒️ Versões Vetoriais do Selo Oficial (SVG)</h2>
   </div>
 
   <div class="grid-concepts">
 
-    <!-- Vetor 1: Mão Silhueta com Traço V Neon -->
+    <!-- Vetor 1: Medalhão Claro / Pergaminho -->
     <div class="concept-card">
-      <span class="badge badge-star">⭐ Vetor Completo</span>
+      <span class="badge badge-classic">Versão Papel / Selo Claro</span>
       <div class="logo-container">
-        <img src="logo-hand-quill.svg" alt="Mão com Pena Traçando V">
+        <img src="logo-classic-quill.svg" alt="Selo Clássico Fundo Claro">
       </div>
-      <h3>1. O Traço Reativo</h3>
-      <p>A mão estilizada segura a pena de escrita enquanto sua ponta desliza e projeta o grande 'V' em neon esmeralda e ciano sobre a tela escura.</p>
+      <h3>Selo Medalhão (Fundo Claro)</h3>
+      <p>Mão em preto profundo com punho de camisa clássica do século XVII, segurando a pena branca com ponta de tinteiro sobre medalhão de papel marfim.</p>
     </div>
 
-    <!-- Vetor 2: Mão em Linha Contínua Minimalista -->
+    <!-- Vetor 2: Medalhão Escuro / Noite -->
     <div class="concept-card">
-      <span class="badge badge-star">⭐ Minimalismo & Traço Contínuo</span>
+      <span class="badge badge-classic">Versão Noturna / Dark Mode</span>
       <div class="logo-container">
-        <img src="logo-hand-quill-minimal.svg" alt="Linha Contínua">
+        <img src="logo-classic-quill-dark.svg" alt="Selo Clássico Fundo Escuro">
       </div>
-      <h3>2. Contorno em Linha Contínua</h3>
-      <p>Arte de linha pura e fluida. O contorno da mão e da pena se conecta em um único fluxo que culmina no vértice do 'V'.</p>
-    </div>
-
-    <!-- Vetor 3: V4 Origami Minimal -->
-    <div class="concept-card">
-      <span class="badge badge-primary">Símbolo Favicon</span>
-      <div class="logo-container">
-        <img src="logo-quill-v4-minimal.svg" alt="Pena V4 Origami">
-      </div>
-      <h3>3. A Pena Origami (Foco na Pena)</h3>
-      <p>A versão geométrica purificada da pena. Se preferir usar o instrumento de escrita como ícone compacto para a aba do navegador.</p>
-    </div>
-
-    <!-- Vetor 4: V2 Prisma -->
-    <div class="concept-card">
-      <span class="badge badge-primary">Aerodinâmico</span>
-      <div class="logo-container">
-        <img src="logo-quill-v2-prism.svg" alt="Pena V2 Prisma">
-      </div>
-      <h3>4. O Prisma e Asas</h3>
-      <p>Asas da pena que se abrem no formato da letra 'V' com fenda luminosa no centro da pena de titânio.</p>
+      <h3>Selo Medalhão (Fundo Escuro)</h3>
+      <p>Mão em preto grafite com contornos prateados e punho rendado branco, segurando a pena branca que brilha com contraste perfeito.</p>
     </div>
 
   </div>
 
   <!-- Teste de Escala & Favicon -->
   <div class="scale-section">
-    <h2>🔍 Teste de Escala dos Novos Símbolos</h2>
+    <h2>🔍 Teste de Escala do Selo Clássico</h2>
     <div class="scale-row">
       <div class="scale-box">
-        <img src="logo-hand-quill.svg" width="128" height="128" alt="128px">
-        <span>128x128 (Desktop / Splash)</span>
+        <img src="logo-classic-quill.svg" width="128" height="128" alt="128px">
+        <span>128x128 (Desktop / Documentação)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-hand-quill.svg" width="64" height="64" alt="64px">
-        <span>64x64 (VS Code Extension)</span>
+        <img src="logo-classic-quill.svg" width="64" height="64" alt="64px">
+        <span>64x64 (Extensão VS Code)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-hand-quill-minimal.svg" width="64" height="64" alt="64px">
-        <span>64x64 (Linha Contínua)</span>
+        <img src="logo-classic-quill.svg" width="32" height="32" alt="32px">
+        <span>32x32 (App Icon)</span>
       </div>
       <div class="scale-box">
-        <img src="logo-quill-v4-minimal.svg" width="32" height="32" alt="32px">
-        <span>32x32 (Favicon / App Icon)</span>
-      </div>
-      <div class="scale-box">
-        <img src="logo-quill-v4-minimal.svg" width="16" height="16" alt="16px">
-        <span>16x16 (Aba do Navegador)</span>
+        <img src="logo-classic-quill.svg" width="16" height="16" alt="16px">
+        <span>16x16 (Aba Favicon)</span>
       </div>
     </div>
   </div>
 
-  <!-- Simulação de Banner Oficial -->
+  <!-- Banner Oficial Clássico -->
   <div class="banner-preview">
-    <img src="logo-hand-quill.svg" alt="BlaiseVue Logo">
+    <img src="logo-classic-quill-dark.svg" alt="BlaiseVue Seal">
     <div class="banner-text">
-      <h2>BlaiseVue</h2>
-      <p>The Reactive Full-Stack Object Pascal Framework</p>
+      <h2>BLAISEVUE</h2>
+      <p>THE OBJECT PASCAL REACTIVE FRAMEWORK</p>
     </div>
   </div>
 
