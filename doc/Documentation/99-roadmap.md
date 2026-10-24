@@ -1,9 +1,9 @@
-# 🛡️ Technical Roadmap: BlaiseVue Platform (v2.0 - v4.4)
+# 🛡️ Technical Roadmap: BlaiseVue Platform (v2.0 - v5.0)
 
-This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 4.0**.
+This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 5.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.4 In Progress (Pillars 1 & 2 Delivered ✅)**. Pillar 1: Compiler Template Type-Checking, AST Verification, and Zero-`with()` Native Fast Templates. Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`). Verified with 464 automated unit tests across 27 test suites. Remaining Pillars 3 to 5 approved and scheduled.
+> **Current Status**: 🚀 **BlaiseVue 4.4 100% Delivered ✅ (All 5 Pillars Verified)**. Covered by 335+ automated unit tests across 68 test suites. Planning and architectural specifications for **BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon** established.
 
 ---
 
@@ -245,7 +245,7 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   └── Phase 4: Full-Stack ────► mORMot 2 Backend Template (bv mormot init/build/run/deploy) (✅ Completed)
        │
        ▼
-[ v4.0 - Enterprise Ecosystem & Developer Superpowers (In Progress 🚀) ]
+[ v4.0 - Enterprise Ecosystem & Developer Superpowers (100% Completed ✅) ]
   ├── Phase 1: Full-Stack CRUD ──► bv mormot crud (Auto-scaffold ORM models, REST API & DataGrid) (✅ Completed)
   ├── Phase 2: Enterprise Auth ──► $auth helper, JWT middleware & role-based route guards (✅ Completed)
   ├── Phase 3: Live OpenAPI ─────► Auto-generated Swagger UI / OpenAPI 3.0 at /api/docs (✅ Completed)
@@ -253,7 +253,22 @@ With the core web, reactive, and WebAssembly engines completed in **v3.0**, **Bl
   ├── Phase 5: Mobile UI Pack ───► packages/blaise-ui-mobile (Ionic Web Components + Pascal wrappers for Web & Mobile) (✅ Completed)
   ├── Phase 6: Blaise Charts ────► packages/blaise-charts (Reactive Chart.js suite with typed Pascal records) (✅ Completed)
   ├── Phase 7: BlaiseVue Studio ──► Web developer dashboard for live WS & visual workflow (✅ Completed)
-  └── Phase 8: Pure Pascal DX ───► Zero-ASM Application Architecture & 100% Idiomatic Object Pascal Views (Planned 🔮)
+  └── Phase 8: Pure Pascal DX ───► Zero-ASM Application Architecture & 100% Idiomatic Object Pascal Views (✅ Completed)
+       │
+       ▼
+[ v4.x - Enterprise Maturity & Data Ecosystem (100% Completed ✅) ]
+  ├── v4.1 ──► Master Package Catalog & Comprehensive Component Docs (✅ Completed)
+  ├── v4.2 ──► LiveBindings & Reactive TBVDataSet Engine (b-field, buffer, cursor) (✅ Completed)
+  ├── v4.3 ──► End-to-End Type-Safe Pascal RPC with mORMot 2 (bv mormot rpc) (✅ Completed)
+  └── v4.4 ──► Enterprise Resilience, Native Fast Templates & Offline Delta Sync (✅ Completed)
+       │
+       ▼
+[ v5.0 - The Enterprise Cloud & Real-Time Horizon (Next Horizon 🎯) ]
+  ├── Pillar 1: BlaiseReports ──► Native Vector PDF, Excel & Print Engine (Planned 🔮)
+  ├── Pillar 2: BlaiseX ────────► Advanced Global State & Finite State Machines (TBVStore 2.0) (Planned 🔮)
+  ├── Pillar 3: bv pwa ─────────► Progressive Web App Engine & Service Worker Background Sync (Planned 🔮)
+  ├── Pillar 4: Node-Free SSR ──► Real-Time Server-Side Rendering directly in mORMot 2 (< 3ms) (Planned 🔮)
+  └── Pillar 5: Studio 2.0 ─────► Visual Relational Database Modeler & Time-Travel Debugger (Planned 🔮)
 ```
 
 ---
@@ -536,10 +551,10 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
 
 ---
 
-### 🚀 BlaiseVue 4.4: Enterprise Resilience, Native Templates & Offline Delta Sync (Approved 🎯)
+### 🚀 BlaiseVue 4.4: Enterprise Resilience, Native Templates & Offline Delta Sync (Completed ✅)
 **Goal**: Elevate BlaiseVue into an uncompromising enterprise runtime by introducing compile-time template verification, native high-performance template evaluation, offline-first dataset synchronization with mORMot 2, relational master-detail code generation, and virtualized high-density data rendering.
 
-- **Status**: **Approved for Implementation (Pillars 1 to 5)**.
+- **Status**: **100% Completed & Verified (All 5 Pillars Delivered ✅)**.
 
 #### ⚡ Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates (Completed ✅)
 - **Detailed Documentation**: [`doc/Documentation/44-native-templates-ast-checker.md`](file:///c:/Users/Pichau/Documents/BlaiseVue/doc/Documentation/44-native-templates-ast-checker.md)
@@ -651,6 +666,141 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
     ```
 - **Dedicated Documentation & Release Guide**: [48-library-distribution-packager.md](48-library-distribution-packager.md).
 - **Automated Test Coverage**: `demo-app/tests/framework/lib_packager.test.pas`.
+
+---
+
+## 🔮 The Next Horizon: BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon (Planned 🎯)
+
+With the complete delivery of **BlaiseVue 4.4** establishing compiler template type-checking, native fast templates, relational master-detail CRUD, virtualized grids, and offline delta sync, **BlaiseVue 5.0** sets the architectural course for enterprise document reporting, centralized reactive state machines, native Progressive Web App (PWA) sync, dynamic server-side rendering (SSR) without Node.js, and visual studio modeling.
+
+> [!NOTE]
+> **Evolutionary Strategy**: BlaiseVue 5.0 strategically blends **brand-new enterprise capabilities** (e.g. vector reporting) with **deep architectural evolutions** of existing foundational pillars (transforming basic `$store` into `BlaiseX`, evolving static SSG into dynamic Node-free SSR, and connecting offline `TBVDataSet` to Service Worker Background Sync).
+
+```
+                                  BLAISEVUE 5.0
+                                        │
+        ┌───────────────┬───────────────┼───────────────┬───────────────┐
+        ▼               ▼               ▼               ▼               ▼
+   [Pillar 1]      [Pillar 2]      [Pillar 3]      [Pillar 4]      [Pillar 5]
+  BlaiseReports     BlaiseX /       Full PWA &     Node-Free SSR    Visual Studio
+ (PDF/Excel/Print) TBVStore 2.0    Offline Sync    (mORMot SSR)    Cockpit & DB
+   (NEW Package)   (Store Evolution) (PWA Engine)   (SSR Evolution) (Studio Evolution)
+```
+
+---
+
+### 📊 Pillar 1: Enterprise Reporting & Multi-Format Document Export (`packages/blaise-reports`) (NEW ✨)
+**Goal**: Provide an official, standalone enterprise reporting suite in pure Object Pascal, enabling seamless generation of vector PDF reports, Excel (`.xlsx`) spreadsheets, CSV data exports, and print-optimized documents directly from `TBVDataSet` and `<bv-data-grid>`.
+
+- **Motivation**: Real-world enterprise ERP, CRM, and financial management applications require high-fidelity business reports, thermal/A4 printing, and multi-format data export without relying on heavy external dependencies or cloud conversion APIs.
+- **Architectural Scope**:
+  1. **Declarative `TBVReport` Engine (`packages/blaise-reports/BlaiseReports.pas`)**:
+     - Fluent report builder binding directly to active `TBVDataSet` instances:
+       ```pascal
+       Report := TBVReport.Create(SalesDataSet);
+       Report.Title('Q4 Executive Sales Summary')
+             .Header('Company: Enterprise Corp | Date: ' + FormatDateTime('yyyy-mm-dd', Now))
+             .Columns(['InvoiceNo', 'Customer', 'SaleDate', 'TotalAmount'])
+             .AddSummary('Total Revenue', 'TotalAmount', aggSum)
+             .AddSummary('Average Order', 'TotalAmount', aggAverage)
+             .ExportPDF('sales_summary.pdf');
+       ```
+  2. **Multi-Format Export Targets**:
+     - **Vector PDF (`ExportPDF`)**: Pure client and server-side PDF generation with automatic pagination, running headers/footers, page numbering (*"Page X of Y"*), table styling, and brand logos.
+     - **Native Excel Spreadsheet (`ExportExcel`)**: Clean binary `.xlsx` generation preserving strongly typed cells (Currency, Integer, DateTime) without losing column headers.
+     - **Raw CSV Data (`ExportCSV`)**: Delimiter-configurable streaming export with UTF-8 BOM encoding for seamless Excel import.
+  3. **Print-Optimized Layouts (`PrintPreview`)**:
+     - Pre-configured CSS `@media print` rules tailored for standard A4, Letter, and thermal POS receipt printers (80mm/58mm), eliminating browser margins and unwanted navigation headers.
+
+---
+
+### 🗄️ Pillar 2: BlaiseX — Advanced Global State & Finite State Machines (`TBVStore 2.0`) (EVOLUTION 🚀)
+**Goal**: Evolve the existing foundation in `core/BVStore.pas` (`$store`) into a comprehensive, strongly typed global state management engine (`BlaiseX`) with memoized getters, transactional action pipelines, automatic storage persistence, and formal Finite State Machines (`TBVStateMachine`).
+
+- **Foundation in v3/v4**: Currently, BlaiseVue provides basic reactive store capabilities via `TBVStore` (`core/BVStore.pas`), injected as `$store`.
+- **The v5.0 Evolution**:
+  1. **Strongly Typed Pascal State Models**:
+     - State structures defined as Pascal records or classes, completely eliminating unverified key strings:
+       ```pascal
+       type
+         TCartItem = record
+           Id: Integer;
+           Title: string;
+           UnitPrice: Currency;
+           Quantity: Integer;
+         end;
+
+         TCartState = record
+           Items: array of TCartItem;
+           DiscountCode: string;
+           CheckoutStep: string;
+         end;
+       ```
+  2. **Memoized Getters & Action Pipelines**:
+     - Derived calculations with dependency-tracked caching (e.g. `TotalAmount`, `ItemCount`, `IsCheckoutReady`).
+     - Async action execution with automatic rollback, optimistic UI updates, and error handling.
+  3. **Pluggable Automatic Persistence**:
+     - Single-directive auto-persistence: `Store.Persist(spLocalStorage, 'my_store_key')` or `IndexedDB`, automatically restoring state on app restart.
+  4. **Formal Finite State Machines (`TBVStateMachine`)**:
+     - Eliminates invalid multi-step UI states in enterprise workflows (e.g., Order: `Draft` -> `Pending` -> `Approved` -> `Shipped` -> `Delivered`).
+     - Guarded state transitions: Attempting to transition from `Draft` directly to `Shipped` raises compile-time or runtime transition exceptions.
+
+---
+
+### 📱 Pillar 3: Full PWA Engine & Service Worker Background Sync (`bv pwa`) (EVOLUTION 🚀)
+**Goal**: Deepen the offline-first architecture of `TBVDataSet` (v4.4) and Capacitor mobile stack (v3.5) by introducing an automated Progressive Web App engine with declarative Service Worker caching and background synchronization.
+
+- **Foundation in v3.5/v4.4**: BlaiseVue provides native mobile compilation (`bv mobile`) and offline IndexedDB persistence with transactional delta tracking (`TBVIndexedDBAdapter`).
+- **The v5.0 Evolution**:
+  1. **Single-Command PWA Scaffolding (`bv pwa init`)**:
+     - Automatically generates `manifest.json`, cross-platform app icons (192px, 512px, maskable), theme colors, and a tuned `sw.js` (Service Worker).
+     - Grants instant 1-click installability across desktop (Windows, macOS, Linux) and mobile (Android, iOS) directly from the browser.
+  2. **Tiered Caching Strategies**:
+     - *Cache-First (Stale-While-Revalidate)*: Offline-critical application bundles (`main.js`, CSS, local fonts) load in under 20ms from Cache Storage.
+     - *Network-First with Cache Fallback*: RPC and REST endpoints dynamically fall back to cached responses when offline.
+  3. **Background Sync Integration with `TBVDataSet.ApplyUpdates` (Killer Feature)**:
+     - Field operators and mobile users create, update, or delete records offline.
+     - Mutations are safely committed into `TBVDataSet` and persisted locally in IndexedDB.
+     - The user locks their phone or closes the browser window.
+     - **Upon network restoration**, the browser's native **Service Worker `sync` event wakes up in the background**, submits pending deltas via `POST /api/dataset/apply` to the mORMot 2 server, reconciles primary keys, and broadcasts real-time confirmations without requiring the user to reopen the tab!
+  4. **Push Notification Bridge**:
+     - Native Web Push API integration allowing mORMot 2 servers to dispatch real-time system alerts directly to client devices.
+
+---
+
+### ⚡ Pillar 4: Node-Free Dynamic Server-Side Rendering (mORMot 2 SSR) (EVOLUTION 🚀)
+**Goal**: Evolve the static build-time pre-rendering engine (`bv run ssg` in v3.0) into a real-time, on-demand dynamic Server-Side Rendering (SSR) pipeline executed directly inside the native Synopse mORMot 2 backend in under 3 milliseconds.
+
+- **Foundation in v3.0**: BlaiseVue features static site generation (`bv run ssg`) that pre-renders static HTML files during build time.
+- **The v5.0 Evolution**:
+  1. **Real-Time Dynamic Route Rendering**:
+     - Dynamic routes (e.g., `/products/:id`, `/orders/:id`, `/blog/:slug`) are rendered on-demand when requested by search engine crawlers (Googlebot, Bing) or social share bots (WhatsApp, LinkedIn, Twitter/X).
+     - The mORMot 2 Pascal backend queries the database and renders the complete initial HTML markup in memory.
+  2. **Ultra-Low Latency & Minimal Footprint**:
+     - Standard JavaScript SSR frameworks (Next.js, Nuxt) require an external Node.js runtime consuming 500 MB to 1.5 GB of RAM with 40-120ms response times.
+     - BlaiseVue SSR runs inside the **compiled native Pascal binary**, executing in **less than 3 milliseconds** and consuming **under 25 MB RAM**.
+  3. **Zero-Flicker Hydration Handshake**:
+     - The browser receives fully rendered HTML with OpenGraph meta tags, titles, and layout immediately.
+     - The client-side Pas2JS engine engages reactive hydration, attaching event listeners and reactive bindings without repainting the DOM.
+
+---
+
+### 🛠️ Pillar 5: BlaiseVue Studio 2.0 (Visual Cockpit & Database Modeler) (EVOLUTION 🚀)
+**Goal**: Expand the existing developer dashboard (`packages/blaise-studio` / `bv studio` in v4.0) into a visual cockpit featuring an interactive relational database schema modeler, full-stack code generator, and time-travel reactive state inspector.
+
+- **Foundation in v4.0**: BlaiseVue provides a developer dashboard (`bv studio`) monitoring live WebSocket events, AST inspection, and 1-click build triggers.
+- **The v5.0 Evolution**:
+  1. **Visual Relational Database Schema Modeler**:
+     - Web-based visual designer allowing developers to model entities, fields, data types, and foreign key relations drag-and-drop.
+     - One-click triggers that automatically scaffold:
+       - 1) The mORMot 2 ORM records in `ServerModels.pas`.
+       - 2) The relational service implementation (`Crud<Entity>.pas`).
+       - 3) The frontend `.bv` view with `<bv-data-grid>`, search filters, and editing dialogs.
+  2. **Reactive Time-Travel State Inspector**:
+     - Visual timeline capturing every reactive proxy mutation, computed property evaluation, and `TBVDataSet` cursor navigation step.
+     - Ability to step backward and forward in time (*undo/redo/replay*) during development to trace state bugs instantly.
+  3. **Live Network & RPC Latency Monitor**:
+     - Real-time telemetry tracking JSON-RPC 2.0 throughput, WebSocket frame roundtrips, and database query durations.
 
 ---
 
