@@ -102,21 +102,15 @@
          if (this._updatePending) return;
          this._updatePending = true;
 
-         const delay = 50 + Math.random() * 100;
-         setTimeout(() => {
+         requestAnimationFrame(() => {
            this._updatePending = false;
            const dataToUse = this._pendingData;
            if (this._chart && dataToUse && dataToUse.datasets) {
              try {
-               const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
-               if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
-                  this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
-                  if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-                  this._chart.update();
-               } else {
-                  this._chart.data = rawNewData;
-                  this._chart.update('none');
-               }
+               const rawNewData = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(dataToUse) : dataToUse;
+               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
+               this._chart.data.datasets = rawNewData.datasets;
+               this._chart.update();
              } catch (e) {
                console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
                this.initChart();
@@ -124,7 +118,22 @@
            } else {
              this.initChart();
            }
-         }, delay);
+         });
+       end;
+    end;
+
+    procedure options(newVal: JSValue);
+    begin
+       asm
+         if (this._chart && newVal) {
+           try {
+             const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
+             this._chart.options = rawNewOpts;
+             this._chart.update();
+           } catch (e) {
+             this.initChart();
+           }
+         }
        end;
     end;
 
@@ -138,7 +147,7 @@
   .bui-chart-wrapper {
     position: relative;
     margin-bottom: 20px;
-    background: white;
+    background: transparent;
     padding: 15px;
     border-radius: var(--bui-radius);
     border: 1px solid var(--bui-border);

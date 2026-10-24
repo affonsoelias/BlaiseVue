@@ -1,5 +1,5 @@
 <template>
-  <div class="chart-dashboard">
+  <div class="chart-dashboard" :class="{ 'charts-dark': isDarkMode }">
     <div class="header-card">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="text-align: left;">
@@ -186,11 +186,13 @@
       NewDark := not Boolean(this['isDarkMode']);
       this['isDarkMode'] := NewDark;
       UpdateChartDarkMode(this['chartOptions'], NewDark);
+      UpdateChartDarkMode(this['pieOptions'], NewDark);
       this['chartOptions'] := ObjectAssign(NewObject, this['chartOptions']);
+      this['pieOptions'] := ObjectAssign(NewObject, this['pieOptions']);
       if NewDark then
-        this['clickedPointInfo'] := 'Modo escuro ativado para escalas dos gráficos!'
+        this['clickedPointInfo'] := 'Modo escuro ativado com sucesso!'
       else
-        this['clickedPointInfo'] := 'Modo claro ativado para escalas dos gráficos!';
+        this['clickedPointInfo'] := 'Modo claro ativado com sucesso!';
     end;
 
     procedure randomizeData;
@@ -221,53 +223,88 @@
 
     procedure togglePalette;
     var
-      Pal: TJSArray;
+      Pal, PalBorder: TJSArray;
       Cur: string;
       Datasets: TJSArray;
     begin
       Cur := String(this['currentPalette']);
       if Cur = 'Emerald' then
-      begin
-        this['currentPalette'] := 'Sunset';
-        Pal := TBVChartPalette.Sunset(4, 0.7);
-      end
+        this['currentPalette'] := 'Sunset'
       else if Cur = 'Sunset' then
-      begin
-        this['currentPalette'] := 'Cyberpunk';
-        Pal := TBVChartPalette.Cyberpunk(4, 0.7);
-      end
+        this['currentPalette'] := 'Cyberpunk'
       else if Cur = 'Cyberpunk' then
-      begin
-        this['currentPalette'] := 'Neon';
-        Pal := TBVChartPalette.Neon(4, 0.7);
-      end
+        this['currentPalette'] := 'Neon'
       else
-      begin
         this['currentPalette'] := 'Emerald';
-        Pal := TBVChartPalette.Emerald(4, 0.7);
+
+      Pal := TBVChartPalette.GetPalette(String(this['currentPalette']), 0.65);
+      PalBorder := TBVChartPalette.GetPalette(String(this['currentPalette']), 1.0);
+
+      // 1. Bar Data (Universal <bv-chart> and <bv-bar-chart>)
+      if this['barData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(this['barData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+          if Datasets.Length > 1 then
+          begin
+            TJSObject(Datasets[1])['backgroundColor'] := Pal[1];
+            TJSObject(Datasets[1])['borderColor'] := PalBorder[1];
+          end;
+          this['barData'] := ObjectAssign(NewObject, this['barData']);
+        end;
       end;
 
+      // 2. Line Data
+      if this['lineData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(this['lineData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[2];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[2];
+          this['lineData'] := ObjectAssign(NewObject, this['lineData']);
+        end;
+      end;
+
+      // 3. Pie Data
       if this['pieData'] <> nil then
       begin
         Datasets := TJSArray(TJSObject(this['pieData'])['datasets']);
         if (Datasets <> nil) and (Datasets.Length > 0) then
         begin
           TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := PalBorder;
           this['pieData'] := ObjectAssign(NewObject, this['pieData']);
         end;
       end;
 
+      // 4. Doughnut Data
       if this['doughnutData'] <> nil then
       begin
         Datasets := TJSArray(TJSObject(this['doughnutData'])['datasets']);
         if (Datasets <> nil) and (Datasets.Length > 0) then
         begin
           TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := PalBorder;
           this['doughnutData'] := ObjectAssign(NewObject, this['doughnutData']);
         end;
       end;
+
+      // 5. Radar Data
+      if this['radarData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(this['radarData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+          this['radarData'] := ObjectAssign(NewObject, this['radarData']);
+        end;
+      end;
+
       this['clickedPointInfo'] := 'Paleta alterada para ' + String(this['currentPalette']) + '!';
     end;
 
@@ -360,6 +397,52 @@
     transition: all 0.15s ease;
   }
   .btn-type-pill:hover {
+    background: #3b82f6;
+    color: #ffffff;
+    border-color: #3b82f6;
+  }
+
+  /* Dark Mode Dashboard Styles */
+  .chart-dashboard.charts-dark {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+  .chart-dashboard.charts-dark .header-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .chart-dashboard.charts-dark .header-card h1 {
+    color: #f8fafc !important;
+  }
+  .chart-dashboard.charts-dark .header-card p {
+    color: #94a3b8 !important;
+  }
+  .chart-dashboard.charts-dark .universal-card,
+  .chart-dashboard.charts-dark .chart-item {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .chart-dashboard.charts-dark .chart-item h3 {
+    color: #f1f5f9;
+  }
+  .chart-dashboard.charts-dark .chart-header-row {
+    border-bottom-color: #334155;
+  }
+  .chart-dashboard.charts-dark .chart-header-row p {
+    color: #94a3b8 !important;
+  }
+  .chart-dashboard.charts-dark .badge-type {
+    background: #334155;
+    color: #cbd5e1;
+  }
+  .chart-dashboard.charts-dark .btn-type-pill {
+    background: #1e293b;
+    border-color: #475569;
+    color: #cbd5e1;
+  }
+  .chart-dashboard.charts-dark .btn-type-pill:hover {
     background: #3b82f6;
     color: #ffffff;
     border-color: #3b82f6;

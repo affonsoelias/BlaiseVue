@@ -1106,15 +1106,27 @@ procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
 begin
   asm
     if (OptionsObj) {
+      const gridColor = Dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+      const textColor = Dark ? '#e2e8f0' : '#475569';
+
       if (!OptionsObj.scales) OptionsObj.scales = {};
       if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
       if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
-      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-      const textColor = Dark ? '#94a3b8' : '#64748b';
       OptionsObj.scales.x.grid = { color: gridColor };
       OptionsObj.scales.y.grid = { color: gridColor };
       OptionsObj.scales.x.ticks = { color: textColor };
       OptionsObj.scales.y.ticks = { color: textColor };
+
+      if (!OptionsObj.scales.r) OptionsObj.scales.r = {};
+      OptionsObj.scales.r.grid = { color: gridColor };
+      OptionsObj.scales.r.angleLines = { color: gridColor };
+      OptionsObj.scales.r.pointLabels = { color: textColor };
+      OptionsObj.scales.r.ticks = { color: textColor, backdropColor: 'transparent' };
+
+      if (!OptionsObj.plugins) OptionsObj.plugins = {};
+      if (!OptionsObj.plugins.legend) OptionsObj.plugins.legend = {};
+      if (!OptionsObj.plugins.legend.labels) OptionsObj.plugins.legend.labels = {};
+      OptionsObj.plugins.legend.labels.color = textColor;
     }
   end;
 end;

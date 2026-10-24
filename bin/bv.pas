@@ -11511,7 +11511,7 @@ procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: s
 
 type
 
-  TCrudFieldKind = (cfkString, cfkInteger, cfkFloat, cfkBoolean, cfkDate);
+  TCrudFieldKind = (cfkString, cfkInteger, cfkFloat, cfkBoolean, cfkDate, cfkForeignKey, cfkDetail);
 
 
 
@@ -11538,6 +11538,12 @@ type
     SampleValJson: string;
 
     InputType: string;
+
+    TargetModel: string;
+
+    IsForeignKey: Boolean;
+
+    IsDetail: Boolean;
 
   end;
 
@@ -11629,9 +11635,9 @@ function ParseCrudField(const Spec: string; FieldIndex: Integer; const ModelName
 
 var
 
-  ColonPos: Integer;
+  ColonPos, P1, P2: Integer;
 
-  FName, FType: string;
+  FName, FType, Target: string;
 
 begin
 
@@ -11662,6 +11668,12 @@ begin
   Result.Name := CamelCaseWord(FName);
 
   Result.PascalName := CapitalizeWord(FName);
+
+  Result.TargetModel := '';
+
+  Result.IsForeignKey := False;
+
+  Result.IsDetail := False;
 
 
 
@@ -11775,6 +11787,49 @@ begin
 
     Result.InputType := 'date';
 
+  end
+
+  else if (Pos('fk(', LowerCase(FType)) = 1) or (Pos('foreignkey(', LowerCase(FType)) = 1) then
+  begin
+    P1 := Pos('(', FType);
+    P2 := Pos(')', FType);
+    if (P1 > 0) and (P2 > P1) then
+      Target := CapitalizeWord(Trim(Copy(FType, P1 + 1, P2 - P1 - 1)))
+    else
+      Target := 'Object';
+    Result.Kind := cfkForeignKey;
+    Result.TargetModel := Target;
+    Result.PascalType := 'Integer';
+    Result.JsType := 'number';
+    Result.BvType := 'integer';
+    Result.DefaultValPascal := '0';
+    Result.DefaultValJs := '0';
+    Result.SampleValPascal := '1';
+    Result.SampleValJson := '1';
+    Result.InputType := 'number';
+    Result.IsForeignKey := True;
+    Result.IsDetail := False;
+  end
+  else if (Pos('detail(', LowerCase(FType)) = 1) or (Pos('details(', LowerCase(FType)) = 1) then
+  begin
+    P1 := Pos('(', FType);
+    P2 := Pos(')', FType);
+    if (P1 > 0) and (P2 > P1) then
+      Target := CapitalizeWord(Trim(Copy(FType, P1 + 1, P2 - P1 - 1)))
+    else
+      Target := 'Item';
+    Result.Kind := cfkDetail;
+    Result.TargetModel := Target;
+    Result.PascalType := 'T' + Target + 'DynArray';
+    Result.JsType := 'array';
+    Result.BvType := 'JSValue';
+    Result.DefaultValPascal := 'nil';
+    Result.DefaultValJs := '[]';
+    Result.SampleValPascal := 'nil';
+    Result.SampleValJson := '[]';
+    Result.InputType := 'detail';
+    Result.IsForeignKey := False;
+    Result.IsDetail := True;
   end
 
   else
@@ -12093,7 +12148,8 @@ begin
 
     'var' + #13#10 +
 
-    '  SNum: string;' + #13#10 +
+    '  SNum, SPrice, STotal: string;' + #13#10 +
+    '  iChild: Integer;' + #13#10 +
 
     'begin' + #13#10 +
 
@@ -12138,6 +12194,27 @@ begin
           '  else' + #13#10 +
 
           '    Result := Result + ' + Q + ',"' + Fields[i].Name + '":false' + Q + ';' + #13#10;
+
+      cfkForeignKey:
+        Result := Result +
+          '  Result := Result + ' + Q + ',"' + Fields[i].Name + '":' + Q + ' + IntToStr(AItem.' + Fields[i].PascalName + ');' + #13#10;
+
+      cfkDetail:
+        Result := Result +
+          '  Result := Result + ' + Q + ',"' + Fields[i].Name + '":[' + Q + ';' + #13#10 +
+          '  for iChild := 0 to High(AItem.' + Fields[i].PascalName + ') do' + #13#10 +
+          '  begin' + #13#10 +
+          '    if iChild > 0 then Result := Result + ' + Q + ',' + Q + ';' + #13#10 +
+          '    Str(AItem.' + Fields[i].PascalName + '[iChild].UnitPrice:0:2, SPrice);' + #13#10 +
+          '    Str(AItem.' + Fields[i].PascalName + '[iChild].Total:0:2, STotal);' + #13#10 +
+          '    Result := Result + ' + Q + '{"id":' + Q + ' + IntToStr(AItem.' + Fields[i].PascalName + '[iChild].ID) +' + #13#10 +
+          '      ' + Q + ',"' + LowerCase(ModelName) + 'Id":' + Q + ' + IntToStr(AItem.' + Fields[i].PascalName + '[iChild].' + ModelName + 'ID) +' + #13#10 +
+          '      ' + Q + ',"description":"' + Q + ' + AItem.' + Fields[i].PascalName + '[iChild].Description + ' + Q + '"' + Q + ' +' + #13#10 +
+          '      ' + Q + ',"quantity":' + Q + ' + IntToStr(AItem.' + Fields[i].PascalName + '[iChild].Quantity) +' + #13#10 +
+          '      ' + Q + ',"unitPrice":' + Q + ' + RawUtf8(Trim(SPrice)) +' + #13#10 +
+          '      ' + Q + ',"total":' + Q + ' + RawUtf8(Trim(STotal)) + ' + Q + '}' + Q + ';' + #13#10 +
+          '  end;' + #13#10 +
+          '  Result := Result + ' + Q + ']' + Q + ';' + #13#10;
 
     end;
 
@@ -12217,11 +12294,11 @@ begin
 
     'var' + #13#10 +
 
-    '  Doc: TDocVariantData;' + #13#10 +
+    '  Doc, ChildDoc: TDocVariantData;' + #13#10 +
 
     '  V: Variant;' + #13#10 +
 
-    '  Idx: Integer;' + #13#10 +
+    '  Idx, iChild: Integer;' + #13#10 +
 
     '  NewItem: T' + ModelName + ';' + #13#10 +
 
@@ -12299,13 +12376,37 @@ begin
 
           '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
 
-    end;
 
+
+
+      cfkForeignKey:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', 1);' + #13#10 +
+          '    NewItem.' + Fields[i].PascalName + ' := Integer(V);' + #13#10;
+
+      cfkDetail:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', Null);' + #13#10 +
+          '    if VarIsArray(V) or (TDocVariantData(V).Kind = dvArray) then' + #13#10 +
+          '    begin' + #13#10 +
+          '      SetLength(NewItem.' + Fields[i].PascalName + ', TDocVariantData(V).Count);' + #13#10 +
+          '      for iChild := 0 to TDocVariantData(V).Count - 1 do' + #13#10 +
+          '      begin' + #13#10 +
+          '        ChildDoc.Init(TDocVariantData(V).Values[iChild]);' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].ID := iChild + 1;' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].' + ModelName + 'ID := NewItem.ID;' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].Description := VariantToUtf8(ChildDoc.GetValueOrDefault(' + Q + 'description' + Q + ', ' + Q + 'Item ' + Q + ' + IntToStr(iChild + 1)));' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].Quantity := ChildDoc.GetValueOrDefault(' + Q + 'quantity' + Q + ', 1);' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].UnitPrice := ChildDoc.GetValueOrDefault(' + Q + 'unitPrice' + Q + ', 10.0);' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].Total := NewItem.' + Fields[i].PascalName + '[iChild].Quantity * NewItem.' + Fields[i].PascalName + '[iChild].UnitPrice;' + #13#10 +
+          '        NewItem.' + Fields[i].PascalName + '[iChild].CreatedAt := DateTimeToStr(Now);' + #13#10 +
+          '      end;' + #13#10 +
+          '    end;' + #13#10;
+    end;
   end;
 
-
-
   Result := Result +
+
 
     '    NewItem.CreatedAt := DateTimeToStr(Now);' + #13#10 +
 
@@ -12335,11 +12436,11 @@ begin
 
     'var' + #13#10 +
 
-    '  Doc: TDocVariantData;' + #13#10 +
+    '  Doc, ChildDoc: TDocVariantData;' + #13#10 +
 
     '  V: Variant;' + #13#10 +
 
-    '  Idx: Integer;' + #13#10 +
+    '  Idx, iChild: Integer;' + #13#10 +
 
     'begin' + #13#10 +
 
@@ -12394,6 +12495,30 @@ begin
           '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
 
           '    FItems[Idx].' + Fields[i].PascalName + ' := Boolean(V);' + #13#10;
+
+      cfkForeignKey:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', FItems[Idx].' + Fields[i].PascalName + ');' + #13#10 +
+          '    FItems[Idx].' + Fields[i].PascalName + ' := Integer(V);' + #13#10;
+
+      cfkDetail:
+        Result := Result +
+          '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', Null);' + #13#10 +
+          '    if VarIsArray(V) or (TDocVariantData(V).Kind = dvArray) then' + #13#10 +
+          '    begin' + #13#10 +
+          '      SetLength(FItems[Idx].' + Fields[i].PascalName + ', TDocVariantData(V).Count);' + #13#10 +
+          '      for iChild := 0 to TDocVariantData(V).Count - 1 do' + #13#10 +
+          '      begin' + #13#10 +
+          '        ChildDoc.Init(TDocVariantData(V).Values[iChild]);' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].ID := iChild + 1;' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].' + ModelName + 'ID := FItems[Idx].ID;' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].Description := VariantToUtf8(ChildDoc.GetValueOrDefault(' + Q + 'description' + Q + ', ' + Q + 'Item ' + Q + ' + IntToStr(iChild + 1)));' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].Quantity := ChildDoc.GetValueOrDefault(' + Q + 'quantity' + Q + ', 1);' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].UnitPrice := ChildDoc.GetValueOrDefault(' + Q + 'unitPrice' + Q + ', 10.0);' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].Total := FItems[Idx].' + Fields[i].PascalName + '[iChild].Quantity * FItems[Idx].' + Fields[i].PascalName + '[iChild].UnitPrice;' + #13#10 +
+          '        FItems[Idx].' + Fields[i].PascalName + '[iChild].CreatedAt := DateTimeToStr(Now);' + #13#10 +
+          '      end;' + #13#10 +
+          '    end;' + #13#10;
 
     end;
 
@@ -12664,12 +12789,27 @@ var
   PluralLower, KebabName: string;
 
   InitFieldsStr, TableHeadersStr, TableCellsStr, FormFieldsStr: string;
+  HasDetail: Boolean;
+  DetailFieldName, DetailModelName, DetailSectionStr: string;
 
 begin
 
   PluralLower := LowerCase(PluralName);
 
   KebabName := PascalToKebab(ModelName + 'View');
+
+  HasDetail := False;
+  DetailFieldName := '';
+  DetailModelName := '';
+  for i := 0 to High(Fields) do
+  begin
+    if Fields[i].Kind = cfkDetail then
+    begin
+      HasDetail := True;
+      DetailFieldName := Fields[i].Name;
+      DetailModelName := Fields[i].TargetModel;
+    end;
+  end;
 
 
 
@@ -12729,6 +12869,12 @@ begin
 
         TableCellsStr := TableCellsStr + '            <td>{{ item.' + Fields[i].Name + ' }}</td>' + #13#10;
 
+      cfkForeignKey:
+        TableCellsStr := TableCellsStr + '            <td><span class="badge-fk">' + Fields[i].TargetModel + ' #{{ item.' + Fields[i].Name + ' }}</span></td>' + #13#10;
+
+      cfkDetail:
+        TableCellsStr := TableCellsStr + '            <td><span class="badge-detail">{{ (item.' + Fields[i].Name + ' && item.' + Fields[i].Name + '.length) || 0 }} items</span></td>' + #13#10;
+
     end;
 
   end;
@@ -12787,6 +12933,9 @@ begin
 
           FormFieldsStr := FormFieldsStr + '            <input type="date" class="form-control" b-model="form.' + Fields[i].Name + '" />' + #13#10;
 
+        cfkForeignKey:
+          FormFieldsStr := FormFieldsStr + '            <input type="number" class="form-control" b-model="form.' + Fields[i].Name + '" placeholder="Select ' + Fields[i].TargetModel + ' ID..." />' + #13#10;
+
       end;
 
     end;
@@ -12796,6 +12945,50 @@ begin
   end;
 
 
+
+  DetailSectionStr := '';
+  if HasDetail then
+  begin
+    DetailSectionStr :=
+      #13#10 +
+      '    <!-- RELATIONAL DETAIL SECTION (MASTER-DETAIL) -->' + #13#10 +
+      '    <div class="crud-detail-card" b-if="selectedMaster">' + #13#10 +
+      '      <div class="detail-header-row">' + #13#10 +
+      '        <div>' + #13#10 +
+      '          <h3>📋 Relational Detail: ' + DetailModelName + ' Items for ' + ModelName + ' #{{ selectedMaster.id }}</h3>' + #13#10 +
+      '          <p class="detail-subtitle">Real-time synchronized child records with automated total calculation.</p>' + #13#10 +
+      '        </div>' + #13#10 +
+      '        <div class="detail-summary-badge">' + #13#10 +
+      '          Total: <strong>$ {{ computeDetailTotal(selectedMaster) }}</strong>' + #13#10 +
+      '        </div>' + #13#10 +
+      '      </div>' + #13#10 +
+      '      <div class="crud-table-wrap">' + #13#10 +
+      '        <table class="crud-table detail-table">' + #13#10 +
+      '          <thead>' + #13#10 +
+      '            <tr>' + #13#10 +
+      '              <th style="width: 60px;">#</th>' + #13#10 +
+      '              <th>Description</th>' + #13#10 +
+      '              <th style="width: 100px;">Quantity</th>' + #13#10 +
+      '              <th style="width: 120px;">Unit Price</th>' + #13#10 +
+      '              <th style="width: 130px;">Subtotal</th>' + #13#10 +
+      '            </tr>' + #13#10 +
+      '          </thead>' + #13#10 +
+      '          <tbody>' + #13#10 +
+      '            <tr b-for="child in selectedMaster.' + DetailFieldName + '" :key="child.id">' + #13#10 +
+      '              <td class="cell-id">#{{ child.id }}</td>' + #13#10 +
+      '              <td><strong>{{ child.description }}</strong></td>' + #13#10 +
+      '              <td><span class="badge-num">{{ child.quantity }}</span></td>' + #13#10 +
+      '              <td><span class="badge-price">$ {{ Number(child.unitPrice).toFixed(2) }}</span></td>' + #13#10 +
+      '              <td><span class="badge-price" style="font-weight: 700;">$ {{ Number(child.total || (child.quantity * child.unitPrice)).toFixed(2) }}</span></td>' + #13#10 +
+      '            </tr>' + #13#10 +
+      '          </tbody>' + #13#10 +
+      '        </table>' + #13#10 +
+      '        <div class="crud-empty" b-if="!selectedMaster.' + DetailFieldName + ' || selectedMaster.' + DetailFieldName + '.length === 0">' + #13#10 +
+      '          <p>No line items found for this record.</p>' + #13#10 +
+      '        </div>' + #13#10 +
+      '      </div>' + #13#10 +
+      '    </div>' + #13#10;
+  end;
 
   Result :=
 
@@ -12883,7 +13076,7 @@ begin
 
     '        <tbody>' + #13#10 +
 
-    '          <tr b-for="item in filteredItems">' + #13#10 +
+    '          <tr b-for="item in filteredItems" @click="selectMaster(item)" :class="{ ' + Q + 'selected-master-row' + Q + ': selectedMaster && selectedMaster.id === item.id }" style="cursor: pointer;">' + #13#10 +
 
     '            <td class="cell-id">#{{ item.id }}</td>' + #13#10 +
 
@@ -12924,6 +13117,8 @@ begin
     '    </div>' + #13#10 +
 
     #13#10 +
+
+    DetailSectionStr +
 
     '    <!-- MODAL DIALOG -->' + #13#10 +
 
@@ -13007,6 +13202,7 @@ begin
 
     '    formError: string = ' + Q + Q + ';' + #13#10 +
 
+    '    selectedMaster: JSValue = nil;' + #13#10 +
     '    form: JSValue = nil;' + #13#10 +
 
     #13#10 +
@@ -13042,6 +13238,20 @@ begin
     #13#10 +
 
     '  methods:' + #13#10 +
+
+    '    procedure selectMaster(item: JSValue);' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm this.selectedMaster = item; end;' + #13#10 +
+    '    end;' + #13#10 +
+    #13#10 +
+    '    function computeDetailTotal(item: JSValue): string;' + #13#10 +
+    '    begin' + #13#10 +
+    '      asm' + #13#10 +
+    '        if (!item || !item.' + DetailFieldName + ' || !Array.isArray(item.' + DetailFieldName + ')) return ''0.00'';' + #13#10 +
+    '        let sum = item.' + DetailFieldName + '.reduce(function(acc, x) { return acc + ((Number(x.quantity) || 0) * (Number(x.unitPrice) || 0)); }, 0);' + #13#10 +
+    '        return sum.toFixed(2);' + #13#10 +
+    '      end;' + #13#10 +
+    '    end;' + #13#10 +
 
     '    procedure resetForm;' + #13#10 +
 
@@ -13429,6 +13639,14 @@ begin
 
     '  .bui-btn-secondary:hover { background: #cbd5e1; }' + #13#10 +
 
+    '  .selected-master-row { background: #e0f2fe !important; border-left: 4px solid #0284c7 !important; }' + #13#10 +
+    '  .crud-detail-card { margin-top: 24px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); }' + #13#10 +
+    '  .detail-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }' + #13#10 +
+    '  .detail-header-row h3 { margin: 0; font-size: 1.15rem; color: #1e293b; font-weight: 700; }' + #13#10 +
+    '  .detail-subtitle { margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b; }' + #13#10 +
+    '  .detail-summary-badge { background: #059669; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.95rem; }' + #13#10 +
+    '  .badge-fk { background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }' + #13#10 +
+    '  .badge-detail { background: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }' + #13#10 +
     '</style>' + #13#10;
 
 end;
@@ -13465,8 +13683,29 @@ begin
 
 
 
-  NewRecord :=
+  NewRecord := '';
+  for i := 0 to High(Fields) do
+  begin
+    if (Fields[i].Kind = cfkDetail) and (Fields[i].TargetModel <> '') and
+       (Pos('T' + Fields[i].TargetModel + ' = record', Content) = 0) then
+    begin
+      NewRecord := NewRecord +
+        '  { Shared ' + Fields[i].TargetModel + ' Record (Relational Master-Detail Child) }' + #13#10 +
+        '  T' + Fields[i].TargetModel + ' = record' + #13#10 +
+        '    ID: Integer;' + #13#10 +
+        '    ' + ModelName + 'ID: Integer;' + #13#10 +
+        '    Description: RawUtf8;' + #13#10 +
+        '    Quantity: Integer;' + #13#10 +
+        '    UnitPrice: Double;' + #13#10 +
+        '    Total: Double;' + #13#10 +
+        '    CreatedAt: RawUtf8;' + #13#10 +
+        '  end;' + #13#10 +
+        '  T' + Fields[i].TargetModel + 'DynArray = array of T' + Fields[i].TargetModel + ';' + #13#10#13#10;
+      WriteLn('  [+] Auto-scaffolded relational child record T' + Fields[i].TargetModel + ' in server/ServerModels.pas');
+    end;
+  end;
 
+  NewRecord := NewRecord +
     '  { Shared ' + ModelName + ' Record }' + #13#10 +
 
     '  T' + ModelName + ' = record' + #13#10 +
@@ -13801,6 +14040,10 @@ begin
 
     WriteLn('    date            ISO Date string (e.g. dueDate:date, createdAt:date)');
 
+    WriteLn('    FK(Model)       Foreign key relationship (e.g. customer:FK(Customer))');
+
+    WriteLn('    Detail(Model)   Master-detail relational collection (e.g. items:Detail(OrderItem))');
+
     WriteLn('');
 
     WriteLn('  Examples:');
@@ -13810,6 +14053,8 @@ begin
     WriteLn('    bv mormot crud Customer name:string email:string phone:string active:boolean');
 
     WriteLn('    bv mormot crud Task title:string priority:integer done:boolean dueDate:date');
+
+    WriteLn('    bv mormot crud Order customer:FK(Customer) total:currency items:Detail(OrderItem)');
 
     WriteLn('');
 
@@ -18897,7 +19142,7 @@ procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: s
 
 var
 
-  ServerDir, BinDir, LibDir, TemplateDir: string;
+  ServerDir, BinDir, LibDir, TemplateDir, DbEngineArg, EnvFile, EnvContent: string;
 
   ProjectRoot, DeployDir, DistDir, ZipFile: string;
 
@@ -18986,6 +19231,7 @@ begin
   HasZip := False;
 
   PortArg := '';
+  DbEngineArg := 'sqlite';
 
 
 
@@ -19011,6 +19257,15 @@ begin
 
         DeployDir := ParamStr(i + 1);
 
+    end
+    else if (ParamStr(i) = '--db') or (ParamStr(i) = '--database') or (ParamStr(i) = '-d') then
+    begin
+      if i + 1 <= ParamCount then
+        DbEngineArg := LowerCase(Trim(ParamStr(i + 1)));
+    end
+    else if (Copy(ParamStr(i), 1, 5) = '--db=') then
+    begin
+      DbEngineArg := LowerCase(Trim(Copy(ParamStr(i), 6, MaxInt)));
     end
 
     else
@@ -19104,6 +19359,41 @@ begin
     ForceDir(BinDir);
 
     ForceDir(LibDir);
+
+    // Multi-Database ORM Configuration
+    if (DbEngineArg <> 'sqlite') and (DbEngineArg <> 'postgres') and
+       (DbEngineArg <> 'postgresql') and (DbEngineArg <> 'mysql') and
+       (DbEngineArg <> 'mariadb') and (DbEngineArg <> 'firebird') and
+       (DbEngineArg <> 'fb') then
+    begin
+      if DbEngineArg <> '' then
+        WriteLn('  [!] Notice: Unknown database engine "' + DbEngineArg + '", defaulting to "sqlite"');
+      DbEngineArg := 'sqlite';
+    end;
+
+    if (DbEngineArg = 'postgresql') then DbEngineArg := 'postgres';
+    if (DbEngineArg = 'mariadb') then DbEngineArg := 'mysql';
+    if (DbEngineArg = 'fb') then DbEngineArg := 'firebird';
+
+    EnvFile := ProjectRoot + DirectorySeparator + '.env';
+    if not FileExists(EnvFile) then
+    begin
+      EnvContent := '# BlaiseVue mORMot 2 Database Configuration' + #13#10 +
+                    'PORT=8090' + #13#10 +
+                    'DATABASE_ENGINE=' + DbEngineArg + #13#10;
+      if DbEngineArg = 'postgres' then
+        EnvContent := EnvContent + 'DATABASE_URL=postgres://postgres:postgres@localhost:5432/blaisevue_app' + #13#10
+      else if DbEngineArg = 'mysql' then
+        EnvContent := EnvContent + 'DATABASE_URL=mysql://root:password@localhost:3306/blaisevue_app' + #13#10
+      else if DbEngineArg = 'firebird' then
+        EnvContent := EnvContent + 'DATABASE_URL=firebird://SYSDBA:masterkey@localhost:3050/server/data.fdb' + #13#10
+      else
+        EnvContent := EnvContent + 'DATABASE_URL=sqlite://server/data.db' + #13#10;
+      WriteStringToFile(EnvFile, EnvContent);
+      WriteLn('  [+] Created .env (DATABASE_ENGINE=' + DbEngineArg + ')');
+    end;
+
+    WriteLn('  [+] Pluggable Database Engine Configured: ' + UpperCase(DbEngineArg));
 
 
 

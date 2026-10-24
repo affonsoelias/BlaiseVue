@@ -67,6 +67,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 ### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
 37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
 43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md) — Shared Pascal service contracts, automated proxy scaffolding (`bv mormot rpc`), and compile-time API validation.
+46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
 
 ### 📱 6. Universal Multiplatform (Mobile & Desktop)
 35. [35. Hybrid Mobile Platform & Capacitor (bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
