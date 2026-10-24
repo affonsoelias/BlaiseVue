@@ -87,6 +87,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md) — Automated browser-based end-to-end integration tests.
 34. [34. VS Code Extension & Professional DX (.vsix)](34-vscode-extension.md) — Official IDE extension with syntax highlighting, IntelliSense, and snippets.
 40. [40. BlaiseVue Studio Dashboard (bv studio)](40-blaise-studio.md) — Web-based developer cockpit for real-time WebSocket monitoring and workflows.
+44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
@@ -98,6 +99,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 
 ```bash
 # === Development & Build ===
+bv check [file]            # Runs compile-time template AST type-checking and typo verification
 bv dev                     # Starts dev server with instant HMR on http://localhost:8080 (alias: bv serve)
 bv run dev                 # Builds project in development mode with cache-busting
 bv run build               # Builds optimized production bundle in dist/

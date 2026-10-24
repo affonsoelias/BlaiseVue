@@ -431,15 +431,7 @@ begin
     let cD = {
       FData: pRef,
       Evaluate: function(expr, ev) {
-        try {
-          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-          return f(pRef, ev);
-        } catch(e1) {
-          try {
-            let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-            return f2(pRef, ev);
-          } catch(e2) { return undefined; }
-        }
+        return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(pRef, expr, ev) : undefined;
       },
       SetValue: function(k, val) {
         if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {

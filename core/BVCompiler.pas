@@ -55,6 +55,504 @@ initialization
         }
       };
     }
+
+    if (!bv.getDeepValue) {
+      bv.getDeepValue = function(target, path) {
+        if (target == null || !path) return undefined;
+        if (typeof path === 'string' && path.indexOf('.') > -1) {
+          let parts = path.split('.');
+          let curr = target;
+          for (let i = 0; i < parts.length; i++) {
+            if (curr == null) return undefined;
+            curr = curr[parts[i]];
+          }
+          return curr;
+        }
+        return target[path];
+      };
+    }
+
+    if (!bv.evalCache) bv.evalCache = Object.create(null);
+
+    // =========================================================================
+    //  BLAISEVUE 4.4: ZERO-WITH NATIVE FAST EXPRESSION EVALUATOR & CSP ENGINE
+    // =========================================================================
+    if (!bv.fastEval) {
+      function bvTokenize(str) {
+        let tokens = [];
+        let i = 0;
+        let len = str.length;
+
+        while (i < len) {
+          let ch = str[i];
+          if (ch <= ' ') { i++; continue; }
+
+          if (ch === '/' && str[i + 1] === '/') {
+            i += 2;
+            while (i < len && str[i] !== '\n') i++;
+            continue;
+          }
+
+          if ((ch >= '0' && ch <= '9') || (ch === '.' && str[i + 1] >= '0' && str[i + 1] <= '9')) {
+            let start = i;
+            while (i < len && ((str[i] >= '0' && str[i] <= '9') || str[i] === '.' || str[i] === 'e' || str[i] === 'E' || (str[i] === '-' && (str[i-1] === 'e' || str[i-1] === 'E')))) {
+              i++;
+            }
+            tokens.push({ type: 'num', value: parseFloat(str.slice(start, i)) });
+            continue;
+          }
+
+          if (ch === '\'' || ch === '"' || ch === '`') {
+            let quote = ch;
+            let val = '';
+            i++;
+            while (i < len && str[i] !== quote) {
+              if (str[i] === '\\' && i + 1 < len) {
+                let next = str[++i];
+                if (next === 'n') val += '\n';
+                else if (next === 't') val += '\t';
+                else if (next === 'r') val += '\r';
+                else val += next;
+              } else {
+                val += str[i];
+              }
+              i++;
+            }
+            i++;
+            tokens.push({ type: 'str', value: val });
+            continue;
+          }
+
+          let op3 = str.slice(i, i + 3);
+          if (op3 === '===' || op3 === '!==' || op3 === '>>>') {
+            tokens.push({ type: 'op', value: op3 });
+            i += 3;
+            continue;
+          }
+
+          let op2 = str.slice(i, i + 2);
+          if (['==', '!=', '<=', '>=', '&&', '||', '??', '++', '--', '+=', '-=', '*=', '/='].indexOf(op2) !== -1) {
+            tokens.push({ type: 'op', value: op2 });
+            i += 2;
+            continue;
+          }
+
+          if ('+-*/%<>=!&|^~?:,;()[]{}'.indexOf(ch) !== -1) {
+            tokens.push({ type: 'op', value: ch });
+            i++;
+            continue;
+          }
+
+          if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_' || ch === '$') {
+            let start = i;
+            while (i < len && ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= '0' && str[i] <= '9') || str[i] === '_' || str[i] === '$')) {
+              i++;
+            }
+            let word = str.slice(start, i);
+            if (word === 'true') tokens.push({ type: 'lit', value: true });
+            else if (word === 'false') tokens.push({ type: 'lit', value: false });
+            else if (word === 'null') tokens.push({ type: 'lit', value: null });
+            else if (word === 'undefined') tokens.push({ type: 'lit', value: undefined });
+            else if (word === 'typeof' || word === 'instanceof' || word === 'in') tokens.push({ type: 'op', value: word });
+            else tokens.push({ type: 'id', value: word });
+            continue;
+          }
+
+          if (ch === '.') {
+            tokens.push({ type: 'op', value: '.' });
+            i++;
+            continue;
+          }
+
+          i++;
+        }
+
+        tokens.push({ type: 'eof', value: '' });
+        return tokens;
+      }
+
+      function bvParseTokens(tokens) {
+        let idx = 0;
+        function peek() { return tokens[idx] || { type: 'eof', value: '' }; }
+        function next() { return tokens[idx++]; }
+        function match(val) {
+          if (peek().value === val) return next();
+          return null;
+        }
+
+        function parseSequence() {
+          let expr = parseAssignment();
+          while (match(';')) {
+            let nextExpr = parseAssignment();
+            let prevExpr = expr;
+            expr = function(scope, ev) {
+              if (prevExpr) prevExpr(scope, ev);
+              return nextExpr ? nextExpr(scope, ev) : undefined;
+            };
+          }
+          return expr;
+        }
+
+        function parseAssignment() {
+          let left = parseTernary();
+          if (!left) return null;
+
+          let op = peek();
+          if (op.type === 'op' && (op.value === '=' || op.value === '+=' || op.value === '-=')) {
+            next();
+            let right = parseAssignment();
+            if (left.isIdentifier) {
+              let idName = left.idName;
+              return function(scope, ev) {
+                let rVal = right ? right(scope, ev) : undefined;
+                let target = (scope && scope.FData) ? scope.FData : scope;
+                if (op.value === '=') target[idName] = rVal;
+                else if (op.value === '+=') target[idName] = (target[idName] || 0) + rVal;
+                else if (op.value === '-=') target[idName] = (target[idName] || 0) - rVal;
+                return target[idName];
+              };
+            } else if (left.isMember) {
+              let objFn = left.objFn;
+              let propFn = left.propFn;
+              return function(scope, ev) {
+                let obj = objFn(scope, ev);
+                let prop = propFn(scope, ev);
+                let rVal = right ? right(scope, ev) : undefined;
+                if (obj != null) {
+                  if (op.value === '=') obj[prop] = rVal;
+                  else if (op.value === '+=') obj[prop] = (obj[prop] || 0) + rVal;
+                  else if (op.value === '-=') obj[prop] = (obj[prop] || 0) - rVal;
+                  return obj[prop];
+                }
+                return undefined;
+              };
+            }
+          }
+          return left;
+        }
+
+        function parseTernary() {
+          let cond = parseLogicalOr();
+          if (match('?')) {
+            let trueBranch = parseAssignment();
+            match(':');
+            let falseBranch = parseAssignment();
+            return function(scope, ev) {
+              return cond(scope, ev) ? (trueBranch ? trueBranch(scope, ev) : undefined) : (falseBranch ? falseBranch(scope, ev) : undefined);
+            };
+          }
+          return cond;
+        }
+
+        function parseLogicalOr() {
+          let left = parseLogicalAnd();
+          while (peek().value === '||' || peek().value === '??') {
+            let op = next().value;
+            let right = parseLogicalAnd();
+            let prevLeft = left;
+            if (op === '||') {
+              left = function(scope, ev) { return prevLeft(scope, ev) || right(scope, ev); };
+            } else {
+              left = function(scope, ev) {
+                let val = prevLeft(scope, ev);
+                return (val !== null && val !== undefined) ? val : right(scope, ev);
+              };
+            }
+          }
+          return left;
+        }
+
+        function parseLogicalAnd() {
+          let left = parseEquality();
+          while (peek().value === '&&') {
+            next();
+            let right = parseEquality();
+            let prevLeft = left;
+            left = function(scope, ev) { return prevLeft(scope, ev) && right(scope, ev); };
+          }
+          return left;
+        }
+
+        function parseEquality() {
+          let left = parseRelational();
+          while (['===', '!==', '==', '!='].indexOf(peek().value) !== -1) {
+            let op = next().value;
+            let right = parseRelational();
+            let prevLeft = left;
+            if (op === '===') left = function(scope, ev) { return prevLeft(scope, ev) === right(scope, ev); };
+            else if (op === '!==') left = function(scope, ev) { return prevLeft(scope, ev) !== right(scope, ev); };
+            else if (op === '==') left = function(scope, ev) { return prevLeft(scope, ev) == right(scope, ev); };
+            else if (op === '!=') left = function(scope, ev) { return prevLeft(scope, ev) != right(scope, ev); };
+          }
+          return left;
+        }
+
+        function parseRelational() {
+          let left = parseAdditive();
+          while (['<', '>', '<=', '>=', 'instanceof', 'in'].indexOf(peek().value) !== -1) {
+            let op = next().value;
+            let right = parseAdditive();
+            let prevLeft = left;
+            if (op === '<') left = function(scope, ev) { return prevLeft(scope, ev) < right(scope, ev); };
+            else if (op === '>') left = function(scope, ev) { return prevLeft(scope, ev) > right(scope, ev); };
+            else if (op === '<=') left = function(scope, ev) { return prevLeft(scope, ev) <= right(scope, ev); };
+            else if (op === '>=') left = function(scope, ev) { return prevLeft(scope, ev) >= right(scope, ev); };
+            else if (op === 'instanceof') left = function(scope, ev) { return prevLeft(scope, ev) instanceof right(scope, ev); };
+            else if (op === 'in') left = function(scope, ev) { return prevLeft(scope, ev) in right(scope, ev); };
+          }
+          return left;
+        }
+
+        function parseAdditive() {
+          let left = parseMultiplicative();
+          while (peek().value === '+' || peek().value === '-') {
+            let op = next().value;
+            let right = parseMultiplicative();
+            let prevLeft = left;
+            if (op === '+') left = function(scope, ev) { return prevLeft(scope, ev) + right(scope, ev); };
+            else left = function(scope, ev) { return prevLeft(scope, ev) - right(scope, ev); };
+          }
+          return left;
+        }
+
+        function parseMultiplicative() {
+          let left = parseUnary();
+          while (peek().value === '*' || peek().value === '/' || peek().value === '%') {
+            let op = next().value;
+            let right = parseUnary();
+            let prevLeft = left;
+            if (op === '*') left = function(scope, ev) { return prevLeft(scope, ev) * right(scope, ev); };
+            else if (op === '/') left = function(scope, ev) { return prevLeft(scope, ev) / right(scope, ev); };
+            else left = function(scope, ev) { return prevLeft(scope, ev) % right(scope, ev); };
+          }
+          return left;
+        }
+
+        function parseUnary() {
+          let op = peek();
+          if (op.type === 'op' && (op.value === '!' || op.value === '+' || op.value === '-' || op.value === 'typeof' || op.value === '~' || op.value === '++' || op.value === '--')) {
+            next();
+            let sub = parseUnary();
+            if (op.value === '!') return function(scope, ev) { return !sub(scope, ev); };
+            if (op.value === '+') return function(scope, ev) { return +sub(scope, ev); };
+            if (op.value === '-') return function(scope, ev) { return -sub(scope, ev); };
+            if (op.value === 'typeof') return function(scope, ev) { return typeof sub(scope, ev); };
+            if (op.value === '~') return function(scope, ev) { return ~sub(scope, ev); };
+            if (op.value === '++' || op.value === '--') {
+              if (sub && sub.isIdentifier) {
+                let idName = sub.idName;
+                return function(scope, ev) {
+                  let target = (scope && scope.FData) ? scope.FData : scope;
+                  return (op.value === '++') ? ++target[idName] : --target[idName];
+                };
+              }
+            }
+          }
+          return parsePostfix();
+        }
+
+        function parsePostfix() {
+          let base = parsePrimary();
+          while (true) {
+            if (match('.')) {
+              let propTok = next();
+              let propName = (propTok && (propTok.type === 'id' || propTok.type === 'lit')) ? propTok.value : '';
+              let prevBase = base;
+              base = function(scope, ev) {
+                let obj = prevBase(scope, ev);
+                return (obj != null) ? obj[propName] : undefined;
+              };
+              base.isMember = true;
+              base.objFn = prevBase;
+              base.propFn = function() { return propName; };
+            } else if (match('[')) {
+              let indexExpr = parseAssignment();
+              match(']');
+              let prevBase = base;
+              base = function(scope, ev) {
+                let obj = prevBase(scope, ev);
+                let idx = indexExpr ? indexExpr(scope, ev) : undefined;
+                return (obj != null) ? obj[idx] : undefined;
+              };
+              base.isMember = true;
+              base.objFn = prevBase;
+              base.propFn = indexExpr;
+            } else if (match('(')) {
+              let args = [];
+              if (peek().value !== ')') {
+                while (true) {
+                  args.push(parseAssignment());
+                  if (!match(',')) break;
+                }
+              }
+              match(')');
+              let prevBase = base;
+              base = function(scope, ev) {
+                let fn = prevBase(scope, ev);
+                let evaluatedArgs = args.map(function(a) { return a ? a(scope, ev) : undefined; });
+                if (typeof fn === 'function') {
+                  let ctx = prevBase.isMember ? prevBase.objFn(scope, ev) : ((scope && scope.FData) ? scope.FData : scope);
+                  return fn.apply(ctx, evaluatedArgs);
+                }
+                return undefined;
+              };
+            } else if (peek().value === '++' || peek().value === '--') {
+              let op = next().value;
+              let prevBase = base;
+              if (prevBase && prevBase.isIdentifier) {
+                let idName = prevBase.idName;
+                base = function(scope, ev) {
+                  let target = (scope && scope.FData) ? scope.FData : scope;
+                  let oldVal = target[idName];
+                  if (op === '++') target[idName] = (oldVal || 0) + 1;
+                  else target[idName] = (oldVal || 0) - 1;
+                  return oldVal;
+                };
+              }
+            } else {
+              break;
+            }
+          }
+          return base;
+        }
+
+        function parsePrimary() {
+          let t = peek();
+          if (!t || t.type === 'eof') return function() { return undefined; };
+
+          if (t.type === 'num' || t.type === 'str' || t.type === 'lit') {
+            next();
+            let val = t.value;
+            return function() { return val; };
+          }
+
+          if (t.type === 'id') {
+            next();
+            let name = t.value;
+            let fn = function(scope, ev) {
+              let d = (scope && scope.FData) ? scope.FData : scope;
+              if (name === '$event') return ev;
+              if (name === 'this') return d;
+              if (d != null && (name in d)) return d[name];
+              if (typeof window !== 'undefined' && (name in window)) return window[name];
+              if (typeof globalThis !== 'undefined' && (name in globalThis)) return globalThis[name];
+              return undefined;
+            };
+            fn.isIdentifier = true;
+            fn.idName = name;
+            return fn;
+          }
+
+          if (match('(')) {
+            let inside = parseSequence();
+            match(')');
+            return inside;
+          }
+
+          if (match('[')) {
+            let elements = [];
+            if (peek().value !== ']') {
+              while (true) {
+                elements.push(parseAssignment());
+                if (!match(',')) break;
+              }
+            }
+            match(']');
+            return function(scope, ev) {
+              return elements.map(function(e) { return e ? e(scope, ev) : undefined; });
+            };
+          }
+
+          if (match('{')) {
+            let props = [];
+            if (peek().value !== '}') {
+              while (true) {
+                let keyTok = next();
+                let keyName = (keyTok && (keyTok.type === 'id' || keyTok.type === 'str')) ? keyTok.value : String(keyTok ? keyTok.value : '');
+                let valFn;
+                if (match(':')) {
+                  valFn = parseAssignment();
+                } else {
+                  valFn = function(scope, ev) {
+                    let d = (scope && scope.FData) ? scope.FData : scope;
+                    return d ? d[keyName] : undefined;
+                  };
+                }
+                props.push({ key: keyName, fn: valFn });
+                if (!match(',')) break;
+              }
+            }
+            match('}');
+            return function(scope, ev) {
+              let res = {};
+              for (let i = 0; i < props.length; i++) {
+                res[props[i].key] = props[i].fn ? props[i].fn(scope, ev) : undefined;
+              }
+              return res;
+            };
+          }
+
+          next();
+          return function() { return undefined; };
+        }
+
+        return parseSequence();
+      }
+
+      bv.fastEval = function(scope, expr, ev) {
+        if (!expr || typeof expr !== 'string') return undefined;
+        let trimmed = expr.trim();
+        if (!trimmed) return undefined;
+
+        let d = (scope && scope.FData) ? scope.FData : scope;
+
+        // Immediate fast paths for primitive tokens
+        if (trimmed === '$event') return ev;
+        if (trimmed.indexOf('$event.') === 0) return bv.getDeepValue(ev, trimmed.slice(7));
+        if (trimmed === 'true') return true;
+        if (trimmed === 'false') return false;
+        if (trimmed === 'null') return null;
+        if (trimmed === 'undefined') return undefined;
+
+        // Single root identifier: count, user, $t
+        if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)) {
+          if (d != null && (trimmed in d)) return d[trimmed];
+          if (typeof window !== 'undefined' && (trimmed in window)) return window[trimmed];
+          if (typeof globalThis !== 'undefined' && (trimmed in globalThis)) return globalThis[trimmed];
+          return undefined;
+        }
+
+        // Numeric constant
+        if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+          return parseFloat(trimmed);
+        }
+
+        // Simple dot path: user.name, $theme.isDark
+        if (/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)+$/.test(trimmed)) {
+          return bv.getDeepValue(d, trimmed);
+        }
+
+        // Simple logical negation: !isActive, !user.admin
+        if (/^![a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(trimmed)) {
+          return !bv.getDeepValue(d, trimmed.slice(1));
+        }
+
+        // Cached AST evaluator lookup
+        let fn = bv.evalCache[trimmed];
+        if (!fn) {
+          try {
+            let tokens = bvTokenize(trimmed);
+            fn = bvParseTokens(tokens);
+            bv.evalCache[trimmed] = fn;
+          } catch(err) {
+            return undefined;
+          }
+        }
+
+        return fn(scope, ev);
+      };
+    }
+    
     
     // Application Entry Point: Mounts a template into the DOM
     bv.compile = function(Root, Data, Methods) {
@@ -98,16 +596,7 @@ initialization
 
       if (Data && !Data.Evaluate) {
         Data.Evaluate = function(expr, ev) {
-          let d = (Data && Data.FData) ? Data.FData : Data;
-          try {
-            let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-            return f(d, ev);
-          } catch(e1) {
-            try {
-              let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-              return f2(d, ev);
-            } catch(e2) { return undefined; }
-          }
+          return bv.fastEval(Data, expr, ev);
         };
       }
       if (Data && !Data.SetValue) {
@@ -783,15 +1272,7 @@ initialization
                     let ld = {
                       FData: scp,
                       Evaluate: function(expr, ev) {
-                        try {
-                          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                          return f(this.FData, ev);
-                        } catch(e1) {
-                          try {
-                            let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                            return f2(this.FData, ev);
-                          } catch(e2) { return undefined; }
-                        }
+                        return bv.fastEval(this.FData, expr, ev);
                       },
                       SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                     };
@@ -1031,8 +1512,7 @@ initialization
                      if (an.startsWith(':') || an.startsWith('b-bind:')) {
                         let propKey = an.replace('b-bind:', '').replace(':', '');
                         try {
-                           let f = new Function('data', 'with(data) { try { return ' + attr.value + '; } catch(e) { return undefined; } }');
-                           slotProps[propKey] = f(pRef);
+                           slotProps[propKey] = bv.fastEval(pRef, attr.value);
                         } catch(ex) { slotProps[propKey] = undefined; }
                      } else {
                         slotProps[an] = attr.value;
@@ -1085,10 +1565,7 @@ initialization
                   let scopedData = {
                      FData: scopedProxy,
                      Evaluate: function(expr, ev) {
-                        try {
-                           let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
-                           return f(this.FData, ev);
-                        } catch(ex) { return undefined; }
+                        return bv.fastEval(this.FData, expr, ev);
                      },
                      SetValue: function(k, val) {
                         if (scopeVarName && k === scopeVarName) Object.assign(slotProps, val);
@@ -1263,15 +1740,7 @@ initialization
             let cD = {
               FData: pRef,
               Evaluate: function(expr, ev) { 
-                try { 
-                  let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }'); 
-                  return f(this.FData, ev); 
-                } catch(e1) {
-                  try {
-                    let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                    return f2(this.FData, ev);
-                  } catch(e2) { return undefined; }
-                } 
+                return bv.fastEval(this.FData, expr, ev);
               },
               SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
             };

@@ -386,6 +386,7 @@ procedure CmdSSG; forward;
 procedure CmdWasm(const SubCmd: string); forward;
 procedure CmdTestE2E; forward;
 procedure CmdStudio; forward;
+procedure CmdCheck(const TargetFile: string); forward;
 
 { Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
@@ -1568,6 +1569,447 @@ begin
 end;
 
 // =====================================================================
+//  BLAISEVUE 4.4: COMPILER TEMPLATE AST VERIFIER & TYPE-CHECKER
+// =====================================================================
+
+function LevenshteinDistance(const S1, S2: string): Integer;
+var
+  Len1, Len2, i, j, Cost: Integer;
+  D: array of array of Integer;
+begin
+  Len1 := Length(S1);
+  Len2 := Length(S2);
+  SetLength(D, Len1 + 1, Len2 + 1);
+  for i := 0 to Len1 do D[i, 0] := i;
+  for j := 0 to Len2 do D[0, j] := j;
+
+  for i := 1 to Len1 do
+  begin
+    for j := 1 to Len2 do
+    begin
+      if LowerCase(S1[i]) = LowerCase(S2[j]) then
+        Cost := 0
+      else
+        Cost := 1;
+      D[i, j] := D[i - 1, j] + 1;
+      if D[i, j - 1] + 1 < D[i, j] then D[i, j] := D[i, j - 1] + 1;
+      if D[i - 1, j - 1] + Cost < D[i, j] then D[i, j] := D[i - 1, j - 1] + Cost;
+    end;
+  end;
+  Result := D[Len1, Len2];
+end;
+
+function FindClosestMatch(const Target: string; Candidates: TStringList): string;
+var
+  i, MinDist, Dist, MaxAllowed: Integer;
+  BestMatch: string;
+begin
+  Result := '';
+  if Candidates.Count = 0 then Exit;
+  MinDist := 999;
+  BestMatch := '';
+  MaxAllowed := 2;
+  if Length(Target) >= 7 then MaxAllowed := 3;
+
+  for i := 0 to Candidates.Count - 1 do
+  begin
+    Dist := LevenshteinDistance(Target, Candidates[i]);
+    if Dist < MinDist then
+    begin
+      MinDist := Dist;
+      BestMatch := Candidates[i];
+    end;
+  end;
+
+  if (MinDist > 0) and (MinDist <= MaxAllowed) then
+    Result := BestMatch;
+end;
+
+function IsJSReservedWord(const W: string): Boolean;
+var
+  L: string;
+begin
+  L := LowerCase(W);
+  Result := (L = 'true') or (L = 'false') or (L = 'null') or (L = 'undefined') or
+            (L = 'this') or (L = 'typeof') or (L = 'instanceof') or (L = 'in') or
+            (L = 'new') or (L = 'function') or (L = 'return') or (L = 'var') or
+            (L = 'let') or (L = 'const') or (L = 'if') or (L = 'else') or
+            (L = 'try') or (L = 'catch') or (L = 'finally') or (L = 'for') or
+            (L = 'while') or (L = 'do') or (L = 'switch') or (L = 'case') or
+            (L = 'break') or (L = 'continue') or (L = 'default') or (L = 'void') or
+            (L = 'delete') or (L = 'yield') or (L = 'await') or (L = 'async');
+end;
+
+procedure ExtractPascalRoutines(const Code: string; Names: TStringList);
+var
+  LowerCode: string;
+  p, pEnd, len, tIdx: Integer;
+  Word: string;
+  Tokens: array[0..1] of string = ('procedure ', 'function ');
+begin
+  if Trim(Code) = '' then Exit;
+  LowerCode := LowerCase(Code);
+  len := Length(LowerCode);
+
+  for tIdx := 0 to 1 do
+  begin
+    p := Pos(Tokens[tIdx], LowerCode);
+    while p > 0 do
+    begin
+      p := p + Length(Tokens[tIdx]);
+      while (p <= len) and (Code[p] <= ' ') do Inc(p);
+      pEnd := p;
+      while (pEnd <= len) and (Code[pEnd] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(pEnd);
+      if pEnd > p then
+      begin
+        Word := Copy(Code, p, pEnd - p);
+        if (Names.IndexOf(Word) < 0) then
+          Names.Add(Word);
+      end;
+      p := PosEx(Tokens[tIdx], LowerCode, pEnd);
+    end;
+  end;
+end;
+
+procedure ExtractRootIdentifiers(const Expr: string; Identifiers: TStringList);
+var
+  i, Len, Start, j: Integer;
+  Ch, Quote: Char;
+  Word, PrevToken: string;
+  IsMember, IsObjectKey: Boolean;
+begin
+  Len := Length(Expr);
+  i := 1;
+  PrevToken := '';
+
+  while i <= Len do
+  begin
+    Ch := Expr[i];
+
+    if Ch <= ' ' then
+    begin
+      Inc(i);
+      Continue;
+    end;
+
+    // Skip string literals: '...', "...", `...`
+    if (Ch = '''') or (Ch = '"') or (Ch = '`') then
+    begin
+      Quote := Ch;
+      Inc(i);
+      while (i <= Len) and (Expr[i] <> Quote) do
+      begin
+        if (Expr[i] = '\') and (i < Len) then Inc(i);
+        Inc(i);
+      end;
+      Inc(i);
+      PrevToken := 'STR';
+      Continue;
+    end;
+
+    // Skip numbers
+    if (Ch in ['0'..'9']) or ((Ch = '.') and (i < Len) and (Expr[i + 1] in ['0'..'9'])) then
+    begin
+      while (i <= Len) and (Expr[i] in ['0'..'9', '.', 'e', 'E']) do Inc(i);
+      PrevToken := 'NUM';
+      Continue;
+    end;
+
+    // Dot accessor (member access)
+    if Ch = '.' then
+    begin
+      PrevToken := '.';
+      Inc(i);
+      Continue;
+    end;
+
+    // Identifiers: [a-zA-Z_$][a-zA-Z0-9_$]*
+    if (Ch in ['a'..'z', 'A'..'Z', '_', '$']) then
+    begin
+      Start := i;
+      while (i <= Len) and (Expr[i] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(i);
+      Word := Copy(Expr, Start, i - Start);
+
+      IsMember := (PrevToken = '.');
+
+      // Check if object key in { key: value }
+      j := i;
+      while (j <= Len) and (Expr[j] <= ' ') do Inc(j);
+      IsObjectKey := (j <= Len) and (Expr[j] = ':') and ((PrevToken = '{') or (PrevToken = ','));
+
+      if (not IsMember) and (not IsObjectKey) and (not IsJSReservedWord(Word)) then
+      begin
+        if Identifiers.IndexOf(Word) < 0 then
+          Identifiers.Add(Word);
+      end;
+
+      PrevToken := Word;
+      Continue;
+    end;
+
+    PrevToken := Ch;
+    Inc(i);
+  end;
+end;
+
+function HasSymbolCaseInsensitive(const Symbol: string; Symbols: TStringList): Boolean;
+var
+  i: Integer;
+  LS: string;
+begin
+  LS := LowerCase(Symbol);
+  for i := 0 to Symbols.Count - 1 do
+  begin
+    if LowerCase(Symbols[i]) = LS then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+
+function ValidateComponentTemplate(const BVFilePath: string; const Parsed: TBVParsed; const StrictMode: Boolean = False): Integer;
+var
+  Symbols: TStringList;
+  RootIds: TStringList;
+  Tpl: string;
+  i, pStart, pEnd, InIdx: Integer;
+  Expr, Id, Sugg, AttrVal, BaseName: string;
+  WarningCount: Integer;
+  BForPos, QuoteEnd: Integer;
+  QuoteChar: Char;
+  IterStr: string;
+begin
+  WarningCount := 0;
+  BaseName := ExtractFileName(BVFilePath);
+  Symbols := TStringList.Create;
+  RootIds := TStringList.Create;
+  try
+    // 1. Collect declared data fields and props
+    for i := 0 to High(Parsed.DataFields) do
+      if Symbols.IndexOf(Parsed.DataFields[i].Name) < 0 then
+        Symbols.Add(Parsed.DataFields[i].Name);
+
+    // 2. Collect methods and computed routines
+    ExtractPascalRoutines(Parsed.MethodsCode, Symbols);
+    ExtractPascalRoutines(Parsed.ComputedCode, Symbols);
+
+    // 3. Collect inject symbols
+    if Parsed.InjectCode <> '' then
+    begin
+      Expr := StringReplace(Parsed.InjectCode, ';', ',', [rfReplaceAll]);
+      Expr := StringReplace(Expr, '''', '', [rfReplaceAll]);
+      RootIds.CommaText := Expr;
+      for i := 0 to RootIds.Count - 1 do
+        if (Trim(RootIds[i]) <> '') and (Symbols.IndexOf(Trim(RootIds[i])) < 0) then
+          Symbols.Add(Trim(RootIds[i]));
+      RootIds.Clear;
+    end;
+
+    // 4. Register global built-ins
+    Symbols.Add('$t'); Symbols.Add('$i18n'); Symbols.Add('$setLocale');
+    Symbols.Add('$theme'); Symbols.Add('$auth');
+    Symbols.Add('$rpc'); Symbols.Add('$ws'); Symbols.Add('$api');
+    Symbols.Add('$mobile'); Symbols.Add('$desktop'); Symbols.Add('$wasm'); Symbols.Add('$ionic');
+    Symbols.Add('$store'); Symbols.Add('Router'); Symbols.Add('$router'); Symbols.Add('$route');
+    Symbols.Add('$v'); Symbols.Add('$errors'); Symbols.Add('$validate');
+    Symbols.Add('$event'); Symbols.Add('$refs'); Symbols.Add('$slots'); Symbols.Add('$index'); Symbols.Add('$emit');
+    Symbols.Add('item'); Symbols.Add('idx'); Symbols.Add('index'); Symbols.Add('p');
+    Symbols.Add('col'); Symbols.Add('row'); Symbols.Add('tab'); Symbols.Add('opt');
+    Symbols.Add('key'); Symbols.Add('val'); Symbols.Add('value'); Symbols.Add('entry');
+    Symbols.Add('true'); Symbols.Add('false'); Symbols.Add('null'); Symbols.Add('undefined');
+    Symbols.Add('this'); Symbols.Add('window'); Symbols.Add('Math'); Symbols.Add('Date');
+    Symbols.Add('String'); Symbols.Add('Number'); Symbols.Add('Boolean'); Symbols.Add('Array');
+    Symbols.Add('Object'); Symbols.Add('JSON'); Symbols.Add('console');
+    Symbols.Add('parseInt'); Symbols.Add('parseFloat');
+    Symbols.Add('encodeURIComponent'); Symbols.Add('decodeURIComponent');
+
+    // 5. Detect template b-for and scoped slots to register local loop identifiers
+    Tpl := Parsed.Template;
+    BForPos := Pos('b-for="', Tpl);
+    if BForPos = 0 then BForPos := Pos('b-for=''', Tpl);
+    while BForPos > 0 do
+    begin
+      QuoteChar := Tpl[BForPos + 6];
+      QuoteEnd := PosEx(QuoteChar, Tpl, BForPos + 7);
+      if QuoteEnd > 0 then
+      begin
+        AttrVal := Copy(Tpl, BForPos + 7, QuoteEnd - (BForPos + 7));
+        InIdx := Pos(' in ', AttrVal);
+        if InIdx > 0 then
+        begin
+          IterStr := Trim(Copy(AttrVal, 1, InIdx - 1));
+          IterStr := StringReplace(IterStr, '(', '', [rfReplaceAll]);
+          IterStr := StringReplace(IterStr, ')', '', [rfReplaceAll]);
+          IterStr := StringReplace(IterStr, ' ', '', [rfReplaceAll]);
+          RootIds.CommaText := IterStr;
+          for i := 0 to RootIds.Count - 1 do
+            if (Trim(RootIds[i]) <> '') and (Symbols.IndexOf(Trim(RootIds[i])) < 0) then
+              Symbols.Add(Trim(RootIds[i]));
+          RootIds.Clear;
+        end;
+      end;
+      BForPos := PosEx('b-for=', Tpl, BForPos + 7);
+    end;
+
+    // Detect slot-scope / v-slot variables
+    pStart := Pos('slot-scope="', Tpl);
+    while pStart > 0 do
+    begin
+      pEnd := PosEx('"', Tpl, pStart + 12);
+      if pEnd > 0 then
+      begin
+        AttrVal := Trim(Copy(Tpl, pStart + 12, pEnd - (pStart + 12)));
+        if (AttrVal <> '') and (Symbols.IndexOf(AttrVal) < 0) then
+          Symbols.Add(AttrVal);
+      end;
+      pStart := PosEx('slot-scope="', Tpl, pStart + 12);
+    end;
+
+    // 6. Scan Interpolations: {{ ... }}
+    pStart := Pos('{{', Tpl);
+    while pStart > 0 do
+    begin
+      pEnd := PosEx('}}', Tpl, pStart + 2);
+      if pEnd > 0 then
+      begin
+        Expr := Trim(Copy(Tpl, pStart + 2, pEnd - (pStart + 2)));
+        RootIds.Clear;
+        ExtractRootIdentifiers(Expr, RootIds);
+        for i := 0 to RootIds.Count - 1 do
+        begin
+          Id := RootIds[i];
+          if not HasSymbolCaseInsensitive(Id, Symbols) then
+          begin
+            Inc(WarningCount);
+            Sugg := FindClosestMatch(Id, Symbols);
+            if (Sugg <> '') and (LowerCase(Sugg) <> LowerCase(Id)) then
+              WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Did you mean ''', Sugg, '''?')
+            else
+              WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Verify declaration in data, props, computed, or methods.');
+          end;
+        end;
+        pStart := PosEx('{{', Tpl, pEnd + 2);
+      end
+      else
+        Break;
+    end;
+
+    // 7. Scan Dynamic Directives: :prop="...", @event="...", b-model="...", b-if="...", b-show="..."
+    for i := 1 to Length(Tpl) - 5 do
+    begin
+      if (i > 1) and (Tpl[i - 1] > ' ') and (Tpl[i - 1] <> '<') then Continue;
+
+      if ((Tpl[i] = ':') or (Tpl[i] = '@') or 
+          ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-model')) or
+          ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'v-model')) or
+          ((i <= Length(Tpl) - 4) and (Copy(Tpl, i, 4) = 'b-if')) or
+          ((i <= Length(Tpl) - 4) and (Copy(Tpl, i, 4) = 'v-if')) or
+          ((i <= Length(Tpl) - 6) and (Copy(Tpl, i, 6) = 'b-show')) or
+          ((i <= Length(Tpl) - 6) and (Copy(Tpl, i, 6) = 'v-show')) or
+          ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-field'))) then
+      begin
+        pStart := i;
+        while (pStart <= Length(Tpl)) and (Tpl[pStart] <> '=') and (Tpl[pStart] <> '>') and (Tpl[pStart] > ' ') do Inc(pStart);
+        if (pStart <= Length(Tpl)) and (Tpl[pStart] = '=') and (pStart < Length(Tpl)) then
+        begin
+          QuoteChar := Tpl[pStart + 1];
+          if (QuoteChar = '"') or (QuoteChar = '''') then
+          begin
+            QuoteEnd := PosEx(QuoteChar, Tpl, pStart + 2);
+            if QuoteEnd > pStart + 2 then
+            begin
+              Expr := Trim(Copy(Tpl, pStart + 2, QuoteEnd - (pStart + 2)));
+              RootIds.Clear;
+              ExtractRootIdentifiers(Expr, RootIds);
+              for pEnd := 0 to RootIds.Count - 1 do
+              begin
+                Id := RootIds[pEnd];
+                if not HasSymbolCaseInsensitive(Id, Symbols) then
+                begin
+                  Inc(WarningCount);
+                  Sugg := FindClosestMatch(Id, Symbols);
+                  if (Sugg <> '') and (LowerCase(Sugg) <> LowerCase(Id)) then
+                    WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Did you mean ''', Sugg, '''?')
+                  else
+                    WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Verify declaration in data, props, computed, or methods.');
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+
+    if StrictMode and (WarningCount > 0) then
+    begin
+      WriteLn('ERROR: Template AST verification failed with ', WarningCount, ' warning(s) in strict mode.');
+      Halt(1);
+    end;
+
+    Result := WarningCount;
+  finally
+    Symbols.Free;
+    RootIds.Free;
+  end;
+end;
+
+procedure CmdCheck(const TargetFile: string);
+var
+  BVFiles: TStringList;
+  Parsed: TBVParsed;
+  i, TotalWarnings, FileWarnings: Integer;
+begin
+  WriteLn('=== BlaiseVue Template AST Checker & Type-Verification ===');
+  WriteLn('');
+
+  BVFiles := TStringList.Create;
+  try
+    if (TargetFile <> '') and FileExists(TargetFile) then
+    begin
+      BVFiles.Add(TargetFile);
+    end
+    else
+    begin
+      if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
+        BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
+
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
+    end;
+
+    if BVFiles.Count = 0 then
+    begin
+      WriteLn('No .bv files found to verify.');
+      Exit;
+    end;
+
+    WriteLn('Checking ', BVFiles.Count, ' component(s)...');
+    WriteLn('');
+    TotalWarnings := 0;
+
+    for i := 0 to BVFiles.Count - 1 do
+    begin
+      ParseBVFile(BVFiles[i], Parsed);
+      FileWarnings := ValidateComponentTemplate(BVFiles[i], Parsed);
+      TotalWarnings := TotalWarnings + FileWarnings;
+      if FileWarnings = 0 then
+        WriteLn('  [v] ', ExtractFileName(BVFiles[i]), ' (0 warnings)');
+    end;
+
+    WriteLn('');
+    if TotalWarnings = 0 then
+      WriteLn('Result: All ', BVFiles.Count, ' component(s) passed AST type-verification with 0 errors.')
+    else
+      WriteLn('Result: Verification completed with ', TotalWarnings, ' template warning(s).');
+  finally
+    BVFiles.Free;
+  end;
+end;
+
+// =====================================================================
 //  COMANDO: TRANSPILE (Gera apenas .pas)
 // =====================================================================
 
@@ -1639,6 +2081,8 @@ begin
 
       WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
       ParseBVFile(BVFiles[i], Parsed);
+      ValidateComponentTemplate(BVFiles[i], Parsed);
+      ValidateComponentTemplate(BVFiles[i], Parsed);
 
       if IsApp then
         GeneratedCode := GenerateAppUnit(Parsed, UnitNames)
@@ -9098,6 +9542,7 @@ begin
     WriteLn('    bv mormot docker [--build]     Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
     WriteLn('    bv mormot rpc                  Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces');
     WriteLn('    bv studio [--port <p>] [--no-open] Launches BlaiseVue Studio developer cockpit (default: 9000)');
+    WriteLn('    bv check [file]        Validates component templates against script declarations (AST Type-Checker)');
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
     WriteLn('');
@@ -9114,6 +9559,13 @@ begin
       Halt(1);
     end;
     CmdCreate(ParamStr(2));
+  end
+  else if Cmd = 'check' then
+  begin
+    if ParamCount >= 2 then
+      CmdCheck(ParamStr(2))
+    else
+      CmdCheck('');
   end
   else if Cmd = 'clean' then
   begin
