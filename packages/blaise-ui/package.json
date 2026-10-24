@@ -1,0 +1,7 @@
+{
+  "name" : "blaise-ui",
+  "version" : "4.4.0",
+  "author" : "BlaiseVue Core Team",
+  "license" : "MIT",
+  "description" : "Official native component kit for BlaiseVue featuring 25+ accessible widgets"
+}

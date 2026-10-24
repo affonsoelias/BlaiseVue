@@ -7583,9 +7583,6 @@ var
   BuildDate, UnitPath, UnitContent: string;
 begin
   BuildDate := FormatDateTime('yyyy-mm-dd', Now);
-  UnitPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
-
-  if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then Exit;
 
   UnitContent :=
     'unit uAppVersion;' + #10#10 +
@@ -7600,8 +7597,24 @@ begin
     'implementation' + #10#10 +
     'end.' + #10;
 
-  WriteStringToFile(UnitPath, UnitContent);
-  WriteLn('  [+] Synchronized Pascal unit: src/uAppVersion.pas (v' + AppVersion + ')');
+  if DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then
+  begin
+    UnitPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
+    WriteStringToFile(UnitPath, UnitContent);
+    WriteLn('  [+] Synchronized Pascal unit: src/uAppVersion.pas (v' + AppVersion + ')');
+  end
+  else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'core') then
+  begin
+    UnitPath := GetCurrentDir + DirectorySeparator + 'core' + DirectorySeparator + 'uAppVersion.pas';
+    WriteStringToFile(UnitPath, UnitContent);
+    WriteLn('  [+] Synchronized Pascal unit: core/uAppVersion.pas (v' + AppVersion + ')');
+  end
+  else
+  begin
+    UnitPath := GetCurrentDir + DirectorySeparator + 'uAppVersion.pas';
+    WriteStringToFile(UnitPath, UnitContent);
+    WriteLn('  [+] Synchronized Pascal unit: uAppVersion.pas (v' + AppVersion + ')');
+  end;
 end;
 
 function BumpSemVer(const CurrentVer, BumpType: string): string;
