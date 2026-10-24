@@ -4456,7 +4456,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       bv.effect(function() {
                          let val = pRef[wk];
                          if (firstRun) { firstRun = false; return; }
-                         opts.watch[wk].call(pRef, pRef, val);
+                         bv.nonReactive(function() {
+                            opts.watch[wk].call(pRef, pRef, val);
+                         });
                       });
                    });
                 }
@@ -10390,50 +10392,14 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     comp["defaultProps"]["height"] = "400px";
     m = new Object();
     m["initChart"] = function (_this) {
-      function __bv_guard_chart_proto() {
-        const C = (typeof window !== 'undefined' && window.Chart) ? window.Chart : ((typeof Chart !== 'undefined') ? Chart : null);
-        if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
-        C.prototype.__bv_safe_guard = true;
-        const origDestroy = C.prototype.destroy;
-        C.prototype.destroy = function() {
-          this._doResize = function() { return 0; };
-          this.update = function() {};
-          this.render = function() {};
-          this.draw = function() {};
-          return origDestroy.apply(this, arguments);
-        };
-        const origUpdate = C.prototype.update;
-        C.prototype.update = function(...args) {
-          if (!this.canvas || !this.ctx) return;
-          return origUpdate.apply(this, args);
-        };
-        const origRender = C.prototype.render;
-        C.prototype.render = function(...args) {
-          if (!this.canvas || !this.ctx) return;
-          return origRender.apply(this, args);
-        };
-        const origResize = C.prototype._resize;
-        if (origResize) {
-          C.prototype._resize = function(...args) {
-            if (!this.canvas || !this.ctx) return;
-            return origResize.apply(this, args);
-          };
-        }
-      }
-      __bv_guard_chart_proto();
-      if (this._initRaf) {
-        cancelAnimationFrame(this._initRaf);
-        this._initRaf = null;
-      }
-      this._initRaf = requestAnimationFrame(() => {
-        this._initRaf = null;
-        const canvas = this.$refs.chartCanvas;
+      const bv = (typeof window !== 'undefined' && window.__BV_CORE__) ? window.__BV_CORE__ : null;
+      const runInit = () => {
+        const canvas = this.$refs ? this.$refs.chartCanvas : null;
         if (!canvas) return;
         if (typeof Chart === 'undefined') {
           console.warn('[BVChart] Chart.js is not loaded.');
           return;
         }
-        __bv_guard_chart_proto();
         function destroySafely(c) {
           if (!c) return;
           try {
@@ -10457,7 +10423,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
         }
         function cloneChartData(input, chartType) {
           if (!input) return null;
-          const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+          const raw = (bv && bv.unproxy) ? bv.unproxy(input) : input;
           if (!raw) return null;
           const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
           const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
@@ -10468,7 +10434,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
               if (Array.isArray(ds.data)) copy.data = [...ds.data];
               if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
               if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
-              if (isRadial && Array.isArray(copy.data) && !Array.isArray(copy.backgroundColor)) {
+              if (isRadial && Array.isArray(copy.data) && (!copy.backgroundColor || typeof copy.backgroundColor === 'string')) {
                 copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
                 copy.borderColor = '#ffffff';
               }
@@ -10478,12 +10444,10 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
         }
         const rawData = extractData(this.data);
         if (!rawData || !rawData.datasets) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
         try {
           const chartData = cloneChartData(rawData, this.type);
           const rawOpts = extractData(this.options);
-          const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, window.__BV_CORE__.unproxy(rawOpts)) : {
+          const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, (bv && bv.unproxy) ? bv.unproxy(rawOpts) : rawOpts) : {
             responsive: true,
             maintainAspectRatio: false,
             resizeDelay: 50
@@ -10495,7 +10459,26 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
             finalOpts = Object.assign({}, chartOptions);
             delete finalOpts.scales;
           }
-          this._chart = new Chart(ctx, {
+          if (!finalOpts.onClick) {
+            finalOpts.onClick = (event, elements) => {
+              if (elements && elements.length > 0) {
+                const el = elements[0];
+                const dsIndex = el.datasetIndex;
+                const index = el.index;
+                const ds = chartData.datasets ? chartData.datasets[dsIndex] : null;
+                const label = chartData.labels ? chartData.labels[index] : '';
+                const val = ds && ds.data ? ds.data[index] : null;
+                this.$emit('chart-click', {
+                  datasetIndex: dsIndex,
+                  index: index,
+                  label: label,
+                  value: val,
+                  datasetLabel: ds ? ds.label : ''
+                });
+              }
+            };
+          }
+          this._chart = new Chart(canvas, {
             type: this.type || 'bar',
             data: chartData,
             options: finalOpts
@@ -10503,12 +10486,19 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
         } catch (e) {
           console.error('[BVChart] Failed to initialize chart:', e);
         }
-      });
+      };
+      if (bv && typeof bv.nonReactive === 'function') {
+        bv.nonReactive(runInit);
+      } else {
+        runInit();
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
-      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false; this._initRaf = null;
+      this._chart = null;
+      this._pendingData = null;
+      this._updatePending = false;
     };
     comp["mounted"] = function (_this) {
       if (!_this) _this = this;
@@ -10526,10 +10516,12 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
           this.initChart();
           return;
         }
-        function cloneChartData(input) {
+        function cloneChartData(input, chartType) {
           if (!input) return null;
           const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
           if (!raw) return null;
+          const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+          const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
           return {
             labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
             datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
@@ -10537,12 +10529,16 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
               if (Array.isArray(ds.data)) copy.data = [...ds.data];
               if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
               if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              if (isRadial && Array.isArray(copy.data) && (!copy.backgroundColor || typeof copy.backgroundColor === 'string')) {
+                copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
+                copy.borderColor = '#ffffff';
+              }
               return copy;
             }) : []
           };
         }
         try {
-          const rawNewData = cloneChartData(dataToUse);
+          const rawNewData = cloneChartData(dataToUse, this.type);
           if (!rawNewData || !rawNewData.datasets) return;
           if (rawNewData.labels) {
             this._chart.data.labels = rawNewData.labels;
@@ -10584,16 +10580,6 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       };
     };
     comp["watch"]["type"] = function (_this, newVal) {
-      if (this._chart) {
-        try {
-          this._chart._doResize = function() { return 0; };
-          this._chart.update = function() {};
-          this._chart.render = function() {};
-          this._chart.draw = function() {};
-          this._chart.destroy();
-        } catch(e) {}
-        this._chart = null;
-      }
       this.initChart();
     };
     pas.BVComponents.RegisterComponent("bv-chart",comp);

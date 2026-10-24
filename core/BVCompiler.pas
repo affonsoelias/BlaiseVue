@@ -1710,7 +1710,9 @@ initialization
                   bv.effect(function() {
                      let val = pRef[wk];
                      if (firstRun) { firstRun = false; return; }
-                     opts.watch[wk].call(pRef, pRef, val);
+                     bv.nonReactive(function() {
+                        opts.watch[wk].call(pRef, pRef, val);
+                     });
                   });
                });
             }
