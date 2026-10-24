@@ -8959,22 +8959,64 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
   });
   $mod.$init = function () {
     // Expose BlaiseCharts globally for window.$charts / __BV_CORE__.charts
-    if (typeof window !== 'undefined') {
-      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
-      window.__BV_CORE__.charts = {
-        types: {
-          bar: 'bar',
-          line: 'line',
-          pie: 'pie',
-          doughnut: 'doughnut',
-          radar: 'radar',
-          polarArea: 'polarArea',
-          scatter: 'scatter',
-          bubble: 'bubble'
-        }
-      };
-      window.$charts = window.__BV_CORE__.charts;
-    };
+        if (typeof window !== 'undefined') {
+          if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          window.__BV_CORE__.charts = {
+            types: {
+              bar: 'bar',
+              line: 'line',
+              pie: 'pie',
+              doughnut: 'doughnut',
+              radar: 'radar',
+              polarArea: 'polarArea',
+              scatter: 'scatter',
+              bubble: 'bubble'
+            }
+          };
+          window.$charts = window.__BV_CORE__.charts;
+    
+          // Universal Chart.js Safety Guard (neutralizes resize/update timers on destroyed charts)
+          function __bv_install_chart_guard() {
+            var C = (typeof window.Chart !== "undefined") ? window.Chart : ((typeof Chart !== "undefined") ? Chart : null);
+            if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
+            C.prototype.__bv_safe_guard = true;
+    
+            var origDestroy = C.prototype.destroy;
+            C.prototype.destroy = function() {
+              this._doResize = function() { return 0; };
+              this.update = function() {};
+              this.render = function() {};
+              this.draw = function() {};
+              return origDestroy.apply(this, arguments);
+            };
+    
+            var origUpdate = C.prototype.update;
+            C.prototype.update = function() {
+              if (!this.canvas || !this.ctx) return;
+              return origUpdate.apply(this, arguments);
+            };
+    
+            var origRender = C.prototype.render;
+            C.prototype.render = function() {
+              if (!this.canvas || !this.ctx) return;
+              return origRender.apply(this, arguments);
+            };
+    
+            var origResize = C.prototype._resize;
+            if (origResize) {
+              C.prototype._resize = function() {
+                if (!this.canvas || !this.ctx) return;
+                return origResize.apply(this, arguments);
+              };
+            }
+          }
+    
+          __bv_install_chart_guard();
+          if (typeof window.addEventListener === "function") {
+            window.addEventListener("DOMContentLoaded", __bv_install_chart_guard);
+            window.addEventListener("load", __bv_install_chart_guard);
+          }
+        };
   };
 });
 rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
@@ -10348,20 +10390,63 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     comp["defaultProps"]["height"] = "400px";
     m = new Object();
     m["initChart"] = function (_this) {
-      if (this._initPending) return;
-      this._initPending = true;
-      requestAnimationFrame(() => {
+      function __bv_guard_chart_proto() {
+        const C = (typeof window !== 'undefined' && window.Chart) ? window.Chart : ((typeof Chart !== 'undefined') ? Chart : null);
+        if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
+        C.prototype.__bv_safe_guard = true;
+        const origDestroy = C.prototype.destroy;
+        C.prototype.destroy = function() {
+          this._doResize = function() { return 0; };
+          this.update = function() {};
+          this.render = function() {};
+          this.draw = function() {};
+          return origDestroy.apply(this, arguments);
+        };
+        const origUpdate = C.prototype.update;
+        C.prototype.update = function(...args) {
+          if (!this.canvas || !this.ctx) return;
+          return origUpdate.apply(this, args);
+        };
+        const origRender = C.prototype.render;
+        C.prototype.render = function(...args) {
+          if (!this.canvas || !this.ctx) return;
+          return origRender.apply(this, args);
+        };
+        const origResize = C.prototype._resize;
+        if (origResize) {
+          C.prototype._resize = function(...args) {
+            if (!this.canvas || !this.ctx) return;
+            return origResize.apply(this, args);
+          };
+        }
+      }
+      __bv_guard_chart_proto();
+      if (this._initRaf) {
+        cancelAnimationFrame(this._initRaf);
+        this._initRaf = null;
+      }
+      this._initRaf = requestAnimationFrame(() => {
+        this._initRaf = null;
         const canvas = this.$refs.chartCanvas;
-        if (!canvas) { this._initPending = false; return; }
+        if (!canvas) return;
         if (typeof Chart === 'undefined') {
           console.warn('[BVChart] Chart.js is not loaded.');
-          this._initPending = false;
           return;
         }
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-          try { existingChart.destroy(); } catch(e) {}
+        __bv_guard_chart_proto();
+        function destroySafely(c) {
+          if (!c) return;
+          try {
+            c._doResize = function() { return 0; };
+            c.update = function() {};
+            c.render = function() {};
+            c.draw = function() {};
+            c.destroy();
+          } catch(e) {}
         }
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) destroySafely(existingChart);
+        if (this._chart) destroySafely(this._chart);
         this._chart = null;
         function extractData(input) {
           if (!input) return null;
@@ -10370,10 +10455,12 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
           if (input.FJS) return input.FJS;
           return input;
         }
-        function cloneChartData(input) {
+        function cloneChartData(input, chartType) {
           if (!input) return null;
           const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
           if (!raw) return null;
+          const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+          const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
           return {
             labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
             datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
@@ -10381,16 +10468,20 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
               if (Array.isArray(ds.data)) copy.data = [...ds.data];
               if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
               if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              if (isRadial && Array.isArray(copy.data) && !Array.isArray(copy.backgroundColor)) {
+                copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
+                copy.borderColor = '#ffffff';
+              }
               return copy;
             }) : []
           };
         }
         const rawData = extractData(this.data);
-        if (!rawData || !rawData.datasets) { this._initPending = false; return; }
+        if (!rawData || !rawData.datasets) return;
         const ctx = canvas.getContext('2d');
-        if (!ctx) { this._initPending = false; return; }
+        if (!ctx) return;
         try {
-          const chartData = cloneChartData(rawData);
+          const chartData = cloneChartData(rawData, this.type);
           const rawOpts = extractData(this.options);
           const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, window.__BV_CORE__.unproxy(rawOpts)) : {
             responsive: true,
@@ -10398,22 +10489,26 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
             resizeDelay: 50
           };
           if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
+          let finalOpts = chartOptions;
+          const isRadial = (this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea');
+          if (isRadial && chartOptions.scales) {
+            finalOpts = Object.assign({}, chartOptions);
+            delete finalOpts.scales;
+          }
           this._chart = new Chart(ctx, {
-            type: this.type,
+            type: this.type || 'bar',
             data: chartData,
-            options: chartOptions
+            options: finalOpts
           });
         } catch (e) {
           console.error('[BVChart] Failed to initialize chart:', e);
-        } finally {
-          this._initPending = false;
         }
       });
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
-      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
+      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false; this._initRaf = null;
     };
     comp["mounted"] = function (_this) {
       if (!_this) _this = this;
@@ -10427,7 +10522,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       requestAnimationFrame(() => {
         this._updatePending = false;
         const dataToUse = this._pendingData;
-        if (!this._chart || !dataToUse) {
+        if (!this._chart || !this._chart.canvas || !dataToUse) {
           this.initChart();
           return;
         }
@@ -10477,7 +10572,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       });
     };
     comp["watch"]["options"] = function (_this, newVal) {
-      if (this._chart && newVal) {
+      if (this._chart && this._chart.canvas && newVal) {
         try {
           const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
           if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
@@ -10489,6 +10584,16 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       };
     };
     comp["watch"]["type"] = function (_this, newVal) {
+      if (this._chart) {
+        try {
+          this._chart._doResize = function() { return 0; };
+          this._chart.update = function() {};
+          this._chart.render = function() {};
+          this._chart.draw = function() {};
+          this._chart.destroy();
+        } catch(e) {}
+        this._chart = null;
+      }
       this.initChart();
     };
     pas.BVComponents.RegisterComponent("bv-chart",comp);

@@ -28,30 +28,80 @@
 
   created:
     begin
-       asm this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false; end;
+       asm this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false; this._initRaf = null; end;
     end;
 
   methods:
     procedure initChart;
     begin
        asm
-         if (this._initPending) return;
-         this._initPending = true;
-         
-         requestAnimationFrame(() => {
+         function __bv_guard_chart_proto() {
+           const C = (typeof window !== 'undefined' && window.Chart) ? window.Chart : ((typeof Chart !== 'undefined') ? Chart : null);
+           if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
+           C.prototype.__bv_safe_guard = true;
+
+           const origDestroy = C.prototype.destroy;
+           C.prototype.destroy = function() {
+             this._doResize = function() { return 0; };
+             this.update = function() {};
+             this.render = function() {};
+             this.draw = function() {};
+             return origDestroy.apply(this, arguments);
+           };
+
+           const origUpdate = C.prototype.update;
+           C.prototype.update = function(...args) {
+             if (!this.canvas || !this.ctx) return;
+             return origUpdate.apply(this, args);
+           };
+
+           const origRender = C.prototype.render;
+           C.prototype.render = function(...args) {
+             if (!this.canvas || !this.ctx) return;
+             return origRender.apply(this, args);
+           };
+
+           const origResize = C.prototype._resize;
+           if (origResize) {
+             C.prototype._resize = function(...args) {
+               if (!this.canvas || !this.ctx) return;
+               return origResize.apply(this, args);
+             };
+           }
+         }
+         __bv_guard_chart_proto();
+
+         if (this._initRaf) {
+           cancelAnimationFrame(this._initRaf);
+           this._initRaf = null;
+         }
+
+         this._initRaf = requestAnimationFrame(() => {
+           this._initRaf = null;
            const canvas = this.$refs.chartCanvas;
-           if (!canvas) { this._initPending = false; return; }
+           if (!canvas) return;
            
            if (typeof Chart === 'undefined') {
              console.warn('[BVChart] Chart.js is not loaded.');
-             this._initPending = false;
              return;
            }
 
-           const existingChart = Chart.getChart(canvas);
-           if (existingChart) {
-             try { existingChart.destroy(); } catch(e) {}
+           __bv_guard_chart_proto();
+
+           function destroySafely(c) {
+             if (!c) return;
+             try {
+               c._doResize = function() { return 0; };
+               c.update = function() {};
+               c.render = function() {};
+               c.draw = function() {};
+               c.destroy();
+             } catch(e) {}
            }
+
+           const existingChart = Chart.getChart(canvas);
+           if (existingChart) destroySafely(existingChart);
+           if (this._chart) destroySafely(this._chart);
            this._chart = null;
 
            function extractData(input) {
@@ -62,10 +112,12 @@
              return input;
            }
 
-           function cloneChartData(input) {
+           function cloneChartData(input, chartType) {
              if (!input) return null;
              const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
              if (!raw) return null;
+             const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+             const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
              return {
                labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
                datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
@@ -73,18 +125,22 @@
                  if (Array.isArray(ds.data)) copy.data = [...ds.data];
                  if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
                  if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+                 if (isRadial && Array.isArray(copy.data) && !Array.isArray(copy.backgroundColor)) {
+                   copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
+                   copy.borderColor = '#ffffff';
+                 }
                  return copy;
                }) : []
              };
            }
 
            const rawData = extractData(this.data);
-           if (!rawData || !rawData.datasets) { this._initPending = false; return; }
+           if (!rawData || !rawData.datasets) return;
            const ctx = canvas.getContext('2d');
-           if (!ctx) { this._initPending = false; return; }
+           if (!ctx) return;
            
            try {
-             const chartData = cloneChartData(rawData);
+             const chartData = cloneChartData(rawData, this.type);
              const rawOpts = extractData(this.options);
              const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, window.__BV_CORE__.unproxy(rawOpts)) : {
                responsive: true,
@@ -93,15 +149,20 @@
              };
              if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
              
+             let finalOpts = chartOptions;
+             const isRadial = (this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea');
+             if (isRadial && chartOptions.scales) {
+               finalOpts = Object.assign({}, chartOptions);
+               delete finalOpts.scales;
+             }
+
              this._chart = new Chart(ctx, {
-               type: this.type,
+               type: this.type || 'bar',
                data: chartData,
-               options: chartOptions
+               options: finalOpts
              });
            } catch (e) {
              console.error('[BVChart] Failed to initialize chart:', e);
-           } finally {
-             this._initPending = false;
            }
          });
        end;
@@ -123,7 +184,7 @@
          requestAnimationFrame(() => {
            this._updatePending = false;
            const dataToUse = this._pendingData;
-           if (!this._chart || !dataToUse) {
+           if (!this._chart || !this._chart.canvas || !dataToUse) {
              this.initChart();
              return;
            }
@@ -182,7 +243,7 @@
     procedure options(newVal: JSValue);
     begin
        asm
-         if (this._chart && newVal) {
+         if (this._chart && this._chart.canvas && newVal) {
            try {
              const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
              if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
@@ -197,7 +258,19 @@
 
     procedure type(newVal: string);
     begin
-      asm this.initChart(); end;
+      asm
+        if (this._chart) {
+          try {
+            this._chart._doResize = function() { return 0; };
+            this._chart.update = function() {};
+            this._chart.render = function() {};
+            this._chart.draw = function() {};
+            this._chart.destroy();
+          } catch(e) {}
+          this._chart = null;
+        }
+        this.initChart();
+      end;
     end;
 </script>
 
