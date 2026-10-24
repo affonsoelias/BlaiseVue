@@ -62,18 +62,36 @@
              return input;
            }
 
+           function cloneChartData(input) {
+             if (!input) return null;
+             const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+             if (!raw) return null;
+             return {
+               labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+               datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+                 const copy = Object.assign({}, ds);
+                 if (Array.isArray(ds.data)) copy.data = [...ds.data];
+                 if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+                 if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+                 return copy;
+               }) : []
+             };
+           }
+
            const rawData = extractData(this.data);
            if (!rawData || !rawData.datasets) { this._initPending = false; return; }
            const ctx = canvas.getContext('2d');
            if (!ctx) { this._initPending = false; return; }
            
            try {
-             const chartData = window.__BV_CORE__.unproxy(rawData);
+             const chartData = cloneChartData(rawData);
              const rawOpts = extractData(this.options);
-             const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
+             const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, window.__BV_CORE__.unproxy(rawOpts)) : {
                responsive: true,
-               maintainAspectRatio: false
+               maintainAspectRatio: false,
+               resizeDelay: 50
              };
+             if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
              
              this._chart = new Chart(ctx, {
                type: this.type,
@@ -105,17 +123,56 @@
          requestAnimationFrame(() => {
            this._updatePending = false;
            const dataToUse = this._pendingData;
-           if (this._chart && dataToUse && dataToUse.datasets) {
-             try {
-               const rawNewData = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(dataToUse) : dataToUse;
-               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-               this._chart.data.datasets = rawNewData.datasets;
-               this._chart.update();
-             } catch (e) {
-               console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
-               this.initChart();
+           if (!this._chart || !dataToUse) {
+             this.initChart();
+             return;
+           }
+
+           function cloneChartData(input) {
+             if (!input) return null;
+             const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+             if (!raw) return null;
+             return {
+               labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+               datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+                 const copy = Object.assign({}, ds);
+                 if (Array.isArray(ds.data)) copy.data = [...ds.data];
+                 if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+                 if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+                 return copy;
+               }) : []
+             };
+           }
+
+           try {
+             const rawNewData = cloneChartData(dataToUse);
+             if (!rawNewData || !rawNewData.datasets) return;
+
+             if (rawNewData.labels) {
+               this._chart.data.labels = rawNewData.labels;
              }
-           } else {
+
+             const curDatasets = this._chart.data.datasets;
+             if (curDatasets && curDatasets.length === rawNewData.datasets.length) {
+               for (let i = 0; i < rawNewData.datasets.length; i++) {
+                 const target = curDatasets[i];
+                 const source = rawNewData.datasets[i];
+                 if (source.data) target.data = source.data;
+                 if (source.backgroundColor !== undefined) target.backgroundColor = source.backgroundColor;
+                 if (source.borderColor !== undefined) target.borderColor = source.borderColor;
+                 if (source.label !== undefined) target.label = source.label;
+                 if (source.fill !== undefined) target.fill = source.fill;
+                 if (source.tension !== undefined) target.tension = source.tension;
+                 if (source.pointRadius !== undefined) target.pointRadius = source.pointRadius;
+                 if (source.pointHoverRadius !== undefined) target.pointHoverRadius = source.pointHoverRadius;
+               }
+             } else {
+               this._chart.data.datasets = rawNewData.datasets;
+             }
+
+             this._chart.update();
+           } catch (e) {
+             console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
              this.initChart();
            }
          });
@@ -128,6 +185,7 @@
          if (this._chart && newVal) {
            try {
              const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
+             if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
              this._chart.options = rawNewOpts;
              this._chart.update();
            } catch (e) {
@@ -146,11 +204,19 @@
 <style>
   .bui-chart-wrapper {
     position: relative;
-    margin-bottom: 20px;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
     background: transparent;
-    padding: 15px;
-    border-radius: var(--bui-radius);
-    border: 1px solid var(--bui-border);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  .bui-chart-wrapper canvas {
+    display: block;
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100%;
   }
 </style>

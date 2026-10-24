@@ -483,6 +483,7 @@ begin
   FJS := TJSObject.new;
   FJS['responsive'] := True;
   FJS['maintainAspectRatio'] := False;
+  FJS['resizeDelay'] := 50;
 end;
 
 constructor TBVChartOptions.Create(AJS: TJSObject);

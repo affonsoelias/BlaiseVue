@@ -332,6 +332,8 @@
     padding: 24px;
     background: #f8fafc;
     min-height: 100vh;
+    overflow-y: scroll;
+    box-sizing: border-box;
   }
   .header-card {
     background: #ffffff;
@@ -340,16 +342,22 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     margin-bottom: 24px;
     border: 1px solid #e2e8f0;
+    box-sizing: border-box;
   }
   .universal-card {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-top: 4px solid #3b82f6;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
   }
   .chart-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
     gap: 24px;
+    width: 100%;
   }
   .chart-item {
     background: #ffffff;
@@ -359,7 +367,10 @@
     border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    min-width: 0;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
   }
   .chart-header-row {
     display: flex;
@@ -369,6 +380,7 @@
     margin-bottom: 16px;
     padding-bottom: 12px;
     border-bottom: 1px solid #f1f5f9;
+    box-sizing: border-box;
   }
   .chart-item h3 {
     margin: 0;
