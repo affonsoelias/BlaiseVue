@@ -19,6 +19,13 @@ procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
 procedure ShowAlert(const Msg: string);
 function Confirm(const Msg: string): Boolean;
 
+{ --- Logging & Timer Helpers (Zero-ASM) --- }
+procedure ConsoleLog(const Msg: string);
+function StartInterval(Callback: JSValue; IntervalMs: Integer): Integer;
+procedure StopInterval(TimerId: Integer);
+function StartTimeout(Callback: JSValue; DelayMs: Integer): Integer;
+procedure StopTimeout(TimerId: Integer);
+
 { --- SPA Navigation Helpers --- }
 procedure NavigateTo(const Path: string);
 procedure GoBack;
@@ -174,6 +181,43 @@ end;
 function Confirm(const Msg: string): Boolean;
 begin
   asm Result = window.confirm(Msg); end;
+end;
+
+procedure ConsoleLog(const Msg: string);
+begin
+  asm console.log(Msg); end;
+end;
+
+function StartInterval(Callback: JSValue; IntervalMs: Integer): Integer;
+begin
+  asm
+    Result = window.setInterval(function() {
+      if (typeof Callback === 'function') Callback();
+    }, IntervalMs);
+  end;
+end;
+
+procedure StopInterval(TimerId: Integer);
+begin
+  asm
+    window.clearInterval(TimerId);
+  end;
+end;
+
+function StartTimeout(Callback: JSValue; DelayMs: Integer): Integer;
+begin
+  asm
+    Result = window.setTimeout(function() {
+      if (typeof Callback === 'function') Callback();
+    }, DelayMs);
+  end;
+end;
+
+procedure StopTimeout(TimerId: Integer);
+begin
+  asm
+    window.clearTimeout(TimerId);
+  end;
 end;
 
 procedure NavigateTo(const Path: string);
