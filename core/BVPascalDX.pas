@@ -35,6 +35,7 @@ procedure CallMethod(Instance: JSValue; const MethodName: string); overload;
 procedure CallMethod(Instance: JSValue; const MethodName: string; const Args: array of JSValue); overload;
 function CallFunction(Instance: JSValue; const MethodName: string): JSValue; overload;
 function CallFunction(Instance: JSValue; const MethodName: string; const Args: array of JSValue): JSValue; overload;
+procedure Emit(Instance: JSValue; const EventName: string; Payload: JSValue = nil);
 
 { --- Component $refs Controller --- }
 function TriggerRef(Instance: JSValue; const RefName, MethodName: string): Boolean;
@@ -86,6 +87,7 @@ function NowTimestampMs: Double;
 { --- Chart & Visual Theming Helpers --- }
 procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
 procedure ThemeSet(const ThemeName: string);
+procedure ThemeToggle;
 
 { --- I18n Internationalization Helpers --- }
 procedure I18nAddMessages(const Locale: string; const JsonStr: string);
@@ -272,6 +274,15 @@ begin
       Result = Instance[MethodName].apply(Instance, Args);
     } else {
       Result = null;
+    }
+  end;
+end;
+
+procedure Emit(Instance: JSValue; const EventName: string; Payload: JSValue = nil);
+begin
+  asm
+    if (Instance && typeof Instance['$emit'] === 'function') {
+      Instance['$emit'](EventName, Payload);
     }
   end;
 end;
@@ -1113,6 +1124,15 @@ begin
   asm
     if (window.$theme && typeof window.$theme.setTheme === 'function') {
       window.$theme.setTheme(ThemeName);
+    }
+  end;
+end;
+
+procedure ThemeToggle;
+begin
+  asm
+    if (window.$theme && typeof window.$theme.toggle === 'function') {
+      window.$theme.toggle();
     }
   end;
 end;

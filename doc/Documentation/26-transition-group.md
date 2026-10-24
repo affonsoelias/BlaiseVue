@@ -16,15 +16,15 @@ BlaiseVue uses the **FLIP (*First, Last, Invert, Play*)** animation technique:
 
 ---
 
-## 🚀 Basic Usage
+## 🚀 Basic Usage (Pure Pascal)
 
 ```html
 <template>
   <div class="list-container">
     <div class="controls">
-      <button @click="shuffleItems">Shuffle</button>
-      <button @click="addItem">Add Number</button>
-      <button @click="removeItem">Remove Random</button>
+      <button class="bui-btn bui-btn-primary" @click="addItem">➕ Add Item</button>
+      <button class="bui-btn bui-btn-danger" @click="removeLastItem">➖ Remove Item</button>
+      <button class="bui-btn bui-btn-outline" @click="shuffleItems">🔀 Shuffle (JS Power-User)</button>
     </div>
 
     <!-- Wrap list in transition-group -->
@@ -41,21 +41,29 @@ BlaiseVue uses the **FLIP (*First, Last, Invert, Play*)** animation technique:
     items: TJSArray = TJSArray.new;
 
   methods:
-    procedure shuffleItems;
+    // Pure Pascal: adding items smoothly slides into the list
+    procedure addItem;
+    var
+      item: TJSObject;
     begin
-      // Reordering items automatically triggers FLIP animations!
-      asm
-        this.items.sort(() => Math.random() - 0.5);
-      end;
+      item := NewObject;
+      item['id'] := NowTimestampStr;
+      item['text'] := 'Item ' + IntToStr(TJSArray(this['items']).length + 1);
+      TJSArray(this['items']).push(item);
     end;
 
-    procedure addItem;
+    // Pure Pascal: removing items triggers exit animations
+    procedure removeLastItem;
+    begin
+      if TJSArray(this['items']).length > 0 then
+        TJSArray(this['items']).pop();
+    end;
+
+    // Power-User JavaScript Interop: reordering with JS sort
+    procedure shuffleItems;
     begin
       asm
-        this.items.splice(Math.floor(Math.random() * this.items.length), 0, {
-          id: Date.now(),
-          text: 'Item ' + Math.floor(Math.random() * 100)
-        });
+        this.items.sort(() => Math.random() - 0.5);
       end;
     end;
 </script>

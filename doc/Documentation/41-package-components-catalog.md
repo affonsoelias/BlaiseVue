@@ -714,11 +714,14 @@ Bootswatch theme management and dark mode switching engine.
 
 In any component:
 ```pascal
-// Set specific theme
+// Set specific theme (Pure Pascal)
 ThemeSet('darkly');
 
-// Programmatic toggle
-asm this.$theme.toggle(); end;
+// Programmatic toggle (Pure Pascal)
+ThemeToggle;
+
+// Alternative via template or JS:
+// @click="$theme.toggle()"
 
 // Check dark state
 if Boolean(this['$theme']['isDark']) then
