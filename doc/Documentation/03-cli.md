@@ -41,9 +41,9 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 2. **Resource Embedding (`{$R templates.res}`)**:
    - Templates are compiled into a binary resource file (`templates.res`) via `windres` / FPC.
    - Embedded directly into the `bv.exe` executable at compile-time.
-3. **Standalone Binary**:
-   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream`.
-   - The compiled `bv.exe` requires zero external template files to generate new projects.
+3. **Standalone Binary & 4-Tier Scaffolding**:
+   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
+   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/unit/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
 
 ---
 
@@ -83,16 +83,16 @@ bv new t SimpleBadge
 - **Se `SimpleBadge.bv` for um componente:** cria em `tests/components/SimpleBadge.test.pas` com `Mount('simple-badge')`.
 - **Se for uma view:** cria em `tests/views/SimpleBadge.test.pas` com `Mount('simple-badge-page')`.
 - **Se passar um caminho:** `bv new t services/CalculoFrete` -> cria em `tests/services/CalculoFrete.test.pas`.
-- **Caso contrário:** cria em `tests/unit/SimpleBadge.test.pas` para regras de negócio e serviços em Pascal.
+- **Caso contrário:** cria em `tests/unit/SimpleBadge.test.pas` para regras de negócio e serviços em Pascal puro.
 
 ### 4. Listar Elementos: `bv list <c|v|t>`
 Lista os arquivos registrados no projeto:
 - `bv list c`: Lista os componentes em `src/components/`.
 - `bv list v`: Lista as views em `src/views/`.
-- `bv list t`: Lista todos os testes de forma recursiva nas subpastas de `tests/`.
+- `bv list t`: Lista todos os testes de forma recursiva nas 4 subpastas de `tests/`.
 
 ### 5. Remover Elementos: `bv remove <component|view|test> <Name>`
-Remove o arquivo principal, a unit Pascal gerada em `generated/` e os testes associados:
+Remove o arquivo principal, a unit Pascal gerada em `generated/` e os testes associados em suas respectivas subpastas:
 ```bash
 bv remove component ProductCard
 bv remove view OrderHistory
@@ -107,10 +107,11 @@ O comando `bv test` executa todos os testes unitários e de integração do proj
 ```bash
 bv test
 ```
-1. **Varredura Recursiva:** Encontra todos os arquivos `*.test.pas` em `tests/` e em todas as suas subpastas (`components/`, `views/`, `unit/`, `framework/`).
-2. **Transpilação:** Transpila todos os arquivos `.bv` para `generated/`.
-3. **Compilação:** Compila cada suíte Pascal para JavaScript usando o Pas2JS.
-4. **Execução:** Roda os testes via **Vitest** no Node.js/JSDOM e apresenta o relatório no terminal.
+1. **Limpeza Prévia:** Limpa automaticamente artefatos legados em `generated/tests/` para evitar testes órfãos.
+2. **Varredura Recursiva:** Encontra todos os arquivos `*.test.pas` nas 4 camadas de `tests/` (`components/`, `views/`, `unit/`, `framework/`).
+3. **Transpilação:** Transpila todos os arquivos `.bv` para `generated/`.
+4. **Compilação Preservando Pastas:** Compila cada suíte Pascal para JavaScript usando o Pas2JS, mantendo a hierarquia relativa de pastas (ex.: `generated/tests/views/Home.test.js`).
+5. **Execução Vitest:** Roda os testes via **Vitest** no Node.js/JSDOM com 100% de compatibilidade e apresenta o relatório no terminal.
 
 Para desenvolvimento contínuo (reexecuta ao salvar qualquer arquivo):
 ```bash

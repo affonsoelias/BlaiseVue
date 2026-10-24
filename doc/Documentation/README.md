@@ -76,7 +76,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 12. [12. Debugging & Error Handling](12-debugging.md) — Source maps, runtime error boundaries, and console inspection.
 14. [14. CSS Transitions & Animations](14-css-transitions.md) — Declarative `<transition>` wrapper with enter/leave classes.
 18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md) — Installing and managing community packages via `bv lib`.
-19. [19. Unit Testing with Vitest](19-unit-testing.md) — Writing and executing automated tests in Pascal with JSDOM and Vitest.
+19. [19. Automated Unit & Integration Testing (4-Tier Architecture)](19-unit-testing.md) — Writing and executing automated tests in Pascal across 4 tiers (components, views, unit services, framework) with JSDOM and Vitest.
 20. [20. Consolidating Extra Libraries](20-extra-libraries.md) — Architecture for package imports and stylesheet bundling.
 21. [21. Teleport & Suspense](21-teleport-suspense.md) — DOM target relocation and asynchronous loading wrappers.
 22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md) — Compile-time static analysis and diff pruning for peak rendering performance.
@@ -107,11 +107,11 @@ bv run ssg                 # Pre-renders static HTML for all routes (SSG)
 bv run preview             # Local HTTP preview of production build (port 5000)
 
 # === Scaffolding ===
-bv create <app-name>       # Scaffolds a new BlaiseVue application
+bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services
 bv create <name> --lib     # Scaffolds a standalone library package with license and playground
-bv new c <Name>            # Scaffolds a new component (.bv)
-bv new v <Name>            # Scaffolds a new route view (.bv)
-bv new t <Name>            # Scaffolds a new Pascal test file (.test.pas)
+bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/
+bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/
+bv new t <Name>            # Scaffolds a test (smart detection: components, views, unit)
 
 # === Full-Stack mORMot 2 ===
 bv mormot init [--db <eng>] # Scaffolds backend (sqlite, postgres, mysql, firebird)
