@@ -11,12 +11,12 @@
         <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>
       </div>
       <div class="crud-header-btns">
-        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>
+        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>
         <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>
         <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>
         <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">
           <span v-if="isSyncing">⏳ Sincronizando...</span>
-          <span v-else>🚀 Sincronizar (ApplyUpdates)</span>
+          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>
         </button>
       </div>
     </div>
@@ -26,7 +26,7 @@
       <div class="control-bar-item">
         <span class="bar-label">Rede:</span>
         <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>
-        <span v-else class="status-pill status-offline">🔴 Modo Offline</span>
+        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>
         <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">
           {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}
         </button>
@@ -64,7 +64,7 @@
         <span class="status-indicator" v-if="productsDS.ChangeCount > 0">
           Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>
         </span>
-        <span class="status-indicator" v-else>
+        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">
           Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>
         </span>
       </div>
@@ -150,8 +150,42 @@
         <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">
           <div>{{ syncStatusMsg }}</div>
           <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">
-            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Resolução: <code>crServerWins</code>
+            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->
+    <div class="crud-modal-backdrop" v-if="isModalOpen">
+      <div class="crud-modal">
+        <div class="modal-header">
+          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>
+          <button class="modal-close-btn" @click="closeModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>
+            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>
+            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>
+              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />
+            </div>
+            <div class="form-group">
+              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>
+              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>
+          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>
         </div>
       </div>
     </div>
@@ -169,6 +203,11 @@
     syncStatusMsg: string = 'DataSet pronto com suporte a IndexedDB.';
     isSyncing: Boolean = False;
     storageEngine: string = 'IndexedDB';
+    isModalOpen: Boolean = False;
+    formTitle: string = '';
+    formCategory: string = 'Hardware';
+    formPrice: string = '99.90';
+    formStock: string = '10';
 
   computed:
     function stateBadgeClass: string;
@@ -211,6 +250,7 @@
       this['autoSyncActive'] := True;
       this['isOnline'] := True;
       this['isSyncing'] := False;
+      this['isModalOpen'] := False;
       this['syncStatusMsg'] := 'DataSet inicializado com persistência IndexedDB e auto-sync configurados.';
       this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
 
@@ -220,7 +260,12 @@
           window.addEventListener('online', function() {
             self.isOnline = true;
             self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
-            if (self.autoSyncActive) self.doApplyUpdates();
+            if (self.autoSyncActive) {
+              var ds = self.productsDS;
+              if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
+                ds.ApplyUpdates('/api/dataset/apply');
+              }
+            }
           });
           window.addEventListener('offline', function() {
             self.isOnline = false;
@@ -261,42 +306,70 @@
     end;
 
     procedure doAppend;
+    begin
+      // Abre a janela modal para o usuário preencher os dados
+      this['formTitle'] := '';
+      this['formCategory'] := 'Hardware';
+      this['formPrice'] := '99.90';
+      this['formStock'] := '10';
+      this['isModalOpen'] := True;
+    end;
+
+    procedure closeModal;
+    begin
+      this['isModalOpen'] := False;
+    end;
+
+    procedure saveNewProduct;
     var
       ds: JSValue;
+      titleVal: string;
+      categoryVal: string;
+      priceVal: Double;
+      stockVal: Integer;
     begin
+      titleVal := Trim(String(this['formTitle']));
+      if titleVal = '' then
+      begin
+        ShowToast('Por favor, informe o título do produto.');
+        Exit;
+      end;
+
+      categoryVal := Trim(String(this['formCategory']));
+      if categoryVal = '' then categoryVal := 'Hardware';
+
+      priceVal := StrToFloatDef(String(this['formPrice']), 0.0);
+      stockVal := StrToIntDef(String(this['formStock']), 0);
+
       ds := this['productsDS'];
       DataSetAppend(ds);
-      
+
       asm
-        var nextNum = 1;
-        if (ds && ds.FRecords && ds.FRecords.length) {
-          nextNum = ds.FRecords.length + 1;
+        var maxId = 0;
+        if (ds && ds.FRecords) {
+          for (var i = 0; i < ds.FRecords.length; i++) {
+            var curId = parseInt(ds.FRecords[i].id, 10);
+            if (!isNaN(curId) && curId > maxId) maxId = curId;
+          }
         }
+        var nextId = maxId + 1;
+
         if (ds && ds.Current) {
-          ds.Current.id = -nextNum;
-          ds.Current.title = 'Novo Produto ' + nextNum;
-          ds.Current.category = 'Hardware';
-          ds.Current.price = 99.90;
-          ds.Current.stock = 10;
+          ds.Current.id = nextId;
+          ds.Current.title = titleVal;
+          ds.Current.category = categoryVal;
+          ds.Current.price = priceVal;
+          ds.Current.stock = stockVal;
         }
         if (ds) ds.FModified = true;
         if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
       end;
-      
+
+      DataSetPost(ds);
       this['deltaJSONStr'] := DataSetDeltaJSON(ds);
-      this['syncStatusMsg'] := 'Registro inserido em modo offline com ID provisório negativo.';
-      ShowToast('Novo registro iniciado (dsInsert). Preencha e salve (Post)');
-      
-      asm
-        setTimeout(function() {
-          var el = document.querySelector('input[b-field="productsDS.title"]');
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus();
-            if (el.select) el.select();
-          }
-        }, 100);
-      end;
+      this['isModalOpen'] := False;
+      this['syncStatusMsg'] := 'Novo produto cadastrado com sucesso no DataSet.';
+      ShowToast('Produto cadastrado com sucesso!');
     end;
 
     procedure doPost;
@@ -346,17 +419,21 @@
     procedure doLoadIndexedDB;
     begin
       asm
-        var self = this;
-        DataSetLoadIndexedDB(self.productsDS, 'demo_products_v44', function(success, count) {
-          if (success) {
-            self.deltaJSONStr = (typeof self.productsDS.GetDeltaJSON === 'function') ? self.productsDS.GetDeltaJSON() : '[]';
-            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
-            ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!');
-          } else {
-            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
-            ShowToast('Nenhum dado encontrado no IndexedDB.');
-          }
-        });
+        var self = _this || this;
+        var ds = self.productsDS;
+        if (!ds) return;
+        if (typeof ds.LoadFromIndexedDB === 'function') {
+          ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
+            if (success) {
+              self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+              self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+              pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+            } else {
+              self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+              pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+            }
+          });
+        }
       end;
     end;
 
@@ -410,9 +487,7 @@
         ShowToast('Conexão restabelecida! (Online)');
         if Boolean(this['autoSyncActive']) then
         begin
-          asm
-            self.doApplyUpdates();
-          end;
+          this.doApplyUpdates();
         end;
       end
       else
@@ -437,25 +512,27 @@
     begin
       this['isSyncing'] := True;
       asm
-        var self = this;
+        var self = _this || this;
         var ds = self.productsDS;
         if (!ds || ds.ChangeCount === 0) {
           self.isSyncing = false;
-          ShowToast('Nenhuma alteração pendente para sincronizar.');
+          pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
           return;
         }
         self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
-        DataSetApplyUpdatesAsync(ds, '/api/dataset/apply', function(resp) {
-          self.isSyncing = false;
-          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
-          ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!');
-        }, function(err) {
-          self.isSyncing = false;
-          self.syncStatusMsg = 'Backend mORMot offline ou inalcançável. Deltas preservados no IndexedDB com segurança!';
-          ShowToast('Backend offline. Deltas guardados no IndexedDB!');
-        });
+        if (typeof ds.ApplyUpdates === 'function') {
+          ds.ApplyUpdates('/api/dataset/apply', function(resp) {
+            self.isSyncing = false;
+            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+            var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+            self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+            pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+          }, function(err) {
+            self.isSyncing = false;
+            self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
+            pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+          });
+        }
       end;
     end;
 </script>
@@ -504,10 +581,60 @@
   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }
   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }
   .dataset-nav-controls { display: flex; gap: 4px; }
-  .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+  .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+
+  .crud-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+  }
+  .crud-modal {
+    background: #ffffff;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 520px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+  }
+  .modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #94a3b8;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }
+  .modal-body { padding: 20px; }
+  .modal-footer {
+    padding: 14px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
 </style>

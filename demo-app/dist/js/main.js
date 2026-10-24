@@ -590,6 +590,18 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
     };
     return Result;
   };
+  this.TStringReplaceFlag = {"0": "rfReplaceAll", rfReplaceAll: 0, "1": "rfIgnoreCase", rfIgnoreCase: 1};
+  this.StringReplace = function (aOriginal, aSearch, aReplace, Flags) {
+    var Result = "";
+    var REFlags = "";
+    var REString = "";
+    REFlags = "";
+    if ($mod.TStringReplaceFlag.rfReplaceAll in Flags) REFlags = "g";
+    if ($mod.TStringReplaceFlag.rfIgnoreCase in Flags) REFlags = REFlags + "i";
+    REString = aSearch.replace(new RegExp($impl.RESpecials,"g"),"\\$1");
+    Result = aOriginal.replace(new RegExp(REString,REFlags),aReplace);
+    return Result;
+  };
   this.IntToStr = function (Value) {
     var Result = "";
     Result = "" + Value;
@@ -772,6 +784,63 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
       }, set: function (v) {
         Result = v;
       }},DS,TS);
+    return Result;
+  };
+  var TDecimalPart = {"0": "dpDigit", dpDigit: 0, "1": "dpSignificand", dpSignificand: 1, "2": "dpExp", dpExp: 2};
+  this.TryStrToFloat$3 = function (S, res, aSettings) {
+    var Result = false;
+    var J = undefined;
+    var I = 0;
+    var aStart = 0;
+    var Len = 0;
+    var N = "";
+    var p = 0;
+    Result = false;
+    N = S;
+    if (aSettings.ThousandSeparator !== "") N = $mod.StringReplace(N,aSettings.ThousandSeparator,"",rtl.createSet($mod.TStringReplaceFlag.rfReplaceAll));
+    if (aSettings.DecimalSeparator !== ".") N = $mod.StringReplace(N,aSettings.DecimalSeparator,".",{});
+    p = TDecimalPart.dpDigit;
+    I = 1;
+    aStart = 1;
+    Len = N.length;
+    while (I <= Len) {
+      var $tmp = N.charAt(I - 1);
+      if (($tmp === "+") || ($tmp === "-")) {
+        var $tmp1 = p;
+        if ($tmp1 === TDecimalPart.dpSignificand) {
+          return Result}
+         else if ($tmp1 === TDecimalPart.dpDigit) {
+          if (I > aStart) return Result}
+         else if ($tmp1 === TDecimalPart.dpExp) if (I > (aStart + 1)) return Result;
+      } else if (($tmp >= "0") && ($tmp <= "9")) {}
+      else if ($tmp === ".") {
+        if (p !== TDecimalPart.dpDigit) return Result;
+        p = TDecimalPart.dpSignificand;
+        aStart = I;
+      } else if (($tmp === "E") || ($tmp === "e")) {
+        if (p === TDecimalPart.dpExp) {
+          return Result}
+         else {
+          p = TDecimalPart.dpExp;
+          aStart = I;
+        };
+      } else {
+        return Result;
+      };
+      I += 1;
+    };
+    J = parseFloat(N);
+    Result = !isNaN(J);
+    if (Result) res.set(rtl.getNumber(J));
+    return Result;
+  };
+  this.StrToFloatDef = function (S, aDef) {
+    var Result = 0.0;
+    if (!$mod.TryStrToFloat$3(S,{get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},$mod.FormatSettings)) Result = aDef;
     return Result;
   };
   this.FormatFloat = function (Fmt, aValue) {
@@ -1365,6 +1434,7 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
       };
       return Result;
     };
+    $impl.RESpecials = "([\\$\\+\\[\\]\\(\\)\\\\\\.\\*\\^\\?\\|])";
     $impl.IntTryStrToInt = function (S, res, aSep) {
       var Result = false;
       var Radix = 10;
@@ -9167,10 +9237,10 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + "          <span v-else>🚀 Sincronizar (ApplyUpdates)</span>" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-else class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Resolução: <code>crServerWins</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -9184,6 +9254,11 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
       d["isSyncing"] = false;
       d["storageEngine"] = "IndexedDB";
+      d["isModalOpen"] = false;
+      d["formTitle"] = "";
+      d["formCategory"] = "Hardware";
+      d["formPrice"] = "99.90";
+      d["formStock"] = "10";
       Result = d;
       return Result;
     };
@@ -9208,33 +9283,54 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["doAppend"] = function (_this) {
+      _this["formTitle"] = "";
+      _this["formCategory"] = "Hardware";
+      _this["formPrice"] = "99.90";
+      _this["formStock"] = "10";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+    };
+    m["saveNewProduct"] = function (_this) {
       var ds = undefined;
+      var titleVal = "";
+      var categoryVal = "";
+      var priceVal = 0.0;
+      var stockVal = 0;
+      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
+      if (titleVal === "") {
+        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
+        return;
+      };
+      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
+      if (categoryVal === "") categoryVal = "Hardware";
+      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
+      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
       ds = _this["productsDS"];
       pas.BVPascalDX.DataSetAppend(ds);
-      var nextNum = 1;
-      if (ds && ds.FRecords && ds.FRecords.length) {
-        nextNum = ds.FRecords.length + 1;
+      var maxId = 0;
+      if (ds && ds.FRecords) {
+        for (var i = 0; i < ds.FRecords.length; i++) {
+          var curId = parseInt(ds.FRecords[i].id, 10);
+          if (!isNaN(curId) && curId > maxId) maxId = curId;
+        }
       }
+      var nextId = maxId + 1;
       if (ds && ds.Current) {
-        ds.Current.id = -nextNum;
-        ds.Current.title = 'Novo Produto ' + nextNum;
-        ds.Current.category = 'Hardware';
-        ds.Current.price = 99.90;
-        ds.Current.stock = 10;
+        ds.Current.id = nextId;
+        ds.Current.title = titleVal;
+        ds.Current.category = categoryVal;
+        ds.Current.price = priceVal;
+        ds.Current.stock = stockVal;
       }
       if (ds) ds.FModified = true;
       if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      pas.BVPascalDX.DataSetPost(ds);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      _this["syncStatusMsg"] = "Registro inserido em modo offline com ID provisório negativo.";
-      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha e salve (Post)",2500);
-      setTimeout(function() {
-        var el = document.querySelector('input[b-field="productsDS.title"]');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.focus();
-          if (el.select) el.select();
-        }
-      }, 100);
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
+      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
     };
     m["doPost"] = function (_this) {
       pas.BVPascalDX.DataSetPost(_this["productsDS"]);
@@ -9268,17 +9364,21 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
     };
     m["doLoadIndexedDB"] = function (_this) {
-      var self = this;
-      DataSetLoadIndexedDB(self.productsDS, 'demo_products_v44', function(success, count) {
-        if (success) {
-          self.deltaJSONStr = (typeof self.productsDS.GetDeltaJSON === 'function') ? self.productsDS.GetDeltaJSON() : '[]';
-          self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
-          ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!');
-        } else {
-          self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
-          ShowToast('Nenhum dado encontrado no IndexedDB.');
-        }
-      });
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds) return;
+      if (typeof ds.LoadFromIndexedDB === 'function') {
+        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
+          if (success) {
+            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+          } else {
+            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+          }
+        });
+      };
     };
     m["toggleAutoPersist"] = function (_this) {
       var newState = false;
@@ -9314,7 +9414,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
         _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
         pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
         if (!(_this["autoSyncActive"] == false)) {
-          self.doApplyUpdates();
+          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
         };
       } else {
         _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
@@ -9331,25 +9431,27 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m["doApplyUpdates"] = function (_this) {
       _this["isSyncing"] = true;
-      var self = this;
+      var self = _this || this;
       var ds = self.productsDS;
       if (!ds || ds.ChangeCount === 0) {
         self.isSyncing = false;
-        ShowToast('Nenhuma alteração pendente para sincronizar.');
+        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
         return;
       }
       self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
-      DataSetApplyUpdatesAsync(ds, '/api/dataset/apply', function(resp) {
-        self.isSyncing = false;
-        self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-        var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-        self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
-        ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!');
-      }, function(err) {
-        self.isSyncing = false;
-        self.syncStatusMsg = 'Backend mORMot offline ou inalcançável. Deltas preservados no IndexedDB com segurança!';
-        ShowToast('Backend offline. Deltas guardados no IndexedDB!');
-      });
+      if (typeof ds.ApplyUpdates === 'function') {
+        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
+          self.isSyncing = false;
+          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+        }, function(err) {
+          self.isSyncing = false;
+          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
+          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+        });
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -9367,6 +9469,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["autoSyncActive"] = true;
       _this["isOnline"] = true;
       _this["isSyncing"] = false;
+      _this["isModalOpen"] = false;
       _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
       var self = this;
@@ -9374,7 +9477,12 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
         window.addEventListener('online', function() {
           self.isOnline = true;
           self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
-          if (self.autoSyncActive) self.doApplyUpdates();
+          if (self.autoSyncActive) {
+            var ds = self.productsDS;
+            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
+              ds.ApplyUpdates('/api/dataset/apply');
+            }
+          }
         });
         window.addEventListener('offline', function() {
           self.isOnline = false;
