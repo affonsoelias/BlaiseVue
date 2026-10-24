@@ -26,6 +26,7 @@ BlaiseVue 4.0 - 4.4 represents an enterprise generational milestone, delivering 
 - **🔗 Relational Master-Detail CRUD & Multi-Database ORM (v4.4)**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
 - **🏎️ High-Performance Virtual Scrolling (v4.4)**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
 - **📦 Standalone Library Scaffolding & Packaging (v4.4)**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
+- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset (v4.4)**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
 - **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
 - **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. Features in-memory cursor navigation (`First`, `Next`, `Prior`, `Last`, `RecNo`), transactional buffering (`Append`, `Edit`, `Post`, `Cancel`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), two-way `b-field` directive, offline delta tracking (`FDelta`, `GetDeltaJSON`), and native `<bv-datagrid :dataset="myDS">` integration.
 - **📚 Official Package Catalog & Documentation (v4.1)**: Master catalog covering 53+ production components across `@blaise-ui`, `@blaise-charts`, `@blaise-ui-mobile`, and `@blaise-themes`.
@@ -101,8 +102,14 @@ bv list <c|v|t|lib>        # Lists project components, views, tests, or installe
 # === Package & Theme Management ===
 bv lib install <pkg|url>   # Installs official package (themes, icons, ui) or from URL
 bv lib remove <name>       # Removes an installed component or package from lib/
+bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
 bv theme list              # Lists all available installed themes
 bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
+
+# === Project Metadata & Licensing ===
+bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
+bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
+bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
 # === Mobile (Android & iOS via Capacitor) ===
 bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project

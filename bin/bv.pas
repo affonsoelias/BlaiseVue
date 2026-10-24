@@ -600,7 +600,8 @@ var
 
 begin
 
-  ForceDir(ExtractFilePath(FileName));
+  if ExtractFilePath(FileName) <> '' then
+    ForceDir(ExtractFilePath(FileName));
 
   SL := TStringList.Create;
 
@@ -779,6 +780,9 @@ procedure CmdTestE2E; forward;
 procedure CmdStudio; forward;
 
 procedure CmdCheck(const TargetFile: string); forward;
+procedure CmdLicense; forward;
+procedure CmdMeta; forward;
+procedure CmdReset; forward;
 
 
 
@@ -7507,6 +7511,946 @@ begin
 
 end;
 
+
+// =====================================================================
+//  PROJECT METADATA, LICENSING & CLEAN RESET SUITE
+// =====================================================================
+
+function LoadPackageJson(out JsonObj: TJSONObject): Boolean;
+var
+  Parser: TJSONParser;
+  Raw: string;
+  Data: TJSONData;
+begin
+  Result := False;
+  JsonObj := nil;
+  if not FileExists('package.json') then Exit;
+  Raw := ReadFileToString('package.json');
+  if Trim(Raw) = '' then Exit;
+  try
+    Parser := TJSONParser.Create(Raw, True);
+    try
+      Data := Parser.Parse;
+      if (Data <> nil) and (Data is TJSONObject) then
+      begin
+        JsonObj := TJSONObject(Data);
+        Result := True;
+      end
+      else if Data <> nil then
+        Data.Free;
+    finally
+      Parser.Free;
+    end;
+  except
+    Result := False;
+  end;
+end;
+
+procedure SavePackageJson(JsonObj: TJSONObject);
+var
+  Formatted: string;
+begin
+  if JsonObj = nil then Exit;
+  Formatted := JsonObj.FormatJSON;
+  WriteStringToFile('package.json', Formatted + #10);
+end;
+
+function GetJsonString(Obj: TJSONObject; const PropName, DefaultVal: string): string;
+var
+  Item: TJSONData;
+begin
+  Result := DefaultVal;
+  if Obj = nil then Exit;
+  Item := Obj.Find(PropName);
+  if (Item <> nil) and (Item.JSONType = jtString) then
+    Result := Item.AsString;
+end;
+
+procedure SetJsonString(Obj: TJSONObject; const PropName, Val: string);
+var
+  Idx: Integer;
+begin
+  if Obj = nil then Exit;
+  Idx := Obj.IndexOfName(PropName);
+  if Idx >= 0 then
+    Obj.Strings[PropName] := Val
+  else
+    Obj.Add(PropName, Val);
+end;
+
+procedure SyncAppVersionUnit(const AppName, AppVersion, AppAuthor, AppLicense: string);
+var
+  BuildDate, UnitPath, UnitContent: string;
+begin
+  BuildDate := FormatDateTime('yyyy-mm-dd', Now);
+  UnitPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
+
+  if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then Exit;
+
+  UnitContent :=
+    'unit uAppVersion;' + #10#10 +
+    '{$mode objfpc}{$H+}' + #10#10 +
+    'interface' + #10#10 +
+    'const' + #10 +
+    '  APP_NAME = ''' + StringReplace(AppName, '''', '''''', [rfReplaceAll]) + ''';' + #10 +
+    '  APP_VERSION = ''' + StringReplace(AppVersion, '''', '''''', [rfReplaceAll]) + ''';' + #10 +
+    '  APP_AUTHOR = ''' + StringReplace(AppAuthor, '''', '''''', [rfReplaceAll]) + ''';' + #10 +
+    '  APP_LICENSE = ''' + StringReplace(AppLicense, '''', '''''', [rfReplaceAll]) + ''';' + #10 +
+    '  APP_BUILD_DATE = ''' + BuildDate + ''';' + #10#10 +
+    'implementation' + #10#10 +
+    'end.' + #10;
+
+  WriteStringToFile(UnitPath, UnitContent);
+  WriteLn('  [+] Synchronized Pascal unit: src/uAppVersion.pas (v' + AppVersion + ')');
+end;
+
+function BumpSemVer(const CurrentVer, BumpType: string): string;
+var
+  Parts: TStringList;
+  Major, Minor, Patch: Integer;
+  PatchStr: string;
+  i: Integer;
+begin
+  Major := 1;
+  Minor := 0;
+  Patch := 0;
+  Parts := TStringList.Create;
+  try
+    Parts.Delimiter := '.';
+    Parts.StrictDelimiter := True;
+    Parts.DelimitedText := CurrentVer;
+    if Parts.Count >= 1 then Major := StrToIntDef(Parts[0], 1);
+    if Parts.Count >= 2 then Minor := StrToIntDef(Parts[1], 0);
+    if Parts.Count >= 3 then
+    begin
+      PatchStr := Parts[2];
+      for i := 1 to Length(PatchStr) do
+        if not (PatchStr[i] in ['0'..'9']) then
+        begin
+          PatchStr := Copy(PatchStr, 1, i - 1);
+          Break;
+        end;
+      Patch := StrToIntDef(PatchStr, 0);
+    end;
+  finally
+    Parts.Free;
+  end;
+
+  if BumpType = 'major' then
+  begin
+    Inc(Major);
+    Minor := 0;
+    Patch := 0;
+  end
+  else if BumpType = 'minor' then
+  begin
+    Inc(Minor);
+    Patch := 0;
+  end
+  else
+  begin
+    Inc(Patch);
+  end;
+
+  Result := IntToStr(Major) + '.' + IntToStr(Minor) + '.' + IntToStr(Patch);
+end;
+
+function GetLicenseDetails(const Key: string; out CanonId, Title, Body: string; const Author, Year: string): Boolean;
+var
+  NormKey, YearStr, AuthorStr: string;
+begin
+  Result := True;
+  NormKey := LowerCase(Trim(Key));
+  if Year <> '' then YearStr := Year else YearStr := FormatDateTime('yyyy', Now);
+  if Author <> '' then AuthorStr := Author else AuthorStr := 'BlaiseVue Developer';
+
+  if (NormKey = 'mit') then
+  begin
+    CanonId := 'MIT';
+    Title := 'MIT License';
+    Body :=
+      'MIT License' + #10#10 +
+      'Copyright (c) ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'Permission is hereby granted, free of charge, to any person obtaining a copy' + #10 +
+      'of this software and associated documentation files (the "Software"), to deal' + #10 +
+      'in the Software without restriction, including without limitation the rights' + #10 +
+      'to use, copy, modify, merge, publish, distribute, sublicense, and/or sell' + #10 +
+      'copies of the Software, and to permit persons to whom the Software is' + #10 +
+      'furnished to do so, subject to the following conditions:' + #10#10 +
+      'The above copyright notice and this permission notice shall be included in all' + #10 +
+      'copies or substantial portions of the Software.' + #10#10 +
+      'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR' + #10 +
+      'IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,' + #10 +
+      'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE' + #10 +
+      'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER' + #10 +
+      'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,' + #10 +
+      'OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE' + #10 +
+      'SOFTWARE.' + #10;
+  end
+  else if (NormKey = 'apache') or (NormKey = 'apache-2.0') or (NormKey = 'apache2') then
+  begin
+    CanonId := 'Apache-2.0';
+    Title := 'Apache License 2.0';
+    Body :=
+      'Apache License' + #10 +
+      'Version 2.0, January 2004' + #10 +
+      'http://www.apache.org/licenses/' + #10#10 +
+      'Copyright ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION' + #10#10 +
+      'Licensed under the Apache License, Version 2.0 (the "License");' + #10 +
+      'you may not use this file except in compliance with the License.' + #10 +
+      'You may obtain a copy of the License at' + #10#10 +
+      '    http://www.apache.org/licenses/LICENSE-2.0' + #10#10 +
+      'Unless required by applicable law or agreed to in writing, software' + #10 +
+      'distributed under the License is distributed on an "AS IS" BASIS,' + #10 +
+      'WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' + #10 +
+      'See the License for the specific language governing permissions and' + #10 +
+      'limitations under the License.' + #10;
+  end
+  else if (NormKey = 'lgpl') or (NormKey = 'lgpl-3.0') or (NormKey = 'lgpl3') then
+  begin
+    CanonId := 'LGPL-3.0';
+    Title := 'GNU Lesser General Public License v3.0';
+    Body :=
+      'GNU LESSER GENERAL PUBLIC LICENSE' + #10 +
+      'Version 3, 29 June 2007' + #10#10 +
+      'Copyright (C) ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'This program is free software: you can redistribute it and/or modify' + #10 +
+      'it under the terms of the GNU Lesser General Public License as published by' + #10 +
+      'the Free Software Foundation, either version 3 of the License, or' + #10 +
+      '(at your option) any later version.' + #10#10 +
+      'This program is distributed in the hope that it will be useful,' + #10 +
+      'but WITHOUT ANY WARRANTY; without even the implied warranty of' + #10 +
+      'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the' + #10 +
+      'GNU Lesser General Public License for more details.' + #10;
+  end
+  else if (NormKey = 'gpl') or (NormKey = 'gpl-3.0') or (NormKey = 'gpl3') then
+  begin
+    CanonId := 'GPL-3.0';
+    Title := 'GNU General Public License v3.0';
+    Body :=
+      'GNU GENERAL PUBLIC LICENSE' + #10 +
+      'Version 3, 29 June 2007' + #10#10 +
+      'Copyright (C) ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'This program is free software: you can redistribute it and/or modify' + #10 +
+      'it under the terms of the GNU General Public License as published by' + #10 +
+      'the Free Software Foundation, either version 3 of the License, or' + #10 +
+      '(at your option) any later version.' + #10#10 +
+      'This program is distributed in the hope that it will be useful,' + #10 +
+      'but WITHOUT ANY WARRANTY; without even the implied warranty of' + #10 +
+      'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the' + #10 +
+      'GNU General Public License for more details.' + #10;
+  end
+  else if (NormKey = 'bsd') or (NormKey = 'bsd-3') or (NormKey = 'bsd-3-clause') then
+  begin
+    CanonId := 'BSD-3-Clause';
+    Title := 'BSD 3-Clause License';
+    Body :=
+      'BSD 3-Clause License' + #10#10 +
+      'Copyright (c) ' + YearStr + ', ' + AuthorStr + #10 +
+      'All rights reserved.' + #10#10 +
+      'Redistribution and use in source and binary forms, with or without' + #10 +
+      'modification, are permitted provided that the following conditions are met:' + #10#10 +
+      '1. Redistributions of source code must retain the above copyright notice, this' + #10 +
+      '   list of conditions and the following disclaimer.' + #10#10 +
+      '2. Redistributions in binary form must reproduce the above copyright notice,' + #10 +
+      '   this list of conditions and the following disclaimer in the documentation' + #10 +
+      '   and/or other materials provided with the distribution.' + #10#10 +
+      '3. Neither the name of the copyright holder nor the names of its' + #10 +
+      '   contributors may be used to endorse or promote products derived from' + #10 +
+      '   this software without specific prior written permission.' + #10#10 +
+      'THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"' + #10 +
+      'AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE' + #10 +
+      'IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE' + #10 +
+      'DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE' + #10 +
+      'FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL' + #10 +
+      'DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR' + #10 +
+      'SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER' + #10 +
+      'CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,' + #10 +
+      'OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE' + #10 +
+      'OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.' + #10;
+  end
+  else if (NormKey = 'commercial') or (NormKey = 'proprietary') then
+  begin
+    CanonId := 'Commercial';
+    Title := 'Commercial / Proprietary License';
+    Body :=
+      'COMMERCIAL / PROPRIETARY SOFTWARE LICENSE AGREEMENT' + #10#10 +
+      'Copyright (c) ' + YearStr + ' ' + AuthorStr + '. All rights reserved.' + #10#10 +
+      'This software and associated documentation files (the "Software") are proprietary' + #10 +
+      'and confidential. Unauthorized copying of this file, via any medium, is strictly' + #10 +
+      'prohibited without prior written permission from the copyright owner.' + #10;
+  end
+  else if (NormKey = 'unlicense') or (NormKey = 'unlicensed') or (NormKey = 'none') then
+  begin
+    CanonId := 'UNLICENSED';
+    Title := 'The Unlicense (Public Domain)';
+    Body :=
+      'This is free and unencumbered software released into the public domain.' + #10#10 +
+      'Anyone is free to copy, modify, publish, use, compile, sell, or' + #10 +
+      'distribute this software, either in source code form or as a compiled' + #10 +
+      'binary, for any purpose, commercial or non-commercial, and by any means.' + #10#10 +
+      'In jurisdictions that recognize copyright laws, the author or authors' + #10 +
+      'of this software dedicate any and all copyright interest in the' + #10 +
+      'software to the public domain. We make this dedication for the benefit' + #10 +
+      'of the public at large and to the detriment of our heirs and' + #10 +
+      'successors. We intend this dedication to be an overt act of' + #10 +
+      'relinquishment in perpetuity of all present and future rights to this' + #10 +
+      'software under copyright law.' + #10#10 +
+      'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,' + #10 +
+      'EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF' + #10 +
+      'MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.' + #10;
+  end
+  else
+    Result := False;
+end;
+
+function IsFrameworkCoreDemoApp: Boolean;
+var
+  CurDir, ParentDir: string;
+begin
+  Result := False;
+  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+
+  // 1. Inside demo-app child directory of BlaiseVue framework
+  if SameText(ExtractFileName(CurDir), 'demo-app') then
+  begin
+    ParentDir := ExtractFilePath(CurDir);
+    if FileExists(ParentDir + 'bin' + DirectorySeparator + 'bv.pas') or
+       FileExists(ParentDir + 'core' + DirectorySeparator + 'BVCompiler.pas') or
+       FileExists(ParentDir + 'packages' + DirectorySeparator + 'blaise-charts' + DirectorySeparator + 'BVChart.bv') then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+
+  // 2. In root BlaiseVue repository
+  if FileExists('bin' + DirectorySeparator + 'bv.pas') and DirectoryExists('demo-app') then
+  begin
+    Result := True;
+    Exit;
+  end;
+end;
+
+procedure CmdLicense;
+var
+  SubCmd, LicType, AuthorArg, YearArg: string;
+  CanonId, LicTitle, LicBody: string;
+  PkgJson: TJSONObject;
+  AppName, AppVer, AppAuth, CurLic, LicFileContent: string;
+  Lines: TStringList;
+  i, MaxPreview: Integer;
+begin
+  SubCmd := '';
+  LicType := '';
+  AuthorArg := '';
+  YearArg := '';
+
+  if ParamCount >= 2 then
+    SubCmd := LowerCase(Trim(ParamStr(2)));
+
+  i := 3;
+  while i <= ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--author') or (LowerCase(ParamStr(i)) = '-a') then
+    begin
+      if i + 1 <= ParamCount then
+      begin
+        AuthorArg := ParamStr(i + 1);
+        Inc(i);
+      end;
+    end
+    else if Copy(LowerCase(ParamStr(i)), 1, 9) = '--author=' then
+      AuthorArg := Copy(ParamStr(i), 10, MaxInt)
+    else if (LowerCase(ParamStr(i)) = '--year') or (LowerCase(ParamStr(i)) = '-y') then
+    begin
+      if i + 1 <= ParamCount then
+      begin
+        YearArg := ParamStr(i + 1);
+        Inc(i);
+      end;
+    end
+    else if Copy(LowerCase(ParamStr(i)), 1, 7) = '--year=' then
+      YearArg := Copy(ParamStr(i), 8, MaxInt)
+    else if LicType = '' then
+      LicType := ParamStr(i);
+    Inc(i);
+  end;
+
+  if (SubCmd = 'help') or (SubCmd = '--help') or (SubCmd = '-h') then
+  begin
+    WriteLn('');
+    WriteLn('  BlaiseVue License Suite');
+    WriteLn('  =======================');
+    WriteLn('  Usage:');
+    WriteLn('    bv license list                  List all supported license templates');
+    WriteLn('    bv license show                  Display current project license and LICENSE preview');
+    WriteLn('    bv license set <type> [options]  Apply license to project and update package.json');
+    WriteLn('    bv license <type> [options]      Shorthand for "bv license set <type>"');
+    WriteLn('');
+    WriteLn('  Options:');
+    WriteLn('    --author, -a <name>  Author name or organization');
+    WriteLn('    --year, -y <year>    Copyright year (default: current year)');
+    WriteLn('');
+    WriteLn('  Supported types: mit, apache-2.0, lgpl-3.0, gpl-3.0, bsd-3, commercial, unlicense');
+    WriteLn('');
+    Exit;
+  end;
+
+  if SubCmd = 'list' then
+  begin
+    WriteLn('');
+    WriteLn('  Available BlaiseVue License Templates:');
+    WriteLn('  --------------------------------------');
+    WriteLn('  mit          - MIT License (Permissive, open-source community standard)');
+    WriteLn('  apache-2.0   - Apache License 2.0 (Permissive with explicit patent grant)');
+    WriteLn('  lgpl-3.0     - GNU Lesser General Public License v3.0 (Pascal library standard)');
+    WriteLn('  gpl-3.0      - GNU General Public License v3.0 (Strong copyleft)');
+    WriteLn('  bsd-3        - BSD 3-Clause License (Permissive with attribution clause)');
+    WriteLn('  commercial   - Commercial / Proprietary (All rights reserved)');
+    WriteLn('  unlicense    - The Unlicense (Public Domain dedication)');
+    WriteLn('');
+    Exit;
+  end;
+
+  if (SubCmd = 'show') or (SubCmd = '') then
+  begin
+    CurLic := 'None';
+    if LoadPackageJson(PkgJson) then
+    begin
+      CurLic := GetJsonString(PkgJson, 'license', 'None');
+      PkgJson.Free;
+    end;
+    WriteLn('');
+    WriteLn('  Project License Status');
+    WriteLn('  ----------------------');
+    WriteLn('  Identifier:   ' + CurLic);
+    if FileExists('LICENSE') then
+    begin
+      WriteLn('  LICENSE File: Found in project root');
+      WriteLn('');
+      WriteLn('--- LICENSE Header Preview ---');
+      LicFileContent := ReadFileToString('LICENSE');
+      Lines := TStringList.Create;
+      try
+        Lines.Text := LicFileContent;
+        MaxPreview := Lines.Count - 1;
+        if MaxPreview > 8 then MaxPreview := 8;
+        for i := 0 to MaxPreview do
+          WriteLn('  ', Lines[i]);
+      finally
+        Lines.Free;
+      end;
+      WriteLn('------------------------------');
+    end
+    else
+      WriteLn('  LICENSE File: Not found in project root (run "bv license set <type>" to generate)');
+    WriteLn('');
+    Exit;
+  end;
+
+  if SubCmd = 'set' then
+  begin
+    if LicType = '' then
+    begin
+      WriteLn('ERROR: License type is required. Example: bv license set mit');
+      WriteLn('Run "bv license list" to view supported license templates.');
+      Halt(1);
+    end;
+  end
+  else
+  begin
+    LicType := SubCmd;
+  end;
+
+  AppName := ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir));
+  AppVer := '1.0.0';
+  AppAuth := AuthorArg;
+
+  if LoadPackageJson(PkgJson) then
+  begin
+    AppName := GetJsonString(PkgJson, 'name', AppName);
+    AppVer := GetJsonString(PkgJson, 'version', AppVer);
+    if AppAuth = '' then
+      AppAuth := GetJsonString(PkgJson, 'author', '');
+  end;
+
+  if AppAuth = '' then
+  begin
+    AppAuth := GetEnvironmentVariable('USERNAME');
+    if AppAuth = '' then AppAuth := GetEnvironmentVariable('USER');
+    if AppAuth = '' then AppAuth := 'BlaiseVue Developer';
+  end;
+
+  if not GetLicenseDetails(LicType, CanonId, LicTitle, LicBody, AppAuth, YearArg) then
+  begin
+    WriteLn('ERROR: Unrecognized license type "' + LicType + '".');
+    WriteLn('Run "bv license list" to view supported license templates.');
+    if PkgJson <> nil then PkgJson.Free;
+    Halt(1);
+  end;
+
+  WriteStringToFile(GetCurrentDir + DirectorySeparator + 'LICENSE', LicBody);
+  WriteLn('  [+] Created LICENSE file (' + LicTitle + ')');
+
+  if PkgJson = nil then
+    PkgJson := TJSONObject.Create;
+
+  SetJsonString(PkgJson, 'license', CanonId);
+  if AuthorArg <> '' then
+    SetJsonString(PkgJson, 'author', AuthorArg)
+  else if GetJsonString(PkgJson, 'author', '') = '' then
+    SetJsonString(PkgJson, 'author', AppAuth);
+
+  SavePackageJson(PkgJson);
+  WriteLn('  [+] Updated package.json (license: "' + CanonId + '", author: "' + AppAuth + '")');
+  PkgJson.Free;
+
+  SyncAppVersionUnit(AppName, AppVer, AppAuth, CanonId);
+  WriteLn('  [+] License applied successfully: ' + CanonId);
+end;
+
+procedure CmdMeta;
+var
+  SubCmd, FieldArg, ValueArg: string;
+  PkgJson: TJSONObject;
+  NameVal, VerVal, AuthVal, LicVal, DescVal, OldVer, NewVer: string;
+  i: Integer;
+begin
+  SubCmd := '';
+  FieldArg := '';
+  ValueArg := '';
+
+  if ParamCount >= 2 then
+    SubCmd := LowerCase(Trim(ParamStr(2)));
+  if ParamCount >= 3 then
+    FieldArg := LowerCase(Trim(ParamStr(3)));
+  if ParamCount >= 4 then
+  begin
+    ValueArg := ParamStr(4);
+    for i := 5 to ParamCount do
+      ValueArg := ValueArg + ' ' + ParamStr(i);
+  end;
+
+  if (SubCmd = '') or (SubCmd = 'show') then
+  begin
+    if not LoadPackageJson(PkgJson) then
+    begin
+      WriteLn('No package.json found in current directory.');
+      WriteLn('Run "bv meta init" to initialize project metadata.');
+      Exit;
+    end;
+    try
+      NameVal := GetJsonString(PkgJson, 'name', 'unnamed');
+      VerVal := GetJsonString(PkgJson, 'version', '1.0.0');
+      AuthVal := GetJsonString(PkgJson, 'author', 'Not specified');
+      LicVal := GetJsonString(PkgJson, 'license', 'UNLICENSED');
+      DescVal := GetJsonString(PkgJson, 'description', '');
+
+      WriteLn('');
+      WriteLn('  BlaiseVue Project Metadata');
+      WriteLn('  ==========================');
+      WriteLn('  Name:        ' + NameVal);
+      WriteLn('  Version:     ' + VerVal);
+      WriteLn('  Author:      ' + AuthVal);
+      WriteLn('  License:     ' + LicVal);
+      if DescVal <> '' then
+        WriteLn('  Description: ' + DescVal);
+      if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas') then
+        WriteLn('  Pascal Unit: src/uAppVersion.pas (synchronized)')
+      else
+        WriteLn('  Pascal Unit: None (run "bv meta init" to generate)');
+      WriteLn('');
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
+  if SubCmd = 'init' then
+  begin
+    if not LoadPackageJson(PkgJson) then
+      PkgJson := TJSONObject.Create;
+    try
+      NameVal := GetJsonString(PkgJson, 'name', ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir)));
+      VerVal := GetJsonString(PkgJson, 'version', '1.0.0');
+      AuthVal := GetJsonString(PkgJson, 'author', 'BlaiseVue Developer');
+      LicVal := GetJsonString(PkgJson, 'license', 'MIT');
+      DescVal := GetJsonString(PkgJson, 'description', 'BlaiseVue Application');
+
+      SetJsonString(PkgJson, 'name', NameVal);
+      SetJsonString(PkgJson, 'version', VerVal);
+      SetJsonString(PkgJson, 'author', AuthVal);
+      SetJsonString(PkgJson, 'license', LicVal);
+      SetJsonString(PkgJson, 'description', DescVal);
+
+      SavePackageJson(PkgJson);
+      WriteLn('  [+] Initialized package.json metadata');
+      SyncAppVersionUnit(NameVal, VerVal, AuthVal, LicVal);
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
+  if SubCmd = 'get' then
+  begin
+    if FieldArg = '' then
+    begin
+      WriteLn('Usage: bv meta get <name|version|author|license|description>');
+      Halt(1);
+    end;
+    if not LoadPackageJson(PkgJson) then
+    begin
+      WriteLn('ERROR: package.json not found in current directory.');
+      Halt(1);
+    end;
+    try
+      WriteLn(GetJsonString(PkgJson, FieldArg, ''));
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
+  if SubCmd = 'set' then
+  begin
+    if (FieldArg = '') or (ValueArg = '') then
+    begin
+      WriteLn('Usage: bv meta set <name|version|author|license|description> <value>');
+      Halt(1);
+    end;
+    if not LoadPackageJson(PkgJson) then
+      PkgJson := TJSONObject.Create;
+    try
+      SetJsonString(PkgJson, FieldArg, ValueArg);
+      SavePackageJson(PkgJson);
+      WriteLn('  [+] Updated "' + FieldArg + '" to "' + ValueArg + '" in package.json');
+
+      NameVal := GetJsonString(PkgJson, 'name', ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir)));
+      VerVal := GetJsonString(PkgJson, 'version', '1.0.0');
+      AuthVal := GetJsonString(PkgJson, 'author', '');
+      LicVal := GetJsonString(PkgJson, 'license', 'MIT');
+      SyncAppVersionUnit(NameVal, VerVal, AuthVal, LicVal);
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
+  if SubCmd = 'bump' then
+  begin
+    if (FieldArg <> 'patch') and (FieldArg <> 'minor') and (FieldArg <> 'major') then
+    begin
+      WriteLn('Usage: bv meta bump <patch|minor|major>');
+      Halt(1);
+    end;
+    if not LoadPackageJson(PkgJson) then
+    begin
+      WriteLn('ERROR: package.json not found in current directory.');
+      Halt(1);
+    end;
+    try
+      OldVer := GetJsonString(PkgJson, 'version', '1.0.0');
+      NewVer := BumpSemVer(OldVer, FieldArg);
+      SetJsonString(PkgJson, 'version', NewVer);
+      SavePackageJson(PkgJson);
+      WriteLn('  [+] Version bumped: ' + OldVer + ' -> ' + NewVer + ' (' + FieldArg + ')');
+
+      NameVal := GetJsonString(PkgJson, 'name', ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir)));
+      AuthVal := GetJsonString(PkgJson, 'author', '');
+      LicVal := GetJsonString(PkgJson, 'license', 'MIT');
+      SyncAppVersionUnit(NameVal, NewVer, AuthVal, LicVal);
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
+  WriteLn('Unknown meta subcommand: "' + SubCmd + '".');
+  WriteLn('Usage: bv meta [show|init|get <field>|set <field> <val>|bump <patch|minor|major>]');
+  Halt(1);
+end;
+
+procedure CmdReset;
+var
+  BareFlag, ForceFlag, NoBackupFlag: Boolean;
+  Answer, BackupDir, BaseDir, ProjName, AppVer, AppAuth, AppLic: string;
+  HomeBvContent, AboutBvContent, AppBvContent, HomeTestContent, AboutTestContent: string;
+  PkgJson: TJSONObject;
+  i: Integer;
+begin
+  BareFlag := False;
+  ForceFlag := False;
+  NoBackupFlag := False;
+
+  for i := 2 to ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--bare') or (LowerCase(ParamStr(i)) = '-b') then
+      BareFlag := True
+    else if (LowerCase(ParamStr(i)) = '--force') or (LowerCase(ParamStr(i)) = '-f') or (LowerCase(ParamStr(i)) = '-y') then
+      ForceFlag := True
+    else if (LowerCase(ParamStr(i)) = '--no-backup') then
+      NoBackupFlag := True;
+  end;
+
+  // SAFETY GUARD #1: ABSOLUTE PROTECTION FOR FRAMEWORK REPO AND DEMO-APP
+  if IsFrameworkCoreDemoApp then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] SAFETY GUARD ACTIVE: OPERATION REFUSED!');
+    WriteLn('  The framework repository ("' + GetCurrentDir + '") is protected.');
+    WriteLn('  "bv reset" cannot be executed in the framework core repository or its demo-app.');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  // SAFETY GUARD #2: VALIDATE RECOGNIZED PROJECT
+  if not (FileExists('package.json') or DirectoryExists('src')) then
+  begin
+    WriteLn('ERROR: Current directory is not a recognized BlaiseVue project.');
+    Halt(1);
+  end;
+
+  // CONFIRMATION PROMPT
+  if not ForceFlag then
+  begin
+    WriteLn('============================================================');
+    WriteLn('  BlaiseVue Project Reset');
+    WriteLn('============================================================');
+    WriteLn('WARNING: This will reset the project to a clean blank slate.');
+    WriteLn('All demo views, components, and demo tests will be removed.');
+    if not NoBackupFlag then
+      WriteLn('A full backup of src/ and tests/ will be created in .bv-backup/')
+    else
+      WriteLn('WARNING: --no-backup was specified. No backup will be made!');
+    WriteLn('');
+    Write('Are you sure you want to proceed? [y/N]: ');
+    Answer := '';
+    try
+      ReadLn(Answer);
+    except
+      Answer := 'n';
+    end;
+    if (LowerCase(Trim(Answer)) <> 'y') and (LowerCase(Trim(Answer)) <> 'yes') then
+    begin
+      WriteLn('Reset aborted by user.');
+      Exit;
+    end;
+  end;
+
+  BaseDir := GetCurrentDir + DirectorySeparator;
+
+  // 1. BACKUP
+  if not NoBackupFlag then
+  begin
+    BackupDir := BaseDir + '.bv-backup' + DirectorySeparator + 'backup_' + FormatDateTime('yyyymmdd_hhnnss', Now);
+    ForceDir(BackupDir);
+    if DirectoryExists(BaseDir + 'src') then
+      CopyDir(BaseDir + 'src', BackupDir + DirectorySeparator + 'src', []);
+    if DirectoryExists(BaseDir + 'tests') then
+      CopyDir(BaseDir + 'tests', BackupDir + DirectorySeparator + 'tests', []);
+    WriteLn('  [+] Created backup in .bv-backup/');
+  end;
+
+  // 2. CLEAN VIEWS
+  if DirectoryExists(BaseDir + 'src' + DirectorySeparator + 'views') then
+    DeleteDir(BaseDir + 'src' + DirectorySeparator + 'views');
+  ForceDir(BaseDir + 'src' + DirectorySeparator + 'views');
+
+  // 3. CLEAN COMPONENTS
+  if DirectoryExists(BaseDir + 'src' + DirectorySeparator + 'components') then
+    DeleteDir(BaseDir + 'src' + DirectorySeparator + 'components');
+  ForceDir(BaseDir + 'src' + DirectorySeparator + 'components');
+
+  // 4. CLEAN TESTS
+  if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'components') then
+    DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'components');
+  ForceDir(BaseDir + 'tests' + DirectorySeparator + 'components');
+
+  if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'views') then
+    DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'views');
+  ForceDir(BaseDir + 'tests' + DirectorySeparator + 'views');
+
+  if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'framework') then
+    DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'framework');
+
+  // 5. SCAFFOLD CLEAN FILES
+  ProjName := ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir));
+  AppVer := '1.0.0';
+  AppAuth := 'BlaiseVue Developer';
+  AppLic := 'MIT';
+
+  if LoadPackageJson(PkgJson) then
+  begin
+    ProjName := GetJsonString(PkgJson, 'name', ProjName);
+    AppVer := GetJsonString(PkgJson, 'version', AppVer);
+    AppAuth := GetJsonString(PkgJson, 'author', AppAuth);
+    AppLic := GetJsonString(PkgJson, 'license', AppLic);
+    PkgJson.Free;
+  end;
+
+  // Home.bv
+  HomeBvContent :=
+    '<template>' + #10 +
+    '  <div class="home-view" style="padding: 32px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">' + #10 +
+    '    <h1 style="color: #2c3e50; margin-bottom: 8px;">{{ title }}</h1>' + #10 +
+    '    <p style="color: #64748b; font-size: 16px; margin-bottom: 24px;">{{ description }}</p>' + #10 +
+    '    <div style="display: flex; gap: 12px;">' + #10 +
+    '      <button class="btn btn-primary" style="background: #42b883; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;" @click="handleAction">' + #10 +
+    '        Get Started' + #10 +
+    '      </button>' + #10 +
+    '    </div>' + #10 +
+    '  </div>' + #10 +
+    '</template>' + #10#10 +
+    '<script>' + #10 +
+    '  data:' + #10 +
+    '    title: string = ''Welcome to ' + ProjName + ''';' + #10 +
+    '    description: string = ''Your clean BlaiseVue project is ready. Start building components and views in Pascal!'';' + #10#10 +
+    '  methods:' + #10 +
+    '    procedure handleAction;' + #10 +
+    '    begin' + #10 +
+    '      window.alert(''Welcome to ' + ProjName + '!'');' + #10 +
+    '    end;' + #10 +
+    '</script>' + #10#10 +
+    '<style>' + #10 +
+    '  .home-view { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' + #10 +
+    '</style>' + #10;
+  WriteStringToFile(BaseDir + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv', HomeBvContent);
+
+  // Home.test.pas
+  HomeTestContent :=
+    'program home_view_test;' + #10#10 +
+    '{$mode objfpc}' + #10#10 +
+    'uses JS, Web, BVTestUtils, uHome;' + #10#10 +
+    'var' + #10 +
+    '  Wrapper: TWrapper;' + #10#10 +
+    'begin' + #10 +
+    '  Register_uHome;' + #10#10 +
+    '  Describe(''View: Home'', procedure' + #10 +
+    '    begin' + #10 +
+    '       It(''deve renderizar a pagina inicial sem erros'', procedure' + #10 +
+    '         begin' + #10 +
+    '            Wrapper := Mount(''home-page'');' + #10 +
+    '            Expect(Wrapper.Element <> nil).ToBe(True);' + #10 +
+    '         end);' + #10 +
+    '    end);' + #10 +
+    'end.' + #10;
+  WriteStringToFile(BaseDir + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.test.pas', HomeTestContent);
+
+  if not BareFlag then
+  begin
+    // About.bv
+    AboutBvContent :=
+      '<template>' + #10 +
+      '  <div class="about-view" style="padding: 32px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">' + #10 +
+      '    <h2 style="color: #2c3e50; margin-bottom: 8px;">About ' + ProjName + '</h2>' + #10 +
+      '    <p style="color: #64748b; font-size: 15px; line-height: 1.6;">' + #10 +
+      '      This application is powered by the BlaiseVue Universal Pascal Framework.' + #10 +
+      '    </p>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10#10 +
+      '<script>' + #10 +
+      '  data:' + #10 +
+      '    pageTitle: string = ''About'';' + #10 +
+      '</script>' + #10;
+    WriteStringToFile(BaseDir + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv', AboutBvContent);
+
+    // About.test.pas
+    AboutTestContent :=
+      'program about_view_test;' + #10#10 +
+      '{$mode objfpc}' + #10#10 +
+      'uses JS, Web, BVTestUtils, uAbout;' + #10#10 +
+      'var' + #10 +
+      '  Wrapper: TWrapper;' + #10#10 +
+      'begin' + #10 +
+      '  Register_uAbout;' + #10#10 +
+      '  Describe(''View: About'', procedure' + #10 +
+      '    begin' + #10 +
+      '       It(''deve renderizar a pagina Sobre sem erros'', procedure' + #10 +
+      '         begin' + #10 +
+      '            Wrapper := Mount(''about-page'');' + #10 +
+      '            Expect(Wrapper.Element <> nil).ToBe(True);' + #10 +
+      '         end);' + #10 +
+      '    end);' + #10 +
+      'end.' + #10;
+    WriteStringToFile(BaseDir + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + 'About.test.pas', AboutTestContent);
+
+    // app.bv with nav
+    AppBvContent :=
+      '<template>' + #10 +
+      '  <div class="bv-clean-app">' + #10 +
+      '    <nav style="background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;">' + #10 +
+      '      <div style="display: flex; align-items: center; gap: 12px;">' + #10 +
+      '        <strong style="color: #42b883; font-size: 18px;">{{ appTitle }}</strong>' + #10 +
+      '        <span style="font-size: 12px; background: rgba(66, 184, 131, 0.2); color: #42b883; padding: 2px 8px; border-radius: 12px;">v{{ appVersion }}</span>' + #10 +
+      '      </div>' + #10 +
+      '      <div style="display: flex; gap: 16px;">' + #10 +
+      '        <a href="#/" style="color: #ecf0f1; text-decoration: none; font-weight: 500;">Home</a>' + #10 +
+      '        <a href="#/about" style="color: #ecf0f1; text-decoration: none; font-weight: 500;">About</a>' + #10 +
+      '      </div>' + #10 +
+      '    </nav>' + #10 +
+      '    <div style="max-width: 960px; margin: 32px auto; padding: 0 16px;">' + #10 +
+      '      <router-view></router-view>' + #10 +
+      '    </div>' + #10 +
+      '    <footer style="text-align: center; padding: 24px 0; color: #94a3b8; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 48px;">' + #10 +
+      '      Powered by BlaiseVue & Free Pascal' + #10 +
+      '    </footer>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10#10 +
+      '<script>' + #10 +
+      '  data:' + #10 +
+      '    appTitle: string = ''' + ProjName + ''';' + #10 +
+      '    appVersion: string = ''' + AppVer + ''';' + #10#10 +
+      '  router:' + #10 +
+      '    routes:' + #10 +
+      '      ''/'': ''home-page'';' + #10 +
+      '      ''/about'': ''about-page'';' + #10 +
+      '</script>' + #10#10 +
+      '<style>' + #10 +
+      '  body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' + #10 +
+      '</style>' + #10;
+  end
+  else
+  begin
+    // Bare app.bv
+    AppBvContent :=
+      '<template>' + #10 +
+      '  <div class="bv-bare-app">' + #10 +
+      '    <router-view></router-view>' + #10 +
+      '  </div>' + #10 +
+      '</template>' + #10#10 +
+      '<script>' + #10 +
+      '  data:' + #10 +
+      '    appTitle: string = ''' + ProjName + ''';' + #10#10 +
+      '  router:' + #10 +
+      '    routes:' + #10 +
+      '      ''/'': ''home-page'';' + #10 +
+      '</script>' + #10;
+  end;
+  WriteStringToFile(BaseDir + 'src' + DirectorySeparator + 'app.bv', AppBvContent);
+
+  // 6. SYNC src/uAppVersion.pas
+  SyncAppVersionUnit(ProjName, AppVer, AppAuth, AppLic);
+
+  WriteLn('');
+  WriteLn('============================================================');
+  WriteLn('  BlaiseVue Project Reset Complete!');
+  WriteLn('============================================================');
+  WriteLn('  [+] Clean application router: src/app.bv');
+  WriteLn('  [+] Clean starter views: src/views/Home.bv' + IfThen(BareFlag, '', ', src/views/About.bv'));
+  WriteLn('  [+] Clean unit test suite: tests/views/Home.test.pas' + IfThen(BareFlag, '', ', About.test.pas'));
+  WriteLn('  [+] Synchronized Pascal unit: src/uAppVersion.pas');
+  WriteLn('');
+  WriteLn('Next steps:');
+  WriteLn('  bv test        Run test suite');
+  WriteLn('  bv run dev     Start development server');
+  WriteLn('============================================================');
+  WriteLn('');
+end;
 
 
 // =====================================================================
@@ -21065,6 +22009,9 @@ begin
     WriteLn('    bv s <name>            Runs setup script for a component in lib/');
 
     WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
+    WriteLn('    bv license [list|show|set <type>] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
+    WriteLn('    bv meta [show|get|set|bump|init]  Manages project metadata and syncs src/uAppVersion.pas');
+    WriteLn('    bv reset [--bare] [--force]       Cleans project to a fresh slate (protected against demo-app)');
 
     WriteLn('');
 
@@ -21567,6 +22514,30 @@ begin
     end;
 
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+
+  end
+
+  else if Cmd = 'license' then
+
+  begin
+
+    CmdLicense;
+
+  end
+
+  else if Cmd = 'meta' then
+
+  begin
+
+    CmdMeta;
+
+  end
+
+  else if Cmd = 'reset' then
+
+  begin
+
+    CmdReset;
 
   end
 

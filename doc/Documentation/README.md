@@ -65,6 +65,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 39. [39. Reactive Chart.js Suite (blaise-charts)](39-blaise-charts.md) — High-performance canvas charts (Bar, Line, Pie, Radar, Bubble) with typed datasets.
 41. [41. Package Components Catalog & Manual](41-package-components-catalog.md) — Comprehensive reference manual covering props, events, slots, and copy-pasteable snippets for all 53+ components.
 48. [48. External Library Scaffolding & Release Packager](48-library-distribution-packager.md) — Scaffolding dedicated standalone component libraries with interactive licensing (`bv create --lib`) and automated release distribution (`bv lib pack`) with SHA-256 integrity verification.
+68. [49. Project Metadata, Licensing Suite & Clean Slate Reset](49-project-metadata-licensing-reset.md) — Automated license generation (`bv license`), SemVer & metadata sync (`bv meta`), synchronized Pascal unit (`src/uAppVersion.pas`), and clean slate reset (`bv reset`) with framework safety guards.
 
 ### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
 37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
@@ -117,6 +118,9 @@ bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/
 bv new t <Name>            # Scaffolds a test (smart detection: components, views, unit)
 bv lib install <pkg|url>   # Installs an official package or local/remote archive into lib/
 bv lib pack [dir]          # Assembles & cryptographically verifies release artifact (.zip with SHA-256)
+bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
+bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
+bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
 # === Full-Stack mORMot 2 ===
 bv mormot init [--db <eng>] # Scaffolds backend (sqlite, postgres, mysql, firebird)
