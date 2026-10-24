@@ -1570,6 +1570,8 @@ var
 
   First: Boolean;
 
+  Val: string;
+
 begin
 
   Result := '';
@@ -1588,13 +1590,21 @@ begin
 
       begin
 
-        Result := '  comp[''props''] := TJSArray.new;' + #10;
+        Result := '  comp[''props''] := TJSArray.new;' + #10 +
+                  '  comp[''defaultProps''] := TJSObject.new;' + #10;
 
         First := False;
 
       end;
 
       Result := Result + '  TJSArray(comp[''props'']).push(''' + Fields[i].Name + ''');' + #10;
+      if Fields[i].DefaultValue <> '' then
+      begin
+        Val := Fields[i].DefaultValue;
+        if Trim(Val) = '[]' then Val := 'TJSArray.new'
+        else if Trim(Val) = '{}' then Val := 'TJSObject.new';
+        Result := Result + '  TJSObject(comp[''defaultProps''])[''' + Fields[i].Name + '''] := ' + Val + ';' + #10;
+      end;
 
     end;
 
@@ -7057,7 +7067,7 @@ var
 
   i: Integer;
 
-  GenPath, TestPath, UnitName, CorePath, RTLFile: string;
+  GenPath, TestPath, UnitName, CorePath, RTLFile, RelPath, OutFile: string;
 
 begin
 
@@ -7109,7 +7119,13 @@ begin
 
     if (TestFiles.Count = 0) and DirectoryExists(GetCurrentDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'tests') then
 
-      ScanDirForTests(GetCurrentDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'tests', TestFiles);
+    begin
+
+      TestPath := GetCurrentDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'tests' + DirectorySeparator;
+
+      ScanDirForTests(TestPath, TestFiles);
+
+    end;
 
     
 
@@ -7139,17 +7155,31 @@ begin
 
     begin
 
-       UnitName := ChangeFileExt(ExtractFileName(TestFiles[i]), '.js');
+       RelPath := TestFiles[i];
 
-       WriteLn('  - ', ExtractFileName(TestFiles[i]));
+       if Pos(TestPath, RelPath) = 1 then
 
-       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + GenPath + UnitName + '" -O-');
+         RelPath := Copy(RelPath, Length(TestPath) + 1, Length(RelPath))
+
+       else
+
+         RelPath := ExtractFileName(RelPath);
+
+       
+
+       OutFile := GenPath + ChangeFileExt(RelPath, '.js');
+
+       ForceDir(ExtractFilePath(OutFile));
+
+       WriteLn('  - ', RelPath);
+
+       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + OutFile + '" -O-');
 
        // Add rtl.run() for Vitest to execute the program module code
 
-       if FileExists(GenPath + UnitName) then
+       if FileExists(OutFile) then
 
-         WriteStringToFile(GenPath + UnitName, ReadFileToString(GenPath + UnitName) + #10 + 'rtl.run();' + #10);
+         WriteStringToFile(OutFile, ReadFileToString(OutFile) + #10 + 'rtl.run();' + #10);
 
     end;
 

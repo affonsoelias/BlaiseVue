@@ -55,7 +55,8 @@ initialization
         }
       };
     }
-
+
+
     if (!bv.getDeepValue) {
       bv.getDeepValue = function(target, path) {
         if (target == null || !path) return undefined;
@@ -662,6 +663,7 @@ initialization
        });
        
        setTimeout(function() {
+          if (typeof window === 'undefined' || !window.getComputedStyle) return;
           let s = window.getComputedStyle(el);
           let d = parseFloat(s.transitionDuration) || parseFloat(s.animationDuration);
           if (!d) onEnd();
@@ -1290,6 +1292,7 @@ initialization
             let m = document.createElement('script'); m.type = 'text/if-marker'; m['bvManaged'] = true;
             el.parentNode.insertBefore(m, el);
             let active = true;
+            let firstRun = true;
             let tName = el.getAttribute('bv-transition');
             bv.effect(function() {
               let res = !!Data.Evaluate(vif);
@@ -1300,10 +1303,11 @@ initialization
                  if (tName) bv.applyTransition(el, 'enter', tName);
               }
               else if (!res && active) { 
-                 if (tName) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
+                 if (tName && !firstRun) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
                  else bv.unmount(el); 
                  active = false; 
               }
+              firstRun = false;
             });
             if (!active) return;
           }
@@ -1383,6 +1387,11 @@ initialization
             }
 
             let dRaw = opts.data ? opts.data.call(null) : {};
+            if (opts.defaultProps) {
+               Object.keys(opts.defaultProps).forEach(function(k) {
+                  if (dRaw[k] === undefined) dRaw[k] = opts.defaultProps[k];
+               });
+            }
             let pRef = bv.defineReactive(dRaw);
             
             if (window.__BV_CORE__.router) {
@@ -1708,7 +1717,15 @@ initialization
             
             if (opts.created) opts.created.call(pRef, pRef);
             
-            pRef['$emit'] = function(ev, arg) { 
+            pRef['$emit'] = function(ev, arg) {
+               if (!pRef['__emitted__']) pRef['__emitted__'] = {};
+               if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
+               pRef['__emitted__'][ev].push(arg);
+               if (rEl) {
+                  if (!rEl['__emitted__']) rEl['__emitted__'] = {};
+                  if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
+                  rEl['__emitted__'][ev].push(arg);
+               }
                if (ev === 'input' || ev === 'change') {
                   if (pRef['$onInput']) pRef['$onInput'](arg);
                }
