@@ -26,6 +26,18 @@ type
 
   TDataSetState = (dsInactive, dsBrowse, dsEdit, dsInsert);
   TFieldType = (ftUnknown, ftString, ftInteger, ftFloat, ftBoolean, ftDate, ftDateTime);
+  TConflictResolution = (crServerWins, crClientWins, crCustom);
+  TDataSetConflictEvent = reference to procedure(DataSet: TBVDataSet; ServerRecord, ClientRecord: JSValue; out ResolvedRecord: JSValue);
+
+  { TBVIndexedDBAdapter: High-capacity structured offline storage adapter }
+  TBVIndexedDBAdapter = class
+  public
+    class function IsSupported: Boolean;
+    class procedure Save(const DBName, StoreKey: string; RecordsData, DeltaData: JSValue; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+    class procedure Load(const DBName, StoreKey: string; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+    class procedure Remove(const DBName, StoreKey: string; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+    class procedure ClearAll(const DBName: string; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+  end;
 
   { TBVField: Represents a single column / field in a dataset }
   TBVField = class
@@ -76,7 +88,7 @@ type
     function ToArray: TJSArray;
   end;
 
-  TDataSetNotifyEvent = procedure(DataSet: TBVDataSet) of object;
+  TDataSetNotifyEvent = reference to procedure(DataSet: TBVDataSet);
 
   { TBVDataSet: The Reactive In-Memory Dataset / TClientDataSet for BlaiseVue }
   TBVDataSet = class
@@ -96,12 +108,24 @@ type
     FReactiveState: JSValue;
     FModified: Boolean;
 
+    FTableName: string;
+    FAutoPersist: Boolean;
+    FPersistStoreKey: string;
+    FAutoSyncOnReconnect: Boolean;
+    FAutoSyncEndpoint: string;
+    FConflictResolution: TConflictResolution;
+    FSyncing: Boolean;
+    FNetworkListenerRegistered: Boolean;
+
     FAfterScroll: TDataSetNotifyEvent;
     FBeforePost: TDataSetNotifyEvent;
     FAfterPost: TDataSetNotifyEvent;
     FBeforeDelete: TDataSetNotifyEvent;
     FAfterDelete: TDataSetNotifyEvent;
+    FAfterApplyUpdates: TDataSetNotifyEvent;
+    FOnConflict: TDataSetConflictEvent;
 
+    procedure AutoPersistIfEnabled;
     procedure SyncReactiveState;
     procedure RebuildActiveRecords;
     function GetActiveRecord(Index0: Integer): TJSObject;
@@ -149,11 +173,20 @@ type
     procedure LoadFromJSON(const AJsonStr: string);
     function ToJSON: string;
     function GetDeltaJSON: string;
-    procedure ApplyUpdates;
+    procedure ApplyUpdates(const AEndpointOrService: string = ''; AOnSuccess: JSValue = nil; AOnError: JSValue = nil);
 
     { Local Storage / Offline Caching }
     procedure SaveToStorage(const AStorageKey: string);
     function LoadFromStorage(const AStorageKey: string): Boolean;
+
+    { Offline-First & IndexedDB Synchronization }
+    procedure SetAutoPersist(AEnabled: Boolean; const AStoreKey: string = '');
+    procedure SetAutoSyncOnReconnect(AEnabled: Boolean; const AEndpointOrService: string = '');
+    procedure SaveToIndexedDB(const AStoreKey: string = ''; AOnSuccess: JSValue = nil; AOnError: JSValue = nil);
+    procedure LoadFromIndexedDB(const AStoreKey: string = ''; AOnComplete: JSValue = nil);
+    procedure ReconcileDelta(ServerResponse: JSValue);
+    function GetHasPendingChanges: Boolean;
+    procedure ClearDelta;
 
     { Properties }
     property Fields: TBVFields read FFields;
@@ -170,6 +203,14 @@ type
     property Filter: string read FFilter write SetFilter;
     property Filtered: Boolean read FFiltered;
     property Modified: Boolean read FModified write FModified;
+    property TableName: string read FTableName write FTableName;
+    property AutoPersist: Boolean read FAutoPersist write FAutoPersist;
+    property PersistStoreKey: string read FPersistStoreKey write FPersistStoreKey;
+    property AutoSyncOnReconnect: Boolean read FAutoSyncOnReconnect write FAutoSyncOnReconnect;
+    property ConflictResolution: TConflictResolution read FConflictResolution write FConflictResolution;
+    property Delta: TJSArray read FDelta;
+    property Syncing: Boolean read FSyncing;
+    property HasPendingChanges: Boolean read GetHasPendingChanges;
 
     { Events }
     property AfterScroll: TDataSetNotifyEvent read FAfterScroll write FAfterScroll;
@@ -177,6 +218,8 @@ type
     property AfterPost: TDataSetNotifyEvent read FAfterPost write FAfterPost;
     property BeforeDelete: TDataSetNotifyEvent read FBeforeDelete write FBeforeDelete;
     property AfterDelete: TDataSetNotifyEvent read FAfterDelete write FAfterDelete;
+    property AfterApplyUpdates: TDataSetNotifyEvent read FAfterApplyUpdates write FAfterApplyUpdates;
+    property OnConflict: TDataSetConflictEvent read FOnConflict write FOnConflict;
   end;
 
 function CreateDataSet: TBVDataSet;
@@ -187,6 +230,183 @@ implementation
 function CreateDataSet: TBVDataSet;
 begin
   Result := TBVDataSet.Create;
+end;
+
+{ ============================================================================ }
+{ TBVIndexedDBAdapter Implementation                                           }
+{ ============================================================================ }
+
+class function TBVIndexedDBAdapter.IsSupported: Boolean;
+begin
+  asm
+    Result = (typeof window !== 'undefined') && (Boolean(window.indexedDB) || Boolean(window.localStorage));
+  end;
+end;
+
+class procedure TBVIndexedDBAdapter.Save(const DBName, StoreKey: string; RecordsData, DeltaData: JSValue; OnSuccess: JSValue; OnError: JSValue);
+begin
+  asm
+    var dbName = DBName || 'bv_offline_db';
+    var key = StoreKey || 'default';
+    var payload = {
+      key: key,
+      records: RecordsData || [],
+      delta: DeltaData || [],
+      updatedAt: Date.now()
+    };
+
+    if (typeof window !== 'undefined' && window.indexedDB) {
+      try {
+        var req = window.indexedDB.open(dbName, 1);
+        req.onupgradeneeded = function(e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('datasets')) {
+            db.createObjectStore('datasets', { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = function(e) {
+          var db = e.target.result;
+          var tx = db.transaction(['datasets'], 'readwrite');
+          var store = tx.objectStore('datasets');
+          var putReq = store.put(payload);
+          putReq.onsuccess = function() {
+            if (typeof OnSuccess === 'function') OnSuccess(payload);
+          };
+          putReq.onerror = function(err) {
+            if (typeof OnError === 'function') OnError(err);
+          };
+        };
+        req.onerror = function(err) {
+          try {
+            window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+            if (typeof OnSuccess === 'function') OnSuccess(payload);
+          } catch(eLoc) {
+            if (typeof OnError === 'function') OnError(eLoc);
+          }
+        };
+        return;
+      } catch(ex) {
+        // Fallback to localStorage below
+      }
+    }
+
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+      }
+      if (typeof OnSuccess === 'function') OnSuccess(payload);
+    } catch(errLS) {
+      if (typeof OnError === 'function') OnError(errLS);
+    }
+  end;
+end;
+
+class procedure TBVIndexedDBAdapter.Load(const DBName, StoreKey: string; OnSuccess: JSValue; OnError: JSValue);
+begin
+  asm
+    var dbName = DBName || 'bv_offline_db';
+    var key = StoreKey || 'default';
+
+    function tryFallbackLS() {
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          var str = window.localStorage.getItem('bv_idb_' + dbName + '_' + key);
+          if (str) {
+            var p = JSON.parse(str);
+            if (typeof OnSuccess === 'function') OnSuccess(p);
+            return;
+          }
+        }
+        if (typeof OnSuccess === 'function') OnSuccess(null);
+      } catch(e) {
+        if (typeof OnError === 'function') OnError(e);
+      }
+    }
+
+    if (typeof window !== 'undefined' && window.indexedDB) {
+      try {
+        var req = window.indexedDB.open(dbName, 1);
+        req.onupgradeneeded = function(e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('datasets')) {
+            db.createObjectStore('datasets', { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = function(e) {
+          var db = e.target.result;
+          var tx = db.transaction(['datasets'], 'readonly');
+          var store = tx.objectStore('datasets');
+          var getReq = store.get(key);
+          getReq.onsuccess = function(ev) {
+            var data = ev.target.result;
+            if (data) {
+              if (typeof OnSuccess === 'function') OnSuccess(data);
+            } else {
+              tryFallbackLS();
+            }
+          };
+          getReq.onerror = function() {
+            tryFallbackLS();
+          };
+        };
+        req.onerror = function() {
+          tryFallbackLS();
+        };
+        return;
+      } catch(ex) {
+        // Fallback
+      }
+    }
+
+    tryFallbackLS();
+  end;
+end;
+
+class procedure TBVIndexedDBAdapter.Remove(const DBName, StoreKey: string; OnSuccess: JSValue; OnError: JSValue);
+begin
+  asm
+    var dbName = DBName || 'bv_offline_db';
+    var key = StoreKey || 'default';
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try { window.localStorage.removeItem('bv_idb_' + dbName + '_' + key); } catch(e) {}
+    }
+    if (typeof window !== 'undefined' && window.indexedDB) {
+      try {
+        var req = window.indexedDB.open(dbName, 1);
+        req.onsuccess = function(e) {
+          var db = e.target.result;
+          var tx = db.transaction(['datasets'], 'readwrite');
+          tx.objectStore('datasets').delete(key);
+          if (typeof OnSuccess === 'function') OnSuccess(true);
+        };
+        req.onerror = function(err) {
+          if (typeof OnError === 'function') OnError(err);
+        };
+        return;
+      } catch(e) {}
+    }
+    if (typeof OnSuccess === 'function') OnSuccess(true);
+  end;
+end;
+
+class procedure TBVIndexedDBAdapter.ClearAll(const DBName: string; OnSuccess: JSValue; OnError: JSValue);
+begin
+  asm
+    var dbName = DBName || 'bv_offline_db';
+    if (typeof window !== 'undefined' && window.indexedDB) {
+      try {
+        var req = window.indexedDB.deleteDatabase(dbName);
+        req.onsuccess = function() {
+          if (typeof OnSuccess === 'function') OnSuccess(true);
+        };
+        req.onerror = function(err) {
+          if (typeof OnError === 'function') OnError(err);
+        };
+        return;
+      } catch(e) {}
+    }
+    if (typeof OnSuccess === 'function') OnSuccess(true);
+  end;
 end;
 
 { ============================================================================ }
@@ -458,6 +678,14 @@ begin
   FSortField := '';
   FSortAscending := True;
   FModified := False;
+  FTableName := 'default';
+  FAutoPersist := False;
+  FPersistStoreKey := '';
+  FAutoSyncOnReconnect := False;
+  FAutoSyncEndpoint := '';
+  FConflictResolution := crServerWins;
+  FSyncing := False;
+  FNetworkListenerRegistered := False;
 
   { Initialize reactive state holder }
   FReactiveState := DefineReactive(TJSObject.new);
@@ -517,6 +745,23 @@ begin
         return self.GetChangeCount();
       }
     });
+    Object.defineProperty(self, 'HasPendingChanges', {
+      get: function() { return self.GetHasPendingChanges(); }
+    });
+    Object.defineProperty(self, 'TableName', {
+      get: function() { return self.FTableName; },
+      set: function(v) { self.FTableName = v; }
+    });
+    Object.defineProperty(self, 'AutoPersist', {
+      get: function() { return self.FAutoPersist; },
+      set: function(v) { self.FAutoPersist = v; }
+    });
+    Object.defineProperty(self, 'Delta', {
+      get: function() { return self.FDelta; }
+    });
+    Object.defineProperty(self, 'Syncing', {
+      get: function() { return self.FSyncing; }
+    });
   end;
 end;
 
@@ -550,6 +795,9 @@ begin
   rs['isEmpty'] := GetIsEmpty;
   rs['changeCount'] := FDelta.length;
   rs['data'] := FActiveRecords;
+  rs['hasPendingChanges'] := GetHasPendingChanges;
+  rs['isSyncing'] := FSyncing;
+  rs['tableName'] := FTableName;
 
   if (FState in [dsEdit, dsInsert]) and Assigned(FEditBuffer) then
     rs['current'] := FEditBuffer
@@ -833,8 +1081,11 @@ begin
 
   if FState = dsInsert then
   begin
-    { Auto-assign id if missing and field exists }
+    { Auto-assign id and clientId if missing }
     asm
+      if (!this.FEditBuffer._clientId) {
+        this.FEditBuffer._clientId = 'cli_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+      }
       if (!this.FEditBuffer.id) {
         var maxId = 0;
         for (var i = 0; i < this.FRecords.length; i++) {
@@ -846,8 +1097,14 @@ begin
     end;
 
     FRecords.push(FEditBuffer);
+    deltaItem['deltaId'] := 'd_' + IntToStr(TJSDate.now) + '_' + IntToStr(Random(10000));
     deltaItem['action'] := 'insert';
+    deltaItem['tableName'] := FTableName;
+    deltaItem['id'] := FEditBuffer['id'];
+    deltaItem['clientId'] := FEditBuffer['_clientId'];
     deltaItem['record'] := FEditBuffer;
+    deltaItem['timestamp'] := TJSDate.now;
+    deltaItem['status'] := 'pending';
     FDelta.push(deltaItem);
 
     RebuildActiveRecords;
@@ -861,9 +1118,14 @@ begin
     if targetIdx <> -1 then
       FRecords[targetIdx] := FEditBuffer;
 
+    deltaItem['deltaId'] := 'd_' + IntToStr(TJSDate.now) + '_' + IntToStr(Random(10000));
     deltaItem['action'] := 'update';
+    deltaItem['tableName'] := FTableName;
+    deltaItem['id'] := FEditBuffer['id'];
     deltaItem['oldRecord'] := FOriginalBuffer;
     deltaItem['record'] := FEditBuffer;
+    deltaItem['timestamp'] := TJSDate.now;
+    deltaItem['status'] := 'pending';
     FDelta.push(deltaItem);
 
     RebuildActiveRecords;
@@ -874,6 +1136,7 @@ begin
   FState := dsBrowse;
   FModified := False;
   SyncReactiveState;
+  AutoPersistIfEnabled;
 
   if Assigned(FAfterPost) then FAfterPost(Self);
 end;
@@ -907,8 +1170,13 @@ begin
     FRecords.splice(targetIdx, 1);
 
   deltaItem := TJSObject.new;
+  deltaItem['deltaId'] := 'd_' + IntToStr(TJSDate.now) + '_' + IntToStr(Random(10000));
   deltaItem['action'] := 'delete';
+  deltaItem['tableName'] := FTableName;
+  deltaItem['id'] := curRec['id'];
   deltaItem['record'] := curRec;
+  deltaItem['timestamp'] := TJSDate.now;
+  deltaItem['status'] := 'pending';
   FDelta.push(deltaItem);
 
   RebuildActiveRecords;
@@ -920,6 +1188,7 @@ begin
 
   FState := dsBrowse;
   SyncReactiveState;
+  AutoPersistIfEnabled;
 
   if Assigned(FAfterDelete) then FAfterDelete(Self);
 end;
@@ -1044,10 +1313,229 @@ begin
   end;
 end;
 
-procedure TBVDataSet.ApplyUpdates;
+procedure TBVDataSet.AutoPersistIfEnabled;
+begin
+  if FAutoPersist and (FPersistStoreKey <> '') then
+  begin
+    SaveToIndexedDB(FPersistStoreKey, nil, nil);
+  end;
+end;
+
+function TBVDataSet.GetHasPendingChanges: Boolean;
+begin
+  Result := (FDelta.length > 0) or FModified;
+end;
+
+procedure TBVDataSet.ClearDelta;
 begin
   FDelta.length := 0;
   SyncReactiveState;
+  AutoPersistIfEnabled;
+end;
+
+procedure TBVDataSet.SetAutoPersist(AEnabled: Boolean; const AStoreKey: string);
+begin
+  FAutoPersist := AEnabled;
+  if AStoreKey <> '' then FPersistStoreKey := AStoreKey
+  else if FPersistStoreKey = '' then FPersistStoreKey := FTableName;
+  AutoPersistIfEnabled;
+end;
+
+procedure TBVDataSet.SetAutoSyncOnReconnect(AEnabled: Boolean; const AEndpointOrService: string);
+begin
+  FAutoSyncOnReconnect := AEnabled;
+  if AEndpointOrService <> '' then FAutoSyncEndpoint := AEndpointOrService;
+
+  asm
+    if (AEnabled && !this.FNetworkListenerRegistered) {
+      this.FNetworkListenerRegistered = true;
+      var self = this;
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+          if (self.GetChangeCount() > 0 && !self.FSyncing) {
+            self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+          }
+        });
+      }
+      if (window.__BV_CORE__ && window.__BV_CORE__.ws) {
+        window.__BV_CORE__.ws.on('open', function() {
+          if (self.GetChangeCount() > 0 && !self.FSyncing) {
+            self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+          }
+        });
+      }
+    }
+  end;
+end;
+
+procedure TBVDataSet.SaveToIndexedDB(const AStoreKey: string; AOnSuccess: JSValue; AOnError: JSValue);
+var
+  k: string;
+begin
+  k := AStoreKey;
+  if k = '' then k := FPersistStoreKey;
+  if k = '' then k := FTableName;
+  if k = '' then k := 'default';
+  FPersistStoreKey := k;
+
+  TBVIndexedDBAdapter.Save('bv_offline_db', k, FRecords, FDelta, AOnSuccess, AOnError);
+end;
+
+procedure TBVDataSet.LoadFromIndexedDB(const AStoreKey: string; AOnComplete: JSValue);
+var
+  k: string;
+begin
+  k := AStoreKey;
+  if k = '' then k := FPersistStoreKey;
+  if k = '' then k := FTableName;
+  if k = '' then k := 'default';
+  FPersistStoreKey := k;
+
+  TBVIndexedDBAdapter.Load('bv_offline_db', k, procedure(data: JSValue)
+    begin
+      if data <> nil then
+      begin
+        asm
+          if (data.records) $Self.LoadFromData(data.records);
+          if (data.delta && Array.isArray(data.delta)) {
+            $Self.FDelta = data.delta;
+            $Self.SyncReactiveState();
+          }
+        end;
+      end;
+      asm
+        if (typeof AOnComplete === 'function') AOnComplete($Self, data);
+      end;
+    end,
+    procedure(err: JSValue)
+    begin
+      asm
+        if (typeof AOnComplete === 'function') AOnComplete($Self, null);
+      end;
+    end
+  );
+end;
+
+procedure TBVDataSet.ReconcileDelta(ServerResponse: JSValue);
+begin
+  if not Assigned(ServerResponse) then Exit;
+
+  asm
+    var resp = ServerResponse;
+    var insertedIds = resp.insertedIds || {};
+    var conflicts = resp.conflicts || [];
+
+    // 1. Remap temporary client IDs
+    if (insertedIds && typeof insertedIds === 'object') {
+      var keys = Object.keys(insertedIds);
+      for (var k = 0; k < keys.length; k++) {
+        var oldId = keys[k];
+        var newId = insertedIds[oldId];
+        for (var r = 0; r < this.FRecords.length; r++) {
+          var rec = this.FRecords[r];
+          if (!rec) continue;
+          if (String(rec.id) === String(oldId) || (rec._clientId && String(rec._clientId) === String(oldId))) {
+            rec.id = newId;
+            delete rec._clientId;
+          }
+        }
+      }
+    }
+
+    // 2. Resolve Conflicts
+    if (Array.isArray(conflicts) && conflicts.length > 0) {
+      for (var c = 0; c < conflicts.length; c++) {
+        var conf = conflicts[c];
+        var cid = conf.id;
+        var sRec = conf.serverRecord;
+
+        if (this.FConflictResolution === 0) { // crServerWins
+          for (var r = 0; r < this.FRecords.length; r++) {
+            if (this.FRecords[r] && String(this.FRecords[r].id) === String(cid)) {
+              if (sRec) {
+                Object.assign(this.FRecords[r], sRec);
+              } else {
+                this.FRecords.splice(r, 1);
+              }
+              break;
+            }
+          }
+        } else if (this.FConflictResolution === 1) { // crClientWins
+          // Client state remains in FRecords
+        }
+      }
+    }
+
+    // 3. Clear delta and sync
+    this.FDelta.length = 0;
+  end;
+
+  FModified := False;
+  RebuildActiveRecords;
+  SyncReactiveState;
+  AutoPersistIfEnabled;
+  if Assigned(FAfterApplyUpdates) then FAfterApplyUpdates(Self);
+end;
+
+procedure TBVDataSet.ApplyUpdates(const AEndpointOrService: string; AOnSuccess: JSValue; AOnError: JSValue);
+begin
+  asm
+    var ep = AEndpointOrService || this.FAutoSyncEndpoint;
+    var self = this;
+
+    // If no endpoint is configured, standard local delta commit
+    if (!ep) {
+      this.FDelta.length = 0;
+      this.FModified = false;
+      this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
+      if (typeof self.FAfterApplyUpdates === 'function') self.FAfterApplyUpdates(self);
+      if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', local: true });
+      return;
+    }
+
+    if (this.FDelta.length === 0) {
+      if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', syncedCount: 0 });
+      return;
+    }
+
+    this.FSyncing = true;
+    var payload = {
+      table: this.FTableName || 'default',
+      delta: this.FDelta,
+      clientTime: Date.now()
+    };
+
+    var isService = ep.indexOf('/') === -1;
+    var api = (window.__BV_CORE__ && window.__BV_CORE__.api) ? window.__BV_CORE__.api : null;
+    var rpc = (window.__BV_CORE__ && window.__BV_CORE__.rpc) ? window.__BV_CORE__.rpc : null;
+
+    function handleSuccess(resp) {
+      self.FSyncing = false;
+      self.ReconcileDelta(resp);
+      if (typeof AOnSuccess === 'function') AOnSuccess(resp);
+    }
+
+    function handleError(err) {
+      self.FSyncing = false;
+      console.warn('[BVDataSet] ApplyUpdates failed:', err);
+      if (typeof AOnError === 'function') AOnError(err);
+    }
+
+    if (isService && rpc && typeof rpc.invoke === 'function') {
+      rpc.invoke(ep, 'ApplyUpdates', [payload], handleSuccess, handleError);
+    } else if (api && typeof api.post === 'function') {
+      api.post(ep, payload).then(handleSuccess).catch(handleError);
+    } else if (typeof fetch === 'function') {
+      fetch(ep, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r) { return r.json(); }).then(handleSuccess).catch(handleError);
+    } else {
+      handleSuccess({ status: 'ok', local: true, syncedCount: self.FDelta.length });
+    }
+  end;
 end;
 
 procedure TBVDataSet.SaveToStorage(const AStorageKey: string);
@@ -1129,8 +1617,25 @@ begin
     dummyDS.LoadFromStorage('');
     dummyDS.ToJSON;
     dummyDS.GetDeltaJSON;
-    dummyDS.ApplyUpdates;
+    dummyDS.ApplyUpdates('', nil, nil);
     dummyDS.LoadFromJSON('');
+    dummyDS.TableName := '';
+    dummyDS.AutoPersist := False;
+    dummyDS.PersistStoreKey := '';
+    dummyDS.AutoSyncOnReconnect := False;
+    dummyDS.GetHasPendingChanges;
+    dummyDS.ClearDelta;
+    dummyDS.SetAutoPersist(False, '');
+    dummyDS.SetAutoSyncOnReconnect(False, '');
+    dummyDS.SaveToIndexedDB('', nil, nil);
+    dummyDS.LoadFromIndexedDB('', nil);
+    dummyDS.ReconcileDelta(nil);
+    dummyDS.AutoPersistIfEnabled;
+    TBVIndexedDBAdapter.IsSupported;
+    TBVIndexedDBAdapter.Save('', '', nil, nil, nil, nil);
+    TBVIndexedDBAdapter.Load('', '', nil, nil);
+    TBVIndexedDBAdapter.Remove('', '', nil, nil);
+    TBVIndexedDBAdapter.ClearAll('', nil, nil);
     dummyDS.GetBof;
     dummyDS.GetEof;
     dummyDS.GetRecordCount;
@@ -1166,6 +1671,7 @@ initialization
     window.__BV_CORE__.dataset = {
       TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
       TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      TBVIndexedDBAdapter: pas.BVDataSet ? pas.BVDataSet.TBVIndexedDBAdapter : null,
       CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
     };
   end;

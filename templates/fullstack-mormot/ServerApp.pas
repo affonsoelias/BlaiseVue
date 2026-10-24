@@ -51,6 +51,7 @@ type
     FStartTime: TDateTime;
     FRequestCount: Int64;
     FItems: TBlaiseItemDynArray;
+    function HandleDataSetApply(const InContent: RawUtf8): RawUtf8;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -152,6 +153,84 @@ begin
   Frame.opcode := focText;
   Frame.payload := Payload;
   FServer.WebSocketBroadcast(Frame);
+end;
+
+function TBlaiseServerApp.HandleDataSetApply(const InContent: RawUtf8): RawUtf8;
+var
+  Doc, DeltaItemDoc: TDocVariantData;
+  TableVal, ActionVal, ClientIdVal, RecJson, DummyJson: RawUtf8;
+  InsertedIdsJson: RawUtf8;
+  DeltaArr, RecVar: Variant;
+  i, SyncedCount, NewId, TargetId: Integer;
+begin
+  Doc.InitJson(InContent);
+  TableVal := LowerCase(Doc.GetValueOrDefault('table', ''));
+  DeltaArr := Doc.GetValueOrDefault('delta', Null);
+  SyncedCount := 0;
+  InsertedIdsJson := '';
+
+  if VarIsArray(DeltaArr) or (TDocVariantData(DeltaArr).Kind = dvArray) then
+  begin
+    for i := 0 to TDocVariantData(DeltaArr).Count - 1 do
+    begin
+      DeltaItemDoc.Init(TDocVariantData(DeltaArr).Values[i]);
+      ActionVal := LowerCase(DeltaItemDoc.GetValueOrDefault('action', ''));
+      ClientIdVal := DeltaItemDoc.GetValueOrDefault('clientId', '');
+      TargetId := DeltaItemDoc.GetValueOrDefault('id', 0);
+      RecVar := DeltaItemDoc.GetValueOrDefault('record', Null);
+
+      if ActionVal = 'insert' then
+      begin
+        RecJson := VariantSaveJson(RecVar);
+        if (TableVal = 'product') or (TableVal = 'products') then
+        begin
+          FCrudProduct.CreateItemFromJson(RecJson, NewId, DummyJson);
+          if InsertedIdsJson <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+          if ClientIdVal <> '' then
+            InsertedIdsJson := InsertedIdsJson + '"' + ClientIdVal + '":' + IntToStr(NewId);
+          if TargetId < 0 then
+          begin
+            if ClientIdVal <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+            InsertedIdsJson := InsertedIdsJson + '"' + IntToStr(TargetId) + '":' + IntToStr(NewId);
+          end;
+          Inc(SyncedCount);
+        end
+        else
+        begin
+          FCrudCustomer.CreateItemFromJson(RecJson, NewId, DummyJson);
+          if InsertedIdsJson <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+          if ClientIdVal <> '' then
+            InsertedIdsJson := InsertedIdsJson + '"' + ClientIdVal + '":' + IntToStr(NewId);
+          if TargetId < 0 then
+          begin
+            if ClientIdVal <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+            InsertedIdsJson := InsertedIdsJson + '"' + IntToStr(TargetId) + '":' + IntToStr(NewId);
+          end;
+          Inc(SyncedCount);
+        end;
+      end
+      else if ActionVal = 'update' then
+      begin
+        RecJson := VariantSaveJson(RecVar);
+        if (TableVal = 'product') or (TableVal = 'products') then
+          FCrudProduct.UpdateItemFromJson(TargetId, RecJson, DummyJson)
+        else
+          FCrudCustomer.UpdateItemFromJson(TargetId, RecJson, DummyJson);
+        Inc(SyncedCount);
+      end
+      else if ActionVal = 'delete' then
+      begin
+        if (TableVal = 'product') or (TableVal = 'products') then
+          FCrudProduct.DeleteItem(TargetId)
+        else
+          FCrudCustomer.DeleteItem(TargetId);
+        Inc(SyncedCount);
+      end;
+    end;
+  end;
+
+  Result := '{"status":"ok","syncedCount":' + IntToStr(SyncedCount) +
+    ',"insertedIds":{' + InsertedIdsJson + '},"conflicts":[]}';
 end;
 
 function TBlaiseServerApp.DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;

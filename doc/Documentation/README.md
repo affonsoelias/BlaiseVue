@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# 🛡️ BlaiseVue 4.3 Documentation
+# 🛡️ BlaiseVue 4.4 Documentation
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.
 
