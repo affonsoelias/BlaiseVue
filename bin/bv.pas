@@ -2875,134 +2875,172 @@ begin
 
 
     // Create directories
-
     ForceDir(Base + 'public');
-
     ForceDir(Base + 'src' + DirectorySeparator + 'components');
-
     ForceDir(Base + 'src' + DirectorySeparator + 'views');
-
+    ForceDir(Base + 'src' + DirectorySeparator + 'services');
     ForceDir(Base + 'generated');
-
     ForceDir(Base + 'dist' + DirectorySeparator + 'js');
-
-    ForceDir(Base + 'tests');
-
-
+    ForceDir(Base + 'tests' + DirectorySeparator + 'components');
+    ForceDir(Base + 'tests' + DirectorySeparator + 'views');
+    ForceDir(Base + 'tests' + DirectorySeparator + 'unit');
+    ForceDir(Base + 'tests' + DirectorySeparator + 'framework');
 
     // Minimal public/index.html
-
     Content := GetTemplate('TPL_INDEX_HTML', 'index.html');
-
     Content := StringReplace(Content, '{{PROJECT_NAME}}', ProjectName, [rfReplaceAll]);
-
     WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html', Content);
 
-
-
     // Minimal src/app.bv
-
     Content := GetTemplate('TPL_APP_BV', 'app.bv');
-
     WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv', Content);
 
-
-
     // Minimal src/views/Home.bv
-
     Content := GetTemplate('TPL_HOME_BV', 'Home.bv');
-
     WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.bv', Content);
 
-
-
     // Minimal src/views/About.bv
-
     Content := GetTemplate('TPL_ABOUT_BV', 'About.bv');
-
     WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' + DirectorySeparator + 'About.bv', Content);
 
+    // Minimal src/services/uFormatters.pas
+    WriteStringToFile(Base + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'uFormatters.pas',
+      'unit uFormatters;' + #10#10 +
+      '{$mode objfpc}{$H+}' + #10#10 +
+      'interface' + #10#10 +
+      'function FormatCurrency(AValue: Double): string;' + #10#10 +
+      'implementation' + #10#10 +
+      'uses SysUtils;' + #10#10 +
+      'function FormatCurrency(AValue: Double): string;' + #10 +
+      'begin' + #10 +
+      '  Result := ''R$ '' + FloatToStrF(AValue, ffFixed, 15, 2);' + #10 +
+      'end;' + #10#10 +
+      'end.' + #10
+    );
+
+    // Minimal tests: views/Home.test.pas
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.test.pas',
+      'program home_view_test;' + #10#10 +
+      '{$mode objfpc}' + #10#10 +
+      'uses JS, Web, BVTestUtils, uHome;' + #10#10 +
+      'var Wrapper: TWrapper;' + #10#10 +
+      'begin' + #10 +
+      '  Register_uHome;' + #10 +
+      '  Describe(''View: Home'', procedure' + #10 +
+      '    begin' + #10 +
+      '       It(''deve renderizar a pagina inicial sem erros'', procedure' + #10 +
+      '         begin' + #10 +
+      '            Wrapper := Mount(''home-page'');' + #10 +
+      '            Expect(Wrapper.Element <> nil).ToBe(True);' + #10 +
+      '         end);' + #10 +
+      '    end);' + #10 +
+      'end.' + #10
+    );
+
+    // Minimal tests: views/About.test.pas
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + 'About.test.pas',
+      'program about_view_test;' + #10#10 +
+      '{$mode objfpc}' + #10#10 +
+      'uses JS, Web, BVTestUtils, uAbout;' + #10#10 +
+      'var Wrapper: TWrapper;' + #10#10 +
+      'begin' + #10 +
+      '  Register_uAbout;' + #10 +
+      '  Describe(''View: About'', procedure' + #10 +
+      '    begin' + #10 +
+      '       It(''deve renderizar a pagina Sobre sem erros'', procedure' + #10 +
+      '         begin' + #10 +
+      '            Wrapper := Mount(''about-page'');' + #10 +
+      '            Expect(Wrapper.Element <> nil).ToBe(True);' + #10 +
+      '         end);' + #10 +
+      '    end);' + #10 +
+      'end.' + #10
+    );
+
+    // Minimal tests: unit/Formatters.test.pas
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + 'Formatters.test.pas',
+      'program formatters_unit_test;' + #10#10 +
+      '{$mode objfpc}' + #10#10 +
+      'uses JS, Web, BVTestUtils, uFormatters;' + #10#10 +
+      'begin' + #10 +
+      '  Describe(''Unit: Formatters'', procedure' + #10 +
+      '    begin' + #10 +
+      '       It(''deve formatar valor monetario'', procedure' + #10 +
+      '         begin' + #10 +
+      '            Expect(FormatCurrency(100.5)).ToContain(''100'');' + #10 +
+      '         end);' + #10 +
+      '    end);' + #10 +
+      'end.' + #10
+    );
+
+    // Minimal tests: framework/reactivity.test.pas
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'framework' + DirectorySeparator + 'reactivity.test.pas',
+      'program reactivity_framework_test;' + #10#10 +
+      '{$mode objfpc}' + #10#10 +
+      'uses JS, Web, BVReactivity, BVTestUtils;' + #10#10 +
+      'var Data, Proxy: TJSObject;' + #10#10 +
+      'begin' + #10 +
+      '  Describe(''Framework: Reactivity'', procedure' + #10 +
+      '    begin' + #10 +
+      '       It(''deve criar objeto reativo e rastrear dados'', procedure' + #10 +
+      '         begin' + #10 +
+      '            Data := TJSObject.new;' + #10 +
+      '            Data[''count''] := 1;' + #10 +
+      '            Proxy := TJSObject(DefineReactive(Data));' + #10 +
+      '            Expect(Proxy[''count'']).ToBe(1);' + #10 +
+      '         end);' + #10 +
+      '    end);' + #10 +
+      'end.' + #10
+    );
   end;
-
-
 
   // --- Ensure Standalone Infrastructure Files ---
 
-
+  // Ensure structured tests folders exist in all scaffolding modes: components, views, unit, framework
+  ForceDir(Base + 'tests' + DirectorySeparator + 'components');
+  ForceDir(Base + 'tests' + DirectorySeparator + 'views');
+  ForceDir(Base + 'tests' + DirectorySeparator + 'unit');
+  ForceDir(Base + 'tests' + DirectorySeparator + 'framework');
+  ForceDir(Base + 'src' + DirectorySeparator + 'services');
 
   // Ensure app.cfg exists
-
   if not FileExists(Base + 'app.cfg') then
-
   begin
-
     Content := GetTemplate('TPL_APP_CFG', 'app.cfg');
-
+    if Pos('-Fusrc/services', Content) = 0 then
+      Content := Content + #10 + '-Fusrc/services';
     WriteStringToFile(Base + 'app.cfg', Content);
-
   end;
-
-
 
   // Ensure package.json exists
-
   if not FileExists(Base + 'package.json') then
-
   begin
-
     Content := GetTemplate('TPL_PACKAGE_JSON', 'package.json');
-
     Content := StringReplace(Content, '{{PROJECT_NAME}}', ProjectName, [rfReplaceAll]);
-
     WriteStringToFile(Base + 'package.json', Content);
-
   end;
-
-
 
   // Ensure tests/setup.js exists
-
   if not FileExists(Base + 'tests' + DirectorySeparator + 'setup.js') then
-
   begin
-
     ForceDir(Base + 'tests');
-
     Content := GetTemplate('TPL_SETUP_JS', 'setup.js');
-
     WriteStringToFile(Base + 'tests' + DirectorySeparator + 'setup.js', Content);
-
   end;
 
-
-
   // Ensure vitest.config.js exists
-
   if not FileExists(Base + 'vitest.config.js') then
-
     WriteStringToFile(Base + 'vitest.config.js',
-
       'import { defineConfig } from ''vitest/config'';' + #10 +
-
       #10 +
-
       'export default defineConfig({' + #10 +
-
       '  test: {' + #10 +
-
       '    globals: true,' + #10 +
-
       '    environment: ''jsdom'',' + #10 +
-
       '    setupFiles: [''./tests/setup.js''],' + #10 +
-
+      '    include: [''generated/tests/**/*.test.js''],' + #10 +
       '  },' + #10 +
-
       '});'
-
     );
-
-
 
   // Always ensure rtl.js exists
 
@@ -7093,6 +7131,8 @@ begin
 
   
 
+  if DirectoryExists(GenPath) then
+    DeleteDir(GenPath);
   ForceDir(GenPath);
 
 
@@ -7173,7 +7213,7 @@ begin
 
        WriteLn('  - ', RelPath);
 
-       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + OutFile + '" -O-');
+       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services" -Fu"' + GetCurrentDir + DirectorySeparator + 'src" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + OutFile + '" -O-');
 
        // Add rtl.run() for Vitest to execute the program module code
 
