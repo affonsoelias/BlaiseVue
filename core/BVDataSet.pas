@@ -248,10 +248,25 @@ begin
   asm
     var dbName = DBName || 'bv_offline_db';
     var key = StoreKey || 'default';
+
+    // Unproxy and sanitize data for IndexedDB structured cloning
+    var cleanRecords = [];
+    var cleanDelta = [];
+    try {
+      if (RecordsData) cleanRecords = JSON.parse(JSON.stringify(RecordsData));
+    } catch(eRec) {
+      cleanRecords = [];
+    }
+    try {
+      if (DeltaData) cleanDelta = JSON.parse(JSON.stringify(DeltaData));
+    } catch(eDel) {
+      cleanDelta = [];
+    }
+
     var payload = {
       key: key,
-      records: RecordsData || [],
-      delta: DeltaData || [],
+      records: cleanRecords,
+      delta: cleanDelta,
       updatedAt: Date.now()
     };
 
@@ -265,16 +280,27 @@ begin
           }
         };
         req.onsuccess = function(e) {
-          var db = e.target.result;
-          var tx = db.transaction(['datasets'], 'readwrite');
-          var store = tx.objectStore('datasets');
-          var putReq = store.put(payload);
-          putReq.onsuccess = function() {
-            if (typeof OnSuccess === 'function') OnSuccess(payload);
-          };
-          putReq.onerror = function(err) {
-            if (typeof OnError === 'function') OnError(err);
-          };
+          try {
+            var db = e.target.result;
+            var tx = db.transaction(['datasets'], 'readwrite');
+            var store = tx.objectStore('datasets');
+            var putReq = store.put(payload);
+            putReq.onsuccess = function() {
+              if (typeof OnSuccess === 'function') OnSuccess(payload);
+            };
+            putReq.onerror = function(err) {
+              if (typeof OnError === 'function') OnError(err);
+            };
+          } catch(putEx) {
+            try {
+              if (window.localStorage) {
+                window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+              }
+              if (typeof OnSuccess === 'function') OnSuccess(payload);
+            } catch(eLoc) {
+              if (typeof OnError === 'function') OnError(eLoc);
+            }
+          }
         };
         req.onerror = function(err) {
           try {
