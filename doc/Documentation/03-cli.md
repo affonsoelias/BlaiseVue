@@ -47,52 +47,52 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 
 ---
 
-## 🏗️ Geradores de Componentes, Views e Testes (`bv new`)
+## 🏗️ Scaffolding Generators for Components, Views, and Tests (`bv new`)
 
-O BlaiseVue conta com geradores inteligentes que aceleram o desenvolvimento e já criam os arquivos de teste correspondentes de forma automática:
+BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites:
 
-### 1. Criar Componente: `bv new component <Name> [--no-test]`
-Cria o componente visual e seu arquivo de teste:
+### 1. Create Component: `bv new component <Name> [--no-test]`
+Creates the visual Single File Component (`.bv`) and its companion test file:
 ```bash
 bv new component ProductCard
-# Atalho:
+# Shorthand:
 bv new c ProductCard
 ```
-- Cria: `src/components/ProductCard.bv`
-- Cria automaticamente: `tests/components/ProductCard.test.pas`
-- Se passar a flag `--no-test` (ou `-nt`), cria apenas o componente `.bv`.
+- Creates: `src/components/ProductCard.bv`
+- Automatically generates: `tests/components/ProductCard.test.pas`
+- Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
-### 2. Criar View / Página: `bv new view <Name> [--no-test]`
-Cria uma nova tela da aplicação e seu teste de montagem:
+### 2. Create View / Page: `bv new view <Name> [--no-test]`
+Creates an application page view and its mount verification test:
 ```bash
 bv new view OrderHistory
-# Atalho:
+# Shorthand:
 bv new v OrderHistory
 ```
-- Cria: `src/views/OrderHistory.bv`
-- Cria automaticamente: `tests/views/OrderHistory.test.pas`
-- Suporta a flag `--no-test` para pular a criação do teste.
+- Creates: `src/views/OrderHistory.bv`
+- Automatically generates: `tests/views/OrderHistory.test.pas`
+- Supports `--no-test` to skip test generation.
 
-### 3. Criar Teste Dedicado (Detecção Inteligente): `bv new test <Name>`
-Cria testes sob demanda com resolução automática de pasta:
+### 3. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+Creates test suites on demand with automatic directory resolution:
 ```bash
 bv new test SimpleBadge
-# Atalho:
+# Shorthand:
 bv new t SimpleBadge
 ```
-- **Se `SimpleBadge.bv` for um componente:** cria em `tests/components/SimpleBadge.test.pas` com `Mount('simple-badge')`.
-- **Se for uma view:** cria em `tests/views/SimpleBadge.test.pas` com `Mount('simple-badge-page')`.
-- **Se passar um caminho:** `bv new t services/CalculoFrete` -> cria em `tests/services/CalculoFrete.test.pas`.
-- **Caso contrário:** cria em `tests/unit/SimpleBadge.test.pas` para regras de negócio e serviços em Pascal puro.
+- **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
+- **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If given a relative path:** `bv new t services/CalculoFrete` -> created in `tests/services/CalculoFrete.test.pas`.
+- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business services.
 
-### 4. Listar Elementos: `bv list <c|v|t>`
-Lista os arquivos registrados no projeto:
-- `bv list c`: Lista os componentes em `src/components/`.
-- `bv list v`: Lista as views em `src/views/`.
-- `bv list t`: Lista todos os testes de forma recursiva nas 4 subpastas de `tests/`.
+### 4. List Elements: `bv list <c|v|t>`
+Lists registered files across the project:
+- `bv list c`: Lists components in `src/components/`.
+- `bv list v`: Lists views in `src/views/`.
+- `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
 
-### 5. Remover Elementos: `bv remove <component|view|test> <Name>`
-Remove o arquivo principal, a unit Pascal gerada em `generated/` e os testes associados em suas respectivas subpastas:
+### 5. Remove Elements: `bv remove <component|view|test> <Name>`
+Safely purges the source file, generated Pascal units in `generated/`, and associated test files across subfolders:
 ```bash
 bv remove component ProductCard
 bv remove view OrderHistory
@@ -101,22 +101,48 @@ bv remove test SimpleBadge
 
 ---
 
-## 🧪 Suíte de Testes Automatizados (`bv test`)
+## 🧪 Automated Test Runner (`bv test`)
 
-O comando `bv test` executa todos os testes unitários e de integração do projeto:
+The `bv test` command compiles and executes all unit and integration tests across the 4-tier hierarchy:
 ```bash
 bv test
 ```
-1. **Limpeza Prévia:** Limpa automaticamente artefatos legados em `generated/tests/` para evitar testes órfãos.
-2. **Varredura Recursiva:** Encontra todos os arquivos `*.test.pas` nas 4 camadas de `tests/` (`components/`, `views/`, `unit/`, `framework/`).
-3. **Transpilação:** Transpila todos os arquivos `.bv` para `generated/`.
-4. **Compilação Preservando Pastas:** Compila cada suíte Pascal para JavaScript usando o Pas2JS, mantendo a hierarquia relativa de pastas (ex.: `generated/tests/views/Home.test.js`).
-5. **Execução Vitest:** Roda os testes via **Vitest** no Node.js/JSDOM com 100% de compatibilidade e apresenta o relatório no terminal.
+1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
+2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/unit/`, and `tests/framework/`.
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
+4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
+5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
 
-Para desenvolvimento contínuo (reexecuta ao salvar qualquer arquivo):
+For continuous test-driven development:
 ```bash
 bv test --watch
 ```
+
+---
+
+## 📦 Standalone Library Scaffolding & Release Packager
+
+BlaiseVue enables creating, testing, and distributing modular component libraries:
+
+### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
+Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
+```bash
+bv create my-ui-kit --lib
+```
+- Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
+- In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
+- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
+
+### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
+Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
+```bash
+bv lib pack
+# Alias:
+bv lib dist
+```
+- **Pre-flight Tests**: Runs `bv test` before packaging to guarantee zero regressions (bypass with `--skip-tests`).
+- **Production Filtering**: Packages only `src/`, `styles/`, `package.json`, `README.md`, `LICENSE`, and `setup.pas`.
+- **Integrity Hash**: Computes SHA-256 checksum and writes `dist/<name>-<version>.zip.sha256`.
 
 ---
 

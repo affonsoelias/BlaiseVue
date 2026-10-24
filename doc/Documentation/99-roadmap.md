@@ -611,15 +611,17 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
 - **Comprehensive Automated Test Coverage (`demo-app/tests/framework/mormot_relational.test.pas`)**:
   - Automated tests validating database engine port and connection string resolution, relational foreign key metadata, parent-child JSON serialization, reactive selection synchronization, and dynamic subtotal calculations.
 
-#### 🏎️ Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`
+#### 🏎️ Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>` (✅ Completed)
 - **DOM Node Virtualization (`<bv-virtual-scroll>`)**:
   - High-performance DOM recycling engine capable of rendering tables with 50,000 to 100,000+ records at a constant 60 FPS.
   - Keeps only visible rows (+ customizable buffer) in the browser DOM tree, drastically cutting memory consumption and preventing layout recalculation bottlenecks.
   - Seamlessly integrates with the reactive `TBVDataSet` cursor and selection models.
+- **Dedicated Documentation & Architecture**: [47-virtual-scrolling.md](47-virtual-scrolling.md).
+- **Automated Test Coverage**: `demo-app/tests/framework/virtual_scroll.test.pas`.
 
 ---
 
-#### 📦 Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)
+#### 📦 Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`) (✅ Completed)
 - **Scaffolding Standalone Library Projects**:
   - `bv create <name> --lib` scaffolds a dedicated library repository tailored for multi-component distribution.
   - **Interactive License Chooser**: Prompts the developer to select an open-source or commercial license during scaffolding:
@@ -643,6 +645,12 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
     ```bash
     bv lib install https://github.com/<author>/<package>
     ```
+    Or locally from an offline archive:
+    ```bash
+    bv lib install ./dist/<name>-<version>.zip
+    ```
+- **Dedicated Documentation & Release Guide**: [48-library-distribution-packager.md](48-library-distribution-packager.md).
+- **Automated Test Coverage**: `demo-app/tests/framework/lib_packager.test.pas`.
 
 ---
 

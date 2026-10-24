@@ -761,6 +761,8 @@ procedure CmdLibList; forward;
 procedure CmdLibInstall(const URL: string); forward;
 
 procedure CmdLibRemove(const LibName: string); forward;
+procedure CmdCreateLib(const LibName: string; const SelectedLicense: string); forward;
+procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean); forward;
 
 procedure CmdThemeList; forward;
 
@@ -2280,6 +2282,14 @@ begin
 
     Result := Result + '  RegisterComponent(''bv-datagrid'', comp);' + #10;
 
+  if TagName = 'bv-virtual-scroll' then
+
+    Result := Result + '  RegisterComponent(''bv-virtualscroll'', comp);' + #10;
+
+  if TagName = 'bv-virtualscroll' then
+
+    Result := Result + '  RegisterComponent(''bv-virtual-scroll'', comp);' + #10;
+
   if TagName = 'data-set-view-page' then
 
     Result := Result + '  RegisterComponent(''dataset-view-page'', comp);' + #10;
@@ -2780,6 +2790,740 @@ end;
 
 
 
+// =====================================================================
+//  CRYPTOGRAPHIC SHA-256 INTEGRITY ENGINE (Pure Pascal RFC 6234)
+// =====================================================================
+
+type
+  TSHA256Context = record
+    State: array[0..7] of Cardinal;
+    Count: QWord;
+    Buffer: array[0..63] of Byte;
+  end;
+
+function ROR32(x: Cardinal; n: Byte): Cardinal; inline;
+begin
+  Result := (x shr n) or (x shl (32 - n));
+end;
+
+function Ch32(x, y, z: Cardinal): Cardinal; inline;
+begin
+  Result := (x and y) xor ((not x) and z);
+end;
+
+function Maj32(x, y, z: Cardinal): Cardinal; inline;
+begin
+  Result := (x and y) xor (x and z) xor (y and z);
+end;
+
+function Sigma0_32(x: Cardinal): Cardinal; inline;
+begin
+  Result := ROR32(x, 2) xor ROR32(x, 13) xor ROR32(x, 22);
+end;
+
+function Sigma1_32(x: Cardinal): Cardinal; inline;
+begin
+  Result := ROR32(x, 6) xor ROR32(x, 11) xor ROR32(x, 25);
+end;
+
+function Gamma0_32(x: Cardinal): Cardinal; inline;
+begin
+  Result := ROR32(x, 7) xor ROR32(x, 18) xor (x shr 3);
+end;
+
+function Gamma1_32(x: Cardinal): Cardinal; inline;
+begin
+  Result := ROR32(x, 17) xor ROR32(x, 19) xor (x shr 10);
+end;
+
+const
+  K256: array[0..63] of Cardinal = (
+    $428a2f98, $71374491, $b5c0fbcf, $e9b5dba5, $3956c25b, $59f111f1, $923f82a4, $ab1c5ed5,
+    $d807aa98, $12835b01, $243185be, $550c7dc3, $72be5d74, $80deb1fe, $9bdc06a7, $c19bf174,
+    $e49b69c1, $efbe4786, $0fc19dc6, $240ca1cc, $2de92c6f, $4a7484aa, $5cb0a9dc, $76f988da,
+    $983e5152, $a831c66d, $b00327c8, $bf597fc7, $c6e00bf3, $d5a79147, $06ca6351, $14292967,
+    $27b70a85, $2e1b2138, $4d2c6dfc, $53380d13, $650a7354, $766a0abb, $81c2c92e, $92722c85,
+    $a2bfe8a1, $a81a664b, $c24b8b70, $c76c51a3, $d192e819, $d6990624, $f40e3585, $106aa070,
+    $19a4c116, $1e376c08, $2748774c, $34b0bcb5, $391c0cb3, $4ed8aa4a, $5b9cca4f, $682e6ff3,
+    $748f82ee, $78a5636f, $84c87814, $8cc70208, $90befffa, $a4506ceb, $bef9a3f7, $c67178f2
+  );
+
+procedure SHA256Transform(var State: array of Cardinal; const Block: array of Byte);
+var
+  W: array[0..63] of Cardinal;
+  a, b, c, d, e, f, g, h, T1, T2: Cardinal;
+  i: Integer;
+begin
+  for i := 0 to 15 do
+    W[i] := (Cardinal(Block[i*4]) shl 24) or (Cardinal(Block[i*4+1]) shl 16) or
+            (Cardinal(Block[i*4+2]) shl 8)  or Cardinal(Block[i*4+3]);
+  for i := 16 to 63 do
+    W[i] := Gamma1_32(W[i - 2]) + W[i - 7] + Gamma0_32(W[i - 15]) + W[i - 16];
+
+  a := State[0]; b := State[1]; c := State[2]; d := State[3];
+  e := State[4]; f := State[5]; g := State[6]; h := State[7];
+
+  for i := 0 to 63 do
+  begin
+    T1 := h + Sigma1_32(e) + Ch32(e, f, g) + K256[i] + W[i];
+    T2 := Sigma0_32(a) + Maj32(a, b, c);
+    h := g; g := f; f := e; e := d + T1;
+    d := c; c := b; b := a; a := T1 + T2;
+  end;
+
+  Inc(State[0], a); Inc(State[1], b); Inc(State[2], c); Inc(State[3], d);
+  Inc(State[4], e); Inc(State[5], f); Inc(State[6], g); Inc(State[7], h);
+end;
+
+procedure SHA256Init(var Ctx: TSHA256Context);
+begin
+  Ctx.State[0] := $6a09e667; Ctx.State[1] := $bb67ae85;
+  Ctx.State[2] := $3c6ef372; Ctx.State[3] := $a54ff53a;
+  Ctx.State[4] := $510e527f; Ctx.State[5] := $9b05688c;
+  Ctx.State[6] := $1f83d9ab; Ctx.State[7] := $5be0cd19;
+  Ctx.Count := 0;
+  FillChar(Ctx.Buffer, SizeOf(Ctx.Buffer), 0);
+end;
+
+procedure SHA256Update(var Ctx: TSHA256Context; const Data; Len: Cardinal);
+var
+  BufferIndex, BufferLeft: Cardinal;
+  P: PByte;
+begin
+  P := PByte(@Data);
+  BufferIndex := Cardinal(Ctx.Count and 63);
+  Inc(Ctx.Count, Len);
+  BufferLeft := 64 - BufferIndex;
+
+  if Len >= BufferLeft then
+  begin
+    Move(P^, Ctx.Buffer[BufferIndex], BufferLeft);
+    SHA256Transform(Ctx.State, Ctx.Buffer);
+    Inc(P, BufferLeft);
+    Dec(Len, BufferLeft);
+    while Len >= 64 do
+    begin
+      Move(P^, Ctx.Buffer[0], 64);
+      SHA256Transform(Ctx.State, Ctx.Buffer);
+      Inc(P, 64);
+      Dec(Len, 64);
+    end;
+    BufferIndex := 0;
+  end;
+  if Len > 0 then
+    Move(P^, Ctx.Buffer[BufferIndex], Len);
+end;
+
+function SHA256FinalHex(var Ctx: TSHA256Context): string;
+var
+  BitLen: QWord;
+  PadLen: Cardinal;
+  Pad: array[0..63] of Byte;
+  i: Integer;
+  BEBits: array[0..7] of Byte;
+begin
+  BitLen := Ctx.Count * 8;
+  FillChar(Pad, SizeOf(Pad), 0);
+  Pad[0] := $80;
+  if (Ctx.Count and 63) < 56 then
+    PadLen := 56 - (Ctx.Count and 63)
+  else
+    PadLen := 120 - (Ctx.Count and 63);
+
+  for i := 0 to 7 do
+    BEBits[i] := Byte((BitLen shr ((7 - i) * 8)) and $FF);
+
+  SHA256Update(Ctx, Pad, PadLen);
+  SHA256Update(Ctx, BEBits, 8);
+
+  Result := '';
+  for i := 0 to 7 do
+    Result := Result + IntToHex(Ctx.State[i], 8);
+  Result := LowerCase(Result);
+end;
+
+function FileSHA256(const FileName: string): string;
+var
+  FS: TFileStream;
+  Ctx: TSHA256Context;
+  Buf: array[0..8191] of Byte;
+  ReadBytes: Integer;
+begin
+  Result := '';
+  if not FileExists(FileName) then Exit;
+  SHA256Init(Ctx);
+  FS := TFileStream.Create(FileName, fmOpenRead or fmShareDenyNone);
+  try
+    while True do
+    begin
+      ReadBytes := FS.Read(Buf, SizeOf(Buf));
+      if ReadBytes <= 0 then Break;
+      SHA256Update(Ctx, Buf, ReadBytes);
+    end;
+    Result := SHA256FinalHex(Ctx);
+  finally
+    FS.Free;
+  end;
+end;
+
+// =====================================================================
+//  LIBRARY SCAFFOLDING HELPERS & PROCEDURES
+// =====================================================================
+
+function ToPascalCase(const S: string): string;
+var
+  i: Integer;
+  NextUpper: Boolean;
+  C: Char;
+begin
+  Result := '';
+  NextUpper := True;
+  for i := 1 to Length(S) do
+  begin
+    C := S[i];
+    if (C = '-') or (C = '_') or (C = ' ') or (C = '.') then
+      NextUpper := True
+    else
+    begin
+      if NextUpper then
+      begin
+        Result := Result + UpCase(C);
+        NextUpper := False;
+      end
+      else
+        Result := Result + C;
+    end;
+  end;
+  if (Copy(Result, 1, 2) = 'Bv') and (Length(Result) > 2) and (Result[3] >= 'A') and (Result[3] <= 'Z') then
+    Result := 'BV' + Copy(Result, 3, MaxInt);
+  if Result = '' then Result := 'CustomComponent';
+end;
+
+function ToKebabCase(const S: string): string;
+var
+  i: Integer;
+  C: Char;
+begin
+  Result := '';
+  for i := 1 to Length(S) do
+  begin
+    C := S[i];
+    if (C >= 'A') and (C <= 'Z') then
+    begin
+      if (i > 1) and (Result[Length(Result)] <> '-') then
+        Result := Result + '-';
+      Result := Result + LowerCase(C);
+    end
+    else if (C = '_') or (C = ' ') or (C = '.') then
+    begin
+      if (Result <> '') and (Result[Length(Result)] <> '-') then
+        Result := Result + '-';
+    end
+    else
+      Result := Result + C;
+  end;
+  if Result = '' then Result := 'custom-component';
+end;
+
+{ Scaffolds a dedicated external component library project }
+procedure CmdCreateLib(const LibName: string; const SelectedLicense: string);
+var
+  Base, PascalName, KebabName, TagName: string;
+  LicenseId, LicenseTitle, LicenseBody, InputChoice: string;
+  NormalizedLic: string;
+  PkgJson, BvComp, PasUnit, CssStyle, DemoHtml, DemoApp, UnitTest, Readme: string;
+begin
+  Base := GetCurrentDir + DirectorySeparator + LibName + DirectorySeparator;
+
+  if DirectoryExists(Base) then
+  begin
+    WriteLn('ERROR: Folder "', LibName, '" already exists.');
+    Halt(1);
+  end;
+
+  NormalizedLic := LowerCase(Trim(SelectedLicense));
+  if NormalizedLic <> '' then
+  begin
+    if (NormalizedLic = 'mit') then
+    begin
+      LicenseId := 'MIT';
+      LicenseTitle := 'MIT License';
+    end
+    else if (NormalizedLic = 'apache') or (NormalizedLic = 'apache-2.0') or (NormalizedLic = 'apache2') then
+    begin
+      LicenseId := 'Apache-2.0';
+      LicenseTitle := 'Apache License 2.0';
+    end
+    else if (NormalizedLic = 'lgpl') or (NormalizedLic = 'lgpl-3.0') or (NormalizedLic = 'lgpl3') then
+    begin
+      LicenseId := 'LGPL-3.0';
+      LicenseTitle := 'GNU Lesser General Public License v3.0';
+    end
+    else if (NormalizedLic = 'commercial') or (NormalizedLic = 'proprietary') then
+    begin
+      LicenseId := 'Commercial';
+      LicenseTitle := 'Commercial / Proprietary License';
+    end
+    else if (NormalizedLic = 'none') or (NormalizedLic = 'unlicensed') or (NormalizedLic = 'unlicense') then
+    begin
+      LicenseId := 'UNLICENSED';
+      LicenseTitle := 'None (Unlicensed)';
+    end
+    else
+    begin
+      LicenseId := 'MIT';
+      LicenseTitle := 'MIT License';
+    end;
+  end
+  else
+  begin
+    WriteLn('');
+    WriteLn('Select license for library "' + LibName + '":');
+    WriteLn('  1) MIT (Permissive, recommended for open-source community packages)');
+    WriteLn('  2) Apache 2.0 (Permissive with patent grant protection)');
+    WriteLn('  3) GNU LGPL v3 (Traditional Pascal library copyleft standard)');
+    WriteLn('  4) Commercial / Proprietary (All rights reserved)');
+    WriteLn('  5) None');
+    Write('Enter choice [1-5] (default 1): ');
+    InputChoice := '';
+    try
+      ReadLn(InputChoice);
+    except
+      InputChoice := '1';
+    end;
+    InputChoice := Trim(InputChoice);
+    if (InputChoice = '1') or (InputChoice = '') then
+    begin
+      LicenseId := 'MIT';
+      LicenseTitle := 'MIT License';
+    end
+    else if InputChoice = '2' then
+    begin
+      LicenseId := 'Apache-2.0';
+      LicenseTitle := 'Apache License 2.0';
+    end
+    else if InputChoice = '3' then
+    begin
+      LicenseId := 'LGPL-3.0';
+      LicenseTitle := 'GNU Lesser General Public License v3.0';
+    end
+    else if InputChoice = '4' then
+    begin
+      LicenseId := 'Commercial';
+      LicenseTitle := 'Commercial / Proprietary License';
+    end
+    else if InputChoice = '5' then
+    begin
+      LicenseId := 'UNLICENSED';
+      LicenseTitle := 'None (Unlicensed)';
+    end
+    else
+    begin
+      LicenseId := 'MIT';
+      LicenseTitle := 'MIT License';
+    end;
+  end;
+
+  // Generate License Body
+  if LicenseId = 'MIT' then
+  begin
+    LicenseBody := 'MIT License' + #10#10 +
+      'Copyright (c) 2026 BlaiseVue Community' + #10#10 +
+      'Permission is hereby granted, free of charge, to any person obtaining a copy' + #10 +
+      'of this software and associated documentation files (the "Software"), to deal' + #10 +
+      'in the Software without restriction, including without limitation the rights' + #10 +
+      'to use, copy, modify, merge, publish, distribute, sublicense, and/or sell' + #10 +
+      'copies of the Software, and to permit persons to whom the Software is' + #10 +
+      'furnished to do so, subject to the following conditions:' + #10#10 +
+      'The above copyright notice and this permission notice shall be included in all' + #10 +
+      'copies or substantial portions of the Software.' + #10#10 +
+      'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR' + #10 +
+      'IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,' + #10 +
+      'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE' + #10 +
+      'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER' + #10 +
+      'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,' + #10 +
+      'OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE' + #10 +
+      'SOFTWARE.' + #10;
+  end
+  else if LicenseId = 'Apache-2.0' then
+  begin
+    LicenseBody := 'Apache License' + #10 +
+      'Version 2.0, January 2004' + #10 +
+      'http://www.apache.org/licenses/' + #10#10 +
+      'TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION' + #10#10 +
+      'Licensed under the Apache License, Version 2.0 (the "License");' + #10 +
+      'you may not use this file except in compliance with the License.' + #10 +
+      'You may obtain a copy of the License at' + #10#10 +
+      '    http://www.apache.org/licenses/LICENSE-2.0' + #10#10 +
+      'Unless required by applicable law or agreed to in writing, software' + #10 +
+      'distributed under the License is distributed on an "AS IS" BASIS,' + #10 +
+      'WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.' + #10 +
+      'See the License for the specific language governing permissions and' + #10 +
+      'limitations under the License.' + #10;
+  end
+  else if LicenseId = 'LGPL-3.0' then
+  begin
+    LicenseBody := 'GNU LESSER GENERAL PUBLIC LICENSE' + #10 +
+      'Version 3, 29 June 2007' + #10#10 +
+      'Copyright (C) 2026 BlaiseVue Community' + #10#10 +
+      'This program is free software: you can redistribute it and/or modify' + #10 +
+      'it under the terms of the GNU Lesser General Public License as published by' + #10 +
+      'the Free Software Foundation, either version 3 of the License, or' + #10 +
+      '(at your option) any later version.' + #10#10 +
+      'This program is distributed in the hope that it will be useful,' + #10 +
+      'but WITHOUT ANY WARRANTY; without even the implied warranty of' + #10 +
+      'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the' + #10 +
+      'GNU Lesser General Public License for more details.' + #10;
+  end
+  else if LicenseId = 'Commercial' then
+  begin
+    LicenseBody := 'COMMERCIAL / PROPRIETARY SOFTWARE LICENSE AGREEMENT' + #10#10 +
+      'Copyright (c) 2026. All rights reserved.' + #10#10 +
+      'This software and associated documentation files (the "Software") are proprietary' + #10 +
+      'and confidential. Unauthorized copying of this file, via any medium, is strictly' + #10 +
+      'prohibited without prior written permission from the copyright owner.' + #10;
+  end
+  else
+  begin
+    LicenseBody := 'This is free and unencumbered software released into the public domain.' + #10#10 +
+      'Anyone is free to copy, modify, publish, use, compile, sell, or' + #10 +
+      'distribute this software, either in source code form or as a compiled' + #10 +
+      'binary, for any purpose, commercial or non-commercial, and by any means.' + #10;
+  end;
+
+  KebabName := ToKebabCase(LibName);
+  PascalName := ToPascalCase(LibName);
+  if Copy(LowerCase(KebabName), 1, 3) = 'bv-' then
+    TagName := KebabName
+  else
+    TagName := 'bv-' + KebabName;
+
+  WriteLn('Scaffolding BlaiseVue library: ' + LibName);
+  ForceDir(Base + 'src');
+  ForceDir(Base + 'styles');
+  ForceDir(Base + 'demo');
+  ForceDir(Base + 'tests');
+  ForceDir(Base + 'dist');
+
+  // 1. package.json
+  PkgJson := '{' + #10 +
+    '  "name": "' + LibName + '",' + #10 +
+    '  "version": "1.0.0",' + #10 +
+    '  "description": "BlaiseVue component library: ' + LibName + '",' + #10 +
+    '  "main": "src/' + PascalName + '.bv",' + #10 +
+    '  "style": "styles/' + KebabName + '.css",' + #10 +
+    '  "license": "' + LicenseId + '",' + #10 +
+    '  "blaisevue": {' + #10 +
+    '    "type": "library"' + #10 +
+    '  },' + #10 +
+    '  "scripts": {' + #10 +
+    '    "dev": "bv run dev",' + #10 +
+    '    "test": "bv test",' + #10 +
+    '    "pack": "bv lib pack"' + #10 +
+    '  }' + #10 +
+    '}' + #10;
+  WriteStringToFile(Base + 'package.json', PkgJson);
+
+  // 2. LICENSE
+  WriteStringToFile(Base + 'LICENSE', LicenseBody);
+
+  // 3. src/<PascalName>.bv
+  BvComp := '<template>' + #10 +
+    '  <div class="bv-lib-component" :class="variantClass">' + #10 +
+    '    <span class="bv-lib-label">{{ label }}</span>' + #10 +
+    '    <span v-if="showCount" class="bv-lib-badge">{{ count }}</span>' + #10 +
+    '    <button class="bv-lib-btn" @click="handleAction">' + #10 +
+    '      {{ actionText }}' + #10 +
+    '    </button>' + #10 +
+    '  </div>' + #10 +
+    '</template>' + #10#10 +
+    '<script>' + #10 +
+    'unit u' + PascalName + ';' + #10#10 +
+    '{$mode objfpc}{$H+}' + #10#10 +
+    'interface' + #10#10 +
+    'uses' + #10 +
+    '  SysUtils, Classes, JS, Web;' + #10#10 +
+    'type' + #10 +
+    '  T' + PascalName + ' = class' + #10 +
+    '  private' + #10 +
+    '    FLabel: string;' + #10 +
+    '    FVariant: string;' + #10 +
+    '    FCount: Integer;' + #10 +
+    '    FShowCount: Boolean;' + #10 +
+    '    FActionText: string;' + #10 +
+    '  public' + #10 +
+    '    property label: string read FLabel write FLabel;' + #10 +
+    '    property variant: string read FVariant write FVariant;' + #10 +
+    '    property count: Integer read FCount write FCount;' + #10 +
+    '    property showCount: Boolean read FShowCount write FShowCount;' + #10 +
+    '    property actionText: string read FActionText write FActionText;' + #10#10 +
+    '    function variantClass: string;' + #10 +
+    '    procedure handleAction;' + #10 +
+    '  end;' + #10#10 +
+    'implementation' + #10#10 +
+    'function T' + PascalName + '.variantClass: string;' + #10 +
+    'begin' + #10 +
+    '  if FVariant <> '''' then' + #10 +
+    '    Result := ''bv-variant-'' + LowerCase(FVariant)' + #10 +
+    '  else' + #10 +
+    '    Result := ''bv-variant-primary'';' + #10 +
+    'end;' + #10#10 +
+    'procedure T' + PascalName + '.handleAction;' + #10 +
+    'begin' + #10 +
+    '  Inc(FCount);' + #10 +
+    '  Emit(''action'', FCount);' + #10 +
+    'end;' + #10#10 +
+    'end.' + #10 +
+    '</script>' + #10#10 +
+    '<style scoped>' + #10 +
+    '.bv-lib-component {' + #10 +
+    '  display: inline-flex;' + #10 +
+    '  align-items: center;' + #10 +
+    '  gap: 8px;' + #10 +
+    '  padding: 8px 16px;' + #10 +
+    '  border-radius: 8px;' + #10 +
+    '  font-family: inherit;' + #10 +
+    '  font-size: 14px;' + #10 +
+    '  border: 1px solid rgba(0, 0, 0, 0.1);' + #10 +
+    '  background: #ffffff;' + #10 +
+    '  transition: all 0.2s ease;' + #10 +
+    '}' + #10#10 +
+    '.bv-variant-primary {' + #10 +
+    '  border-color: #3b82f6;' + #10 +
+    '  color: #1e40af;' + #10 +
+    '  background: #eff6ff;' + #10 +
+    '}' + #10#10 +
+    '.bv-variant-success {' + #10 +
+    '  border-color: #10b981;' + #10 +
+    '  color: #065f46;' + #10 +
+    '  background: #ecfdf5;' + #10 +
+    '}' + #10#10 +
+    '.bv-lib-badge {' + #10 +
+    '  background: #3b82f6;' + #10 +
+    '  color: #ffffff;' + #10 +
+    '  padding: 2px 6px;' + #10 +
+    '  border-radius: 9999px;' + #10 +
+    '  font-size: 12px;' + #10 +
+    '  font-weight: 600;' + #10 +
+    '}' + #10#10 +
+    '.bv-lib-btn {' + #10 +
+    '  cursor: pointer;' + #10 +
+    '  background: #2563eb;' + #10 +
+    '  color: #ffffff;' + #10 +
+    '  border: none;' + #10 +
+    '  padding: 4px 10px;' + #10 +
+    '  border-radius: 6px;' + #10 +
+    '  font-size: 13px;' + #10 +
+    '  font-weight: 500;' + #10 +
+    '}' + #10#10 +
+    '.bv-lib-btn:hover {' + #10 +
+    '  background: #1d4ed8;' + #10 +
+    '}' + #10 +
+    '</style>' + #10;
+  WriteStringToFile(Base + 'src' + DirectorySeparator + PascalName + '.bv', BvComp);
+
+  // 4. src/<PascalName>.pas
+  PasUnit := 'unit ' + PascalName + ';' + #10#10 +
+    '{$mode objfpc}{$H+}' + #10#10 +
+    'interface' + #10#10 +
+    'uses' + #10 +
+    '  SysUtils, Classes;' + #10#10 +
+    'type' + #10 +
+    '  T' + PascalName + 'Config = record' + #10 +
+    '    DefaultVariant: string;' + #10 +
+    '    AutoIncrement: Boolean;' + #10 +
+    '  end;' + #10#10 +
+    'function Get' + PascalName + 'Version: string;' + #10#10 +
+    'implementation' + #10#10 +
+    'function Get' + PascalName + 'Version: string;' + #10 +
+    'begin' + #10 +
+    '  Result := ''1.0.0'';' + #10 +
+    'end;' + #10#10 +
+    'end.' + #10;
+  WriteStringToFile(Base + 'src' + DirectorySeparator + PascalName + '.pas', PasUnit);
+
+  // 5. styles/<KebabName>.css
+  CssStyle := '/* BlaiseVue Library Stylesheet: ' + LibName + ' */' + #10 +
+    '.bv-lib-component {' + #10 +
+    '  box-sizing: border-box;' + #10 +
+    '}' + #10;
+  WriteStringToFile(Base + 'styles' + DirectorySeparator + KebabName + '.css', CssStyle);
+
+  // 6. demo/index.html
+  DemoHtml := '<!DOCTYPE html>' + #10 +
+    '<html lang="en">' + #10 +
+    '<head>' + #10 +
+    '  <meta charset="UTF-8">' + #10 +
+    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' + #10 +
+    '  <title>' + LibName + ' - BlaiseVue Playground</title>' + #10 +
+    '  <link rel="stylesheet" href="../styles/' + KebabName + '.css">' + #10 +
+    '  <style>' + #10 +
+    '    body {' + #10 +
+    '      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' + #10 +
+    '      background: #f8fafc;' + #10 +
+    '      color: #0f172a;' + #10 +
+    '      display: flex;' + #10 +
+    '      flex-direction: column;' + #10 +
+    '      align-items: center;' + #10 +
+    '      padding: 40px 20px;' + #10 +
+    '    }' + #10 +
+    '    .demo-container {' + #10 +
+    '      max-width: 600px;' + #10 +
+    '      width: 100%;' + #10 +
+    '      background: #ffffff;' + #10 +
+    '      border-radius: 12px;' + #10 +
+    '      padding: 24px;' + #10 +
+    '      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);' + #10 +
+    '    }' + #10 +
+    '  </style>' + #10 +
+    '</head>' + #10 +
+    '<body>' + #10 +
+    '  <div id="app"></div>' + #10 +
+    '  <script src="../dist/js/main.js"></script>' + #10 +
+    '</body>' + #10 +
+    '</html>' + #10;
+  WriteStringToFile(Base + 'demo' + DirectorySeparator + 'index.html', DemoHtml);
+
+  // 7. demo/app.bv
+  DemoApp := '<template>' + #10 +
+    '  <div class="demo-container">' + #10 +
+    '    <h1>' + LibName + ' Component Playground</h1>' + #10 +
+    '    <p>Interactive testing playground for <strong>' + LibName + '</strong>.</p>' + #10 +
+    '    <' + TagName + #10 +
+    '      label="Interactive Badge"' + #10 +
+    '      variant="primary"' + #10 +
+    '      :count="clickCount"' + #10 +
+    '      :showCount="true"' + #10 +
+    '      actionText="Click Me"' + #10 +
+    '      @action="onAction"' + #10 +
+    '    />' + #10 +
+    '  </div>' + #10 +
+    '</template>' + #10#10 +
+    '<script>' + #10 +
+    'unit app;' + #10#10 +
+    '{$mode objfpc}{$H+}' + #10#10 +
+    'interface' + #10#10 +
+    'uses' + #10 +
+    '  SysUtils, Classes, JS, Web;' + #10#10 +
+    'type' + #10 +
+    '  TApp = class' + #10 +
+    '  private' + #10 +
+    '    FClickCount: Integer;' + #10 +
+    '  public' + #10 +
+    '    property clickCount: Integer read FClickCount write FClickCount;' + #10 +
+    '    procedure onAction(ANewCount: Integer);' + #10 +
+    '  end;' + #10#10 +
+    'implementation' + #10#10 +
+    'procedure TApp.onAction(ANewCount: Integer);' + #10 +
+    'begin' + #10 +
+    '  FClickCount := ANewCount;' + #10 +
+    'end;' + #10#10 +
+    'end.' + #10 +
+    '</script>' + #10;
+  WriteStringToFile(Base + 'demo' + DirectorySeparator + 'app.bv', DemoApp);
+
+  // 8. tests/<KebabName>.test.pas
+  UnitTest := 'program ' + StringReplace(KebabName, '-', '_', [rfReplaceAll]) + '_test;' + #10#10 +
+    '{$mode objfpc}{$H+}' + #10#10 +
+    'uses' + #10 +
+    '  JS, Web, BVTestUtils, u' + PascalName + ';' + #10#10 +
+    'var' + #10 +
+    '  Wrapper: TWrapper;' + #10#10 +
+    'begin' + #10 +
+    '  Describe(''' + LibName + ' Component Suite'', procedure' + #10 +
+    '    begin' + #10 +
+    '      It(''should mount library component and render initial state'', procedure' + #10 +
+    '        begin' + #10 +
+    '          Wrapper := Mount(''<' + TagName + ' label="Testing" variant="success"></' + TagName + '>'');' + #10 +
+    '          Expect(Wrapper.Exists).ToBe(True);' + #10 +
+    '          Expect(Wrapper.Find(''.bv-lib-label'').Text).ToContain(''Testing'');' + #10 +
+    '          Wrapper.Destroy;' + #10 +
+    '        end);' + #10#10 +
+    '      It(''should emit action event on button click'', procedure' + #10 +
+    '        var' + #10 +
+    '          Btn: TTestElement;' + #10 +
+    '        begin' + #10 +
+    '          Wrapper := Mount(''<' + TagName + ' label="Count" :count="5" :showCount="true" actionText="Plus"></' + TagName + '>'');' + #10 +
+    '          Btn := Wrapper.Find(''.bv-lib-btn'');' + #10 +
+    '          Expect(Btn.Exists).ToBe(True);' + #10 +
+    '          Btn.Trigger(''click'');' + #10 +
+    '          Expect(Wrapper.Emitted(''action'')).ToBe(True);' + #10 +
+    '          Wrapper.Destroy;' + #10 +
+    '        end);' + #10 +
+    '    end);' + #10 +
+    'end.' + #10;
+  WriteStringToFile(Base + 'tests' + DirectorySeparator + KebabName + '.test.pas', UnitTest);
+
+  // 9. README.md
+  Readme := '# ' + LibName + #10#10 +
+    'High-performance reusable component library for **BlaiseVue**.' + #10#10 +
+    '## 📦 Installation' + #10#10 +
+    'In your BlaiseVue project, install this package directly via the CLI:' + #10#10 +
+    '```bash' + #10 +
+    'bv lib install https://github.com/<author>/' + LibName + '/releases/latest/download/' + LibName + '-1.0.0.zip' + #10 +
+    '```' + #10#10 +
+    'Or install from a local archive:' + #10#10 +
+    '```bash' + #10 +
+    'bv lib install ./path/to/' + LibName + '-1.0.0.zip' + #10 +
+    '```' + #10#10 +
+    '## 🚀 Usage' + #10#10 +
+    'Once installed, use the `<' + TagName + '>` component in any `.bv` template:' + #10#10 +
+    '```html' + #10 +
+    '<template>' + #10 +
+    '  <div class="my-view">' + #10 +
+    '    <' + TagName + #10 +
+    '      label="Active Session"' + #10 +
+    '      variant="success"' + #10 +
+    '      :count="activeUsers"' + #10 +
+    '      :showCount="true"' + #10 +
+    '      actionText="Refresh"' + #10 +
+    '      @action="handleRefresh"' + #10 +
+    '    />' + #10 +
+    '  </div>' + #10 +
+    '</template>' + #10 +
+    '```' + #10#10 +
+    '### Component Props' + #10#10 +
+    '| Prop | Type | Default | Description |' + #10 +
+    '| :--- | :--- | :--- | :--- |' + #10 +
+    '| `label` | `string` | `''''` | Text label displayed on the component |' + #10 +
+    '| `variant` | `string` | `''primary''` | Visual theme variant (`primary`, `success`) |' + #10 +
+    '| `count` | `integer` | `0` | Numeric counter displayed when enabled |' + #10 +
+    '| `showCount` | `boolean` | `false` | Controls visibility of the count badge |' + #10 +
+    '| `actionText`| `string` | `''Action''` | Button label |' + #10#10 +
+    '### Events' + #10#10 +
+    '| Event | Payload | Description |' + #10 +
+    '| :--- | :--- | :--- |' + #10 +
+    '| `@action` | `count: Integer` | Emitted when the action button is clicked |' + #10#10 +
+    '## 🛠️ Development & Distribution' + #10#10 +
+    '```bash' + #10 +
+    '# Run playground in dev mode with live HMR' + #10 +
+    'bv run dev' + #10#10 +
+    '# Run autonomous test suite' + #10 +
+    'bv test' + #10#10 +
+    '# Assemble and verify release archive with SHA-256' + #10 +
+    'bv lib pack' + #10 +
+    '```' + #10#10 +
+    '## 📄 License' + #10#10 +
+    'This library is licensed under the ' + LicenseTitle + '. See [LICENSE](LICENSE) for details.' + #10;
+  WriteStringToFile(Base + 'README.md', Readme);
+
+  WriteLn('  [+] src/' + PascalName + '.bv');
+  WriteLn('  [+] src/' + PascalName + '.pas');
+  WriteLn('  [+] styles/' + KebabName + '.css');
+  WriteLn('  [+] demo/index.html & demo/app.bv');
+  WriteLn('  [+] tests/' + KebabName + '.test.pas');
+  WriteLn('  [+] package.json (License: ' + LicenseId + ')');
+  WriteLn('  [+] LICENSE (' + LicenseTitle + ')');
+  WriteLn('  [+] README.md');
+  WriteLn('');
+  WriteLn('Library "' + LibName + '" scaffolded successfully!');
+  WriteLn('Next steps:');
+  WriteLn('  cd ' + LibName);
+  WriteLn('  bv run dev        # Launch interactive component playground');
+  WriteLn('  bv test           # Run autonomous test suite');
+  WriteLn('  bv lib pack       # Assemble production artifact in dist/' + LibName + '-1.0.0.zip');
+end;
+
 { Scaffolds a complete project directory structure with sample pages }
 
 procedure CmdCreate(const ProjectName: string);
@@ -2790,15 +3534,40 @@ var
 
   Content: string;
 
-  IsFullStack: Boolean;
+  IsFullStack, IsLib: Boolean;
 
-  TemplateMormotDir: string;
+  TemplateMormotDir, LicenseArg, RealProjectName: string;
 
   i: Integer;
 
 begin
 
-  Base := GetCurrentDir + DirectorySeparator + ProjectName + DirectorySeparator;
+  IsLib := False;
+  LicenseArg := '';
+  RealProjectName := ProjectName;
+
+  for i := 2 to ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--lib') or
+       (LowerCase(ParamStr(i)) = '-l') or
+       (LowerCase(ParamStr(i)) = '--library') then
+      IsLib := True
+    else if (LowerCase(ParamStr(i)) = '--license') and (i + 1 <= ParamCount) then
+      LicenseArg := LowerCase(Trim(ParamStr(i + 1)))
+    else if Copy(LowerCase(ParamStr(i)), 1, 10) = '--license=' then
+      LicenseArg := LowerCase(Trim(Copy(ParamStr(i), 11, MaxInt)))
+    else if (Copy(ParamStr(i), 1, 1) <> '-') and
+            ((RealProjectName = '--lib') or (RealProjectName = '-l') or (RealProjectName = '--library')) then
+      RealProjectName := ParamStr(i);
+  end;
+
+  if IsLib then
+  begin
+    CmdCreateLib(RealProjectName, LicenseArg);
+    Exit;
+  end;
+
+  Base := GetCurrentDir + DirectorySeparator + RealProjectName + DirectorySeparator;
 
   TemplatePath := GetSDKPath + 'demo-app' + DirectorySeparator;
 
@@ -5616,36 +6385,30 @@ begin
 
   end
 
+  else if FileExists(URL) or FileExists(ExpandFileName(URL)) then
+  begin
+    PkgSource := URL;
+    if not FileExists(PkgSource) then PkgSource := ExpandFileName(URL);
+    ZipName := LibPath + 'temp_lib.zip';
+    WriteLn('Installing from local archive: ', PkgSource);
+    CopyFile(PkgSource, ZipName);
+  end
   else
-
+  begin
     DownloadURL := URL;
-
-
-
-  ZipName := LibPath + 'temp_lib.zip';
-
-  WriteLn('Downloading from: ', DownloadURL);
-
-  Client := TFPHTTPClient.Create(nil);
-
-  try
-
+    ZipName := LibPath + 'temp_lib.zip';
+    WriteLn('Downloading from: ', DownloadURL);
+    Client := TFPHTTPClient.Create(nil);
     try
-
-      Client.AllowRedirect := True;
-
-      Client.Get(DownloadURL, ZipName);
-
-    except
-
-      on E: Exception do begin WriteLn('Download error: ', E.Message); Halt(1); end;
-
+      try
+        Client.AllowRedirect := True;
+        Client.Get(DownloadURL, ZipName);
+      except
+        on E: Exception do begin WriteLn('Download error: ', E.Message); Halt(1); end;
+      end;
+    finally
+      Client.Free;
     end;
-
-  finally
-
-    Client.Free;
-
   end;
 
   
@@ -5676,6 +6439,187 @@ begin
 
   WriteLn('Installation completed successfully!');
 
+end;
+
+procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean);
+var
+  BaseDir, PkgJsonFile, PkgName, PkgVersion, DistDir, ZipFile, ChecksumFile: string;
+  Zip: TZipper;
+  HashStr, JsonStr, PkgFolder: string;
+  FileSizeKB: Double;
+  ExitCode: Integer;
+  FS: TFileStream;
+  JData: TJSONData;
+  JObj: TJSONObject;
+
+  procedure AddDirectoryToZip(const RootDir, SubDir: string);
+  var
+    SR: TSearchRec;
+    CurrentPath, EntryDisk, EntryArchive, Ext: string;
+  begin
+    CurrentPath := RootDir;
+    if SubDir <> '' then
+      CurrentPath := CurrentPath + StringReplace(SubDir, '/', DirectorySeparator, [rfReplaceAll]) + DirectorySeparator;
+    if FindFirst(CurrentPath + '*', faAnyFile, SR) = 0 then
+    begin
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and (SR.Name <> '.git') and (SR.Name <> 'node_modules') then
+        begin
+          if (SR.Attr and faDirectory) <> 0 then
+          begin
+            if SubDir = '' then
+              AddDirectoryToZip(RootDir, SR.Name)
+            else
+              AddDirectoryToZip(RootDir, SubDir + '/' + SR.Name);
+          end
+          else
+          begin
+            Ext := LowerCase(ExtractFileExt(SR.Name));
+            if (Ext <> '.o') and (Ext <> '.ppu') and (Ext <> '.tmp') and (Ext <> '.exe') then
+            begin
+              EntryDisk := CurrentPath + SR.Name;
+              if SubDir = '' then
+                EntryArchive := PkgFolder + '/' + SR.Name
+              else
+                EntryArchive := PkgFolder + '/' + SubDir + '/' + SR.Name;
+              Zip.Entries.AddFileEntry(EntryDisk, EntryArchive);
+            end;
+          end;
+        end;
+      until FindNext(SR) <> 0;
+      FindClose(SR);
+    end;
+  end;
+
+begin
+  BaseDir := TargetDir;
+  if BaseDir = '' then BaseDir := GetCurrentDir;
+  BaseDir := IncludeTrailingPathDelimiter(ExpandFileName(BaseDir));
+
+  PkgJsonFile := BaseDir + 'package.json';
+  if not FileExists(PkgJsonFile) then
+  begin
+    WriteLn('ERROR: package.json not found in ' + BaseDir);
+    WriteLn('Ensure you are running "bv lib pack" inside a valid BlaiseVue library directory.');
+    Halt(1);
+  end;
+
+  PkgName := ExtractFileName(ExcludeTrailingPathDelimiter(BaseDir));
+  PkgVersion := '1.0.0';
+
+  try
+    JsonStr := ReadFileToString(PkgJsonFile);
+    JData := GetJSON(JsonStr);
+    try
+      if JData is TJSONObject then
+      begin
+        JObj := TJSONObject(JData);
+        if JObj.IndexOfName('name') >= 0 then PkgName := JObj.Get('name', PkgName);
+        if JObj.IndexOfName('version') >= 0 then PkgVersion := JObj.Get('version', PkgVersion);
+      end;
+    finally
+      JData.Free;
+    end;
+  except
+  end;
+
+  PkgFolder := PkgName;
+
+  if not SkipTests then
+  begin
+    if DirectoryExists(BaseDir + 'tests') then
+    begin
+      WriteLn('=== [Pre-flight] Running Automated Tests for ' + PkgName + ' ===');
+      {$IFDEF WINDOWS}
+      ExitCode := ExecuteProcess('cmd', '/c cd /d "' + BaseDir + '" && "' + ParamStr(0) + '" test');
+      {$ELSE}
+      ExitCode := ExecuteProcess(ParamStr(0), 'test');
+      {$ENDIF}
+      if ExitCode <> 0 then
+      begin
+        WriteLn('');
+        WriteLn('ERROR: Pre-flight tests failed with exit code ' + IntToStr(ExitCode) + '!');
+        WriteLn('Packaging aborted to prevent releasing a broken package.');
+        WriteLn('Hint: Fix test failures or pass "--skip-tests" to bypass verification.');
+        Halt(1);
+      end;
+      WriteLn('[+] Pre-flight tests passed successfully!');
+      WriteLn('');
+    end
+    else
+      WriteLn('Notice: No tests/ directory found. Skipping automated tests.');
+  end
+  else
+    WriteLn('Notice: Pre-flight tests skipped via --skip-tests.');
+
+  DistDir := BaseDir + 'dist' + DirectorySeparator;
+  ForceDir(DistDir);
+  ZipFile := DistDir + PkgName + '-' + PkgVersion + '.zip';
+  if FileExists(ZipFile) then DeleteFile(ZipFile);
+
+  WriteLn('Assembling release artifact: ' + ExtractFileName(ZipFile) + ' ...');
+
+  Zip := TZipper.Create;
+  try
+    Zip.FileName := ZipFile;
+
+    // Add root metadata files
+    Zip.Entries.AddFileEntry(PkgJsonFile, PkgFolder + '/package.json');
+    if FileExists(BaseDir + 'README.md') then
+      Zip.Entries.AddFileEntry(BaseDir + 'README.md', PkgFolder + '/README.md');
+    if FileExists(BaseDir + 'LICENSE') then
+      Zip.Entries.AddFileEntry(BaseDir + 'LICENSE', PkgFolder + '/LICENSE');
+    if FileExists(BaseDir + 'setup.pas') then
+      Zip.Entries.AddFileEntry(BaseDir + 'setup.pas', PkgFolder + '/setup.pas');
+
+    // Add src/ directory recursively
+    if DirectoryExists(BaseDir + 'src') then
+      AddDirectoryToZip(BaseDir, 'src');
+
+    // Add styles/ directory recursively
+    if DirectoryExists(BaseDir + 'styles') then
+      AddDirectoryToZip(BaseDir, 'styles');
+
+    Zip.ZipAllFiles;
+  finally
+    Zip.Free;
+  end;
+
+  if not FileExists(ZipFile) then
+  begin
+    WriteLn('ERROR: Failed to create archive: ' + ZipFile);
+    Halt(1);
+  end;
+
+  // Compute SHA-256
+  HashStr := FileSHA256(ZipFile);
+  ChecksumFile := ZipFile + '.sha256';
+  WriteStringToFile(ChecksumFile, HashStr + ' *' + ExtractFileName(ZipFile) + #10);
+
+  FileSizeKB := 0;
+  FS := TFileStream.Create(ZipFile, fmOpenRead or fmShareDenyNone);
+  try
+    FileSizeKB := FS.Size / 1024.0;
+  finally
+    FS.Free;
+  end;
+
+  WriteLn('');
+  WriteLn('============================================================');
+  WriteLn('  📦 BlaiseVue Library Packager');
+  WriteLn('============================================================');
+  WriteLn('  Package:     ' + PkgName + ' @ v' + PkgVersion);
+  WriteLn('  Archive:     dist/' + ExtractFileName(ZipFile));
+  WriteLn('  Size:        ' + FloatToStrF(FileSizeKB, ffFixed, 8, 2) + ' KB');
+  WriteLn('  SHA-256:     ' + HashStr);
+  WriteLn('  Checksum:    dist/' + ExtractFileName(ChecksumFile));
+  WriteLn('============================================================');
+  WriteLn('🎉 Package successfully assembled and verified!');
+  WriteLn('');
+  WriteLn('Installation commands for consumers:');
+  WriteLn('  bv lib install https://github.com/<org>/' + PkgName + '/releases/download/v' + PkgVersion + '/' + ExtractFileName(ZipFile));
+  WriteLn('  bv lib install ./dist/' + ExtractFileName(ZipFile));
+  WriteLn('');
 end;
 
 
@@ -7144,6 +8088,15 @@ begin
   if (RTLFile <> '') and not FileExists(GetCurrentDir + DirectorySeparator + 'rtl.js') then
 
     WriteStringToFile(GetCurrentDir + DirectorySeparator + 'rtl.js', ReadFileToString(RTLFile));
+
+  // Ensure app.cfg is accessible in project root for test compilation
+  if not FileExists(GetCurrentDir + DirectorySeparator + 'app.cfg') then
+  begin
+    if FileExists(GetSDKPath + 'demo-app' + DirectorySeparator + 'app.cfg') then
+      WriteStringToFile(GetCurrentDir + DirectorySeparator + 'app.cfg', ReadFileToString(GetSDKPath + 'demo-app' + DirectorySeparator + 'app.cfg'))
+    else if FileExists(GetSDKPath + 'templates' + DirectorySeparator + 'app.cfg') then
+      WriteStringToFile(GetCurrentDir + DirectorySeparator + 'app.cfg', ReadFileToString(GetSDKPath + 'templates' + DirectorySeparator + 'app.cfg'));
+  end;
 
   
 
@@ -19985,9 +20938,9 @@ end;
 
 var
 
-  Cmd, TypeArg, NameArg: string;
+  Cmd, TypeArg, NameArg, DirArg: string;
 
-  SkipTest: Boolean;
+  SkipTest, SkipTestsArg: Boolean;
 
   i: Integer;
 
@@ -20052,6 +21005,10 @@ begin
     WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile, charts) or from URL');
 
     WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
+
+    WriteLn('    bv lib pack [dir] [--skip-tests] Assembles and cryptographically verifies release artifact (.zip with SHA-256)');
+
+    WriteLn('    bv lib dist [dir] [--skip-tests] Alias for "bv lib pack"');
 
     WriteLn('    bv theme list          Lists available installed themes');
 
@@ -20127,7 +21084,7 @@ begin
 
     begin
 
-      WriteLn('Usage: bv create <project-name>');
+      WriteLn('Usage: bv create <project-name> [--lib] [--license <mit|apache|lgpl|commercial|none>]');
 
       Halt(1);
 
@@ -20380,6 +21337,32 @@ begin
        if ParamCount < 3 then begin WriteLn('Usage: bv lib remove <name>'); Halt(1); end;
 
        CmdLibRemove(ParamStr(3));
+
+    end
+
+    else if (Cmd = 'pack') or (Cmd = 'dist') then
+
+    begin
+
+      DirArg := '';
+
+      SkipTestsArg := False;
+
+      for i := 3 to ParamCount do
+
+      begin
+
+        if (LowerCase(ParamStr(i)) = '--skip-tests') or (LowerCase(ParamStr(i)) = '-s') then
+
+          SkipTestsArg := True
+
+        else if DirArg = '' then
+
+          DirArg := ParamStr(i);
+
+      end;
+
+      CmdLibPack(DirArg, SkipTestsArg);
 
     end;
 

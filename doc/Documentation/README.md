@@ -55,6 +55,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 26. [26. List Transitions (<transition-group>)](26-transition-group.md) — Smooth FLIP animations for entering, leaving, and reordering list items.
 27. [27. Integrated Internationalization (Blaise-i18n)](27-i18n.md) — Multi-locale dictionaries, token interpolation, and runtime `$setLocale`.
 42. [42. LiveBindings & Reactive TBVDataSet](42-livebindings-dataset.md) — Delphi/Lazarus-style in-memory dataset, cursor navigation, CRUD buffers, delta tracking, and `<bv-datagrid :dataset="...">`.
+47. [47. Enterprise UI Performance: Virtual Scrolling](47-virtual-scrolling.md) — DOM node virtualization and recycling engine for 50,000+ records at constant 60 FPS with `<bv-virtual-scroll>` and `<bv-data-grid>`.
 
 ### 📦 4. Official Component Packages & UI Kits
 24. [24. BlaiseUI (Official Component Kit)](24-blaise-ui.md) — Overview of the native 25+ widget kit (buttons, modals, cards, tabs, drawers).
@@ -63,6 +64,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 38. [38. Mobile UI Kit (blaise-ui-mobile)](38-mobile-ionic.md) — Ionic Web Components with strongly typed Object Pascal controllers.
 39. [39. Reactive Chart.js Suite (blaise-charts)](39-blaise-charts.md) — High-performance canvas charts (Bar, Line, Pie, Radar, Bubble) with typed datasets.
 41. [41. Package Components Catalog & Manual](41-package-components-catalog.md) — Comprehensive reference manual covering props, events, slots, and copy-pasteable snippets for all 53+ components.
+48. [48. External Library Scaffolding & Release Packager](48-library-distribution-packager.md) — Scaffolding dedicated standalone component libraries with interactive licensing (`bv create --lib`) and automated release distribution (`bv lib pack`) with SHA-256 integrity verification.
 
 ### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
 37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
@@ -107,12 +109,14 @@ bv run build               # Builds optimized production bundle in dist/
 bv run ssg                 # Pre-renders static HTML for all routes (SSG)
 bv run preview             # Local HTTP preview of production build (port 5000)
 
-# === Scaffolding ===
+# === Scaffolding & Packages ===
 bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services
 bv create <name> --lib     # Scaffolds a standalone library package with license and playground
 bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/
 bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/
 bv new t <Name>            # Scaffolds a test (smart detection: components, views, unit)
+bv lib install <pkg|url>   # Installs an official package or local/remote archive into lib/
+bv lib pack [dir]          # Assembles & cryptographically verifies release artifact (.zip with SHA-256)
 
 # === Full-Stack mORMot 2 ===
 bv mormot init [--db <eng>] # Scaffolds backend (sqlite, postgres, mysql, firebird)

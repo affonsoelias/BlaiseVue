@@ -1,0 +1,161 @@
+<template>
+  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: 'auto', position: 'relative' }" @scroll="handleScroll" b-ref="viewport">
+    <div class="bui-virtual-runway" :style="{ height: totalHeight + 'px', width: '100%', position: 'relative' }">
+      <div class="bui-virtual-content" :style="{ transform: 'translateY(' + offsetY + 'px)', position: 'absolute', top: 0, left: 0, width: '100%' }">
+        <div 
+          b-for="(item, idx) in visibleItems" 
+          :key="startIndex + idx" 
+          class="bui-virtual-item"
+          :style="{ height: itemHeight + 'px' }"
+        >
+          <slot :item="item" :index="startIndex + idx">
+            {{ item }}
+          </slot>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVVirtualScroll - High-Performance Virtualized DOM Node Recycling List
+    ------------------------------------------------------------------------
+    Props:
+    - items: JSValue (Array of data items)
+    - itemHeight: integer (Height in pixels of each item, default: 40)
+    - height: string (Container viewport height, default: '400px')
+    - buffer: integer (Off-screen buffer items above & below, default: 5)
+  }
+
+  props:
+    items: JSValue = [];
+    itemHeight: integer = 40;
+    height: string = '400px';
+    buffer: integer = 5;
+
+  data:
+    scrollTop: integer = 0;
+    viewportHeight: integer = 400;
+
+  computed:
+    function totalCount: integer;
+    begin
+      asm
+        Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      end;
+    end;
+
+    function totalHeight: integer;
+    begin
+      asm
+        Result = this.totalCount * (this.itemHeight || 40);
+      end;
+    end;
+
+    function startIndex: integer;
+    begin
+      asm
+        let ih = this.itemHeight || 40;
+        let buf = this.buffer !== undefined ? this.buffer : 5;
+        let idx = Math.floor(this.scrollTop / ih) - buf;
+        Result = Math.max(0, idx);
+      end;
+    end;
+
+    function endIndex: integer;
+    begin
+      asm
+        let ih = this.itemHeight || 40;
+        let buf = this.buffer !== undefined ? this.buffer : 5;
+        let vh = this.viewportHeight || 400;
+        let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
+        Result = Math.min(this.totalCount, idx);
+      end;
+    end;
+
+    function offsetY: integer;
+    begin
+      asm
+        let ih = this.itemHeight || 40;
+        Result = this.startIndex * ih;
+      end;
+    end;
+
+    function visibleItems: JSValue;
+    begin
+      asm
+        let list = (this.items && Array.isArray(this.items)) ? this.items : [];
+        return list.slice(this.startIndex, this.endIndex);
+      end;
+    end;
+
+  mounted:
+    begin
+      asm
+        if (this.$refs && this.$refs.viewport) {
+          this.viewportHeight = this.$refs.viewport.clientHeight || 400;
+        }
+      end;
+    end;
+
+  methods:
+    procedure handleScroll(e: JSValue);
+    begin
+      asm
+        if (e && e.target) {
+          this.scrollTop = e.target.scrollTop || 0;
+          this.viewportHeight = e.target.clientHeight || 400;
+          if (typeof this.$emit === 'function') {
+            this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
+          }
+        }
+      end;
+    end;
+
+    procedure scrollToIndex(idx: integer);
+    begin
+      asm
+        let ih = this.itemHeight || 40;
+        if (this.$refs && this.$refs.viewport) {
+          this.$refs.viewport.scrollTop = idx * ih;
+        }
+      end;
+    end;
+
+    procedure scrollToTop;
+    begin
+      asm
+        if (this.$refs && this.$refs.viewport) {
+          this.$refs.viewport.scrollTop = 0;
+        }
+      end;
+    end;
+</script>
+
+<style>
+  .bui-virtual-scroll {
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .bui-virtual-runway {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .bui-virtual-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    will-change: transform;
+  }
+  .bui-virtual-item {
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+</style>

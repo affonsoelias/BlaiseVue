@@ -58,6 +58,9 @@ file_list.txt
 demo-app/dist/js/*.js
 demo-app/generated/
 demo-app/rtl.js
+generated/
+rtl.js
+app.cfg
 my-app/
 deploy/
 **/deploy/
