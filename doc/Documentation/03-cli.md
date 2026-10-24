@@ -47,25 +47,75 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 
 ---
 
-## 🧪 Unit Testing Arsenal (`bv test`)
+## 🏗️ Geradores de Componentes, Views e Testes (`bv new`)
 
-BlaiseVue integrates automated testing using Pascal test specifications compiled to JavaScript and executed with **Vitest**:
+O BlaiseVue conta com geradores inteligentes que aceleram o desenvolvimento e já criam os arquivos de teste correspondentes de forma automática:
 
-### `bv test`
-Transpiles all components, builds the test units in `tests/`, and executes the full suite in headless Node.js via Vitest.
-
-### `bv new t <Name>`
-Instantly scaffolds a new unit test file.
+### 1. Criar Componente: `bv new component <Name> [--no-test]`
+Cria o componente visual e seu arquivo de teste:
 ```bash
-bv new t UserProfile
+bv new component ProductCard
+# Atalho:
+bv new c ProductCard
 ```
-Generates `tests/UserProfile.test.pas` pre-filled with the `Describe`, `It`, and `Expect` assertions template.
+- Cria: `src/components/ProductCard.bv`
+- Cria automaticamente: `tests/components/ProductCard.test.pas`
+- Se passar a flag `--no-test` (ou `-nt`), cria apenas o componente `.bv`.
 
-### `bv list t`
-Lists all unit test suites currently registered in the `tests/` folder.
+### 2. Criar View / Página: `bv new view <Name> [--no-test]`
+Cria uma nova tela da aplicação e seu teste de montagem:
+```bash
+bv new view OrderHistory
+# Atalho:
+bv new v OrderHistory
+```
+- Cria: `src/views/OrderHistory.bv`
+- Cria automaticamente: `tests/views/OrderHistory.test.pas`
+- Suporta a flag `--no-test` para pular a criação do teste.
 
-### `bv remove t <Name>`
-Safely removes a test file and any corresponding compiled artifacts.
+### 3. Criar Teste Dedicado (Detecção Inteligente): `bv new test <Name>`
+Cria testes sob demanda com resolução automática de pasta:
+```bash
+bv new test SimpleBadge
+# Atalho:
+bv new t SimpleBadge
+```
+- **Se `SimpleBadge.bv` for um componente:** cria em `tests/components/SimpleBadge.test.pas` com `Mount('simple-badge')`.
+- **Se for uma view:** cria em `tests/views/SimpleBadge.test.pas` com `Mount('simple-badge-page')`.
+- **Se passar um caminho:** `bv new t services/CalculoFrete` -> cria em `tests/services/CalculoFrete.test.pas`.
+- **Caso contrário:** cria em `tests/unit/SimpleBadge.test.pas` para regras de negócio e serviços em Pascal.
+
+### 4. Listar Elementos: `bv list <c|v|t>`
+Lista os arquivos registrados no projeto:
+- `bv list c`: Lista os componentes em `src/components/`.
+- `bv list v`: Lista as views em `src/views/`.
+- `bv list t`: Lista todos os testes de forma recursiva nas subpastas de `tests/`.
+
+### 5. Remover Elementos: `bv remove <component|view|test> <Name>`
+Remove o arquivo principal, a unit Pascal gerada em `generated/` e os testes associados:
+```bash
+bv remove component ProductCard
+bv remove view OrderHistory
+bv remove test SimpleBadge
+```
+
+---
+
+## 🧪 Suíte de Testes Automatizados (`bv test`)
+
+O comando `bv test` executa todos os testes unitários e de integração do projeto:
+```bash
+bv test
+```
+1. **Varredura Recursiva:** Encontra todos os arquivos `*.test.pas` em `tests/` e em todas as suas subpastas (`components/`, `views/`, `unit/`, `framework/`).
+2. **Transpilação:** Transpila todos os arquivos `.bv` para `generated/`.
+3. **Compilação:** Compila cada suíte Pascal para JavaScript usando o Pas2JS.
+4. **Execução:** Roda os testes via **Vitest** no Node.js/JSDOM e apresenta o relatório no terminal.
+
+Para desenvolvimento contínuo (reexecuta ao salvar qualquer arquivo):
+```bash
+bv test --watch
+```
 
 ---
 
