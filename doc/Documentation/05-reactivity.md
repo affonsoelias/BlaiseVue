@@ -271,22 +271,24 @@ While `computed:` properties are best suited for calculating synchronous, derive
     query: string = '';
     isSearching: Boolean = False;
     searchLog: string = 'Ready. Type above to trigger watcher.';
+    searchTimerId: Integer = 0;
 
   watch:
     procedure query(newVal: JSValue);
     begin
-      this.searchLog := 'Watcher triggered: value changed to "' + String(newVal) + '"';
-      this.isSearching := True;
+      this['searchLog'] := 'Watcher triggered: value changed to "' + String(newVal) + '"';
+      this['isSearching'] := True;
 
-      // Simulate debounced API fetch or side effect
-      asm
-        var self = this;
-        clearTimeout(self._searchTimer);
-        self._searchTimer = setTimeout(function() {
-          self.isSearching = false;
-          self.searchLog = 'Search completed for: ' + String(newVal);
-        }, 400);
-      end;
+      // Cancel previous timer if user is still typing (pure Pascal debounce)
+      if Integer(this['searchTimerId']) <> 0 then
+        StopTimeout(Integer(this['searchTimerId']));
+
+      // Schedule the search to execute in 400ms (100% pure Pascal - zero asm!)
+      this['searchTimerId'] := StartTimeout(procedure
+      begin
+        this['isSearching'] := False;
+        this['searchLog'] := 'Search completed for: ' + String(newVal);
+      end, 400);
     end;
 </script>
 
