@@ -7575,6 +7575,8 @@ begin
 
   RenameFile(DistPath + 'js/main.js', DistPath + 'js/main.' + Hash + '.js');
 
+  CopyFile(DistPath + 'js/main.' + Hash + '.js', DistPath + 'js/main.js');
+
   
 
   FileName := GetRTLPath;

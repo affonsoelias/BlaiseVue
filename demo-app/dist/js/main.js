@@ -3409,6 +3409,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            });
            
            setTimeout(function() {
+              if (typeof window === 'undefined' || !window.getComputedStyle) return;
               let s = window.getComputedStyle(el);
               let d = parseFloat(s.transitionDuration) || parseFloat(s.animationDuration);
               if (!d) onEnd();
@@ -4037,6 +4038,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 let m = document.createElement('script'); m.type = 'text/if-marker'; m['bvManaged'] = true;
                 el.parentNode.insertBefore(m, el);
                 let active = true;
+                let firstRun = true;
                 let tName = el.getAttribute('bv-transition');
                 bv.effect(function() {
                   let res = !!Data.Evaluate(vif);
@@ -4047,10 +4049,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                      if (tName) bv.applyTransition(el, 'enter', tName);
                   }
                   else if (!res && active) { 
-                     if (tName) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
+                     if (tName && !firstRun) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
                      else bv.unmount(el); 
                      active = false; 
                   }
+                  firstRun = false;
                 });
                 if (!active) return;
               }
@@ -4130,6 +4133,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 }
     
                 let dRaw = opts.data ? opts.data.call(null) : {};
+                if (opts.defaultProps) {
+                   Object.keys(opts.defaultProps).forEach(function(k) {
+                      if (dRaw[k] === undefined) dRaw[k] = opts.defaultProps[k];
+                   });
+                }
                 let pRef = bv.defineReactive(dRaw);
                 
                 if (window.__BV_CORE__.router) {
@@ -4455,7 +4463,15 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 
                 if (opts.created) opts.created.call(pRef, pRef);
                 
-                pRef['$emit'] = function(ev, arg) { 
+                pRef['$emit'] = function(ev, arg) {
+                   if (!pRef['__emitted__']) pRef['__emitted__'] = {};
+                   if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
+                   pRef['__emitted__'][ev].push(arg);
+                   if (rEl) {
+                      if (!rEl['__emitted__']) rEl['__emitted__'] = {};
+                      if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
+                      rEl['__emitted__'][ev].push(arg);
+                   }
                    if (ev === 'input' || ev === 'change') {
                       if (pRef['$onInput']) pRef['$onInput'](arg);
                    }
@@ -7630,16 +7646,28 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
   };
   this.UpdateChartDarkMode = function (OptionsObj, Dark) {
     if (OptionsObj) {
-      if (!OptionsObj.scales) OptionsObj.scales = {};
-      if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
-      if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
-      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-      const textColor = Dark ? '#94a3b8' : '#64748b';
-      OptionsObj.scales.x.grid = { color: gridColor };
-      OptionsObj.scales.y.grid = { color: gridColor };
-      OptionsObj.scales.x.ticks = { color: textColor };
-      OptionsObj.scales.y.ticks = { color: textColor };
-    };
+          const gridColor = Dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+          const textColor = Dark ? '#e2e8f0' : '#475569';
+    
+          if (!OptionsObj.scales) OptionsObj.scales = {};
+          if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
+          if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
+          OptionsObj.scales.x.grid = { color: gridColor };
+          OptionsObj.scales.y.grid = { color: gridColor };
+          OptionsObj.scales.x.ticks = { color: textColor };
+          OptionsObj.scales.y.ticks = { color: textColor };
+    
+          if (!OptionsObj.scales.r) OptionsObj.scales.r = {};
+          OptionsObj.scales.r.grid = { color: gridColor };
+          OptionsObj.scales.r.angleLines = { color: gridColor };
+          OptionsObj.scales.r.pointLabels = { color: textColor };
+          OptionsObj.scales.r.ticks = { color: textColor, backdropColor: 'transparent' };
+    
+          if (!OptionsObj.plugins) OptionsObj.plugins = {};
+          if (!OptionsObj.plugins.legend) OptionsObj.plugins.legend = {};
+          if (!OptionsObj.plugins.legend.labels) OptionsObj.plugins.legend.labels = {};
+          OptionsObj.plugins.legend.labels.color = textColor;
+        };
   };
   this.ThemeSet = function (ThemeName) {
     if (window.$theme && typeof window.$theme.setTheme === 'function') {
@@ -8439,8 +8467,11 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Formulário do Sistema";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
     m = new Object();
     m["headerClick"] = function (_this) {
       _this["$emit"].call(_this,"header-clicked","Ola do Header!");
@@ -8734,6 +8765,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
       this.FJS = new Object();
       this.FJS["responsive"] = true;
       this.FJS["maintainAspectRatio"] = false;
+      this.FJS["resizeDelay"] = 50;
       return this;
     };
     this.Responsive = function (AVal) {
@@ -8830,6 +8862,35 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
       } else Result = AHex;
       return Result;
     };
+    this.GetPalette = function (AName, Alpha) {
+      var Result = null;
+      var N = "";
+      N = pas.SysUtils.LowerCase(AName);
+      if (N === "emerald") {
+        Result = this.Emerald(6,Alpha)}
+       else if (N === "sunset") {
+        Result = this.Sunset(6,Alpha)}
+       else if (N === "neon") {
+        Result = this.Neon(6,Alpha)}
+       else if (N === "pastel") {
+        Result = this.Pastel(6,Alpha)}
+       else if (N === "cyberpunk") {
+        Result = this.Cyberpunk(6,Alpha)}
+       else Result = this.DefaultColors(8,Alpha);
+      return Result;
+    };
+    this.DefaultColors = function (Count, Alpha) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.Color(i,Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
     this.Emerald = function (Count, Alpha) {
       var Result = null;
       var Colors = ["#059669","#10b981","#34d399","#6ee7b7","#a7f3d0","#047857"];
@@ -8859,6 +8920,19 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
     this.Neon = function (Count, Alpha) {
       var Result = null;
       var Colors = ["#00f0ff","#ff007f","#7000ff","#00ff66","#ffe600","#ff3366"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
+    this.Pastel = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#a5b4fc","#fbcfe8","#fed7aa","#bbf7d0","#bae6fd","#ddd6fe"];
       var Arr = null;
       var i = 0;
       Arr = new Array();
@@ -8911,10 +8985,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
+    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;     overflow-y: scroll;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Modo Claro\' : \'Modo Escuro\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Barras</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Linha</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pizza</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Rosca</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Barras (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard" :class="{ \'charts-dark\': isDarkMode }">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Modo Claro\' : \'Modo Escuro\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Barras</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Linha</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pizza</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Rosca</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Barras (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8979,10 +9053,12 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       NewDark = !!(_this["isDarkMode"] == false);
       _this["isDarkMode"] = NewDark;
       pas.BVPascalDX.UpdateChartDarkMode(_this["chartOptions"],NewDark);
+      pas.BVPascalDX.UpdateChartDarkMode(_this["pieOptions"],NewDark);
       _this["chartOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["chartOptions"]);
+      _this["pieOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieOptions"]);
       if (NewDark) {
-        _this["clickedPointInfo"] = "Modo escuro ativado para escalas dos gráficos!"}
-       else _this["clickedPointInfo"] = "Modo claro ativado para escalas dos gráficos!";
+        _this["clickedPointInfo"] = "Modo escuro ativado com sucesso!"}
+       else _this["clickedPointInfo"] = "Modo claro ativado com sucesso!";
     };
     m["randomizeData"] = function (_this) {
       var NewData = null;
@@ -9007,27 +9083,44 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     };
     m["togglePalette"] = function (_this) {
       var Pal = null;
+      var PalBorder = null;
       var Cur = "";
       var Datasets = null;
       Cur = "" + _this["currentPalette"];
       if (Cur === "Emerald") {
-        _this["currentPalette"] = "Sunset";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Sunset(4,0.7);
-      } else if (Cur === "Sunset") {
-        _this["currentPalette"] = "Cyberpunk";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Cyberpunk(4,0.7);
-      } else if (Cur === "Cyberpunk") {
-        _this["currentPalette"] = "Neon";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Neon(4,0.7);
-      } else {
-        _this["currentPalette"] = "Emerald";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Emerald(4,0.7);
+        _this["currentPalette"] = "Sunset"}
+       else if (Cur === "Sunset") {
+        _this["currentPalette"] = "Cyberpunk"}
+       else if (Cur === "Cyberpunk") {
+        _this["currentPalette"] = "Neon"}
+       else _this["currentPalette"] = "Emerald";
+      Pal = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],0.65);
+      PalBorder = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],1.0);
+      if (_this["barData"] != null) {
+        Datasets = _this["barData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[0];
+          Datasets[0]["borderColor"] = PalBorder[0];
+          if (Datasets.length > 1) {
+            Datasets[1]["backgroundColor"] = Pal[1];
+            Datasets[1]["borderColor"] = PalBorder[1];
+          };
+          _this["barData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["barData"]);
+        };
+      };
+      if (_this["lineData"] != null) {
+        Datasets = _this["lineData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[2];
+          Datasets[0]["borderColor"] = PalBorder[2];
+          _this["lineData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["lineData"]);
+        };
       };
       if (_this["pieData"] != null) {
         Datasets = _this["pieData"]["datasets"];
         if ((Datasets !== null) && (Datasets.length > 0)) {
           Datasets[0]["backgroundColor"] = Pal;
-          Datasets[0]["borderColor"] = Pal;
+          Datasets[0]["borderColor"] = PalBorder;
           _this["pieData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieData"]);
         };
       };
@@ -9035,8 +9128,16 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
         Datasets = _this["doughnutData"]["datasets"];
         if ((Datasets !== null) && (Datasets.length > 0)) {
           Datasets[0]["backgroundColor"] = Pal;
-          Datasets[0]["borderColor"] = Pal;
+          Datasets[0]["borderColor"] = PalBorder;
           _this["doughnutData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["doughnutData"]);
+        };
+      };
+      if (_this["radarData"] != null) {
+        Datasets = _this["radarData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[0];
+          Datasets[0]["borderColor"] = PalBorder[0];
+          _this["radarData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["radarData"]);
         };
       };
       _this["clickedPointInfo"] = "Paleta alterada para " + ("" + _this["currentPalette"]) + "!";
@@ -10159,11 +10260,17 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10188,11 +10295,17 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10209,7 +10322,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: var(--bui-radius);     border: 1px solid var(--bui-border);     box-shadow: 0 2px 10px rgba(0,0,0,0.04);   }";
+    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     display: block;     width: 100%;     max-width: 100%;     box-sizing: border-box;     margin-bottom: 0;     background: transparent;     overflow: hidden;   }    .bui-chart-wrapper canvas {     display: block;     box-sizing: border-box;     width: 100% !important;     max-width: 100%;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <div class="bui-chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
@@ -10222,11 +10335,17 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("type");
+    comp["defaultProps"]["type"] = "bar";
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
     m = new Object();
     m["initChart"] = function (_this) {
       if (this._initPending) return;
@@ -10251,17 +10370,34 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
           if (input.FJS) return input.FJS;
           return input;
         }
+        function cloneChartData(input) {
+          if (!input) return null;
+          const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+          if (!raw) return null;
+          return {
+            labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+            datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+              const copy = Object.assign({}, ds);
+              if (Array.isArray(ds.data)) copy.data = [...ds.data];
+              if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+              if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              return copy;
+            }) : []
+          };
+        }
         const rawData = extractData(this.data);
         if (!rawData || !rawData.datasets) { this._initPending = false; return; }
         const ctx = canvas.getContext('2d');
         if (!ctx) { this._initPending = false; return; }
         try {
-          const chartData = window.__BV_CORE__.unproxy(rawData);
+          const chartData = cloneChartData(rawData);
           const rawOpts = extractData(this.options);
-          const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
+          const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, window.__BV_CORE__.unproxy(rawOpts)) : {
             responsive: true,
-            maintainAspectRatio: false
+            maintainAspectRatio: false,
+            resizeDelay: 50
           };
+          if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
           this._chart = new Chart(ctx, {
             type: this.type,
             data: chartData,
@@ -10288,29 +10424,69 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       this._pendingData = newVal;
       if (this._updatePending) return;
       this._updatePending = true;
-      const delay = 50 + Math.random() * 100;
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         this._updatePending = false;
         const dataToUse = this._pendingData;
-        if (this._chart && dataToUse && dataToUse.datasets) {
-          try {
-            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
-            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
-               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
-               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-               this._chart.update();
-            } else {
-               this._chart.data = rawNewData;
-               this._chart.update('none');
-            }
-          } catch (e) {
-            console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
-            this.initChart();
+        if (!this._chart || !dataToUse) {
+          this.initChart();
+          return;
+        }
+        function cloneChartData(input) {
+          if (!input) return null;
+          const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+          if (!raw) return null;
+          return {
+            labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+            datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+              const copy = Object.assign({}, ds);
+              if (Array.isArray(ds.data)) copy.data = [...ds.data];
+              if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+              if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              return copy;
+            }) : []
+          };
+        }
+        try {
+          const rawNewData = cloneChartData(dataToUse);
+          if (!rawNewData || !rawNewData.datasets) return;
+          if (rawNewData.labels) {
+            this._chart.data.labels = rawNewData.labels;
           }
-        } else {
+          const curDatasets = this._chart.data.datasets;
+          if (curDatasets && curDatasets.length === rawNewData.datasets.length) {
+            for (let i = 0; i < rawNewData.datasets.length; i++) {
+              const target = curDatasets[i];
+              const source = rawNewData.datasets[i];
+              if (source.data) target.data = source.data;
+              if (source.backgroundColor !== undefined) target.backgroundColor = source.backgroundColor;
+              if (source.borderColor !== undefined) target.borderColor = source.borderColor;
+              if (source.label !== undefined) target.label = source.label;
+              if (source.fill !== undefined) target.fill = source.fill;
+              if (source.tension !== undefined) target.tension = source.tension;
+              if (source.pointRadius !== undefined) target.pointRadius = source.pointRadius;
+              if (source.pointHoverRadius !== undefined) target.pointHoverRadius = source.pointHoverRadius;
+            }
+          } else {
+            this._chart.data.datasets = rawNewData.datasets;
+          }
+          this._chart.update();
+        } catch (e) {
+          console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
           this.initChart();
         }
-      }, delay);
+      });
+    };
+    comp["watch"]["options"] = function (_this, newVal) {
+      if (this._chart && newVal) {
+        try {
+          const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
+          if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
+          this._chart.options = rawNewOpts;
+          this._chart.update();
+        } catch (e) {
+          this.initChart();
+        }
+      };
     };
     comp["watch"]["type"] = function (_this, newVal) {
       this.initChart();
@@ -10334,11 +10510,17 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10363,11 +10545,17 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10392,11 +10580,17 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10421,11 +10615,17 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10450,11 +10650,17 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10479,11 +10685,17 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -10509,9 +10721,13 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("items");
+    comp["defaultProps"]["items"] = null;
     comp["props"].push("initialActiveId");
+    comp["defaultProps"]["initialActiveId"] = "";
     comp["props"].push("initialactiveid");
+    comp["defaultProps"]["initialactiveid"] = "";
     m = new Object();
     m["toggle"] = function (_this, id) {
       if (this.activeId === id) {
@@ -10545,9 +10761,13 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("dismissible");
+    comp["defaultProps"]["dismissible"] = false;
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = true;
     m = new Object();
     m["close"] = function (_this) {
       _this["visible"] = false;
@@ -10577,8 +10797,11 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("pill");
+    comp["defaultProps"]["pill"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -10625,10 +10848,15 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#/";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "Item";
     comp["props"].push("icon");
+    comp["defaultProps"]["icon"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     m["handleClick"] = function (_this, e) {
       var target = (this && this.href) || (_this && _this.href);
@@ -10696,8 +10924,11 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#";
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('click', ev);
@@ -10722,11 +10953,17 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
     comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
     comp["props"].push("outline");
+    comp["defaultProps"]["outline"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
@@ -10765,8 +11002,11 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-card",comp);
@@ -10788,12 +11028,19 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("cols");
+    comp["defaultProps"]["cols"] = "12";
     comp["props"].push("sm");
+    comp["defaultProps"]["sm"] = "";
     comp["props"].push("md");
+    comp["defaultProps"]["md"] = "";
     comp["props"].push("lg");
+    comp["defaultProps"]["lg"] = "";
     comp["props"].push("xl");
+    comp["defaultProps"]["xl"] = "";
     comp["props"].push("offset");
+    comp["defaultProps"]["offset"] = "";
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -10829,7 +11076,9 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("fluid");
+    comp["defaultProps"]["fluid"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-container",comp);
@@ -10842,7 +11091,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -10853,16 +11102,37 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       d["currentPage"] = 1;
       d["pageSize"] = 5;
       d["selectedRow"] = null;
+      d["virtualScrollTop"] = 0;
+      d["virtualViewportHeight"] = 400;
       Result = d;
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
     comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
     comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("virtualScroll");
+    comp["defaultProps"]["virtualScroll"] = false;
+    comp["props"].push("rowHeight");
+    comp["defaultProps"]["rowHeight"] = 40;
+    comp["props"].push("virtualHeight");
+    comp["defaultProps"]["virtualHeight"] = "400px";
+    comp["props"].push("virtualBuffer");
+    comp["defaultProps"]["virtualBuffer"] = 5;
     m = new Object();
     m["handleSearch"] = function (_this) {
       _this["currentPage"] = 1;
+      _this["virtualScrollTop"] = 0;
+    };
+    m["handleTableScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.virtualScrollTop = e.target.scrollTop || 0;
+        this.virtualViewportHeight = e.target.clientHeight || 400;
+      };
     };
     m["sortBy"] = function (_this, key) {
       if (_this["sortKey"] == key) {
@@ -10895,6 +11165,12 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       };
     };
     comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
+        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
+      };
+    };
     comp["computed"] = new Object();
     comp["computed"]["resolvedItems"] = function (_this) {
       var Result = undefined;
@@ -10987,6 +11263,48 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       return list.slice(start, start + this.pageSize);
       return Result;
     };
+    comp["computed"]["virtualStartIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["virtualEndIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let vh = this.virtualViewportHeight || 400;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
+      Result = Math.min(count, idx);
+      return Result;
+    };
+    comp["computed"]["topSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      Result = this.virtualStartIndex * rh;
+      return Result;
+    };
+    comp["computed"]["bottomSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let rendered = this.virtualEndIndex - this.virtualStartIndex;
+      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
+      Result = remaining * rh;
+      return Result;
+    };
+    comp["computed"]["displayRows"] = function (_this) {
+      var Result = undefined;
+      if (this.virtualScroll) {
+        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
+        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
+      }
+      return this.pagedItems;
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-data-grid",comp);
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
@@ -11016,12 +11334,19 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Menu";
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "280px";
     comp["props"].push("position");
+    comp["defaultProps"]["position"] = "left";
     comp["props"].push("overlay");
+    comp["defaultProps"]["overlay"] = true;
     comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
     m = new Object();
     m["open"] = function (_this) {
       _this["isOpen"] = true;
@@ -11065,9 +11390,13 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     m = new Object();
     m["onChange"] = function (_this, ev) {
       var val = (ev && ev.target) ? ev.target.value : ev;
@@ -11094,8 +11423,11 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("name");
+    comp["defaultProps"]["name"] = "check-circle";
     comp["props"].push("size");
+    comp["defaultProps"]["size"] = "16";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-icon",comp);
@@ -11117,11 +11449,17 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
     comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("readonly");
+    comp["defaultProps"]["readonly"] = false;
     m = new Object();
     m["handleInput"] = function (_this, ev) {
       let val = (ev && ev.target) ? ev.target.value : (ev || '');
@@ -11148,11 +11486,17 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("prepend");
+    comp["defaultProps"]["prepend"] = "";
     comp["props"].push("append");
+    comp["defaultProps"]["append"] = "";
     m = new Object();
     m["onInput"] = function (_this, ev) {
       var val = (ev && ev.target) ? ev.target.value : (ev || '');
@@ -11191,10 +11535,15 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("badge");
+    comp["defaultProps"]["badge"] = "";
     comp["props"].push("badgeVariant");
+    comp["defaultProps"]["badgeVariant"] = "primary";
     comp["props"].push("badgevariant");
+    comp["defaultProps"]["badgevariant"] = "primary";
     m = new Object();
     m["handleClick"] = function (_this) {
       this.$emit('click');
@@ -11230,12 +11579,19 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Modal";
     comp["props"].push("okLabel");
+    comp["defaultProps"]["okLabel"] = "Process";
     comp["props"].push("oklabel");
+    comp["defaultProps"]["oklabel"] = "Process";
     comp["props"].push("cancelLabel");
+    comp["defaultProps"]["cancelLabel"] = "Close";
     comp["props"].push("cancellabel");
+    comp["defaultProps"]["cancellabel"] = "Close";
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
     m = new Object();
     m["showModal"] = function (_this) {
       this.isOpen = true;
@@ -11302,7 +11658,9 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("brand");
+    comp["defaultProps"]["brand"] = "BlaiseVue UI";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
@@ -11328,9 +11686,13 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
@@ -11358,8 +11720,11 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = 1;
     comp["props"].push("total");
+    comp["defaultProps"]["total"] = 10;
     m = new Object();
     m["changePage"] = function (_this, p) {
       if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
@@ -11395,9 +11760,13 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = 0;
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = true;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -11437,11 +11806,17 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("gutter");
+    comp["defaultProps"]["gutter"] = "md";
     comp["props"].push("align");
+    comp["defaultProps"]["align"] = "";
     comp["props"].push("justify");
+    comp["defaultProps"]["justify"] = "";
     comp["props"].push("noGutters");
+    comp["defaultProps"]["noGutters"] = false;
     comp["props"].push("nogutters");
+    comp["defaultProps"]["nogutters"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -11481,8 +11856,11 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("small");
+    comp["defaultProps"]["small"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
@@ -11504,9 +11882,13 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Tab";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -11619,10 +12001,15 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("message");
+    comp["defaultProps"]["message"] = "";
     comp["props"].push("duration");
+    comp["defaultProps"]["duration"] = 3000;
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "success";
     m = new Object();
     m["showToast"] = function (_this) {
       _this["isOpen"] = true;
@@ -11649,6 +12036,109 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
+rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVVirtualScroll = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["scrollTop"] = 0;
+      d["viewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("itemHeight");
+    comp["defaultProps"]["itemHeight"] = 40;
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
+    comp["props"].push("buffer");
+    comp["defaultProps"]["buffer"] = 5;
+    m = new Object();
+    m["handleScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.scrollTop = e.target.scrollTop || 0;
+        this.viewportHeight = e.target.clientHeight || 400;
+        if (typeof this.$emit === 'function') {
+          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
+        }
+      };
+    };
+    m["scrollToIndex"] = function (_this, idx) {
+      let ih = this.itemHeight || 40;
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = idx * ih;
+      };
+    };
+    m["scrollToTop"] = function (_this) {
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = 0;
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.$refs && this.$refs.viewport) {
+        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["totalCount"] = function (_this) {
+      var Result = undefined;
+      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      return Result;
+    };
+    comp["computed"]["totalHeight"] = function (_this) {
+      var Result = undefined;
+      Result = this.totalCount * (this.itemHeight || 40);
+      return Result;
+    };
+    comp["computed"]["startIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let idx = Math.floor(this.scrollTop / ih) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["endIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let vh = this.viewportHeight || 400;
+      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
+      Result = Math.min(this.totalCount, idx);
+      return Result;
+    };
+    comp["computed"]["offsetY"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      Result = this.startIndex * ih;
+      return Result;
+    };
+    comp["computed"]["visibleItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
+      return list.slice(this.startIndex, this.endIndex);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
+    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
+  };
+});
 rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11665,7 +12155,9 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("mode");
+    comp["defaultProps"]["mode"] = "";
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -11694,8 +12186,11 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
@@ -11717,11 +12212,17 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
     comp["props"].push("fill");
+    comp["defaultProps"]["fill"] = "solid";
     comp["props"].push("expand");
+    comp["defaultProps"]["expand"] = "";
     comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
@@ -11758,8 +12259,11 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
@@ -11781,7 +12285,9 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("padding");
+    comp["defaultProps"]["padding"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
@@ -11817,12 +12323,19 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
     comp["props"].push("detail");
+    comp["defaultProps"]["detail"] = false;
     comp["props"].push("expandable");
+    comp["defaultProps"]["expandable"] = false;
     comp["props"].push("expanded");
+    comp["defaultProps"]["expanded"] = false;
     comp["props"].push("hasStart");
+    comp["defaultProps"]["hasStart"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       if (this.expandable === true || this.expandable === 'true') {
@@ -11885,7 +12398,9 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("inset");
+    comp["defaultProps"]["inset"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
@@ -11920,9 +12435,13 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("tab");
+    comp["defaultProps"]["tab"] = "";
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
@@ -11960,7 +12479,9 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
@@ -12019,7 +12540,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -12156,6 +12677,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVTabs.Register_uBVTabs();
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVVirtualScroll...");
+    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
     console.log("[Init] Registering uBVIonApp...");
     pas.uBVIonApp.Register_uBVIonApp();
     console.log("[Init] Registering uBVIonBadge...");

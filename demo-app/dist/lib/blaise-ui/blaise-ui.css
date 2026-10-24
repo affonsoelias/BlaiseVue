@@ -888,3 +888,45 @@
   line-height: 1;
 }
 
+
+
+/* Virtual Scrolling Styles */
+.bui-virtual-scroll {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bui-virtual-runway {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bui-virtual-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.bui-virtual-item {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.bui-virtual-spacer {
+  pointer-events: none;
+  background: transparent !important;
+}
+
+.bui-virtual-spacer td {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}

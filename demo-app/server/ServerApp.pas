@@ -392,6 +392,13 @@ begin
          (Ext = '.svg') or (Ext = '.ico') or (Ext = '.woff') or (Ext = '.woff2') or (Ext = '.ttf') or
          (Ext = '.eot') or (Ext = '.map') or (Ext = '.json') or (Ext = '.wasm') then
       begin
+        // Outdated bundle fallback: if an older main.<hash>.js was requested, gracefully fallback to main.js!
+        if (Ext = '.js') and (Pos('main.', LowerCase(ExtractFileName(LocalFile))) = 1) and
+           FileExists(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js') then
+        begin
+          Exit(Ctxt.SetOutFile(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js', False));
+        end;
+
         Ctxt.OutContentType := TEXT_CONTENT_TYPE;
         Ctxt.OutContent := '404 File Not Found: ' + CleanUrl;
         Result := HTTP_NOTFOUND;
