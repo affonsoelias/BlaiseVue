@@ -1458,15 +1458,7 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         }
         this.Evaluate = function(expr, ev) {
           let d = this.FData || this;
-          try {
-            let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-            return f(d, ev);
-          } catch(e1) {
-            try {
-              let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-              return f2(d, ev);
-            } catch(e2) { return undefined; }
-          }
+          return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(d, expr, ev) : undefined;
         };
         this.SetValue = function(k, val) {
           let d = this.FData || this;
@@ -2739,6 +2731,505 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
             }
           };
         }
+    
+    
+        if (!bv.getDeepValue) {
+          bv.getDeepValue = function(target, path) {
+            if (target == null || !path) return undefined;
+            if (typeof path === 'string' && path.indexOf('.') > -1) {
+              let parts = path.split('.');
+              let curr = target;
+              for (let i = 0; i < parts.length; i++) {
+                if (curr == null) return undefined;
+                curr = curr[parts[i]];
+              }
+              return curr;
+            }
+            return target[path];
+          };
+        }
+    
+        if (!bv.evalCache) bv.evalCache = Object.create(null);
+    
+        // =========================================================================
+        //  BLAISEVUE 4.4: ZERO-WITH NATIVE FAST EXPRESSION EVALUATOR & CSP ENGINE
+        // =========================================================================
+        if (!bv.fastEval) {
+          function bvTokenize(str) {
+            let tokens = [];
+            let i = 0;
+            let len = str.length;
+    
+            while (i < len) {
+              let ch = str[i];
+              if (ch <= ' ') { i++; continue; }
+    
+              if (ch === '/' && str[i + 1] === '/') {
+                i += 2;
+                while (i < len && str[i] !== '\n') i++;
+                continue;
+              }
+    
+              if ((ch >= '0' && ch <= '9') || (ch === '.' && str[i + 1] >= '0' && str[i + 1] <= '9')) {
+                let start = i;
+                while (i < len && ((str[i] >= '0' && str[i] <= '9') || str[i] === '.' || str[i] === 'e' || str[i] === 'E' || (str[i] === '-' && (str[i-1] === 'e' || str[i-1] === 'E')))) {
+                  i++;
+                }
+                tokens.push({ type: 'num', value: parseFloat(str.slice(start, i)) });
+                continue;
+              }
+    
+              if (ch === '\'' || ch === '"' || ch === '`') {
+                let quote = ch;
+                let val = '';
+                i++;
+                while (i < len && str[i] !== quote) {
+                  if (str[i] === '\\' && i + 1 < len) {
+                    let next = str[++i];
+                    if (next === 'n') val += '\n';
+                    else if (next === 't') val += '\t';
+                    else if (next === 'r') val += '\r';
+                    else val += next;
+                  } else {
+                    val += str[i];
+                  }
+                  i++;
+                }
+                i++;
+                tokens.push({ type: 'str', value: val });
+                continue;
+              }
+    
+              let op3 = str.slice(i, i + 3);
+              if (op3 === '===' || op3 === '!==' || op3 === '>>>') {
+                tokens.push({ type: 'op', value: op3 });
+                i += 3;
+                continue;
+              }
+    
+              let op2 = str.slice(i, i + 2);
+              if (['==', '!=', '<=', '>=', '&&', '||', '??', '++', '--', '+=', '-=', '*=', '/='].indexOf(op2) !== -1) {
+                tokens.push({ type: 'op', value: op2 });
+                i += 2;
+                continue;
+              }
+    
+              if ('+-*/%<>=!&|^~?:,;()[]{}'.indexOf(ch) !== -1) {
+                tokens.push({ type: 'op', value: ch });
+                i++;
+                continue;
+              }
+    
+              if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_' || ch === '$') {
+                let start = i;
+                while (i < len && ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= '0' && str[i] <= '9') || str[i] === '_' || str[i] === '$')) {
+                  i++;
+                }
+                let word = str.slice(start, i);
+                if (word === 'true') tokens.push({ type: 'lit', value: true });
+                else if (word === 'false') tokens.push({ type: 'lit', value: false });
+                else if (word === 'null') tokens.push({ type: 'lit', value: null });
+                else if (word === 'undefined') tokens.push({ type: 'lit', value: undefined });
+                else if (word === 'typeof' || word === 'instanceof' || word === 'in') tokens.push({ type: 'op', value: word });
+                else tokens.push({ type: 'id', value: word });
+                continue;
+              }
+    
+              if (ch === '.') {
+                tokens.push({ type: 'op', value: '.' });
+                i++;
+                continue;
+              }
+    
+              i++;
+            }
+    
+            tokens.push({ type: 'eof', value: '' });
+            return tokens;
+          }
+    
+          function bvParseTokens(tokens) {
+            let idx = 0;
+            function peek() { return tokens[idx] || { type: 'eof', value: '' }; }
+            function next() { return tokens[idx++]; }
+            function match(val) {
+              if (peek().value === val) return next();
+              return null;
+            }
+    
+            function parseSequence() {
+              let expr = parseAssignment();
+              while (match(';')) {
+                let nextExpr = parseAssignment();
+                let prevExpr = expr;
+                expr = function(scope, ev) {
+                  if (prevExpr) prevExpr(scope, ev);
+                  return nextExpr ? nextExpr(scope, ev) : undefined;
+                };
+              }
+              return expr;
+            }
+    
+            function parseAssignment() {
+              let left = parseTernary();
+              if (!left) return null;
+    
+              let op = peek();
+              if (op.type === 'op' && (op.value === '=' || op.value === '+=' || op.value === '-=')) {
+                next();
+                let right = parseAssignment();
+                if (left.isIdentifier) {
+                  let idName = left.idName;
+                  return function(scope, ev) {
+                    let rVal = right ? right(scope, ev) : undefined;
+                    let target = (scope && scope.FData) ? scope.FData : scope;
+                    if (op.value === '=') target[idName] = rVal;
+                    else if (op.value === '+=') target[idName] = (target[idName] || 0) + rVal;
+                    else if (op.value === '-=') target[idName] = (target[idName] || 0) - rVal;
+                    return target[idName];
+                  };
+                } else if (left.isMember) {
+                  let objFn = left.objFn;
+                  let propFn = left.propFn;
+                  return function(scope, ev) {
+                    let obj = objFn(scope, ev);
+                    let prop = propFn(scope, ev);
+                    let rVal = right ? right(scope, ev) : undefined;
+                    if (obj != null) {
+                      if (op.value === '=') obj[prop] = rVal;
+                      else if (op.value === '+=') obj[prop] = (obj[prop] || 0) + rVal;
+                      else if (op.value === '-=') obj[prop] = (obj[prop] || 0) - rVal;
+                      return obj[prop];
+                    }
+                    return undefined;
+                  };
+                }
+              }
+              return left;
+            }
+    
+            function parseTernary() {
+              let cond = parseLogicalOr();
+              if (match('?')) {
+                let trueBranch = parseAssignment();
+                match(':');
+                let falseBranch = parseAssignment();
+                return function(scope, ev) {
+                  return cond(scope, ev) ? (trueBranch ? trueBranch(scope, ev) : undefined) : (falseBranch ? falseBranch(scope, ev) : undefined);
+                };
+              }
+              return cond;
+            }
+    
+            function parseLogicalOr() {
+              let left = parseLogicalAnd();
+              while (peek().value === '||' || peek().value === '??') {
+                let op = next().value;
+                let right = parseLogicalAnd();
+                let prevLeft = left;
+                if (op === '||') {
+                  left = function(scope, ev) { return prevLeft(scope, ev) || right(scope, ev); };
+                } else {
+                  left = function(scope, ev) {
+                    let val = prevLeft(scope, ev);
+                    return (val !== null && val !== undefined) ? val : right(scope, ev);
+                  };
+                }
+              }
+              return left;
+            }
+    
+            function parseLogicalAnd() {
+              let left = parseEquality();
+              while (peek().value === '&&') {
+                next();
+                let right = parseEquality();
+                let prevLeft = left;
+                left = function(scope, ev) { return prevLeft(scope, ev) && right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseEquality() {
+              let left = parseRelational();
+              while (['===', '!==', '==', '!='].indexOf(peek().value) !== -1) {
+                let op = next().value;
+                let right = parseRelational();
+                let prevLeft = left;
+                if (op === '===') left = function(scope, ev) { return prevLeft(scope, ev) === right(scope, ev); };
+                else if (op === '!==') left = function(scope, ev) { return prevLeft(scope, ev) !== right(scope, ev); };
+                else if (op === '==') left = function(scope, ev) { return prevLeft(scope, ev) == right(scope, ev); };
+                else if (op === '!=') left = function(scope, ev) { return prevLeft(scope, ev) != right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseRelational() {
+              let left = parseAdditive();
+              while (['<', '>', '<=', '>=', 'instanceof', 'in'].indexOf(peek().value) !== -1) {
+                let op = next().value;
+                let right = parseAdditive();
+                let prevLeft = left;
+                if (op === '<') left = function(scope, ev) { return prevLeft(scope, ev) < right(scope, ev); };
+                else if (op === '>') left = function(scope, ev) { return prevLeft(scope, ev) > right(scope, ev); };
+                else if (op === '<=') left = function(scope, ev) { return prevLeft(scope, ev) <= right(scope, ev); };
+                else if (op === '>=') left = function(scope, ev) { return prevLeft(scope, ev) >= right(scope, ev); };
+                else if (op === 'instanceof') left = function(scope, ev) { return prevLeft(scope, ev) instanceof right(scope, ev); };
+                else if (op === 'in') left = function(scope, ev) { return prevLeft(scope, ev) in right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseAdditive() {
+              let left = parseMultiplicative();
+              while (peek().value === '+' || peek().value === '-') {
+                let op = next().value;
+                let right = parseMultiplicative();
+                let prevLeft = left;
+                if (op === '+') left = function(scope, ev) { return prevLeft(scope, ev) + right(scope, ev); };
+                else left = function(scope, ev) { return prevLeft(scope, ev) - right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseMultiplicative() {
+              let left = parseUnary();
+              while (peek().value === '*' || peek().value === '/' || peek().value === '%') {
+                let op = next().value;
+                let right = parseUnary();
+                let prevLeft = left;
+                if (op === '*') left = function(scope, ev) { return prevLeft(scope, ev) * right(scope, ev); };
+                else if (op === '/') left = function(scope, ev) { return prevLeft(scope, ev) / right(scope, ev); };
+                else left = function(scope, ev) { return prevLeft(scope, ev) % right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseUnary() {
+              let op = peek();
+              if (op.type === 'op' && (op.value === '!' || op.value === '+' || op.value === '-' || op.value === 'typeof' || op.value === '~' || op.value === '++' || op.value === '--')) {
+                next();
+                let sub = parseUnary();
+                if (op.value === '!') return function(scope, ev) { return !sub(scope, ev); };
+                if (op.value === '+') return function(scope, ev) { return +sub(scope, ev); };
+                if (op.value === '-') return function(scope, ev) { return -sub(scope, ev); };
+                if (op.value === 'typeof') return function(scope, ev) { return typeof sub(scope, ev); };
+                if (op.value === '~') return function(scope, ev) { return ~sub(scope, ev); };
+                if (op.value === '++' || op.value === '--') {
+                  if (sub && sub.isIdentifier) {
+                    let idName = sub.idName;
+                    return function(scope, ev) {
+                      let target = (scope && scope.FData) ? scope.FData : scope;
+                      return (op.value === '++') ? ++target[idName] : --target[idName];
+                    };
+                  }
+                }
+              }
+              return parsePostfix();
+            }
+    
+            function parsePostfix() {
+              let base = parsePrimary();
+              while (true) {
+                if (match('.')) {
+                  let propTok = next();
+                  let propName = (propTok && (propTok.type === 'id' || propTok.type === 'lit')) ? propTok.value : '';
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let obj = prevBase(scope, ev);
+                    return (obj != null) ? obj[propName] : undefined;
+                  };
+                  base.isMember = true;
+                  base.objFn = prevBase;
+                  base.propFn = function() { return propName; };
+                } else if (match('[')) {
+                  let indexExpr = parseAssignment();
+                  match(']');
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let obj = prevBase(scope, ev);
+                    let idx = indexExpr ? indexExpr(scope, ev) : undefined;
+                    return (obj != null) ? obj[idx] : undefined;
+                  };
+                  base.isMember = true;
+                  base.objFn = prevBase;
+                  base.propFn = indexExpr;
+                } else if (match('(')) {
+                  let args = [];
+                  if (peek().value !== ')') {
+                    while (true) {
+                      args.push(parseAssignment());
+                      if (!match(',')) break;
+                    }
+                  }
+                  match(')');
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let fn = prevBase(scope, ev);
+                    let evaluatedArgs = args.map(function(a) { return a ? a(scope, ev) : undefined; });
+                    if (typeof fn === 'function') {
+                      let ctx = prevBase.isMember ? prevBase.objFn(scope, ev) : ((scope && scope.FData) ? scope.FData : scope);
+                      return fn.apply(ctx, evaluatedArgs);
+                    }
+                    return undefined;
+                  };
+                } else if (peek().value === '++' || peek().value === '--') {
+                  let op = next().value;
+                  let prevBase = base;
+                  if (prevBase && prevBase.isIdentifier) {
+                    let idName = prevBase.idName;
+                    base = function(scope, ev) {
+                      let target = (scope && scope.FData) ? scope.FData : scope;
+                      let oldVal = target[idName];
+                      if (op === '++') target[idName] = (oldVal || 0) + 1;
+                      else target[idName] = (oldVal || 0) - 1;
+                      return oldVal;
+                    };
+                  }
+                } else {
+                  break;
+                }
+              }
+              return base;
+            }
+    
+            function parsePrimary() {
+              let t = peek();
+              if (!t || t.type === 'eof') return function() { return undefined; };
+    
+              if (t.type === 'num' || t.type === 'str' || t.type === 'lit') {
+                next();
+                let val = t.value;
+                return function() { return val; };
+              }
+    
+              if (t.type === 'id') {
+                next();
+                let name = t.value;
+                let fn = function(scope, ev) {
+                  let d = (scope && scope.FData) ? scope.FData : scope;
+                  if (name === '$event') return ev;
+                  if (name === 'this') return d;
+                  if (d != null && (name in d)) return d[name];
+                  if (typeof window !== 'undefined' && (name in window)) return window[name];
+                  if (typeof globalThis !== 'undefined' && (name in globalThis)) return globalThis[name];
+                  return undefined;
+                };
+                fn.isIdentifier = true;
+                fn.idName = name;
+                return fn;
+              }
+    
+              if (match('(')) {
+                let inside = parseSequence();
+                match(')');
+                return inside;
+              }
+    
+              if (match('[')) {
+                let elements = [];
+                if (peek().value !== ']') {
+                  while (true) {
+                    elements.push(parseAssignment());
+                    if (!match(',')) break;
+                  }
+                }
+                match(']');
+                return function(scope, ev) {
+                  return elements.map(function(e) { return e ? e(scope, ev) : undefined; });
+                };
+              }
+    
+              if (match('{')) {
+                let props = [];
+                if (peek().value !== '}') {
+                  while (true) {
+                    let keyTok = next();
+                    let keyName = (keyTok && (keyTok.type === 'id' || keyTok.type === 'str')) ? keyTok.value : String(keyTok ? keyTok.value : '');
+                    let valFn;
+                    if (match(':')) {
+                      valFn = parseAssignment();
+                    } else {
+                      valFn = function(scope, ev) {
+                        let d = (scope && scope.FData) ? scope.FData : scope;
+                        return d ? d[keyName] : undefined;
+                      };
+                    }
+                    props.push({ key: keyName, fn: valFn });
+                    if (!match(',')) break;
+                  }
+                }
+                match('}');
+                return function(scope, ev) {
+                  let res = {};
+                  for (let i = 0; i < props.length; i++) {
+                    res[props[i].key] = props[i].fn ? props[i].fn(scope, ev) : undefined;
+                  }
+                  return res;
+                };
+              }
+    
+              next();
+              return function() { return undefined; };
+            }
+    
+            return parseSequence();
+          }
+    
+          bv.fastEval = function(scope, expr, ev) {
+            if (!expr || typeof expr !== 'string') return undefined;
+            let trimmed = expr.trim();
+            if (!trimmed) return undefined;
+    
+            let d = (scope && scope.FData) ? scope.FData : scope;
+    
+            // Immediate fast paths for primitive tokens
+            if (trimmed === '$event') return ev;
+            if (trimmed.indexOf('$event.') === 0) return bv.getDeepValue(ev, trimmed.slice(7));
+            if (trimmed === 'true') return true;
+            if (trimmed === 'false') return false;
+            if (trimmed === 'null') return null;
+            if (trimmed === 'undefined') return undefined;
+    
+            // Single root identifier: count, user, $t
+            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)) {
+              if (d != null && (trimmed in d)) return d[trimmed];
+              if (typeof window !== 'undefined' && (trimmed in window)) return window[trimmed];
+              if (typeof globalThis !== 'undefined' && (trimmed in globalThis)) return globalThis[trimmed];
+              return undefined;
+            }
+    
+            // Numeric constant
+            if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+              return parseFloat(trimmed);
+            }
+    
+            // Simple dot path: user.name, $theme.isDark
+            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)+$/.test(trimmed)) {
+              return bv.getDeepValue(d, trimmed);
+            }
+    
+            // Simple logical negation: !isActive, !user.admin
+            if (/^![a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(trimmed)) {
+              return !bv.getDeepValue(d, trimmed.slice(1));
+            }
+    
+            // Cached AST evaluator lookup
+            let fn = bv.evalCache[trimmed];
+            if (!fn) {
+              try {
+                let tokens = bvTokenize(trimmed);
+                fn = bvParseTokens(tokens);
+                bv.evalCache[trimmed] = fn;
+              } catch(err) {
+                return undefined;
+              }
+            }
+    
+            return fn(scope, ev);
+          };
+        }
+        
         
         // Application Entry Point: Mounts a template into the DOM
         bv.compile = function(Root, Data, Methods) {
@@ -2782,16 +3273,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
           if (Data && !Data.Evaluate) {
             Data.Evaluate = function(expr, ev) {
-              let d = (Data && Data.FData) ? Data.FData : Data;
-              try {
-                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                return f(d, ev);
-              } catch(e1) {
-                try {
-                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                  return f2(d, ev);
-                } catch(e2) { return undefined; }
-              }
+              return bv.fastEval(Data, expr, ev);
             };
           }
           if (Data && !Data.SetValue) {
@@ -3467,15 +3949,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                         let ld = {
                           FData: scp,
                           Evaluate: function(expr, ev) {
-                            try {
-                              let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                              return f(this.FData, ev);
-                            } catch(e1) {
-                              try {
-                                let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                                return f2(this.FData, ev);
-                              } catch(e2) { return undefined; }
-                            }
+                            return bv.fastEval(this.FData, expr, ev);
                           },
                           SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                         };
@@ -3715,8 +4189,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                          if (an.startsWith(':') || an.startsWith('b-bind:')) {
                             let propKey = an.replace('b-bind:', '').replace(':', '');
                             try {
-                               let f = new Function('data', 'with(data) { try { return ' + attr.value + '; } catch(e) { return undefined; } }');
-                               slotProps[propKey] = f(pRef);
+                               slotProps[propKey] = bv.fastEval(pRef, attr.value);
                             } catch(ex) { slotProps[propKey] = undefined; }
                          } else {
                             slotProps[an] = attr.value;
@@ -3769,10 +4242,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       let scopedData = {
                          FData: scopedProxy,
                          Evaluate: function(expr, ev) {
-                            try {
-                               let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
-                               return f(this.FData, ev);
-                            } catch(ex) { return undefined; }
+                            return bv.fastEval(this.FData, expr, ev);
                          },
                          SetValue: function(k, val) {
                             if (scopeVarName && k === scopeVarName) Object.assign(slotProps, val);
@@ -3947,15 +4417,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 let cD = {
                   FData: pRef,
                   Evaluate: function(expr, ev) { 
-                    try { 
-                      let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }'); 
-                      return f(this.FData, ev); 
-                    } catch(e1) {
-                      try {
-                        let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                        return f2(this.FData, ev);
-                      } catch(e2) { return undefined; }
-                    } 
+                    return bv.fastEval(this.FData, expr, ev);
                   },
                   SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
@@ -4302,15 +4764,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           let cD = {
             FData: pRef,
             Evaluate: function(expr, ev) {
-              try {
-                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                return f(pRef, ev);
-              } catch(e1) {
-                try {
-                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                  return f2(pRef, ev);
-                } catch(e2) { return undefined; }
-              }
+              return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(pRef, expr, ev) : undefined;
             },
             SetValue: function(k, val) {
               if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
@@ -5237,6 +5691,164 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
   var $impl = $mod.$impl;
   this.TDataSetState = {"0": "dsInactive", dsInactive: 0, "1": "dsBrowse", dsBrowse: 1, "2": "dsEdit", dsEdit: 2, "3": "dsInsert", dsInsert: 3};
   this.TFieldType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftString", ftString: 1, "2": "ftInteger", ftInteger: 2, "3": "ftFloat", ftFloat: 3, "4": "ftBoolean", ftBoolean: 4, "5": "ftDate", ftDate: 5, "6": "ftDateTime", ftDateTime: 6};
+  this.TConflictResolution = {"0": "crServerWins", crServerWins: 0, "1": "crClientWins", crClientWins: 1, "2": "crCustom", crCustom: 2};
+  rtl.createClass(this,"TBVIndexedDBAdapter",pas.System.TObject,function () {
+    this.IsSupported = function () {
+      var Result = false;
+      Result = (typeof window !== 'undefined') && (Boolean(window.indexedDB) || Boolean(window.localStorage));
+      return Result;
+    };
+    this.Save = function (DBName, StoreKey, RecordsData, DeltaData, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+          var key = StoreKey || 'default';
+          var payload = {
+            key: key,
+            records: RecordsData || [],
+            delta: DeltaData || [],
+            updatedAt: Date.now()
+          };
+      
+          if (typeof window !== 'undefined' && window.indexedDB) {
+            try {
+              var req = window.indexedDB.open(dbName, 1);
+              req.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('datasets')) {
+                  db.createObjectStore('datasets', { keyPath: 'key' });
+                }
+              };
+              req.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction(['datasets'], 'readwrite');
+                var store = tx.objectStore('datasets');
+                var putReq = store.put(payload);
+                putReq.onsuccess = function() {
+                  if (typeof OnSuccess === 'function') OnSuccess(payload);
+                };
+                putReq.onerror = function(err) {
+                  if (typeof OnError === 'function') OnError(err);
+                };
+              };
+              req.onerror = function(err) {
+                try {
+                  window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+                  if (typeof OnSuccess === 'function') OnSuccess(payload);
+                } catch(eLoc) {
+                  if (typeof OnError === 'function') OnError(eLoc);
+                }
+              };
+              return;
+            } catch(ex) {
+              // Fallback to localStorage below
+            }
+          }
+      
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+            }
+            if (typeof OnSuccess === 'function') OnSuccess(payload);
+          } catch(errLS) {
+            if (typeof OnError === 'function') OnError(errLS);
+          };
+    };
+    this.Load = function (DBName, StoreKey, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+          var key = StoreKey || 'default';
+      
+          function tryFallbackLS() {
+            try {
+              if (typeof window !== 'undefined' && window.localStorage) {
+                var str = window.localStorage.getItem('bv_idb_' + dbName + '_' + key);
+                if (str) {
+                  var p = JSON.parse(str);
+                  if (typeof OnSuccess === 'function') OnSuccess(p);
+                  return;
+                }
+              }
+              if (typeof OnSuccess === 'function') OnSuccess(null);
+            } catch(e) {
+              if (typeof OnError === 'function') OnError(e);
+            }
+          }
+      
+          if (typeof window !== 'undefined' && window.indexedDB) {
+            try {
+              var req = window.indexedDB.open(dbName, 1);
+              req.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('datasets')) {
+                  db.createObjectStore('datasets', { keyPath: 'key' });
+                }
+              };
+              req.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction(['datasets'], 'readonly');
+                var store = tx.objectStore('datasets');
+                var getReq = store.get(key);
+                getReq.onsuccess = function(ev) {
+                  var data = ev.target.result;
+                  if (data) {
+                    if (typeof OnSuccess === 'function') OnSuccess(data);
+                  } else {
+                    tryFallbackLS();
+                  }
+                };
+                getReq.onerror = function() {
+                  tryFallbackLS();
+                };
+              };
+              req.onerror = function() {
+                tryFallbackLS();
+              };
+              return;
+            } catch(ex) {
+              // Fallback
+            }
+          }
+      
+          tryFallbackLS();
+    };
+    this.Remove = function (DBName, StoreKey, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+      var key = StoreKey || 'default';
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { window.localStorage.removeItem('bv_idb_' + dbName + '_' + key); } catch(e) {}
+      }
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        try {
+          var req = window.indexedDB.open(dbName, 1);
+          req.onsuccess = function(e) {
+            var db = e.target.result;
+            var tx = db.transaction(['datasets'], 'readwrite');
+            tx.objectStore('datasets').delete(key);
+            if (typeof OnSuccess === 'function') OnSuccess(true);
+          };
+          req.onerror = function(err) {
+            if (typeof OnError === 'function') OnError(err);
+          };
+          return;
+        } catch(e) {}
+      }
+      if (typeof OnSuccess === 'function') OnSuccess(true);
+    };
+    this.ClearAll = function (DBName, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        try {
+          var req = window.indexedDB.deleteDatabase(dbName);
+          req.onsuccess = function() {
+            if (typeof OnSuccess === 'function') OnSuccess(true);
+          };
+          req.onerror = function(err) {
+            if (typeof OnError === 'function') OnError(err);
+          };
+          return;
+        } catch(e) {}
+      }
+      if (typeof OnSuccess === 'function') OnSuccess(true);
+    };
+  });
   rtl.createClass(this,"TBVField",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
@@ -5447,11 +6059,20 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FSortAscending = false;
       this.FReactiveState = undefined;
       this.FModified = false;
+      this.FTableName = "";
+      this.FAutoPersist = false;
+      this.FPersistStoreKey = "";
+      this.FAutoSyncOnReconnect = false;
+      this.FAutoSyncEndpoint = "";
+      this.FConflictResolution = 0;
+      this.FSyncing = false;
+      this.FNetworkListenerRegistered = false;
       this.FAfterScroll = null;
       this.FBeforePost = null;
       this.FAfterPost = null;
       this.FBeforeDelete = null;
       this.FAfterDelete = null;
+      this.FAfterApplyUpdates = null;
     };
     this.$final = function () {
       this.FFields = undefined;
@@ -5465,7 +6086,13 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FAfterPost = undefined;
       this.FBeforeDelete = undefined;
       this.FAfterDelete = undefined;
+      this.FAfterApplyUpdates = undefined;
       pas.System.TObject.$final.call(this);
+    };
+    this.AutoPersistIfEnabled = function () {
+      if (this.FAutoPersist && (this.FPersistStoreKey !== "")) {
+        this.SaveToIndexedDB(this.FPersistStoreKey,null,null);
+      };
     };
     this.SyncReactiveState = function () {
       var rs = null;
@@ -5480,6 +6107,9 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       rs["isEmpty"] = this.GetIsEmpty();
       rs["changeCount"] = this.FDelta.length;
       rs["data"] = this.FActiveRecords;
+      rs["hasPendingChanges"] = this.GetHasPendingChanges();
+      rs["isSyncing"] = this.FSyncing;
+      rs["tableName"] = this.FTableName;
       if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
         rs["current"] = this.FEditBuffer}
        else {
@@ -5562,6 +6192,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FSortField = "";
       this.FSortAscending = true;
       this.FModified = false;
+      this.FTableName = "default";
+      this.FAutoPersist = false;
+      this.FPersistStoreKey = "";
+      this.FAutoSyncOnReconnect = false;
+      this.FAutoSyncEndpoint = "";
+      this.FConflictResolution = $mod.TConflictResolution.crServerWins;
+      this.FSyncing = false;
+      this.FNetworkListenerRegistered = false;
       this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
       this.SyncReactiveState();
       var self = this;
@@ -5616,6 +6254,23 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
           if (self.FReactiveState && self.FReactiveState.changeCount !== undefined) return self.FReactiveState.changeCount;
           return self.GetChangeCount();
         }
+      });
+      Object.defineProperty(self, 'HasPendingChanges', {
+        get: function() { return self.GetHasPendingChanges(); }
+      });
+      Object.defineProperty(self, 'TableName', {
+        get: function() { return self.FTableName; },
+        set: function(v) { self.FTableName = v; }
+      });
+      Object.defineProperty(self, 'AutoPersist', {
+        get: function() { return self.FAutoPersist; },
+        set: function(v) { self.FAutoPersist = v; }
+      });
+      Object.defineProperty(self, 'Delta', {
+        get: function() { return self.FDelta; }
+      });
+      Object.defineProperty(self, 'Syncing', {
+        get: function() { return self.FSyncing; }
       });
       return this;
     };
@@ -5776,6 +6431,9 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       if (this.FBeforePost != null) this.FBeforePost(this);
       deltaItem = new Object();
       if (this.FState === $mod.TDataSetState.dsInsert) {
+        if (!this.FEditBuffer._clientId) {
+          this.FEditBuffer._clientId = 'cli_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        }
         if (!this.FEditBuffer.id) {
           var maxId = 0;
           for (var i = 0; i < this.FRecords.length; i++) {
@@ -5785,8 +6443,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
           this.FEditBuffer.id = maxId + 1;
         };
         this.FRecords.push(this.FEditBuffer);
+        deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
         deltaItem["action"] = "insert";
+        deltaItem["tableName"] = this.FTableName;
+        deltaItem["id"] = this.FEditBuffer["id"];
+        deltaItem["clientId"] = this.FEditBuffer["_clientId"];
         deltaItem["record"] = this.FEditBuffer;
+        deltaItem["timestamp"] = Date.now();
+        deltaItem["status"] = "pending";
         this.FDelta.push(deltaItem);
         this.RebuildActiveRecords();
         this.FRecNo = this.FActiveRecords.length;
@@ -5794,9 +6458,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
         curRec = this.GetActiveRecord(this.FRecNo - 1);
         targetIdx = this.FRecords.indexOf(curRec);
         if (targetIdx !== -1) this.FRecords[targetIdx] = this.FEditBuffer;
+        deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
         deltaItem["action"] = "update";
+        deltaItem["tableName"] = this.FTableName;
+        deltaItem["id"] = this.FEditBuffer["id"];
         deltaItem["oldRecord"] = this.FOriginalBuffer;
         deltaItem["record"] = this.FEditBuffer;
+        deltaItem["timestamp"] = Date.now();
+        deltaItem["status"] = "pending";
         this.FDelta.push(deltaItem);
         this.RebuildActiveRecords();
       };
@@ -5805,6 +6474,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FState = $mod.TDataSetState.dsBrowse;
       this.FModified = false;
       this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
       if (this.FAfterPost != null) this.FAfterPost(this);
     };
     this.Cancel = function () {
@@ -5826,14 +6496,20 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       targetIdx = this.FRecords.indexOf(curRec);
       if (targetIdx !== -1) this.FRecords.splice(targetIdx,1);
       deltaItem = new Object();
+      deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
       deltaItem["action"] = "delete";
+      deltaItem["tableName"] = this.FTableName;
+      deltaItem["id"] = curRec["id"];
       deltaItem["record"] = curRec;
+      deltaItem["timestamp"] = Date.now();
+      deltaItem["status"] = "pending";
       this.FDelta.push(deltaItem);
       this.RebuildActiveRecords();
       if (this.FRecNo > this.FActiveRecords.length) this.FRecNo = this.FActiveRecords.length;
       if ((this.FRecNo === 0) && (this.FActiveRecords.length > 0)) this.FRecNo = 1;
       this.FState = $mod.TDataSetState.dsBrowse;
       this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
       if (this.FAfterDelete != null) this.FAfterDelete(this);
     };
     this.SetFilter = function (AQuery) {
@@ -5918,9 +6594,62 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       Result = JSON.stringify(this.FDelta || []);
       return Result;
     };
-    this.ApplyUpdates = function () {
-      this.FDelta.length = 0;
-      this.SyncReactiveState();
+    this.ApplyUpdates = function (AEndpointOrService, AOnSuccess, AOnError) {
+      var ep = AEndpointOrService || this.FAutoSyncEndpoint;
+          var self = this;
+      
+          // If no endpoint is configured, standard local delta commit
+          if (!ep) {
+            this.FDelta.length = 0;
+            this.FModified = false;
+            this.SyncReactiveState();
+            this.AutoPersistIfEnabled();
+            if (typeof self.FAfterApplyUpdates === 'function') self.FAfterApplyUpdates(self);
+            if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', local: true });
+            return;
+          }
+      
+          if (this.FDelta.length === 0) {
+            if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', syncedCount: 0 });
+            return;
+          }
+      
+          this.FSyncing = true;
+          var payload = {
+            table: this.FTableName || 'default',
+            delta: this.FDelta,
+            clientTime: Date.now()
+          };
+      
+          var isService = ep.indexOf('/') === -1;
+          var api = (window.__BV_CORE__ && window.__BV_CORE__.api) ? window.__BV_CORE__.api : null;
+          var rpc = (window.__BV_CORE__ && window.__BV_CORE__.rpc) ? window.__BV_CORE__.rpc : null;
+      
+          function handleSuccess(resp) {
+            self.FSyncing = false;
+            self.ReconcileDelta(resp);
+            if (typeof AOnSuccess === 'function') AOnSuccess(resp);
+          }
+      
+          function handleError(err) {
+            self.FSyncing = false;
+            console.warn('[BVDataSet] ApplyUpdates failed:', err);
+            if (typeof AOnError === 'function') AOnError(err);
+          }
+      
+          if (isService && rpc && typeof rpc.invoke === 'function') {
+            rpc.invoke(ep, 'ApplyUpdates', [payload], handleSuccess, handleError);
+          } else if (api && typeof api.post === 'function') {
+            api.post(ep, payload).then(handleSuccess).catch(handleError);
+          } else if (typeof fetch === 'function') {
+            fetch(ep, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).then(function(r) { return r.json(); }).then(handleSuccess).catch(handleError);
+          } else {
+            handleSuccess({ status: 'ok', local: true, syncedCount: self.FDelta.length });
+          };
     };
     this.SaveToStorage = function (AStorageKey) {
       var json = "";
@@ -5958,6 +6687,130 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       } else Result = false;
       return Result;
     };
+    this.SetAutoPersist = function (AEnabled, AStoreKey) {
+      this.FAutoPersist = AEnabled;
+      if (AStoreKey !== "") {
+        this.FPersistStoreKey = AStoreKey}
+       else if (this.FPersistStoreKey === "") this.FPersistStoreKey = this.FTableName;
+      this.AutoPersistIfEnabled();
+    };
+    this.SetAutoSyncOnReconnect = function (AEnabled, AEndpointOrService) {
+      this.FAutoSyncOnReconnect = AEnabled;
+      if (AEndpointOrService !== "") this.FAutoSyncEndpoint = AEndpointOrService;
+      if (AEnabled && !this.FNetworkListenerRegistered) {
+        this.FNetworkListenerRegistered = true;
+        var self = this;
+        if (typeof window !== 'undefined') {
+          window.addEventListener('online', function() {
+            if (self.GetChangeCount() > 0 && !self.FSyncing) {
+              self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+            }
+          });
+        }
+        if (window.__BV_CORE__ && window.__BV_CORE__.ws) {
+          window.__BV_CORE__.ws.on('open', function() {
+            if (self.GetChangeCount() > 0 && !self.FSyncing) {
+              self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+            }
+          });
+        }
+      };
+    };
+    this.SaveToIndexedDB = function (AStoreKey, AOnSuccess, AOnError) {
+      var k = "";
+      k = AStoreKey;
+      if (k === "") k = this.FPersistStoreKey;
+      if (k === "") k = this.FTableName;
+      if (k === "") k = "default";
+      this.FPersistStoreKey = k;
+      $mod.TBVIndexedDBAdapter.Save("bv_offline_db",k,this.FRecords,this.FDelta,AOnSuccess,AOnError);
+    };
+    this.LoadFromIndexedDB = function (AStoreKey, AOnComplete) {
+      var $Self = this;
+      var k = "";
+      k = AStoreKey;
+      if (k === "") k = this.FPersistStoreKey;
+      if (k === "") k = this.FTableName;
+      if (k === "") k = "default";
+      this.FPersistStoreKey = k;
+      $mod.TBVIndexedDBAdapter.Load("bv_offline_db",k,function (data) {
+        if (data != null) {
+          if (data.records) $Self.LoadFromData(data.records);
+          if (data.delta && Array.isArray(data.delta)) {
+            $Self.FDelta = data.delta;
+            $Self.SyncReactiveState();
+          };
+        };
+        if (typeof AOnComplete === 'function') AOnComplete($Self, data);
+      },function (err) {
+        if (typeof AOnComplete === 'function') AOnComplete($Self, null);
+      });
+    };
+    this.ReconcileDelta = function (ServerResponse) {
+      if (!pas.System.Assigned(ServerResponse)) return;
+      var resp = ServerResponse;
+          var insertedIds = resp.insertedIds || {};
+          var conflicts = resp.conflicts || [];
+      
+          // 1. Remap temporary client IDs
+          if (insertedIds && typeof insertedIds === 'object') {
+            var keys = Object.keys(insertedIds);
+            for (var k = 0; k < keys.length; k++) {
+              var oldId = keys[k];
+              var newId = insertedIds[oldId];
+              for (var r = 0; r < this.FRecords.length; r++) {
+                var rec = this.FRecords[r];
+                if (!rec) continue;
+                if (String(rec.id) === String(oldId) || (rec._clientId && String(rec._clientId) === String(oldId))) {
+                  rec.id = newId;
+                  delete rec._clientId;
+                }
+              }
+            }
+          }
+      
+          // 2. Resolve Conflicts
+          if (Array.isArray(conflicts) && conflicts.length > 0) {
+            for (var c = 0; c < conflicts.length; c++) {
+              var conf = conflicts[c];
+              var cid = conf.id;
+              var sRec = conf.serverRecord;
+      
+              if (this.FConflictResolution === 0) { // crServerWins
+                for (var r = 0; r < this.FRecords.length; r++) {
+                  if (this.FRecords[r] && String(this.FRecords[r].id) === String(cid)) {
+                    if (sRec) {
+                      Object.assign(this.FRecords[r], sRec);
+                    } else {
+                      this.FRecords.splice(r, 1);
+                    }
+                    break;
+                  }
+                }
+              } else if (this.FConflictResolution === 1) { // crClientWins
+                // Client state remains in FRecords
+              }
+            }
+          }
+      
+          // 3. Clear delta and sync
+          this.FDelta.length = 0;
+      this.FModified = false;
+      this.RebuildActiveRecords();
+      this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
+      if (this.FAfterApplyUpdates != null) this.FAfterApplyUpdates(this);
+    };
+    this.GetHasPendingChanges = function () {
+      var Result = false;
+      Result = (this.FDelta.length > 0) || this.FModified;
+      return Result;
+    };
+    this.ClearDelta = function () {
+      this.FDelta.length = 0;
+      this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
+    };
   });
   $mod.$implcode = function () {
     $impl.RetainDataSetSymbols = function () {
@@ -5988,8 +6841,25 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
         dummyDS.LoadFromStorage("");
         dummyDS.ToJSON();
         dummyDS.GetDeltaJSON();
-        dummyDS.ApplyUpdates();
+        dummyDS.ApplyUpdates("",null,null);
         dummyDS.LoadFromJSON("");
+        dummyDS.FTableName = "";
+        dummyDS.FAutoPersist = false;
+        dummyDS.FPersistStoreKey = "";
+        dummyDS.FAutoSyncOnReconnect = false;
+        dummyDS.GetHasPendingChanges();
+        dummyDS.ClearDelta();
+        dummyDS.SetAutoPersist(false,"");
+        dummyDS.SetAutoSyncOnReconnect(false,"");
+        dummyDS.SaveToIndexedDB("",null,null);
+        dummyDS.LoadFromIndexedDB("",null);
+        dummyDS.ReconcileDelta(null);
+        dummyDS.AutoPersistIfEnabled();
+        $mod.TBVIndexedDBAdapter.IsSupported();
+        $mod.TBVIndexedDBAdapter.Save("","",null,null,null,null);
+        $mod.TBVIndexedDBAdapter.Load("","",null,null);
+        $mod.TBVIndexedDBAdapter.Remove("","",null,null);
+        $mod.TBVIndexedDBAdapter.ClearAll("",null,null);
         dummyDS.GetBof();
         dummyDS.GetEof();
         dummyDS.GetRecordCount();
@@ -6024,6 +6894,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
     window.__BV_CORE__.dataset = {
       TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
       TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      TBVIndexedDBAdapter: pas.BVDataSet ? pas.BVDataSet.TBVIndexedDBAdapter : null,
       CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
     };
   };
@@ -6870,9 +7741,82 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
   };
   this.DataSetApplyUpdates = function (DS) {
     if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
-      rtl.getObject(DS).ApplyUpdates()}
+      rtl.getObject(DS).ApplyUpdates("",null,null)}
      else {
       if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+    };
+  };
+  this.DataSetSaveIndexedDB = function (DS, StoreKey, OnSuccess, OnError) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SaveToIndexedDB(StoreKey,OnSuccess,OnError)}
+     else {
+      if (DS && typeof DS.SaveToIndexedDB === 'function') DS.SaveToIndexedDB(StoreKey, OnSuccess, OnError);
+    };
+  };
+  this.DataSetLoadIndexedDB = function (DS, StoreKey, OnComplete) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).LoadFromIndexedDB(StoreKey,OnComplete)}
+     else {
+      if (DS && typeof DS.LoadFromIndexedDB === 'function') DS.LoadFromIndexedDB(StoreKey, OnComplete);
+    };
+  };
+  this.DataSetSetAutoPersist = function (DS, Enable, StoreKey) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetAutoPersist(Enable,StoreKey)}
+     else {
+      if (DS && typeof DS.SetAutoPersist === 'function') DS.SetAutoPersist(Enable, StoreKey);
+    };
+  };
+  this.DataSetSetAutoSync = function (DS, Enable, EndpointOrService) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetAutoSyncOnReconnect(Enable,EndpointOrService)}
+     else {
+      if (DS && typeof DS.SetAutoSyncOnReconnect === 'function') DS.SetAutoSyncOnReconnect(Enable, EndpointOrService);
+    };
+  };
+  this.DataSetApplyUpdatesAsync = function (DS, EndpointOrService, OnSuccess, OnError) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ApplyUpdates(EndpointOrService,OnSuccess,OnError)}
+     else {
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates(EndpointOrService, OnSuccess, OnError);
+    };
+  };
+  this.DataSetHasPending = function (DS) {
+    var Result = false;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetHasPendingChanges()}
+     else {
+      if (DS && typeof DS.GetHasPendingChanges === 'function') Result = DS.GetHasPendingChanges();
+      else if (DS && DS.HasPendingChanges !== undefined) Result = Boolean(DS.HasPendingChanges);
+      else Result = false;
+    };
+    return Result;
+  };
+  this.DataSetChangeCount = function (DS) {
+    var Result = 0;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetChangeCount()}
+     else {
+      if (DS && typeof DS.GetChangeCount === 'function') Result = DS.GetChangeCount();
+      else Result = 0;
+    };
+    return Result;
+  };
+  this.DataSetDeltaList = function (DS) {
+    var Result = undefined;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).FDelta}
+     else {
+      if (DS && DS.FDelta) Result = DS.FDelta;
+      else Result = [];
+    };
+    return Result;
+  };
+  this.DataSetClearDelta = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ClearDelta()}
+     else {
+      if (DS && typeof DS.ClearDelta === 'function') DS.ClearDelta();
     };
   };
   this.RpcSetBaseUrl = function (Url) {
@@ -6925,6 +7869,15 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
         $mod.DataSetSetFieldVal(dummy,"",null);
         $mod.DataSetDeltaJSON(dummy);
         $mod.DataSetApplyUpdates(dummy);
+        $mod.DataSetSaveIndexedDB(dummy,"",null,null);
+        $mod.DataSetLoadIndexedDB(dummy,"",null);
+        $mod.DataSetSetAutoPersist(dummy,false,"");
+        $mod.DataSetSetAutoSync(dummy,false,"");
+        $mod.DataSetApplyUpdatesAsync(dummy,"",null,null);
+        $mod.DataSetHasPending(dummy);
+        $mod.DataSetChangeCount(dummy);
+        $mod.DataSetDeltaList(dummy);
+        $mod.DataSetClearDelta(dummy);
         $mod.RpcSetBaseUrl("");
         $mod.RpcSetToken("");
         $mod.RpcClearToken();
@@ -8188,10 +9141,10 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }   .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Procurando o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>? <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + "          <span v-else>🚀 Sincronizar (ApplyUpdates)</span>" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-else class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Resolução: <code>crServerWins</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8199,10 +9152,19 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       d["productsDS"] = null;
       d["searchQuery"] = "";
       d["deltaJSONStr"] = "[]";
+      d["isOnline"] = true;
+      d["autoPersistActive"] = true;
+      d["autoSyncActive"] = true;
+      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
+      d["isSyncing"] = false;
+      d["storageEngine"] = "IndexedDB";
       Result = d;
       return Result;
     };
     m = new Object();
+    m["updateDeltaView"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
     m["navFirst"] = function (_this) {
       pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
@@ -8228,6 +9190,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
         nextNum = ds.FRecords.length + 1;
       }
       if (ds && ds.Current) {
+        ds.Current.id = -nextNum;
         ds.Current.title = 'Novo Produto ' + nextNum;
         ds.Current.category = 'Hardware';
         ds.Current.price = 99.90;
@@ -8236,7 +9199,8 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       if (ds) ds.FModified = true;
       if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha ou confirme em Salvar (Post)",2500);
+      _this["syncStatusMsg"] = "Registro inserido em modo offline com ID provisório negativo.";
+      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha e salve (Post)",2500);
       setTimeout(function() {
         var el = document.querySelector('input[b-field="productsDS.title"]');
         if (el) {
@@ -8249,17 +9213,20 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     m["doPost"] = function (_this) {
       pas.BVPascalDX.DataSetPost(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
       pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
     };
     m["doCancel"] = function (_this) {
       pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
       pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
     };
     m["doDelete"] = function (_this) {
       if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
         pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
         _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
         pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
       };
     };
@@ -8269,36 +9236,125 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     m["onFieldInput"] = function (_this) {
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
-    m["doApplyUpdates"] = function (_this) {
-      pas.BVPascalDX.DataSetApplyUpdates(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      pas.BVPascalDX.ShowToast("Deltas sincronizados com sucesso (ApplyUpdates)!",2500);
+    m["doSaveIndexedDB"] = function (_this) {
+      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
+      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
+      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
     };
-    m["doSaveStorage"] = function (_this) {
-      if (this.productsDS && typeof this.productsDS.SaveToStorage === 'function') {
-        this.productsDS.SaveToStorage('demo_products_dataset');
-      };
-      pas.BVPascalDX.ShowToast("Dados salvos no LocalStorage com sucesso!",2500);
+    m["doLoadIndexedDB"] = function (_this) {
+      var self = this;
+      DataSetLoadIndexedDB(self.productsDS, 'demo_products_v44', function(success, count) {
+        if (success) {
+          self.deltaJSONStr = (typeof self.productsDS.GetDeltaJSON === 'function') ? self.productsDS.GetDeltaJSON() : '[]';
+          self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+          ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!');
+        } else {
+          self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+          ShowToast('Nenhum dado encontrado no IndexedDB.');
+        }
+      });
     };
-    m["doLoadStorage"] = function (_this) {
-      var loaded = false;
-      loaded = false;
-      if (this.productsDS && typeof this.productsDS.LoadFromStorage === 'function') {
-        loaded = this.productsDS.LoadFromStorage('demo_products_dataset');
+    m["toggleAutoPersist"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoPersistActive"] == false);
+      _this["autoPersistActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
+        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
+        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
       };
-      if (loaded) {
+    };
+    m["toggleAutoSync"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoSyncActive"] == false);
+      _this["autoSyncActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
+        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoSync desativado.";
+        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
+      };
+    };
+    m["toggleOnlineSimulation"] = function (_this) {
+      var nextOnline = false;
+      nextOnline = !!(_this["isOnline"] == false);
+      _this["isOnline"] = nextOnline;
+      if (nextOnline) {
+        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
+        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
+        if (!(_this["autoSyncActive"] == false)) {
+          self.doApplyUpdates();
+        };
+      } else {
+        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
+        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
+      };
+    };
+    m["doClearDelta"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
+        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
         _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        pas.BVPascalDX.ShowToast("Dados restaurados do LocalStorage com sucesso!",2500);
-      } else pas.BVPascalDX.ShowToast("Nenhum dado salvo anteriormente no LocalStorage.",2500);
+        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
+        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
+      };
+    };
+    m["doApplyUpdates"] = function (_this) {
+      _this["isSyncing"] = true;
+      var self = this;
+      var ds = self.productsDS;
+      if (!ds || ds.ChangeCount === 0) {
+        self.isSyncing = false;
+        ShowToast('Nenhuma alteração pendente para sincronizar.');
+        return;
+      }
+      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
+      DataSetApplyUpdatesAsync(ds, '/api/dataset/apply', function(resp) {
+        self.isSyncing = false;
+        self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+        var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+        self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+        ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!');
+      }, function(err) {
+        self.isSyncing = false;
+        self.syncStatusMsg = 'Backend mORMot offline ou inalcançável. Deltas preservados no IndexedDB com segurança!';
+        ShowToast('Backend offline. Deltas guardados no IndexedDB!');
+      });
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       var mockData = "";
       if (!_this) _this = this;
       _this["productsDS"] = pas.BVPascalDX.NewDataSet();
+      if (this.productsDS) {
+        this.productsDS.TableName = 'products';
+      };
       mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
       pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
+      _this["autoPersistActive"] = true;
+      _this["autoSyncActive"] = true;
+      _this["isOnline"] = true;
+      _this["isSyncing"] = false;
+      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      var self = this;
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+          self.isOnline = true;
+          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
+          if (self.autoSyncActive) self.doApplyUpdates();
+        });
+        window.addEventListener('offline', function() {
+          self.isOnline = false;
+          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
+        });
+      };
     };
     comp["computed"] = new Object();
     comp["computed"]["stateBadgeClass"] = function (_this) {
@@ -10997,7 +12053,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.3</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();

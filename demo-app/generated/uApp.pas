@@ -188,7 +188,7 @@ begin
     '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
     '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' +
     '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' +
-    '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' +
+    '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' +
     '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' +
     '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(''nav.home'') }}</a>' +
     '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(''nav.about'') }}</a>' +
@@ -205,13 +205,14 @@ begin
     '    <nav class="navbar">' +
     '      <div style="display: flex; align-items: center; gap: 8px;">' +
     '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' +
-    '        <strong class="brand">BlaiseVue 4.3</strong>' +
+    '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' +
+    '        <strong class="brand">BlaiseVue 4.4</strong>' +
     '      </div>' +
     '      <div class="nav-links">' +
     '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' +
     '        <a href="#/customers">📦 Customers</a>' +
     '        <a href="#/products">📦 Products</a>' +
-    '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' +
+    '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' +
     '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' +
     '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
     '        <a href="#/">{{ $t(''nav.home'') }}</a>' +
