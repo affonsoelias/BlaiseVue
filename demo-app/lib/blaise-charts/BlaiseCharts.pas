@@ -483,6 +483,7 @@ begin
   FJS := TJSObject.new;
   FJS['responsive'] := True;
   FJS['maintainAspectRatio'] := False;
+  FJS['resizeDelay'] := 50;
 end;
 
 constructor TBVChartOptions.Create(AJS: TJSObject);
@@ -924,6 +925,48 @@ initialization
         }
       };
       window.$charts = window.__BV_CORE__.charts;
+
+      // Universal Chart.js Safety Guard (neutralizes resize/update timers on destroyed charts)
+      function __bv_install_chart_guard() {
+        var C = (typeof window.Chart !== "undefined") ? window.Chart : ((typeof Chart !== "undefined") ? Chart : null);
+        if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
+        C.prototype.__bv_safe_guard = true;
+
+        var origDestroy = C.prototype.destroy;
+        C.prototype.destroy = function() {
+          this._doResize = function() { return 0; };
+          this.update = function() {};
+          this.render = function() {};
+          this.draw = function() {};
+          return origDestroy.apply(this, arguments);
+        };
+
+        var origUpdate = C.prototype.update;
+        C.prototype.update = function() {
+          if (!this.canvas || !this.ctx) return;
+          return origUpdate.apply(this, arguments);
+        };
+
+        var origRender = C.prototype.render;
+        C.prototype.render = function() {
+          if (!this.canvas || !this.ctx) return;
+          return origRender.apply(this, arguments);
+        };
+
+        var origResize = C.prototype._resize;
+        if (origResize) {
+          C.prototype._resize = function() {
+            if (!this.canvas || !this.ctx) return;
+            return origResize.apply(this, arguments);
+          };
+        }
+      }
+
+      __bv_install_chart_guard();
+      if (typeof window.addEventListener === "function") {
+        window.addEventListener("DOMContentLoaded", __bv_install_chart_guard);
+        window.addEventListener("load", __bv_install_chart_guard);
+      }
     }
   end;
 

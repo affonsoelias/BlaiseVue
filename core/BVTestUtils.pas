@@ -24,6 +24,8 @@ type
     function HTML: string; { Returns innerHTML of the component }
     function Text: string; { Returns textContent of the component }
     function Find(Selector: string): TJSHTMLElement; { Queries a sub-element }
+    function FindAll(Selector: string): TJSArray; { Queries all matching sub-elements as an array }
+    function Emitted(EventName: string): Boolean; { Checks if an event was emitted by the component }
     function Element: TJSHTMLElement; { Returns the underlying DOM element }
     procedure Click; { Simulates a mouse click }
     procedure SetValue(AVal: string); { Simulates an input change + event dispatch }
@@ -39,6 +41,7 @@ type
     procedure ToBe(AExpected: JSValue);
     procedure ToEqual(AExpected: JSValue);
     procedure ToContain(AExpected: JSValue);
+    procedure NotToContain(AExpected: JSValue);
     procedure ToHaveLength(ALen: Integer);
     procedure ToBeTruthy;
     procedure ToBeFalsy;
@@ -117,6 +120,38 @@ begin
     Result := nil;
 end;
 
+function TWrapper.FindAll(Selector: string): TJSArray;
+var
+  El: TJSHTMLElement;
+begin
+  El := GetElement;
+  Result := TJSArray.new;
+  if El <> nil then
+  begin
+    asm
+      Result = Array.from(El.querySelectorAll(Selector));
+    end;
+  end;
+end;
+
+function TWrapper.Emitted(EventName: string): Boolean;
+var
+  El: TJSHTMLElement;
+begin
+  El := GetElement;
+  Result := False;
+  asm
+    let target = El;
+    if (target) {
+      let inst = target['__bv_instance_data__'];
+      let emitted = (inst && inst['__emitted__']) || target['__emitted__'];
+      if (emitted && emitted[EventName] && emitted[EventName].length > 0) {
+        Result = true;
+      }
+    }
+  end;
+end;
+
 function TWrapper.Element: TJSHTMLElement;
 begin
   Result := GetElement;
@@ -171,6 +206,11 @@ end;
 procedure TExpectProxy.ToContain(AExpected: JSValue);
 begin
   asm expect(this.FVal).toContain(AExpected); end;
+end;
+
+procedure TExpectProxy.NotToContain(AExpected: JSValue);
+begin
+  asm expect(this.FVal).not.toContain(AExpected); end;
 end;
 
 procedure TExpectProxy.ToHaveLength(ALen: Integer);

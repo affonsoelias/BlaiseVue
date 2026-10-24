@@ -1,7 +1,7 @@
 {
-  "name": "blaisevue-testing",
-  "version": "1.0.0",
-  "description": "BlaiseVue Unit Testing Engine",
+  "name": "blaisevue",
+  "version": "4.4.0",
+  "description": "BlaiseVue - Universal Full-Stack Object Pascal Framework for Web, Mobile and Desktop",
   "type": "module",
   "scripts": {
     "test": "vitest"
@@ -9,5 +9,7 @@
   "devDependencies": {
     "vitest": "^3.0.0",
     "jsdom": "^26.0.0"
-  }
+  },
+  "license": "GPL-2.0-only AND LGPL-2.1-only WITH Static-linking-exception",
+  "author": "BlaiseVue Core Team"
 }

@@ -17,10 +17,16 @@
 
 ---
 
-## 🌟 Version 4.0 - 4.3: The Enterprise Universal Release
+## 🌟 Version 4.0 - 4.4: The Enterprise Universal Release
 
-BlaiseVue 4.0 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, and zero-ASM pure Object Pascal DX:
+BlaiseVue 4.0 - 4.4 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
 
+- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates (v4.4)**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
+- **💾 Offline-First `TBVDataSet` & Delta Sync (v4.4)**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
+- **🔗 Relational Master-Detail CRUD & Multi-Database ORM (v4.4)**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
+- **🏎️ High-Performance Virtual Scrolling (v4.4)**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
+- **📦 Standalone Library Scaffolding & Packaging (v4.4)**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
+- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset (v4.4)**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
 - **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
 - **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. Features in-memory cursor navigation (`First`, `Next`, `Prior`, `Last`, `RecNo`), transactional buffering (`Append`, `Edit`, `Post`, `Cancel`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), two-way `b-field` directive, offline delta tracking (`FDelta`, `GetDeltaJSON`), and native `<bv-datagrid :dataset="myDS">` integration.
 - **📚 Official Package Catalog & Documentation (v4.1)**: Master catalog covering 53+ production components across `@blaise-ui`, `@blaise-charts`, `@blaise-ui-mobile`, and `@blaise-themes`.
@@ -86,18 +92,24 @@ bv run preview             # Local HTTP preview of production build (port 5000)
 bv clean                   # Cleans generated files (generated/ and dist/)
 
 # === Scaffolding & Generators ===
-bv create <app-name>       # Scaffolds a complete new BlaiseVue project
-bv new c <Name>            # Scaffolds a new component (.bv) in src/components/
-bv new v <Name>            # Scaffolds a new route view (.bv) in src/views/
-bv new t <Name>            # Scaffolds a new Pascal test file (.test.pas) in tests/
+bv create <app-name>       # Scaffolds a project with 4-tier testing hierarchy & domain services
+bv new c <Name>            # Scaffolds a component (.bv) & automatic test in tests/components/
+bv new v <Name>            # Scaffolds a route view (.bv) & automatic test in tests/views/
+bv new t <Name>            # Scaffolds a Pascal test file (smart detection: components, views, unit)
 bv remove <c|v|t> <Name>   # Safely deletes a component, view, or test
 bv list <c|v|t|lib>        # Lists project components, views, tests, or installed libs
 
 # === Package & Theme Management ===
 bv lib install <pkg|url>   # Installs official package (themes, icons, ui) or from URL
 bv lib remove <name>       # Removes an installed component or package from lib/
+bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
 bv theme list              # Lists all available installed themes
 bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
+
+# === Project Metadata & Licensing ===
+bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
+bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
+bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
 # === Mobile (Android & iOS via Capacitor) ===
 bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project
@@ -161,12 +173,18 @@ Our architectural evolution roadmap:
 - [x] **v4.1 Component Catalog & Package Documentation (Completed ✅)**: Exhaustive documentation and interactive reference for all package components (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, `blaise-themes`) with props, events, slots, and copy-pasteable 100% Pascal snippets.
 - [x] **v4.2 LiveBindings & Reactive `TBVDataSet` (Completed ✅)**: Delphi/Lazarus-style in-memory dataset (`TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), delta tracking, and native `<bv-datagrid>` integration.
 - [x] **v4.3 End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)**: Shared service interfaces (`ICustomerService`, `IProductService`, `ISystemService`), automated client proxy scaffolding (`bv mormot rpc`), dual HTTP/WebSocket transport, and compile-time API validation.
-- [ ] **v4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (Next Horizon 🎯)**:
-  - [ ] ⚡ **Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates**: Compile-time AST verification of template expressions against component declarations and compilation to native Pascal closures/methods.
-  - [ ] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence and automatic background delta synchronization with mORMot 2 via WebSockets upon reconnection.
-  - [ ] 🔗 **Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)**: Automated scaffolding of foreign keys and master-detail views (`Order` -> `OrderItems`), coupled with pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
-  - [ ] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling capable of rendering 100,000+ records at a constant 60 FPS.
-  - [ ] 📦 **Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)**: Scaffolding of standalone community libraries with interactive license prompt (MIT, Apache, LGPL), isolated HMR playground, autonomous tests, and distribution bundler.
+- [x] **v4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (100% Completed ✅)**:
+  - [x] ⚡ **Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
+  - [x] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence, transactional delta tracking (`FDelta`), primary key reconciliation, and automatic reconnect triggers for mORMot 2.
+  - [x] 🔗 **Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)**: Automated scaffolding of foreign keys and master-detail views (`Order` -> `OrderItems`), coupled with pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
+  - [x] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS.
+  - [x] 📦 **Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)**: Standalone library scaffolding with interactive license prompt (MIT, Apache, LGPL), isolated HMR playground, autonomous tests, and distribution packager.
+- [ ] **v5.0 The Enterprise Cloud & Real-Time Horizon (Next Horizon 🎯)**:
+  - [ ] 📊 **Pillar 1: Enterprise Reporting & Multi-Format Export (`packages/blaise-reports`)**: Declarative vector PDF generation with automatic pagination, native Excel (`.xlsx`) and CSV exports, and print-optimized thermal/A4 layouts directly from `TBVDataSet` and `<bv-data-grid>` (NEW ✨).
+  - [ ] 🗄️ **Pillar 2: BlaiseX — Advanced Global State & Finite State Machines (`TBVStore 2.0`)**: Evolution of `core/BVStore.pas` into a strongly typed state engine with memoized getters, action pipelines, pluggable storage persistence, and formal `TBVStateMachine` workflows (EVOLUTION 🚀).
+  - [ ] 📱 **Pillar 3: Full PWA Engine & Service Worker Background Sync (`bv pwa`)**: Evolution of offline `TBVDataSet` and mobile stack with 1-click installability, Service Worker caching, push notifications, and background delta sync when reconnecting (EVOLUTION 🚀).
+  - [ ] ⚡ **Pillar 4: Node-Free Dynamic Server-Side Rendering (`mORMot 2 SSR`)**: Evolution of static SSG into ultra-fast sub-3ms dynamic runtime server rendering directly inside the native Pascal backend, eliminating Node.js in production (EVOLUTION 🚀).
+  - [ ] 🛠️ **Pillar 5: BlaiseVue Studio 2.0 (Visual Cockpit & Database Modeler)**: Evolution of `bv studio` into a visual relational database modeler and a time-travel reactive state inspector (EVOLUTION 🚀).
 
 > [!TIP]
 > **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md), and [Type-Safe RPC Documentation](doc/Documentation/43-typesafe-rpc-mormot.md).

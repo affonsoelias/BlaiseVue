@@ -41,31 +41,108 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 2. **Resource Embedding (`{$R templates.res}`)**:
    - Templates are compiled into a binary resource file (`templates.res`) via `windres` / FPC.
    - Embedded directly into the `bv.exe` executable at compile-time.
-3. **Standalone Binary**:
-   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream`.
-   - The compiled `bv.exe` requires zero external template files to generate new projects.
+3. **Standalone Binary & 4-Tier Scaffolding**:
+   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
+   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/unit/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
 
 ---
 
-## 🧪 Unit Testing Arsenal (`bv test`)
+## 🏗️ Scaffolding Generators for Components, Views, and Tests (`bv new`)
 
-BlaiseVue integrates automated testing using Pascal test specifications compiled to JavaScript and executed with **Vitest**:
+BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites:
 
-### `bv test`
-Transpiles all components, builds the test units in `tests/`, and executes the full suite in headless Node.js via Vitest.
-
-### `bv new t <Name>`
-Instantly scaffolds a new unit test file.
+### 1. Create Component: `bv new component <Name> [--no-test]`
+Creates the visual Single File Component (`.bv`) and its companion test file:
 ```bash
-bv new t UserProfile
+bv new component ProductCard
+# Shorthand:
+bv new c ProductCard
 ```
-Generates `tests/UserProfile.test.pas` pre-filled with the `Describe`, `It`, and `Expect` assertions template.
+- Creates: `src/components/ProductCard.bv`
+- Automatically generates: `tests/components/ProductCard.test.pas`
+- Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
-### `bv list t`
-Lists all unit test suites currently registered in the `tests/` folder.
+### 2. Create View / Page: `bv new view <Name> [--no-test]`
+Creates an application page view and its mount verification test:
+```bash
+bv new view OrderHistory
+# Shorthand:
+bv new v OrderHistory
+```
+- Creates: `src/views/OrderHistory.bv`
+- Automatically generates: `tests/views/OrderHistory.test.pas`
+- Supports `--no-test` to skip test generation.
 
-### `bv remove t <Name>`
-Safely removes a test file and any corresponding compiled artifacts.
+### 3. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+Creates test suites on demand with automatic directory resolution:
+```bash
+bv new test SimpleBadge
+# Shorthand:
+bv new t SimpleBadge
+```
+- **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
+- **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If given a relative path:** `bv new t services/CalculoFrete` -> created in `tests/services/CalculoFrete.test.pas`.
+- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business services.
+
+### 4. List Elements: `bv list <c|v|t>`
+Lists registered files across the project:
+- `bv list c`: Lists components in `src/components/`.
+- `bv list v`: Lists views in `src/views/`.
+- `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
+
+### 5. Remove Elements: `bv remove <component|view|test> <Name>`
+Safely purges the source file, generated Pascal units in `generated/`, and associated test files across subfolders:
+```bash
+bv remove component ProductCard
+bv remove view OrderHistory
+bv remove test SimpleBadge
+```
+
+---
+
+## 🧪 Automated Test Runner (`bv test`)
+
+The `bv test` command compiles and executes all unit and integration tests across the 4-tier hierarchy:
+```bash
+bv test
+```
+1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
+2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/unit/`, and `tests/framework/`.
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
+4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
+5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
+
+For continuous test-driven development:
+```bash
+bv test --watch
+```
+
+---
+
+## 📦 Standalone Library Scaffolding & Release Packager
+
+BlaiseVue enables creating, testing, and distributing modular component libraries:
+
+### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
+Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
+```bash
+bv create my-ui-kit --lib
+```
+- Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
+- In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
+- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
+
+### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
+Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
+```bash
+bv lib pack
+# Alias:
+bv lib dist
+```
+- **Pre-flight Tests**: Runs `bv test` before packaging to guarantee zero regressions (bypass with `--skip-tests`).
+- **Production Filtering**: Packages only `src/`, `styles/`, `package.json`, `README.md`, `LICENSE`, and `setup.pas`.
+- **Integrity Hash**: Computes SHA-256 checksum and writes `dist/<name>-<version>.zip.sha256`.
 
 ---
 

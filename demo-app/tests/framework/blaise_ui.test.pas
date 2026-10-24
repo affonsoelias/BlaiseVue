@@ -162,11 +162,11 @@ begin
          begin
             AccordionProps := TJSObject.new;
             asm
-              AccordionProps.items = [
+              $mod.AccordionProps.items = [
                 { id: 'q1', title: 'Question 1', content: 'Answer 1' },
                 { id: 'q2', title: 'Question 2', content: 'Answer 2' }
               ];
-              AccordionProps.initialActiveId = 'q1';
+              $mod.AccordionProps.initialActiveId = 'q1';
             end;
             Wrapper := Mount('bv-accordion', AccordionProps);
             Expect(Wrapper.Find('.bui-accordion')).toBeDefined;
@@ -174,9 +174,9 @@ begin
             Expect(Wrapper.Find('.bui-accordion-button').className).ToContain('active');
             
             { Click second accordion button to toggle }
-            Wrapper.FindAll('.bui-accordion-button')[1].click;
-            Expect(Wrapper.FindAll('.bui-accordion-button')[1].className).ToContain('active');
-            Expect(Wrapper.FindAll('.bui-accordion-button')[0].className).NotToContain('active');
+            TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[1]).click;
+            Expect(TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[1]).className).ToContain('active');
+            Expect(TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[0]).className).NotToContain('active');
          end);
     end);
 end.

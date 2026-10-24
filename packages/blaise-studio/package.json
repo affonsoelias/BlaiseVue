@@ -1,6 +1,6 @@
 {
   "name": "blaise-studio",
-  "version": "4.0.0",
+  "version": "4.4.0",
   "description": "BlaiseVue Studio - Real-time developer cockpit, WebSocket event monitor and visual workflow suite",
   "main": "BlaiseStudio.pas",
   "keywords": [
@@ -13,5 +13,5 @@
     "mormot2"
   ],
   "author": "BlaiseVue Core Team",
-  "license": "MIT"
+  "license": "GNU GPL v2"
 }

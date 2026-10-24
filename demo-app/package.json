@@ -1,7 +1,7 @@
 {
   "name": "blaisevue-demo-app",
-  "version": "1.0.0",
-  "description": "BlaiseVue Demo App Mobile & Web",
+  "version": "4.4.0",
+  "description": "BlaiseVue Enterprise Universal Showcase Application",
   "private": true,
   "scripts": {
     "build": "bv run build",
@@ -11,5 +11,7 @@
     "@capacitor/android": "^8.5.3",
     "@capacitor/cli": "^8.5.3",
     "@capacitor/core": "^8.5.3"
-  }
+  },
+  "license": "MIT",
+  "author": "BlaiseVue Core Team"
 }

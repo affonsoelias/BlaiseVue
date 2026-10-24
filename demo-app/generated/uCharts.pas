@@ -17,11 +17,11 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
+  _styleEl.textContent := '.chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;     overflow-y: scroll;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
-    '  <div class="chart-dashboard">' +
+    '  <div class="chart-dashboard" :class="{ ''charts-dark'': isDarkMode }">' +
     '    <div class="header-card">' +
     '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' +
     '        <div style="text-align: left;">' +
@@ -209,11 +209,13 @@ begin
       NewDark := not Boolean(_this['isDarkMode']);
       _this['isDarkMode'] := NewDark;
       UpdateChartDarkMode(_this['chartOptions'], NewDark);
+      UpdateChartDarkMode(_this['pieOptions'], NewDark);
       _this['chartOptions'] := ObjectAssign(NewObject, _this['chartOptions']);
+      _this['pieOptions'] := ObjectAssign(NewObject, _this['pieOptions']);
       if NewDark then
-        _this['clickedPointInfo'] := 'Modo escuro ativado para escalas dos gráficos!'
+        _this['clickedPointInfo'] := 'Modo escuro ativado com sucesso!'
       else
-        _this['clickedPointInfo'] := 'Modo claro ativado para escalas dos gráficos!';
+        _this['clickedPointInfo'] := 'Modo claro ativado com sucesso!';
     end;
     
   m['randomizeData'] := procedure(_this: TJSObject)
@@ -246,49 +248,79 @@ begin
   m['togglePalette'] := procedure(_this: TJSObject)
 
     var
-      Pal: TJSArray;
+      Pal, PalBorder: TJSArray;
       Cur: string;
       Datasets: TJSArray;
     begin
       Cur := String(_this['currentPalette']);
       if Cur = 'Emerald' then
-      begin
-        _this['currentPalette'] := 'Sunset';
-        Pal := TBVChartPalette.Sunset(4, 0.7);
-      end
+        _this['currentPalette'] := 'Sunset'
       else if Cur = 'Sunset' then
-      begin
-        _this['currentPalette'] := 'Cyberpunk';
-        Pal := TBVChartPalette.Cyberpunk(4, 0.7);
-      end
+        _this['currentPalette'] := 'Cyberpunk'
       else if Cur = 'Cyberpunk' then
-      begin
-        _this['currentPalette'] := 'Neon';
-        Pal := TBVChartPalette.Neon(4, 0.7);
-      end
+        _this['currentPalette'] := 'Neon'
       else
-      begin
         _this['currentPalette'] := 'Emerald';
-        Pal := TBVChartPalette.Emerald(4, 0.7);
+      Pal := TBVChartPalette.GetPalette(String(_this['currentPalette']), 0.65);
+      PalBorder := TBVChartPalette.GetPalette(String(_this['currentPalette']), 1.0);
+      // 1. Bar Data (Universal <bv-chart> and <bv-bar-chart>)
+      if _this['barData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+          if Datasets.Length > 1 then
+          begin
+            TJSObject(Datasets[1])['backgroundColor'] := Pal[1];
+            TJSObject(Datasets[1])['borderColor'] := PalBorder[1];
+          end;
+          _this['barData'] := ObjectAssign(NewObject, _this['barData']);
+        end;
       end;
+      // 2. Line Data
+      if _this['lineData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['lineData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[2];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[2];
+          _this['lineData'] := ObjectAssign(NewObject, _this['lineData']);
+        end;
+      end;
+      // 3. Pie Data
       if _this['pieData'] <> nil then
       begin
         Datasets := TJSArray(TJSObject(_this['pieData'])['datasets']);
         if (Datasets <> nil) and (Datasets.Length > 0) then
         begin
           TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := PalBorder;
           _this['pieData'] := ObjectAssign(NewObject, _this['pieData']);
         end;
       end;
+      // 4. Doughnut Data
       if _this['doughnutData'] <> nil then
       begin
         Datasets := TJSArray(TJSObject(_this['doughnutData'])['datasets']);
         if (Datasets <> nil) and (Datasets.Length > 0) then
         begin
           TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := Pal;
+          TJSObject(Datasets[0])['borderColor'] := PalBorder;
           _this['doughnutData'] := ObjectAssign(NewObject, _this['doughnutData']);
+        end;
+      end;
+      // 5. Radar Data
+      if _this['radarData'] <> nil then
+      begin
+        Datasets := TJSArray(TJSObject(_this['radarData'])['datasets']);
+        if (Datasets <> nil) and (Datasets.Length > 0) then
+        begin
+          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+          _this['radarData'] := ObjectAssign(NewObject, _this['radarData']);
         end;
       end;
       _this['clickedPointInfo'] := 'Paleta alterada para ' + String(_this['currentPalette']) + '!';

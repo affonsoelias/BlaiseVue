@@ -39,8 +39,11 @@ begin
   end;
 
   comp['props'] := TJSArray.new;
+  comp['defaultProps'] := TJSObject.new;
   TJSArray(comp['props']).push('title');
+  TJSObject(comp['defaultProps'])['title'] := 'Formulário do Sistema';
   TJSArray(comp['props']).push('subtitle');
+  TJSObject(comp['defaultProps'])['subtitle'] := 'Preencha os campos abaixo para atualizar o estado reativo.';
 
   m := TJSObject.new;
   m['headerClick'] := procedure(_this: TJSObject)

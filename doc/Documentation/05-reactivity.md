@@ -244,6 +244,69 @@ end;
 
 ---
 
+## 👁️ Practical Example 4: Watchers (`watch:`)
+
+While `computed:` properties are best suited for calculating synchronous, derived values to display in templates, **`watch:`** is designed to react to state changes and trigger **side effects** (such as HTTP requests, timers, debounced searching, analytics logging, or hardware triggers).
+
+### `computed` vs `watch`: When to use which?
+| Feature | Primary Purpose | Caching | Asynchronous / Side Effects |
+| :--- | :--- | :--- | :--- |
+| **`computed:`** | Calculate derived, formatted, or aggregated data | ✅ Yes (lazy evaluation with dirty-checking) | ❌ No (should be a pure getter function) |
+| **`watch:`** | React to state mutations and perform side effects | ❌ No (runs on every mutation) | ✅ Ideal for API calls, timers, storage, sound, DOM effects |
+
+### Runnable Single File Component (`.bv`) Example:
+```html
+<template>
+  <div class="search-widget">
+    <h3>Live Autocomplete Search</h3>
+    <input type="text" b-model="query" placeholder="Type to search products..." class="search-input" />
+    
+    <p v-if="isSearching" class="loading">🔍 Querying backend for '{{ query }}'...</p>
+    <p v-else class="status">{{ searchLog }}</p>
+  </div>
+</template>
+
+<script>
+  data:
+    query: string = '';
+    isSearching: Boolean = False;
+    searchLog: string = 'Ready. Type above to trigger watcher.';
+    searchTimerId: Integer = 0;
+
+  watch:
+    procedure query(newVal: JSValue);
+    begin
+      this['searchLog'] := 'Watcher triggered: value changed to "' + String(newVal) + '"';
+      this['isSearching'] := True;
+
+      // Cancel previous timer if user is still typing (pure Pascal debounce)
+      if Integer(this['searchTimerId']) <> 0 then
+        StopTimeout(Integer(this['searchTimerId']));
+
+      // Schedule the search to execute in 400ms (100% pure Pascal - zero asm!)
+      this['searchTimerId'] := StartTimeout(procedure
+      begin
+        this['isSearching'] := False;
+        this['searchLog'] := 'Search completed for: ' + String(newVal);
+      end, 400);
+    end;
+</script>
+
+<style>
+  .search-widget { padding: 16px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+  .search-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; }
+  .loading { color: #0284c7; font-weight: 600; margin-top: 8px; }
+  .status { color: #64748b; font-size: 13px; margin-top: 8px; }
+</style>
+```
+
+### 💡 How BlaiseVue Executes Watchers:
+1. During component initialization in `BVCompiler.pas`, each watcher declared under `watch:` is wrapped in an internal reactivity `bv.effect()`.
+2. When the component first mounts, the watcher is registered against its reactive dependency without firing (preventing unintended initial side effects).
+3. On any subsequent mutation of the watched property (e.g., via user typing, method call, or API response), the registered Pascal procedure runs immediately and receives the new value as `newVal: JSValue`.
+
+---
+
 ## 🔍 Deep Reactivity & Nested Objects
 
 BlaiseVue automatically wraps nested objects and records in reactive proxies:

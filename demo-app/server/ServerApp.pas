@@ -60,6 +60,7 @@ type
     FAuthService: TAuthService;
     FSwaggerService: TSwaggerService;
     FRpcDispatcher: TRpcDispatcher;
+    function HandleDataSetApply(const InContent: RawUtf8): RawUtf8;
     function DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
   public
     constructor Create(const APort: RawUtf8 = '8090'; const ADistPath: string = '../dist');
@@ -183,6 +184,84 @@ begin
   FServer.WebSocketBroadcast(Frame);
 end;
 
+function TBlaiseServerApp.HandleDataSetApply(const InContent: RawUtf8): RawUtf8;
+var
+  Doc, DeltaItemDoc: TDocVariantData;
+  TableVal, ActionVal, ClientIdVal, RecJson, DummyJson: RawUtf8;
+  InsertedIdsJson: RawUtf8;
+  DeltaArr, RecVar: Variant;
+  i, SyncedCount, NewId, TargetId: Integer;
+begin
+  Doc.InitJson(InContent);
+  TableVal := LowerCase(Doc.GetValueOrDefault('table', ''));
+  DeltaArr := Doc.GetValueOrDefault('delta', Null);
+  SyncedCount := 0;
+  InsertedIdsJson := '';
+
+  if VarIsArray(DeltaArr) or (TDocVariantData(DeltaArr).Kind = dvArray) then
+  begin
+    for i := 0 to TDocVariantData(DeltaArr).Count - 1 do
+    begin
+      DeltaItemDoc.Init(TDocVariantData(DeltaArr).Values[i]);
+      ActionVal := LowerCase(DeltaItemDoc.GetValueOrDefault('action', ''));
+      ClientIdVal := DeltaItemDoc.GetValueOrDefault('clientId', '');
+      TargetId := DeltaItemDoc.GetValueOrDefault('id', 0);
+      RecVar := DeltaItemDoc.GetValueOrDefault('record', Null);
+
+      if ActionVal = 'insert' then
+      begin
+        RecJson := VariantSaveJson(RecVar);
+        if (TableVal = 'product') or (TableVal = 'products') then
+        begin
+          FCrudProduct.CreateItemFromJson(RecJson, NewId, DummyJson);
+          if InsertedIdsJson <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+          if ClientIdVal <> '' then
+            InsertedIdsJson := InsertedIdsJson + '"' + ClientIdVal + '":' + IntToStr(NewId);
+          if TargetId < 0 then
+          begin
+            if ClientIdVal <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+            InsertedIdsJson := InsertedIdsJson + '"' + IntToStr(TargetId) + '":' + IntToStr(NewId);
+          end;
+          Inc(SyncedCount);
+        end
+        else
+        begin
+          FCrudCustomer.CreateItemFromJson(RecJson, NewId, DummyJson);
+          if InsertedIdsJson <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+          if ClientIdVal <> '' then
+            InsertedIdsJson := InsertedIdsJson + '"' + ClientIdVal + '":' + IntToStr(NewId);
+          if TargetId < 0 then
+          begin
+            if ClientIdVal <> '' then InsertedIdsJson := InsertedIdsJson + ',';
+            InsertedIdsJson := InsertedIdsJson + '"' + IntToStr(TargetId) + '":' + IntToStr(NewId);
+          end;
+          Inc(SyncedCount);
+        end;
+      end
+      else if ActionVal = 'update' then
+      begin
+        RecJson := VariantSaveJson(RecVar);
+        if (TableVal = 'product') or (TableVal = 'products') then
+          FCrudProduct.UpdateItemFromJson(TargetId, RecJson, DummyJson)
+        else
+          FCrudCustomer.UpdateItemFromJson(TargetId, RecJson, DummyJson);
+        Inc(SyncedCount);
+      end
+      else if ActionVal = 'delete' then
+      begin
+        if (TableVal = 'product') or (TableVal = 'products') then
+          FCrudProduct.DeleteItem(TargetId)
+        else
+          FCrudCustomer.DeleteItem(TargetId);
+        Inc(SyncedCount);
+      end;
+    end;
+  end;
+
+  Result := '{"status":"ok","syncedCount":' + IntToStr(SyncedCount) +
+    ',"insertedIds":{' + InsertedIdsJson + '},"conflicts":[]}';
+end;
+
 function TBlaiseServerApp.DoRequest(Ctxt: THttpServerRequestAbstract): cardinal;
 var
   LocalFile, DistIndex, Ext: string;
@@ -282,6 +361,15 @@ begin
   if FAuthService.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
 
+  // Offline-First Dataset Delta Synchronization: POST /api/dataset/apply
+  if (Ctxt.Method = 'POST') and ((CleanUrl = '/api/dataset/apply') or (CleanUrl = '/api/customers/apply') or (CleanUrl = '/api/products/apply')) then
+  begin
+    Ctxt.OutContentType := JSON_CONTENT_TYPE;
+    Ctxt.OutContent := HandleDataSetApply(Ctxt.InContent);
+    Result := HTTP_SUCCESS;
+    Exit;
+  end;
+
   // Customer CRUD REST API: /api/customers
   if FCrudCustomer.HandleRequest(Ctxt, CleanUrl, Result) then
     Exit;
@@ -304,6 +392,13 @@ begin
          (Ext = '.svg') or (Ext = '.ico') or (Ext = '.woff') or (Ext = '.woff2') or (Ext = '.ttf') or
          (Ext = '.eot') or (Ext = '.map') or (Ext = '.json') or (Ext = '.wasm') then
       begin
+        // Outdated bundle fallback: if an older main.<hash>.js was requested, gracefully fallback to main.js!
+        if (Ext = '.js') and (Pos('main.', LowerCase(ExtractFileName(LocalFile))) = 1) and
+           FileExists(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js') then
+        begin
+          Exit(Ctxt.SetOutFile(FDistPath + DirectorySeparator + 'js' + DirectorySeparator + 'main.js', False));
+        end;
+
         Ctxt.OutContentType := TEXT_CONTENT_TYPE;
         Ctxt.OutContent := '404 File Not Found: ' + CleanUrl;
         Result := HTTP_NOTFOUND;

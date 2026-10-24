@@ -103,15 +103,7 @@ begin
       }
       this.Evaluate = function(expr, ev) {
         let d = this.FData || this;
-        try {
-          let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-          return f(d, ev);
-        } catch(e1) {
-          try {
-            let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-            return f2(d, ev);
-          } catch(e2) { return undefined; }
-        }
+        return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(d, expr, ev) : undefined;
       };
       this.SetValue = function(k, val) {
         let d = this.FData || this;
@@ -138,15 +130,8 @@ function TBlaiseData.Evaluate(AExpr: string; AEvent: JSValue = nil): JSValue;
 begin
   { Evaluates a Pascal/JS expression within the data context }
   asm
-    try {
-      let f = new Function('data', '$event', 'with(data) { return (' + AExpr + '); }');
-      return f(this.FData, AEvent);
-    } catch(e1) {
-      try {
-        let f2 = new Function('data', '$event', 'with(data) { ' + AExpr + '; }');
-        return f2(this.FData, AEvent);
-      } catch(e2) { return undefined; }
-    }
+    let d = this.FData || this;
+    return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(d, AExpr, AEvent) : undefined;
   end;
 end;
 

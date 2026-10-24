@@ -210,12 +210,13 @@ $ionic.actionSheet.show(title, optionsArray, onSelectCallback)
     procedure handleSync;
     begin
       TIonicLoading.Present('Connecting to mORMot 2...');
-      asm
-        setTimeout(function() {
-          pas.BlaiseIonic.TIonicLoading.Dismiss();
-          pas.BlaiseIonic.TIonicToast.Show('Synchronized 42 records!', 2000, 'bottom', 'success');
-        }, 800);
-      end;
+      
+      // 100% Pure Pascal (Zero-ASM)
+      StartTimeout(procedure
+      begin
+        TIonicLoading.Dismiss();
+        IonicToast('Synchronized 42 records!', 2000, 'bottom', 'success');
+      end, 800);
     end;
 </script>
 ```

@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# 🛡️ BlaiseVue 4.3 Documentation
+# 🛡️ BlaiseVue 4.4 Documentation
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.
 
@@ -55,6 +55,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 26. [26. List Transitions (<transition-group>)](26-transition-group.md) — Smooth FLIP animations for entering, leaving, and reordering list items.
 27. [27. Integrated Internationalization (Blaise-i18n)](27-i18n.md) — Multi-locale dictionaries, token interpolation, and runtime `$setLocale`.
 42. [42. LiveBindings & Reactive TBVDataSet](42-livebindings-dataset.md) — Delphi/Lazarus-style in-memory dataset, cursor navigation, CRUD buffers, delta tracking, and `<bv-datagrid :dataset="...">`.
+47. [47. Enterprise UI Performance: Virtual Scrolling](47-virtual-scrolling.md) — DOM node virtualization and recycling engine for 50,000+ records at constant 60 FPS with `<bv-virtual-scroll>` and `<bv-data-grid>`.
 
 ### 📦 4. Official Component Packages & UI Kits
 24. [24. BlaiseUI (Official Component Kit)](24-blaise-ui.md) — Overview of the native 25+ widget kit (buttons, modals, cards, tabs, drawers).
@@ -63,10 +64,13 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 38. [38. Mobile UI Kit (blaise-ui-mobile)](38-mobile-ionic.md) — Ionic Web Components with strongly typed Object Pascal controllers.
 39. [39. Reactive Chart.js Suite (blaise-charts)](39-blaise-charts.md) — High-performance canvas charts (Bar, Line, Pie, Radar, Bubble) with typed datasets.
 41. [41. Package Components Catalog & Manual](41-package-components-catalog.md) — Comprehensive reference manual covering props, events, slots, and copy-pasteable snippets for all 53+ components.
+48. [48. External Library Scaffolding & Release Packager](48-library-distribution-packager.md) — Scaffolding dedicated standalone component libraries with interactive licensing (`bv create --lib`) and automated release distribution (`bv lib pack`) with SHA-256 integrity verification.
+68. [49. Project Metadata, Licensing Suite & Clean Slate Reset](49-project-metadata-licensing-reset.md) — Automated license generation (`bv license`), SemVer & metadata sync (`bv meta`), synchronized Pascal unit (`src/uAppVersion.pas`), and clean slate reset (`bv reset`) with framework safety guards.
 
 ### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
 37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
 43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md) — Shared Pascal service contracts, automated proxy scaffolding (`bv mormot rpc`), and compile-time API validation.
+46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
 
 ### 📱 6. Universal Multiplatform (Mobile & Desktop)
 35. [35. Hybrid Mobile Platform & Capacitor (bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
@@ -76,7 +80,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 12. [12. Debugging & Error Handling](12-debugging.md) — Source maps, runtime error boundaries, and console inspection.
 14. [14. CSS Transitions & Animations](14-css-transitions.md) — Declarative `<transition>` wrapper with enter/leave classes.
 18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md) — Installing and managing community packages via `bv lib`.
-19. [19. Unit Testing with Vitest](19-unit-testing.md) — Writing and executing automated tests in Pascal with JSDOM and Vitest.
+19. [19. Automated Unit & Integration Testing (4-Tier Architecture)](19-unit-testing.md) — Writing and executing automated tests in Pascal across 4 tiers (components, views, unit services, framework) with JSDOM and Vitest.
 20. [20. Consolidating Extra Libraries](20-extra-libraries.md) — Architecture for package imports and stylesheet bundling.
 21. [21. Teleport & Suspense](21-teleport-suspense.md) — DOM target relocation and asynchronous loading wrappers.
 22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md) — Compile-time static analysis and diff pruning for peak rendering performance.
@@ -87,6 +91,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 33. [33. Headless End-to-End Test Suite (bv test e2e)](33-e2e-testing.md) — Automated browser-based end-to-end integration tests.
 34. [34. VS Code Extension & Professional DX (.vsix)](34-vscode-extension.md) — Official IDE extension with syntax highlighting, IntelliSense, and snippets.
 40. [40. BlaiseVue Studio Dashboard (bv studio)](40-blaise-studio.md) — Web-based developer cockpit for real-time WebSocket monitoring and workflows.
+44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
@@ -98,18 +103,24 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 
 ```bash
 # === Development & Build ===
+bv check [file]            # Runs compile-time template AST type-checking and typo verification
 bv dev                     # Starts dev server with instant HMR on http://localhost:8080 (alias: bv serve)
 bv run dev                 # Builds project in development mode with cache-busting
 bv run build               # Builds optimized production bundle in dist/
 bv run ssg                 # Pre-renders static HTML for all routes (SSG)
 bv run preview             # Local HTTP preview of production build (port 5000)
 
-# === Scaffolding ===
-bv create <app-name>       # Scaffolds a new BlaiseVue application
+# === Scaffolding & Packages ===
+bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services
 bv create <name> --lib     # Scaffolds a standalone library package with license and playground
-bv new c <Name>            # Scaffolds a new component (.bv)
-bv new v <Name>            # Scaffolds a new route view (.bv)
-bv new t <Name>            # Scaffolds a new Pascal test file (.test.pas)
+bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/
+bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/
+bv new t <Name>            # Scaffolds a test (smart detection: components, views, unit)
+bv lib install <pkg|url>   # Installs an official package or local/remote archive into lib/
+bv lib pack [dir]          # Assembles & cryptographically verifies release artifact (.zip with SHA-256)
+bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
+bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
+bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
 # === Full-Stack mORMot 2 ===
 bv mormot init [--db <eng>] # Scaffolds backend (sqlite, postgres, mysql, firebird)

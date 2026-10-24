@@ -590,6 +590,18 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
     };
     return Result;
   };
+  this.TStringReplaceFlag = {"0": "rfReplaceAll", rfReplaceAll: 0, "1": "rfIgnoreCase", rfIgnoreCase: 1};
+  this.StringReplace = function (aOriginal, aSearch, aReplace, Flags) {
+    var Result = "";
+    var REFlags = "";
+    var REString = "";
+    REFlags = "";
+    if ($mod.TStringReplaceFlag.rfReplaceAll in Flags) REFlags = "g";
+    if ($mod.TStringReplaceFlag.rfIgnoreCase in Flags) REFlags = REFlags + "i";
+    REString = aSearch.replace(new RegExp($impl.RESpecials,"g"),"\\$1");
+    Result = aOriginal.replace(new RegExp(REString,REFlags),aReplace);
+    return Result;
+  };
   this.IntToStr = function (Value) {
     var Result = "";
     Result = "" + Value;
@@ -772,6 +784,63 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
       }, set: function (v) {
         Result = v;
       }},DS,TS);
+    return Result;
+  };
+  var TDecimalPart = {"0": "dpDigit", dpDigit: 0, "1": "dpSignificand", dpSignificand: 1, "2": "dpExp", dpExp: 2};
+  this.TryStrToFloat$3 = function (S, res, aSettings) {
+    var Result = false;
+    var J = undefined;
+    var I = 0;
+    var aStart = 0;
+    var Len = 0;
+    var N = "";
+    var p = 0;
+    Result = false;
+    N = S;
+    if (aSettings.ThousandSeparator !== "") N = $mod.StringReplace(N,aSettings.ThousandSeparator,"",rtl.createSet($mod.TStringReplaceFlag.rfReplaceAll));
+    if (aSettings.DecimalSeparator !== ".") N = $mod.StringReplace(N,aSettings.DecimalSeparator,".",{});
+    p = TDecimalPart.dpDigit;
+    I = 1;
+    aStart = 1;
+    Len = N.length;
+    while (I <= Len) {
+      var $tmp = N.charAt(I - 1);
+      if (($tmp === "+") || ($tmp === "-")) {
+        var $tmp1 = p;
+        if ($tmp1 === TDecimalPart.dpSignificand) {
+          return Result}
+         else if ($tmp1 === TDecimalPart.dpDigit) {
+          if (I > aStart) return Result}
+         else if ($tmp1 === TDecimalPart.dpExp) if (I > (aStart + 1)) return Result;
+      } else if (($tmp >= "0") && ($tmp <= "9")) {}
+      else if ($tmp === ".") {
+        if (p !== TDecimalPart.dpDigit) return Result;
+        p = TDecimalPart.dpSignificand;
+        aStart = I;
+      } else if (($tmp === "E") || ($tmp === "e")) {
+        if (p === TDecimalPart.dpExp) {
+          return Result}
+         else {
+          p = TDecimalPart.dpExp;
+          aStart = I;
+        };
+      } else {
+        return Result;
+      };
+      I += 1;
+    };
+    J = parseFloat(N);
+    Result = !isNaN(J);
+    if (Result) res.set(rtl.getNumber(J));
+    return Result;
+  };
+  this.StrToFloatDef = function (S, aDef) {
+    var Result = 0.0;
+    if (!$mod.TryStrToFloat$3(S,{get: function () {
+        return Result;
+      }, set: function (v) {
+        Result = v;
+      }},$mod.FormatSettings)) Result = aDef;
     return Result;
   };
   this.FormatFloat = function (Fmt, aValue) {
@@ -1365,6 +1434,7 @@ rtl.module("SysUtils",["System","RTLConsts","JS"],function () {
       };
       return Result;
     };
+    $impl.RESpecials = "([\\$\\+\\[\\]\\(\\)\\\\\\.\\*\\^\\?\\|])";
     $impl.IntTryStrToInt = function (S, res, aSep) {
       var Result = false;
       var Radix = 10;
@@ -1458,15 +1528,7 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
         }
         this.Evaluate = function(expr, ev) {
           let d = this.FData || this;
-          try {
-            let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-            return f(d, ev);
-          } catch(e1) {
-            try {
-              let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-              return f2(d, ev);
-            } catch(e2) { return undefined; }
-          }
+          return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(d, expr, ev) : undefined;
         };
         this.SetValue = function(k, val) {
           let d = this.FData || this;
@@ -2739,6 +2801,505 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
             }
           };
         }
+    
+    
+        if (!bv.getDeepValue) {
+          bv.getDeepValue = function(target, path) {
+            if (target == null || !path) return undefined;
+            if (typeof path === 'string' && path.indexOf('.') > -1) {
+              let parts = path.split('.');
+              let curr = target;
+              for (let i = 0; i < parts.length; i++) {
+                if (curr == null) return undefined;
+                curr = curr[parts[i]];
+              }
+              return curr;
+            }
+            return target[path];
+          };
+        }
+    
+        if (!bv.evalCache) bv.evalCache = Object.create(null);
+    
+        // =========================================================================
+        //  BLAISEVUE 4.4: ZERO-WITH NATIVE FAST EXPRESSION EVALUATOR & CSP ENGINE
+        // =========================================================================
+        if (!bv.fastEval) {
+          function bvTokenize(str) {
+            let tokens = [];
+            let i = 0;
+            let len = str.length;
+    
+            while (i < len) {
+              let ch = str[i];
+              if (ch <= ' ') { i++; continue; }
+    
+              if (ch === '/' && str[i + 1] === '/') {
+                i += 2;
+                while (i < len && str[i] !== '\n') i++;
+                continue;
+              }
+    
+              if ((ch >= '0' && ch <= '9') || (ch === '.' && str[i + 1] >= '0' && str[i + 1] <= '9')) {
+                let start = i;
+                while (i < len && ((str[i] >= '0' && str[i] <= '9') || str[i] === '.' || str[i] === 'e' || str[i] === 'E' || (str[i] === '-' && (str[i-1] === 'e' || str[i-1] === 'E')))) {
+                  i++;
+                }
+                tokens.push({ type: 'num', value: parseFloat(str.slice(start, i)) });
+                continue;
+              }
+    
+              if (ch === '\'' || ch === '"' || ch === '`') {
+                let quote = ch;
+                let val = '';
+                i++;
+                while (i < len && str[i] !== quote) {
+                  if (str[i] === '\\' && i + 1 < len) {
+                    let next = str[++i];
+                    if (next === 'n') val += '\n';
+                    else if (next === 't') val += '\t';
+                    else if (next === 'r') val += '\r';
+                    else val += next;
+                  } else {
+                    val += str[i];
+                  }
+                  i++;
+                }
+                i++;
+                tokens.push({ type: 'str', value: val });
+                continue;
+              }
+    
+              let op3 = str.slice(i, i + 3);
+              if (op3 === '===' || op3 === '!==' || op3 === '>>>') {
+                tokens.push({ type: 'op', value: op3 });
+                i += 3;
+                continue;
+              }
+    
+              let op2 = str.slice(i, i + 2);
+              if (['==', '!=', '<=', '>=', '&&', '||', '??', '++', '--', '+=', '-=', '*=', '/='].indexOf(op2) !== -1) {
+                tokens.push({ type: 'op', value: op2 });
+                i += 2;
+                continue;
+              }
+    
+              if ('+-*/%<>=!&|^~?:,;()[]{}'.indexOf(ch) !== -1) {
+                tokens.push({ type: 'op', value: ch });
+                i++;
+                continue;
+              }
+    
+              if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_' || ch === '$') {
+                let start = i;
+                while (i < len && ((str[i] >= 'a' && str[i] <= 'z') || (str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= '0' && str[i] <= '9') || str[i] === '_' || str[i] === '$')) {
+                  i++;
+                }
+                let word = str.slice(start, i);
+                if (word === 'true') tokens.push({ type: 'lit', value: true });
+                else if (word === 'false') tokens.push({ type: 'lit', value: false });
+                else if (word === 'null') tokens.push({ type: 'lit', value: null });
+                else if (word === 'undefined') tokens.push({ type: 'lit', value: undefined });
+                else if (word === 'typeof' || word === 'instanceof' || word === 'in') tokens.push({ type: 'op', value: word });
+                else tokens.push({ type: 'id', value: word });
+                continue;
+              }
+    
+              if (ch === '.') {
+                tokens.push({ type: 'op', value: '.' });
+                i++;
+                continue;
+              }
+    
+              i++;
+            }
+    
+            tokens.push({ type: 'eof', value: '' });
+            return tokens;
+          }
+    
+          function bvParseTokens(tokens) {
+            let idx = 0;
+            function peek() { return tokens[idx] || { type: 'eof', value: '' }; }
+            function next() { return tokens[idx++]; }
+            function match(val) {
+              if (peek().value === val) return next();
+              return null;
+            }
+    
+            function parseSequence() {
+              let expr = parseAssignment();
+              while (match(';')) {
+                let nextExpr = parseAssignment();
+                let prevExpr = expr;
+                expr = function(scope, ev) {
+                  if (prevExpr) prevExpr(scope, ev);
+                  return nextExpr ? nextExpr(scope, ev) : undefined;
+                };
+              }
+              return expr;
+            }
+    
+            function parseAssignment() {
+              let left = parseTernary();
+              if (!left) return null;
+    
+              let op = peek();
+              if (op.type === 'op' && (op.value === '=' || op.value === '+=' || op.value === '-=')) {
+                next();
+                let right = parseAssignment();
+                if (left.isIdentifier) {
+                  let idName = left.idName;
+                  return function(scope, ev) {
+                    let rVal = right ? right(scope, ev) : undefined;
+                    let target = (scope && scope.FData) ? scope.FData : scope;
+                    if (op.value === '=') target[idName] = rVal;
+                    else if (op.value === '+=') target[idName] = (target[idName] || 0) + rVal;
+                    else if (op.value === '-=') target[idName] = (target[idName] || 0) - rVal;
+                    return target[idName];
+                  };
+                } else if (left.isMember) {
+                  let objFn = left.objFn;
+                  let propFn = left.propFn;
+                  return function(scope, ev) {
+                    let obj = objFn(scope, ev);
+                    let prop = propFn(scope, ev);
+                    let rVal = right ? right(scope, ev) : undefined;
+                    if (obj != null) {
+                      if (op.value === '=') obj[prop] = rVal;
+                      else if (op.value === '+=') obj[prop] = (obj[prop] || 0) + rVal;
+                      else if (op.value === '-=') obj[prop] = (obj[prop] || 0) - rVal;
+                      return obj[prop];
+                    }
+                    return undefined;
+                  };
+                }
+              }
+              return left;
+            }
+    
+            function parseTernary() {
+              let cond = parseLogicalOr();
+              if (match('?')) {
+                let trueBranch = parseAssignment();
+                match(':');
+                let falseBranch = parseAssignment();
+                return function(scope, ev) {
+                  return cond(scope, ev) ? (trueBranch ? trueBranch(scope, ev) : undefined) : (falseBranch ? falseBranch(scope, ev) : undefined);
+                };
+              }
+              return cond;
+            }
+    
+            function parseLogicalOr() {
+              let left = parseLogicalAnd();
+              while (peek().value === '||' || peek().value === '??') {
+                let op = next().value;
+                let right = parseLogicalAnd();
+                let prevLeft = left;
+                if (op === '||') {
+                  left = function(scope, ev) { return prevLeft(scope, ev) || right(scope, ev); };
+                } else {
+                  left = function(scope, ev) {
+                    let val = prevLeft(scope, ev);
+                    return (val !== null && val !== undefined) ? val : right(scope, ev);
+                  };
+                }
+              }
+              return left;
+            }
+    
+            function parseLogicalAnd() {
+              let left = parseEquality();
+              while (peek().value === '&&') {
+                next();
+                let right = parseEquality();
+                let prevLeft = left;
+                left = function(scope, ev) { return prevLeft(scope, ev) && right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseEquality() {
+              let left = parseRelational();
+              while (['===', '!==', '==', '!='].indexOf(peek().value) !== -1) {
+                let op = next().value;
+                let right = parseRelational();
+                let prevLeft = left;
+                if (op === '===') left = function(scope, ev) { return prevLeft(scope, ev) === right(scope, ev); };
+                else if (op === '!==') left = function(scope, ev) { return prevLeft(scope, ev) !== right(scope, ev); };
+                else if (op === '==') left = function(scope, ev) { return prevLeft(scope, ev) == right(scope, ev); };
+                else if (op === '!=') left = function(scope, ev) { return prevLeft(scope, ev) != right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseRelational() {
+              let left = parseAdditive();
+              while (['<', '>', '<=', '>=', 'instanceof', 'in'].indexOf(peek().value) !== -1) {
+                let op = next().value;
+                let right = parseAdditive();
+                let prevLeft = left;
+                if (op === '<') left = function(scope, ev) { return prevLeft(scope, ev) < right(scope, ev); };
+                else if (op === '>') left = function(scope, ev) { return prevLeft(scope, ev) > right(scope, ev); };
+                else if (op === '<=') left = function(scope, ev) { return prevLeft(scope, ev) <= right(scope, ev); };
+                else if (op === '>=') left = function(scope, ev) { return prevLeft(scope, ev) >= right(scope, ev); };
+                else if (op === 'instanceof') left = function(scope, ev) { return prevLeft(scope, ev) instanceof right(scope, ev); };
+                else if (op === 'in') left = function(scope, ev) { return prevLeft(scope, ev) in right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseAdditive() {
+              let left = parseMultiplicative();
+              while (peek().value === '+' || peek().value === '-') {
+                let op = next().value;
+                let right = parseMultiplicative();
+                let prevLeft = left;
+                if (op === '+') left = function(scope, ev) { return prevLeft(scope, ev) + right(scope, ev); };
+                else left = function(scope, ev) { return prevLeft(scope, ev) - right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseMultiplicative() {
+              let left = parseUnary();
+              while (peek().value === '*' || peek().value === '/' || peek().value === '%') {
+                let op = next().value;
+                let right = parseUnary();
+                let prevLeft = left;
+                if (op === '*') left = function(scope, ev) { return prevLeft(scope, ev) * right(scope, ev); };
+                else if (op === '/') left = function(scope, ev) { return prevLeft(scope, ev) / right(scope, ev); };
+                else left = function(scope, ev) { return prevLeft(scope, ev) % right(scope, ev); };
+              }
+              return left;
+            }
+    
+            function parseUnary() {
+              let op = peek();
+              if (op.type === 'op' && (op.value === '!' || op.value === '+' || op.value === '-' || op.value === 'typeof' || op.value === '~' || op.value === '++' || op.value === '--')) {
+                next();
+                let sub = parseUnary();
+                if (op.value === '!') return function(scope, ev) { return !sub(scope, ev); };
+                if (op.value === '+') return function(scope, ev) { return +sub(scope, ev); };
+                if (op.value === '-') return function(scope, ev) { return -sub(scope, ev); };
+                if (op.value === 'typeof') return function(scope, ev) { return typeof sub(scope, ev); };
+                if (op.value === '~') return function(scope, ev) { return ~sub(scope, ev); };
+                if (op.value === '++' || op.value === '--') {
+                  if (sub && sub.isIdentifier) {
+                    let idName = sub.idName;
+                    return function(scope, ev) {
+                      let target = (scope && scope.FData) ? scope.FData : scope;
+                      return (op.value === '++') ? ++target[idName] : --target[idName];
+                    };
+                  }
+                }
+              }
+              return parsePostfix();
+            }
+    
+            function parsePostfix() {
+              let base = parsePrimary();
+              while (true) {
+                if (match('.')) {
+                  let propTok = next();
+                  let propName = (propTok && (propTok.type === 'id' || propTok.type === 'lit')) ? propTok.value : '';
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let obj = prevBase(scope, ev);
+                    return (obj != null) ? obj[propName] : undefined;
+                  };
+                  base.isMember = true;
+                  base.objFn = prevBase;
+                  base.propFn = function() { return propName; };
+                } else if (match('[')) {
+                  let indexExpr = parseAssignment();
+                  match(']');
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let obj = prevBase(scope, ev);
+                    let idx = indexExpr ? indexExpr(scope, ev) : undefined;
+                    return (obj != null) ? obj[idx] : undefined;
+                  };
+                  base.isMember = true;
+                  base.objFn = prevBase;
+                  base.propFn = indexExpr;
+                } else if (match('(')) {
+                  let args = [];
+                  if (peek().value !== ')') {
+                    while (true) {
+                      args.push(parseAssignment());
+                      if (!match(',')) break;
+                    }
+                  }
+                  match(')');
+                  let prevBase = base;
+                  base = function(scope, ev) {
+                    let fn = prevBase(scope, ev);
+                    let evaluatedArgs = args.map(function(a) { return a ? a(scope, ev) : undefined; });
+                    if (typeof fn === 'function') {
+                      let ctx = prevBase.isMember ? prevBase.objFn(scope, ev) : ((scope && scope.FData) ? scope.FData : scope);
+                      return fn.apply(ctx, evaluatedArgs);
+                    }
+                    return undefined;
+                  };
+                } else if (peek().value === '++' || peek().value === '--') {
+                  let op = next().value;
+                  let prevBase = base;
+                  if (prevBase && prevBase.isIdentifier) {
+                    let idName = prevBase.idName;
+                    base = function(scope, ev) {
+                      let target = (scope && scope.FData) ? scope.FData : scope;
+                      let oldVal = target[idName];
+                      if (op === '++') target[idName] = (oldVal || 0) + 1;
+                      else target[idName] = (oldVal || 0) - 1;
+                      return oldVal;
+                    };
+                  }
+                } else {
+                  break;
+                }
+              }
+              return base;
+            }
+    
+            function parsePrimary() {
+              let t = peek();
+              if (!t || t.type === 'eof') return function() { return undefined; };
+    
+              if (t.type === 'num' || t.type === 'str' || t.type === 'lit') {
+                next();
+                let val = t.value;
+                return function() { return val; };
+              }
+    
+              if (t.type === 'id') {
+                next();
+                let name = t.value;
+                let fn = function(scope, ev) {
+                  let d = (scope && scope.FData) ? scope.FData : scope;
+                  if (name === '$event') return ev;
+                  if (name === 'this') return d;
+                  if (d != null && (name in d)) return d[name];
+                  if (typeof window !== 'undefined' && (name in window)) return window[name];
+                  if (typeof globalThis !== 'undefined' && (name in globalThis)) return globalThis[name];
+                  return undefined;
+                };
+                fn.isIdentifier = true;
+                fn.idName = name;
+                return fn;
+              }
+    
+              if (match('(')) {
+                let inside = parseSequence();
+                match(')');
+                return inside;
+              }
+    
+              if (match('[')) {
+                let elements = [];
+                if (peek().value !== ']') {
+                  while (true) {
+                    elements.push(parseAssignment());
+                    if (!match(',')) break;
+                  }
+                }
+                match(']');
+                return function(scope, ev) {
+                  return elements.map(function(e) { return e ? e(scope, ev) : undefined; });
+                };
+              }
+    
+              if (match('{')) {
+                let props = [];
+                if (peek().value !== '}') {
+                  while (true) {
+                    let keyTok = next();
+                    let keyName = (keyTok && (keyTok.type === 'id' || keyTok.type === 'str')) ? keyTok.value : String(keyTok ? keyTok.value : '');
+                    let valFn;
+                    if (match(':')) {
+                      valFn = parseAssignment();
+                    } else {
+                      valFn = function(scope, ev) {
+                        let d = (scope && scope.FData) ? scope.FData : scope;
+                        return d ? d[keyName] : undefined;
+                      };
+                    }
+                    props.push({ key: keyName, fn: valFn });
+                    if (!match(',')) break;
+                  }
+                }
+                match('}');
+                return function(scope, ev) {
+                  let res = {};
+                  for (let i = 0; i < props.length; i++) {
+                    res[props[i].key] = props[i].fn ? props[i].fn(scope, ev) : undefined;
+                  }
+                  return res;
+                };
+              }
+    
+              next();
+              return function() { return undefined; };
+            }
+    
+            return parseSequence();
+          }
+    
+          bv.fastEval = function(scope, expr, ev) {
+            if (!expr || typeof expr !== 'string') return undefined;
+            let trimmed = expr.trim();
+            if (!trimmed) return undefined;
+    
+            let d = (scope && scope.FData) ? scope.FData : scope;
+    
+            // Immediate fast paths for primitive tokens
+            if (trimmed === '$event') return ev;
+            if (trimmed.indexOf('$event.') === 0) return bv.getDeepValue(ev, trimmed.slice(7));
+            if (trimmed === 'true') return true;
+            if (trimmed === 'false') return false;
+            if (trimmed === 'null') return null;
+            if (trimmed === 'undefined') return undefined;
+    
+            // Single root identifier: count, user, $t
+            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)) {
+              if (d != null && (trimmed in d)) return d[trimmed];
+              if (typeof window !== 'undefined' && (trimmed in window)) return window[trimmed];
+              if (typeof globalThis !== 'undefined' && (trimmed in globalThis)) return globalThis[trimmed];
+              return undefined;
+            }
+    
+            // Numeric constant
+            if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+              return parseFloat(trimmed);
+            }
+    
+            // Simple dot path: user.name, $theme.isDark
+            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)+$/.test(trimmed)) {
+              return bv.getDeepValue(d, trimmed);
+            }
+    
+            // Simple logical negation: !isActive, !user.admin
+            if (/^![a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(trimmed)) {
+              return !bv.getDeepValue(d, trimmed.slice(1));
+            }
+    
+            // Cached AST evaluator lookup
+            let fn = bv.evalCache[trimmed];
+            if (!fn) {
+              try {
+                let tokens = bvTokenize(trimmed);
+                fn = bvParseTokens(tokens);
+                bv.evalCache[trimmed] = fn;
+              } catch(err) {
+                return undefined;
+              }
+            }
+    
+            return fn(scope, ev);
+          };
+        }
+        
         
         // Application Entry Point: Mounts a template into the DOM
         bv.compile = function(Root, Data, Methods) {
@@ -2782,16 +3343,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
           if (Data && !Data.Evaluate) {
             Data.Evaluate = function(expr, ev) {
-              let d = (Data && Data.FData) ? Data.FData : Data;
-              try {
-                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                return f(d, ev);
-              } catch(e1) {
-                try {
-                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                  return f2(d, ev);
-                } catch(e2) { return undefined; }
-              }
+              return bv.fastEval(Data, expr, ev);
             };
           }
           if (Data && !Data.SetValue) {
@@ -2857,6 +3409,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            });
            
            setTimeout(function() {
+              if (typeof window === 'undefined' || !window.getComputedStyle) return;
               let s = window.getComputedStyle(el);
               let d = parseFloat(s.transitionDuration) || parseFloat(s.animationDuration);
               if (!d) onEnd();
@@ -3467,15 +4020,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                         let ld = {
                           FData: scp,
                           Evaluate: function(expr, ev) {
-                            try {
-                              let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                              return f(this.FData, ev);
-                            } catch(e1) {
-                              try {
-                                let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                                return f2(this.FData, ev);
-                              } catch(e2) { return undefined; }
-                            }
+                            return bv.fastEval(this.FData, expr, ev);
                           },
                           SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                         };
@@ -3493,6 +4038,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 let m = document.createElement('script'); m.type = 'text/if-marker'; m['bvManaged'] = true;
                 el.parentNode.insertBefore(m, el);
                 let active = true;
+                let firstRun = true;
                 let tName = el.getAttribute('bv-transition');
                 bv.effect(function() {
                   let res = !!Data.Evaluate(vif);
@@ -3503,10 +4049,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                      if (tName) bv.applyTransition(el, 'enter', tName);
                   }
                   else if (!res && active) { 
-                     if (tName) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
+                     if (tName && !firstRun) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
                      else bv.unmount(el); 
                      active = false; 
                   }
+                  firstRun = false;
                 });
                 if (!active) return;
               }
@@ -3586,6 +4133,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 }
     
                 let dRaw = opts.data ? opts.data.call(null) : {};
+                if (opts.defaultProps) {
+                   Object.keys(opts.defaultProps).forEach(function(k) {
+                      if (dRaw[k] === undefined) dRaw[k] = opts.defaultProps[k];
+                   });
+                }
                 let pRef = bv.defineReactive(dRaw);
                 
                 if (window.__BV_CORE__.router) {
@@ -3715,8 +4267,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                          if (an.startsWith(':') || an.startsWith('b-bind:')) {
                             let propKey = an.replace('b-bind:', '').replace(':', '');
                             try {
-                               let f = new Function('data', 'with(data) { try { return ' + attr.value + '; } catch(e) { return undefined; } }');
-                               slotProps[propKey] = f(pRef);
+                               slotProps[propKey] = bv.fastEval(pRef, attr.value);
                             } catch(ex) { slotProps[propKey] = undefined; }
                          } else {
                             slotProps[an] = attr.value;
@@ -3769,10 +4320,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       let scopedData = {
                          FData: scopedProxy,
                          Evaluate: function(expr, ev) {
-                            try {
-                               let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
-                               return f(this.FData, ev);
-                            } catch(ex) { return undefined; }
+                            return bv.fastEval(this.FData, expr, ev);
                          },
                          SetValue: function(k, val) {
                             if (scopeVarName && k === scopeVarName) Object.assign(slotProps, val);
@@ -3908,14 +4456,24 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       bv.effect(function() {
                          let val = pRef[wk];
                          if (firstRun) { firstRun = false; return; }
-                         opts.watch[wk].call(pRef, pRef, val);
+                         bv.nonReactive(function() {
+                            opts.watch[wk].call(pRef, pRef, val);
+                         });
                       });
                    });
                 }
                 
                 if (opts.created) opts.created.call(pRef, pRef);
                 
-                pRef['$emit'] = function(ev, arg) { 
+                pRef['$emit'] = function(ev, arg) {
+                   if (!pRef['__emitted__']) pRef['__emitted__'] = {};
+                   if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
+                   pRef['__emitted__'][ev].push(arg);
+                   if (rEl) {
+                      if (!rEl['__emitted__']) rEl['__emitted__'] = {};
+                      if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
+                      rEl['__emitted__'][ev].push(arg);
+                   }
                    if (ev === 'input' || ev === 'change') {
                       if (pRef['$onInput']) pRef['$onInput'](arg);
                    }
@@ -3947,15 +4505,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 let cD = {
                   FData: pRef,
                   Evaluate: function(expr, ev) { 
-                    try { 
-                      let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }'); 
-                      return f(this.FData, ev); 
-                    } catch(e1) {
-                      try {
-                        let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                        return f2(this.FData, ev);
-                      } catch(e2) { return undefined; }
-                    } 
+                    return bv.fastEval(this.FData, expr, ev);
                   },
                   SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
@@ -4302,15 +4852,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           let cD = {
             FData: pRef,
             Evaluate: function(expr, ev) {
-              try {
-                let f = new Function('data', '$event', 'with(data) { return (' + expr + '); }');
-                return f(pRef, ev);
-              } catch(e1) {
-                try {
-                  let f2 = new Function('data', '$event', 'with(data) { ' + expr + '; }');
-                  return f2(pRef, ev);
-                } catch(e2) { return undefined; }
-              }
+              return (window.__BV_CORE__ && window.__BV_CORE__.fastEval) ? window.__BV_CORE__.fastEval(pRef, expr, ev) : undefined;
             },
             SetValue: function(k, val) {
               if (window.__BV_CORE__ && window.__BV_CORE__.setDeepValue) {
@@ -5237,6 +5779,190 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
   var $impl = $mod.$impl;
   this.TDataSetState = {"0": "dsInactive", dsInactive: 0, "1": "dsBrowse", dsBrowse: 1, "2": "dsEdit", dsEdit: 2, "3": "dsInsert", dsInsert: 3};
   this.TFieldType = {"0": "ftUnknown", ftUnknown: 0, "1": "ftString", ftString: 1, "2": "ftInteger", ftInteger: 2, "3": "ftFloat", ftFloat: 3, "4": "ftBoolean", ftBoolean: 4, "5": "ftDate", ftDate: 5, "6": "ftDateTime", ftDateTime: 6};
+  this.TConflictResolution = {"0": "crServerWins", crServerWins: 0, "1": "crClientWins", crClientWins: 1, "2": "crCustom", crCustom: 2};
+  rtl.createClass(this,"TBVIndexedDBAdapter",pas.System.TObject,function () {
+    this.IsSupported = function () {
+      var Result = false;
+      Result = (typeof window !== 'undefined') && (Boolean(window.indexedDB) || Boolean(window.localStorage));
+      return Result;
+    };
+    this.Save = function (DBName, StoreKey, RecordsData, DeltaData, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+          var key = StoreKey || 'default';
+      
+          // Unproxy and sanitize data for IndexedDB structured cloning
+          var cleanRecords = [];
+          var cleanDelta = [];
+          try {
+            if (RecordsData) cleanRecords = JSON.parse(JSON.stringify(RecordsData));
+          } catch(eRec) {
+            cleanRecords = [];
+          }
+          try {
+            if (DeltaData) cleanDelta = JSON.parse(JSON.stringify(DeltaData));
+          } catch(eDel) {
+            cleanDelta = [];
+          }
+      
+          var payload = {
+            key: key,
+            records: cleanRecords,
+            delta: cleanDelta,
+            updatedAt: Date.now()
+          };
+      
+          if (typeof window !== 'undefined' && window.indexedDB) {
+            try {
+              var req = window.indexedDB.open(dbName, 1);
+              req.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('datasets')) {
+                  db.createObjectStore('datasets', { keyPath: 'key' });
+                }
+              };
+              req.onsuccess = function(e) {
+                try {
+                  var db = e.target.result;
+                  var tx = db.transaction(['datasets'], 'readwrite');
+                  var store = tx.objectStore('datasets');
+                  var putReq = store.put(payload);
+                  putReq.onsuccess = function() {
+                    if (typeof OnSuccess === 'function') OnSuccess(payload);
+                  };
+                  putReq.onerror = function(err) {
+                    if (typeof OnError === 'function') OnError(err);
+                  };
+                } catch(putEx) {
+                  try {
+                    if (window.localStorage) {
+                      window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+                    }
+                    if (typeof OnSuccess === 'function') OnSuccess(payload);
+                  } catch(eLoc) {
+                    if (typeof OnError === 'function') OnError(eLoc);
+                  }
+                }
+              };
+              req.onerror = function(err) {
+                try {
+                  window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+                  if (typeof OnSuccess === 'function') OnSuccess(payload);
+                } catch(eLoc) {
+                  if (typeof OnError === 'function') OnError(eLoc);
+                }
+              };
+              return;
+            } catch(ex) {
+              // Fallback to localStorage below
+            }
+          }
+      
+          try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              window.localStorage.setItem('bv_idb_' + dbName + '_' + key, JSON.stringify(payload));
+            }
+            if (typeof OnSuccess === 'function') OnSuccess(payload);
+          } catch(errLS) {
+            if (typeof OnError === 'function') OnError(errLS);
+          };
+    };
+    this.Load = function (DBName, StoreKey, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+          var key = StoreKey || 'default';
+      
+          function tryFallbackLS() {
+            try {
+              if (typeof window !== 'undefined' && window.localStorage) {
+                var str = window.localStorage.getItem('bv_idb_' + dbName + '_' + key);
+                if (str) {
+                  var p = JSON.parse(str);
+                  if (typeof OnSuccess === 'function') OnSuccess(p);
+                  return;
+                }
+              }
+              if (typeof OnSuccess === 'function') OnSuccess(null);
+            } catch(e) {
+              if (typeof OnError === 'function') OnError(e);
+            }
+          }
+      
+          if (typeof window !== 'undefined' && window.indexedDB) {
+            try {
+              var req = window.indexedDB.open(dbName, 1);
+              req.onupgradeneeded = function(e) {
+                var db = e.target.result;
+                if (!db.objectStoreNames.contains('datasets')) {
+                  db.createObjectStore('datasets', { keyPath: 'key' });
+                }
+              };
+              req.onsuccess = function(e) {
+                var db = e.target.result;
+                var tx = db.transaction(['datasets'], 'readonly');
+                var store = tx.objectStore('datasets');
+                var getReq = store.get(key);
+                getReq.onsuccess = function(ev) {
+                  var data = ev.target.result;
+                  if (data) {
+                    if (typeof OnSuccess === 'function') OnSuccess(data);
+                  } else {
+                    tryFallbackLS();
+                  }
+                };
+                getReq.onerror = function() {
+                  tryFallbackLS();
+                };
+              };
+              req.onerror = function() {
+                tryFallbackLS();
+              };
+              return;
+            } catch(ex) {
+              // Fallback
+            }
+          }
+      
+          tryFallbackLS();
+    };
+    this.Remove = function (DBName, StoreKey, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+      var key = StoreKey || 'default';
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { window.localStorage.removeItem('bv_idb_' + dbName + '_' + key); } catch(e) {}
+      }
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        try {
+          var req = window.indexedDB.open(dbName, 1);
+          req.onsuccess = function(e) {
+            var db = e.target.result;
+            var tx = db.transaction(['datasets'], 'readwrite');
+            tx.objectStore('datasets').delete(key);
+            if (typeof OnSuccess === 'function') OnSuccess(true);
+          };
+          req.onerror = function(err) {
+            if (typeof OnError === 'function') OnError(err);
+          };
+          return;
+        } catch(e) {}
+      }
+      if (typeof OnSuccess === 'function') OnSuccess(true);
+    };
+    this.ClearAll = function (DBName, OnSuccess, OnError) {
+      var dbName = DBName || 'bv_offline_db';
+      if (typeof window !== 'undefined' && window.indexedDB) {
+        try {
+          var req = window.indexedDB.deleteDatabase(dbName);
+          req.onsuccess = function() {
+            if (typeof OnSuccess === 'function') OnSuccess(true);
+          };
+          req.onerror = function(err) {
+            if (typeof OnError === 'function') OnError(err);
+          };
+          return;
+        } catch(e) {}
+      }
+      if (typeof OnSuccess === 'function') OnSuccess(true);
+    };
+  });
   rtl.createClass(this,"TBVField",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
@@ -5447,11 +6173,20 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FSortAscending = false;
       this.FReactiveState = undefined;
       this.FModified = false;
+      this.FTableName = "";
+      this.FAutoPersist = false;
+      this.FPersistStoreKey = "";
+      this.FAutoSyncOnReconnect = false;
+      this.FAutoSyncEndpoint = "";
+      this.FConflictResolution = 0;
+      this.FSyncing = false;
+      this.FNetworkListenerRegistered = false;
       this.FAfterScroll = null;
       this.FBeforePost = null;
       this.FAfterPost = null;
       this.FBeforeDelete = null;
       this.FAfterDelete = null;
+      this.FAfterApplyUpdates = null;
     };
     this.$final = function () {
       this.FFields = undefined;
@@ -5465,7 +6200,13 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FAfterPost = undefined;
       this.FBeforeDelete = undefined;
       this.FAfterDelete = undefined;
+      this.FAfterApplyUpdates = undefined;
       pas.System.TObject.$final.call(this);
+    };
+    this.AutoPersistIfEnabled = function () {
+      if (this.FAutoPersist && (this.FPersistStoreKey !== "")) {
+        this.SaveToIndexedDB(this.FPersistStoreKey,null,null);
+      };
     };
     this.SyncReactiveState = function () {
       var rs = null;
@@ -5480,6 +6221,9 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       rs["isEmpty"] = this.GetIsEmpty();
       rs["changeCount"] = this.FDelta.length;
       rs["data"] = this.FActiveRecords;
+      rs["hasPendingChanges"] = this.GetHasPendingChanges();
+      rs["isSyncing"] = this.FSyncing;
+      rs["tableName"] = this.FTableName;
       if ((this.FState in rtl.createSet($mod.TDataSetState.dsEdit,$mod.TDataSetState.dsInsert)) && (this.FEditBuffer != null)) {
         rs["current"] = this.FEditBuffer}
        else {
@@ -5562,6 +6306,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FSortField = "";
       this.FSortAscending = true;
       this.FModified = false;
+      this.FTableName = "default";
+      this.FAutoPersist = false;
+      this.FPersistStoreKey = "";
+      this.FAutoSyncOnReconnect = false;
+      this.FAutoSyncEndpoint = "";
+      this.FConflictResolution = $mod.TConflictResolution.crServerWins;
+      this.FSyncing = false;
+      this.FNetworkListenerRegistered = false;
       this.FReactiveState = pas.BVReactivity.DefineReactive(new Object());
       this.SyncReactiveState();
       var self = this;
@@ -5616,6 +6368,23 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
           if (self.FReactiveState && self.FReactiveState.changeCount !== undefined) return self.FReactiveState.changeCount;
           return self.GetChangeCount();
         }
+      });
+      Object.defineProperty(self, 'HasPendingChanges', {
+        get: function() { return self.GetHasPendingChanges(); }
+      });
+      Object.defineProperty(self, 'TableName', {
+        get: function() { return self.FTableName; },
+        set: function(v) { self.FTableName = v; }
+      });
+      Object.defineProperty(self, 'AutoPersist', {
+        get: function() { return self.FAutoPersist; },
+        set: function(v) { self.FAutoPersist = v; }
+      });
+      Object.defineProperty(self, 'Delta', {
+        get: function() { return self.FDelta; }
+      });
+      Object.defineProperty(self, 'Syncing', {
+        get: function() { return self.FSyncing; }
       });
       return this;
     };
@@ -5776,6 +6545,9 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       if (this.FBeforePost != null) this.FBeforePost(this);
       deltaItem = new Object();
       if (this.FState === $mod.TDataSetState.dsInsert) {
+        if (!this.FEditBuffer._clientId) {
+          this.FEditBuffer._clientId = 'cli_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        }
         if (!this.FEditBuffer.id) {
           var maxId = 0;
           for (var i = 0; i < this.FRecords.length; i++) {
@@ -5785,8 +6557,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
           this.FEditBuffer.id = maxId + 1;
         };
         this.FRecords.push(this.FEditBuffer);
+        deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
         deltaItem["action"] = "insert";
+        deltaItem["tableName"] = this.FTableName;
+        deltaItem["id"] = this.FEditBuffer["id"];
+        deltaItem["clientId"] = this.FEditBuffer["_clientId"];
         deltaItem["record"] = this.FEditBuffer;
+        deltaItem["timestamp"] = Date.now();
+        deltaItem["status"] = "pending";
         this.FDelta.push(deltaItem);
         this.RebuildActiveRecords();
         this.FRecNo = this.FActiveRecords.length;
@@ -5794,9 +6572,14 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
         curRec = this.GetActiveRecord(this.FRecNo - 1);
         targetIdx = this.FRecords.indexOf(curRec);
         if (targetIdx !== -1) this.FRecords[targetIdx] = this.FEditBuffer;
+        deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
         deltaItem["action"] = "update";
+        deltaItem["tableName"] = this.FTableName;
+        deltaItem["id"] = this.FEditBuffer["id"];
         deltaItem["oldRecord"] = this.FOriginalBuffer;
         deltaItem["record"] = this.FEditBuffer;
+        deltaItem["timestamp"] = Date.now();
+        deltaItem["status"] = "pending";
         this.FDelta.push(deltaItem);
         this.RebuildActiveRecords();
       };
@@ -5805,6 +6588,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       this.FState = $mod.TDataSetState.dsBrowse;
       this.FModified = false;
       this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
       if (this.FAfterPost != null) this.FAfterPost(this);
     };
     this.Cancel = function () {
@@ -5826,14 +6610,20 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       targetIdx = this.FRecords.indexOf(curRec);
       if (targetIdx !== -1) this.FRecords.splice(targetIdx,1);
       deltaItem = new Object();
+      deltaItem["deltaId"] = "d_" + pas.SysUtils.IntToStr(Date.now()) + "_" + pas.SysUtils.IntToStr(pas.System.Random(10000));
       deltaItem["action"] = "delete";
+      deltaItem["tableName"] = this.FTableName;
+      deltaItem["id"] = curRec["id"];
       deltaItem["record"] = curRec;
+      deltaItem["timestamp"] = Date.now();
+      deltaItem["status"] = "pending";
       this.FDelta.push(deltaItem);
       this.RebuildActiveRecords();
       if (this.FRecNo > this.FActiveRecords.length) this.FRecNo = this.FActiveRecords.length;
       if ((this.FRecNo === 0) && (this.FActiveRecords.length > 0)) this.FRecNo = 1;
       this.FState = $mod.TDataSetState.dsBrowse;
       this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
       if (this.FAfterDelete != null) this.FAfterDelete(this);
     };
     this.SetFilter = function (AQuery) {
@@ -5918,9 +6708,62 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       Result = JSON.stringify(this.FDelta || []);
       return Result;
     };
-    this.ApplyUpdates = function () {
-      this.FDelta.length = 0;
-      this.SyncReactiveState();
+    this.ApplyUpdates = function (AEndpointOrService, AOnSuccess, AOnError) {
+      var ep = AEndpointOrService || this.FAutoSyncEndpoint;
+          var self = this;
+      
+          // If no endpoint is configured, standard local delta commit
+          if (!ep) {
+            this.FDelta.length = 0;
+            this.FModified = false;
+            this.SyncReactiveState();
+            this.AutoPersistIfEnabled();
+            if (typeof self.FAfterApplyUpdates === 'function') self.FAfterApplyUpdates(self);
+            if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', local: true });
+            return;
+          }
+      
+          if (this.FDelta.length === 0) {
+            if (typeof AOnSuccess === 'function') AOnSuccess({ status: 'ok', syncedCount: 0 });
+            return;
+          }
+      
+          this.FSyncing = true;
+          var payload = {
+            table: this.FTableName || 'default',
+            delta: this.FDelta,
+            clientTime: Date.now()
+          };
+      
+          var isService = ep.indexOf('/') === -1;
+          var api = (window.__BV_CORE__ && window.__BV_CORE__.api) ? window.__BV_CORE__.api : null;
+          var rpc = (window.__BV_CORE__ && window.__BV_CORE__.rpc) ? window.__BV_CORE__.rpc : null;
+      
+          function handleSuccess(resp) {
+            self.FSyncing = false;
+            self.ReconcileDelta(resp);
+            if (typeof AOnSuccess === 'function') AOnSuccess(resp);
+          }
+      
+          function handleError(err) {
+            self.FSyncing = false;
+            console.warn('[BVDataSet] ApplyUpdates failed:', err);
+            if (typeof AOnError === 'function') AOnError(err);
+          }
+      
+          if (isService && rpc && typeof rpc.invoke === 'function') {
+            rpc.invoke(ep, 'ApplyUpdates', [payload], handleSuccess, handleError);
+          } else if (api && typeof api.post === 'function') {
+            api.post(ep, payload).then(handleSuccess).catch(handleError);
+          } else if (typeof fetch === 'function') {
+            fetch(ep, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            }).then(function(r) { return r.json(); }).then(handleSuccess).catch(handleError);
+          } else {
+            handleSuccess({ status: 'ok', local: true, syncedCount: self.FDelta.length });
+          };
     };
     this.SaveToStorage = function (AStorageKey) {
       var json = "";
@@ -5958,6 +6801,130 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
       } else Result = false;
       return Result;
     };
+    this.SetAutoPersist = function (AEnabled, AStoreKey) {
+      this.FAutoPersist = AEnabled;
+      if (AStoreKey !== "") {
+        this.FPersistStoreKey = AStoreKey}
+       else if (this.FPersistStoreKey === "") this.FPersistStoreKey = this.FTableName;
+      this.AutoPersistIfEnabled();
+    };
+    this.SetAutoSyncOnReconnect = function (AEnabled, AEndpointOrService) {
+      this.FAutoSyncOnReconnect = AEnabled;
+      if (AEndpointOrService !== "") this.FAutoSyncEndpoint = AEndpointOrService;
+      if (AEnabled && !this.FNetworkListenerRegistered) {
+        this.FNetworkListenerRegistered = true;
+        var self = this;
+        if (typeof window !== 'undefined') {
+          window.addEventListener('online', function() {
+            if (self.GetChangeCount() > 0 && !self.FSyncing) {
+              self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+            }
+          });
+        }
+        if (window.__BV_CORE__ && window.__BV_CORE__.ws) {
+          window.__BV_CORE__.ws.on('open', function() {
+            if (self.GetChangeCount() > 0 && !self.FSyncing) {
+              self.ApplyUpdates(self.FAutoSyncEndpoint, null, null);
+            }
+          });
+        }
+      };
+    };
+    this.SaveToIndexedDB = function (AStoreKey, AOnSuccess, AOnError) {
+      var k = "";
+      k = AStoreKey;
+      if (k === "") k = this.FPersistStoreKey;
+      if (k === "") k = this.FTableName;
+      if (k === "") k = "default";
+      this.FPersistStoreKey = k;
+      $mod.TBVIndexedDBAdapter.Save("bv_offline_db",k,this.FRecords,this.FDelta,AOnSuccess,AOnError);
+    };
+    this.LoadFromIndexedDB = function (AStoreKey, AOnComplete) {
+      var $Self = this;
+      var k = "";
+      k = AStoreKey;
+      if (k === "") k = this.FPersistStoreKey;
+      if (k === "") k = this.FTableName;
+      if (k === "") k = "default";
+      this.FPersistStoreKey = k;
+      $mod.TBVIndexedDBAdapter.Load("bv_offline_db",k,function (data) {
+        if (data != null) {
+          if (data.records) $Self.LoadFromData(data.records);
+          if (data.delta && Array.isArray(data.delta)) {
+            $Self.FDelta = data.delta;
+            $Self.SyncReactiveState();
+          };
+        };
+        if (typeof AOnComplete === 'function') AOnComplete($Self, data);
+      },function (err) {
+        if (typeof AOnComplete === 'function') AOnComplete($Self, null);
+      });
+    };
+    this.ReconcileDelta = function (ServerResponse) {
+      if (!pas.System.Assigned(ServerResponse)) return;
+      var resp = ServerResponse;
+          var insertedIds = resp.insertedIds || {};
+          var conflicts = resp.conflicts || [];
+      
+          // 1. Remap temporary client IDs
+          if (insertedIds && typeof insertedIds === 'object') {
+            var keys = Object.keys(insertedIds);
+            for (var k = 0; k < keys.length; k++) {
+              var oldId = keys[k];
+              var newId = insertedIds[oldId];
+              for (var r = 0; r < this.FRecords.length; r++) {
+                var rec = this.FRecords[r];
+                if (!rec) continue;
+                if (String(rec.id) === String(oldId) || (rec._clientId && String(rec._clientId) === String(oldId))) {
+                  rec.id = newId;
+                  delete rec._clientId;
+                }
+              }
+            }
+          }
+      
+          // 2. Resolve Conflicts
+          if (Array.isArray(conflicts) && conflicts.length > 0) {
+            for (var c = 0; c < conflicts.length; c++) {
+              var conf = conflicts[c];
+              var cid = conf.id;
+              var sRec = conf.serverRecord;
+      
+              if (this.FConflictResolution === 0) { // crServerWins
+                for (var r = 0; r < this.FRecords.length; r++) {
+                  if (this.FRecords[r] && String(this.FRecords[r].id) === String(cid)) {
+                    if (sRec) {
+                      Object.assign(this.FRecords[r], sRec);
+                    } else {
+                      this.FRecords.splice(r, 1);
+                    }
+                    break;
+                  }
+                }
+              } else if (this.FConflictResolution === 1) { // crClientWins
+                // Client state remains in FRecords
+              }
+            }
+          }
+      
+          // 3. Clear delta and sync
+          this.FDelta.length = 0;
+      this.FModified = false;
+      this.RebuildActiveRecords();
+      this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
+      if (this.FAfterApplyUpdates != null) this.FAfterApplyUpdates(this);
+    };
+    this.GetHasPendingChanges = function () {
+      var Result = false;
+      Result = (this.FDelta.length > 0) || this.FModified;
+      return Result;
+    };
+    this.ClearDelta = function () {
+      this.FDelta.length = 0;
+      this.SyncReactiveState();
+      this.AutoPersistIfEnabled();
+    };
   });
   $mod.$implcode = function () {
     $impl.RetainDataSetSymbols = function () {
@@ -5988,8 +6955,25 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
         dummyDS.LoadFromStorage("");
         dummyDS.ToJSON();
         dummyDS.GetDeltaJSON();
-        dummyDS.ApplyUpdates();
+        dummyDS.ApplyUpdates("",null,null);
         dummyDS.LoadFromJSON("");
+        dummyDS.FTableName = "";
+        dummyDS.FAutoPersist = false;
+        dummyDS.FPersistStoreKey = "";
+        dummyDS.FAutoSyncOnReconnect = false;
+        dummyDS.GetHasPendingChanges();
+        dummyDS.ClearDelta();
+        dummyDS.SetAutoPersist(false,"");
+        dummyDS.SetAutoSyncOnReconnect(false,"");
+        dummyDS.SaveToIndexedDB("",null,null);
+        dummyDS.LoadFromIndexedDB("",null);
+        dummyDS.ReconcileDelta(null);
+        dummyDS.AutoPersistIfEnabled();
+        $mod.TBVIndexedDBAdapter.IsSupported();
+        $mod.TBVIndexedDBAdapter.Save("","",null,null,null,null);
+        $mod.TBVIndexedDBAdapter.Load("","",null,null);
+        $mod.TBVIndexedDBAdapter.Remove("","",null,null);
+        $mod.TBVIndexedDBAdapter.ClearAll("",null,null);
         dummyDS.GetBof();
         dummyDS.GetEof();
         dummyDS.GetRecordCount();
@@ -6024,6 +7008,7 @@ rtl.module("BVDataSet",["System","JS","Web","SysUtils","Classes","BVReactivity"]
     window.__BV_CORE__.dataset = {
       TBVDataSet: pas.BVDataSet ? pas.BVDataSet.TBVDataSet : null,
       TBVField: pas.BVDataSet ? pas.BVDataSet.TBVField : null,
+      TBVIndexedDBAdapter: pas.BVDataSet ? pas.BVDataSet.TBVIndexedDBAdapter : null,
       CreateDataSet: pas.BVDataSet ? pas.BVDataSet.CreateDataSet : null
     };
   };
@@ -6663,16 +7648,28 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
   };
   this.UpdateChartDarkMode = function (OptionsObj, Dark) {
     if (OptionsObj) {
-      if (!OptionsObj.scales) OptionsObj.scales = {};
-      if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
-      if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
-      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-      const textColor = Dark ? '#94a3b8' : '#64748b';
-      OptionsObj.scales.x.grid = { color: gridColor };
-      OptionsObj.scales.y.grid = { color: gridColor };
-      OptionsObj.scales.x.ticks = { color: textColor };
-      OptionsObj.scales.y.ticks = { color: textColor };
-    };
+          const gridColor = Dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+          const textColor = Dark ? '#e2e8f0' : '#475569';
+    
+          if (!OptionsObj.scales) OptionsObj.scales = {};
+          if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
+          if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
+          OptionsObj.scales.x.grid = { color: gridColor };
+          OptionsObj.scales.y.grid = { color: gridColor };
+          OptionsObj.scales.x.ticks = { color: textColor };
+          OptionsObj.scales.y.ticks = { color: textColor };
+    
+          if (!OptionsObj.scales.r) OptionsObj.scales.r = {};
+          OptionsObj.scales.r.grid = { color: gridColor };
+          OptionsObj.scales.r.angleLines = { color: gridColor };
+          OptionsObj.scales.r.pointLabels = { color: textColor };
+          OptionsObj.scales.r.ticks = { color: textColor, backdropColor: 'transparent' };
+    
+          if (!OptionsObj.plugins) OptionsObj.plugins = {};
+          if (!OptionsObj.plugins.legend) OptionsObj.plugins.legend = {};
+          if (!OptionsObj.plugins.legend.labels) OptionsObj.plugins.legend.labels = {};
+          OptionsObj.plugins.legend.labels.color = textColor;
+        };
   };
   this.ThemeSet = function (ThemeName) {
     if (window.$theme && typeof window.$theme.setTheme === 'function') {
@@ -6870,9 +7867,82 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
   };
   this.DataSetApplyUpdates = function (DS) {
     if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
-      rtl.getObject(DS).ApplyUpdates()}
+      rtl.getObject(DS).ApplyUpdates("",null,null)}
      else {
       if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+    };
+  };
+  this.DataSetSaveIndexedDB = function (DS, StoreKey, OnSuccess, OnError) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SaveToIndexedDB(StoreKey,OnSuccess,OnError)}
+     else {
+      if (DS && typeof DS.SaveToIndexedDB === 'function') DS.SaveToIndexedDB(StoreKey, OnSuccess, OnError);
+    };
+  };
+  this.DataSetLoadIndexedDB = function (DS, StoreKey, OnComplete) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).LoadFromIndexedDB(StoreKey,OnComplete)}
+     else {
+      if (DS && typeof DS.LoadFromIndexedDB === 'function') DS.LoadFromIndexedDB(StoreKey, OnComplete);
+    };
+  };
+  this.DataSetSetAutoPersist = function (DS, Enable, StoreKey) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetAutoPersist(Enable,StoreKey)}
+     else {
+      if (DS && typeof DS.SetAutoPersist === 'function') DS.SetAutoPersist(Enable, StoreKey);
+    };
+  };
+  this.DataSetSetAutoSync = function (DS, Enable, EndpointOrService) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).SetAutoSyncOnReconnect(Enable,EndpointOrService)}
+     else {
+      if (DS && typeof DS.SetAutoSyncOnReconnect === 'function') DS.SetAutoSyncOnReconnect(Enable, EndpointOrService);
+    };
+  };
+  this.DataSetApplyUpdatesAsync = function (DS, EndpointOrService, OnSuccess, OnError) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ApplyUpdates(EndpointOrService,OnSuccess,OnError)}
+     else {
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates(EndpointOrService, OnSuccess, OnError);
+    };
+  };
+  this.DataSetHasPending = function (DS) {
+    var Result = false;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetHasPendingChanges()}
+     else {
+      if (DS && typeof DS.GetHasPendingChanges === 'function') Result = DS.GetHasPendingChanges();
+      else if (DS && DS.HasPendingChanges !== undefined) Result = Boolean(DS.HasPendingChanges);
+      else Result = false;
+    };
+    return Result;
+  };
+  this.DataSetChangeCount = function (DS) {
+    var Result = 0;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetChangeCount()}
+     else {
+      if (DS && typeof DS.GetChangeCount === 'function') Result = DS.GetChangeCount();
+      else Result = 0;
+    };
+    return Result;
+  };
+  this.DataSetDeltaList = function (DS) {
+    var Result = undefined;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).FDelta}
+     else {
+      if (DS && DS.FDelta) Result = DS.FDelta;
+      else Result = [];
+    };
+    return Result;
+  };
+  this.DataSetClearDelta = function (DS) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).ClearDelta()}
+     else {
+      if (DS && typeof DS.ClearDelta === 'function') DS.ClearDelta();
     };
   };
   this.RpcSetBaseUrl = function (Url) {
@@ -6925,6 +7995,15 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
         $mod.DataSetSetFieldVal(dummy,"",null);
         $mod.DataSetDeltaJSON(dummy);
         $mod.DataSetApplyUpdates(dummy);
+        $mod.DataSetSaveIndexedDB(dummy,"",null,null);
+        $mod.DataSetLoadIndexedDB(dummy,"",null);
+        $mod.DataSetSetAutoPersist(dummy,false,"");
+        $mod.DataSetSetAutoSync(dummy,false,"");
+        $mod.DataSetApplyUpdatesAsync(dummy,"",null,null);
+        $mod.DataSetHasPending(dummy);
+        $mod.DataSetChangeCount(dummy);
+        $mod.DataSetDeltaList(dummy);
+        $mod.DataSetClearDelta(dummy);
         $mod.RpcSetBaseUrl("");
         $mod.RpcSetToken("");
         $mod.RpcClearToken();
@@ -7390,8 +8469,11 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Formulário do Sistema";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
     m = new Object();
     m["headerClick"] = function (_this) {
       _this["$emit"].call(_this,"header-clicked","Ola do Header!");
@@ -7685,6 +8767,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
       this.FJS = new Object();
       this.FJS["responsive"] = true;
       this.FJS["maintainAspectRatio"] = false;
+      this.FJS["resizeDelay"] = 50;
       return this;
     };
     this.Responsive = function (AVal) {
@@ -7781,6 +8864,35 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
       } else Result = AHex;
       return Result;
     };
+    this.GetPalette = function (AName, Alpha) {
+      var Result = null;
+      var N = "";
+      N = pas.SysUtils.LowerCase(AName);
+      if (N === "emerald") {
+        Result = this.Emerald(6,Alpha)}
+       else if (N === "sunset") {
+        Result = this.Sunset(6,Alpha)}
+       else if (N === "neon") {
+        Result = this.Neon(6,Alpha)}
+       else if (N === "pastel") {
+        Result = this.Pastel(6,Alpha)}
+       else if (N === "cyberpunk") {
+        Result = this.Cyberpunk(6,Alpha)}
+       else Result = this.DefaultColors(8,Alpha);
+      return Result;
+    };
+    this.DefaultColors = function (Count, Alpha) {
+      var Result = null;
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.Color(i,Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
     this.Emerald = function (Count, Alpha) {
       var Result = null;
       var Colors = ["#059669","#10b981","#34d399","#6ee7b7","#a7f3d0","#047857"];
@@ -7820,6 +8932,19 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
       Result = Arr;
       return Result;
     };
+    this.Pastel = function (Count, Alpha) {
+      var Result = null;
+      var Colors = ["#a5b4fc","#fbcfe8","#fed7aa","#bbf7d0","#bae6fd","#ddd6fe"];
+      var Arr = null;
+      var i = 0;
+      Arr = new Array();
+      for (var $l = 0, $end = Count - 1; $l <= $end; $l++) {
+        i = $l;
+        Arr.push(this.HexToRgba(Colors[i % 6],Alpha));
+      };
+      Result = Arr;
+      return Result;
+    };
     this.Cyberpunk = function (Count, Alpha) {
       var Result = null;
       var Colors = ["#fcee0a","#00f0ff","#ff003c","#711c91","#133e7c","#0abdc6"];
@@ -7836,22 +8961,64 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
   });
   $mod.$init = function () {
     // Expose BlaiseCharts globally for window.$charts / __BV_CORE__.charts
-    if (typeof window !== 'undefined') {
-      if (!window.__BV_CORE__) window.__BV_CORE__ = {};
-      window.__BV_CORE__.charts = {
-        types: {
-          bar: 'bar',
-          line: 'line',
-          pie: 'pie',
-          doughnut: 'doughnut',
-          radar: 'radar',
-          polarArea: 'polarArea',
-          scatter: 'scatter',
-          bubble: 'bubble'
-        }
-      };
-      window.$charts = window.__BV_CORE__.charts;
-    };
+        if (typeof window !== 'undefined') {
+          if (!window.__BV_CORE__) window.__BV_CORE__ = {};
+          window.__BV_CORE__.charts = {
+            types: {
+              bar: 'bar',
+              line: 'line',
+              pie: 'pie',
+              doughnut: 'doughnut',
+              radar: 'radar',
+              polarArea: 'polarArea',
+              scatter: 'scatter',
+              bubble: 'bubble'
+            }
+          };
+          window.$charts = window.__BV_CORE__.charts;
+    
+          // Universal Chart.js Safety Guard (neutralizes resize/update timers on destroyed charts)
+          function __bv_install_chart_guard() {
+            var C = (typeof window.Chart !== "undefined") ? window.Chart : ((typeof Chart !== "undefined") ? Chart : null);
+            if (!C || !C.prototype || C.prototype.__bv_safe_guard) return;
+            C.prototype.__bv_safe_guard = true;
+    
+            var origDestroy = C.prototype.destroy;
+            C.prototype.destroy = function() {
+              this._doResize = function() { return 0; };
+              this.update = function() {};
+              this.render = function() {};
+              this.draw = function() {};
+              return origDestroy.apply(this, arguments);
+            };
+    
+            var origUpdate = C.prototype.update;
+            C.prototype.update = function() {
+              if (!this.canvas || !this.ctx) return;
+              return origUpdate.apply(this, arguments);
+            };
+    
+            var origRender = C.prototype.render;
+            C.prototype.render = function() {
+              if (!this.canvas || !this.ctx) return;
+              return origRender.apply(this, arguments);
+            };
+    
+            var origResize = C.prototype._resize;
+            if (origResize) {
+              C.prototype._resize = function() {
+                if (!this.canvas || !this.ctx) return;
+                return origResize.apply(this, arguments);
+              };
+            }
+          }
+    
+          __bv_install_chart_guard();
+          if (typeof window.addEventListener === "function") {
+            window.addEventListener("DOMContentLoaded", __bv_install_chart_guard);
+            window.addEventListener("load", __bv_install_chart_guard);
+          }
+        };
   };
 });
 rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
@@ -7862,10 +9029,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));     gap: 24px;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     align-items: center;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
+    _styleEl.textContent = ".chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;     overflow-y: scroll;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Modo Claro\' : \'Modo Escuro\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Barras</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Linha</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pizza</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Rosca</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Barras (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard" :class="{ \'charts-dark\': isDarkMode }">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts 4.0 - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Modo Claro\' : \'Modo Escuro\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Barras</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Linha</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pizza</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Rosca</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Barras (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Área Polar (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar / Competências (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -7930,10 +9097,12 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       NewDark = !!(_this["isDarkMode"] == false);
       _this["isDarkMode"] = NewDark;
       pas.BVPascalDX.UpdateChartDarkMode(_this["chartOptions"],NewDark);
+      pas.BVPascalDX.UpdateChartDarkMode(_this["pieOptions"],NewDark);
       _this["chartOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["chartOptions"]);
+      _this["pieOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieOptions"]);
       if (NewDark) {
-        _this["clickedPointInfo"] = "Modo escuro ativado para escalas dos gráficos!"}
-       else _this["clickedPointInfo"] = "Modo claro ativado para escalas dos gráficos!";
+        _this["clickedPointInfo"] = "Modo escuro ativado com sucesso!"}
+       else _this["clickedPointInfo"] = "Modo claro ativado com sucesso!";
     };
     m["randomizeData"] = function (_this) {
       var NewData = null;
@@ -7958,27 +9127,44 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     };
     m["togglePalette"] = function (_this) {
       var Pal = null;
+      var PalBorder = null;
       var Cur = "";
       var Datasets = null;
       Cur = "" + _this["currentPalette"];
       if (Cur === "Emerald") {
-        _this["currentPalette"] = "Sunset";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Sunset(4,0.7);
-      } else if (Cur === "Sunset") {
-        _this["currentPalette"] = "Cyberpunk";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Cyberpunk(4,0.7);
-      } else if (Cur === "Cyberpunk") {
-        _this["currentPalette"] = "Neon";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Neon(4,0.7);
-      } else {
-        _this["currentPalette"] = "Emerald";
-        Pal = pas.BlaiseCharts.TBVChartPalette.Emerald(4,0.7);
+        _this["currentPalette"] = "Sunset"}
+       else if (Cur === "Sunset") {
+        _this["currentPalette"] = "Cyberpunk"}
+       else if (Cur === "Cyberpunk") {
+        _this["currentPalette"] = "Neon"}
+       else _this["currentPalette"] = "Emerald";
+      Pal = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],0.65);
+      PalBorder = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],1.0);
+      if (_this["barData"] != null) {
+        Datasets = _this["barData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[0];
+          Datasets[0]["borderColor"] = PalBorder[0];
+          if (Datasets.length > 1) {
+            Datasets[1]["backgroundColor"] = Pal[1];
+            Datasets[1]["borderColor"] = PalBorder[1];
+          };
+          _this["barData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["barData"]);
+        };
+      };
+      if (_this["lineData"] != null) {
+        Datasets = _this["lineData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[2];
+          Datasets[0]["borderColor"] = PalBorder[2];
+          _this["lineData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["lineData"]);
+        };
       };
       if (_this["pieData"] != null) {
         Datasets = _this["pieData"]["datasets"];
         if ((Datasets !== null) && (Datasets.length > 0)) {
           Datasets[0]["backgroundColor"] = Pal;
-          Datasets[0]["borderColor"] = Pal;
+          Datasets[0]["borderColor"] = PalBorder;
           _this["pieData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieData"]);
         };
       };
@@ -7986,8 +9172,16 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
         Datasets = _this["doughnutData"]["datasets"];
         if ((Datasets !== null) && (Datasets.length > 0)) {
           Datasets[0]["backgroundColor"] = Pal;
-          Datasets[0]["borderColor"] = Pal;
+          Datasets[0]["borderColor"] = PalBorder;
           _this["doughnutData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["doughnutData"]);
+        };
+      };
+      if (_this["radarData"] != null) {
+        Datasets = _this["radarData"]["datasets"];
+        if ((Datasets !== null) && (Datasets.length > 0)) {
+          Datasets[0]["backgroundColor"] = Pal[0];
+          Datasets[0]["borderColor"] = PalBorder[0];
+          _this["radarData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["radarData"]);
         };
       };
       _this["clickedPointInfo"] = "Paleta alterada para " + ("" + _this["currentPalette"]) + "!";
@@ -8188,10 +9382,10 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }   .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }";
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Procurando o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>? <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">⚡ TBVDataSet & LiveBindings (v4.2)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com semântica Delphi/Lazarus (`TClientDataSet`) e bindings bidirecionais.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo (Append)</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveStorage">💾 Salvar no LocalStorage</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadStorage">📂 Restaurar LocalStorage</button>' + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Alterações Pendentes (Delta): <strong style="color: #e67e22;">{{ productsDS.ChangeCount }}</strong>' + "        </span>" + '        <span class="status-indicator" v-else>' + '          Alterações Pendentes: <strong style="color: #27ae60;">0 (Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & PERSISTENCE -->" + '    <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas Offline (`productsDS.GetDeltaJSON`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para sincronização com backends REST / mORMot 2.</p>' + "        </div>" + '        <button class="bui-btn bui-btn-sm bui-btn-primary" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doApplyUpdates">' + "          🔄 Aplicar Atualizações (ApplyUpdates)" + "        </button>" + "      </div>" + "" + '      <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80;">{{ deltaJSONStr }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -8199,10 +9393,24 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       d["productsDS"] = null;
       d["searchQuery"] = "";
       d["deltaJSONStr"] = "[]";
+      d["isOnline"] = true;
+      d["autoPersistActive"] = true;
+      d["autoSyncActive"] = true;
+      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
+      d["isSyncing"] = false;
+      d["storageEngine"] = "IndexedDB";
+      d["isModalOpen"] = false;
+      d["formTitle"] = "";
+      d["formCategory"] = "Hardware";
+      d["formPrice"] = "99.90";
+      d["formStock"] = "10";
       Result = d;
       return Result;
     };
     m = new Object();
+    m["updateDeltaView"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
     m["navFirst"] = function (_this) {
       pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
@@ -8220,46 +9428,72 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["doAppend"] = function (_this) {
+      _this["formTitle"] = "";
+      _this["formCategory"] = "Hardware";
+      _this["formPrice"] = "99.90";
+      _this["formStock"] = "10";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+    };
+    m["saveNewProduct"] = function (_this) {
       var ds = undefined;
+      var titleVal = "";
+      var categoryVal = "";
+      var priceVal = 0.0;
+      var stockVal = 0;
+      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
+      if (titleVal === "") {
+        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
+        return;
+      };
+      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
+      if (categoryVal === "") categoryVal = "Hardware";
+      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
+      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
       ds = _this["productsDS"];
       pas.BVPascalDX.DataSetAppend(ds);
-      var nextNum = 1;
-      if (ds && ds.FRecords && ds.FRecords.length) {
-        nextNum = ds.FRecords.length + 1;
+      var maxId = 0;
+      if (ds && ds.FRecords) {
+        for (var i = 0; i < ds.FRecords.length; i++) {
+          var curId = parseInt(ds.FRecords[i].id, 10);
+          if (!isNaN(curId) && curId > maxId) maxId = curId;
+        }
       }
+      var nextId = maxId + 1;
       if (ds && ds.Current) {
-        ds.Current.title = 'Novo Produto ' + nextNum;
-        ds.Current.category = 'Hardware';
-        ds.Current.price = 99.90;
-        ds.Current.stock = 10;
+        ds.Current.id = nextId;
+        ds.Current.title = titleVal;
+        ds.Current.category = categoryVal;
+        ds.Current.price = priceVal;
+        ds.Current.stock = stockVal;
       }
       if (ds) ds.FModified = true;
       if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      pas.BVPascalDX.DataSetPost(ds);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      pas.BVPascalDX.ShowToast("Novo registro iniciado (dsInsert). Preencha ou confirme em Salvar (Post)",2500);
-      setTimeout(function() {
-        var el = document.querySelector('input[b-field="productsDS.title"]');
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.focus();
-          if (el.select) el.select();
-        }
-      }, 100);
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
+      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
     };
     m["doPost"] = function (_this) {
       pas.BVPascalDX.DataSetPost(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
       pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
     };
     m["doCancel"] = function (_this) {
       pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
       pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
     };
     m["doDelete"] = function (_this) {
       if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
         pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
         _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
         pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
       };
     };
@@ -8269,36 +9503,137 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     m["onFieldInput"] = function (_this) {
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
-    m["doApplyUpdates"] = function (_this) {
-      pas.BVPascalDX.DataSetApplyUpdates(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      pas.BVPascalDX.ShowToast("Deltas sincronizados com sucesso (ApplyUpdates)!",2500);
+    m["doSaveIndexedDB"] = function (_this) {
+      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
+      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
+      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
     };
-    m["doSaveStorage"] = function (_this) {
-      if (this.productsDS && typeof this.productsDS.SaveToStorage === 'function') {
-        this.productsDS.SaveToStorage('demo_products_dataset');
+    m["doLoadIndexedDB"] = function (_this) {
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds) return;
+      if (typeof ds.LoadFromIndexedDB === 'function') {
+        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
+          if (success) {
+            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+          } else {
+            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+          }
+        });
       };
-      pas.BVPascalDX.ShowToast("Dados salvos no LocalStorage com sucesso!",2500);
     };
-    m["doLoadStorage"] = function (_this) {
-      var loaded = false;
-      loaded = false;
-      if (this.productsDS && typeof this.productsDS.LoadFromStorage === 'function') {
-        loaded = this.productsDS.LoadFromStorage('demo_products_dataset');
+    m["toggleAutoPersist"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoPersistActive"] == false);
+      _this["autoPersistActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
+        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
+        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
       };
-      if (loaded) {
+    };
+    m["toggleAutoSync"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoSyncActive"] == false);
+      _this["autoSyncActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
+        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoSync desativado.";
+        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
+      };
+    };
+    m["toggleOnlineSimulation"] = function (_this) {
+      var nextOnline = false;
+      nextOnline = !!(_this["isOnline"] == false);
+      _this["isOnline"] = nextOnline;
+      if (nextOnline) {
+        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
+        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
+        if (!(_this["autoSyncActive"] == false)) {
+          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
+        };
+      } else {
+        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
+        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
+      };
+    };
+    m["doClearDelta"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
+        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
         _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        pas.BVPascalDX.ShowToast("Dados restaurados do LocalStorage com sucesso!",2500);
-      } else pas.BVPascalDX.ShowToast("Nenhum dado salvo anteriormente no LocalStorage.",2500);
+        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
+        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
+      };
+    };
+    m["doApplyUpdates"] = function (_this) {
+      _this["isSyncing"] = true;
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds || ds.ChangeCount === 0) {
+        self.isSyncing = false;
+        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
+        return;
+      }
+      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
+      if (typeof ds.ApplyUpdates === 'function') {
+        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
+          self.isSyncing = false;
+          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+        }, function(err) {
+          self.isSyncing = false;
+          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
+          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+        });
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       var mockData = "";
       if (!_this) _this = this;
       _this["productsDS"] = pas.BVPascalDX.NewDataSet();
+      if (this.productsDS) {
+        this.productsDS.TableName = 'products';
+      };
       mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
       pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
+      _this["autoPersistActive"] = true;
+      _this["autoSyncActive"] = true;
+      _this["isOnline"] = true;
+      _this["isSyncing"] = false;
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
       _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      var self = this;
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+          self.isOnline = true;
+          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
+          if (self.autoSyncActive) {
+            var ds = self.productsDS;
+            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
+              ds.ApplyUpdates('/api/dataset/apply');
+            }
+          }
+        });
+        window.addEventListener('offline', function() {
+          self.isOnline = false;
+          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
+        });
+      };
     };
     comp["computed"] = new Object();
     comp["computed"]["stateBadgeClass"] = function (_this) {
@@ -8969,11 +10304,17 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -8998,11 +10339,17 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9019,7 +10366,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     margin-bottom: 20px;     background: white;     padding: 15px;     border-radius: var(--bui-radius);     border: 1px solid var(--bui-border);     box-shadow: 0 2px 10px rgba(0,0,0,0.04);   }";
+    _styleEl.textContent = ".bui-chart-wrapper {     position: relative;     display: block;     width: 100%;     max-width: 100%;     box-sizing: border-box;     margin-bottom: 0;     background: transparent;     overflow: hidden;   }    .bui-chart-wrapper canvas {     display: block;     box-sizing: border-box;     width: 100% !important;     max-width: 100%;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <div class="bui-chart-wrapper" :style="{ width: width, height: height }">' + '    <canvas b-ref="chartCanvas"></canvas>' + "  </div>";
@@ -9032,27 +10379,40 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("type");
+    comp["defaultProps"]["type"] = "bar";
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
     m = new Object();
     m["initChart"] = function (_this) {
-      if (this._initPending) return;
-      this._initPending = true;
-      requestAnimationFrame(() => {
-        const canvas = this.$refs.chartCanvas;
-        if (!canvas) { this._initPending = false; return; }
+      const bv = (typeof window !== 'undefined' && window.__BV_CORE__) ? window.__BV_CORE__ : null;
+      const runInit = () => {
+        const canvas = this.$refs ? this.$refs.chartCanvas : null;
+        if (!canvas) return;
         if (typeof Chart === 'undefined') {
           console.warn('[BVChart] Chart.js is not loaded.');
-          this._initPending = false;
           return;
         }
-        const existingChart = Chart.getChart(canvas);
-        if (existingChart) {
-          try { existingChart.destroy(); } catch(e) {}
+        function destroySafely(c) {
+          if (!c) return;
+          try {
+            c._doResize = function() { return 0; };
+            c.update = function() {};
+            c.render = function() {};
+            c.draw = function() {};
+            c.destroy();
+          } catch(e) {}
         }
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) destroySafely(existingChart);
+        if (this._chart) destroySafely(this._chart);
         this._chart = null;
         function extractData(input) {
           if (!input) return null;
@@ -9061,33 +10421,84 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
           if (input.FJS) return input.FJS;
           return input;
         }
-        const rawData = extractData(this.data);
-        if (!rawData || !rawData.datasets) { this._initPending = false; return; }
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { this._initPending = false; return; }
-        try {
-          const chartData = window.__BV_CORE__.unproxy(rawData);
-          const rawOpts = extractData(this.options);
-          const chartOptions = rawOpts ? window.__BV_CORE__.unproxy(rawOpts) : {
-            responsive: true,
-            maintainAspectRatio: false
+        function cloneChartData(input, chartType) {
+          if (!input) return null;
+          const raw = (bv && bv.unproxy) ? bv.unproxy(input) : input;
+          if (!raw) return null;
+          const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+          const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
+          return {
+            labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+            datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+              const copy = Object.assign({}, ds);
+              if (Array.isArray(ds.data)) copy.data = [...ds.data];
+              if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+              if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              if (isRadial && Array.isArray(copy.data) && (!copy.backgroundColor || typeof copy.backgroundColor === 'string')) {
+                copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
+                copy.borderColor = '#ffffff';
+              }
+              return copy;
+            }) : []
           };
-          this._chart = new Chart(ctx, {
-            type: this.type,
+        }
+        const rawData = extractData(this.data);
+        if (!rawData || !rawData.datasets) return;
+        try {
+          const chartData = cloneChartData(rawData, this.type);
+          const rawOpts = extractData(this.options);
+          const chartOptions = rawOpts ? Object.assign({ responsive: true, maintainAspectRatio: false, resizeDelay: 50 }, (bv && bv.unproxy) ? bv.unproxy(rawOpts) : rawOpts) : {
+            responsive: true,
+            maintainAspectRatio: false,
+            resizeDelay: 50
+          };
+          if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
+          let finalOpts = chartOptions;
+          const isRadial = (this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea');
+          if (isRadial && chartOptions.scales) {
+            finalOpts = Object.assign({}, chartOptions);
+            delete finalOpts.scales;
+          }
+          if (!finalOpts.onClick) {
+            finalOpts.onClick = (event, elements) => {
+              if (elements && elements.length > 0) {
+                const el = elements[0];
+                const dsIndex = el.datasetIndex;
+                const index = el.index;
+                const ds = chartData.datasets ? chartData.datasets[dsIndex] : null;
+                const label = chartData.labels ? chartData.labels[index] : '';
+                const val = ds && ds.data ? ds.data[index] : null;
+                this.$emit('chart-click', {
+                  datasetIndex: dsIndex,
+                  index: index,
+                  label: label,
+                  value: val,
+                  datasetLabel: ds ? ds.label : ''
+                });
+              }
+            };
+          }
+          this._chart = new Chart(canvas, {
+            type: this.type || 'bar',
             data: chartData,
-            options: chartOptions
+            options: finalOpts
           });
         } catch (e) {
           console.error('[BVChart] Failed to initialize chart:', e);
-        } finally {
-          this._initPending = false;
         }
-      });
+      };
+      if (bv && typeof bv.nonReactive === 'function') {
+        bv.nonReactive(runInit);
+      } else {
+        runInit();
+      };
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
-      this._chart = null; this._pendingData = null; this._initPending = false; this._updatePending = false;
+      this._chart = null;
+      this._pendingData = null;
+      this._updatePending = false;
     };
     comp["mounted"] = function (_this) {
       if (!_this) _this = this;
@@ -9098,29 +10509,75 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
       this._pendingData = newVal;
       if (this._updatePending) return;
       this._updatePending = true;
-      const delay = 50 + Math.random() * 100;
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         this._updatePending = false;
         const dataToUse = this._pendingData;
-        if (this._chart && dataToUse && dataToUse.datasets) {
-          try {
-            const rawNewData = window.__BV_CORE__.unproxy(dataToUse);
-            if (this._chart.data && this._chart.data.datasets && this._chart.data.datasets[0] && rawNewData.datasets[0]) {
-               this._chart.data.datasets[0].data = rawNewData.datasets[0].data;
-               if (rawNewData.labels) this._chart.data.labels = rawNewData.labels;
-               this._chart.update();
-            } else {
-               this._chart.data = rawNewData;
-               this._chart.update('none');
-            }
-          } catch (e) {
-            console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
-            this.initChart();
+        if (!this._chart || !this._chart.canvas || !dataToUse) {
+          this.initChart();
+          return;
+        }
+        function cloneChartData(input, chartType) {
+          if (!input) return null;
+          const raw = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(input) : input;
+          if (!raw) return null;
+          const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+          const defaultPalette = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
+          return {
+            labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+            datasets: Array.isArray(raw.datasets) ? raw.datasets.map(ds => {
+              const copy = Object.assign({}, ds);
+              if (Array.isArray(ds.data)) copy.data = [...ds.data];
+              if (Array.isArray(ds.backgroundColor)) copy.backgroundColor = [...ds.backgroundColor];
+              if (Array.isArray(ds.borderColor)) copy.borderColor = [...ds.borderColor];
+              if (isRadial && Array.isArray(copy.data) && (!copy.backgroundColor || typeof copy.backgroundColor === 'string')) {
+                copy.backgroundColor = copy.data.map((_, idx) => defaultPalette[idx % defaultPalette.length]);
+                copy.borderColor = '#ffffff';
+              }
+              return copy;
+            }) : []
+          };
+        }
+        try {
+          const rawNewData = cloneChartData(dataToUse, this.type);
+          if (!rawNewData || !rawNewData.datasets) return;
+          if (rawNewData.labels) {
+            this._chart.data.labels = rawNewData.labels;
           }
-        } else {
+          const curDatasets = this._chart.data.datasets;
+          if (curDatasets && curDatasets.length === rawNewData.datasets.length) {
+            for (let i = 0; i < rawNewData.datasets.length; i++) {
+              const target = curDatasets[i];
+              const source = rawNewData.datasets[i];
+              if (source.data) target.data = source.data;
+              if (source.backgroundColor !== undefined) target.backgroundColor = source.backgroundColor;
+              if (source.borderColor !== undefined) target.borderColor = source.borderColor;
+              if (source.label !== undefined) target.label = source.label;
+              if (source.fill !== undefined) target.fill = source.fill;
+              if (source.tension !== undefined) target.tension = source.tension;
+              if (source.pointRadius !== undefined) target.pointRadius = source.pointRadius;
+              if (source.pointHoverRadius !== undefined) target.pointHoverRadius = source.pointHoverRadius;
+            }
+          } else {
+            this._chart.data.datasets = rawNewData.datasets;
+          }
+          this._chart.update();
+        } catch (e) {
+          console.warn('[BVChart] Hot update failed, falling back to full re-init:', e);
           this.initChart();
         }
-      }, delay);
+      });
+    };
+    comp["watch"]["options"] = function (_this, newVal) {
+      if (this._chart && this._chart.canvas && newVal) {
+        try {
+          const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
+          if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
+          this._chart.options = rawNewOpts;
+          this._chart.update();
+        } catch (e) {
+          this.initChart();
+        }
+      };
     };
     comp["watch"]["type"] = function (_this, newVal) {
       this.initChart();
@@ -9144,11 +10601,17 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9173,11 +10636,17 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9202,11 +10671,17 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9231,11 +10706,17 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9260,11 +10741,17 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9289,11 +10776,17 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
     comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
     comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('chart-click', ev);
@@ -9319,9 +10812,13 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("items");
+    comp["defaultProps"]["items"] = null;
     comp["props"].push("initialActiveId");
+    comp["defaultProps"]["initialActiveId"] = "";
     comp["props"].push("initialactiveid");
+    comp["defaultProps"]["initialactiveid"] = "";
     m = new Object();
     m["toggle"] = function (_this, id) {
       if (this.activeId === id) {
@@ -9355,9 +10852,13 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("dismissible");
+    comp["defaultProps"]["dismissible"] = false;
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = true;
     m = new Object();
     m["close"] = function (_this) {
       _this["visible"] = false;
@@ -9387,8 +10888,11 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("pill");
+    comp["defaultProps"]["pill"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -9435,10 +10939,15 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#/";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "Item";
     comp["props"].push("icon");
+    comp["defaultProps"]["icon"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     m["handleClick"] = function (_this, e) {
       var target = (this && this.href) || (_this && _this.href);
@@ -9506,8 +11015,11 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#";
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('click', ev);
@@ -9532,11 +11044,17 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
     comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
     comp["props"].push("outline");
+    comp["defaultProps"]["outline"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
@@ -9575,8 +11093,11 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-card",comp);
@@ -9598,12 +11119,19 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("cols");
+    comp["defaultProps"]["cols"] = "12";
     comp["props"].push("sm");
+    comp["defaultProps"]["sm"] = "";
     comp["props"].push("md");
+    comp["defaultProps"]["md"] = "";
     comp["props"].push("lg");
+    comp["defaultProps"]["lg"] = "";
     comp["props"].push("xl");
+    comp["defaultProps"]["xl"] = "";
     comp["props"].push("offset");
+    comp["defaultProps"]["offset"] = "";
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -9639,7 +11167,9 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("fluid");
+    comp["defaultProps"]["fluid"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-container",comp);
@@ -9652,7 +11182,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }}</span>" + "    </div>" + "" + '    <table class="bui-datagrid-table">' + "      <thead>" + "        <tr>" + '          <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "            {{ col.label }}" + "          </th>" + "        </tr>" + "      </thead>" + "      <tbody>" + '        <tr b-for="row in pagedItems" @click="selectRow(row)" :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }">' + '          <td b-for="col in resolvedColumns">' + '            <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "              {{ row[col.key] }}" + "            </slot>" + "          </td>" + "        </tr>" + "      </tbody>" + "    </table>" + "" + '    <div class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -9663,16 +11193,37 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       d["currentPage"] = 1;
       d["pageSize"] = 5;
       d["selectedRow"] = null;
+      d["virtualScrollTop"] = 0;
+      d["virtualViewportHeight"] = 400;
       Result = d;
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
     comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
     comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("virtualScroll");
+    comp["defaultProps"]["virtualScroll"] = false;
+    comp["props"].push("rowHeight");
+    comp["defaultProps"]["rowHeight"] = 40;
+    comp["props"].push("virtualHeight");
+    comp["defaultProps"]["virtualHeight"] = "400px";
+    comp["props"].push("virtualBuffer");
+    comp["defaultProps"]["virtualBuffer"] = 5;
     m = new Object();
     m["handleSearch"] = function (_this) {
       _this["currentPage"] = 1;
+      _this["virtualScrollTop"] = 0;
+    };
+    m["handleTableScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.virtualScrollTop = e.target.scrollTop || 0;
+        this.virtualViewportHeight = e.target.clientHeight || 400;
+      };
     };
     m["sortBy"] = function (_this, key) {
       if (_this["sortKey"] == key) {
@@ -9705,6 +11256,12 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       };
     };
     comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
+        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
+      };
+    };
     comp["computed"] = new Object();
     comp["computed"]["resolvedItems"] = function (_this) {
       var Result = undefined;
@@ -9797,6 +11354,48 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
       return list.slice(start, start + this.pageSize);
       return Result;
     };
+    comp["computed"]["virtualStartIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["virtualEndIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let vh = this.virtualViewportHeight || 400;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
+      Result = Math.min(count, idx);
+      return Result;
+    };
+    comp["computed"]["topSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      Result = this.virtualStartIndex * rh;
+      return Result;
+    };
+    comp["computed"]["bottomSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let rendered = this.virtualEndIndex - this.virtualStartIndex;
+      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
+      Result = remaining * rh;
+      return Result;
+    };
+    comp["computed"]["displayRows"] = function (_this) {
+      var Result = undefined;
+      if (this.virtualScroll) {
+        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
+        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
+      }
+      return this.pagedItems;
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-data-grid",comp);
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
@@ -9826,12 +11425,19 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Menu";
     comp["props"].push("width");
+    comp["defaultProps"]["width"] = "280px";
     comp["props"].push("position");
+    comp["defaultProps"]["position"] = "left";
     comp["props"].push("overlay");
+    comp["defaultProps"]["overlay"] = true;
     comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
     m = new Object();
     m["open"] = function (_this) {
       _this["isOpen"] = true;
@@ -9875,9 +11481,13 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
     m = new Object();
     m["onChange"] = function (_this, ev) {
       var val = (ev && ev.target) ? ev.target.value : ev;
@@ -9904,8 +11514,11 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("name");
+    comp["defaultProps"]["name"] = "check-circle";
     comp["props"].push("size");
+    comp["defaultProps"]["size"] = "16";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-icon",comp);
@@ -9927,11 +11540,17 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
     comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("readonly");
+    comp["defaultProps"]["readonly"] = false;
     m = new Object();
     m["handleInput"] = function (_this, ev) {
       let val = (ev && ev.target) ? ev.target.value : (ev || '');
@@ -9958,11 +11577,17 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     comp["props"].push("prepend");
+    comp["defaultProps"]["prepend"] = "";
     comp["props"].push("append");
+    comp["defaultProps"]["append"] = "";
     m = new Object();
     m["onInput"] = function (_this, ev) {
       var val = (ev && ev.target) ? ev.target.value : (ev || '');
@@ -10001,10 +11626,15 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("badge");
+    comp["defaultProps"]["badge"] = "";
     comp["props"].push("badgeVariant");
+    comp["defaultProps"]["badgeVariant"] = "primary";
     comp["props"].push("badgevariant");
+    comp["defaultProps"]["badgevariant"] = "primary";
     m = new Object();
     m["handleClick"] = function (_this) {
       this.$emit('click');
@@ -10040,12 +11670,19 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Modal";
     comp["props"].push("okLabel");
+    comp["defaultProps"]["okLabel"] = "Process";
     comp["props"].push("oklabel");
+    comp["defaultProps"]["oklabel"] = "Process";
     comp["props"].push("cancelLabel");
+    comp["defaultProps"]["cancelLabel"] = "Close";
     comp["props"].push("cancellabel");
+    comp["defaultProps"]["cancellabel"] = "Close";
     comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
     m = new Object();
     m["showModal"] = function (_this) {
       this.isOpen = true;
@@ -10112,7 +11749,9 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("brand");
+    comp["defaultProps"]["brand"] = "BlaiseVue UI";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
@@ -10138,9 +11777,13 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("href");
+    comp["defaultProps"]["href"] = "";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
@@ -10168,8 +11811,11 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = 1;
     comp["props"].push("total");
+    comp["defaultProps"]["total"] = 10;
     m = new Object();
     m["changePage"] = function (_this, p) {
       if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
@@ -10205,9 +11851,13 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = 0;
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = true;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -10247,11 +11897,17 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("gutter");
+    comp["defaultProps"]["gutter"] = "md";
     comp["props"].push("align");
+    comp["defaultProps"]["align"] = "";
     comp["props"].push("justify");
+    comp["defaultProps"]["justify"] = "";
     comp["props"].push("noGutters");
+    comp["defaultProps"]["noGutters"] = false;
     comp["props"].push("nogutters");
+    comp["defaultProps"]["nogutters"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -10291,8 +11947,11 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("small");
+    comp["defaultProps"]["small"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
@@ -10314,9 +11973,13 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Tab";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     m = new Object();
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -10429,10 +12092,15 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("message");
+    comp["defaultProps"]["message"] = "";
     comp["props"].push("duration");
+    comp["defaultProps"]["duration"] = 3000;
     comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "success";
     m = new Object();
     m["showToast"] = function (_this) {
       _this["isOpen"] = true;
@@ -10459,6 +12127,109 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
+rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVVirtualScroll = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["scrollTop"] = 0;
+      d["viewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("itemHeight");
+    comp["defaultProps"]["itemHeight"] = 40;
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
+    comp["props"].push("buffer");
+    comp["defaultProps"]["buffer"] = 5;
+    m = new Object();
+    m["handleScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.scrollTop = e.target.scrollTop || 0;
+        this.viewportHeight = e.target.clientHeight || 400;
+        if (typeof this.$emit === 'function') {
+          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
+        }
+      };
+    };
+    m["scrollToIndex"] = function (_this, idx) {
+      let ih = this.itemHeight || 40;
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = idx * ih;
+      };
+    };
+    m["scrollToTop"] = function (_this) {
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = 0;
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.$refs && this.$refs.viewport) {
+        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["totalCount"] = function (_this) {
+      var Result = undefined;
+      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      return Result;
+    };
+    comp["computed"]["totalHeight"] = function (_this) {
+      var Result = undefined;
+      Result = this.totalCount * (this.itemHeight || 40);
+      return Result;
+    };
+    comp["computed"]["startIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let idx = Math.floor(this.scrollTop / ih) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["endIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let vh = this.viewportHeight || 400;
+      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
+      Result = Math.min(this.totalCount, idx);
+      return Result;
+    };
+    comp["computed"]["offsetY"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      Result = this.startIndex * ih;
+      return Result;
+    };
+    comp["computed"]["visibleItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
+      return list.slice(this.startIndex, this.endIndex);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
+    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
+  };
+});
 rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -10475,7 +12246,9 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("mode");
+    comp["defaultProps"]["mode"] = "";
     m = new Object();
     comp["methods"] = m;
     comp["computed"] = new Object();
@@ -10504,8 +12277,11 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
     comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
@@ -10527,11 +12303,17 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
     comp["props"].push("fill");
+    comp["defaultProps"]["fill"] = "solid";
     comp["props"].push("expand");
+    comp["defaultProps"]["expand"] = "";
     comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
@@ -10568,8 +12350,11 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
@@ -10591,7 +12376,9 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("padding");
+    comp["defaultProps"]["padding"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
@@ -10627,12 +12414,19 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
     comp["props"].push("detail");
+    comp["defaultProps"]["detail"] = false;
     comp["props"].push("expandable");
+    comp["defaultProps"]["expandable"] = false;
     comp["props"].push("expanded");
+    comp["defaultProps"]["expanded"] = false;
     comp["props"].push("hasStart");
+    comp["defaultProps"]["hasStart"] = false;
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       if (this.expandable === true || this.expandable === 'true') {
@@ -10695,7 +12489,9 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("inset");
+    comp["defaultProps"]["inset"] = false;
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
@@ -10730,9 +12526,13 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
     comp["props"].push("tab");
+    comp["defaultProps"]["tab"] = "";
     m = new Object();
     m["handleClick"] = function (_this, ev) {
       this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
@@ -10770,7 +12570,9 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
       return Result;
     };
     comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
     comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
@@ -10829,7 +12631,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -10966,6 +12768,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVTabs.Register_uBVTabs();
     console.log("[Init] Registering uBVToast...");
     pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVVirtualScroll...");
+    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
     console.log("[Init] Registering uBVIonApp...");
     pas.uBVIonApp.Register_uBVIonApp();
     console.log("[Init] Registering uBVIonBadge...");
@@ -10997,7 +12801,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">⚡ DataSet & LiveBindings (v4.2)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <strong class="brand">BlaiseVue 4.3</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">⚡ DataSet (v4.2)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();

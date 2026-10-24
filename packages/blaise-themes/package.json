@@ -1,0 +1,7 @@
+{
+  "name": "blaise-themes",
+  "version": "4.4.0",
+  "author": "BlaiseVue Core Team",
+  "license": "MIT",
+  "description": "Bootswatch themes and reactive dynamic theme switcher for BlaiseVue"
+}

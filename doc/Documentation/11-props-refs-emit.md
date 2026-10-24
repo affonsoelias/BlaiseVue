@@ -31,7 +31,10 @@ Used to pass data from a parent component down to a child.
 Allows parent components to programmatically access child components or DOM elements.
 
 1. Add `b-ref="identifier"` (or `ref="identifier"`) to any component or element in the template.
-2. In Pascal, access the reference dictionary via `this['$refs']` or `this.$refs` (in `asm` blocks):
+2. In Pascal, you can interact with the reference in two ways:
+
+### Approach A: 100% Pure Pascal (Zero-ASM — Recommended)
+Use the high-level `TriggerRef` helper from `BVPascalDX` to cleanly execute methods on child components without writing any JavaScript:
 
 ```html
 <template>
@@ -45,13 +48,24 @@ Allows parent components to programmatically access child components or DOM elem
   methods:
     procedure openConfirmModal;
     begin
-      asm
-        if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
-          this.$refs.mainModal.showModal();
-        }
-      end;
+      // Pure Pascal: cleanly triggers 'showModal' on the child component
+      TriggerRef(this, 'mainModal', 'showModal');
     end;
 </script>
+```
+
+### Approach B: Advanced Power-User (`asm` Interop)
+When you need to interact directly with raw DOM elements, HTML5 canvas contexts, or third-party JavaScript libraries, BlaiseVue allows inline `asm` blocks:
+
+```pascal
+procedure openConfirmModalWithJS;
+begin
+  asm
+    if (this.$refs.mainModal && this.$refs.mainModal.showModal) {
+      this.$refs.mainModal.showModal();
+    }
+  end;
+end;
 ```
 
 > [!NOTE]
@@ -62,15 +76,15 @@ Allows parent components to programmatically access child components or DOM elem
 ## 📤 $emit (Child -> Parent)
 Allows child components to trigger custom events and pass payloads upward to the parent.
 
-1. **In the Child:** Call `this['$emit']('event-name', payload)` or `this.$emit('event-name', payload)`.
+1. **In the Child:** Trigger an event using pure Pascal `Emit(this, 'event-name', payload)`.
 2. **In the Parent:** Listen to the event using `@event-name="handler"`, `v-on:event-name`, or `b-on:event-name`.
 
+### Example: Child Component (`FormHeader.bv`)
 ```html
-<!-- Child: FormHeader.bv -->
 <template>
   <header class="header-box">
     <h3>{{ title }}</h3>
-    <button @click="notifyParent">Refresh Data</button>
+    <button class="bui-btn bui-btn-primary" @click="notifyParent">Refresh Data</button>
   </header>
 </template>
 
@@ -80,16 +94,30 @@ Allows child components to trigger custom events and pass payloads upward to the
 
   methods:
     procedure notifyParent;
+    var
+      payload: TJSObject;
     begin
-      asm
-        this.$emit('refresh', { timestamp: Date.now() });
-      end;
+      // 100% Pure Pascal (Zero-ASM)
+      payload := NewObject;
+      payload['timestamp'] := NowTimestampStr;
+      Emit(this, 'refresh', payload);
     end;
 </script>
 ```
 
+> [!TIP]
+> **Power-User JavaScript Alternative:** You can also emit events directly in `asm` if interfacing with external JS:
+> ```pascal
+> procedure notifyParentJS;
+> begin
+>   asm
+>     this.$emit('refresh', { timestamp: Date.now() });
+>   end;
+> end;
+> ```
+
+### Example: Parent Component Listening to the Event
 ```html
-<!-- Parent Component -->
 <template>
   <div>
     <!-- Method handler with payload -->
@@ -107,7 +135,8 @@ Allows child components to trigger custom events and pass payloads upward to the
   methods:
     procedure onRefresh(data: JSValue);
     begin
-      console.log('Parent received refresh event:', data);
+      ConsoleLog('Parent received refresh event!');
+      ShowToast('Data refreshed successfully!');
     end;
 </script>
 ```

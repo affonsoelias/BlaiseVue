@@ -19,6 +19,13 @@ procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
 procedure ShowAlert(const Msg: string);
 function Confirm(const Msg: string): Boolean;
 
+{ --- Logging & Timer Helpers (Zero-ASM) --- }
+procedure ConsoleLog(const Msg: string);
+function StartInterval(Callback: JSValue; IntervalMs: Integer): Integer;
+procedure StopInterval(TimerId: Integer);
+function StartTimeout(Callback: JSValue; DelayMs: Integer): Integer;
+procedure StopTimeout(TimerId: Integer);
+
 { --- SPA Navigation Helpers --- }
 procedure NavigateTo(const Path: string);
 procedure GoBack;
@@ -28,6 +35,7 @@ procedure CallMethod(Instance: JSValue; const MethodName: string); overload;
 procedure CallMethod(Instance: JSValue; const MethodName: string; const Args: array of JSValue); overload;
 function CallFunction(Instance: JSValue; const MethodName: string): JSValue; overload;
 function CallFunction(Instance: JSValue; const MethodName: string; const Args: array of JSValue): JSValue; overload;
+procedure Emit(Instance: JSValue; const EventName: string; Payload: JSValue = nil);
 
 { --- Component $refs Controller --- }
 function TriggerRef(Instance: JSValue; const RefName, MethodName: string): Boolean;
@@ -79,6 +87,7 @@ function NowTimestampMs: Double;
 { --- Chart & Visual Theming Helpers --- }
 procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
 procedure ThemeSet(const ThemeName: string);
+procedure ThemeToggle;
 
 { --- I18n Internationalization Helpers --- }
 procedure I18nAddMessages(const Locale: string; const JsonStr: string);
@@ -109,6 +118,16 @@ function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
 procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
 function DataSetDeltaJSON(DS: JSValue): string;
 procedure DataSetApplyUpdates(DS: JSValue);
+{ --- Offline-First TBVDataSet & Delta Sync Helpers (BlaiseVue 4.4 Pillar 2) --- }
+procedure DataSetSaveIndexedDB(DS: JSValue; const StoreKey: string = ''; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+procedure DataSetLoadIndexedDB(DS: JSValue; const StoreKey: string = ''; OnComplete: JSValue = nil);
+procedure DataSetSetAutoPersist(DS: JSValue; Enable: Boolean; const StoreKey: string = '');
+procedure DataSetSetAutoSync(DS: JSValue; Enable: Boolean; const EndpointOrService: string = '');
+procedure DataSetApplyUpdatesAsync(DS: JSValue; const EndpointOrService: string = ''; OnSuccess: JSValue = nil; OnError: JSValue = nil);
+function DataSetHasPending(DS: JSValue): Boolean;
+function DataSetChangeCount(DS: JSValue): Integer;
+function DataSetDeltaList(DS: JSValue): JSValue;
+procedure DataSetClearDelta(DS: JSValue);
 
 { --- Type-Safe mORMot 2 Pascal RPC Helpers (BlaiseVue 4.3) --- }
 procedure RpcSetBaseUrl(const Url: string);
@@ -166,6 +185,43 @@ begin
   asm Result = window.confirm(Msg); end;
 end;
 
+procedure ConsoleLog(const Msg: string);
+begin
+  asm console.log(Msg); end;
+end;
+
+function StartInterval(Callback: JSValue; IntervalMs: Integer): Integer;
+begin
+  asm
+    Result = window.setInterval(function() {
+      if (typeof Callback === 'function') Callback();
+    }, IntervalMs);
+  end;
+end;
+
+procedure StopInterval(TimerId: Integer);
+begin
+  asm
+    window.clearInterval(TimerId);
+  end;
+end;
+
+function StartTimeout(Callback: JSValue; DelayMs: Integer): Integer;
+begin
+  asm
+    Result = window.setTimeout(function() {
+      if (typeof Callback === 'function') Callback();
+    }, DelayMs);
+  end;
+end;
+
+procedure StopTimeout(TimerId: Integer);
+begin
+  asm
+    window.clearTimeout(TimerId);
+  end;
+end;
+
 procedure NavigateTo(const Path: string);
 begin
   asm
@@ -218,6 +274,15 @@ begin
       Result = Instance[MethodName].apply(Instance, Args);
     } else {
       Result = null;
+    }
+  end;
+end;
+
+procedure Emit(Instance: JSValue; const EventName: string; Payload: JSValue = nil);
+begin
+  asm
+    if (Instance && typeof Instance['$emit'] === 'function') {
+      Instance['$emit'](EventName, Payload);
     }
   end;
 end;
@@ -622,7 +687,6 @@ begin
 end;
 
 procedure DataSetApplyUpdates(DS: JSValue);
-
 begin
   if (DS <> nil) and (TObject(DS) is TBVDataSet) then
     TBVDataSet(DS).ApplyUpdates
@@ -630,6 +694,118 @@ begin
   begin
     asm
       if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates();
+    end;
+  end;
+end;
+
+procedure DataSetSaveIndexedDB(DS: JSValue; const StoreKey: string; OnSuccess: JSValue; OnError: JSValue);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).SaveToIndexedDB(StoreKey, OnSuccess, OnError)
+  else
+  begin
+    asm
+      if (DS && typeof DS.SaveToIndexedDB === 'function') DS.SaveToIndexedDB(StoreKey, OnSuccess, OnError);
+    end;
+  end;
+end;
+
+procedure DataSetLoadIndexedDB(DS: JSValue; const StoreKey: string; OnComplete: JSValue);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).LoadFromIndexedDB(StoreKey, OnComplete)
+  else
+  begin
+    asm
+      if (DS && typeof DS.LoadFromIndexedDB === 'function') DS.LoadFromIndexedDB(StoreKey, OnComplete);
+    end;
+  end;
+end;
+
+procedure DataSetSetAutoPersist(DS: JSValue; Enable: Boolean; const StoreKey: string);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).SetAutoPersist(Enable, StoreKey)
+  else
+  begin
+    asm
+      if (DS && typeof DS.SetAutoPersist === 'function') DS.SetAutoPersist(Enable, StoreKey);
+    end;
+  end;
+end;
+
+procedure DataSetSetAutoSync(DS: JSValue; Enable: Boolean; const EndpointOrService: string);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).SetAutoSyncOnReconnect(Enable, EndpointOrService)
+  else
+  begin
+    asm
+      if (DS && typeof DS.SetAutoSyncOnReconnect === 'function') DS.SetAutoSyncOnReconnect(Enable, EndpointOrService);
+    end;
+  end;
+end;
+
+procedure DataSetApplyUpdatesAsync(DS: JSValue; const EndpointOrService: string; OnSuccess: JSValue; OnError: JSValue);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).ApplyUpdates(EndpointOrService, OnSuccess, OnError)
+  else
+  begin
+    asm
+      if (DS && typeof DS.ApplyUpdates === 'function') DS.ApplyUpdates(EndpointOrService, OnSuccess, OnError);
+    end;
+  end;
+end;
+
+function DataSetHasPending(DS: JSValue): Boolean;
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).GetHasPendingChanges
+  else
+  begin
+    asm
+      if (DS && typeof DS.GetHasPendingChanges === 'function') Result = DS.GetHasPendingChanges();
+      else if (DS && DS.HasPendingChanges !== undefined) Result = Boolean(DS.HasPendingChanges);
+      else Result = false;
+    end;
+  end;
+end;
+
+function DataSetChangeCount(DS: JSValue): Integer;
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).ChangeCount
+  else
+  begin
+    asm
+      if (DS && typeof DS.GetChangeCount === 'function') Result = DS.GetChangeCount();
+      else Result = 0;
+    end;
+  end;
+end;
+
+function DataSetDeltaList(DS: JSValue): JSValue;
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).Delta
+  else
+  begin
+    asm
+      if (DS && DS.FDelta) Result = DS.FDelta;
+      else Result = [];
+    end;
+  end;
+end;
+
+procedure DataSetClearDelta(DS: JSValue);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).ClearDelta
+  else
+  begin
+    asm
+      if (DS && typeof DS.ClearDelta === 'function') DS.ClearDelta();
     end;
   end;
 end;
@@ -930,15 +1106,27 @@ procedure UpdateChartDarkMode(OptionsObj: JSValue; Dark: Boolean);
 begin
   asm
     if (OptionsObj) {
+      const gridColor = Dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+      const textColor = Dark ? '#e2e8f0' : '#475569';
+
       if (!OptionsObj.scales) OptionsObj.scales = {};
       if (!OptionsObj.scales.x) OptionsObj.scales.x = {};
       if (!OptionsObj.scales.y) OptionsObj.scales.y = {};
-      const gridColor = Dark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-      const textColor = Dark ? '#94a3b8' : '#64748b';
       OptionsObj.scales.x.grid = { color: gridColor };
       OptionsObj.scales.y.grid = { color: gridColor };
       OptionsObj.scales.x.ticks = { color: textColor };
       OptionsObj.scales.y.ticks = { color: textColor };
+
+      if (!OptionsObj.scales.r) OptionsObj.scales.r = {};
+      OptionsObj.scales.r.grid = { color: gridColor };
+      OptionsObj.scales.r.angleLines = { color: gridColor };
+      OptionsObj.scales.r.pointLabels = { color: textColor };
+      OptionsObj.scales.r.ticks = { color: textColor, backdropColor: 'transparent' };
+
+      if (!OptionsObj.plugins) OptionsObj.plugins = {};
+      if (!OptionsObj.plugins.legend) OptionsObj.plugins.legend = {};
+      if (!OptionsObj.plugins.legend.labels) OptionsObj.plugins.legend.labels = {};
+      OptionsObj.plugins.legend.labels.color = textColor;
     }
   end;
 end;
@@ -948,6 +1136,15 @@ begin
   asm
     if (window.$theme && typeof window.$theme.setTheme === 'function') {
       window.$theme.setTheme(ThemeName);
+    }
+  end;
+end;
+
+procedure ThemeToggle;
+begin
+  asm
+    if (window.$theme && typeof window.$theme.toggle === 'function') {
+      window.$theme.toggle();
     }
   end;
 end;
@@ -1039,6 +1236,15 @@ begin
     DataSetSetFieldVal(dummy, '', nil);
     DataSetDeltaJSON(dummy);
     DataSetApplyUpdates(dummy);
+    DataSetSaveIndexedDB(dummy, '', nil, nil);
+    DataSetLoadIndexedDB(dummy, '', nil);
+    DataSetSetAutoPersist(dummy, False, '');
+    DataSetSetAutoSync(dummy, False, '');
+    DataSetApplyUpdatesAsync(dummy, '', nil, nil);
+    DataSetHasPending(dummy);
+    DataSetChangeCount(dummy);
+    DataSetDeltaList(dummy);
+    DataSetClearDelta(dummy);
     RpcSetBaseUrl('');
     RpcSetToken('');
     RpcClearToken;
