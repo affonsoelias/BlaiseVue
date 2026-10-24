@@ -1,9 +1,9 @@
 {
-  "name" : "blaise-charts",
-  "version" : "4.4.0",
-  "description" : "High-performance reactive Chart.js suite with typed Pascal datasets for BlaiseVue",
-  "main" : "chart.min.js",
-  "keywords" : [
+  "name": "blaise-charts",
+  "version": "4.4.0",
+  "description": "Reactive Chart.js data visualization suite with strongly typed Object Pascal classes for BlaiseVue",
+  "main": "chart.min.js",
+  "keywords": [
     "blaisevue",
     "pascal",
     "chartjs",
@@ -13,6 +13,6 @@
     "mobile",
     "desktop"
   ],
-  "author" : "BlaiseVue Core Team <team@blaisevue.org>",
-  "license" : "MIT"
+  "author": "BlaiseVue Core Team",
+  "license": "Modified GNU LGPL v2.1 with Static Linking Exception"
 }

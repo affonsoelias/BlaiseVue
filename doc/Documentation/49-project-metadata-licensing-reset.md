@@ -132,7 +132,7 @@ bv meta get author
 Updates the field in `package.json` and updates `src/uAppVersion.pas`:
 
 ```bash
-bv meta set author "Blaise Team <team@blaisevue.org>"
+bv meta set author "Blaise Team "
 bv meta set description "High performance Pascal web client"
 ```
 

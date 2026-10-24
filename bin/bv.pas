@@ -7720,6 +7720,47 @@ begin
       'See the License for the specific language governing permissions and' + #10 +
       'limitations under the License.' + #10;
   end
+  else if (NormKey = 'lgpl-2.1') or (NormKey = 'lgpl2') or (NormKey = 'modified-lgpl') or (NormKey = 'fpc') or (NormKey = 'fpc-lgpl') then
+  begin
+    CanonId := 'Modified-LGPL-2.1';
+    Title := 'Modified GNU LGPL v2.1 with Static Linking Exception';
+    Body :=
+      'Modified GNU LESSER GENERAL PUBLIC LICENSE' + #10 +
+      'Version 2.1, February 1999' + #10#10 +
+      'Copyright (C) ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'This library is free software; you can redistribute it and/or modify' + #10 +
+      'it under the terms of the GNU Lesser General Public License as published by' + #10 +
+      'the Free Software Foundation; either version 2.1 of the License, or' + #10 +
+      '(at your option) any later version.' + #10#10 +
+      'STATIC LINKING EXCEPTION:' + #10 +
+      'As a special exception, the copyright holders of this library give you' + #10 +
+      'permission to link this library with independent modules to produce an' + #10 +
+      'executable, regardless of the license terms of these independent modules,' + #10 +
+      'and to copy and distribute the resulting executable under terms of your choice,' + #10 +
+      'provided that you also meet, for each linked independent module, the terms' + #10 +
+      'and conditions of the license of that module. An independent module is a' + #10 +
+      'module which is not derived from or based on this library. If you modify' + #10 +
+      'this library, you may extend this exception to your version of the library,' + #10 +
+      'but you are not obligated to do so. If you do not wish to do so, delete this' + #10 +
+      'exception statement from your version.' + #10;
+  end
+  else if (NormKey = 'gpl-2.0') or (NormKey = 'gpl2') then
+  begin
+    CanonId := 'GPL-2.0';
+    Title := 'GNU General Public License v2.0';
+    Body :=
+      'GNU GENERAL PUBLIC LICENSE' + #10 +
+      'Version 2, June 1991' + #10#10 +
+      'Copyright (C) ' + YearStr + ' ' + AuthorStr + #10#10 +
+      'This program is free software; you can redistribute it and/or modify' + #10 +
+      'it under the terms of the GNU General Public License as published by' + #10 +
+      'the Free Software Foundation; either version 2 of the License, or' + #10 +
+      '(at your option) any later version.' + #10#10 +
+      'This program is distributed in the hope that it will be useful,' + #10 +
+      'but WITHOUT ANY WARRANTY; without even the implied warranty of' + #10 +
+      'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the' + #10 +
+      'GNU General Public License for more details.' + #10;
+  end
   else if (NormKey = 'lgpl') or (NormKey = 'lgpl-3.0') or (NormKey = 'lgpl3') then
   begin
     CanonId := 'LGPL-3.0';
@@ -7918,7 +7959,9 @@ begin
     WriteLn('  --------------------------------------');
     WriteLn('  mit          - MIT License (Permissive, open-source community standard)');
     WriteLn('  apache-2.0   - Apache License 2.0 (Permissive with explicit patent grant)');
+    WriteLn('  lgpl-2.1     - Modified GNU LGPL v2.1 with Static Linking Exception (Lazarus/FPC/BlaiseVue Core)');
     WriteLn('  lgpl-3.0     - GNU Lesser General Public License v3.0 (Pascal library standard)');
+    WriteLn('  gpl-2.0      - GNU General Public License v2.0 (Standard GPL v2, BlaiseCLI tool)');
     WriteLn('  gpl-3.0      - GNU General Public License v3.0 (Strong copyleft)');
     WriteLn('  bsd-3        - BSD 3-Clause License (Permissive with attribution clause)');
     WriteLn('  commercial   - Commercial / Proprietary (All rights reserved)');
