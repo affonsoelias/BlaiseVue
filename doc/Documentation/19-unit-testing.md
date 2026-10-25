@@ -102,7 +102,21 @@ bv new t SimpleBadge
 The BlaiseVue CLI inspects your workspace automatically:
 1. **Found `SimpleBadge.bv` in `src/components/`?** Creates `tests/components/SimpleBadge.test.pas` configured with `<simple-badge>` and `Mount`.
 2. **Found in `src/views/`?** Creates `tests/views/SimpleBadge.test.pas` with `<simple-badge-page>` and `Mount`.
-3. **No matching `.bv` found?** Creates `tests/unit/SimpleBadge.test.pas` for pure Pascal domain logic.
+3. **Found `uSimpleBadge.pas` in `src/services/`?** Creates `tests/unit/SimpleBadge.test.pas` importing `uSimpleBadge`.
+4. **No matching file found?** Creates `tests/unit/SimpleBadge.test.pas` for pure Pascal domain logic.
+
+### ⚡ Scaffolding Business Services (`bv new service` / `bv new s`)
+To scaffold a pure Pascal domain service unit along with its pre-configured unit test in a single command:
+```bash
+bv new service PaymentProcessor
+# Shorthand:
+bv new s PaymentProcessor
+# Generator alias:
+bv g s PaymentProcessor
+```
+- **Service Unit:** `src/services/uPaymentProcessor.pas` (pure Pascal class and business functions)
+- **Unit Test:** `tests/unit/PaymentProcessor.test.pas` (pre-wired with `BVTestUtils` and assertions)
+- Add `--no-test` (or `-nt`) to generate the service unit without a test file.
 
 You can also target a specific subfolder directly:
 ```bash

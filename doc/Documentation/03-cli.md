@@ -73,7 +73,20 @@ bv new v OrderHistory
 - Automatically generates: `tests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
-### 3. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+### 3. Create Service Unit: `bv new service <Name> [--no-test]`
+Creates a pure Pascal business service unit and its corresponding domain unit test:
+```bash
+bv new service PaymentProcessor
+# Shorthand:
+bv new s PaymentProcessor
+# Generator alias:
+bv g s PaymentProcessor
+```
+- Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
+- Automatically generates: `tests/unit/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
+- Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
+
+### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
 Creates test suites on demand with automatic directory resolution:
 ```bash
 bv new test SimpleBadge
@@ -82,21 +95,25 @@ bv new t SimpleBadge
 ```
 - **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
 - **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If it is a service in `src/services/`:** created in `tests/unit/SimpleBadge.test.pas` importing `uSimpleBadge`.
 - **If given a relative path:** `bv new t services/CalculoFrete` -> created in `tests/services/CalculoFrete.test.pas`.
-- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business services.
+- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business logic.
 
-### 4. List Elements: `bv list <c|v|t>`
+### 5. List Elements: `bv list <c|v|s|t|lib>`
 Lists registered files across the project:
 - `bv list c`: Lists components in `src/components/`.
 - `bv list v`: Lists views in `src/views/`.
+- `bv list s`: Lists pure Pascal service units in `src/services/`.
 - `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
+- `bv list lib`: Lists installed libraries in `lib/`.
 
-### 5. Remove Elements: `bv remove <component|view|test> <Name>`
+### 6. Remove Elements: `bv remove <component|view|service|test> <Name>`
 Safely purges the source file, generated Pascal units in `generated/`, and associated test files across subfolders:
 ```bash
-bv remove component ProductCard
-bv remove view OrderHistory
-bv remove test SimpleBadge
+bv remove component ProductCard     # or: bv remove c ProductCard
+bv remove view OrderHistory         # or: bv remove v OrderHistory
+bv remove service PaymentProcessor  # or: bv remove s PaymentProcessor
+bv remove test SimpleBadge          # or: bv remove t SimpleBadge
 ```
 
 ---

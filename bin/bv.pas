@@ -19,6 +19,8 @@ program bv;
     bv run dev                  - Real-time build with debug features
 
     bv new c <ComponentName>    - Scaffolds a new .bv component
+    bv new v <ViewName>         - Scaffolds a new .bv view
+    bv new s <ServiceName>      - Scaffolds a new pure Pascal service unit
 
     bv clean                     - Purges the dist/ and generated/ folders
 
@@ -6921,6 +6923,145 @@ begin
 end;
 
 
+// =====================================================================
+//  COMMAND: NEW SERVICE (Pure Pascal Domain Logic)
+// =====================================================================
+
+procedure CmdNewService(const ServiceName: string; CreateTest: Boolean = True);
+var
+  NormName, ServicePath, TargetPath, Content: string;
+  TestPath, TestFile, TestContent: string;
+begin
+  NormName := ServiceName;
+  if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
+    NormName := Copy(NormName, 2, Length(NormName) - 1);
+
+  ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+  TargetPath := ServicePath + 'u' + NormName + '.pas';
+
+  if FileExists(TargetPath) then
+  begin
+    WriteLn('ERROR: Service "u', NormName, '.pas" already exists!');
+    Halt(1);
+  end;
+
+  ForceDir(ServicePath);
+
+  Content := GetTemplate('TPL_SERVICE_PAS', 'service.pas');
+  if Content = '' then
+  begin
+    Content :=
+      'unit u' + NormName + ';' + #10#10 +
+      '{$mode objfpc}{$H+}' + #10#10 +
+      'interface' + #10#10 +
+      'uses' + #10 +
+      '  SysUtils;' + #10#10 +
+      'type' + #10 +
+      '  { T' + NormName + ' - Domain Service }' + #10 +
+      '  T' + NormName + ' = class' + #10 +
+      '  public' + #10 +
+      '    function Execute(const Input: string): string;' + #10 +
+      '  end;' + #10#10 +
+      'function ' + NormName + 'Helper(AValue: Integer): Integer;' + #10#10 +
+      'implementation' + #10#10 +
+      '{ T' + NormName + ' }' + #10#10 +
+      'function T' + NormName + '.Execute(const Input: string): string;' + #10 +
+      'begin' + #10 +
+      '  Result := ''Processed: '' + Input;' + #10 +
+      'end;' + #10#10 +
+      'function ' + NormName + 'Helper(AValue: Integer): Integer;' + #10 +
+      'begin' + #10 +
+      '  Result := AValue * 2;' + #10 +
+      'end;' + #10#10 +
+      'end.' + #10;
+  end
+  else
+    Content := StringReplace(Content, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+
+  WriteStringToFile(TargetPath, Content);
+  WriteLn('Service created: src/services/u', NormName, '.pas');
+
+  if CreateTest then
+  begin
+    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TestFile := TestPath + NormName + '.test.pas';
+
+    if not FileExists(TestFile) then
+    begin
+      ForceDir(TestPath);
+
+      TestContent := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
+      if TestContent = '' then
+      begin
+        TestContent :=
+          'program ' + LowerCase(NormName) + '_unit_test;' + #10#10 +
+          '{$mode objfpc}' + #10#10 +
+          'uses JS, Web, BVTestUtils, u' + NormName + ';' + #10#10 +
+          'var' + #10 +
+          '  Service: T' + NormName + ';' + #10#10 +
+          'begin' + #10 +
+          '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+          '    begin' + #10 +
+          '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
+          '         begin' + #10 +
+          '            Service := T' + NormName + '.Create;' + #10 +
+          '            try' + #10 +
+          '              Expect(Service.Execute(''teste'')).ToBe(''Processed: teste'');' + #10 +
+          '            finally' + #10 +
+          '              Service.Free;' + #10 +
+          '            end;' + #10 +
+          '         end);' + #10#10 +
+          '       It(''deve executar a funcao helper com sucesso'', procedure' + #10 +
+          '         begin' + #10 +
+          '            Expect(' + NormName + 'Helper(10)).ToBe(20);' + #10 +
+          '         end);' + #10 +
+          '    end);' + #10 +
+          'end.' + #10;
+      end
+      else
+      begin
+        TestContent := StringReplace(TestContent, '{{TEST_NAME}}', LowerCase(NormName) + '_unit', [rfReplaceAll]);
+        TestContent := StringReplace(TestContent, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+      end;
+
+      WriteStringToFile(TestFile, TestContent);
+      WriteLn('Unit test created: tests/unit/', NormName, '.test.pas');
+    end;
+  end;
+end;
+
+// =====================================================================
+//  COMMAND: REMOVE SERVICE
+// =====================================================================
+
+procedure CmdRemoveService(const ServiceName: string);
+var
+  NormName, TargetPath, TestPath: string;
+begin
+  NormName := ServiceName;
+  if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
+    NormName := Copy(NormName, 2, Length(NormName) - 1);
+
+  TargetPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'u' + NormName + '.pas';
+  if FileExists(TargetPath) then
+  begin
+    DeleteFile(TargetPath);
+    WriteLn('Removed: src/services/u', NormName, '.pas');
+  end
+  else
+    WriteLn('Service not found: src/services/u', NormName, '.pas');
+
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + NormName + '.test.pas';
+  if FileExists(TestPath) then
+  begin
+    DeleteFile(TestPath);
+    WriteLn('Removed associated test: tests/unit/', NormName, '.test.pas');
+  end;
+
+  WriteLn('Service "', NormName, '" removed.');
+end;
+
+
 
 // =====================================================================
 
@@ -6936,7 +7077,7 @@ var
 
   CleanName, NormName, TargetPath, TargetDir, Content: string;
 
-  CompBV, ViewBV: string;
+  CompBV, ViewBV, ServicePas: string;
 
   CompTag, ViewTag, ViewKebab: string;
 
@@ -7238,7 +7379,63 @@ begin
 
 
 
-  // 3. Fallback: Pure Unit Test for business logic, services, or models
+  // 3. Is it an existing service in src/services/?
+  ServicePas := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'u' + NormName + '.pas';
+  if not FileExists(ServicePas) then
+    ServicePas := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + NormName + '.pas';
+
+  if FileExists(ServicePas) then
+  begin
+    TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TargetPath := TargetDir + NormName + '.test.pas';
+    if FileExists(TargetPath) then
+    begin
+      WriteLn('ERROR: Unit test "', NormName, '.test.pas" already exists in tests/unit/!');
+      Halt(1);
+    end;
+    ForceDir(TargetDir);
+
+    Content := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
+    if Content = '' then
+    begin
+      Content :=
+        'program ' + LowerCase(NormName) + '_unit_test;' + #10#10 +
+        '{$mode objfpc}' + #10#10 +
+        'uses JS, Web, BVTestUtils, u' + NormName + ';' + #10#10 +
+        'var' + #10 +
+        '  Service: T' + NormName + ';' + #10#10 +
+        'begin' + #10 +
+        '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+        '    begin' + #10 +
+        '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
+        '         begin' + #10 +
+        '            Service := T' + NormName + '.Create;' + #10 +
+        '            try' + #10 +
+        '              Expect(Service.Execute(''teste'')).ToBe(''Processed: teste'');' + #10 +
+        '            finally' + #10 +
+        '              Service.Free;' + #10 +
+        '            end;' + #10 +
+        '         end);' + #10#10 +
+        '       It(''deve executar a funcao helper com sucesso'', procedure' + #10 +
+        '         begin' + #10 +
+        '            Expect(' + NormName + 'Helper(10)).ToBe(20);' + #10 +
+        '         end);' + #10 +
+        '    end);' + #10 +
+        'end.' + #10;
+    end
+    else
+    begin
+      Content := StringReplace(Content, '{{TEST_NAME}}', LowerCase(NormName) + '_unit', [rfReplaceAll]);
+      Content := StringReplace(Content, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+    end;
+
+    WriteStringToFile(TargetPath, Content);
+    WriteLn('Smart Detection: Found service src/services/u', NormName, '.pas');
+    WriteLn('Test created: tests/unit/', NormName, '.test.pas');
+    Exit;
+  end;
+
+  // 4. Fallback: Pure Unit Test for business logic, services, or models
 
   TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
 
@@ -7404,6 +7601,11 @@ begin
     SearchKind := 'Views';
 
   end
+  else if (LKind = 's') or (LKind = 'service') or (LKind = 'services') then
+  begin
+    Path := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+    SearchKind := 'Services';
+  end
 
   else if (LKind = 't') or (LKind = 'test') then
 
@@ -7419,7 +7621,7 @@ begin
 
   begin
 
-    WriteLn('Usage: bv list <c|v|t>');
+    WriteLn('Usage: bv list <c|v|s|t|lib>');
 
     Halt(1);
 
@@ -7473,7 +7675,7 @@ begin
 
       repeat
 
-        if (ExtractFileExt(SR.Name) = '.bv') then
+        if (((LKind = 's') or (LKind = 'service') or (LKind = 'services')) and (ExtractFileExt(SR.Name) = '.pas')) or (ExtractFileExt(SR.Name) = '.bv') then
 
         begin
 
@@ -21987,18 +22189,21 @@ begin
     WriteLn('    bv new c <Name>        Creates a new component');
 
     WriteLn('    bv new v <Name>        Creates a new view');
+    WriteLn('    bv new s <Name>        Creates a new service unit (pure Pascal)');
 
     WriteLn('    bv new t <Name>        Creates a new test file (.test.pas)');
 
     WriteLn('    bv remove c <Name>     Removes a component');
 
     WriteLn('    bv remove v <Name>     Removes a view');
+    WriteLn('    bv remove s <Name>     Removes a service unit');
 
     WriteLn('    bv remove t <Name>     Removes a test file');
 
     WriteLn('    bv list c              Lists components');
 
     WriteLn('    bv list v              Lists views');
+    WriteLn('    bv list s              Lists services');
 
     WriteLn('    bv list t              Lists test files');
 
@@ -22161,7 +22366,7 @@ begin
 
   end
 
-  else if Cmd = 'new' then
+  else if (Cmd = 'new') or (Cmd = 'generate') or (Cmd = 'g') then
 
   begin
 
@@ -22169,9 +22374,9 @@ begin
 
     begin
 
-      WriteLn('Usage: bv new <c|v|t> <Name> [--no-test]');
+      WriteLn('Usage: bv new <c|v|s|t> <Name> [--no-test]');
 
-      WriteLn('Types: component (c), view (v), test (t)');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
 
       Halt(1);
 
@@ -22204,6 +22409,8 @@ begin
     else if (TypeArg = 'v') or (TypeArg = 'view') then
 
       CmdNewView(NameArg, not SkipTest)
+    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+      CmdNewService(NameArg, not SkipTest)
 
     else if (TypeArg = 't') or (TypeArg = 'test') then
 
@@ -22213,7 +22420,7 @@ begin
 
     begin
 
-      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v) or "test" (t).');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
 
       Halt(1);
 
@@ -22229,9 +22436,9 @@ begin
 
     begin
 
-      WriteLn('Usage: bv remove <c|v|t> <Name>');
+      WriteLn('Usage: bv remove <c|v|s|t> <Name>');
 
-      WriteLn('Types: component (c), view (v), test (t)');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
 
       Halt(1);
 
@@ -22248,6 +22455,8 @@ begin
     else if (TypeArg = 'v') or (TypeArg = 'view') then
 
       CmdRemoveView(NameArg)
+    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+      CmdRemoveService(NameArg)
 
     else if (TypeArg = 't') or (TypeArg = 'test') then
 
@@ -22257,7 +22466,7 @@ begin
 
     begin
 
-      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v) or "test" (t).');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
 
       Halt(1);
 
