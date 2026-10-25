@@ -275,6 +275,84 @@ See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2
 
 ---
 
+## 🚀 Interactive Cockpit & Project Registry (`bv enter`, `bv use`, `bv project`)
+
+BlaiseVue provides an interactive cockpit environment and global project registry for fast, error-free multi-project development without risk of modifying or deleting files in the wrong directory.
+
+### 1. Enter Project Cockpit: `bv enter`
+Opens the interactive cockpit shell locked to the current directory.
+> [!IMPORTANT]
+> **Safety Rule**: `bv enter` only executes if you are already inside a valid BlaiseVue project (`app.cfg`, `package.json`, `src/`). It refuses to run in arbitrary or non-project directories.
+
+```bash
+cd C:\Projects\my-erp
+bv enter
+```
+**Output:**
+```text
+========================================================================
+  [BlaiseVue Interactive Cockpit]
+  Active Project: my-erp (C:\Projects\my-erp)
+  Commands: new, remove, list, test, dev, build, project add, exit
+========================================================================
+
+[bv: my-erp] >
+```
+
+### 2. Register Current Project: `project add`
+Inside the cockpit (or via `bv project add`), register the current project into the global registry (`~/.blaisevue/projects.json`):
+```text
+[bv: my-erp] > project add
+
+  [SUCCESS] Project "my-erp" successfully registered in BlaiseVue registry!
+  Path:    C:\Projects\my-erp
+  Version: v1.0.0
+
+  You can now enter this project from anywhere using:
+    bv use my-erp
+```
+
+### 3. Jump to Registered Project from Anywhere: `bv use <project-name>`
+From any terminal directory on the machine, jump directly into a registered project:
+```bash
+C:\Users\Developer> bv use my-erp
+```
+The CLI validates the project's existence on disk, switches directory, and opens the cockpit locked to `my-erp`:
+```text
+[bv: my-erp] > 
+```
+
+### 4. Project Registry Management (`bv project` / `project`)
+Commands available both from the terminal and inside the interactive cockpit:
+* **`project list` (or `bv project list`)**: Lists all registered projects with an active marker `(*)`:
+  ```text
+  Registered BlaiseVue Projects:
+  ----------------------------------------------------------------------------
+  * my-erp            v1.0.0    C:\Projects\my-erp
+    customer-portal   v4.4.0    D:\Work\customer-portal
+  ----------------------------------------------------------------------------
+  Total: 2 project(s) registered (* active)
+  ```
+* **`project current` (or `bv project current`)**: Displays active project name, version, path, and disk health status.
+* **`project remove <name>` (or `bv project remove <name>`)**: Unregisters a project from the registry (keeps project files completely intact).
+* **`use <other-name>`**: Inside the cockpit, switch to another registered project on the fly without exiting the shell!
+
+### 5. Running Commands Inside the Cockpit
+Within the interactive cockpit (`[bv: <project>] > `), run commands directly without repeating `bv`:
+* `new s <Name> [--no-test]` — Scaffolds pure Pascal domain service and unit test.
+* `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
+* `new v <Name> [--no-test]` — Scaffolds `.bv` view and test.
+* `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
+* `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
+* `test` — Runs full test suite (Pas2JS + Vitest).
+* `dev` — Starts dev server with instant HMR.
+* `build` — Compiles production distribution with hashes.
+* `check [file]` — Validates SFC templates with AST type-checker.
+* `clean` — Purges `generated/` and `dist/`.
+* `exit` / `quit` — Exits the cockpit and returns to regular shell.
+
+---
+
 ## 🧹 Maintenance Commands
 
 ### `bv clean`
