@@ -14,6 +14,9 @@ program server;
 {$endif OSWINDOWS}
 
 uses
+  {$ifdef OSWINDOWS}
+  windows,
+  {$endif OSWINDOWS}
   sysutils,
   classes,
   mormot.core.base,
@@ -26,7 +29,36 @@ var
   Port: RawUtf8;
   DistPath: string;
   i: Integer;
+
+{$ifdef OSWINDOWS}
+function ConsoleCtrlHandler(dwCtrlType: DWORD): BOOL; stdcall;
 begin
+  case dwCtrlType of
+    CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT, CTRL_SHUTDOWN_EVENT:
+    begin
+      WriteLn('');
+      WriteLn('[+] Signal received (Ctrl+C). Gracefully closing mORMot 2 server...');
+      if Assigned(App) then
+      begin
+        try
+          App.Free;
+          App := nil;
+        except
+        end;
+      end;
+      WriteLn('[+] mORMot 2 server stopped cleanly. Ports released.');
+      Result := False;
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+{$endif OSWINDOWS}
+
+begin
+  {$ifdef OSWINDOWS}
+  SetConsoleCtrlHandler(@ConsoleCtrlHandler, True);
+  {$endif OSWINDOWS}
   Port := '8090';
 
   // Intelligent resolution of dist/ folder
