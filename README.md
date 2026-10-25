@@ -144,50 +144,25 @@ bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from 
 
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
+
+# === Cockpit & Multi-Project Management ===
+bv enter                   # Enters interactive project Cockpit shell (e.g. [bv: my-app] >)
+bv use <project-name>      # Jumps into registered project Cockpit shell from anywhere
+bv project add             # Registers current project into global registry (~/.blaisevue/projects.json)
+bv project list            # Lists registered projects (* active)
+bv project current         # Shows currently active project details
+bv project remove <name>   # Unregisters project from global registry
+bv rename <s|c|v|p> <New>  # Smart rename for services, components, views, or project name
 ```
 
 ---
 
-## 🔮 Architectural Milestones & Roadmap
+## 📖 Roadmap & Technical Documentation
 
-Our architectural evolution roadmap:
+For the complete architectural evolution specifications, delivered enterprise pillars, and future roadmap milestones (v2.0 to v5.0), see:
 
-- [x] **v2.0**: SPA Router, History API, Scoped Slots, DevTools, Static Hoisting, Vitest.
-- [x] **v2.5**: Form Validation (`b-validate`), List Transitions (`<transition-group>`), Native i18n (`$t`).
-- [x] **v2.6**: Bootswatch Themes (`blaise-themes`), Bootstrap Icons (`blaise-icons`), `$theme` engine.
-- [x] **v3.0 Enterprise**: Automatic Documentation Generator (`bv doc`), WebAssembly Acceleration (`$wasm`), SSG (`bv run ssg`), Zero-Flicker Hydration, Headless E2E Test Suite (`bv test e2e`).
-- [x] **v3.5 Universal Pascal Platform (100% Complete - Phases 1, 2, 3 & 4 Delivered)**:
-  - [x] 🛠️ **Phase 1: Professional DX**: VS Code Extension (`.vsix`) with directive autocomplete, BlaiseUI Kit suggestions, and snippets (`bv vsix`, `bv extension install`).
-  - [x] 📱 **Phase 2: Hybrid Mobile**: Native Android (`.apk`) & iOS integration via Capacitor (`bv mobile init|sync|open|build`), responsive 12-column grid (`<bv-container>`, `<bv-row>`, `<bv-col>`), mobile bottom navigation (`<bv-bottom-nav>`), and off-canvas drawer (`<bv-drawer>`).
-  - [x] 🖥️ **Phase 3: Real Cross-Platform Desktop**: Ultra-lightweight native desktop app via WebUI & Lazarus IDE (`bv desktop init|sync|build|run`) with dual Debug (console logs) and Release (pure GUI without console) modes.
-  - [x] ⚙️ **Phase 4: Full-Stack Pascal**: High-throughput backend integration with Synopse mORMot 2 (`bv mormot init|build|run|status`, `--mormot`, `$api`, `$ws`).
-- [x] **v4.0 Enterprise Ecosystem & Developer Superpowers (100% Completed ✅)**:
-  - [x] ⚡ **Phase 1: Full-Stack CRUD & ORM Generator**: Rapid entity scaffolding (`bv mormot crud <Model> <fields...>`) generating Pascal records, mORMot 2 ORM endpoints, and reactive frontend `<bv-data-grid>` views.
-  - [x] 🔐 **Phase 2: Enterprise Authentication & Route Guards (`$auth`)**: Native JWT middleware, Argon2 password hashing, and reactive `this.$auth` with role-based routing guards.
-  - [x] 📜 **Phase 3: Live Swagger / OpenAPI 3.0**: Auto-generated interactive API documentation and testing portal at `/api/docs`.
-  - [x] 🐳 **Phase 4: Cloud-Native Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) producing ultra-lean (< 20 MB) Alpine/Scratch containers.
-  - [x] 📱 **Phase 5: Mobile-First Ecosystem (`blaise-ui-mobile`)**: Standalone Ionic Web Components package with Pascal controller wrappers (`BlaiseIonic.pas`), providing native iOS/Android look & feel for both mobile apps and web/PWA.
-  - [x] 📊 **Phase 6: Data Visualization & Analytics (`blaise-charts`)**: Dedicated Chart.js package with strongly typed Pascal dataset configuration (`BlaiseCharts.pas`), reactive `<bv-chart>` component, and hardware-accelerated 60 FPS canvas rendering.
-  - [x] 🎨 **Phase 7: BlaiseVue Studio**: Visual developer dashboard (`bv studio`) for real-time WebSocket debugging, component tree visualization, and 1-click workflows.
-  - [x] 💎 **Phase 8: Idiomatic Object Pascal DX (Zero-ASM Architecture)**: Eradicate inline `asm` blocks from end-user views, establishing a 100% pure Object Pascal developer experience with strongly typed records, native state assignments, and idiomatic Pascal view controllers.
-- [x] **v4.1 Component Catalog & Package Documentation (Completed ✅)**: Exhaustive documentation and interactive reference for all package components (`blaise-ui`, `blaise-charts`, `blaise-ui-mobile`, `blaise-themes`) with props, events, slots, and copy-pasteable 100% Pascal snippets.
-- [x] **v4.2 LiveBindings & Reactive `TBVDataSet` (Completed ✅)**: Delphi/Lazarus-style in-memory dataset (`TBVDataSet`) with reactive state binding (`b-field`), record navigation (`First`, `Next`, `Prior`, `Last`), CRUD operations (`Append`, `Post`, `Delete`, `Cancel`, `Filter`), delta tracking, and native `<bv-datagrid>` integration.
-- [x] **v4.3 End-to-End Type-Safe Pascal RPC with mORMot 2 (Completed ✅)**: Shared service interfaces (`ICustomerService`, `IProductService`, `ISystemService`), automated client proxy scaffolding (`bv mormot rpc`), dual HTTP/WebSocket transport, and compile-time API validation.
-- [x] **v4.4 Enterprise Resilience, Native Templates & Offline Delta Sync (100% Completed ✅)**:
-  - [x] ⚡ **Pillar 1: Compiler Template Type-Checking & Zero-`with()` Native Templates**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
-  - [x] 💾 **Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)**: IndexedDB browser persistence, transactional delta tracking (`FDelta`), primary key reconciliation, and automatic reconnect triggers for mORMot 2.
-  - [x] 🔗 **Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)**: Automated scaffolding of foreign keys and master-detail views (`Order` -> `OrderItems`), coupled with pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
-  - [x] 🏎️ **Pillar 4: Enterprise UI Performance: Virtual Scrolling for `<bv-datagrid>`**: DOM node recycling engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS.
-  - [x] 📦 **Pillar 5: External Library Scaffolding & Distribution (`bv create --lib` & `bv lib pack`)**: Standalone library scaffolding with interactive license prompt (MIT, Apache, LGPL), isolated HMR playground, autonomous tests, and distribution packager.
-- [ ] **v5.0 The Enterprise Cloud & Real-Time Horizon (Next Horizon 🎯)**:
-  - [ ] 📊 **Pillar 1: Enterprise Reporting & Multi-Format Export (`packages/blaise-reports`)**: Declarative vector PDF generation with automatic pagination, native Excel (`.xlsx`) and CSV exports, and print-optimized thermal/A4 layouts directly from `TBVDataSet` and `<bv-data-grid>` (NEW ✨).
-  - [ ] 🗄️ **Pillar 2: BlaiseX — Advanced Global State & Finite State Machines (`TBVStore 2.0`)**: Evolution of `core/BVStore.pas` into a strongly typed state engine with memoized getters, action pipelines, pluggable storage persistence, and formal `TBVStateMachine` workflows (EVOLUTION 🚀).
-  - [ ] 📱 **Pillar 3: Full PWA Engine & Service Worker Background Sync (`bv pwa`)**: Evolution of offline `TBVDataSet` and mobile stack with 1-click installability, Service Worker caching, push notifications, and background delta sync when reconnecting (EVOLUTION 🚀).
-  - [ ] ⚡ **Pillar 4: Node-Free Dynamic Server-Side Rendering (`mORMot 2 SSR`)**: Evolution of static SSG into ultra-fast sub-3ms dynamic runtime server rendering directly inside the native Pascal backend, eliminating Node.js in production (EVOLUTION 🚀).
-  - [ ] 🛠️ **Pillar 5: BlaiseVue Studio 2.0 (Visual Cockpit & Database Modeler)**: Evolution of `bv studio` into a visual relational database modeler and a time-travel reactive state inspector (EVOLUTION 🚀).
-
-> [!TIP]
-> **Detailed Engineering Plan**: Read the complete specification in the [Technical Roadmap](doc/Documentation/99-roadmap.md), [Desktop Documentation](doc/Documentation/36-desktop-webui.md), and [Full-Stack mORMot 2 Documentation](doc/Documentation/37-mormot2-backend.md), and [Type-Safe RPC Documentation](doc/Documentation/43-typesafe-rpc-mormot.md).
+- 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
+- 📚 **[Documentation Index (doc/Documentation/00-index.md)](doc/Documentation/00-index.md)**: 33+ comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, and mORMot 2.
 
 ---
 

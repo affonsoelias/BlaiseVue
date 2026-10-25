@@ -19,6 +19,8 @@ program bv;
     bv run dev                  - Real-time build with debug features
 
     bv new c <ComponentName>    - Scaffolds a new .bv component
+    bv new v <ViewName>         - Scaffolds a new .bv view
+    bv new s <ServiceName>      - Scaffolds a new pure Pascal service unit
 
     bv clean                     - Purges the dist/ and generated/ folders
 
@@ -3607,7 +3609,10 @@ begin
 
       Content := ReadFileToString(Base + 'package.json');
 
+      Content := StringReplace(Content, '"name": "blaisevue-demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
+      Content := StringReplace(Content, '"name" : "blaisevue-demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
       Content := StringReplace(Content, '"name": "demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
+      Content := StringReplace(Content, '"name" : "demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
 
       WriteStringToFile(Base + 'package.json', Content);
 
@@ -6921,6 +6926,145 @@ begin
 end;
 
 
+// =====================================================================
+//  COMMAND: NEW SERVICE (Pure Pascal Domain Logic)
+// =====================================================================
+
+procedure CmdNewService(const ServiceName: string; CreateTest: Boolean = True);
+var
+  NormName, ServicePath, TargetPath, Content: string;
+  TestPath, TestFile, TestContent: string;
+begin
+  NormName := ServiceName;
+  if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
+    NormName := Copy(NormName, 2, Length(NormName) - 1);
+
+  ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+  TargetPath := ServicePath + 'u' + NormName + '.pas';
+
+  if FileExists(TargetPath) then
+  begin
+    WriteLn('ERROR: Service "u', NormName, '.pas" already exists!');
+    Halt(1);
+  end;
+
+  ForceDir(ServicePath);
+
+  Content := GetTemplate('TPL_SERVICE_PAS', 'service.pas');
+  if Content = '' then
+  begin
+    Content :=
+      'unit u' + NormName + ';' + #10#10 +
+      '{$mode objfpc}{$H+}' + #10#10 +
+      'interface' + #10#10 +
+      'uses' + #10 +
+      '  SysUtils;' + #10#10 +
+      'type' + #10 +
+      '  { T' + NormName + ' - Domain Service }' + #10 +
+      '  T' + NormName + ' = class' + #10 +
+      '  public' + #10 +
+      '    function Execute(const Input: string): string;' + #10 +
+      '  end;' + #10#10 +
+      'function ' + NormName + 'Helper(AValue: Integer): Integer;' + #10#10 +
+      'implementation' + #10#10 +
+      '{ T' + NormName + ' }' + #10#10 +
+      'function T' + NormName + '.Execute(const Input: string): string;' + #10 +
+      'begin' + #10 +
+      '  Result := ''Processed: '' + Input;' + #10 +
+      'end;' + #10#10 +
+      'function ' + NormName + 'Helper(AValue: Integer): Integer;' + #10 +
+      'begin' + #10 +
+      '  Result := AValue * 2;' + #10 +
+      'end;' + #10#10 +
+      'end.' + #10;
+  end
+  else
+    Content := StringReplace(Content, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+
+  WriteStringToFile(TargetPath, Content);
+  WriteLn('Service created: src/services/u', NormName, '.pas');
+
+  if CreateTest then
+  begin
+    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TestFile := TestPath + NormName + '.test.pas';
+
+    if not FileExists(TestFile) then
+    begin
+      ForceDir(TestPath);
+
+      TestContent := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
+      if TestContent = '' then
+      begin
+        TestContent :=
+          'program ' + LowerCase(NormName) + '_unit_test;' + #10#10 +
+          '{$mode objfpc}' + #10#10 +
+          'uses JS, Web, BVTestUtils, u' + NormName + ';' + #10#10 +
+          'var' + #10 +
+          '  Service: T' + NormName + ';' + #10#10 +
+          'begin' + #10 +
+          '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+          '    begin' + #10 +
+          '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
+          '         begin' + #10 +
+          '            Service := T' + NormName + '.Create;' + #10 +
+          '            try' + #10 +
+          '              Expect(Service.Execute(''teste'')).ToBe(''Processed: teste'');' + #10 +
+          '            finally' + #10 +
+          '              Service.Free;' + #10 +
+          '            end;' + #10 +
+          '         end);' + #10#10 +
+          '       It(''deve executar a funcao helper com sucesso'', procedure' + #10 +
+          '         begin' + #10 +
+          '            Expect(' + NormName + 'Helper(10)).ToBe(20);' + #10 +
+          '         end);' + #10 +
+          '    end);' + #10 +
+          'end.' + #10;
+      end
+      else
+      begin
+        TestContent := StringReplace(TestContent, '{{TEST_NAME}}', LowerCase(NormName) + '_unit', [rfReplaceAll]);
+        TestContent := StringReplace(TestContent, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+      end;
+
+      WriteStringToFile(TestFile, TestContent);
+      WriteLn('Unit test created: tests/unit/', NormName, '.test.pas');
+    end;
+  end;
+end;
+
+// =====================================================================
+//  COMMAND: REMOVE SERVICE
+// =====================================================================
+
+procedure CmdRemoveService(const ServiceName: string);
+var
+  NormName, TargetPath, TestPath: string;
+begin
+  NormName := ServiceName;
+  if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
+    NormName := Copy(NormName, 2, Length(NormName) - 1);
+
+  TargetPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'u' + NormName + '.pas';
+  if FileExists(TargetPath) then
+  begin
+    DeleteFile(TargetPath);
+    WriteLn('Removed: src/services/u', NormName, '.pas');
+  end
+  else
+    WriteLn('Service not found: src/services/u', NormName, '.pas');
+
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + NormName + '.test.pas';
+  if FileExists(TestPath) then
+  begin
+    DeleteFile(TestPath);
+    WriteLn('Removed associated test: tests/unit/', NormName, '.test.pas');
+  end;
+
+  WriteLn('Service "', NormName, '" removed.');
+end;
+
+
 
 // =====================================================================
 
@@ -6936,7 +7080,7 @@ var
 
   CleanName, NormName, TargetPath, TargetDir, Content: string;
 
-  CompBV, ViewBV: string;
+  CompBV, ViewBV, ServicePas: string;
 
   CompTag, ViewTag, ViewKebab: string;
 
@@ -7238,7 +7382,63 @@ begin
 
 
 
-  // 3. Fallback: Pure Unit Test for business logic, services, or models
+  // 3. Is it an existing service in src/services/?
+  ServicePas := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'u' + NormName + '.pas';
+  if not FileExists(ServicePas) then
+    ServicePas := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + NormName + '.pas';
+
+  if FileExists(ServicePas) then
+  begin
+    TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TargetPath := TargetDir + NormName + '.test.pas';
+    if FileExists(TargetPath) then
+    begin
+      WriteLn('ERROR: Unit test "', NormName, '.test.pas" already exists in tests/unit/!');
+      Halt(1);
+    end;
+    ForceDir(TargetDir);
+
+    Content := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
+    if Content = '' then
+    begin
+      Content :=
+        'program ' + LowerCase(NormName) + '_unit_test;' + #10#10 +
+        '{$mode objfpc}' + #10#10 +
+        'uses JS, Web, BVTestUtils, u' + NormName + ';' + #10#10 +
+        'var' + #10 +
+        '  Service: T' + NormName + ';' + #10#10 +
+        'begin' + #10 +
+        '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+        '    begin' + #10 +
+        '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
+        '         begin' + #10 +
+        '            Service := T' + NormName + '.Create;' + #10 +
+        '            try' + #10 +
+        '              Expect(Service.Execute(''teste'')).ToBe(''Processed: teste'');' + #10 +
+        '            finally' + #10 +
+        '              Service.Free;' + #10 +
+        '            end;' + #10 +
+        '         end);' + #10#10 +
+        '       It(''deve executar a funcao helper com sucesso'', procedure' + #10 +
+        '         begin' + #10 +
+        '            Expect(' + NormName + 'Helper(10)).ToBe(20);' + #10 +
+        '         end);' + #10 +
+        '    end);' + #10 +
+        'end.' + #10;
+    end
+    else
+    begin
+      Content := StringReplace(Content, '{{TEST_NAME}}', LowerCase(NormName) + '_unit', [rfReplaceAll]);
+      Content := StringReplace(Content, '{{SERVICE_NAME}}', NormName, [rfReplaceAll]);
+    end;
+
+    WriteStringToFile(TargetPath, Content);
+    WriteLn('Smart Detection: Found service src/services/u', NormName, '.pas');
+    WriteLn('Test created: tests/unit/', NormName, '.test.pas');
+    Exit;
+  end;
+
+  // 4. Fallback: Pure Unit Test for business logic, services, or models
 
   TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
 
@@ -7404,6 +7604,11 @@ begin
     SearchKind := 'Views';
 
   end
+  else if (LKind = 's') or (LKind = 'service') or (LKind = 'services') then
+  begin
+    Path := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+    SearchKind := 'Services';
+  end
 
   else if (LKind = 't') or (LKind = 'test') then
 
@@ -7419,7 +7624,7 @@ begin
 
   begin
 
-    WriteLn('Usage: bv list <c|v|t>');
+    WriteLn('Usage: bv list <c|v|s|t|lib>');
 
     Halt(1);
 
@@ -7473,7 +7678,7 @@ begin
 
       repeat
 
-        if (ExtractFileExt(SR.Name) = '.bv') then
+        if (((LKind = 's') or (LKind = 'service') or (LKind = 'services')) and (ExtractFileExt(SR.Name) = '.pas')) or (ExtractFileExt(SR.Name) = '.bv') then
 
         begin
 
@@ -21932,6 +22137,1245 @@ end;
 
 // =====================================================================
 
+
+// =====================================================================
+//  COMMAND: RENAME (Components, Views, Services, Projects)
+// =====================================================================
+
+procedure CmdRenameService(const OldName, NewName: string);
+var
+  OldNorm, NewNorm, ServicePath, OldFile, NewFile, Content: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  OldNorm := OldName;
+  if (Length(OldNorm) > 1) and ((OldNorm[1] = 'u') or (OldNorm[1] = 'U')) and (OldNorm[2] in ['A'..'Z']) then
+    OldNorm := Copy(OldNorm, 2, Length(OldNorm) - 1);
+
+  NewNorm := NewName;
+  if (Length(NewNorm) > 1) and ((NewNorm[1] = 'u') or (NewNorm[1] = 'U')) and (NewNorm[2] in ['A'..'Z']) then
+    NewNorm := Copy(NewNorm, 2, Length(NewNorm) - 1);
+
+  ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+  OldFile := ServicePath + 'u' + OldNorm + '.pas';
+  NewFile := ServicePath + 'u' + NewNorm + '.pas';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] Service "u', OldNorm, '.pas" not found in src/services/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination service "u', NewNorm, '.pas" already exists!');
+    Exit;
+  end;
+
+  Content := ReadFileToString(OldFile);
+  Content := StringReplace(Content, 'unit u' + OldNorm + ';', 'unit u' + NewNorm + ';', [rfIgnoreCase]);
+  Content := StringReplace(Content, 'T' + OldNorm + ' ', 'T' + NewNorm + ' ', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + '.', 'T' + NewNorm + '.', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + '=', 'T' + NewNorm + '=', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ':', 'T' + NewNorm + ':', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ';', 'T' + NewNorm + ';', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ')', 'T' + NewNorm + ')', [rfReplaceAll]);
+  Content := StringReplace(Content, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
+
+  WriteStringToFile(NewFile, Content);
+  DeleteFile(OldFile);
+  WriteLn('Service renamed: src/services/u', OldNorm, '.pas -> src/services/u', NewNorm, '.pas');
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+  OldTest := TestPath + OldNorm + '.test.pas';
+  NewTest := TestPath + NewNorm + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldNorm) + '_unit_test;', 'program ' + LowerCase(NewNorm) + '_unit_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldNorm, 'u' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'T' + OldNorm, 'T' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Unit: ' + OldNorm, 'Unit: ' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Unit test renamed: tests/unit/', OldNorm, '.test.pas -> tests/unit/', NewNorm, '.test.pas');
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldNorm + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + OldNorm + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameComponent(const OldName, NewName: string);
+var
+  CompPath, OldFile, NewFile: string;
+  OldTag, NewTag: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
+  OldFile := CompPath + OldName + '.bv';
+  NewFile := CompPath + NewName + '.bv';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] Component "', OldName, '.bv" not found in src/components/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination component "', NewName, '.bv" already exists!');
+    Exit;
+  end;
+
+  WriteStringToFile(NewFile, ReadFileToString(OldFile));
+  DeleteFile(OldFile);
+  WriteLn('Component renamed: src/components/', OldName, '.bv -> src/components/', NewName, '.bv');
+
+  OldTag := PascalToKebab(OldName);
+  NewTag := PascalToKebab(NewName);
+  WriteLn('HTML tag updated: <', OldTag, '> -> <', NewTag, '>');
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator;
+  OldTest := TestPath + OldName + '.test.pas';
+  NewTest := TestPath + NewName + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldName) + '_test;', 'program ' + LowerCase(NewName) + '_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldName, 'u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Register_u' + OldName, 'Register_u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Component: ' + OldName, 'Component: ' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Test renamed: tests/components/', OldName, '.test.pas -> tests/components/', NewName, '.test.pas');
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldName + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator + OldName + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameView(const OldName, NewName: string);
+var
+  ViewPath, OldFile, NewFile: string;
+  OldTag, NewTag, OldKebab, NewKebab: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  AppBvPath, AppContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
+  OldFile := ViewPath + OldName + '.bv';
+  NewFile := ViewPath + NewName + '.bv';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] View "', OldName, '.bv" not found in src/views/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination view "', NewName, '.bv" already exists!');
+    Exit;
+  end;
+
+  WriteStringToFile(NewFile, ReadFileToString(OldFile));
+  DeleteFile(OldFile);
+  WriteLn('View renamed: src/views/', OldName, '.bv -> src/views/', NewName, '.bv');
+
+  OldKebab := PascalToKebab(OldName);
+  NewKebab := PascalToKebab(NewName);
+  OldTag := OldKebab + '-page';
+  NewTag := NewKebab + '-page';
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator;
+  OldTest := TestPath + OldName + '.test.pas';
+  NewTest := TestPath + NewName + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldName) + '_view_test;', 'program ' + LowerCase(NewName) + '_view_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldName, 'u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Register_u' + OldName, 'Register_u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'View: ' + OldName, 'View: ' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Test renamed: tests/views/', OldName, '.test.pas -> tests/views/', NewName, '.test.pas');
+  end;
+
+  // Auto-update router in src/app.bv
+  AppBvPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
+  if FileExists(AppBvPath) then
+  begin
+    AppContent := ReadFileToString(AppBvPath);
+    if Pos(OldTag, AppContent) > 0 then
+    begin
+      AppContent := StringReplace(AppContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+      WriteStringToFile(AppBvPath, AppContent);
+      WriteLn('Router updated in src/app.bv: ''', OldTag, ''' -> ''', NewTag, '''');
+    end;
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldName + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + OldName + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string); forward;
+
+// =====================================================================
+//  PROJECT REGISTRY & INTERACTIVE COCKPIT SHELL
+// =====================================================================
+
+procedure CmdUse(const ProjName: string); forward;
+procedure CmdEnter; forward;
+procedure RunCockpitShell(const InitialName, InitialPath: string); forward;
+
+function IsValidBlaiseVueProject(const ADir: string = ''): Boolean;
+var
+  TargetDir, PkgContent: string;
+begin
+  if ADir = '' then
+    TargetDir := IncludeTrailingPathDelimiter(GetCurrentDir)
+  else
+    TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
+
+  Result := False;
+
+  if FileExists(TargetDir + 'app.cfg') then Exit(True);
+  if FileExists(TargetDir + 'src' + DirectorySeparator + 'app.bv') then Exit(True);
+  if DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'views') or
+     DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'components') then Exit(True);
+
+  if FileExists(TargetDir + 'package.json') then
+  begin
+    PkgContent := LowerCase(ReadFileToString(TargetDir + 'package.json'));
+    if Pos('blaise', PkgContent) > 0 then Exit(True);
+  end;
+end;
+
+function GetProjectsConfigPath: string;
+var
+  HomeDir, BaseDir: string;
+begin
+  {$IFDEF MSWINDOWS}
+  HomeDir := GetEnvironmentVariable('USERPROFILE');
+  if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
+  {$ELSE}
+  HomeDir := GetEnvironmentVariable('HOME');
+  {$ENDIF}
+  if HomeDir = '' then HomeDir := GetCurrentDir;
+  BaseDir := IncludeTrailingPathDelimiter(HomeDir) + '.blaisevue';
+  ForceDir(BaseDir);
+  Result := BaseDir + DirectorySeparator + 'projects.json';
+end;
+
+function LoadProjectsRegistry(out RootObj: TJSONObject): Boolean;
+var
+  ConfigFile, Raw: string;
+  Parser: TJSONParser;
+  Data: TJSONData;
+begin
+  Result := False;
+  RootObj := nil;
+  ConfigFile := GetProjectsConfigPath;
+  if (not FileExists(ConfigFile)) or (Trim(ReadFileToString(ConfigFile)) = '') then
+  begin
+    RootObj := TJSONObject.Create;
+    RootObj.Add('active', '');
+    RootObj.Add('projects', TJSONArray.Create);
+    Exit(True);
+  end;
+
+  Raw := ReadFileToString(ConfigFile);
+  try
+    Parser := TJSONParser.Create(Raw, True);
+    try
+      Data := Parser.Parse;
+      if (Data <> nil) and (Data is TJSONObject) then
+      begin
+        RootObj := TJSONObject(Data);
+        if RootObj.Find('projects') = nil then
+          RootObj.Add('projects', TJSONArray.Create);
+        Result := True;
+      end
+      else
+      begin
+        if Data <> nil then Data.Free;
+        RootObj := TJSONObject.Create;
+        RootObj.Add('active', '');
+        RootObj.Add('projects', TJSONArray.Create);
+        Result := True;
+      end;
+    finally
+      Parser.Free;
+    end;
+  except
+    RootObj := TJSONObject.Create;
+    RootObj.Add('active', '');
+    RootObj.Add('projects', TJSONArray.Create);
+    Result := True;
+  end;
+end;
+
+procedure SaveProjectsRegistry(RootObj: TJSONObject);
+var
+  ConfigFile, JsonStr: string;
+begin
+  ConfigFile := GetProjectsConfigPath;
+  JsonStr := RootObj.FormatJSON;
+  WriteStringToFile(ConfigFile, JsonStr);
+end;
+
+function GetProjectNameFromDir(const ADir: string): string;
+var
+  TargetDir, Raw, Val, DirName: string;
+  Parser: TJSONParser;
+  Data: TJSONData;
+  Obj: TJSONObject;
+begin
+  TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
+  DirName := ExtractFileName(ExcludeTrailingPathDelimiter(TargetDir));
+  Result := DirName;
+
+  if FileExists(TargetDir + 'package.json') then
+  begin
+    Raw := ReadFileToString(TargetDir + 'package.json');
+    if Trim(Raw) <> '' then
+    begin
+      try
+        Parser := TJSONParser.Create(Raw, True);
+        try
+          Data := Parser.Parse;
+          if (Data <> nil) and (Data is TJSONObject) then
+          begin
+            Obj := TJSONObject(Data);
+            Val := Trim(GetJsonString(Obj, 'name', ''));
+            if Val <> '' then
+            begin
+              if (SameText(Val, 'blaisevue-demo-app') or SameText(Val, 'demo-app')) and
+                 (not SameText(DirName, 'demo-app')) then
+                Result := DirName
+              else
+                Result := Val;
+            end;
+          end;
+          if Data <> nil then Data.Free;
+        finally
+          Parser.Free;
+        end;
+      except
+      end;
+    end;
+  end;
+end;
+
+function GetProjectVersionFromDir(const ADir: string): string;
+var
+  TargetDir, Raw, Val: string;
+  Parser: TJSONParser;
+  Data: TJSONData;
+  Obj: TJSONObject;
+begin
+  TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
+  Result := '1.0.0';
+
+  if FileExists(TargetDir + 'package.json') then
+  begin
+    Raw := ReadFileToString(TargetDir + 'package.json');
+    if Trim(Raw) <> '' then
+    begin
+      try
+        Parser := TJSONParser.Create(Raw, True);
+        try
+          Data := Parser.Parse;
+          if (Data <> nil) and (Data is TJSONObject) then
+          begin
+            Obj := TJSONObject(Data);
+            Val := GetJsonString(Obj, 'version', '');
+            if Val <> '' then
+              Result := Val;
+          end;
+          if Data <> nil then Data.Free;
+        finally
+          Parser.Free;
+        end;
+      except
+      end;
+    end;
+  end;
+end;
+
+function FindRegisteredProject(const ProjName: string; out ProjPath, ProjVer: string): Boolean;
+var
+  RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  i: Integer;
+  PName: string;
+begin
+  Result := False;
+  ProjPath := '';
+  ProjVer := '';
+  if not LoadProjectsRegistry(RootObj) then Exit;
+  try
+    ProjectsArr := RootObj.Arrays['projects'];
+    for i := 0 to ProjectsArr.Count - 1 do
+    begin
+      ProjData := ProjectsArr[i];
+      if ProjData is TJSONObject then
+      begin
+        ProjObj := TJSONObject(ProjData);
+        PName := GetJsonString(ProjObj, 'name', '');
+        if SameText(PName, ProjName) then
+        begin
+          ProjPath := GetJsonString(ProjObj, 'path', '');
+          ProjVer := GetJsonString(ProjObj, 'version', '1.0.0');
+          Result := True;
+          Exit;
+        end;
+      end;
+    end;
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdProjectAdd;
+var
+  RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  CurDir, ProjName, ProjVer, NormCurDir, NormExisting: string;
+  i, FoundIdx: Integer;
+begin
+  if not IsValidBlaiseVueProject then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Cannot register current directory: not a recognized BlaiseVue project.');
+    WriteLn('  Directory: ', GetCurrentDir);
+    WriteLn('  Ensure you are inside a project with app.cfg, package.json, or src/');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
+  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+  NormCurDir := LowerCase(CurDir);
+  ProjName := GetProjectNameFromDir(CurDir);
+  ProjVer := GetProjectVersionFromDir(CurDir);
+
+  if not LoadProjectsRegistry(RootObj) then Exit;
+  try
+    ProjectsArr := RootObj.Arrays['projects'];
+    FoundIdx := -1;
+
+    for i := 0 to ProjectsArr.Count - 1 do
+    begin
+      ProjData := ProjectsArr[i];
+      if ProjData is TJSONObject then
+      begin
+        NormExisting := LowerCase(ExcludeTrailingPathDelimiter(GetJsonString(TJSONObject(ProjData), 'path', '')));
+        if (NormExisting = NormCurDir) or (LowerCase(GetJsonString(TJSONObject(ProjData), 'name', '')) = LowerCase(ProjName)) then
+        begin
+          FoundIdx := i;
+          Break;
+        end;
+      end;
+    end;
+
+    if FoundIdx >= 0 then
+    begin
+      ProjObj := TJSONObject(ProjectsArr[FoundIdx]);
+      ProjObj.Strings['name'] := ProjName;
+      ProjObj.Strings['path'] := CurDir;
+      ProjObj.Strings['version'] := ProjVer;
+      ProjObj.Strings['lastUsed'] := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+    end
+    else
+    begin
+      ProjObj := TJSONObject.Create;
+      ProjObj.Add('name', ProjName);
+      ProjObj.Add('path', CurDir);
+      ProjObj.Add('version', ProjVer);
+      ProjObj.Add('lastUsed', FormatDateTime('yyyy-mm-dd hh:nn:ss', Now));
+      ProjectsArr.Add(ProjObj);
+    end;
+
+    RootObj.Strings['active'] := ProjName;
+    SaveProjectsRegistry(RootObj);
+
+    WriteLn('');
+    WriteLn('  [SUCCESS] Project "', ProjName, '" successfully registered in BlaiseVue registry!');
+    WriteLn('  Path:    ', CurDir);
+    WriteLn('  Version: v', ProjVer);
+    WriteLn('');
+    WriteLn('  You can now enter this project from anywhere using:');
+    WriteLn('    bv use ', ProjName);
+    WriteLn('');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdProjectList;
+var
+  RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  ActiveName, PName, PPath, PVer, Marker: string;
+  i: Integer;
+begin
+  if not LoadProjectsRegistry(RootObj) then Exit;
+  try
+    ActiveName := GetJsonString(RootObj, 'active', '');
+    ProjectsArr := RootObj.Arrays['projects'];
+
+    WriteLn('');
+    WriteLn('  Registered BlaiseVue Projects:');
+    WriteLn('  ' + StringOfChar('-', 76));
+
+    if ProjectsArr.Count = 0 then
+    begin
+      WriteLn('  No projects registered yet.');
+      WriteLn('  To register a project: navigate to its folder, run "bv enter" and "project add"');
+    end
+    else
+    begin
+      for i := 0 to ProjectsArr.Count - 1 do
+      begin
+        ProjData := ProjectsArr[i];
+        if ProjData is TJSONObject then
+        begin
+          ProjObj := TJSONObject(ProjData);
+          PName := GetJsonString(ProjObj, 'name', 'unnamed');
+          PPath := GetJsonString(ProjObj, 'path', '');
+          PVer := GetJsonString(ProjObj, 'version', '1.0.0');
+
+          if SameText(PName, ActiveName) then
+            Marker := '* '
+          else
+            Marker := '  ';
+
+          WriteLn('  ', Marker, PadRight(PName, 20), PadRight('v' + PVer, 10), PPath);
+        end;
+      end;
+    end;
+
+    WriteLn('  ' + StringOfChar('-', 76));
+    WriteLn('  Total: ', ProjectsArr.Count, ' project(s) registered (* active)');
+    WriteLn('');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdProjectCurrent;
+var
+  RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  ActiveName, PName, PPath, PVer: string;
+  i: Integer;
+  Found: Boolean;
+begin
+  if not LoadProjectsRegistry(RootObj) then Exit;
+  try
+    ActiveName := GetJsonString(RootObj, 'active', '');
+    if ActiveName = '' then
+    begin
+      WriteLn('No active project set in registry.');
+      Exit;
+    end;
+
+    ProjectsArr := RootObj.Arrays['projects'];
+    Found := False;
+    for i := 0 to ProjectsArr.Count - 1 do
+    begin
+      ProjData := ProjectsArr[i];
+      if ProjData is TJSONObject then
+      begin
+        ProjObj := TJSONObject(ProjData);
+        PName := GetJsonString(ProjObj, 'name', '');
+        if SameText(PName, ActiveName) then
+        begin
+          PPath := GetJsonString(ProjObj, 'path', '');
+          PVer := GetJsonString(ProjObj, 'version', '1.0.0');
+          WriteLn('');
+          WriteLn('  Active Project: ', PName);
+          WriteLn('  Version:        v', PVer);
+          WriteLn('  Directory:      ', PPath);
+          if DirectoryExists(PPath) then
+            WriteLn('  Status:         OK (folder exists on disk)')
+          else
+            WriteLn('  Status:         WARNING (folder not found on disk!)');
+          WriteLn('');
+          Found := True;
+          Break;
+        end;
+      end;
+    end;
+
+    if not Found then
+      WriteLn('Active project "', ActiveName, '" not found in registry details.');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdProjectRemove(const ProjName: string);
+var
+  RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  i, DeleteIdx: Integer;
+  ActiveName: string;
+begin
+  if not LoadProjectsRegistry(RootObj) then Exit;
+  try
+    ProjectsArr := RootObj.Arrays['projects'];
+    DeleteIdx := -1;
+    for i := 0 to ProjectsArr.Count - 1 do
+    begin
+      ProjData := ProjectsArr[i];
+      if ProjData is TJSONObject then
+      begin
+        ProjObj := TJSONObject(ProjData);
+        if SameText(GetJsonString(ProjObj, 'name', ''), ProjName) then
+        begin
+          DeleteIdx := i;
+          Break;
+        end;
+      end;
+    end;
+
+    if DeleteIdx >= 0 then
+    begin
+      ProjectsArr.Delete(DeleteIdx);
+      ActiveName := GetJsonString(RootObj, 'active', '');
+      if SameText(ActiveName, ProjName) then
+      begin
+        if ProjectsArr.Count > 0 then
+          RootObj.Strings['active'] := GetJsonString(TJSONObject(ProjectsArr[0]), 'name', '')
+        else
+          RootObj.Strings['active'] := '';
+      end;
+      SaveProjectsRegistry(RootObj);
+      WriteLn('Project "', ProjName, '" unregistered from BlaiseVue registry (files intact).');
+    end
+    else
+    begin
+      WriteLn('Project "', ProjName, '" not found in registry.');
+      WriteLn('Run "project list" to see registered projects.');
+    end;
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string);
+var
+  CurDir, CurName, AppVer, AppAuth, AppLic: string;
+  PkgJson, RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  AppBvPath, HtmlPath, AppContent, HtmlContent: string;
+  i: Integer;
+begin
+  RenamedName := '';
+  if not IsValidBlaiseVueProject then
+  begin
+    WriteLn('[ERROR] "bv rename project" can only be executed inside a BlaiseVue project.');
+    Exit;
+  end;
+
+  if IsFrameworkCoreDemoApp then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] SAFETY GUARD ACTIVE: OPERATION REFUSED!');
+    WriteLn('  The framework repository and its official demo-app cannot be renamed.');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
+  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+  CurName := GetProjectNameFromDir(CurDir);
+
+  if SameText(CurName, NewProjectName) then
+  begin
+    if LoadPackageJson(PkgJson) then
+    begin
+      try
+        if GetJsonString(PkgJson, 'name', '') <> NewProjectName then
+        begin
+          PkgJson.Strings['name'] := NewProjectName;
+          WriteStringToFile('package.json', PkgJson.FormatJSON);
+          WriteLn('Synced "name": "', NewProjectName, '" in package.json.');
+        end;
+      finally
+        PkgJson.Free;
+      end;
+    end;
+    WriteLn('Project is already named "', NewProjectName, '".');
+    RenamedName := NewProjectName;
+    Exit;
+  end;
+
+  AppVer := '1.0.0';
+  AppAuth := 'BlaiseVue Developer';
+  AppLic := 'MIT';
+
+  // 1. Update package.json
+  if LoadPackageJson(PkgJson) then
+  begin
+    try
+      AppVer := GetJsonString(PkgJson, 'version', AppVer);
+      AppAuth := GetJsonString(PkgJson, 'author', AppAuth);
+      AppLic := GetJsonString(PkgJson, 'license', AppLic);
+      PkgJson.Strings['name'] := NewProjectName;
+      WriteStringToFile('package.json', PkgJson.FormatJSON);
+    finally
+      PkgJson.Free;
+    end;
+  end;
+
+  // 2. Sync uAppVersion.pas
+  SyncAppVersionUnit(NewProjectName, AppVer, AppAuth, AppLic);
+
+  // 3. Update src/app.bv
+  AppBvPath := CurDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
+  if FileExists(AppBvPath) then
+  begin
+    AppContent := ReadFileToString(AppBvPath);
+    if Pos('appTitle: string = ''' + CurName + ''';', AppContent) > 0 then
+    begin
+      AppContent := StringReplace(AppContent, 'appTitle: string = ''' + CurName + ''';', 'appTitle: string = ''' + NewProjectName + ''';', [rfReplaceAll]);
+      WriteStringToFile(AppBvPath, AppContent);
+    end;
+  end;
+
+  // 4. Update public/index.html
+  HtmlPath := CurDir + DirectorySeparator + 'public' + DirectorySeparator + 'index.html';
+  if FileExists(HtmlPath) then
+  begin
+    HtmlContent := ReadFileToString(HtmlPath);
+    if Pos('<title>' + CurName + '</title>', HtmlContent) > 0 then
+    begin
+      HtmlContent := StringReplace(HtmlContent, '<title>' + CurName + '</title>', '<title>' + NewProjectName + '</title>', [rfReplaceAll]);
+      WriteStringToFile(HtmlPath, HtmlContent);
+    end;
+  end;
+
+  // 5. Update Global Registry (~/.blaisevue/projects.json)
+  if LoadProjectsRegistry(RootObj) then
+  begin
+    try
+      ProjectsArr := RootObj.Arrays['projects'];
+      for i := 0 to ProjectsArr.Count - 1 do
+      begin
+        ProjData := ProjectsArr[i];
+        if ProjData is TJSONObject then
+        begin
+          ProjObj := TJSONObject(ProjData);
+          if SameText(GetJsonString(ProjObj, 'path', ''), CurDir) or SameText(GetJsonString(ProjObj, 'name', ''), CurName) then
+          begin
+            ProjObj.Strings['name'] := NewProjectName;
+            ProjObj.Strings['lastUsed'] := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+            Break;
+          end;
+        end;
+      end;
+      if SameText(GetJsonString(RootObj, 'active', ''), CurName) then
+        RootObj.Strings['active'] := NewProjectName;
+      SaveProjectsRegistry(RootObj);
+    finally
+      RootObj.Free;
+    end;
+  end;
+
+  RenamedName := NewProjectName;
+  WriteLn('');
+  WriteLn('  [SUCCESS] Project renamed from "', CurName, '" to "', NewProjectName, '"!');
+  WriteLn('  Updated: package.json, src/app.bv, src/uAppVersion.pas, public/index.html');
+  WriteLn('  Updated project registry entry.');
+  WriteLn('');
+end;
+
+procedure CmdProject;
+var
+  SubCmd: string;
+begin
+  if ParamCount < 2 then
+  begin
+    WriteLn('Usage: bv project <add|list|current|use|remove>');
+    WriteLn('Commands:');
+    WriteLn('  bv project add            Registers current directory as a project');
+    WriteLn('  bv project list           Lists all registered projects (* active)');
+    WriteLn('  bv project current        Shows active project details');
+    WriteLn('  bv project use <name>     Sets active project and opens cockpit');
+    WriteLn('  bv project remove <name>  Unregisters a project');
+    Halt(1);
+  end;
+  SubCmd := LowerCase(ParamStr(2));
+  if SubCmd = 'add' then
+    CmdProjectAdd
+  else if (SubCmd = 'list') or (SubCmd = 'ls') then
+    CmdProjectList
+  else if (SubCmd = 'current') or (SubCmd = 'cur') then
+    CmdProjectCurrent
+  else if SubCmd = 'use' then
+  begin
+    if ParamCount < 3 then
+    begin
+      WriteLn('Usage: bv project use <name>');
+      Halt(1);
+    end;
+    CmdUse(ParamStr(3));
+  end
+  else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
+  begin
+    if ParamCount < 3 then
+    begin
+      WriteLn('Usage: bv project remove <name>');
+      Halt(1);
+    end;
+    CmdProjectRemove(ParamStr(3));
+  end
+  else
+  begin
+    WriteLn('Unknown project subcommand: ', SubCmd);
+    WriteLn('Use "bv project" for help.');
+    Halt(1);
+  end;
+end;
+
+procedure SplitTokens(const S: string; Tokens: TStringList);
+var
+  i: Integer;
+  Cur: string;
+  InQuote: Boolean;
+begin
+  Tokens.Clear;
+  Cur := '';
+  InQuote := False;
+  for i := 1 to Length(S) do
+  begin
+    if S[i] = '"' then
+      InQuote := not InQuote
+    else if (S[i] = ' ') and not InQuote then
+    begin
+      if Cur <> '' then
+      begin
+        Tokens.Add(Cur);
+        Cur := '';
+      end;
+    end
+    else
+      Cur := Cur + S[i];
+  end;
+  if Cur <> '' then
+    Tokens.Add(Cur);
+end;
+
+procedure RunCockpitShell(const InitialName, InitialPath: string);
+var
+  ActiveName, ActivePath, InputLine, CmdName, DummyName: string;
+  Tokens: TStringList;
+  FoundPath, FoundVer: string;
+  HasNoTest: Boolean;
+  i: Integer;
+begin
+  ActiveName := InitialName;
+  ActivePath := InitialPath;
+
+  WriteLn('');
+  WriteLn('========================================================================');
+  WriteLn('  [BlaiseVue Interactive Cockpit]');
+  WriteLn('  Active Project: ' + ActiveName + ' (' + ActivePath + ')');
+  WriteLn('  Commands: new, remove, list, test, dev, build, project add, exit');
+  WriteLn('========================================================================');
+  WriteLn('');
+
+  Tokens := TStringList.Create;
+  try
+    while True do
+    begin
+      Write('[bv: ' + ActiveName + '] > ');
+      ReadLn(InputLine);
+      InputLine := Trim(InputLine);
+      if InputLine = '' then Continue;
+
+      // Strip leading 'bv ' if typed out of habit
+      if (Length(InputLine) >= 3) and (LowerCase(Copy(InputLine, 1, 3)) = 'bv ') then
+        InputLine := Trim(Copy(InputLine, 4, Length(InputLine)));
+
+      SplitTokens(InputLine, Tokens);
+      if Tokens.Count = 0 then Continue;
+
+      CmdName := LowerCase(Tokens[0]);
+
+      // Exit / Quit
+      if (CmdName = 'exit') or (CmdName = 'quit') or (CmdName = 'q') then
+      begin
+        WriteLn('Exiting BlaiseVue Cockpit. Goodbye!');
+        Break;
+      end
+
+      // Clear screen
+      else if (CmdName = 'cls') or (CmdName = 'clear') then
+      begin
+        for i := 1 to 40 do WriteLn('');
+      end
+
+      // Help
+      else if (CmdName = 'help') or (CmdName = '?') then
+      begin
+        WriteLn('');
+        WriteLn('  BlaiseVue Cockpit Commands:');
+        WriteLn('  -------------------------------------------------------------');
+        WriteLn('  Project Commands:');
+        WriteLn('    project add          Registers current project into global registry');
+        WriteLn('    project list         Lists all registered projects (* active)');
+        WriteLn('    project current      Shows active project details');
+        WriteLn('    project remove <name> Unregisters a project');
+        WriteLn('    use <name>           Switches active project context immediately');
+        WriteLn('');
+        WriteLn('  Scaffolding & Management:');
+        WriteLn('    new s <Name> [--no-test] Creates a new pure Pascal service');
+        WriteLn('    new c <Name> [--no-test] Creates a new component');
+        WriteLn('    new v <Name> [--no-test] Creates a new view');
+        WriteLn('    new t <Name>             Creates a new test file');
+        WriteLn('    remove <c|v|s|t> <Name>  Removes element and tests safely');
+        WriteLn('    list <c|v|s|t>           Lists components, views, services, or tests');
+        WriteLn('');
+        WriteLn('  Testing & Building:');
+        WriteLn('    test                     Runs test suite (Pas2JS + Vitest)');
+        WriteLn('    dev                      Starts dev server with HMR');
+        WriteLn('    build                    Production build with hashes');
+        WriteLn('    check [file]             AST template type-checker');
+        WriteLn('    clean                    Cleans generated and dist folders');
+        WriteLn('    exit / quit              Exits the cockpit');
+        WriteLn('  -------------------------------------------------------------');
+        WriteLn('');
+      end
+
+      // Project subcommands inside shell
+      else if (CmdName = 'project') or (CmdName = 'p') then
+      begin
+        if Tokens.Count < 2 then
+          CmdProjectList
+        else
+        begin
+          if LowerCase(Tokens[1]) = 'add' then
+            CmdProjectAdd
+          else if (LowerCase(Tokens[1]) = 'list') or (LowerCase(Tokens[1]) = 'ls') then
+            CmdProjectList
+          else if (LowerCase(Tokens[1]) = 'current') or (LowerCase(Tokens[1]) = 'cur') then
+            CmdProjectCurrent
+          else if (LowerCase(Tokens[1]) = 'remove') or (LowerCase(Tokens[1]) = 'rm') or (LowerCase(Tokens[1]) = 'del') then
+          begin
+            if Tokens.Count < 3 then
+              WriteLn('Usage: project remove <name>')
+            else
+              CmdProjectRemove(Tokens[2]);
+          end
+          else if LowerCase(Tokens[1]) = 'use' then
+          begin
+            if Tokens.Count < 3 then
+              WriteLn('Usage: use <name>')
+            else
+            begin
+              if FindRegisteredProject(Tokens[2], FoundPath, FoundVer) then
+              begin
+                if DirectoryExists(FoundPath) then
+                begin
+                  ChDir(FoundPath);
+                  ActiveName := Tokens[2];
+                  ActivePath := FoundPath;
+                  WriteLn('Switched active project to "', ActiveName, '" (', ActivePath, ')');
+                end
+                else
+                  WriteLn('[ERROR] Directory for "', Tokens[2], '" not found: ', FoundPath);
+              end
+              else
+                WriteLn('[ERROR] Project "', Tokens[2], '" not found in registry. Run "project list".');
+            end;
+          end
+          else
+            WriteLn('Unknown project subcommand. Use "project add", "project list", or "project remove <name>".');
+        end;
+      end
+
+      // Direct switch via `use <name>`
+      else if CmdName = 'use' then
+      begin
+        if Tokens.Count < 2 then
+          WriteLn('Usage: use <project-name>')
+        else
+        begin
+          if FindRegisteredProject(Tokens[1], FoundPath, FoundVer) then
+          begin
+            if DirectoryExists(FoundPath) then
+            begin
+              ChDir(FoundPath);
+              ActiveName := Tokens[1];
+              ActivePath := FoundPath;
+              WriteLn('');
+              WriteLn('  Switched active project to "' + ActiveName + '"');
+              WriteLn('  Directory: ' + ActivePath);
+              WriteLn('');
+            end
+            else
+              WriteLn('[ERROR] Directory for "', Tokens[1], '" not found: ', FoundPath);
+          end
+          else
+          begin
+            WriteLn('[ERROR] Project "', Tokens[1], '" not found in registry.');
+            WriteLn('Run "project list" to see registered projects.');
+          end;
+        end;
+      end
+
+      // `new` generator
+      else if (CmdName = 'new') or (CmdName = 'generate') or (CmdName = 'g') then
+      begin
+        if Tokens.Count < 3 then
+        begin
+          WriteLn('Usage: new <c|v|s|t> <Name> [--no-test]');
+        end
+        else
+        begin
+          HasNoTest := False;
+          for i := 3 to Tokens.Count - 1 do
+          begin
+            if (LowerCase(Tokens[i]) = '--no-test') or (LowerCase(Tokens[i]) = '-nt') or (LowerCase(Tokens[i]) = '--skip-test') then
+              HasNoTest := True;
+          end;
+
+          if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') then
+            CmdNewService(Tokens[2], not HasNoTest)
+          else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
+            CmdNewComponent(Tokens[2], not HasNoTest)
+          else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
+            CmdNewView(Tokens[2], not HasNoTest)
+          else if (LowerCase(Tokens[1]) = 't') or (LowerCase(Tokens[1]) = 'test') then
+            CmdNewTest(Tokens[2])
+          else
+            WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "test" (t).');
+        end;
+      end
+
+      // `remove`
+      else if (CmdName = 'remove') or (CmdName = 'rm') then
+      begin
+        if Tokens.Count < 3 then
+          WriteLn('Usage: remove <c|v|s|t> <Name>')
+        else
+        begin
+          if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') then
+            CmdRemoveService(Tokens[2])
+          else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
+            CmdRemoveComponent(Tokens[2])
+          else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
+            CmdRemoveView(Tokens[2])
+          else if (LowerCase(Tokens[1]) = 't') or (LowerCase(Tokens[1]) = 'test') then
+            CmdRemoveTest(Tokens[2])
+          else
+            WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "test" (t).');
+        end;
+      end
+
+      // `list`
+      else if (CmdName = 'list') or (CmdName = 'ls') then
+      begin
+        if Tokens.Count < 2 then
+          WriteLn('Usage: list <c|v|s|t|lib>')
+        else
+        begin
+          if LowerCase(Tokens[1]) = 'lib' then
+            CmdLibList
+          else
+            CmdList(Tokens[1]);
+        end;
+      end
+
+      // `test`
+      else if CmdName = 'test' then
+      begin
+        if (Tokens.Count >= 2) and (LowerCase(Tokens[1]) = 'e2e') then
+          CmdTestE2E
+        else
+          CmdTest;
+      end
+
+      // `dev`
+      else if (CmdName = 'dev') or (CmdName = 'serve') then
+      begin
+        CmdBuild;
+      end
+
+      // `build`
+      else if CmdName = 'build' then
+      begin
+        CmdRunBuild;
+      end
+
+      // `clean`
+      else if CmdName = 'clean' then
+      begin
+        CmdClean;
+      end
+
+      // `rename`
+      else if (CmdName = 'rename') or (CmdName = 'ren') or (CmdName = 'mv') then
+      begin
+        if Tokens.Count < 3 then
+        begin
+          WriteLn('Usage: rename <c|v|s|project> <OldName> [NewName]');
+        end
+        else
+        begin
+          if (LowerCase(Tokens[1]) = 'p') or (LowerCase(Tokens[1]) = 'project') or (LowerCase(Tokens[1]) = 'proj') then
+          begin
+            CmdRenameProject(Tokens[2], DummyName);
+            if DummyName <> '' then
+              ActiveName := DummyName;
+          end
+          else if Tokens.Count < 4 then
+          begin
+            WriteLn('Usage: rename <c|v|s> <OldName> <NewName>');
+          end
+          else
+          begin
+            if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') or (LowerCase(Tokens[1]) = 'unit') then
+              CmdRenameService(Tokens[2], Tokens[3])
+            else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
+              CmdRenameComponent(Tokens[2], Tokens[3])
+            else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
+              CmdRenameView(Tokens[2], Tokens[3])
+            else
+              WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "project" (p).');
+          end;
+        end;
+      end
+
+      // `check`
+      else if CmdName = 'check' then
+      begin
+        if Tokens.Count >= 2 then
+          CmdCheck(Tokens[1])
+        else
+          CmdCheck('');
+      end
+
+      else
+      begin
+        WriteLn('Unknown command: ', CmdName);
+        WriteLn('Type "help" for a list of available commands, or "exit" to quit.');
+      end;
+    end;
+  finally
+    Tokens.Free;
+  end;
+end;
+
+procedure CmdEnter;
+var
+  CurDir, ProjName, ProjVer: string;
+begin
+  // LOCAL ONLY RULE: Must be inside a recognized BlaiseVue project!
+  if not IsValidBlaiseVueProject then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] "bv enter" can only be executed inside a BlaiseVue project.');
+    WriteLn('  Current directory: ', GetCurrentDir);
+    WriteLn('');
+    WriteLn('  To enter an already registered project from anywhere, use:');
+    WriteLn('    bv use <project-name>');
+    WriteLn('');
+    WriteLn('  To view registered projects:');
+    WriteLn('    bv project list');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+  ProjName := GetProjectNameFromDir(CurDir);
+  ProjVer := GetProjectVersionFromDir(CurDir);
+
+  RunCockpitShell(ProjName, CurDir);
+end;
+
+procedure CmdUse(const ProjName: string);
+var
+  ProjPath, ProjVer: string;
+  RootObj: TJSONObject;
+begin
+  if not FindRegisteredProject(ProjName, ProjPath, ProjVer) then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Project "', ProjName, '" is not registered in BlaiseVue registry.');
+    WriteLn('');
+    WriteLn('  To register a project:');
+    WriteLn('    1. Open its folder in terminal');
+    WriteLn('    2. Run "bv enter"');
+    WriteLn('    3. Run "project add"');
+    WriteLn('');
+    WriteLn('  Run "bv project list" to see registered projects.');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  if not DirectoryExists(ProjPath) then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Registered path for "', ProjName, '" does not exist on disk:');
+    WriteLn('  ', ProjPath);
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  ChDir(ProjPath);
+
+  // Update active project in registry
+  if LoadProjectsRegistry(RootObj) then
+  begin
+    try
+      RootObj.Strings['active'] := ProjName;
+      SaveProjectsRegistry(RootObj);
+    finally
+      RootObj.Free;
+    end;
+  end;
+
+  RunCockpitShell(ProjName, ProjPath);
+end;
 //  MAIN ENTRY POINT
 
 // =====================================================================
@@ -21940,7 +23384,7 @@ end;
 
 var
 
-  Cmd, TypeArg, NameArg, DirArg: string;
+  Cmd, TypeArg, NameArg, DirArg, DummyRenamed: string;
 
   SkipTest, SkipTestsArg: Boolean;
 
@@ -21987,18 +23431,22 @@ begin
     WriteLn('    bv new c <Name>        Creates a new component');
 
     WriteLn('    bv new v <Name>        Creates a new view');
+    WriteLn('    bv new s <Name>        Creates a new service unit (pure Pascal)');
 
     WriteLn('    bv new t <Name>        Creates a new test file (.test.pas)');
 
     WriteLn('    bv remove c <Name>     Removes a component');
 
     WriteLn('    bv remove v <Name>     Removes a view');
+    WriteLn('    bv remove s <Name>     Removes a service unit');
 
     WriteLn('    bv remove t <Name>     Removes a test file');
+    WriteLn('    bv rename <c|v|s|p> <Old> [New] Renames component, view, service, or project');
 
     WriteLn('    bv list c              Lists components');
 
     WriteLn('    bv list v              Lists views');
+    WriteLn('    bv list s              Lists services');
 
     WriteLn('    bv list t              Lists test files');
 
@@ -22068,6 +23516,12 @@ begin
     WriteLn('    bv license [list|show|set <type>] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
     WriteLn('    bv meta [show|get|set|bump|init]  Manages project metadata and syncs src/uAppVersion.pas');
     WriteLn('    bv reset [--bare] [--force]       Cleans project to a fresh slate (protected against demo-app)');
+    WriteLn('    bv enter               Enters interactive cockpit (must be inside project)');
+    WriteLn('    bv use <project-name>  Enters registered project cockpit from anywhere');
+    WriteLn('    bv project add         Registers current project into global registry');
+    WriteLn('    bv project list        Lists registered projects (* active)');
+    WriteLn('    bv project current     Shows active project information');
+    WriteLn('    bv project remove <name> Unregisters a project');
 
     WriteLn('');
 
@@ -22161,7 +23615,7 @@ begin
 
   end
 
-  else if Cmd = 'new' then
+  else if (Cmd = 'new') or (Cmd = 'generate') or (Cmd = 'g') then
 
   begin
 
@@ -22169,9 +23623,9 @@ begin
 
     begin
 
-      WriteLn('Usage: bv new <c|v|t> <Name> [--no-test]');
+      WriteLn('Usage: bv new <c|v|s|t> <Name> [--no-test]');
 
-      WriteLn('Types: component (c), view (v), test (t)');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
 
       Halt(1);
 
@@ -22204,6 +23658,8 @@ begin
     else if (TypeArg = 'v') or (TypeArg = 'view') then
 
       CmdNewView(NameArg, not SkipTest)
+    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+      CmdNewService(NameArg, not SkipTest)
 
     else if (TypeArg = 't') or (TypeArg = 'test') then
 
@@ -22213,7 +23669,7 @@ begin
 
     begin
 
-      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v) or "test" (t).');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
 
       Halt(1);
 
@@ -22229,9 +23685,9 @@ begin
 
     begin
 
-      WriteLn('Usage: bv remove <c|v|t> <Name>');
+      WriteLn('Usage: bv remove <c|v|s|t> <Name>');
 
-      WriteLn('Types: component (c), view (v), test (t)');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
 
       Halt(1);
 
@@ -22248,6 +23704,8 @@ begin
     else if (TypeArg = 'v') or (TypeArg = 'view') then
 
       CmdRemoveView(NameArg)
+    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+      CmdRemoveService(NameArg)
 
     else if (TypeArg = 't') or (TypeArg = 'test') then
 
@@ -22257,7 +23715,7 @@ begin
 
     begin
 
-      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v) or "test" (t).');
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
 
       Halt(1);
 
@@ -22590,23 +24048,72 @@ begin
   end
 
   else if Cmd = 'reset' then
-
   begin
-
     CmdReset;
-
   end
-
-  else
-
+  else if Cmd = 'enter' then
   begin
-
+    CmdEnter;
+  end
+  else if Cmd = 'use' then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv use <project-name>');
+      WriteLn('Switches to a registered BlaiseVue project and opens the interactive cockpit.');
+      WriteLn('Run "bv project list" to see registered projects.');
+      Halt(1);
+    end;
+    CmdUse(ParamStr(2));
+  end
+  else if (Cmd = 'project') or (Cmd = 'p') then
+  begin
+    CmdProject;
+  end
+  else if (Cmd = 'rename') or (Cmd = 'ren') or (Cmd = 'mv') then
+  begin
+    if ParamCount < 3 then
+    begin
+      WriteLn('Usage: bv rename <c|v|s|project> <OldName> [NewName]');
+      WriteLn('Types: component (c), view (v), service (s), project (p)');
+      WriteLn('Examples:');
+      WriteLn('  bv rename s CalculadoraFrete CalculoLogistica');
+      WriteLn('  bv rename c ProductCard ItemCard');
+      WriteLn('  bv rename v OrderHistory MyOrders');
+      WriteLn('  bv rename project meu-novo-app');
+      Halt(1);
+    end;
+    TypeArg := LowerCase(ParamStr(2));
+    if (TypeArg = 'p') or (TypeArg = 'project') or (TypeArg = 'proj') then
+    begin
+      CmdRenameProject(ParamStr(3), DummyRenamed);
+    end
+    else
+    begin
+      if ParamCount < 4 then
+      begin
+        WriteLn('Usage: bv rename <c|v|s> <OldName> <NewName>');
+        Halt(1);
+      end;
+      NameArg := ParamStr(3);
+      if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'unit') then
+        CmdRenameService(NameArg, ParamStr(4))
+      else if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
+        CmdRenameComponent(NameArg, ParamStr(4))
+      else if (TypeArg = 'v') or (TypeArg = 'view') then
+        CmdRenameView(NameArg, ParamStr(4))
+      else
+      begin
+        WriteLn('Unknown type: ', ParamStr(2), '. Use "service" (s), "component" (c), "view" (v) or "project" (p).');
+        Halt(1);
+      end;
+    end;
+  end
+  else
+  begin
     WriteLn('Unknown command: ', Cmd);
-
     WriteLn('Use "bv" without arguments for help.');
-
     Halt(1);
-
   end;
 
 end.

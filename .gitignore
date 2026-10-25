@@ -31,6 +31,8 @@ bin/lib/
 *.apk
 *.aab
 *.ipa
+*.lps
+*.bak
 
 # ⚙️ Embedded Tools & Resources
 temp/

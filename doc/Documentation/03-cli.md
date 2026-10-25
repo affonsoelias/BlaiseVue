@@ -73,7 +73,20 @@ bv new v OrderHistory
 - Automatically generates: `tests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
-### 3. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+### 3. Create Service Unit: `bv new service <Name> [--no-test]`
+Creates a pure Pascal business service unit and its corresponding domain unit test:
+```bash
+bv new service PaymentProcessor
+# Shorthand:
+bv new s PaymentProcessor
+# Generator alias:
+bv g s PaymentProcessor
+```
+- Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
+- Automatically generates: `tests/unit/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
+- Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
+
+### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
 Creates test suites on demand with automatic directory resolution:
 ```bash
 bv new test SimpleBadge
@@ -82,22 +95,55 @@ bv new t SimpleBadge
 ```
 - **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
 - **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If it is a service in `src/services/`:** created in `tests/unit/SimpleBadge.test.pas` importing `uSimpleBadge`.
 - **If given a relative path:** `bv new t services/CalculoFrete` -> created in `tests/services/CalculoFrete.test.pas`.
-- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business services.
+- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business logic.
 
-### 4. List Elements: `bv list <c|v|t>`
+### 5. List Elements: `bv list <c|v|s|t|lib>`
 Lists registered files across the project:
 - `bv list c`: Lists components in `src/components/`.
 - `bv list v`: Lists views in `src/views/`.
+- `bv list s`: Lists pure Pascal service units in `src/services/`.
 - `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
+- `bv list lib`: Lists installed libraries in `lib/`.
 
-### 5. Remove Elements: `bv remove <component|view|test> <Name>`
+### 6. Remove Elements: `bv remove <component|view|service|test> <Name>`
 Safely purges the source file, generated Pascal units in `generated/`, and associated test files across subfolders:
 ```bash
-bv remove component ProductCard
-bv remove view OrderHistory
-bv remove test SimpleBadge
+bv remove component ProductCard     # or: bv remove c ProductCard
+bv remove view OrderHistory         # or: bv remove v OrderHistory
+bv remove service PaymentProcessor  # or: bv remove s PaymentProcessor
+bv remove test SimpleBadge          # or: bv remove t SimpleBadge
 ```
+
+### 7. Rename Elements: `bv rename <component|view|service|project> <OldName> [NewName]`
+Intelligently refactors components, views, services, or the entire project, updating source files, internal Pascal declarations, unit names, test suites, router configurations, and global registry entries:
+
+```bash
+# Rename a pure Pascal service and its unit tests:
+bv rename service ShippingCalculator LogisticsEngine
+# Shorthand:
+bv rename s ShippingCalculator LogisticsEngine
+
+# Rename a component and update HTML tag across tests:
+bv rename component ProductCard ItemCard
+# Shorthand:
+bv rename c ProductCard ItemCard
+
+# Rename a view and update app.bv router definition:
+bv rename view OrderHistory MyOrders
+# Shorthand:
+bv rename v OrderHistory MyOrders
+
+# Rename the entire project across package.json, src/app.bv, uAppVersion.pas, index.html, and registry:
+bv rename project my-new-erp
+# Shorthand:
+bv rename p my-new-erp
+```
+* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/unit/<New>.test.pas`.
+* **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
+* **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
+* **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
 
 ---
 
@@ -255,6 +301,85 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
+
+---
+
+## 🚀 Interactive Cockpit & Project Registry (`bv enter`, `bv use`, `bv project`)
+
+BlaiseVue provides an interactive cockpit environment and global project registry for fast, error-free multi-project development without risk of modifying or deleting files in the wrong directory.
+
+### 1. Enter Project Cockpit: `bv enter`
+Opens the interactive cockpit shell locked to the current directory.
+> [!IMPORTANT]
+> **Safety Rule**: `bv enter` only executes if you are already inside a valid BlaiseVue project (`app.cfg`, `package.json`, `src/`). It refuses to run in arbitrary or non-project directories.
+
+```bash
+cd C:\Projects\my-erp
+bv enter
+```
+**Output:**
+```text
+========================================================================
+  [BlaiseVue Interactive Cockpit]
+  Active Project: my-erp (C:\Projects\my-erp)
+  Commands: new, remove, list, test, dev, build, project add, exit
+========================================================================
+
+[bv: my-erp] >
+```
+
+### 2. Register Current Project: `project add`
+Inside the cockpit (or via `bv project add`), register the current project into the global registry (`~/.blaisevue/projects.json`):
+```text
+[bv: my-erp] > project add
+
+  [SUCCESS] Project "my-erp" successfully registered in BlaiseVue registry!
+  Path:    C:\Projects\my-erp
+  Version: v1.0.0
+
+  You can now enter this project from anywhere using:
+    bv use my-erp
+```
+
+### 3. Jump to Registered Project from Anywhere: `bv use <project-name>`
+From any terminal directory on the machine, jump directly into a registered project:
+```bash
+C:\Users\Developer> bv use my-erp
+```
+The CLI validates the project's existence on disk, switches directory, and opens the cockpit locked to `my-erp`:
+```text
+[bv: my-erp] > 
+```
+
+### 4. Project Registry Management (`bv project` / `project`)
+Commands available both from the terminal and inside the interactive cockpit:
+* **`project list` (or `bv project list`)**: Lists all registered projects with an active marker `(*)`:
+  ```text
+  Registered BlaiseVue Projects:
+  ----------------------------------------------------------------------------
+  * my-erp            v1.0.0    C:\Projects\my-erp
+    customer-portal   v4.4.0    D:\Work\customer-portal
+  ----------------------------------------------------------------------------
+  Total: 2 project(s) registered (* active)
+  ```
+* **`project current` (or `bv project current`)**: Displays active project name, version, path, and disk health status.
+* **`project remove <name>` (or `bv project remove <name>`)**: Unregisters a project from the registry (keeps project files completely intact).
+* **`use <other-name>`**: Inside the cockpit, switch to another registered project on the fly without exiting the shell!
+
+### 5. Running Commands Inside the Cockpit
+Within the interactive cockpit (`[bv: <project>] > `), run commands directly without repeating `bv`:
+* `new s <Name> [--no-test]` — Scaffolds pure Pascal domain service and unit test.
+* `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
+* `new v <Name> [--no-test]` — Scaffolds `.bv` view and test.
+* `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
+* `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
+* `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
+* `test` — Runs full test suite (Pas2JS + Vitest).
+* `dev` — Starts dev server with instant HMR.
+* `build` — Compiles production distribution with hashes.
+* `check [file]` — Validates SFC templates with AST type-checker.
+* `clean` — Purges `generated/` and `dist/`.
+* `exit` / `quit` — Exits the cockpit and returns to regular shell.
 
 ---
 
