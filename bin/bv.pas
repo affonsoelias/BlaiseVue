@@ -22997,22 +22997,46 @@ begin
     Tokens.Add(Cur);
 end;
 
+procedure ExecInCockpit(const ExePath, WorkingDir, Args: string);
+begin
+  {$IFDEF WINDOWS}
+  ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && "' + ExePath + '" ' + Args);
+  {$ELSE}
+  ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && \"' + ExePath + '\" ' + Args + '"');
+  {$ENDIF}
+end;
+
+procedure ExecShellCmd(const WorkingDir, CmdLine: string);
+begin
+  {$IFDEF WINDOWS}
+  ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && ' + CmdLine);
+  {$ELSE}
+  ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && ' + CmdLine + '"');
+  {$ENDIF}
+end;
+
 procedure RunCockpitShell(const InitialName, InitialPath: string);
 var
   ActiveName, ActivePath, InputLine, CmdName, DummyName: string;
   Tokens: TStringList;
   FoundPath, FoundVer: string;
-  HasNoTest: Boolean;
   i: Integer;
+  BvExePath: string;
 begin
   ActiveName := InitialName;
   ActivePath := InitialPath;
+  BvExePath := ExpandFileName(ParamStr(0));
+  {$IFDEF WINDOWS}
+  if (ExtractFileExt(BvExePath) = '') and FileExists(BvExePath + '.exe') then
+    BvExePath := BvExePath + '.exe';
+  {$ENDIF}
 
   WriteLn('');
   WriteLn('========================================================================');
   WriteLn('  [BlaiseVue Interactive Cockpit]');
   WriteLn('  Active Project: ' + ActiveName + ' (' + ActivePath + ')');
-  WriteLn('  Commands: new, remove, list, test, dev, build, project add, exit');
+  WriteLn('  Full-Stack Pascal & Reactive CLI Environment');
+  WriteLn('  Type "help" for command list, or "exit" to quit.');
   WriteLn('========================================================================');
   WriteLn('');
 
@@ -23047,39 +23071,67 @@ begin
         for i := 1 to 40 do WriteLn('');
       end
 
+      // Enter (already inside)
+      else if CmdName = 'enter' then
+      begin
+        WriteLn('You are already inside the BlaiseVue Cockpit! Active project: ' + ActiveName);
+        WriteLn('To switch projects, use: use <project-name>');
+        WriteLn('To exit, use: exit');
+      end
+
       // Help
-      else if (CmdName = 'help') or (CmdName = '?') then
+      else if (CmdName = 'help') or (CmdName = '?') or (CmdName = '--help') or (CmdName = '-h') then
       begin
         WriteLn('');
-        WriteLn('  BlaiseVue Cockpit Commands:');
-        WriteLn('  -------------------------------------------------------------');
-        WriteLn('  Project Commands:');
-        WriteLn('    project add          Registers current project into global registry');
-        WriteLn('    project list         Lists all registered projects (* active)');
-        WriteLn('    project current      Shows active project details');
-        WriteLn('    project remove <name> Unregisters a project');
-        WriteLn('    use <name>           Switches active project context immediately');
+        WriteLn('  BlaiseVue Interactive Cockpit Commands:');
+        WriteLn('  =============================================================');
+        WriteLn('  Project & Session:');
+        WriteLn('    project add                Registers current project into global registry');
+        WriteLn('    project list               Lists registered projects (* active)');
+        WriteLn('    project current            Shows active project details');
+        WriteLn('    project remove <name>      Unregisters a project');
+        WriteLn('    use <name>                 Switches active project context immediately');
+        WriteLn('    rename project <NewName>   Renames project, syncs package.json & prompt');
         WriteLn('');
-        WriteLn('  Scaffolding & Management:');
-        WriteLn('    new s <Name> [--no-test] Creates a new pure Pascal service');
-        WriteLn('    new c <Name> [--no-test] Creates a new component');
-        WriteLn('    new v <Name> [--no-test] Creates a new view');
-        WriteLn('    new t <Name>             Creates a new test file');
-        WriteLn('    remove <c|v|s|t> <Name>  Removes element and tests safely');
-        WriteLn('    list <c|v|s|t>           Lists components, views, services, or tests');
+        WriteLn('  Backend & Full-Stack (mORMot 2):');
+        WriteLn('    mormot run [--release]     Launches native backend server');
+        WriteLn('    mormot build [--release]   Compiles native server with Free Pascal');
+        WriteLn('    mormot status              Checks backend health & metrics');
+        WriteLn('    mormot crud <Model> [fields] Scaffolds full-stack CRUD & data grid');
+        WriteLn('    mormot docs / docker       Swagger API docs / Docker containers');
         WriteLn('');
-        WriteLn('  Testing & Building:');
-        WriteLn('    test                     Runs test suite (Pas2JS + Vitest)');
-        WriteLn('    dev                      Starts dev server with HMR');
-        WriteLn('    build                    Production build with hashes');
-        WriteLn('    check [file]             AST template type-checker');
-        WriteLn('    clean                    Cleans generated and dist folders');
-        WriteLn('    exit / quit              Exits the cockpit');
-        WriteLn('  -------------------------------------------------------------');
+        WriteLn('  Frontend & Development:');
+        WriteLn('    dev / serve                Starts dev server with HMR on http://localhost:8080');
+        WriteLn('    build                      Production build in dist/');
+        WriteLn('    run <build|dev|preview>    Unified build and run commands');
+        WriteLn('    check [file]               AST template type-checker & validator');
+        WriteLn('    clean                      Purges generated/ and dist/ folders');
+        WriteLn('');
+        WriteLn('  Code Scaffolding:');
+        WriteLn('    new s <Name> [--no-test]   Creates a new pure Pascal domain service');
+        WriteLn('    new c <Name> [--no-test]   Creates a new component (.bv)');
+        WriteLn('    new v <Name> [--no-test]   Creates a new view (.bv)');
+        WriteLn('    new t <Name>               Creates a new test file');
+        WriteLn('    remove <c|v|s|t> <Name>    Deletes element and unit tests safely');
+        WriteLn('    list <c|v|s|t|lib>         Lists components, views, services, or tests');
+        WriteLn('    rename <c|v|s> <Old> <New> Renames service, component, or view across codebase');
+        WriteLn('');
+        WriteLn('  Testing & Cross-Platform:');
+        WriteLn('    test [e2e]                 Runs Pas2JS + Vitest test suite');
+        WriteLn('    mobile <run|build|sync>    Native Android & iOS via Capacitor');
+        WriteLn('    desktop <run|build|sync>   Native desktop app via Lazarus & WebUI');
+        WriteLn('    studio                     Launches BlaiseVue Studio developer cockpit');
+        WriteLn('    theme <list|use <name>>    Inspects or changes project UI theme');
+        WriteLn('');
+        WriteLn('  Shell Passthrough:');
+        WriteLn('    cls / clear                Clears terminal screen');
+        WriteLn('    exit / quit / q            Exits the cockpit shell');
+        WriteLn('    <shell command>            Runs any system command (git, npm, dir, etc.)');
+        WriteLn('  =============================================================');
         WriteLn('');
       end
 
-      // Project subcommands inside shell
+      // Project subcommands inside shell (in-process for state tracking)
       else if (CmdName = 'project') or (CmdName = 'p') then
       begin
         if Tokens.Count < 2 then
@@ -23126,7 +23178,7 @@ begin
         end;
       end
 
-      // Direct switch via `use <name>`
+      // Direct switch via `use <name>` (in-process for state tracking)
       else if CmdName = 'use' then
       begin
         if Tokens.Count < 2 then
@@ -23156,142 +23208,149 @@ begin
         end;
       end
 
-      // `new` generator
-      else if (CmdName = 'new') or (CmdName = 'generate') or (CmdName = 'g') then
+      // `rename`
+      else if (CmdName = 'rename') or (CmdName = 'ren') or (CmdName = 'mv') then
       begin
-        if Tokens.Count < 3 then
+        if (Tokens.Count >= 3) and ((LowerCase(Tokens[1]) = 'p') or (LowerCase(Tokens[1]) = 'project') or (LowerCase(Tokens[1]) = 'proj')) then
         begin
-          WriteLn('Usage: new <c|v|s|t> <Name> [--no-test]');
+          CmdRenameProject(Tokens[2], DummyName);
+          if DummyName <> '' then
+            ActiveName := DummyName;
         end
         else
-        begin
-          HasNoTest := False;
-          for i := 3 to Tokens.Count - 1 do
-          begin
-            if (LowerCase(Tokens[i]) = '--no-test') or (LowerCase(Tokens[i]) = '-nt') or (LowerCase(Tokens[i]) = '--skip-test') then
-              HasNoTest := True;
-          end;
-
-          if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') then
-            CmdNewService(Tokens[2], not HasNoTest)
-          else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
-            CmdNewComponent(Tokens[2], not HasNoTest)
-          else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
-            CmdNewView(Tokens[2], not HasNoTest)
-          else if (LowerCase(Tokens[1]) = 't') or (LowerCase(Tokens[1]) = 'test') then
-            CmdNewTest(Tokens[2])
-          else
-            WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "test" (t).');
-        end;
+          ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `remove`
-      else if (CmdName = 'remove') or (CmdName = 'rm') then
+      // `mormot` / `server` backend commands
+      else if (CmdName = 'mormot') or (CmdName = 'server') then
       begin
-        if Tokens.Count < 3 then
-          WriteLn('Usage: remove <c|v|s|t> <Name>')
-        else
-        begin
-          if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') then
-            CmdRemoveService(Tokens[2])
-          else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
-            CmdRemoveComponent(Tokens[2])
-          else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
-            CmdRemoveView(Tokens[2])
-          else if (LowerCase(Tokens[1]) = 't') or (LowerCase(Tokens[1]) = 'test') then
-            CmdRemoveTest(Tokens[2])
-          else
-            WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "test" (t).');
-        end;
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `list`
-      else if (CmdName = 'list') or (CmdName = 'ls') then
-      begin
-        if Tokens.Count < 2 then
-          WriteLn('Usage: list <c|v|s|t|lib>')
-        else
-        begin
-          if LowerCase(Tokens[1]) = 'lib' then
-            CmdLibList
-          else
-            CmdList(Tokens[1]);
-        end;
-      end
-
-      // `test`
-      else if CmdName = 'test' then
-      begin
-        if (Tokens.Count >= 2) and (LowerCase(Tokens[1]) = 'e2e') then
-          CmdTestE2E
-        else
-          CmdTest;
-      end
-
-      // `dev`
+      // `dev` / `serve`
       else if (CmdName = 'dev') or (CmdName = 'serve') then
       begin
-        CmdBuild;
+        ExecInCockpit(BvExePath, ActivePath, 'dev');
       end
 
       // `build`
       else if CmdName = 'build' then
       begin
-        CmdRunBuild;
+        ExecInCockpit(BvExePath, ActivePath, 'run build');
+      end
+
+      // `run`
+      else if CmdName = 'run' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `test`
+      else if CmdName = 'test' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
       // `clean`
       else if CmdName = 'clean' then
       begin
-        CmdClean;
-      end
-
-      // `rename`
-      else if (CmdName = 'rename') or (CmdName = 'ren') or (CmdName = 'mv') then
-      begin
-        if Tokens.Count < 3 then
-        begin
-          WriteLn('Usage: rename <c|v|s|project> <OldName> [NewName]');
-        end
-        else
-        begin
-          if (LowerCase(Tokens[1]) = 'p') or (LowerCase(Tokens[1]) = 'project') or (LowerCase(Tokens[1]) = 'proj') then
-          begin
-            CmdRenameProject(Tokens[2], DummyName);
-            if DummyName <> '' then
-              ActiveName := DummyName;
-          end
-          else if Tokens.Count < 4 then
-          begin
-            WriteLn('Usage: rename <c|v|s> <OldName> <NewName>');
-          end
-          else
-          begin
-            if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') or (LowerCase(Tokens[1]) = 'unit') then
-              CmdRenameService(Tokens[2], Tokens[3])
-            else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
-              CmdRenameComponent(Tokens[2], Tokens[3])
-            else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
-              CmdRenameView(Tokens[2], Tokens[3])
-            else
-              WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "project" (p).');
-          end;
-        end;
+        ExecInCockpit(BvExePath, ActivePath, 'clean');
       end
 
       // `check`
       else if CmdName = 'check' then
       begin
-        if Tokens.Count >= 2 then
-          CmdCheck(Tokens[1])
-        else
-          CmdCheck('');
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
+      // `new` / `generate` / `g`
+      else if (CmdName = 'new') or (CmdName = 'generate') or (CmdName = 'g') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `remove` / `rm`
+      else if (CmdName = 'remove') or (CmdName = 'rm') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `list`
+      else if (CmdName = 'list') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `mobile`
+      else if CmdName = 'mobile' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `desktop`
+      else if CmdName = 'desktop' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `studio`
+      else if CmdName = 'studio' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `theme`
+      else if CmdName = 'theme' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `lib`
+      else if CmdName = 'lib' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `meta`
+      else if CmdName = 'meta' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `license`
+      else if CmdName = 'license' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `reset`
+      else if CmdName = 'reset' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `doc`
+      else if CmdName = 'doc' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `ssg`
+      else if CmdName = 'ssg' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `wasm`
+      else if CmdName = 'wasm' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // Fallback: execute as a system shell command (e.g. git status, npm install, dir, ls)
       else
       begin
-        WriteLn('Unknown command: ', CmdName);
-        WriteLn('Type "help" for a list of available commands, or "exit" to quit.');
+        ExecShellCmd(ActivePath, InputLine);
       end;
     end;
   finally
