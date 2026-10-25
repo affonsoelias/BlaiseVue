@@ -116,6 +116,35 @@ bv remove service PaymentProcessor  # or: bv remove s PaymentProcessor
 bv remove test SimpleBadge          # or: bv remove t SimpleBadge
 ```
 
+### 7. Rename Elements: `bv rename <component|view|service|project> <OldName> [NewName]`
+Intelligently refactors components, views, services, or the entire project, updating source files, internal Pascal declarations, unit names, test suites, router configurations, and global registry entries:
+
+```bash
+# Rename a pure Pascal service and its unit tests:
+bv rename service ShippingCalculator LogisticsEngine
+# Shorthand:
+bv rename s ShippingCalculator LogisticsEngine
+
+# Rename a component and update HTML tag across tests:
+bv rename component ProductCard ItemCard
+# Shorthand:
+bv rename c ProductCard ItemCard
+
+# Rename a view and update app.bv router definition:
+bv rename view OrderHistory MyOrders
+# Shorthand:
+bv rename v OrderHistory MyOrders
+
+# Rename the entire project across package.json, src/app.bv, uAppVersion.pas, index.html, and registry:
+bv rename project my-new-erp
+# Shorthand:
+bv rename p my-new-erp
+```
+* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/unit/<New>.test.pas`.
+* **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
+* **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
+* **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
+
 ---
 
 ## 🧪 Automated Test Runner (`bv test`)
@@ -343,6 +372,7 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
 * `new v <Name> [--no-test]` — Scaffolds `.bv` view and test.
 * `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
+* `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
 * `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
 * `test` — Runs full test suite (Pas2JS + Vitest).
 * `dev` — Starts dev server with instant HMR.

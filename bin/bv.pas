@@ -22136,6 +22136,208 @@ end;
 
 
 // =====================================================================
+//  COMMAND: RENAME (Components, Views, Services, Projects)
+// =====================================================================
+
+procedure CmdRenameService(const OldName, NewName: string);
+var
+  OldNorm, NewNorm, ServicePath, OldFile, NewFile, Content: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  OldNorm := OldName;
+  if (Length(OldNorm) > 1) and ((OldNorm[1] = 'u') or (OldNorm[1] = 'U')) and (OldNorm[2] in ['A'..'Z']) then
+    OldNorm := Copy(OldNorm, 2, Length(OldNorm) - 1);
+
+  NewNorm := NewName;
+  if (Length(NewNorm) > 1) and ((NewNorm[1] = 'u') or (NewNorm[1] = 'U')) and (NewNorm[2] in ['A'..'Z']) then
+    NewNorm := Copy(NewNorm, 2, Length(NewNorm) - 1);
+
+  ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
+  OldFile := ServicePath + 'u' + OldNorm + '.pas';
+  NewFile := ServicePath + 'u' + NewNorm + '.pas';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] Service "u', OldNorm, '.pas" not found in src/services/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination service "u', NewNorm, '.pas" already exists!');
+    Exit;
+  end;
+
+  Content := ReadFileToString(OldFile);
+  Content := StringReplace(Content, 'unit u' + OldNorm + ';', 'unit u' + NewNorm + ';', [rfIgnoreCase]);
+  Content := StringReplace(Content, 'T' + OldNorm + ' ', 'T' + NewNorm + ' ', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + '.', 'T' + NewNorm + '.', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + '=', 'T' + NewNorm + '=', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ':', 'T' + NewNorm + ':', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ';', 'T' + NewNorm + ';', [rfReplaceAll]);
+  Content := StringReplace(Content, 'T' + OldNorm + ')', 'T' + NewNorm + ')', [rfReplaceAll]);
+  Content := StringReplace(Content, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
+
+  WriteStringToFile(NewFile, Content);
+  DeleteFile(OldFile);
+  WriteLn('Service renamed: src/services/u', OldNorm, '.pas -> src/services/u', NewNorm, '.pas');
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+  OldTest := TestPath + OldNorm + '.test.pas';
+  NewTest := TestPath + NewNorm + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldNorm) + '_unit_test;', 'program ' + LowerCase(NewNorm) + '_unit_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldNorm, 'u' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'T' + OldNorm, 'T' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Unit: ' + OldNorm, 'Unit: ' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Unit test renamed: tests/unit/', OldNorm, '.test.pas -> tests/unit/', NewNorm, '.test.pas');
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldNorm + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + OldNorm + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameComponent(const OldName, NewName: string);
+var
+  CompPath, OldFile, NewFile: string;
+  OldTag, NewTag: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
+  OldFile := CompPath + OldName + '.bv';
+  NewFile := CompPath + NewName + '.bv';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] Component "', OldName, '.bv" not found in src/components/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination component "', NewName, '.bv" already exists!');
+    Exit;
+  end;
+
+  WriteStringToFile(NewFile, ReadFileToString(OldFile));
+  DeleteFile(OldFile);
+  WriteLn('Component renamed: src/components/', OldName, '.bv -> src/components/', NewName, '.bv');
+
+  OldTag := PascalToKebab(OldName);
+  NewTag := PascalToKebab(NewName);
+  WriteLn('HTML tag updated: <', OldTag, '> -> <', NewTag, '>');
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator;
+  OldTest := TestPath + OldName + '.test.pas';
+  NewTest := TestPath + NewName + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldName) + '_test;', 'program ' + LowerCase(NewName) + '_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldName, 'u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Register_u' + OldName, 'Register_u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Component: ' + OldName, 'Component: ' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Test renamed: tests/components/', OldName, '.test.pas -> tests/components/', NewName, '.test.pas');
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldName + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator + OldName + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameView(const OldName, NewName: string);
+var
+  ViewPath, OldFile, NewFile: string;
+  OldTag, NewTag, OldKebab, NewKebab: string;
+  TestPath, OldTest, NewTest, TestContent: string;
+  AppBvPath, AppContent: string;
+  GenOldPas, GenOldJs: string;
+begin
+  ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
+  OldFile := ViewPath + OldName + '.bv';
+  NewFile := ViewPath + NewName + '.bv';
+
+  if not FileExists(OldFile) then
+  begin
+    WriteLn('[ERROR] View "', OldName, '.bv" not found in src/views/');
+    Exit;
+  end;
+
+  if FileExists(NewFile) then
+  begin
+    WriteLn('[ERROR] Destination view "', NewName, '.bv" already exists!');
+    Exit;
+  end;
+
+  WriteStringToFile(NewFile, ReadFileToString(OldFile));
+  DeleteFile(OldFile);
+  WriteLn('View renamed: src/views/', OldName, '.bv -> src/views/', NewName, '.bv');
+
+  OldKebab := PascalToKebab(OldName);
+  NewKebab := PascalToKebab(NewName);
+  OldTag := OldKebab + '-page';
+  NewTag := NewKebab + '-page';
+
+  // Associated Test
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator;
+  OldTest := TestPath + OldName + '.test.pas';
+  NewTest := TestPath + NewName + '.test.pas';
+
+  if FileExists(OldTest) then
+  begin
+    TestContent := ReadFileToString(OldTest);
+    TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldName) + '_view_test;', 'program ' + LowerCase(NewName) + '_view_test;', [rfIgnoreCase]);
+    TestContent := StringReplace(TestContent, 'u' + OldName, 'u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Register_u' + OldName, 'Register_u' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'View: ' + OldName, 'View: ' + NewName, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+    WriteStringToFile(NewTest, TestContent);
+    DeleteFile(OldTest);
+    WriteLn('Test renamed: tests/views/', OldName, '.test.pas -> tests/views/', NewName, '.test.pas');
+  end;
+
+  // Auto-update router in src/app.bv
+  AppBvPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
+  if FileExists(AppBvPath) then
+  begin
+    AppContent := ReadFileToString(AppBvPath);
+    if Pos(OldTag, AppContent) > 0 then
+    begin
+      AppContent := StringReplace(AppContent, '''' + OldTag + '''', '''' + NewTag + '''', [rfReplaceAll]);
+      WriteStringToFile(AppBvPath, AppContent);
+      WriteLn('Router updated in src/app.bv: ''', OldTag, ''' -> ''', NewTag, '''');
+    end;
+  end;
+
+  // Clean stale generated artifacts
+  GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldName + '.pas';
+  if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + OldName + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
+end;
+
+procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string); forward;
+
+// =====================================================================
 //  PROJECT REGISTRY & INTERACTIVE COCKPIT SHELL
 // =====================================================================
 
@@ -22579,6 +22781,123 @@ begin
   end;
 end;
 
+procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string);
+var
+  CurDir, CurName, AppVer, AppAuth, AppLic: string;
+  PkgJson, RootObj, ProjObj: TJSONObject;
+  ProjectsArr: TJSONArray;
+  ProjData: TJSONData;
+  AppBvPath, HtmlPath, AppContent, HtmlContent: string;
+  i: Integer;
+begin
+  RenamedName := '';
+  if not IsValidBlaiseVueProject then
+  begin
+    WriteLn('[ERROR] "bv rename project" can only be executed inside a BlaiseVue project.');
+    Exit;
+  end;
+
+  if IsFrameworkCoreDemoApp then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] SAFETY GUARD ACTIVE: OPERATION REFUSED!');
+    WriteLn('  The framework repository and its official demo-app cannot be renamed.');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
+  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+  CurName := GetProjectNameFromDir(CurDir);
+
+  if SameText(CurName, NewProjectName) then
+  begin
+    WriteLn('Project is already named "', NewProjectName, '".');
+    RenamedName := NewProjectName;
+    Exit;
+  end;
+
+  AppVer := '1.0.0';
+  AppAuth := 'BlaiseVue Developer';
+  AppLic := 'MIT';
+
+  // 1. Update package.json
+  if LoadPackageJson(PkgJson) then
+  begin
+    try
+      AppVer := GetJsonString(PkgJson, 'version', AppVer);
+      AppAuth := GetJsonString(PkgJson, 'author', AppAuth);
+      AppLic := GetJsonString(PkgJson, 'license', AppLic);
+      PkgJson.Strings['name'] := NewProjectName;
+      WriteStringToFile('package.json', PkgJson.FormatJSON);
+    finally
+      PkgJson.Free;
+    end;
+  end;
+
+  // 2. Sync uAppVersion.pas
+  SyncAppVersionUnit(NewProjectName, AppVer, AppAuth, AppLic);
+
+  // 3. Update src/app.bv
+  AppBvPath := CurDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
+  if FileExists(AppBvPath) then
+  begin
+    AppContent := ReadFileToString(AppBvPath);
+    if Pos('appTitle: string = ''' + CurName + ''';', AppContent) > 0 then
+    begin
+      AppContent := StringReplace(AppContent, 'appTitle: string = ''' + CurName + ''';', 'appTitle: string = ''' + NewProjectName + ''';', [rfReplaceAll]);
+      WriteStringToFile(AppBvPath, AppContent);
+    end;
+  end;
+
+  // 4. Update public/index.html
+  HtmlPath := CurDir + DirectorySeparator + 'public' + DirectorySeparator + 'index.html';
+  if FileExists(HtmlPath) then
+  begin
+    HtmlContent := ReadFileToString(HtmlPath);
+    if Pos('<title>' + CurName + '</title>', HtmlContent) > 0 then
+    begin
+      HtmlContent := StringReplace(HtmlContent, '<title>' + CurName + '</title>', '<title>' + NewProjectName + '</title>', [rfReplaceAll]);
+      WriteStringToFile(HtmlPath, HtmlContent);
+    end;
+  end;
+
+  // 5. Update Global Registry (~/.blaisevue/projects.json)
+  if LoadProjectsRegistry(RootObj) then
+  begin
+    try
+      ProjectsArr := RootObj.Arrays['projects'];
+      for i := 0 to ProjectsArr.Count - 1 do
+      begin
+        ProjData := ProjectsArr[i];
+        if ProjData is TJSONObject then
+        begin
+          ProjObj := TJSONObject(ProjData);
+          if SameText(GetJsonString(ProjObj, 'path', ''), CurDir) or SameText(GetJsonString(ProjObj, 'name', ''), CurName) then
+          begin
+            ProjObj.Strings['name'] := NewProjectName;
+            ProjObj.Strings['lastUsed'] := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now);
+            Break;
+          end;
+        end;
+      end;
+      if SameText(GetJsonString(RootObj, 'active', ''), CurName) then
+        RootObj.Strings['active'] := NewProjectName;
+      SaveProjectsRegistry(RootObj);
+    finally
+      RootObj.Free;
+    end;
+  end;
+
+  RenamedName := NewProjectName;
+  WriteLn('');
+  WriteLn('  [SUCCESS] Project renamed from "', CurName, '" to "', NewProjectName, '"!');
+  WriteLn('  Updated: package.json, src/app.bv, src/uAppVersion.pas, public/index.html');
+  WriteLn('  Updated project registry entry.');
+  WriteLn('');
+end;
+
 procedure CmdProject;
 var
   SubCmd: string;
@@ -22657,7 +22976,7 @@ end;
 
 procedure RunCockpitShell(const InitialName, InitialPath: string);
 var
-  ActiveName, ActivePath, InputLine, CmdName: string;
+  ActiveName, ActivePath, InputLine, CmdName, DummyName: string;
   Tokens: TStringList;
   FoundPath, FoundVer: string;
   HasNoTest: Boolean;
@@ -22904,6 +23223,39 @@ begin
         CmdClean;
       end
 
+      // `rename`
+      else if (CmdName = 'rename') or (CmdName = 'ren') or (CmdName = 'mv') then
+      begin
+        if Tokens.Count < 3 then
+        begin
+          WriteLn('Usage: rename <c|v|s|project> <OldName> [NewName]');
+        end
+        else
+        begin
+          if (LowerCase(Tokens[1]) = 'p') or (LowerCase(Tokens[1]) = 'project') or (LowerCase(Tokens[1]) = 'proj') then
+          begin
+            CmdRenameProject(Tokens[2], DummyName);
+            if DummyName <> '' then
+              ActiveName := DummyName;
+          end
+          else if Tokens.Count < 4 then
+          begin
+            WriteLn('Usage: rename <c|v|s> <OldName> <NewName>');
+          end
+          else
+          begin
+            if (LowerCase(Tokens[1]) = 's') or (LowerCase(Tokens[1]) = 'service') or (LowerCase(Tokens[1]) = 'unit') then
+              CmdRenameService(Tokens[2], Tokens[3])
+            else if (LowerCase(Tokens[1]) = 'c') or (LowerCase(Tokens[1]) = 'comp') or (LowerCase(Tokens[1]) = 'component') then
+              CmdRenameComponent(Tokens[2], Tokens[3])
+            else if (LowerCase(Tokens[1]) = 'v') or (LowerCase(Tokens[1]) = 'view') then
+              CmdRenameView(Tokens[2], Tokens[3])
+            else
+              WriteLn('Unknown type: ', Tokens[1], '. Use "service" (s), "component" (c), "view" (v) or "project" (p).');
+          end;
+        end;
+      end
+
       // `check`
       else if CmdName = 'check' then
       begin
@@ -23009,7 +23361,7 @@ end;
 
 var
 
-  Cmd, TypeArg, NameArg, DirArg: string;
+  Cmd, TypeArg, NameArg, DirArg, DummyRenamed: string;
 
   SkipTest, SkipTestsArg: Boolean;
 
@@ -23066,6 +23418,7 @@ begin
     WriteLn('    bv remove s <Name>     Removes a service unit');
 
     WriteLn('    bv remove t <Name>     Removes a test file');
+    WriteLn('    bv rename <c|v|s|p> <Old> [New] Renames component, view, service, or project');
 
     WriteLn('    bv list c              Lists components');
 
@@ -23693,6 +24046,45 @@ begin
   else if (Cmd = 'project') or (Cmd = 'p') then
   begin
     CmdProject;
+  end
+  else if (Cmd = 'rename') or (Cmd = 'ren') or (Cmd = 'mv') then
+  begin
+    if ParamCount < 3 then
+    begin
+      WriteLn('Usage: bv rename <c|v|s|project> <OldName> [NewName]');
+      WriteLn('Types: component (c), view (v), service (s), project (p)');
+      WriteLn('Examples:');
+      WriteLn('  bv rename s CalculadoraFrete CalculoLogistica');
+      WriteLn('  bv rename c ProductCard ItemCard');
+      WriteLn('  bv rename v OrderHistory MyOrders');
+      WriteLn('  bv rename project meu-novo-app');
+      Halt(1);
+    end;
+    TypeArg := LowerCase(ParamStr(2));
+    if (TypeArg = 'p') or (TypeArg = 'project') or (TypeArg = 'proj') then
+    begin
+      CmdRenameProject(ParamStr(3), DummyRenamed);
+    end
+    else
+    begin
+      if ParamCount < 4 then
+      begin
+        WriteLn('Usage: bv rename <c|v|s> <OldName> <NewName>');
+        Halt(1);
+      end;
+      NameArg := ParamStr(3);
+      if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'unit') then
+        CmdRenameService(NameArg, ParamStr(4))
+      else if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
+        CmdRenameComponent(NameArg, ParamStr(4))
+      else if (TypeArg = 'v') or (TypeArg = 'view') then
+        CmdRenameView(NameArg, ParamStr(4))
+      else
+      begin
+        WriteLn('Unknown type: ', ParamStr(2), '. Use "service" (s), "component" (c), "view" (v) or "project" (p).');
+        Halt(1);
+      end;
+    end;
   end
   else
   begin
