@@ -21771,6 +21771,7 @@ begin
 
     {$IFDEF WINDOWS}
 
+    ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
     ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
 
     {$ELSE}
