@@ -3609,7 +3609,10 @@ begin
 
       Content := ReadFileToString(Base + 'package.json');
 
+      Content := StringReplace(Content, '"name": "blaisevue-demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
+      Content := StringReplace(Content, '"name" : "blaisevue-demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
       Content := StringReplace(Content, '"name": "demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
+      Content := StringReplace(Content, '"name" : "demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
 
       WriteStringToFile(Base + 'package.json', Content);
 
@@ -22443,13 +22446,14 @@ end;
 
 function GetProjectNameFromDir(const ADir: string): string;
 var
-  TargetDir, Raw, Val: string;
+  TargetDir, Raw, Val, DirName: string;
   Parser: TJSONParser;
   Data: TJSONData;
   Obj: TJSONObject;
 begin
   TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
-  Result := ExtractFileName(ExcludeTrailingPathDelimiter(TargetDir));
+  DirName := ExtractFileName(ExcludeTrailingPathDelimiter(TargetDir));
+  Result := DirName;
 
   if FileExists(TargetDir + 'package.json') then
   begin
@@ -22463,9 +22467,15 @@ begin
           if (Data <> nil) and (Data is TJSONObject) then
           begin
             Obj := TJSONObject(Data);
-            Val := GetJsonString(Obj, 'name', '');
+            Val := Trim(GetJsonString(Obj, 'name', ''));
             if Val <> '' then
-              Result := Val;
+            begin
+              if (SameText(Val, 'blaisevue-demo-app') or SameText(Val, 'demo-app')) and
+                 (not SameText(DirName, 'demo-app')) then
+                Result := DirName
+              else
+                Result := Val;
+            end;
           end;
           if Data <> nil then Data.Free;
         finally
@@ -22813,6 +22823,19 @@ begin
 
   if SameText(CurName, NewProjectName) then
   begin
+    if LoadPackageJson(PkgJson) then
+    begin
+      try
+        if GetJsonString(PkgJson, 'name', '') <> NewProjectName then
+        begin
+          PkgJson.Strings['name'] := NewProjectName;
+          WriteStringToFile('package.json', PkgJson.FormatJSON);
+          WriteLn('Synced "name": "', NewProjectName, '" in package.json.');
+        end;
+      finally
+        PkgJson.Free;
+      end;
+    end;
     WriteLn('Project is already named "', NewProjectName, '".');
     RenamedName := NewProjectName;
     Exit;
