@@ -1075,10 +1075,14 @@ initialization
                Promise.all(Data.FData.$pendingPromises).then(function() {
                   if (fbNode.parentNode) fbNode.remove();
                   el.style.display = '';
-                  bv.traverse(el, Data, Methods);
+                  bv.nonReactive(function() {
+                    bv.traverse(el, Data, Methods);
+                  });
                });
             } else {
-               bv.traverse(el, Data, Methods);
+               bv.nonReactive(function() {
+                 bv.traverse(el, Data, Methods);
+               });
             }
             return;
           }
@@ -1278,7 +1282,9 @@ initialization
                       },
                       SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                     };
-                    bv.traverse(cl, ld, Methods);
+                    bv.nonReactive(function() {
+                      bv.traverse(cl, ld, Methods);
+                    });
                   });
                 }
               });
@@ -1299,7 +1305,9 @@ initialization
               if (res && !active) { 
                  m.parentNode.insertBefore(el, m.nextSibling); 
                  active = true; 
-                 bv.traverse(el, Data, Methods); 
+                 bv.nonReactive(function() {
+                   bv.traverse(el, Data, Methods);
+                 });
                  if (tName) bv.applyTransition(el, 'enter', tName);
               }
               else if (!res && active) { 
@@ -1321,7 +1329,9 @@ initialization
               if (res) {
                  if (el.style.display === 'none') {
                     el.style.display = '';
-                    bv.traverse(el, Data, Methods);
+                    bv.nonReactive(function() {
+                      bv.traverse(el, Data, Methods);
+                    });
                     if (tName) bv.applyTransition(el, 'enter', tName);
                  }
               } else {
@@ -1695,12 +1705,14 @@ initialization
             if (opts.methods) { 
                Object.keys(opts.methods).forEach(function(k) { 
                  let rM = opts.methods[k];
-                 dRaw[k] = function() { 
-                   if (arguments.length > 0 && arguments[0] === this) {
-                     return rM.apply(this, arguments);
+                 const boundFn = function() { 
+                   if (arguments.length > 0 && arguments[0] === pRef) {
+                     return rM.apply(pRef, arguments);
                    }
-                   return rM.apply(this, [this, ...arguments]); 
+                   return rM.apply(pRef, [pRef, ...arguments]); 
                  }; 
+                 dRaw[k] = boundFn;
+                 pRef[k] = boundFn;
                }); 
             }
             
@@ -1719,7 +1731,8 @@ initialization
             
             if (opts.created) opts.created.call(pRef, pRef);
             
-            pRef['$emit'] = function(ev, arg) {
+            pRef['$emit'] = function(ev, ...args) {
+               let arg = args[0];
                if (!pRef['__emitted__']) pRef['__emitted__'] = {};
                if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
                pRef['__emitted__'][ev].push(arg);
@@ -1740,12 +1753,12 @@ initialization
                      }
                      let expr = evt.expr;
                      if (expr) {
-                        let r = Data.Evaluate(expr, arg);
+                        let r = Data.Evaluate(expr, ...args);
                         if (typeof r === 'function') {
-                           try { r.call(Data.FData, Data.FData, arg); }
+                           try { r.call(Data.FData, Data.FData, ...args); }
                            catch(e) { console.error("[Compiler] Event handler error:", e); }
                         } else if (Methods && typeof Methods[expr] === 'function') {
-                           try { Methods[expr].call(Data.FData, Data.FData, arg); }
+                           try { Methods[expr].call(Data.FData, Data.FData, ...args); }
                            catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
                         }
                      }
