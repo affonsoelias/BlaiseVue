@@ -283,8 +283,9 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 - **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
   - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
-- **`bv mormot run [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090) with static SPA hosting and REST API.
-- **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`).
+- **`bv mormot run [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+- **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
+- **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
 - **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
   - Compiles frontend in production mode (`bv run build`).
   - Compiles backend in release mode (`bv mormot build --release`).
@@ -297,8 +298,9 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | `bv mormot init` | - | Scaffolds native backend in `server/` |
 | `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
-| `bv mormot run` | `[--port <p>]` | Starts server on port (default: 8090) |
-| `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check |
+| `bv mormot run` | `[--port <p>]` | Starts server with automatic port conflict fallback |
+| `bv mormot kill` | - | Forcefully terminates running `server.exe` instances |
+| `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
 | `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
 
