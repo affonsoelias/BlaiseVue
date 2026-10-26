@@ -788,6 +788,9 @@ procedure CmdLicense; forward;
 procedure CmdMeta; forward;
 procedure CmdReset; forward;
 procedure CmdUpdate; forward;
+procedure CmdDoctor; forward;
+procedure CmdSelfUpdate; forward;
+procedure CmdChannel; forward;
 
 
 
@@ -23225,6 +23228,9 @@ begin
         WriteLn('    use <name>                 Switches active project context immediately');
         WriteLn('    rename project <NewName>   Renames project, syncs package.json & prompt');
         WriteLn('    update [--dry-run]         Updates project infrastructure non-destructively');
+        WriteLn('    doctor                     Diagnoses environment tools (Git, Lazarus, FPC, etc.)');
+        WriteLn('    self-update [--check]      Updates BlaiseVue framework directly from GitHub');
+        WriteLn('    channel [use <name>]       Inspects or switches framework branch (main/develop)');
         WriteLn('');
         WriteLn('  Backend & Full-Stack (mORMot 2):');
         WriteLn('    mormot run [--release]     Launches native backend server');
@@ -23464,6 +23470,24 @@ begin
 
       // `update` / `upgrade`
       else if (CmdName = 'update') or (CmdName = 'upgrade') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `doctor`
+      else if (CmdName = 'doctor') or (CmdName = 'doc-env') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `self-update` / `upgrade-cli`
+      else if (CmdName = 'self-update') or (CmdName = 'selfupdate') or (CmdName = 'upgrade-cli') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `channel` / `branch`
+      else if (CmdName = 'channel') or (CmdName = 'branch') then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
@@ -23980,6 +24004,567 @@ begin
   WriteLn('');
 end;
 
+// =====================================================================
+//  ENVIRONMENT UTILITIES & FRAMEWORK DIAGNOSTICS (bv doctor)
+// =====================================================================
+
+function ExecCmdCapture(const CmdLine: string; out OutText: string): Boolean;
+var
+  OutStr: string;
+begin
+  OutStr := '';
+  {$IFDEF WINDOWS}
+  Result := RunCommand('cmd.exe', ['/c', CmdLine], OutStr);
+  {$ELSE}
+  Result := RunCommand('sh', ['-c', CmdLine], OutStr);
+  {$ENDIF}
+  OutText := Trim(OutStr);
+end;
+
+function FindFPCExecutable(out FpcExe, FpcVer, SourceDesc: string): Boolean;
+var
+  OutStr, Cand: string;
+begin
+  FpcExe := '';
+  FpcVer := '';
+  SourceDesc := '';
+  Result := False;
+
+  // 1. Try system PATH
+  if ExecCmdCapture('fpc -iV', OutStr) and (OutStr <> '') and (Pos('Error', OutStr) = 0) and (Pos('not found', OutStr) = 0) and (Pos('reconhecido', OutStr) = 0) then
+  begin
+    FpcExe := 'fpc';
+    FpcVer := Trim(OutStr);
+    SourceDesc := 'system PATH';
+    Result := True;
+    Exit;
+  end;
+
+  // 2. Check Lazarus installation on Windows
+  {$IFDEF WINDOWS}
+  Cand := 'C:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'C:\lazarus\fpc\3.2.0\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.0)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'D:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (D:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'C:\FPC\3.2.2\bin\i386-win32\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'FPC Standalone (C:\FPC\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+  {$ELSE}
+  Cand := '/usr/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := '/usr/bin/fpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/usr/local/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := '/usr/local/bin/fpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/opt/homebrew/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Homebrew (/opt/homebrew/bin/fpc)';
+    Result := True;
+    Exit;
+  end;
+  {$ENDIF}
+end;
+
+procedure CmdDoctor;
+var
+  SDKDir, OSName, GitVer, FpcExe, FpcVer, FpcSource, Pas2Path, Pas2Ver: string;
+  NodeVer, NpmVer, MormotPath, BranchName, ShortHash, RemoteUrl, DockerVer: string;
+  HasGit, HasFpc, HasPas2, HasMormot, HasNode, HasLazarus: Boolean;
+  AllHealthy: Boolean;
+begin
+  SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
+  AllHealthy := True;
+
+  {$IFDEF WINDOWS}
+  OSName := 'Windows (x86_64)';
+  {$ELSE}
+    {$IFDEF LINUX}
+    OSName := 'Linux (x86_64)';
+    {$ELSE}
+    OSName := 'macOS (Darwin)';
+    {$ENDIF}
+  {$ENDIF}
+
+  // Probe Git branch and commit if in repo
+  BranchName := 'Unknown';
+  ShortHash := '';
+  RemoteUrl := '';
+  if DirectoryExists(SDKDir + DirectorySeparator + '.git') then
+  begin
+    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD', BranchName);
+    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --short HEAD', ShortHash);
+    ExecCmdCapture('git -C "' + SDKDir + '" remote get-url origin', RemoteUrl);
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Doctor - Environment Diagnostics');
+  WriteLn('======================================================================');
+  WriteLn('  Operating System:     ', OSName);
+  WriteLn('  SDK Directory:        ', SDKDir);
+  if ShortHash <> '' then
+    WriteLn('  Git Channel:          ', BranchName, ' (Commit: ', ShortHash, ')')
+  else
+    WriteLn('  Git Channel:          Standalone installation');
+  if RemoteUrl <> '' then
+    WriteLn('  Remote Origin:        ', RemoteUrl);
+  WriteLn('');
+
+  // 1. Core Tooling
+  WriteLn('[1] Core Framework Tooling:');
+
+  // Git
+  HasGit := ExecCmdCapture('git --version', GitVer) and (Pos('git version', GitVer) > 0);
+  if HasGit then
+    WriteLn('  [v] Git CLI:              ', GitVer, ' detected in PATH')
+  else
+  begin
+    AllHealthy := False;
+    WriteLn('  [X] Git CLI:              Not detected in PATH!');
+    WriteLn('      -> Required for framework updates and synchronization.');
+    WriteLn('      -> Install from: https://git-scm.com/');
+  end;
+
+  // FPC
+  HasFpc := FindFPCExecutable(FpcExe, FpcVer, FpcSource);
+  if HasFpc then
+    WriteLn('  [v] Free Pascal (FPC):    v', FpcVer, ' (', FpcSource, ')')
+  else
+  begin
+    AllHealthy := False;
+    WriteLn('  [X] Free Pascal (FPC):    Not detected!');
+    WriteLn('      -> Required to compile mORMot backend and CLI.');
+    WriteLn('      -> Install Lazarus IDE (which bundles FPC): https://www.lazarus-ide.org/');
+  end;
+
+  // Lazarus IDE
+  HasLazarus := False;
+  {$IFDEF WINDOWS}
+  HasLazarus := FileExists('C:\lazarus\lazarus.exe') or FileExists('C:\lazarus\lazbuild.exe') or HasCommand('lazbuild');
+  {$ELSE}
+  HasLazarus := HasCommand('lazarus-ide') or HasCommand('lazbuild') or DirectoryExists('/usr/lib/lazarus') or DirectoryExists('/Applications/Lazarus');
+  {$ENDIF}
+  if HasLazarus then
+    WriteLn('  [v] Lazarus IDE:          Detected (Full F9 and Desktop app support)')
+  else
+    WriteLn('  [!] Lazarus IDE:          Not found (Optional, recommended for Desktop apps)');
+
+  // Pas2JS (Bundled)
+  Pas2Path := GetPas2JSPath;
+  HasPas2 := FileExists(Pas2Path);
+  if HasPas2 then
+  begin
+    Pas2Ver := '3.2.0';
+    if ExecCmdCapture('"' + Pas2Path + '" -iV', Pas2Ver) then Pas2Ver := Trim(Pas2Ver);
+    WriteLn('  [v] Pas2JS (Bundled):     v', Pas2Ver, ' verified at ', ExtractRelativePath(SDKDir + DirectorySeparator, Pas2Path));
+  end
+  else
+  begin
+    AllHealthy := False;
+    WriteLn('  [X] Pas2JS (Bundled):     Binary not found in SDK at:');
+    WriteLn('      ', Pas2Path);
+  end;
+
+  // mORMot 2 (Bundled)
+  MormotPath := FindMormot2Path;
+  HasMormot := (MormotPath <> '') and DirectoryExists(MormotPath);
+  if HasMormot then
+    WriteLn('  [v] Synopse mORMot 2:     Verified at ', ExtractRelativePath(SDKDir + DirectorySeparator, MormotPath))
+  else
+  begin
+    AllHealthy := False;
+    WriteLn('  [X] Synopse mORMot 2:     Not found in vendor/mormot2!');
+  end;
+
+  WriteLn('');
+  WriteLn('[2] Ecosystem & Testing Tools:');
+
+  // Node & npm
+  HasNode := ExecCmdCapture('node -v', NodeVer) and (Pos('v', NodeVer) = 1);
+  if HasNode then
+  begin
+    ExecCmdCapture('npm -v', NpmVer);
+    WriteLn('  [v] Node.js & npm:        Node ', NodeVer, ' and npm v', NpmVer, ' detected in PATH');
+  end
+  else
+  begin
+    WriteLn('  [!] Node.js:              Not detected in PATH (Optional, needed for "npm test" and HMR)');
+    WriteLn('      -> Download: https://nodejs.org');
+  end;
+
+  // Docker
+  if ExecCmdCapture('docker --version', DockerVer) and (Pos('Docker version', DockerVer) > 0) then
+    WriteLn('  [v] Docker CLI:           ', DockerVer, ' detected (bv mormot docker)')
+  else
+    WriteLn('  [!] Docker CLI:           Not detected (Optional: production micro-containers)');
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  if AllHealthy then
+    WriteLn('  [v] Diagnostics complete: Your environment is 100% healthy and ready!')
+  else
+    WriteLn('  [!] Issues found with required tools listed above with [X].');
+  WriteLn('======================================================================');
+  WriteLn('');
+end;
+
+// =====================================================================
+//  FRAMEWORK GIT AUTO-UPDATER (bv self-update)
+// =====================================================================
+
+procedure CmdSelfUpdate;
+var
+  SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FetchOut: string;
+  DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
+  BinDir, CompCmd, CompOut, TargetBv, MoveCmd, DummyOut: string;
+  DiffList: TStringList;
+  CheckOnly, NeedRecompile: Boolean;
+  i: Integer;
+begin
+  SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
+
+  // 1. Verify Git availability
+  if not (ExecCmdCapture('git --version', GitVer) and (Pos('git version', GitVer) > 0)) then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Git was not detected on this system.');
+    WriteLn('  BlaiseVue requires Git for framework auto-updates.');
+    WriteLn('  Install Git from: https://git-scm.com/');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  // 2. Verify if SDK is a Git clone
+  if not DirectoryExists(SDKDir + DirectorySeparator + '.git') then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository:');
+    WriteLn('  ', SDKDir);
+    WriteLn('  To use Git self-update, clone the official repository:');
+    WriteLn('    git clone https://github.com/affonsoelias/BlaiseVue.git');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  // 3. Parse arguments
+  CheckOnly := False;
+  TargetBranch := '';
+
+  for i := 2 to ParamCount do
+  begin
+    if (ParamStr(i) = '--check') or (ParamStr(i) = '-c') then
+      CheckOnly := True
+    else if Copy(ParamStr(i), 1, 10) = '--channel=' then
+      TargetBranch := LowerCase(Trim(Copy(ParamStr(i), 11, MaxInt)))
+    else if Copy(ParamStr(i), 1, 9) = '--branch=' then
+      TargetBranch := LowerCase(Trim(Copy(ParamStr(i), 10, MaxInt)))
+    else if (ParamStr(i) = '-h') or (ParamStr(i) = '--help') then
+    begin
+      WriteLn('');
+      WriteLn('  BlaiseVue Framework Git Auto-Updater');
+      WriteLn('  Usage: bv self-update [options]');
+      WriteLn('  Alias: bv upgrade-cli [options]');
+      WriteLn('');
+      WriteLn('  Options:');
+      WriteLn('    --check              Check for GitHub updates without applying');
+      WriteLn('    --channel=<name>     Switch to channel (main | develop)');
+      WriteLn('    --branch=<name>      Alias for --channel');
+      WriteLn('    -h, --help           Show this help message');
+      WriteLn('');
+      Halt(0);
+    end;
+  end;
+
+  // Get current active branch
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD', CurBranch);
+  CurBranch := Trim(CurBranch);
+  if TargetBranch = '' then
+    TargetBranch := CurBranch;
+
+  if (TargetBranch <> 'main') and (TargetBranch <> 'develop') then
+  begin
+    WriteLn('  [ERROR] Unknown channel: "', TargetBranch, '". Choose "main" or "develop".');
+    Halt(1);
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Framework Auto-Updater (bv self-update)');
+  WriteLn('======================================================================');
+  WriteLn('  SDK Directory:    ', SDKDir);
+  WriteLn('  Current Channel:  ', CurBranch);
+  WriteLn('  Target Channel:   ', TargetBranch);
+  if CheckOnly then
+    WriteLn('  Mode:             CHECK ONLY (--check)')
+  else
+    WriteLn('  Mode:             SYNC & UPDATE');
+  WriteLn('======================================================================');
+  WriteLn('');
+
+  // 4. Safety check for dirty workspace
+  ExecCmdCapture('git -C "' + SDKDir + '" status --porcelain', GitStatusOut);
+  if (Trim(GitStatusOut) <> '') and (not CheckOnly) then
+  begin
+    WriteLn('  [WARNING] You have uncommitted local changes in the BlaiseVue repository:');
+    WriteLn(GitStatusOut);
+    WriteLn('  Run "git stash" or commit before updating to avoid overwriting your changes.');
+    Halt(1);
+  end
+  else if (Trim(GitStatusOut) <> '') and CheckOnly then
+  begin
+    WriteLn('  [INFO] Local workspace has uncommitted changes.');
+  end;
+
+  // 5. Fetch from origin
+  WriteLn('  Connecting to GitHub (affonsoelias/BlaiseVue)...');
+  ExecCmdCapture('git -C "' + SDKDir + '" fetch origin', FetchOut);
+
+  // 6. Diff and commit tracking
+  BehindOut := '0';
+  AheadOut := '0';
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count HEAD..origin/' + TargetBranch, BehindOut);
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count origin/' + TargetBranch + '..HEAD', AheadOut);
+  BehindOut := Trim(BehindOut);
+  AheadOut := Trim(AheadOut);
+
+  if TargetBranch = CurBranch then
+  begin
+    // Check if GitHub has zero incoming commits
+    if (BehindOut = '0') or (BehindOut = '') then
+    begin
+      WriteLn('  [v] BlaiseVue is already up to date with GitHub.');
+      if (AheadOut <> '0') and (AheadOut <> '') then
+        WriteLn('      (Local branch has ' + AheadOut + ' unpushed commit' + IfThen(AheadOut <> '1', 's', '') + ' ahead of origin/' + TargetBranch + ')');
+      WriteLn('======================================================================');
+      WriteLn('');
+      Exit;
+    end;
+
+    // Incoming files from GitHub using three-dot diff (merge-base to origin)
+    ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD...origin/' + TargetBranch, DiffOut);
+  end
+  else
+  begin
+    // Switching channel (e.g. develop -> main)
+    ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD origin/' + TargetBranch, DiffOut);
+  end;
+
+  if (BehindOut <> '0') and (BehindOut <> '') then
+    WriteLn('  [+] New commits found on GitHub: ', BehindOut);
+
+  WriteLn('  [+] Modified files on GitHub:');
+  DiffList := TStringList.Create;
+  try
+    DiffList.Text := DiffOut;
+    for i := 0 to DiffList.Count - 1 do
+      if Trim(DiffList[i]) <> '' then
+        WriteLn('      * ' + Trim(DiffList[i]));
+  finally
+    DiffList.Free;
+  end;
+
+  if CheckOnly then
+  begin
+    WriteLn('');
+    WriteLn('  [TIP] Run "bv self-update" to download and apply changes.');
+    WriteLn('======================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
+  // 7. Checkout branch if switching
+  if TargetBranch <> CurBranch then
+  begin
+    WriteLn('  [+] Switching channel: ' + CurBranch + ' -> ' + TargetBranch + '...');
+    ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, CheckoutOut);
+  end;
+
+  // 8. Pull updates
+  WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
+  ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
+
+  // 9. Recompile binary if bv.pas was updated or if switched branch
+  NeedRecompile := (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0);
+  if NeedRecompile then
+  begin
+    WriteLn('  [BUILD] CLI source code was updated. Recompiling with Free Pascal...');
+    if not FindFPCExecutable(FpcExe, FpcVer, FpcSource) then
+    begin
+      WriteLn('  [WARNING] FPC not found to automatically recompile CLI.');
+      WriteLn('            Install Lazarus/FPC and run "bv doctor" to verify.');
+      Exit;
+    end;
+
+    BinDir := SDKDir + DirectorySeparator + 'bin';
+    {$IFDEF WINDOWS}
+    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && move /y bv.exe bv_old.exe > nul 2>&1';
+    ExecCmdCapture(MoveCmd, DummyOut);
+    CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh bv.pas';
+    ExecCmdCapture(CompCmd, CompOut);
+    {$ELSE}
+    CompCmd := 'sh -c "cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv"';
+    ExecCmdCapture(CompCmd, CompOut);
+    {$ENDIF}
+
+    TargetBv := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'{$ENDIF};
+    if FileExists(TargetBv) then
+    begin
+      WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) + ' recompiled successfully!');
+      {$IFDEF WINDOWS}
+      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1', DummyOut);
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('  [ERROR] CLI recompilation failed:');
+      WriteLn(CompOut);
+      {$IFDEF WINDOWS}
+      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && move /y bv_old.exe bv.exe > nul 2>&1', DummyOut);
+      {$ENDIF}
+    end;
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  [v] BlaiseVue successfully updated on channel "' + TargetBranch + '"!');
+  WriteLn('======================================================================');
+  WriteLn('');
+end;
+
+// =====================================================================
+//  FRAMEWORK CHANNEL MANAGER (bv channel)
+// =====================================================================
+
+procedure CmdChannel;
+var
+  SDKDir, CurBranch, ShortHash, RemoteUrl, SubCmd, TargetBranch: string;
+begin
+  SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
+
+  if not DirectoryExists(SDKDir + DirectorySeparator + '.git') then
+  begin
+    WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository.');
+    Halt(1);
+  end;
+
+  SubCmd := '';
+  if ParamCount >= 2 then
+    SubCmd := LowerCase(Trim(ParamStr(2)));
+
+  if (SubCmd = 'use') or (SubCmd = 'switch') then
+  begin
+    if ParamCount < 3 then
+    begin
+      WriteLn('Usage: bv channel use <main|develop>');
+      Halt(1);
+    end;
+    TargetBranch := LowerCase(Trim(ParamStr(3)));
+    if (TargetBranch <> 'main') and (TargetBranch <> 'develop') then
+    begin
+      WriteLn('  [ERROR] Invalid channel: "', TargetBranch, '". Choose "main" or "develop".');
+      Halt(1);
+    end;
+
+    // Run self-update targeting this branch
+    WriteLn('Switching to channel "' + TargetBranch + '"...');
+    ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, SubCmd);
+    CmdSelfUpdate;
+  end
+  else
+  begin
+    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD', CurBranch);
+    CurBranch := Trim(CurBranch);
+    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --short HEAD', ShortHash);
+    ExecCmdCapture('git -C "' + SDKDir + '" remote get-url origin', RemoteUrl);
+
+    WriteLn('');
+    WriteLn('======================================================================');
+    WriteLn('  BlaiseVue Framework Channels (Git)');
+    WriteLn('======================================================================');
+    WriteLn('  Repository:       ', RemoteUrl);
+    WriteLn('  SDK Directory:    ', SDKDir);
+    WriteLn('');
+    WriteLn('  Available Channels:');
+    if CurBranch = 'main' then
+    begin
+      WriteLn('    * main       [ACTIVE] Stable release channel (End user / Production)');
+      WriteLn('      develop    [Available] Development channel (Contributors / Bleeding-edge)');
+    end
+    else if CurBranch = 'develop' then
+    begin
+      WriteLn('      main       [Available] Stable release channel (End user / Production)');
+      WriteLn('    * develop    [ACTIVE] Development channel (Contributors / Bleeding-edge)');
+    end
+    else
+    begin
+      WriteLn('    * ' + CurBranch + ' [ACTIVE - Custom]');
+      WriteLn('      main       [Available] Stable release channel');
+      WriteLn('      develop    [Available] Development channel');
+    end;
+    WriteLn('');
+    WriteLn('  Current Commit:   ', ShortHash);
+    WriteLn('');
+    WriteLn('  To switch channels:');
+    WriteLn('    bv channel use develop   # Switch to development channel');
+    WriteLn('    bv channel use main      # Switch to stable release channel');
+    WriteLn('======================================================================');
+    WriteLn('');
+  end;
+end;
+
 //  MAIN ENTRY POINT
 
 // =====================================================================
@@ -23996,142 +24581,90 @@ var
 
 begin
 
-  if ParamCount < 1 then
-
+  if (ParamCount < 1) or (ParamStr(1) = 'help') or (ParamStr(1) = '--help') or (ParamStr(1) = '-h') then
   begin
-
     WriteLn('');
-
-    WriteLn('  BlaiseVue CLI v3.5 (Universal Pascal Platform)');
-
-    WriteLn('  ==============================================');
-
+    WriteLn('  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)');
+    WriteLn('  ============================================================');
+    WriteLn('  Usage: bv <command> [options]');
     WriteLn('');
-
-    WriteLn('  Usage:');
-
-    WriteLn('    bv create <name>       Scaffolds a new project');
-
-    WriteLn('    bv clean               Cleans generated files (generated/ and dist/)');
-
-    WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
-
-    WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
-
-    WriteLn('    bv run ssg             Pre-renders all routes into static HTML (SSG)');
-
-    WriteLn('    bv dev                 Starts development server with HMR (alias: bv serve)');
-
-    WriteLn('    bv serve               Starts development server with HMR');
-
-    WriteLn('    bv doc [--serve]       Generates interactive component documentation & playground');
-
-    WriteLn('    bv wasm <info|benchmark> WebAssembly acceleration and performance benchmarks');
-
-    WriteLn('    bv transpile           Generates only .pas files');
-
-    WriteLn('    bv run preview         Tests the production build locally');
-
-    WriteLn('    bv new c <Name>        Creates a new component');
-
-    WriteLn('    bv new v <Name>        Creates a new view');
-    WriteLn('    bv new s <Name>        Creates a new service unit (pure Pascal)');
-
-    WriteLn('    bv new t <Name>        Creates a new test file (.test.pas)');
-
-    WriteLn('    bv remove c <Name>     Removes a component');
-
-    WriteLn('    bv remove v <Name>     Removes a view');
-    WriteLn('    bv remove s <Name>     Removes a service unit');
-
-    WriteLn('    bv remove t <Name>     Removes a test file');
-    WriteLn('    bv rename <c|v|s|p> <Old> [New] Renames component, view, service, or project');
-
-    WriteLn('    bv list c              Lists components');
-
-    WriteLn('    bv list v              Lists views');
-    WriteLn('    bv list s              Lists services');
-
-    WriteLn('    bv list t              Lists test files');
-
-    WriteLn('    bv lib list            Lists all installed components in lib/');
-
-    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile, charts) or from URL');
-
-    WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
-
-    WriteLn('    bv lib pack [dir] [--skip-tests] Assembles and cryptographically verifies release artifact (.zip with SHA-256)');
-
-    WriteLn('    bv lib dist [dir] [--skip-tests] Alias for "bv lib pack"');
-
-    WriteLn('    bv theme list          Lists available installed themes');
-
-    WriteLn('    bv theme use <name>    Switches active project theme in index.html');
-
-    WriteLn('    bv extension [install|package] Installs or packages the official VS Code extension');
-
-    WriteLn('    bv vsix                Packages standalone VS Code extension (.vsix)');
-
-    WriteLn('    bv mobile init [name] [id] Configures Capacitor and scaffolds Android project');
-
-    WriteLn('    bv mobile sync         Syncs dist/ with native Android assets');
-
-    WriteLn('    bv mobile open         Syncs and opens Android Studio');
-
-    WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
-
-    WriteLn('    bv desktop init [name] Scaffolds WebUI & Lazarus desktop project in desktop/');
-
-    WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
-
-    WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
-
-    WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
-
-    WriteLn('    bv mormot init         Scaffolds mORMot 2 backend server in server/');
-
-    WriteLn('    bv mormot build [--release] Compiles native server binary with Free Pascal');
-
-    WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
-
-    WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
-
-    WriteLn('    bv mormot deploy [--zip] [--port <p>] Assembles standalone production bundle in deploy/');
-
-
-
-    WriteLn('    bv mormot crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
-
-    WriteLn('    bv mormot auth                 Scaffolds JWT authentication, AuthService, LoginView & route guards');
-
-    WriteLn('    bv mormot docs | swagger       Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
-
-    WriteLn('    bv mormot docker [--build]     Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
-
-    WriteLn('    bv mormot rpc                  Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces');
-
-    WriteLn('    bv studio [--port <p>] [--no-open] Launches BlaiseVue Studio developer cockpit (default: 9000)');
-
-    WriteLn('    bv check [file]        Validates component templates against script declarations (AST Type-Checker)');
-
-    WriteLn('    bv s <name>            Runs setup script for a component in lib/');
-
-    WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
-    WriteLn('    bv license [list|show|set <type>] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
-    WriteLn('    bv meta [show|get|set|bump|init]  Manages project metadata and syncs src/uAppVersion.pas');
-    WriteLn('    bv reset [--bare] [--force]       Cleans project to a fresh slate (protected against demo-app)');
-    WriteLn('    bv update [--dry-run]  Synchronizes project infrastructure with latest framework features');
-    WriteLn('    bv enter               Enters interactive cockpit (must be inside project)');
-    WriteLn('    bv use <project-name>  Enters registered project cockpit from anywhere');
-    WriteLn('    bv project add         Registers current project into global registry');
-    WriteLn('    bv project list        Lists registered projects (* active)');
-    WriteLn('    bv project current     Shows active project information');
-    WriteLn('    bv project remove <name> Unregisters a project');
-
+    WriteLn('  # === Development & Server ===');
+    WriteLn('  bv dev                     Starts dev server with HMR on http://localhost:8080 (alias: bv serve)');
+    WriteLn('  bv run dev                 Builds project in dev mode & launches dev server on http://localhost:8080');
+    WriteLn('  bv build                   Compiles project without launching server (ideal for watchers & CI)');
+    WriteLn('  bv run build               Builds optimized production bundle with hashes in dist/');
+    WriteLn('  bv run preview             Local HTTP preview of production build (port 5000)');
+    WriteLn('  bv run ssg                 Pre-renders all routes into static HTML (SSG)');
+    WriteLn('  bv doc [--serve]           Generates interactive component documentation & playground');
+    WriteLn('  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks');
+    WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
+    WriteLn('  bv clean                   Cleans generated build files (generated/ and dist/)');
     WriteLn('');
-
+    WriteLn('  # === Scaffolding & Generators ===');
+    WriteLn('  bv create <name>           Scaffolds a new project with 4-tier testing hierarchy & domain services');
+    WriteLn('  bv new c <Name>            Scaffolds a component (.bv) & automatic test in tests/components/');
+    WriteLn('  bv new v <Name>            Scaffolds a route view (.bv) & automatic test in tests/views/');
+    WriteLn('  bv new s <Name>            Scaffolds a pure Pascal domain service in src/services/');
+    WriteLn('  bv new t <Name>            Scaffolds a Pascal test file (.test.pas)');
+    WriteLn('  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test');
+    WriteLn('  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs');
+    WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
+    WriteLn('');
+    WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
+    WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
+    WriteLn('  bv mormot run [--port <p>] Starts native backend server (auto-fallback to next port if busy)');
+    WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
+    WriteLn('  bv mormot kill             Terminates lingering server.exe instances and releases ports');
+    WriteLn('  bv mormot status           Queries running mORMot 2 health endpoint (/api/status)');
+    WriteLn('  bv mormot deploy [--zip]   Assembles standalone production bundle in deploy/');
+    WriteLn('  bv mormot crud <Model>     Scaffolds full-stack ORM model, REST API & reactive DataGrid');
+    WriteLn('  bv mormot auth             Scaffolds JWT authentication, AuthService, LoginView & route guards');
+    WriteLn('  bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
+    WriteLn('  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
+    WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
+    WriteLn('');
+    WriteLn('  # === Multiplatform (Mobile & Desktop) ===');
+    WriteLn('  bv mobile init [name] [id] Configures Capacitor and scaffolds Android/iOS project');
+    WriteLn('  bv mobile sync             Syncs dist/ with native Android assets');
+    WriteLn('  bv mobile open             Syncs and opens Android Studio');
+    WriteLn('  bv mobile build            Builds native Android Debug APK via Gradle');
+    WriteLn('  bv desktop init [name]     Scaffolds WebUI & Lazarus desktop project in desktop/');
+    WriteLn('  bv desktop sync            Syncs dist/ with desktop/assets/');
+    WriteLn('  bv desktop build [target]  Compiles native binary (windows|linux|macos|all)');
+    WriteLn('  bv desktop run [target]    Builds and launches desktop app for target');
+    WriteLn('');
+    WriteLn('  # === Package & Theme Management ===');
+    WriteLn('  bv lib install <pkg|url>   Installs official package (themes, icons, ui, mobile) or from URL');
+    WriteLn('  bv lib remove <name>       Removes an installed component or package from lib/');
+    WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
+    WriteLn('  bv theme list              Lists all available installed themes');
+    WriteLn('  bv theme use <name>        Sets default project theme in index.html (e.g. darkly, lux)');
+    WriteLn('  bv extension [install|pkg] Installs or packages official VS Code extension');
+    WriteLn('  bv vsix                    Packages standalone VS Code extension (.vsix)');
+    WriteLn('');
+    WriteLn('  # === Project Metadata & Licensing ===');
+    WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
+    WriteLn('  bv meta [show|get|set|bump] Manages project metadata and syncs SemVer with src/uAppVersion.pas');
+    WriteLn('  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)');
+    WriteLn('');
+    WriteLn('  # === Framework Diagnostics & Git Auto-Updater ===');
+    WriteLn('  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
+    WriteLn('  bv self-update [--check]   Syncs & recompiles BlaiseVue directly from GitHub via Git');
+    WriteLn('  bv channel [use <name>]    Inspects or switches framework branch (main/develop)');
+    WriteLn('  bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features');
+    WriteLn('');
+    WriteLn('  # === Cockpit & Multi-Project Management ===');
+    WriteLn('  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)');
+    WriteLn('  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere');
+    WriteLn('  bv project add             Registers current project into global registry');
+    WriteLn('  bv project list            Lists registered projects (* active)');
+    WriteLn('  bv project current         Shows active project details');
+    WriteLn('  bv project remove <name>   Unregisters a project from global registry');
+    WriteLn('');
+    WriteLn('  For complete documentation and guides:');
+    WriteLn('    https://github.com/affonsoelias/BlaiseVue');
+    WriteLn('');
     Halt(0);
-
   end;
 
 
@@ -24658,6 +25191,18 @@ begin
   else if (Cmd = 'update') or (Cmd = 'upgrade') then
   begin
     CmdUpdate;
+  end
+  else if (Cmd = 'doctor') or (Cmd = 'doc-env') then
+  begin
+    CmdDoctor;
+  end
+  else if (Cmd = 'self-update') or (Cmd = 'selfupdate') or (Cmd = 'upgrade-cli') then
+  begin
+    CmdSelfUpdate;
+  end
+  else if (Cmd = 'channel') or (Cmd = 'branch') then
+  begin
+    CmdChannel;
   end
   else if Cmd = 'enter' then
   begin
