@@ -24135,7 +24135,7 @@ begin
   {$ENDIF}
 
   // Probe Git branch and commit if in repo
-  BranchName := 'Desconhecido';
+  BranchName := 'Unknown';
   ShortHash := '';
   RemoteUrl := '';
   if DirectoryExists(SDKDir + DirectorySeparator + '.git') then
@@ -24147,31 +24147,31 @@ begin
 
   WriteLn('');
   WriteLn('======================================================================');
-  WriteLn('  BlaiseVue Doctor - Diagnostico do Ambiente');
+  WriteLn('  BlaiseVue Doctor - Environment Diagnostics');
   WriteLn('======================================================================');
-  WriteLn('  Sistema Operacional:  ', OSName);
-  WriteLn('  Diretorio do SDK:     ', SDKDir);
+  WriteLn('  Operating System:     ', OSName);
+  WriteLn('  SDK Directory:        ', SDKDir);
   if ShortHash <> '' then
-    WriteLn('  Canal Git:            ', BranchName, ' (Commit: ', ShortHash, ')')
+    WriteLn('  Git Channel:          ', BranchName, ' (Commit: ', ShortHash, ')')
   else
-    WriteLn('  Canal Git:            Instalacao independente');
+    WriteLn('  Git Channel:          Standalone installation');
   if RemoteUrl <> '' then
-    WriteLn('  Origem Remota:        ', RemoteUrl);
+    WriteLn('  Remote Origin:        ', RemoteUrl);
   WriteLn('');
 
   // 1. Core Tooling
-  WriteLn('[1] Ferramentas Essenciais do Framework:');
+  WriteLn('[1] Core Framework Tooling:');
 
   // Git
   HasGit := ExecCmdCapture('git --version', GitVer) and (Pos('git version', GitVer) > 0);
   if HasGit then
-    WriteLn('  [v] Git CLI:              ', GitVer, ' detectado no PATH')
+    WriteLn('  [v] Git CLI:              ', GitVer, ' detected in PATH')
   else
   begin
     AllHealthy := False;
-    WriteLn('  [X] Git CLI:              Nao detectado no PATH!');
-    WriteLn('      -> Obrigatorio para sincronizacao e atualizacoes.');
-    WriteLn('      -> Instale em: https://git-scm.com/');
+    WriteLn('  [X] Git CLI:              Not detected in PATH!');
+    WriteLn('      -> Required for framework updates and synchronization.');
+    WriteLn('      -> Install from: https://git-scm.com/');
   end;
 
   // FPC
@@ -24181,9 +24181,9 @@ begin
   else
   begin
     AllHealthy := False;
-    WriteLn('  [X] Free Pascal (FPC):    Nao detectado!');
-    WriteLn('      -> Necessario para compilar o backend mORMot e o CLI.');
-    WriteLn('      -> Instale o Lazarus IDE (que inclui o FPC): https://www.lazarus-ide.org/');
+    WriteLn('  [X] Free Pascal (FPC):    Not detected!');
+    WriteLn('      -> Required to compile mORMot backend and CLI.');
+    WriteLn('      -> Install Lazarus IDE (which bundles FPC): https://www.lazarus-ide.org/');
   end;
 
   // Lazarus IDE
@@ -24194,65 +24194,65 @@ begin
   HasLazarus := HasCommand('lazarus-ide') or HasCommand('lazbuild') or DirectoryExists('/usr/lib/lazarus') or DirectoryExists('/Applications/Lazarus');
   {$ENDIF}
   if HasLazarus then
-    WriteLn('  [v] Lazarus IDE:          Detectado (Suporte completo a F9 e Desktop)')
+    WriteLn('  [v] Lazarus IDE:          Detected (Full F9 and Desktop app support)')
   else
-    WriteLn('  [!] Lazarus IDE:          Nao localizado (Opcional, recomendado para Desktop)');
+    WriteLn('  [!] Lazarus IDE:          Not found (Optional, recommended for Desktop apps)');
 
-  // Pas2JS (Embutido)
+  // Pas2JS (Bundled)
   Pas2Path := GetPas2JSPath;
   HasPas2 := FileExists(Pas2Path);
   if HasPas2 then
   begin
     Pas2Ver := '3.2.0';
     if ExecCmdCapture('"' + Pas2Path + '" -iV', Pas2Ver) then Pas2Ver := Trim(Pas2Ver);
-    WriteLn('  [v] Pas2JS (Embutido):    v', Pas2Ver, ' integro em ', ExtractRelativePath(SDKDir + DirectorySeparator, Pas2Path));
+    WriteLn('  [v] Pas2JS (Bundled):     v', Pas2Ver, ' verified at ', ExtractRelativePath(SDKDir + DirectorySeparator, Pas2Path));
   end
   else
   begin
     AllHealthy := False;
-    WriteLn('  [X] Pas2JS (Embutido):    Binario nao encontrado no SDK em:');
+    WriteLn('  [X] Pas2JS (Bundled):     Binary not found in SDK at:');
     WriteLn('      ', Pas2Path);
   end;
 
-  // mORMot 2 (Embutido)
+  // mORMot 2 (Bundled)
   MormotPath := FindMormot2Path;
   HasMormot := (MormotPath <> '') and DirectoryExists(MormotPath);
   if HasMormot then
-    WriteLn('  [v] Synopse mORMot 2:     Integro em ', ExtractRelativePath(SDKDir + DirectorySeparator, MormotPath))
+    WriteLn('  [v] Synopse mORMot 2:     Verified at ', ExtractRelativePath(SDKDir + DirectorySeparator, MormotPath))
   else
   begin
     AllHealthy := False;
-    WriteLn('  [X] Synopse mORMot 2:     Nao encontrado em vendor/mormot2!');
+    WriteLn('  [X] Synopse mORMot 2:     Not found in vendor/mormot2!');
   end;
 
   WriteLn('');
-  WriteLn('[2] Ferramentas de Ecossistema & Testes:');
+  WriteLn('[2] Ecosystem & Testing Tools:');
 
   // Node & npm
   HasNode := ExecCmdCapture('node -v', NodeVer) and (Pos('v', NodeVer) = 1);
   if HasNode then
   begin
     ExecCmdCapture('npm -v', NpmVer);
-    WriteLn('  [v] Node.js & npm:        Node ', NodeVer, ' e npm v', NpmVer, ' detectados no PATH');
+    WriteLn('  [v] Node.js & npm:        Node ', NodeVer, ' and npm v', NpmVer, ' detected in PATH');
   end
   else
   begin
-    WriteLn('  [!] Node.js:              Nao detectado no PATH (Opcional, necessario para "npm test" e HMR)');
+    WriteLn('  [!] Node.js:              Not detected in PATH (Optional, needed for "npm test" and HMR)');
     WriteLn('      -> Download: https://nodejs.org');
   end;
 
   // Docker
   if ExecCmdCapture('docker --version', DockerVer) and (Pos('Docker version', DockerVer) > 0) then
-    WriteLn('  [v] Docker CLI:           ', DockerVer, ' detectado (bv mormot docker)')
+    WriteLn('  [v] Docker CLI:           ', DockerVer, ' detected (bv mormot docker)')
   else
-    WriteLn('  [!] Docker CLI:           Nao detectado (Opcional: micro-containers de producao)');
+    WriteLn('  [!] Docker CLI:           Not detected (Optional: production micro-containers)');
 
   WriteLn('');
   WriteLn('======================================================================');
   if AllHealthy then
-    WriteLn('  [v] Diagnostico concluido: Seu ambiente esta 100% pronto e saudavel!')
+    WriteLn('  [v] Diagnostics complete: Your environment is 100% healthy and ready!')
   else
-    WriteLn('  [!] Foram encontradas pendencias essenciais listadas acima com [X].');
+    WriteLn('  [!] Issues found with required tools listed above with [X].');
   WriteLn('======================================================================');
   WriteLn('');
 end;
@@ -24277,9 +24277,9 @@ begin
   begin
     WriteLn('');
     WriteLn('========================================================================');
-    WriteLn('  [ERROR] O Git nao foi detectado no sistema.');
-    WriteLn('  O BlaiseVue requer o Git para atualizacoes do framework.');
-    WriteLn('  Instale o Git em: https://git-scm.com/');
+    WriteLn('  [ERROR] Git was not detected on this system.');
+    WriteLn('  BlaiseVue requires Git for framework auto-updates.');
+    WriteLn('  Install Git from: https://git-scm.com/');
     WriteLn('========================================================================');
     WriteLn('');
     Halt(1);
@@ -24290,9 +24290,9 @@ begin
   begin
     WriteLn('');
     WriteLn('========================================================================');
-    WriteLn('  [ERROR] O diretorio do BlaiseVue nao e um repositorio Git:');
+    WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository:');
     WriteLn('  ', SDKDir);
-    WriteLn('  Para utilizar o self-update via Git, clone o repositorio oficial:');
+    WriteLn('  To use Git self-update, clone the official repository:');
     WriteLn('    git clone https://github.com/affonsoelias/BlaiseVue.git');
     WriteLn('========================================================================');
     WriteLn('');
@@ -24336,7 +24336,7 @@ begin
 
   if (TargetBranch <> 'main') and (TargetBranch <> 'develop') then
   begin
-    WriteLn('  [ERROR] Canal desconhecido: "', TargetBranch, '". Escolha "main" ou "develop".');
+    WriteLn('  [ERROR] Unknown channel: "', TargetBranch, '". Choose "main" or "develop".');
     Halt(1);
   end;
 
@@ -24344,13 +24344,13 @@ begin
   WriteLn('======================================================================');
   WriteLn('  BlaiseVue Framework Auto-Updater (bv self-update)');
   WriteLn('======================================================================');
-  WriteLn('  Diretorio SDK:    ', SDKDir);
-  WriteLn('  Canal Atual:      ', CurBranch);
-  WriteLn('  Canal Alvo:       ', TargetBranch);
+  WriteLn('  SDK Directory:    ', SDKDir);
+  WriteLn('  Current Channel:  ', CurBranch);
+  WriteLn('  Target Channel:   ', TargetBranch);
   if CheckOnly then
-    WriteLn('  Modo:             VERIFICACAO (--check)')
+    WriteLn('  Mode:             CHECK ONLY (--check)')
   else
-    WriteLn('  Modo:             SINCRONIZACAO & ATUALIZACAO');
+    WriteLn('  Mode:             SYNC & UPDATE');
   WriteLn('======================================================================');
   WriteLn('');
 
@@ -24358,18 +24358,18 @@ begin
   ExecCmdCapture('git -C "' + SDKDir + '" status --porcelain', GitStatusOut);
   if (Trim(GitStatusOut) <> '') and (not CheckOnly) then
   begin
-    WriteLn('  [AVISO] Voce possui alteracoes locais pendentes no repositorio do BlaiseVue:');
+    WriteLn('  [WARNING] You have uncommitted local changes in the BlaiseVue repository:');
     WriteLn(GitStatusOut);
-    WriteLn('  Faca "git stash" ou commit antes de atualizar para nao sobrescrever suas alteracoes.');
+    WriteLn('  Run "git stash" or commit before updating to avoid overwriting your changes.');
     Halt(1);
   end
   else if (Trim(GitStatusOut) <> '') and CheckOnly then
   begin
-    WriteLn('  [INFO] Workspace local possui arquivos modificados ainda nao commitados.');
+    WriteLn('  [INFO] Local workspace has uncommitted changes.');
   end;
 
   // 5. Fetch from origin
-  WriteLn('  Conectando ao GitHub (affonsoelias/BlaiseVue)...');
+  WriteLn('  Connecting to GitHub (affonsoelias/BlaiseVue)...');
   ExecCmdCapture('git -C "' + SDKDir + '" fetch origin', FetchOut);
 
   // 6. Diff against target branch
@@ -24378,16 +24378,16 @@ begin
 
   if (TargetBranch = CurBranch) and (Trim(DiffOut) = '') and ((Trim(BehindOut) = '0') or (BehindOut = '')) then
   begin
-    WriteLn('  [v] O BlaiseVue ja esta na versao mais recente do canal "' + CurBranch + '".');
+    WriteLn('  [v] BlaiseVue is already up to date on channel "' + CurBranch + '".');
     WriteLn('======================================================================');
     WriteLn('');
     Exit;
   end;
 
   if Trim(BehindOut) <> '' then
-    WriteLn('  [+] Commits novos encontrados: ', Trim(BehindOut));
+    WriteLn('  [+] New commits found: ', Trim(BehindOut));
 
-  WriteLn('  [+] Arquivos modificados no GitHub:');
+  WriteLn('  [+] Modified files on GitHub:');
   DiffList := TStringList.Create;
   try
     DiffList.Text := DiffOut;
@@ -24401,7 +24401,7 @@ begin
   if CheckOnly then
   begin
     WriteLn('');
-    WriteLn('  [TIP] Execute "bv self-update" para baixar e aplicar as alteracoes.');
+    WriteLn('  [TIP] Run "bv self-update" to download and apply changes.');
     WriteLn('======================================================================');
     WriteLn('');
     Exit;
@@ -24410,23 +24410,23 @@ begin
   // 7. Checkout branch if switching
   if TargetBranch <> CurBranch then
   begin
-    WriteLn('  [+] Alternando canal: ' + CurBranch + ' -> ' + TargetBranch + '...');
+    WriteLn('  [+] Switching channel: ' + CurBranch + ' -> ' + TargetBranch + '...');
     ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, CheckoutOut);
   end;
 
   // 8. Pull updates
-  WriteLn('  [+] Sincronizando arquivos (git pull origin ' + TargetBranch + ')...');
+  WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
   ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
 
   // 9. Recompile binary if bv.pas was updated or if switched branch
   NeedRecompile := (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0);
   if NeedRecompile then
   begin
-    WriteLn('  [BUILD] Codigo do CLI foi atualizado. Recompilando com Free Pascal...');
+    WriteLn('  [BUILD] CLI source code was updated. Recompiling with Free Pascal...');
     if not FindFPCExecutable(FpcExe, FpcVer, FpcSource) then
     begin
-      WriteLn('  [AVISO] FPC nao encontrado para recompilar o CLI automaticamente.');
-      WriteLn('          Instale o Lazarus/FPC e rode "bv doctor" para verificar.');
+      WriteLn('  [WARNING] FPC not found to automatically recompile CLI.');
+      WriteLn('            Install Lazarus/FPC and run "bv doctor" to verify.');
       Exit;
     end;
 
@@ -24444,14 +24444,14 @@ begin
     TargetBv := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'{$ENDIF};
     if FileExists(TargetBv) then
     begin
-      WriteLn('  [SUCCESS] Binario ' + ExtractFileName(TargetBv) + ' recompilado com sucesso!');
+      WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) + ' recompiled successfully!');
       {$IFDEF WINDOWS}
       ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1', DummyOut);
       {$ENDIF}
     end
     else
     begin
-      WriteLn('  [ERROR] Falha na recompilacao do CLI:');
+      WriteLn('  [ERROR] CLI recompilation failed:');
       WriteLn(CompOut);
       {$IFDEF WINDOWS}
       ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && move /y bv_old.exe bv.exe > nul 2>&1', DummyOut);
@@ -24461,7 +24461,7 @@ begin
 
   WriteLn('');
   WriteLn('======================================================================');
-  WriteLn('  [v] BlaiseVue atualizado com sucesso no canal "' + TargetBranch + '"!');
+  WriteLn('  [v] BlaiseVue successfully updated on channel "' + TargetBranch + '"!');
   WriteLn('======================================================================');
   WriteLn('');
 end;
@@ -24478,7 +24478,7 @@ begin
 
   if not DirectoryExists(SDKDir + DirectorySeparator + '.git') then
   begin
-    WriteLn('  [ERROR] O diretorio do BlaiseVue nao e um repositorio Git.');
+    WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository.');
     Halt(1);
   end;
 
@@ -24496,12 +24496,12 @@ begin
     TargetBranch := LowerCase(Trim(ParamStr(3)));
     if (TargetBranch <> 'main') and (TargetBranch <> 'develop') then
     begin
-      WriteLn('  [ERROR] Canal invalido: "', TargetBranch, '". Escolha "main" ou "develop".');
+      WriteLn('  [ERROR] Invalid channel: "', TargetBranch, '". Choose "main" or "develop".');
       Halt(1);
     end;
 
     // Run self-update targeting this branch
-    WriteLn('Alternando para o canal "' + TargetBranch + '"...');
+    WriteLn('Switching to channel "' + TargetBranch + '"...');
     ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, SubCmd);
     CmdSelfUpdate;
   end
@@ -24516,32 +24516,32 @@ begin
     WriteLn('======================================================================');
     WriteLn('  BlaiseVue Framework Channels (Git)');
     WriteLn('======================================================================');
-    WriteLn('  Repositorio:    ', RemoteUrl);
-    WriteLn('  Diretorio SDK:  ', SDKDir);
+    WriteLn('  Repository:       ', RemoteUrl);
+    WriteLn('  SDK Directory:    ', SDKDir);
     WriteLn('');
-    WriteLn('  Canais Disponiveis:');
+    WriteLn('  Available Channels:');
     if CurBranch = 'main' then
     begin
-      WriteLn('    * main       [ATIVO] Canal estavel (Usuario final / Producao)');
-      WriteLn('      develop    [Disponivel] Canal de desenvolvimento (Contribuidores)');
+      WriteLn('    * main       [ACTIVE] Stable release channel (End user / Production)');
+      WriteLn('      develop    [Available] Development channel (Contributors / Bleeding-edge)');
     end
     else if CurBranch = 'develop' then
     begin
-      WriteLn('      main       [Disponivel] Canal estavel (Usuario final / Producao)');
-      WriteLn('    * develop    [ATIVO] Canal de desenvolvimento (Contribuidores)');
+      WriteLn('      main       [Available] Stable release channel (End user / Production)');
+      WriteLn('    * develop    [ACTIVE] Development channel (Contributors / Bleeding-edge)');
     end
     else
     begin
-      WriteLn('    * ' + CurBranch + ' [ATIVO - Custom]');
-      WriteLn('      main       [Disponivel] Canal estavel');
-      WriteLn('      develop    [Disponivel] Canal de desenvolvimento');
+      WriteLn('    * ' + CurBranch + ' [ACTIVE - Custom]');
+      WriteLn('      main       [Available] Stable release channel');
+      WriteLn('      develop    [Available] Development channel');
     end;
     WriteLn('');
-    WriteLn('  Commit Atual:   ', ShortHash);
+    WriteLn('  Current Commit:   ', ShortHash);
     WriteLn('');
-    WriteLn('  Para trocar de canal:');
-    WriteLn('    bv channel use develop   # Muda para desenvolvimento');
-    WriteLn('    bv channel use main      # Muda para versao estavel');
+    WriteLn('  To switch channels:');
+    WriteLn('    bv channel use develop   # Switch to development channel');
+    WriteLn('    bv channel use main      # Switch to stable release channel');
     WriteLn('======================================================================');
     WriteLn('');
   end;

@@ -385,8 +385,8 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `clean` — Purges `generated/` and `dist/`.
 * `update` / `upgrade` — Surgically syncs project infrastructure with latest framework features.
 * `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
-* `self-update` — Sincroniza e recompila o motor do BlaiseVue direto do GitHub.
-* `channel [use <name>]` — Consulta ou alterna entre branches (main / develop).
+* `self-update` — Synchronizes and recompiles BlaiseVue engine directly from GitHub.
+* `channel [use <name>]` — Inspects or switches framework branches (main / develop).
 * `exit` / `quit` — Exits the cockpit and returns to regular shell.
 
 > [!TIP]
@@ -450,40 +450,40 @@ bv doctor
 Updates the BlaiseVue framework engine itself directly from GitHub using Git.
 
 ```bash
-# Sincroniza e atualiza o framework na branch ativa:
+# Synchronize and update framework on current branch:
 bv self-update
 
-# Apenas verifica se há commits e novidades no GitHub sem baixar:
+# Check for remote updates without downloading:
 bv self-update --check
 
-# Alterna para o canal de desenvolvimento do framework:
+# Switch to development channel:
 bv self-update --channel=develop
 
-# Alterna para o canal estável oficial:
+# Switch to official stable release channel:
 bv self-update --channel=main
 ```
 
-**Como funciona nos bastidores:**
-* Executa `git fetch origin`.
-* Compara e lista os arquivos modificados no GitHub com `git diff --name-only`.
-* Faz `git pull` transferindo apenas o delta dos arquivos alterados (poucos KBs).
-* Se o código-fonte do CLI (`bin/bv.pas`) foi modificado ou se você alternou de branch, recompila automaticamente o executável:
-  * **No Windows**: Recompila `bin/bv.exe` (substituindo o binário em execução com segurança).
-  * **No Linux / macOS**: Recompila `bin/bv` e aplica permissão `chmod +x bin/bv`.
+**How it works under the hood:**
+* Executes `git fetch origin`.
+* Compares and lists modified files on GitHub with `git diff --name-only`.
+* Performs `git pull`, transferring only the delta of changed files (a few KBs).
+* If CLI source code (`bin/bv.pas`) was updated or branch was switched, automatically recompiles the binary:
+  * **On Windows**: Recompiles `bin/bv.exe` (safely replacing the running binary).
+  * **On Linux / macOS**: Recompiles `bin/bv` and applies executable permissions `chmod +x bin/bv`.
 
 ---
 
-### `bv channel` (Gerenciador de Canais Git)
-Permite inspecionar a branch ativa do framework e alternar rapidamente entre o canal estável (`main`) e o canal de desenvolvimento (`develop`).
+### `bv channel` (Git Channel Manager)
+Inspects active framework branch and quickly switches between stable release channel (`main`) and development channel (`develop`).
 
 ```bash
-# Exibe o canal ativo, commit atual e status do repositório:
+# Display active channel, current commit, and repository status:
 bv channel
 
-# Alterna para a branch de desenvolvimento:
+# Switch to development channel:
 bv channel use develop
 
-# Alterna para a branch estável oficial:
+# Switch to official stable release channel:
 bv channel use main
 ```
 
