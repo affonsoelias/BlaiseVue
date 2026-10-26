@@ -163,7 +163,7 @@ function watchDir(dir) {
           const bvExe = candidateExes.find(p => fs.existsSync(p));
           const appDir = fs.existsSync(path.resolve(ROOT_DIR, 'demo-app')) ? path.resolve(ROOT_DIR, 'demo-app') : ROOT_DIR;
           if (bvExe) {
-            execSync(`"${bvExe}" run dev`, { cwd: appDir, stdio: 'pipe' });
+            execSync(`"${bvExe}" build`, { cwd: appDir, stdio: 'pipe' });
             console.log(`\x1b[32m[HMR] Dev build refreshed. Broadcasting update...\x1b[0m`);
             broadcast({ type: 'reload' });
           } else {

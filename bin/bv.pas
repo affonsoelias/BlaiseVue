@@ -39,7 +39,9 @@ program bv;
 
 
 uses
-
+{$IFDEF WINDOWS}
+  windows,
+{$ENDIF}
   SysUtils, Classes, StrUtils, DateUtils, Process, Sockets,
 
   fphttpclient, openssl, zipper, fpjson, jsonparser;
@@ -23000,21 +23002,58 @@ end;
 
 procedure ExecInCockpit(const ExePath, WorkingDir, Args: string);
 begin
-  {$IFDEF WINDOWS}
-  ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && "' + ExePath + '" ' + Args);
-  {$ELSE}
-  ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && \"' + ExePath + '\" ' + Args + '"');
-  {$ENDIF}
+  try
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && "' + ExePath + '" ' + Args);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && \"' + ExePath + '\" ' + Args + '"');
+    {$ENDIF}
+  except
+    on E: Exception do
+    begin
+      // Catch Ctrl+C interruptions cleanly without terminating the Cockpit session
+    end;
+  end;
 end;
 
 procedure ExecShellCmd(const WorkingDir, CmdLine: string);
 begin
-  {$IFDEF WINDOWS}
-  ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && ' + CmdLine);
-  {$ELSE}
-  ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && ' + CmdLine + '"');
-  {$ENDIF}
+  try
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && ' + CmdLine);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && ' + CmdLine + '"');
+    {$ENDIF}
+  except
+    on E: Exception do
+    begin
+      // Catch Ctrl+C interruptions cleanly without terminating the Cockpit session
+    end;
+  end;
 end;
+
+{$IFDEF WINDOWS}
+function CockpitConsoleCtrlHandler(dwCtrlType: DWORD): BOOL; stdcall;
+begin
+  case dwCtrlType of
+    CTRL_C_EVENT, CTRL_BREAK_EVENT:
+    begin
+      // Intercept Ctrl+C / Ctrl+Break in Cockpit:
+      // Return TRUE so Windows DOES NOT terminate bv.exe (the Cockpit shell).
+      // Child processes (dev-server, mormot, etc.) still receive the signal and exit cleanly.
+      WriteLn('');
+      Result := True;
+      Exit;
+    end;
+    CTRL_CLOSE_EVENT, CTRL_LOGOFF_EVENT, CTRL_SHUTDOWN_EVENT:
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+{$ENDIF}
 
 procedure RunCockpitShell(const InitialName, InitialPath: string);
 var
@@ -23024,6 +23063,9 @@ var
   i: Integer;
   BvExePath: string;
 begin
+  {$IFDEF WINDOWS}
+  SetConsoleCtrlHandler(@CockpitConsoleCtrlHandler, True);
+  {$ENDIF}
   ActiveName := InitialName;
   ActivePath := InitialPath;
   BvExePath := ExpandFileName(ParamStr(0));
@@ -23046,7 +23088,15 @@ begin
     while True do
     begin
       Write('[bv: ' + ActiveName + '] > ');
-      ReadLn(InputLine);
+      try
+        ReadLn(InputLine);
+      except
+        on E: Exception do
+        begin
+          WriteLn('');
+          Continue;
+        end;
+      end;
       InputLine := Trim(InputLine);
       if InputLine = '' then Continue;
 
@@ -23356,6 +23406,9 @@ begin
     end;
   finally
     Tokens.Free;
+    {$IFDEF WINDOWS}
+    SetConsoleCtrlHandler(@CockpitConsoleCtrlHandler, False);
+    {$ENDIF}
   end;
 end;
 
@@ -23650,13 +23703,8 @@ begin
   end
 
   else if Cmd = 'build' then
-
   begin
-
-    WriteLn('Warning: "bv build" has been renamed to "bv run dev".');
-
     CmdBuild;
-
   end
 
   else if (Cmd = 'serve') or (Cmd = 'dev') then
@@ -23949,7 +23997,11 @@ begin
 
     if Cmd = 'build' then CmdRunBuild
 
-    else if Cmd = 'dev' then CmdBuild // Old bv build is now bv run dev
+    else if Cmd = 'dev' then
+    begin
+      CmdBuild;
+      CmdServe;
+    end
 
     else if Cmd = 'ssg' then CmdSSG
 
