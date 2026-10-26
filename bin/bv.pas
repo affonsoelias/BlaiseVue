@@ -787,6 +787,7 @@ procedure CmdCheck(const TargetFile: string); forward;
 procedure CmdLicense; forward;
 procedure CmdMeta; forward;
 procedure CmdReset; forward;
+procedure CmdUpdate; forward;
 
 
 
@@ -23223,6 +23224,7 @@ begin
         WriteLn('    project remove <name>      Unregisters a project');
         WriteLn('    use <name>                 Switches active project context immediately');
         WriteLn('    rename project <NewName>   Renames project, syncs package.json & prompt');
+        WriteLn('    update [--dry-run]         Updates project infrastructure non-destructively');
         WriteLn('');
         WriteLn('  Backend & Full-Stack (mORMot 2):');
         WriteLn('    mormot run [--release]     Launches native backend server');
@@ -23460,6 +23462,12 @@ begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
+      // `update` / `upgrade`
+      else if (CmdName = 'update') or (CmdName = 'upgrade') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
       // `doc`
       else if CmdName = 'doc' then
       begin
@@ -23569,6 +23577,409 @@ begin
 
   RunCockpitShell(ProjName, ProjPath);
 end;
+
+// =====================================================================
+//  COMMAND: UPDATE / UPGRADE (bv update)
+// =====================================================================
+{ Surgically and non-destructively synchronizes existing BlaiseVue projects
+  with the latest framework infrastructure, signal handlers, port failovers,
+  runtime scripts and RTL assets without ever touching user custom code or folders. }
+
+procedure CmdUpdate;
+var
+  BaseDir, ServerDir, ServerLprFile, AppCfgFile, PkgFile, DistJsDir, RtlDest, RtlSrc: string;
+  BackupDir, CurTimestamp, ProjName, ProjVer, LprContent, PkgContent: string;
+  DryRun, OnlyServer, OnlyFrontend, NoBackup, Force: Boolean;
+  HasServer, HasFrontend, ServerUpdated, PkgUpdated, RtlUpdated: Boolean;
+  i, BackupCount: Integer;
+  UsesPos, VarPos, BeginPos, PosMarker, MainPortPos, MainBeginPos, p: Integer;
+
+  procedure CreateFileBackup(const RelFilePath: string);
+  var
+    Src, Dst: string;
+  begin
+    if DryRun or NoBackup then Exit;
+    Src := BaseDir + RelFilePath;
+    if not FileExists(Src) then Exit;
+    Dst := BackupDir + RelFilePath;
+    ForceDirectories(ExtractFilePath(Dst));
+    CopyFile(Src, Dst);
+    Inc(BackupCount);
+    WriteLn('  [BACKUP] Saved snapshot: .bv_backup' + DirectorySeparator + 'update_' + CurTimestamp + DirectorySeparator + RelFilePath);
+  end;
+
+begin
+  DryRun := False;
+  OnlyServer := False;
+  OnlyFrontend := False;
+  NoBackup := False;
+  Force := False;
+
+  for i := 2 to ParamCount do
+  begin
+    if (ParamStr(i) = '--dry-run') or (ParamStr(i) = '-d') then
+      DryRun := True
+    else if ParamStr(i) = '--server' then
+      OnlyServer := True
+    else if ParamStr(i) = '--frontend' then
+      OnlyFrontend := True
+    else if ParamStr(i) = '--no-backup' then
+      NoBackup := True
+    else if (ParamStr(i) = '--force') or (ParamStr(i) = '-f') then
+      Force := True
+    else if (ParamStr(i) = '--help') or (ParamStr(i) = '-h') then
+    begin
+      WriteLn('');
+      WriteLn('  BlaiseVue Infrastructure Updater');
+      WriteLn('  Usage: bv update [options]');
+      WriteLn('  Alias: bv upgrade [options]');
+      WriteLn('');
+      WriteLn('  Options:');
+      WriteLn('    --dry-run       Simulate update without modifying any files');
+      WriteLn('    --server        Update only backend/server infrastructure');
+      WriteLn('    --frontend      Update only frontend infrastructure');
+      WriteLn('    --no-backup     Skip creating automatic backup snapshot');
+      WriteLn('    --force         Force re-patching and rebuilding even if up-to-date');
+      WriteLn('    -h, --help      Show this help message');
+      WriteLn('');
+      Halt(0);
+    end;
+  end;
+
+  BaseDir := IncludeTrailingPathDelimiter(GetCurrentDir);
+  ServerDir := BaseDir + 'server' + DirectorySeparator;
+  ServerLprFile := ServerDir + 'server.lpr';
+  AppCfgFile := ServerDir + 'app.cfg';
+  PkgFile := BaseDir + 'package.json';
+  DistJsDir := BaseDir + 'dist' + DirectorySeparator + 'js' + DirectorySeparator;
+
+  HasServer := DirectoryExists(ServerDir) and FileExists(ServerLprFile);
+  HasFrontend := FileExists(PkgFile) or DirectoryExists(BaseDir + 'src');
+
+  if not HasServer and not HasFrontend then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] "bv update" must be executed inside a BlaiseVue project.');
+    WriteLn('  Current directory: ', BaseDir);
+    WriteLn('  No server/server.lpr or package.json found.');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  ProjName := GetProjectNameFromDir(ExcludeTrailingPathDelimiter(BaseDir));
+  ProjVer := GetProjectVersionFromDir(ExcludeTrailingPathDelimiter(BaseDir));
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Project Infrastructure Updater (bv update)');
+  WriteLn('======================================================================');
+  WriteLn('  Project:       ', ProjName, ' (v', ProjVer, ')');
+  WriteLn('  Directory:     ', BaseDir);
+  if DryRun then
+    WriteLn('  Mode:          DRY-RUN (Simulation - no changes will be made)')
+  else
+    WriteLn('  Mode:          LIVE UPDATE');
+  WriteLn('  Safety Rule:   User custom directories & files (kernel/, packages/,');
+  WriteLn('                 models/, controllers/, etc.) are NEVER touched.');
+  WriteLn('======================================================================');
+  WriteLn('');
+
+  CurTimestamp := FormatDateTime('yyyymmdd_hhnnss', Now);
+  BackupDir := BaseDir + '.bv_backup' + DirectorySeparator + 'update_' + CurTimestamp + DirectorySeparator;
+  BackupCount := 0;
+
+  ServerUpdated := False;
+  PkgUpdated := False;
+  RtlUpdated := False;
+
+  // -------------------------------------------------------------------
+  // 1. Backend Server Infrastructure
+  // -------------------------------------------------------------------
+  if HasServer and (not OnlyFrontend) then
+  begin
+    WriteLn('[1/3] Inspecting server infrastructure in server/server.lpr...');
+    LprContent := ReadFileToString(ServerLprFile);
+
+    // 1.1: Ensure windows unit is in uses clause
+    if (Pos('windows,', LprContent) = 0) and (Pos('windows;', LprContent) = 0) then
+    begin
+      UsesPos := Pos('uses', LprContent);
+      if UsesPos > 0 then
+      begin
+        Insert(#10 + '  {$ifdef OSWINDOWS}' + #10 + '  windows,' + #10 + '  {$endif OSWINDOWS}', LprContent, UsesPos + 4);
+        ServerUpdated := True;
+      end;
+    end;
+
+    // 1.2: Ensure .env variables are declared
+    if Pos('EnvLines: TStringList;', LprContent) = 0 then
+    begin
+      VarPos := Pos('var', LprContent);
+      if VarPos > 0 then
+      begin
+        Insert(#10 + '  EnvPath, EnvLine, EnvKey, EnvVal: string;' + #10 + '  EnvLines: TStringList;' + #10 + '  eqPos: Integer;', LprContent, VarPos + 3);
+        ServerUpdated := True;
+      end;
+    end;
+
+    // 1.3: Locate main program block using 'Port :='
+    MainPortPos := Pos('Port :=', LprContent);
+    MainBeginPos := 0;
+    if MainPortPos > 0 then
+    begin
+      for p := MainPortPos downto 6 do
+      begin
+        if Copy(LprContent, p - 4, 5) = 'begin' then
+        begin
+          MainBeginPos := p - 4;
+          Break;
+        end;
+      end;
+    end;
+
+    // 1.4: Ensure ConsoleCtrlHandler with clean ExitProcess(0)
+    if Pos('function ConsoleCtrlHandler', LprContent) = 0 then
+    begin
+      if MainBeginPos > 0 then
+      begin
+        Insert(
+          '{$ifdef OSWINDOWS}' + #10 +
+          'function ConsoleCtrlHandler(dwCtrlType: DWORD): BOOL; stdcall;' + #10 +
+          'begin' + #10 +
+          '  case dwCtrlType of' + #10 +
+          '    CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT, CTRL_SHUTDOWN_EVENT:' + #10 +
+          '    begin' + #10 +
+          '      WriteLn('''');' + #10 +
+          '      WriteLn(''[+] Signal received (Ctrl+C). Gracefully closing mORMot 2 server...'');' + #10 +
+          '      if Assigned(App) then' + #10 +
+          '      begin' + #10 +
+          '        try' + #10 +
+          '          App.Free;' + #10 +
+          '          App := nil;' + #10 +
+          '        except' + #10 +
+          '        end;' + #10 +
+          '      end;' + #10 +
+          '      WriteLn(''[+] mORMot 2 server stopped cleanly. Ports released.'');' + #10 +
+          '      ExitProcess(0);' + #10 +
+          '      Result := True;' + #10 +
+          '      Exit;' + #10 +
+          '    end;' + #10 +
+          '  end;' + #10 +
+          '  Result := False;' + #10 +
+          'end;' + #10 +
+          '{$endif OSWINDOWS}' + #10#10, LprContent, MainBeginPos);
+        ServerUpdated := True;
+      end;
+    end
+    else if Pos('ExitProcess(0)', LprContent) = 0 then
+    begin
+      if Pos('App.Free;', LprContent) > 0 then
+      begin
+        LprContent := StringReplace(LprContent,
+          'FreeAndNil(App);',
+          'try App.Free; App := nil; except end;' + #10 + '      ExitProcess(0); Result := True; Exit;',
+          [rfReplaceAll]);
+        ServerUpdated := True;
+      end;
+    end;
+
+    // 1.5: Ensure SetConsoleCtrlHandler call in main program block right before Port :=
+    if Pos('SetConsoleCtrlHandler(@ConsoleCtrlHandler', LprContent) = 0 then
+    begin
+      MainPortPos := Pos('Port :=', LprContent);
+      if MainPortPos > 0 then
+      begin
+        Insert('{$ifdef OSWINDOWS}' + #10 +
+               '  SetConsoleCtrlHandler(@ConsoleCtrlHandler, True);' + #10 +
+               '  {$endif OSWINDOWS}' + #10 + '  ', LprContent, MainPortPos);
+        ServerUpdated := True;
+      end;
+    end;
+
+    // 1.5: Ensure .env PORT support
+    if Pos('EnvLines.LoadFromFile(EnvPath);', LprContent) = 0 then
+    begin
+      PosMarker := Pos('Port := ''8090'';', LprContent);
+      if PosMarker > 0 then
+      begin
+        PosMarker := PosMarker + Length('Port := ''8090'';');
+        Insert(#10#10 +
+          '  // Read .env configuration if present' + #10 +
+          '  EnvPath := ExtractFilePath(ParamStr(0)) + ''.env'';' + #10 +
+          '  if not FileExists(EnvPath) then' + #10 +
+          '    EnvPath := ExtractFilePath(ParamStr(0)) + ''..'' + DirectorySeparator + ''.env'';' + #10 +
+          '  if not FileExists(EnvPath) and FileExists(''.env'') then' + #10 +
+          '    EnvPath := ExpandFileName(''.env'');' + #10 +
+          '  if not FileExists(EnvPath) and FileExists(''..'' + DirectorySeparator + ''.env'') then' + #10 +
+          '    EnvPath := ExpandFileName(''..'' + DirectorySeparator + ''.env'');' + #10#10 +
+          '  if FileExists(EnvPath) then' + #10 +
+          '  begin' + #10 +
+          '    EnvLines := TStringList.Create;' + #10 +
+          '    try' + #10 +
+          '      EnvLines.LoadFromFile(EnvPath);' + #10 +
+          '      for i := 0 to EnvLines.Count - 1 do' + #10 +
+          '      begin' + #10 +
+          '        EnvLine := Trim(EnvLines[i]);' + #10 +
+          '        if (EnvLine = '''') or (EnvLine[1] = ''#'') then Continue;' + #10 +
+          '        eqPos := Pos(''='', EnvLine);' + #10 +
+          '        if eqPos > 1 then' + #10 +
+          '        begin' + #10 +
+          '          EnvKey := UpperCase(Trim(Copy(EnvLine, 1, eqPos - 1)));' + #10 +
+          '          EnvVal := Trim(Copy(EnvLine, eqPos + 1, MaxInt));' + #10 +
+          '          if EnvKey = ''PORT'' then' + #10 +
+          '            Port := EnvVal;' + #10 +
+          '        end;' + #10 +
+          '      end;' + #10 +
+          '    finally' + #10 +
+          '      EnvLines.Free;' + #10 +
+          '    end;' + #10 +
+          '  end;', LprContent, PosMarker);
+        ServerUpdated := True;
+      end;
+    end;
+
+    if ServerUpdated then
+    begin
+      WriteLn('  [+] server/server.lpr updates identified (clean signals + .env reader).');
+      if not DryRun then
+      begin
+        CreateFileBackup('server' + DirectorySeparator + 'server.lpr');
+        WriteStringToFile(ServerLprFile, LprContent);
+        WriteLn('  [+] Updated server/server.lpr successfully.');
+      end
+      else
+        WriteLn('  [*] [DRY-RUN] Would update server/server.lpr');
+    end
+    else
+    begin
+      WriteLn('  [OK] server/server.lpr is already up to date with the latest features.');
+    end;
+
+    // Check if server binary should be rebuilt
+    if (ServerUpdated or Force) and (not DryRun) then
+    begin
+      WriteLn('  [BUILD] Recompiling server binary with updated infrastructure...');
+      CmdServer('build');
+    end
+    else if ServerUpdated and DryRun then
+    begin
+      WriteLn('  [*] [DRY-RUN] Would recompile server/bin/server.exe');
+    end;
+  end;
+
+  // -------------------------------------------------------------------
+  // 2. Frontend Infrastructure
+  // -------------------------------------------------------------------
+  if HasFrontend and (not OnlyServer) then
+  begin
+    WriteLn('[2/3] Inspecting frontend infrastructure...');
+
+    // 2.1: package.json scripts
+    if FileExists(PkgFile) then
+    begin
+      PkgContent := ReadFileToString(PkgFile);
+      if Pos('"dev": "bv serve"', PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '"dev": "bv serve"', '"dev": "bv run dev"', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('"server": "bv server"', PkgContent) = 0 then
+      begin
+        if Pos('"build": "bv run build"', PkgContent) > 0 then
+        begin
+          PkgContent := StringReplace(PkgContent,
+            '"build": "bv run build"',
+            '"build": "bv run build",' + #10 + '    "server": "bv server",' + #10 + '    "mormot": "bv mormot"',
+            [rfReplaceAll]);
+          PkgUpdated := True;
+        end;
+      end;
+
+      if PkgUpdated then
+      begin
+        if not DryRun then
+        begin
+          CreateFileBackup('package.json');
+          WriteStringToFile(PkgFile, PkgContent);
+          WriteLn('  [+] Synchronized package.json scripts ("dev": "bv run dev").');
+        end
+        else
+          WriteLn('  [*] [DRY-RUN] Would update package.json scripts');
+      end
+      else
+        WriteLn('  [OK] package.json scripts are up to date.');
+    end;
+
+    // 2.2: RTL JavaScript runtime asset
+    RtlSrc := GetRTLPath;
+    RtlDest := DistJsDir + 'rtl.js';
+    if FileExists(RtlSrc) and DirectoryExists(DistJsDir) then
+    begin
+      if (not FileExists(RtlDest)) or Force then
+      begin
+        if not DryRun then
+        begin
+          CreateFileBackup('dist' + DirectorySeparator + 'js' + DirectorySeparator + 'rtl.js');
+          CopyFile(RtlSrc, RtlDest);
+          RtlUpdated := True;
+          WriteLn('  [+] Synchronized dist/js/rtl.js runtime asset.');
+        end
+        else
+          WriteLn('  [*] [DRY-RUN] Would synchronize dist/js/rtl.js');
+      end
+      else
+        WriteLn('  [OK] dist/js/rtl.js is present.');
+    end;
+  end;
+
+  // -------------------------------------------------------------------
+  // 3. Registry & Non-destructive Safety Summary
+  // -------------------------------------------------------------------
+  WriteLn('[3/3] Finalizing project registry and safety check...');
+  if not DryRun then
+  begin
+    CmdProjectAdd;
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Update Summary');
+  WriteLn('======================================================================');
+  WriteLn('  Project:       ', ProjName, ' (v', ProjVer, ')');
+  if HasServer then
+  begin
+    if ServerUpdated then
+      WriteLn('  Server:        UPDATED (server.lpr + recompiled binary)')
+    else
+      WriteLn('  Server:        ALREADY UP TO DATE');
+  end
+  else
+    WriteLn('  Server:        N/A (frontend-only project)');
+
+  if HasFrontend then
+  begin
+    if PkgUpdated or RtlUpdated then
+      WriteLn('  Frontend:      UPDATED (scripts and/or runtime assets)')
+    else
+      WriteLn('  Frontend:      ALREADY UP TO DATE');
+  end;
+
+  WriteLn('  Safety Rule:   100% PRESERVED - All user custom directories and files');
+  WriteLn('                 (kernel/, packages/, models/, src/, etc.) were NOT touched.');
+
+  if (not DryRun) and (not NoBackup) and (BackupCount > 0) then
+    WriteLn('  Backup:        Saved to .bv_backup/update_', CurTimestamp, '/')
+  else if DryRun then
+    WriteLn('  Backup:        None (dry-run mode)')
+  else
+    WriteLn('  Backup:        No modified files required backup');
+
+  WriteLn('======================================================================');
+  WriteLn('');
+end;
+
 //  MAIN ENTRY POINT
 
 // =====================================================================
@@ -23709,6 +24120,7 @@ begin
     WriteLn('    bv license [list|show|set <type>] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
     WriteLn('    bv meta [show|get|set|bump|init]  Manages project metadata and syncs src/uAppVersion.pas');
     WriteLn('    bv reset [--bare] [--force]       Cleans project to a fresh slate (protected against demo-app)');
+    WriteLn('    bv update [--dry-run]  Synchronizes project infrastructure with latest framework features');
     WriteLn('    bv enter               Enters interactive cockpit (must be inside project)');
     WriteLn('    bv use <project-name>  Enters registered project cockpit from anywhere');
     WriteLn('    bv project add         Registers current project into global registry');
@@ -24242,6 +24654,10 @@ begin
   else if Cmd = 'reset' then
   begin
     CmdReset;
+  end
+  else if (Cmd = 'update') or (Cmd = 'upgrade') then
+  begin
+    CmdUpdate;
   end
   else if Cmd = 'enter' then
   begin

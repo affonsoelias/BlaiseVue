@@ -148,6 +148,8 @@ bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from 
 bv test                    # Compiles .test.pas files and runs Vitest suite
 
 # === Cockpit & Multi-Project Management ===
+bv update                  # Surgically syncs project infrastructure with latest framework features
+bv update --dry-run        # Previews updates without modifying any files (non-destructive safety)
 bv enter                   # Enters interactive project Cockpit shell (e.g. [bv: my-app] >)
 bv use <project-name>      # Jumps into registered project Cockpit shell from anywhere
 bv project add             # Registers current project into global registry (~/.blaisevue/projects.json)

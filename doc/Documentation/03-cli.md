@@ -383,6 +383,7 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `build` — Compiles production distribution with hashes.
 * `check [file]` — Validates SFC templates with AST type-checker.
 * `clean` — Purges `generated/` and `dist/`.
+* `update` / `upgrade` — Surgically syncs project infrastructure with latest framework features.
 * `exit` / `quit` — Exits the cockpit and returns to regular shell.
 
 > [!TIP]
@@ -391,13 +392,37 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 
 ---
 
-## 🧹 Maintenance Commands
+## 🧹 Maintenance & Upgrades
 
 ### `bv clean`
 Performs a complete purge of the build workspace:
 1. Purges the `generated/` directory.
 2. Purges compiled scripts in `dist/js/` and styles in `dist/css/`.
 3. Resets `dist/index.html` back to the template state.
+
+---
+
+### `bv update` (alias: `bv upgrade`)
+Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, and RTL assets.
+
+```bash
+# Preview what would be updated without touching any files
+bv update --dry-run
+
+# Run the live update
+bv update
+
+# Available options
+bv update --server     # Update only backend infrastructure (server.lpr, binary)
+bv update --frontend   # Update only frontend infrastructure (package.json, rtl.js)
+bv update --force      # Force rebuild and re-patching even if up to date
+bv update --no-backup  # Skip creating automatic backup snapshot
+```
+
+> [!IMPORTANT]
+> **Zero-Risk Non-Destructive Guarantee**:  
+> `bv update` **NEVER** deletes, overwrites, or modifies custom user directories or files (such as `server/kernel/`, `server/packages/`, `server/models/`, `server/controllers/`, `src/`, etc.). It only updates framework glue files (`server/server.lpr`, `package.json` scripts, `dist/js/rtl.js`).  
+> Furthermore, an automatic snapshot is preserved in `.bv_backup/update_<timestamp>/` prior to modifying any file.
 
 ---
 
