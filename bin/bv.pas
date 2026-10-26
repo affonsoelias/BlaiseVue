@@ -21300,6 +21300,41 @@ end;
 
 
 
+function IsTcpPortAvailable(APort: Word): Boolean;
+var
+  S: TSocket;
+  Addr: TInetSockAddr;
+  Res: Integer;
+begin
+  Result := False;
+  S := fpSocket(AF_INET, SOCK_STREAM, 0);
+  if S = -1 then Exit;
+  try
+    FillChar(Addr, SizeOf(Addr), 0);
+    Addr.sin_family := AF_INET;
+    Addr.sin_port := htons(APort);
+    Addr.sin_addr.s_addr := 0; // INADDR_ANY
+    Res := fpBind(S, @Addr, SizeOf(Addr));
+    Result := (Res = 0);
+  finally
+    CloseSocket(S);
+  end;
+end;
+
+function FindNextAvailableTcpPort(StartPort: Word; MaxAttempts: Word = 50): Word;
+var
+  Candidate: Word;
+begin
+  Candidate := StartPort;
+  while Candidate < StartPort + MaxAttempts do
+  begin
+    if IsTcpPortAvailable(Candidate) then
+      Exit(Candidate);
+    Inc(Candidate);
+  end;
+  Result := StartPort;
+end;
+
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
@@ -21310,7 +21345,13 @@ var
 
   LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
 
-  IsRelease, HasZip: Boolean;
+  IsRelease, HasZip, UserSpecifiedPort: Boolean;
+
+  TargetPort, OrigPort: Word;
+
+  EnvLines: TStringList;
+
+  EnvLine: string;
 
   i: Integer;
 
@@ -21688,133 +21729,168 @@ begin
 
 
     {$IFDEF WINDOWS}
-
+    ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
     if DirectoryExists(MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64') then
-
       FpcCmd := FpcCmd + '-Fl"' + MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-win64" ';
-
     FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
-
     ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && ' + FpcCmd);
-
     {$ELSE}
-
     FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
-
     ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ' + FpcCmd + '"');
-
     {$ENDIF}
 
-
-
     if FileExists(TargetExe) then
-
     begin
-
       WriteLn('  [SUCCESS] Native mORMot 2 server compiled successfully: ' + TargetExe);
-
       WriteLn('  [TIP] Run "bv mormot run" to start the server.');
-
     end
-
     else
-
     begin
-
       WriteLn('  [ERROR] Server compilation failed. Check FPC compiler output above.');
-
       Halt(1);
-
     end;
-
   end
 
   else if (SubCmd = 'run') then
-
   begin
-
     if not FileExists(TargetExe) or IsRelease then
-
     begin
-
       CmdServer('build', Arg1, Arg2);
-
     end;
-
-
 
     if not FileExists(TargetExe) then
-
     begin
-
       WriteLn('Error: Server binary not found: ' + TargetExe);
-
       Halt(1);
-
     end;
 
+    TargetPort := 8090;
+    UserSpecifiedPort := (PortArg <> '');
 
-
-    ExtraArgs := '';
+    if not UserSpecifiedPort then
+    begin
+      EnvFile := ProjectRoot + DirectorySeparator + '.env';
+      if not FileExists(EnvFile) then
+        EnvFile := ServerDir + DirectorySeparator + '.env';
+      if FileExists(EnvFile) then
+      begin
+        EnvLines := TStringList.Create;
+        try
+          EnvLines.LoadFromFile(EnvFile);
+          for i := 0 to EnvLines.Count - 1 do
+          begin
+            EnvLine := Trim(EnvLines[i]);
+            if (EnvLine <> '') and (EnvLine[1] <> '#') and (Pos('PORT=', UpperCase(EnvLine)) = 1) then
+            begin
+              PortArg := Trim(Copy(EnvLine, 6, MaxInt));
+              UserSpecifiedPort := True;
+              Break;
+            end;
+          end;
+        finally
+          EnvLines.Free;
+        end;
+      end;
+    end;
 
     if PortArg <> '' then
-
-      ExtraArgs := ' --port ' + PortArg;
-
-
-
-    WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
-
-    WriteLn('Executable: ' + TargetExe);
-
-    WriteLn('');
-
-
+      TargetPort := StrToIntDef(PortArg, 8090);
 
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
-    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
-
-    {$ELSE}
-
-    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ./bin/server' + ExtraArgs + '"');
-
     {$ENDIF}
 
+    if not IsTcpPortAvailable(TargetPort) then
+    begin
+      if UserSpecifiedPort then
+      begin
+        WriteLn('  [WARNING] Port ' + IntToStr(TargetPort) + ' is reported in use or locked by a lingering socket.');
+        WriteLn('            Server will attempt to bind, but if connections hang, specify another port.');
+      end
+      else
+      begin
+        OrigPort := TargetPort;
+        TargetPort := FindNextAvailableTcpPort(TargetPort + 1);
+        PortArg := IntToStr(TargetPort);
+        WriteLn('  [!] Notice: Default port ' + IntToStr(OrigPort) + ' is busy or locked by a lingering socket.');
+        WriteLn('  [+] Automatically switched to available port: ' + PortArg);
+      end;
+    end;
+
+    ExtraArgs := ' --port ' + IntToStr(TargetPort);
+
+    WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
+    WriteLn('Executable: ' + TargetExe);
+    WriteLn('Port:       ' + IntToStr(TargetPort));
+    WriteLn('');
+
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
+    {$ELSE}
+    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ./bin/server' + ExtraArgs + '"');
+    {$ENDIF}
+  end
+
+  else if (SubCmd = 'kill') or (SubCmd = 'stop') then
+  begin
+    WriteLn('Terminating mORMot 2 native server instances...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
+    {$ELSE}
+    ExecuteProcess('sh', '-c "killall -9 server > /dev/null 2>&1"');
+    {$ENDIF}
+    WriteLn('  [+] All server.exe processes terminated. Ports released.');
   end
 
   else if (SubCmd = 'status') then
-
   begin
-
+    UserSpecifiedPort := False;
     PortArg := '8090';
-
     for i := 2 to ParamCount do
-
     begin
-
       if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
-
       begin
-
         if i + 1 <= ParamCount then
-
+        begin
           PortArg := ParamStr(i + 1);
-
+          UserSpecifiedPort := True;
+        end;
       end
-
       else if Copy(ParamStr(i), 1, 7) = '--port=' then
-
+      begin
         PortArg := Copy(ParamStr(i), 8, MaxInt);
-
+        UserSpecifiedPort := True;
+      end;
     end;
 
-
+    if not UserSpecifiedPort then
+    begin
+      EnvFile := ProjectRoot + DirectorySeparator + '.env';
+      if not FileExists(EnvFile) then
+        EnvFile := ServerDir + DirectorySeparator + '.env';
+      if FileExists(EnvFile) then
+      begin
+        EnvLines := TStringList.Create;
+        try
+          EnvLines.LoadFromFile(EnvFile);
+          for i := 0 to EnvLines.Count - 1 do
+          begin
+            EnvLine := Trim(EnvLines[i]);
+            if (EnvLine <> '') and (EnvLine[1] <> '#') and (Pos('PORT=', UpperCase(EnvLine)) = 1) then
+            begin
+              PortArg := Trim(Copy(EnvLine, 6, MaxInt));
+              Break;
+            end;
+          end;
+        finally
+          EnvLines.Free;
+        end;
+      end;
+    end;
 
     WriteLn('Checking BlaiseVue mORMot 2 server status on http://localhost:' + PortArg + '/api/status ...');
-
     HttpClient := TFPHTTPClient.Create(nil);
+    HttpClient.IOTimeout := 2000;
 
     try
 
@@ -21827,17 +21903,21 @@ begin
         WriteLn(StatusResp);
 
       except
-
         on E: Exception do
-
         begin
-
+          if (PortArg = '8090') and (ParamCount < 3) then
+          begin
+            try
+              StatusResp := HttpClient.Get('http://localhost:8091/api/status');
+              WriteLn('[+] Server is ONLINE on fallback port 8091!');
+              WriteLn(StatusResp);
+              Exit;
+            except
+            end;
+          end;
           WriteLn('[-] Server is OFFLINE or unreachable on port ' + PortArg + ': ' + E.Message);
-
           WriteLn('    Start it using: bv mormot run');
-
         end;
-
       end;
 
     finally
