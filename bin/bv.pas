@@ -24264,7 +24264,7 @@ end;
 procedure CmdSelfUpdate;
 var
   SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FetchOut: string;
-  DiffOut, BehindOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
+  DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
   BinDir, CompCmd, CompOut, TargetBv, MoveCmd, DummyOut: string;
   DiffList: TStringList;
   CheckOnly, NeedRecompile: Boolean;
@@ -24372,20 +24372,38 @@ begin
   WriteLn('  Connecting to GitHub (affonsoelias/BlaiseVue)...');
   ExecCmdCapture('git -C "' + SDKDir + '" fetch origin', FetchOut);
 
-  // 6. Diff against target branch
-  ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD origin/' + TargetBranch, DiffOut);
+  // 6. Diff and commit tracking
+  BehindOut := '0';
+  AheadOut := '0';
   ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count HEAD..origin/' + TargetBranch, BehindOut);
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count origin/' + TargetBranch + '..HEAD', AheadOut);
+  BehindOut := Trim(BehindOut);
+  AheadOut := Trim(AheadOut);
 
-  if (TargetBranch = CurBranch) and (Trim(DiffOut) = '') and ((Trim(BehindOut) = '0') or (BehindOut = '')) then
+  if TargetBranch = CurBranch then
   begin
-    WriteLn('  [v] BlaiseVue is already up to date on channel "' + CurBranch + '".');
-    WriteLn('======================================================================');
-    WriteLn('');
-    Exit;
+    // Check if GitHub has zero incoming commits
+    if (BehindOut = '0') or (BehindOut = '') then
+    begin
+      WriteLn('  [v] BlaiseVue is already up to date with GitHub.');
+      if (AheadOut <> '0') and (AheadOut <> '') then
+        WriteLn('      (Local branch has ' + AheadOut + ' unpushed commit' + IfThen(AheadOut <> '1', 's', '') + ' ahead of origin/' + TargetBranch + ')');
+      WriteLn('======================================================================');
+      WriteLn('');
+      Exit;
+    end;
+
+    // Incoming files from GitHub using three-dot diff (merge-base to origin)
+    ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD...origin/' + TargetBranch, DiffOut);
+  end
+  else
+  begin
+    // Switching channel (e.g. develop -> main)
+    ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD origin/' + TargetBranch, DiffOut);
   end;
 
-  if Trim(BehindOut) <> '' then
-    WriteLn('  [+] New commits found: ', Trim(BehindOut));
+  if (BehindOut <> '0') and (BehindOut <> '') then
+    WriteLn('  [+] New commits found on GitHub: ', BehindOut);
 
   WriteLn('  [+] Modified files on GitHub:');
   DiffList := TStringList.Create;
