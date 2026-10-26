@@ -24563,145 +24563,90 @@ var
 
 begin
 
-  if ParamCount < 1 then
-
+  if (ParamCount < 1) or (ParamStr(1) = 'help') or (ParamStr(1) = '--help') or (ParamStr(1) = '-h') then
   begin
-
     WriteLn('');
-
-    WriteLn('  BlaiseVue CLI v3.5 (Universal Pascal Platform)');
-
-    WriteLn('  ==============================================');
-
+    WriteLn('  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)');
+    WriteLn('  ============================================================');
+    WriteLn('  Usage: bv <command> [options]');
     WriteLn('');
-
-    WriteLn('  Usage:');
-
-    WriteLn('    bv create <name>       Scaffolds a new project');
-
-    WriteLn('    bv clean               Cleans generated files (generated/ and dist/)');
-
-    WriteLn('    bv run dev             DEBUG build with timestamp (SFC -> Pas -> JS)');
-
-    WriteLn('    bv run build           PRODUCTION build with hashes (SFC -> Pas -> JS)');
-
-    WriteLn('    bv run ssg             Pre-renders all routes into static HTML (SSG)');
-
-    WriteLn('    bv dev                 Starts development server with HMR (alias: bv serve)');
-
-    WriteLn('    bv serve               Starts development server with HMR');
-
-    WriteLn('    bv doc [--serve]       Generates interactive component documentation & playground');
-
-    WriteLn('    bv wasm <info|benchmark> WebAssembly acceleration and performance benchmarks');
-
-    WriteLn('    bv transpile           Generates only .pas files');
-
-    WriteLn('    bv run preview         Tests the production build locally');
-
-    WriteLn('    bv new c <Name>        Creates a new component');
-
-    WriteLn('    bv new v <Name>        Creates a new view');
-    WriteLn('    bv new s <Name>        Creates a new service unit (pure Pascal)');
-
-    WriteLn('    bv new t <Name>        Creates a new test file (.test.pas)');
-
-    WriteLn('    bv remove c <Name>     Removes a component');
-
-    WriteLn('    bv remove v <Name>     Removes a view');
-    WriteLn('    bv remove s <Name>     Removes a service unit');
-
-    WriteLn('    bv remove t <Name>     Removes a test file');
-    WriteLn('    bv rename <c|v|s|p> <Old> [New] Renames component, view, service, or project');
-
-    WriteLn('    bv list c              Lists components');
-
-    WriteLn('    bv list v              Lists views');
-    WriteLn('    bv list s              Lists services');
-
-    WriteLn('    bv list t              Lists test files');
-
-    WriteLn('    bv lib list            Lists all installed components in lib/');
-
-    WriteLn('    bv lib install <pkg|url> Installs an official package (themes, icons, ui, mobile, charts) or from URL');
-
-    WriteLn('    bv lib remove <name>    Removes an installed component from lib/');
-
-    WriteLn('    bv lib pack [dir] [--skip-tests] Assembles and cryptographically verifies release artifact (.zip with SHA-256)');
-
-    WriteLn('    bv lib dist [dir] [--skip-tests] Alias for "bv lib pack"');
-
-    WriteLn('    bv theme list          Lists available installed themes');
-
-    WriteLn('    bv theme use <name>    Switches active project theme in index.html');
-
-    WriteLn('    bv extension [install|package] Installs or packages the official VS Code extension');
-
-    WriteLn('    bv vsix                Packages standalone VS Code extension (.vsix)');
-
-    WriteLn('    bv mobile init [name] [id] Configures Capacitor and scaffolds Android project');
-
-    WriteLn('    bv mobile sync         Syncs dist/ with native Android assets');
-
-    WriteLn('    bv mobile open         Syncs and opens Android Studio');
-
-    WriteLn('    bv mobile build        Builds native Android Debug APK via Gradle');
-
-    WriteLn('    bv desktop init [name] Scaffolds WebUI & Lazarus desktop project in desktop/');
-
-    WriteLn('    bv desktop sync        Syncs dist/ with desktop/assets/');
-
-    WriteLn('    bv desktop build [target] [--release] Compiles native binary (windows|linux|macos|all)');
-
-    WriteLn('    bv desktop run [target] [--release]   Builds and launches desktop app for target');
-
-    WriteLn('    bv mormot init         Scaffolds mORMot 2 backend server in server/');
-
-    WriteLn('    bv mormot build [--release] Compiles native server binary with Free Pascal');
-
-    WriteLn('    bv mormot run [--port <p>] Starts native mORMot 2 backend server (default: 8090)');
-
-    WriteLn('    bv mormot status [--port <p>] Queries running mORMot 2 health endpoint (/api/status)');
-
-    WriteLn('    bv mormot deploy [--zip] [--port <p>] Assembles standalone production bundle in deploy/');
-
-
-
-    WriteLn('    bv mormot crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
-
-    WriteLn('    bv mormot auth                 Scaffolds JWT authentication, AuthService, LoginView & route guards');
-
-    WriteLn('    bv mormot docs | swagger       Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
-
-    WriteLn('    bv mormot docker [--build]     Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
-
-    WriteLn('    bv mormot rpc                  Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces');
-
-    WriteLn('    bv studio [--port <p>] [--no-open] Launches BlaiseVue Studio developer cockpit (default: 9000)');
-
-    WriteLn('    bv check [file]        Validates component templates against script declarations (AST Type-Checker)');
-
-    WriteLn('    bv s <name>            Runs setup script for a component in lib/');
-
-    WriteLn('    bv test [e2e]          Runs unit tests (.test.pas) or headless E2E suite');
-    WriteLn('    bv license [list|show|set <type>] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
-    WriteLn('    bv meta [show|get|set|bump|init]  Manages project metadata and syncs src/uAppVersion.pas');
-    WriteLn('    bv reset [--bare] [--force]       Cleans project to a fresh slate (protected against demo-app)');
-    WriteLn('    bv update [--dry-run]  Synchronizes project infrastructure with latest framework features');
-    WriteLn('    bv doctor              Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
-    WriteLn('    bv self-update [--check] Updates BlaiseVue framework directly from GitHub via Git');
-    WriteLn('    bv channel [use <name>] Inspects or switches framework branch (main/develop)');
-    WriteLn('    bv enter               Enters interactive cockpit (must be inside project)');
-    WriteLn('    bv use <project-name>  Enters registered project cockpit from anywhere');
-    WriteLn('    bv project add         Registers current project into global registry');
-    WriteLn('    bv project list        Lists registered projects (* active)');
-    WriteLn('    bv project current     Shows active project information');
-    WriteLn('    bv project remove <name> Unregisters a project');
-
+    WriteLn('  # === Development & Server ===');
+    WriteLn('  bv dev                     Starts dev server with HMR on http://localhost:8080 (alias: bv serve)');
+    WriteLn('  bv run dev                 Builds project in dev mode & launches dev server on http://localhost:8080');
+    WriteLn('  bv build                   Compiles project without launching server (ideal for watchers & CI)');
+    WriteLn('  bv run build               Builds optimized production bundle with hashes in dist/');
+    WriteLn('  bv run preview             Local HTTP preview of production build (port 5000)');
+    WriteLn('  bv run ssg                 Pre-renders all routes into static HTML (SSG)');
+    WriteLn('  bv doc [--serve]           Generates interactive component documentation & playground');
+    WriteLn('  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks');
+    WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
+    WriteLn('  bv clean                   Cleans generated build files (generated/ and dist/)');
     WriteLn('');
-
+    WriteLn('  # === Scaffolding & Generators ===');
+    WriteLn('  bv create <name>           Scaffolds a new project with 4-tier testing hierarchy & domain services');
+    WriteLn('  bv new c <Name>            Scaffolds a component (.bv) & automatic test in tests/components/');
+    WriteLn('  bv new v <Name>            Scaffolds a route view (.bv) & automatic test in tests/views/');
+    WriteLn('  bv new s <Name>            Scaffolds a pure Pascal domain service in src/services/');
+    WriteLn('  bv new t <Name>            Scaffolds a Pascal test file (.test.pas)');
+    WriteLn('  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test');
+    WriteLn('  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs');
+    WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
+    WriteLn('');
+    WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
+    WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
+    WriteLn('  bv mormot run [--port <p>] Starts native backend server (auto-fallback to next port if busy)');
+    WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
+    WriteLn('  bv mormot kill             Terminates lingering server.exe instances and releases ports');
+    WriteLn('  bv mormot status           Queries running mORMot 2 health endpoint (/api/status)');
+    WriteLn('  bv mormot deploy [--zip]   Assembles standalone production bundle in deploy/');
+    WriteLn('  bv mormot crud <Model>     Scaffolds full-stack ORM model, REST API & reactive DataGrid');
+    WriteLn('  bv mormot auth             Scaffolds JWT authentication, AuthService, LoginView & route guards');
+    WriteLn('  bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
+    WriteLn('  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
+    WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
+    WriteLn('');
+    WriteLn('  # === Multiplatform (Mobile & Desktop) ===');
+    WriteLn('  bv mobile init [name] [id] Configures Capacitor and scaffolds Android/iOS project');
+    WriteLn('  bv mobile sync             Syncs dist/ with native Android assets');
+    WriteLn('  bv mobile open             Syncs and opens Android Studio');
+    WriteLn('  bv mobile build            Builds native Android Debug APK via Gradle');
+    WriteLn('  bv desktop init [name]     Scaffolds WebUI & Lazarus desktop project in desktop/');
+    WriteLn('  bv desktop sync            Syncs dist/ with desktop/assets/');
+    WriteLn('  bv desktop build [target]  Compiles native binary (windows|linux|macos|all)');
+    WriteLn('  bv desktop run [target]    Builds and launches desktop app for target');
+    WriteLn('');
+    WriteLn('  # === Package & Theme Management ===');
+    WriteLn('  bv lib install <pkg|url>   Installs official package (themes, icons, ui, mobile) or from URL');
+    WriteLn('  bv lib remove <name>       Removes an installed component or package from lib/');
+    WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
+    WriteLn('  bv theme list              Lists all available installed themes');
+    WriteLn('  bv theme use <name>        Sets default project theme in index.html (e.g. darkly, lux)');
+    WriteLn('  bv extension [install|pkg] Installs or packages official VS Code extension');
+    WriteLn('  bv vsix                    Packages standalone VS Code extension (.vsix)');
+    WriteLn('');
+    WriteLn('  # === Project Metadata & Licensing ===');
+    WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
+    WriteLn('  bv meta [show|get|set|bump] Manages project metadata and syncs SemVer with src/uAppVersion.pas');
+    WriteLn('  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)');
+    WriteLn('');
+    WriteLn('  # === Framework Diagnostics & Git Auto-Updater ===');
+    WriteLn('  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
+    WriteLn('  bv self-update [--check]   Syncs & recompiles BlaiseVue directly from GitHub via Git');
+    WriteLn('  bv channel [use <name>]    Inspects or switches framework branch (main/develop)');
+    WriteLn('  bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features');
+    WriteLn('');
+    WriteLn('  # === Cockpit & Multi-Project Management ===');
+    WriteLn('  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)');
+    WriteLn('  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere');
+    WriteLn('  bv project add             Registers current project into global registry');
+    WriteLn('  bv project list            Lists registered projects (* active)');
+    WriteLn('  bv project current         Shows active project details');
+    WriteLn('  bv project remove <name>   Unregisters a project from global registry');
+    WriteLn('');
+    WriteLn('  For complete documentation and guides:');
+    WriteLn('    https://github.com/affonsoelias/BlaiseVue');
+    WriteLn('');
     Halt(0);
-
   end;
 
 
