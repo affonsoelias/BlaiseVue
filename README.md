@@ -147,6 +147,13 @@ bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from 
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
 
+# === Framework Diagnostics & Git Auto-Updater ===
+bv doctor                  # Diagnoses environment tools (Git, Lazarus & FPC, Pas2JS, Node.js)
+bv self-update             # Sincroniza e recompila o motor do BlaiseVue direto do GitHub via Git
+bv self-update --check     # Verifica atualizações e lista arquivos modificados sem baixar
+bv channel                 # Inspeciona canal ativo (* main [estável] ou develop [dev])
+bv channel use <name>      # Alterna entre o canal estável (main) e desenvolvimento (develop)
+
 # === Cockpit & Multi-Project Management ===
 bv update                  # Surgically syncs project infrastructure with latest framework features
 bv update --dry-run        # Previews updates without modifying any files (non-destructive safety)

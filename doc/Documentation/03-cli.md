@@ -384,6 +384,9 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `check [file]` — Validates SFC templates with AST type-checker.
 * `clean` — Purges `generated/` and `dist/`.
 * `update` / `upgrade` — Surgically syncs project infrastructure with latest framework features.
+* `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
+* `self-update` — Sincroniza e recompila o motor do BlaiseVue direto do GitHub.
+* `channel [use <name>]` — Consulta ou alterna entre branches (main / develop).
 * `exit` / `quit` — Exits the cockpit and returns to regular shell.
 
 > [!TIP]
@@ -423,6 +426,66 @@ bv update --no-backup  # Skip creating automatic backup snapshot
 > **Zero-Risk Non-Destructive Guarantee**:  
 > `bv update` **NEVER** deletes, overwrites, or modifies custom user directories or files (such as `server/kernel/`, `server/packages/`, `server/models/`, `server/controllers/`, `src/`, etc.). It only updates framework glue files (`server/server.lpr`, `package.json` scripts, `dist/js/rtl.js`).  
 > Furthermore, an automatic snapshot is preserved in `.bv_backup/update_<timestamp>/` prior to modifying any file.
+
+---
+
+### `bv doctor`
+Diagnoses your system environment, verifying that essential tools and bundled assets are correctly configured and accessible.
+
+```bash
+bv doctor
+```
+
+**What it verifies:**
+1. **Git CLI**: Required for framework updates and channel switching.
+2. **Free Pascal (FPC) & Lazarus IDE**: Automatically detects FPC either in the system PATH or bundled within standard Lazarus paths (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
+3. **Pas2JS (Bundled)**: Verifies the built-in Object Pascal to JavaScript transpiler in `vendor/pas2js/`.
+4. **Synopse mORMot 2 (Bundled)**: Confirms presence of the embedded mORMot 2 full-stack framework in `vendor/mormot2/`.
+5. **Node.js & npm**: Checks for Vitest testing suite and live development HMR support.
+6. **Docker & Optional Tools**: Checks micro-container tools and Android SDK for cross-platform workflows.
+
+---
+
+### `bv self-update` (alias: `bv upgrade-cli`)
+Updates the BlaiseVue framework engine itself directly from GitHub using Git.
+
+```bash
+# Sincroniza e atualiza o framework na branch ativa:
+bv self-update
+
+# Apenas verifica se há commits e novidades no GitHub sem baixar:
+bv self-update --check
+
+# Alterna para o canal de desenvolvimento do framework:
+bv self-update --channel=develop
+
+# Alterna para o canal estável oficial:
+bv self-update --channel=main
+```
+
+**Como funciona nos bastidores:**
+* Executa `git fetch origin`.
+* Compara e lista os arquivos modificados no GitHub com `git diff --name-only`.
+* Faz `git pull` transferindo apenas o delta dos arquivos alterados (poucos KBs).
+* Se o código-fonte do CLI (`bin/bv.pas`) foi modificado ou se você alternou de branch, recompila automaticamente o executável:
+  * **No Windows**: Recompila `bin/bv.exe` (substituindo o binário em execução com segurança).
+  * **No Linux / macOS**: Recompila `bin/bv` e aplica permissão `chmod +x bin/bv`.
+
+---
+
+### `bv channel` (Gerenciador de Canais Git)
+Permite inspecionar a branch ativa do framework e alternar rapidamente entre o canal estável (`main`) e o canal de desenvolvimento (`develop`).
+
+```bash
+# Exibe o canal ativo, commit atual e status do repositório:
+bv channel
+
+# Alterna para a branch de desenvolvimento:
+bv channel use develop
+
+# Alterna para a branch estável oficial:
+bv channel use main
+```
 
 ---
 
