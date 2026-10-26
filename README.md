@@ -86,7 +86,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
 # === Development & Server ===
 bv dev                     # Starts development server with HMR on http://localhost:8080 (alias: bv serve)
 bv serve                   # Starts development server with HMR
-bv run dev                 # Builds project in development mode with cache-busting
+bv run dev                 # Builds project in development mode & launches dev server on http://localhost:8080
+bv build                   # Compiles project without launching server (ideal for watchers & CI)
 bv run build               # Builds optimized production bundle in dist/
 bv run preview             # Local HTTP preview of production build (port 5000)
 bv clean                   # Cleans generated files (generated/ and dist/)

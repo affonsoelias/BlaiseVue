@@ -14,11 +14,13 @@ Launches the integrated development server with live Hot Module Replacement:
 - **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
 - **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and sends an in-place patch to the browser without reloading the page or losing state.
 
-### 2. `bv run dev` (Express Development Build)
-Executes a full development build with cache busting:
+### 2. `bv run dev` (Express Development Build & Server)
+Compiles Single File Components (`.bv`) and automatically boots the development server:
+- **Build & Serve**: Compiles all reactive templates and launches the HMR development server on `http://localhost:8080` (WebSocket HMR on port `8081`).
 - **Cache Busting (`v=123...`)**: Injects timestamps into script and link tags in `index.html` to prevent stale browser caches.
 - **Diagnostic DevTools**: Injects diagnostic symbols and runtime hooks for browser extensions.
 - **Verbose Console Output**: Generates human-readable debug logs.
+- **Direct Shortcuts**: `bv dev` or `bv serve` also launch the dev server directly. For headless compilation without launching a server (ideal for watchers, linters, or CI), use `bv build`.
 
 ### 3. `bv run build` (Optimized Production)
 Generates the production-ready distribution in `dist/`:
@@ -380,6 +382,10 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `check [file]` — Validates SFC templates with AST type-checker.
 * `clean` — Purges `generated/` and `dist/`.
 * `exit` / `quit` — Exits the cockpit and returns to regular shell.
+
+> [!TIP]
+> **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
+> Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev`, `serve`, `run dev`, or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
 
 ---
 

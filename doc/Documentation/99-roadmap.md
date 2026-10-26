@@ -669,6 +669,23 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
 
 ---
 
+#### 🎮 Pillar 6: Interactive Cockpit, Project Registry & Resilient Dev DX (`bv enter`, `bv use`, `bv run dev`) (✅ Completed)
+- **Interactive Project Cockpit (`bv enter`)**:
+  - Interactive developer shell locked to the active project context with colored prompt (`[bv: <project-name>] >`).
+  - Native passthrough for all project commands (`dev`, `build`, `test`, `clean`, `mormot run`, `rename`, `new`, `lib`).
+  - **Windows `SetConsoleCtrlHandler` Interrupt Trap**: Pressing `Ctrl + C` halts the running dev or backend server (`mormot run`, `dev`) and gracefully releases ports without ever killing the Cockpit shell.
+- **Global Project Registry (`bv project` & `bv use <name>`)**:
+  - Global cross-session registry (`~/.blaisevue/projects.json`) tracking project names, locations, and versions.
+  - Zero-latency jumping to any registered project from any directory via `bv use <project-name>`.
+  - Registration via `project add` / `bv project add` and listing with active project marker via `project list`.
+- **Intelligent Refactoring CLI (`bv rename <s|c|v|p> <NewName>`)**:
+  - Automated refactoring for Pascal services, single-file components, route views, and project root (syncing `package.json`, `app.bv`, and the global registry).
+- **Unified DX (`bv run dev`)**:
+  - Standardized modern DX: `bv run dev` compiles reactive Single File Components and automatically launches the HMR development server on `http://localhost:8080`.
+- **Comprehensive Automated Test Coverage**: `demo-app/tests/framework/cockpit_registry.test.pas` & CLI verification suite.
+
+---
+
 ## 🔮 The Next Horizon: BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon (Planned 🎯)
 
 With the complete delivery of **BlaiseVue 4.4** establishing compiler template type-checking, native fast templates, relational master-detail CRUD, virtualized grids, and offline delta sync, **BlaiseVue 5.0** sets the architectural course for enterprise document reporting, centralized reactive state machines, native Progressive Web App (PWA) sync, dynamic server-side rendering (SSR) without Node.js, and visual studio modeling.
