@@ -169,7 +169,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (pathname === '/api/actions/build' && req.method === 'POST') {
-    exec('bv run dev', { cwd: ROOT_DIR }, (error, stdout, stderr) => {
+    exec('bv build', { cwd: ROOT_DIR }, (error, stdout, stderr) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         success: !error,
