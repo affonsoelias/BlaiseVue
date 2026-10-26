@@ -149,10 +149,10 @@ bv test                    # Compiles .test.pas files and runs Vitest suite
 
 # === Framework Diagnostics & Git Auto-Updater ===
 bv doctor                  # Diagnoses environment tools (Git, Lazarus & FPC, Pas2JS, Node.js)
-bv self-update             # Sincroniza e recompila o motor do BlaiseVue direto do GitHub via Git
-bv self-update --check     # Verifica atualizações e lista arquivos modificados sem baixar
-bv channel                 # Inspeciona canal ativo (* main [estável] ou develop [dev])
-bv channel use <name>      # Alterna entre o canal estável (main) e desenvolvimento (develop)
+bv self-update             # Synchronizes & recompiles BlaiseVue engine directly from GitHub via Git
+bv self-update --check     # Checks for remote updates without downloading
+bv channel                 # Inspects active channel (* main [stable] or develop [dev])
+bv channel use <name>      # Switches between stable release (main) and development (develop)
 
 # === Cockpit & Multi-Project Management ===
 bv update                  # Surgically syncs project infrastructure with latest framework features
@@ -217,6 +217,7 @@ BlaiseVue/
 ## 🏁 Quick Start
 
 ### 📋 Prerequisites
+- **Git (v2.30+)**: Required for cloning the framework, automatic selective updates (`bv self-update`), and channel management (`bv channel`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server/`).
 - **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv serve` / `bv dev`), automated testing (`bv test`), and mobile synchronization (`bv mobile`).
 - **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv mobile build`), managing emulators, and running `bv mobile open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.
@@ -224,18 +225,35 @@ BlaiseVue/
 > [!NOTE]
 > **Pas2JS is pre-bundled**: You do **not** need to install `pas2js`. Official multi-platform binaries for Windows, Linux, and macOS are already included in `vendor/pas2js/`.
 
-### 1. Compile the BlaiseVue CLI
-Ensure you have **FPC (Free Pascal Compiler 3.2+)** installed (included with Lazarus):
+### 1. Clone the Repository
+```bash
+# Clone official stable release channel (main):
+git clone https://github.com/affonsoelias/BlaiseVue.git
+cd BlaiseVue
+
+# Or clone the active development channel (develop):
+git clone -b develop https://github.com/affonsoelias/BlaiseVue.git
+cd BlaiseVue
+```
+
+### 2. Verify Environment Health
+Run the built-in diagnostic doctor:
+```bash
+.\bin\bv.exe doctor
+```
+
+### 3. Compile the BlaiseVue CLI (Optional)
+Pre-compiled binaries are provided in `bin/`. To rebuild manually with **Free Pascal Compiler 3.2+**:
 ```bash
 cd bin
 fpc -O2 bv.pas
 # Move bv or bv.exe to your PATH or use directly from bin/
 ```
 
-### 2. Pre-bundled Pas2JS Compiler
+### 4. Pre-bundled Pas2JS Compiler
 BlaiseVue comes with the `pas2js` transpiler already included under `vendor/pas2js/`. The CLI automatically detects your platform (Windows, Linux, macOS) with zero manual configuration required!
 
-### 3. Launch the Demo App
+### 5. Launch the Demo App
 ```bash
 cd demo-app
 ..\bin\bv.exe serve
