@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "build": "bv run build",
+    "server": "bv server",
+    "mormot": "bv mormot",
     "dev": "bv run dev"
   },
   "devDependencies": {

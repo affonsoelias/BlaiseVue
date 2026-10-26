@@ -14,6 +14,9 @@ program server;
 {$endif OSWINDOWS}
 
 uses
+  {$ifdef OSWINDOWS}
+  windows,
+  {$endif OSWINDOWS}
   sysutils,
   classes,
   mormot.core.base,
@@ -22,12 +25,76 @@ uses
   ServerApp;
 
 var
+  EnvPath, EnvLine, EnvKey, EnvVal: string;
+  EnvLines: TStringList;
+  eqPos: Integer;
   App: TBlaiseServerApp;
   Port: RawUtf8;
   DistPath: string;
   i: Integer;
+{$ifdef OSWINDOWS}
+function ConsoleCtrlHandler(dwCtrlType: DWORD): BOOL; stdcall;
 begin
+  case dwCtrlType of
+    CTRL_C_EVENT, CTRL_BREAK_EVENT, CTRL_CLOSE_EVENT, CTRL_SHUTDOWN_EVENT:
+    begin
+      WriteLn('');
+      WriteLn('[+] Signal received (Ctrl+C). Gracefully closing mORMot 2 server...');
+      if Assigned(App) then
+      begin
+        try
+          App.Free;
+          App := nil;
+        except
+        end;
+      end;
+      WriteLn('[+] mORMot 2 server stopped cleanly. Ports released.');
+      ExitProcess(0);
+      Result := True;
+      Exit;
+    end;
+  end;
+  Result := False;
+end;
+{$endif OSWINDOWS}
+
+begin
+  {$ifdef OSWINDOWS}
+  SetConsoleCtrlHandler(@ConsoleCtrlHandler, True);
+  {$endif OSWINDOWS}
   Port := '8090';
+
+  // Read .env configuration if present
+  EnvPath := ExtractFilePath(ParamStr(0)) + '.env';
+  if not FileExists(EnvPath) then
+    EnvPath := ExtractFilePath(ParamStr(0)) + '..' + DirectorySeparator + '.env';
+  if not FileExists(EnvPath) and FileExists('.env') then
+    EnvPath := ExpandFileName('.env');
+  if not FileExists(EnvPath) and FileExists('..' + DirectorySeparator + '.env') then
+    EnvPath := ExpandFileName('..' + DirectorySeparator + '.env');
+
+  if FileExists(EnvPath) then
+  begin
+    EnvLines := TStringList.Create;
+    try
+      EnvLines.LoadFromFile(EnvPath);
+      for i := 0 to EnvLines.Count - 1 do
+      begin
+        EnvLine := Trim(EnvLines[i]);
+        if (EnvLine = '') or (EnvLine[1] = '#') then Continue;
+        eqPos := Pos('=', EnvLine);
+        if eqPos > 1 then
+        begin
+          EnvKey := UpperCase(Trim(Copy(EnvLine, 1, eqPos - 1)));
+          EnvVal := Trim(Copy(EnvLine, eqPos + 1, MaxInt));
+          if EnvKey = 'PORT' then
+            Port := EnvVal;
+        end;
+      end;
+    finally
+      EnvLines.Free;
+    end;
+  end;
 
   // Intelligent resolution of dist/ folder
   DistPath := '..' + DirectorySeparator + 'dist';

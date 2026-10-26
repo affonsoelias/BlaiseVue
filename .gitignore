@@ -66,6 +66,8 @@ app.cfg
 my-app/
 deploy/
 **/deploy/
+.bv_backup/
+**/.bv_backup/
 *.zip
 
 
