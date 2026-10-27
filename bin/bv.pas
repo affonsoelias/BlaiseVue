@@ -24289,11 +24289,11 @@ end;
 
 procedure CmdSelfUpdate;
 var
-  SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FetchOut: string;
+  SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FilteredStatus, LineStr, FetchOut: string;
   DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
   BinDir, CompCmd, CompOut, TargetBv, MoveCmd, DummyOut: string;
   DiffList: TStringList;
-  CheckOnly, NeedRecompile: Boolean;
+  CheckOnly, NeedRecompile, HadLocalBinMod: Boolean;
   i: Integer;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -24380,8 +24380,34 @@ begin
   WriteLn('======================================================================');
   WriteLn('');
 
-  // 4. Safety check for dirty workspace
+  // 4. Safety check for dirty workspace (ignoring compiled CLI binary & build logs)
   ExecCmdCapture('git -C "' + SDKDir + '" status --porcelain', GitStatusOut);
+  FilteredStatus := '';
+  HadLocalBinMod := False;
+  DiffList := TStringList.Create;
+  try
+    DiffList.Text := GitStatusOut;
+    for i := 0 to DiffList.Count - 1 do
+    begin
+      LineStr := StringReplace(Trim(DiffList[i]), '\', '/', [rfReplaceAll]);
+      if LineStr = '' then Continue;
+      if (Pos('bin/bv.o', LineStr) > 0) or
+         (Pos('bin/bv.exe', LineStr) > 0) or
+         (Copy(LineStr, Length(LineStr) - 5, 6) = 'bin/bv') or
+         (Pos('compile_log.txt', LineStr) > 0) or
+         (Pos('compile_err.txt', LineStr) > 0) then
+      begin
+        HadLocalBinMod := True;
+        Continue;
+      end;
+      if FilteredStatus <> '' then FilteredStatus := FilteredStatus + LineEnding;
+      FilteredStatus := FilteredStatus + DiffList[i];
+    end;
+  finally
+    DiffList.Free;
+  end;
+  GitStatusOut := FilteredStatus;
+
   if (Trim(GitStatusOut) <> '') and (not CheckOnly) then
   begin
     WriteLn('  [WARNING] You have uncommitted local changes in the BlaiseVue repository:');
@@ -24451,6 +24477,17 @@ begin
     Exit;
   end;
 
+  // Reset local CLI binary modifications before git checkout/pull to avoid binary merge conflicts
+  if HadLocalBinMod then
+  begin
+    BinDir := SDKDir + DirectorySeparator + 'bin';
+    {$IFDEF WINDOWS}
+    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && move /y bv.exe bv_old.exe > nul 2>&1';
+    ExecCmdCapture(MoveCmd, DummyOut);
+    {$ENDIF}
+    ExecCmdCapture('git -C "' + SDKDir + '" checkout -- bin/bv bin/bv.exe bin/bv.o', DummyOut);
+  end;
+
   // 7. Checkout branch if switching
   if TargetBranch <> CurBranch then
   begin
@@ -24462,8 +24499,8 @@ begin
   WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
   ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
 
-  // 9. Recompile binary if bv.pas was updated or if switched branch
-  NeedRecompile := (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0);
+  // 9. Recompile binary if bv.pas was updated, switched branch, or restored local binary
+  NeedRecompile := (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0) or HadLocalBinMod;
   if NeedRecompile then
   begin
     WriteLn('  [BUILD] CLI source code was updated. Recompiling with Free Pascal...');

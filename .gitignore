@@ -8,11 +8,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # 🛡️ BlaiseCLI Artifacts (bin/)
-bin/*.exe
 bin/*.o
 bin/*.ppu
 bin/*.dcu
 bin/*.rsj
+bin/bv_old*
 bin/lib/
 **/server/bin/
 **/server/lib/
@@ -24,6 +24,8 @@ bin/lib/
 *.ppu.js
 *.rsj
 *.exe
+!bin/bv.exe
+!bin/bv
 *.dll
 *.so
 *.dylib
