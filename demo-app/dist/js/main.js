@@ -7332,15 +7332,52 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       this.FFormat = "";
     };
     this.Create$1 = function (AFieldName, ACaption, AWidth, AAlign, AFormat) {
-      this.FFieldName = AFieldName;
-      if (ACaption !== "") {
-        this.FCaption = ACaption}
-       else this.FCaption = $impl.HumanizeFieldName(AFieldName);
-      if (AWidth > 0) {
-        this.FWidth = AWidth}
-       else this.FWidth = 120;
-      this.FAlign = AAlign;
-      this.FFormat = AFormat;
+      var RawSpec = "";
+      var ParsedField = "";
+      var ParsedCap = "";
+      var ParsedFmt = "";
+      var ParsedAlignStr = "";
+      var ParsedWidth = 0;
+      RawSpec = pas.SysUtils.Trim(AFieldName);
+      if ((pas.System.Pos(":",RawSpec) > 0) && (ACaption === "") && (AFormat === "")) {
+        ParsedField = "";
+        ParsedCap = "";
+        ParsedFmt = "";
+        ParsedAlignStr = "";
+        ParsedWidth = AWidth;
+        Parts = RawSpec.split(':');
+        ParsedField = (Parts[0] || '').trim();
+        ParsedCap = (Parts.length > 1 && Parts[1]) ? Parts[1].trim() : '';
+        ParsedFmt = (Parts.length > 2 && Parts[2]) ? Parts[2].trim() : '';
+        ParsedAlignStr = (Parts.length > 3 && Parts[3]) ? Parts[3].trim() : '';
+        if (Parts.length > 4 && Parts[4]) {
+          var pw = parseInt(Parts[4], 10);
+          if (!isNaN(pw) && pw > 0) ParsedWidth = pw;
+        };
+        this.FFieldName = ParsedField;
+        if (ParsedCap !== "") {
+          this.FCaption = ParsedCap}
+         else this.FCaption = $impl.HumanizeFieldName(ParsedField);
+        this.FFormat = ParsedFmt;
+        if (ParsedAlignStr !== "") {
+          this.FAlign = $mod.ParseColumnAlign(ParsedAlignStr)}
+         else if ((pas.SysUtils.LowerCase(ParsedFmt) === "currency") || (pas.SysUtils.LowerCase(ParsedFmt) === "money") || (pas.SysUtils.LowerCase(ParsedFmt) === "number") || (pas.SysUtils.LowerCase(ParsedFmt) === "float")) {
+          this.FAlign = $mod.TBVColumnAlign.caRight}
+         else this.FAlign = AAlign;
+        if (ParsedWidth > 0) {
+          this.FWidth = ParsedWidth}
+         else this.FWidth = 120;
+      } else {
+        this.FFieldName = AFieldName;
+        if (ACaption !== "") {
+          this.FCaption = ACaption}
+         else this.FCaption = $impl.HumanizeFieldName(AFieldName);
+        if (AWidth > 0) {
+          this.FWidth = AWidth}
+         else this.FWidth = 120;
+        this.FAlign = AAlign;
+        this.FFormat = AFormat;
+      };
       return this;
     };
     this.GetAlignStr = function () {
@@ -7610,16 +7647,26 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       Result = new Array();
       var ds = this.FDataSet;
       if (ds) {
-        if (Array.isArray(ds.Data)) return ds.Data;
-        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds.Data)) {
+          Result = ds.Data;
+        } else if (Array.isArray(ds.FActiveRecords)) {
+          Result = ds.FActiveRecords;
+        } else if (Array.isArray(ds.FRecords)) {
+          Result = ds.FRecords;
+        }
+        return Result;
       }
       var raw = this.FRawData;
       if (raw) {
-        if (Array.isArray(raw)) return raw;
-        if (Array.isArray(raw.Data)) return raw.Data;
-        if (Array.isArray(raw.FActiveRecords)) return raw.FActiveRecords;
-        if (Array.isArray(raw.items)) return raw.items;
+        if (Array.isArray(raw)) {
+          Result = raw;
+        } else if (Array.isArray(raw.Data)) {
+          Result = raw.Data;
+        } else if (Array.isArray(raw.FActiveRecords)) {
+          Result = raw.FActiveRecords;
+        } else if (Array.isArray(raw.items)) {
+          Result = raw.items;
+        }
       };
       return Result;
     };
@@ -7663,52 +7710,54 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
     this.ComputeSummary = function (AFieldName, AAggregate) {
       var Result = 0.0;
       var Recs = null;
+      var AggIdx = 0;
       Recs = this.GetRecordsArray();
+      AggIdx = AAggregate;
       Result = 0.0;
       if (!Recs || Recs.length === 0) {
             Result = 0;
             return;
           }
-          if (AAggregate === 2) { // aggCount
+          if (AggIdx === 2) { // aggCount
             Result = Recs.length;
-            return;
-          }
-          var sum = 0;
-          var count = 0;
-          var minVal = null;
-          var maxVal = null;
-          var targetLower = (AFieldName || '').toLowerCase();
+          } else {
+            var sum = 0;
+            var count = 0;
+            var minVal = null;
+            var maxVal = null;
+            var targetLower = (AFieldName || '').toLowerCase();
       
-          for (var i = 0; i < Recs.length; i++) {
-            var row = Recs[i];
-            if (!row || typeof row !== 'object') continue;
-            var rawVal = row[AFieldName];
-            if (rawVal === undefined) {
-              var keys = Object.keys(row);
-              for (var k = 0; k < keys.length; k++) {
-                if (keys[k].toLowerCase() === targetLower) {
-                  rawVal = row[keys[k]];
-                  break;
+            for (var i = 0; i < Recs.length; i++) {
+              var row = Recs[i];
+              if (!row || typeof row !== 'object') continue;
+              var rawVal = row[AFieldName];
+              if (rawVal === undefined) {
+                var keys = Object.keys(row);
+                for (var k = 0; k < keys.length; k++) {
+                  if (keys[k].toLowerCase() === targetLower) {
+                    rawVal = row[keys[k]];
+                    break;
+                  }
                 }
               }
+              var num = parseFloat(rawVal);
+              if (!isNaN(num)) {
+                sum += num;
+                count++;
+                if (minVal === null || num < minVal) minVal = num;
+                if (maxVal === null || num > maxVal) maxVal = num;
+              }
             }
-            var num = parseFloat(rawVal);
-            if (!isNaN(num)) {
-              sum += num;
-              count++;
-              if (minVal === null || num < minVal) minVal = num;
-              if (maxVal === null || num > maxVal) maxVal = num;
-            }
-          }
       
-          if (AAggregate === 0) { // aggSum
-            Result = Math.round(sum * 100) / 100;
-          } else if (AAggregate === 1) { // aggAverage
-            Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
-          } else if (AAggregate === 3) { // aggMin
-            Result = minVal !== null ? minVal : 0;
-          } else if (AAggregate === 4) { // aggMax
-            Result = maxVal !== null ? maxVal : 0;
+            if (AggIdx === 0) { // aggSum
+              Result = Math.round(sum * 100) / 100;
+            } else if (AggIdx === 1) { // aggAverage
+              Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
+            } else if (AggIdx === 3) { // aggMin
+              Result = minVal !== null ? minVal : 0;
+            } else if (AggIdx === 4) { // aggMax
+              Result = maxVal !== null ? maxVal : 0;
+            }
           };
       return Result;
     };
@@ -7721,15 +7770,14 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       Result = "";
       if (AValue === null || AValue === undefined) {
         Result = '';
-        return;
-      }
-      if (Fmt === 'currency' || Fmt === 'money') {
+      } else if (Fmt === 'currency' || Fmt === 'money') {
         var num = parseFloat(AValue);
         if (!isNaN(num)) {
           var parts = num.toFixed(2).split('.');
           parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
           Result = Curr + parts.join('.');
-          return;
+        } else {
+          Result = String(AValue);
         }
       } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
         var fnum = parseFloat(AValue);
@@ -7737,25 +7785,28 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
           var fparts = fnum.toFixed(2).split('.');
           fparts[0] = fparts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
           Result = fparts.join('.');
-          return;
+        } else {
+          Result = String(AValue);
         }
       } else if (Fmt === 'integer' || Fmt === 'int') {
         var inum = parseInt(AValue, 10);
         if (!isNaN(inum)) {
           Result = String(inum);
-          return;
+        } else {
+          Result = String(AValue);
         }
       } else if (Fmt === 'percent' || Fmt === '%') {
         var pnum = parseFloat(AValue);
         if (!isNaN(pnum)) {
           Result = pnum.toFixed(2) + '%';
-          return;
+        } else {
+          Result = String(AValue);
         }
       } else if (Fmt === 'boolean' || Fmt === 'bool') {
         Result = AValue ? 'Yes' : 'No';
-        return;
-      }
-      Result = String(AValue);
+      } else {
+        Result = String(AValue);
+      };
       return Result;
     };
     this.FormatSummaryNumber = function (AValue, AFormat) {
@@ -8297,17 +8348,21 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
     };
     $impl.GetRecordFieldCaseInsensitive = function (ARow, AFieldName) {
       var Result = undefined;
-      Result = null;
-      if (!ARow || typeof ARow !== 'object') return null;
-      if (ARow[AFieldName] !== undefined) return ARow[AFieldName];
-      var target = (AFieldName || '').toLowerCase();
-      var keys = Object.keys(ARow);
-      for (var i = 0; i < keys.length; i++) {
-        if (keys[i].toLowerCase() === target) {
-          return ARow[keys[i]];
+      Result = "";
+      if (ARow && typeof ARow === 'object') {
+        if (ARow[AFieldName] !== undefined) {
+          Result = ARow[AFieldName];
+        } else {
+          var target = (AFieldName || '').toLowerCase();
+          var keys = Object.keys(ARow);
+          for (var i = 0; i < keys.length; i++) {
+            if (keys[i].toLowerCase() === target) {
+              Result = ARow[keys[i]];
+              break;
+            }
+          }
         }
-      }
-      return '';
+      };
       return Result;
     };
   };
@@ -8352,8 +8407,11 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
     return Result;
   };
   this.CallMethod = function (Instance, MethodName) {
-    if (Instance && typeof Instance[MethodName] === 'function') {
-      Instance[MethodName]();
+    if (!Instance) return;
+    if (typeof Instance[MethodName] === 'function') {
+      Instance[MethodName](Instance);
+    } else if (Instance.$methods && typeof Instance.$methods[MethodName] === 'function') {
+      Instance.$methods[MethodName](Instance);
     };
   };
   this.CallMethod$1 = function (Instance, MethodName, Args) {
@@ -9042,6 +9100,27 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
      else Result = "";
     return Result;
   };
+  this.ReportGeneratePDF = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GeneratePDF()}
+     else Result = "";
+    return Result;
+  };
+  this.ReportGenerateExcel = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GenerateExcel()}
+     else Result = "";
+    return Result;
+  };
+  this.ReportGenerateCSV = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GenerateCSV()}
+     else Result = "";
+    return Result;
+  };
   this.ReportPrintPreview = function (Report, ATargetElementId) {
     var Result = "";
     if (Report != null) {
@@ -9106,6 +9185,9 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
         $mod.ReportExportPDF(dummy,"");
         $mod.ReportExportExcel(dummy,"");
         $mod.ReportExportCSV(dummy,"");
+        $mod.ReportGeneratePDF(dummy);
+        $mod.ReportGenerateExcel(dummy);
+        $mod.ReportGenerateCSV(dummy);
         $mod.ReportPrintPreview(dummy,"");
         $mod.ReportComputeSummary(dummy,"","");
       };
@@ -10481,7 +10563,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -10693,6 +10775,27 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
           pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
         });
       };
+    };
+    m["doExportDatasetPDF"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
+      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
+      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
+    };
+    m["doExportDatasetExcel"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
+      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -11310,6 +11413,141 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
+rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uReportsView = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["salesDS"] = null;
+      d["activeReport"] = null;
+      d["activePreset"] = "sales";
+      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
+      d["rawOutputPreview"] = "";
+      d["nextInvoiceId"] = 1006;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["loadSalesPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "sales";
+      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
+      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadPosReceiptPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "pos";
+      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
+      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
+      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
+      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadInventoryPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "inventory";
+      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
+      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["addSampleInvoice"] = function (_this) {
+      var newId = 0;
+      newId = rtl.trunc(_this["nextInvoiceId"]);
+      _this["nextInvoiceId"] = newId + 1;
+      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
+      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
+      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportPDF"] = function (_this) {
+      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
+      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportExcel"] = function (_this) {
+      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
+      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
+    };
+    m["doExportCSV"] = function (_this) {
+      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
+      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
+    };
+    m["inspectPDF"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
+    };
+    m["inspectExcel"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
+    };
+    m["inspectCSV"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
+      _this["nextInvoiceId"] = 1006;
+      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      Result = 0;
+      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
+        Result = this.salesDS.GetRecordCount();
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("reports-view-page",comp);
+  };
+});
 rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11902,7 +12140,7 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     _styleEl.textContent = ".bv-report-viewer-container {     display: flex;     flex-direction: column;     gap: 16px;     width: 100%;     box-sizing: border-box;   }    .bv-report-toolbar {     display: flex;     flex-wrap: wrap;     justify-content: space-between;     align-items: center;     gap: 12px;     background: #1e293b;     color: #f8fafc;     padding: 12px 16px;     border-radius: 8px;   }    .bv-report-toolbar-left {     display: flex;     align-items: center;     gap: 10px;   }    .bv-report-badge {     background: #3b82f6;     color: #ffffff;     font-size: 11px;     font-weight: 700;     padding: 4px 8px;     border-radius: 4px;     text-transform: uppercase;   }    .bv-report-layout-select {     background: #0f172a;     color: #f8fafc;     border: 1px solid #334155;     border-radius: 6px;     padding: 6px 10px;     font-size: 13px;   }    .bv-report-count-pill {     font-size: 12px;     color: #94a3b8;   }    .bv-report-toolbar-actions {     display: flex;     flex-wrap: wrap;     gap: 8px;   }    .bv-report-btn {     border: none;     border-radius: 6px;     padding: 7px 12px;     font-size: 12px;     font-weight: 600;     cursor: pointer;     color: #ffffff;   }    .bv-report-btn-pdf { background: #ef4444; }   .bv-report-btn-excel { background: #10b981; }   .bv-report-btn-csv { background: #3b82f6; }   .bv-report-btn-print { background: #6366f1; }    .bv-report-sheet {     background: #ffffff;     color: #0f172a;     padding: 24px;     border-radius: 8px;     border: 1px solid #cbd5e1;     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);     margin: 0 auto;     width: 100%;     box-sizing: border-box;   }    .bv-layout-thermal-80mm {     max-width: 320px;     font-family: 'Courier New', monospace;     font-size: 12px;     padding: 12px;   }    .bv-layout-thermal-58mm {     max-width: 240px;     font-family: 'Courier New', monospace;     font-size: 11px;     padding: 8px;   }    .bv-report-banner {     background: #1e293b;     color: #ffffff;     padding: 16px 20px;     border-radius: 6px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 16px;   }    .bv-report-title {     margin: 0;     font-size: 18px;     font-weight: 700;   }    .bv-report-company {     font-size: 12px;     opacity: 0.85;     margin-top: 4px;   }    .bv-report-logo-box {     font-weight: 800;     font-size: 16px;     border: 2px solid rgba(255, 255, 255, 0.5);     padding: 6px 10px;     border-radius: 6px;   }    .bv-report-meta {     font-size: 12px;     color: #475569;     margin-bottom: 14px;     padding-bottom: 8px;     border-bottom: 1px solid #e2e8f0;   }    .bv-report-table {     width: 100%;     border-collapse: collapse;     font-size: 13px;     margin-bottom: 16px;   }    .bv-report-table th {     background: #f1f5f9;     color: #1e293b;     text-align: left;     padding: 9px 12px;     border-bottom: 2px solid #cbd5e1;     font-weight: 600;   }    .bv-report-table td {     padding: 8px 12px;     border-bottom: 1px solid #e2e8f0;     color: #334155;   }    .bv-report-summaries {     display: flex;     flex-wrap: wrap;     gap: 12px;     justify-content: flex-end;     padding-top: 12px;     border-top: 2px solid #cbd5e1;   }    .bv-report-summary-card {     background: #f8fafc;     border: 1px solid #cbd5e1;     border-radius: 6px;     padding: 8px 14px;     min-width: 130px;     text-align: right;   }    .bv-report-summary-label {     font-size: 11px;     color: #64748b;     text-transform: uppercase;     font-weight: 600;   }    .bv-report-summary-value {     font-size: 15px;     color: #0f172a;     font-weight: 700;     margin-top: 2px;   }    .bv-report-footer {     margin-top: 18px;     padding-top: 10px;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     font-size: 11px;     color: #64748b;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports v5.0</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ title }}</h2>' + '          <div v-if="company" class="bv-report-company">{{ company }}</div>' + '          <div v-if="subtitle" class="bv-report-subtitle">{{ subtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">BV</div>' + "      </div>" + "" + '      <div v-if="headerText" class="bv-report-meta">' + "        {{ headerText }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in resolvedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ footerText }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bv-report-viewer-root bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports v5.0</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ resolvedTitle }}</h2>' + '          <div v-if="resolvedCompany" class="bv-report-company">{{ resolvedCompany }}</div>' + '          <div v-if="resolvedSubtitle" class="bv-report-subtitle">{{ resolvedSubtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">{{ resolvedLogo }}</div>' + "      </div>" + "" + '      <div v-if="resolvedHeader" class="bv-report-meta">' + "        {{ resolvedHeader }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in formattedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ resolvedFooter }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -11914,6 +12152,8 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     };
     comp["props"] = new Array();
     comp["defaultProps"] = new Object();
+    comp["props"].push("report");
+    comp["defaultProps"]["report"] = null;
     comp["props"].push("title");
     comp["defaultProps"]["title"] = "Executive Data Report";
     comp["props"].push("subtitle");
@@ -11943,23 +12183,41 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     m = new Object();
     m["setLayout"] = function (_this, layoutName) {
       _this["activeLayout"] = layoutName;
+      if (this.report && typeof this.report.PageSize === 'function') {
+        this.report.PageSize(layoutName);
+      };
     };
     m["exportPdf"] = function (_this) {
       _this["lastExportFormat"] = "pdf";
+      var fname = (this.filename || 'report') + '.pdf';
+      if (this.report && typeof this.report.ExportPDF === 'function') {
+        if (typeof this.report.PageSize === 'function') {
+          this.report.PageSize(this.activeLayout || 'a4');
+        }
+        this.report.ExportPDF(fname);
+      }
       if (typeof this.$emit === 'function') {
-        this.$emit('export-pdf', { filename: (this.filename || 'report') + '.pdf', layout: this.activeLayout });
+        this.$emit('export-pdf', { filename: fname, layout: this.activeLayout });
       };
     };
     m["exportExcel"] = function (_this) {
       _this["lastExportFormat"] = "xlsx";
+      var fname = (this.filename || 'report') + '.xlsx';
+      if (this.report && typeof this.report.ExportExcel === 'function') {
+        this.report.ExportExcel(fname);
+      }
       if (typeof this.$emit === 'function') {
-        this.$emit('export-excel', { filename: (this.filename || 'report') + '.xlsx' });
+        this.$emit('export-excel', { filename: fname });
       };
     };
     m["exportCsv"] = function (_this) {
       _this["lastExportFormat"] = "csv";
+      var fname = (this.filename || 'report') + '.csv';
+      if (this.report && typeof this.report.ExportCSV === 'function') {
+        this.report.ExportCSV(fname);
+      }
       if (typeof this.$emit === 'function') {
-        this.$emit('export-csv', { filename: (this.filename || 'report') + '.csv' });
+        this.$emit('export-csv', { filename: fname });
       };
     };
     m["printReport"] = function (_this) {
@@ -11977,104 +12235,203 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
       if (!_this) _this = this;
-      if (this.pageLayout) {
+      if (this.report && typeof this.report.GetPageLayoutStr === 'function') {
+        this.activeLayout = this.report.GetPageLayoutStr();
+      } else if (this.pageLayout) {
         this.activeLayout = this.pageLayout;
       };
     };
     comp["computed"] = new Object();
+    comp["computed"]["resolvedTitle"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FTitle) {
+        Result = this.report.FTitle;
+      } else {
+        Result = this.title || 'Executive Data Report';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedSubtitle"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FSubtitle) {
+        Result = this.report.FSubtitle;
+      } else {
+        Result = this.subtitle || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedCompany"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FCompanyName) {
+        Result = this.report.FCompanyName;
+      } else {
+        Result = this.company || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedLogo"] = function (_this) {
+      var Result = undefined;
+      Result = "BV";
+      if (this.report && this.report.FLogoText) {
+        Result = this.report.FLogoText;
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedHeader"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FHeader) {
+        Result = this.report.FHeader;
+      } else {
+        Result = this.headerText || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedFooter"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FFooter) {
+        Result = this.report.FFooter;
+      } else {
+        Result = this.footerText || '';
+      };
+      return Result;
+    };
     comp["computed"]["resolvedRows"] = function (_this) {
       var Result = undefined;
-      var ds = this.dataset;
-      if (ds) {
-        if (Array.isArray(ds.Data)) return ds.Data;
-        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-        if (Array.isArray(ds.FRecords)) return ds.FRecords;
-        if (Array.isArray(ds)) return ds;
-      }
-      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      Result = new Array();
+      if (this.report && typeof this.report.GetRecordsArray === 'function') {
+        Result = this.report.GetRecordsArray() || [];
+      } else {
+        var ds = this.dataset;
+        if (ds) {
+          if (Array.isArray(ds.Data)) Result = ds.Data;
+          else if (Array.isArray(ds.FActiveRecords)) Result = ds.FActiveRecords;
+          else if (Array.isArray(ds.FRecords)) Result = ds.FRecords;
+          else if (Array.isArray(ds)) Result = ds;
+        } else {
+          Result = (this.items && Array.isArray(this.items)) ? this.items : [];
+        }
+      };
       return Result;
     };
     comp["computed"]["resolvedColumns"] = function (_this) {
       var Result = undefined;
-      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
-        return this.columns.map(function(c) {
+      Result = new Array();
+      if (this.report && typeof this.report.GetColumnsJS === 'function') {
+        Result = this.report.GetColumnsJS() || [];
+      } else if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        Result = this.columns.map(function(c) {
           if (typeof c === 'string') {
-            return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1) };
+            return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1), format: '' };
           }
           return {
             key: c.key || c.field || c.FieldName || '',
-            label: c.label || c.caption || c.Caption || c.key || c.field || ''
+            label: c.label || c.caption || c.Caption || c.key || c.field || '',
+            format: c.format || ''
           };
         });
-      }
-      var ds = this.dataset;
-      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
-        return ds.Fields.ToArray();
-      }
-      var list = this.resolvedRows;
-      if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
-        return Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
-          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+      } else {
+        var ds = this.dataset;
+        if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+          Result = ds.Fields.ToArray();
+        } else {
+          var list = this.resolvedRows;
+          if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
+            Result = Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
+              return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), format: '' };
+            });
+          }
+        }
+      };
+      return Result;
+    };
+    comp["computed"]["formattedRows"] = function (_this) {
+      var Result = undefined;
+      Result = new Array();
+      var rows = this.resolvedRows || [];
+      var cols = this.resolvedColumns || [];
+      var rep = this.report;
+      if (!rep || typeof rep.FormatCellValue !== 'function') {
+        Result = rows;
+      } else {
+        Result = rows.map(function(r) {
+          var out = {};
+          for (var i = 0; i < cols.length; i++) {
+            var k = cols[i].key || cols[i].fieldName;
+            var fmt = cols[i].format || '';
+            out[k] = fmt ? rep.FormatCellValue(r[k], fmt) : r[k];
+          }
+          return out;
         });
-      }
-      return [];
+      };
       return Result;
     };
     comp["computed"]["recordCount"] = function (_this) {
       var Result = undefined;
+      Result = 0;
       var r = this.resolvedRows;
       Result = (r && Array.isArray(r)) ? r.length : 0;
       return Result;
     };
     comp["computed"]["computedSummaries"] = function (_this) {
       var Result = undefined;
-      var sums = this.summaries;
-      if (!sums || !Array.isArray(sums) || sums.length === 0) return [];
-      var rows = this.resolvedRows || [];
-      var curr = this.currencySymbol || '$';
-      return sums.map(function(s) {
-        var field = s.field || s.FieldName || '';
-        var agg = (s.aggregate || s.type || 'sum').toLowerCase();
-        var label = s.label || s.LabelText || field;
-        var fmt = (s.format || '').toLowerCase();
-        var val = 0;
-        if (agg === 'count') {
-          val = rows.length;
-        } else if (rows.length > 0) {
-          var sum = 0;
-          var cnt = 0;
-          var minV = null;
-          var maxV = null;
-          for (var i = 0; i < rows.length; i++) {
-            var n = parseFloat(rows[i] ? rows[i][field] : NaN);
-            if (!isNaN(n)) {
-              sum += n;
-              cnt++;
-              if (minV === null || n < minV) minV = n;
-              if (maxV === null || n > maxV) maxV = n;
+      Result = new Array();
+      if (this.report && typeof this.report.GetSummariesJS === 'function') {
+        Result = this.report.GetSummariesJS() || [];
+      } else {
+        var sums = this.summaries;
+        if (sums && Array.isArray(sums) && sums.length > 0) {
+          var rows = this.resolvedRows || [];
+          var curr = this.currencySymbol || '$';
+          Result = sums.map(function(s) {
+            var field = s.field || s.FieldName || '';
+            var agg = (s.aggregate || s.type || 'sum').toLowerCase();
+            var label = s.label || s.LabelText || field;
+            var fmt = (s.format || '').toLowerCase();
+            var val = 0;
+            if (agg === 'count') {
+              val = rows.length;
+            } else if (rows.length > 0) {
+              var sum = 0;
+              var cnt = 0;
+              var minV = null;
+              var maxV = null;
+              for (var i = 0; i < rows.length; i++) {
+                var n = parseFloat(rows[i] ? rows[i][field] : NaN);
+                if (!isNaN(n)) {
+                  sum += n;
+                  cnt++;
+                  if (minV === null || n < minV) minV = n;
+                  if (maxV === null || n > maxV) maxV = n;
+                }
+              }
+              if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
+              else if (agg === 'min') val = minV !== null ? minV : 0;
+              else if (agg === 'max') val = maxV !== null ? maxV : 0;
+              else val = sum;
             }
-          }
-          if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
-          else if (agg === 'min') val = minV !== null ? minV : 0;
-          else if (agg === 'max') val = maxV !== null ? maxV : 0;
-          else val = sum;
+            var formatted = '';
+            if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
+              formatted = String(Math.round(val));
+            } else {
+              var parts = Number(val).toFixed(2).split('.');
+              parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+              formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
+            }
+            return {
+              label: label,
+              field: field,
+              aggregate: agg,
+              value: Math.round(val * 100) / 100,
+              formattedValue: formatted
+            };
+          });
         }
-        var formatted = '';
-        if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
-          formatted = String(Math.round(val));
-        } else {
-          var parts = Number(val).toFixed(2).split('.');
-          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
-        }
-        return {
-          label: label,
-          field: field,
-          aggregate: agg,
-          value: Math.round(val * 100) / 100,
-          formattedValue: formatted
-        };
-      });
+      };
       return Result;
     };
     pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
@@ -13916,7 +14273,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -13973,6 +14330,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uProductView.Register_uProductView();
     console.log("[Init] Registering uProFeatures...");
     pas.uProFeatures.Register_uProFeatures();
+    console.log("[Init] Registering uReportsView...");
+    pas.uReportsView.Register_uReportsView();
     console.log("[Init] Registering uShowcase...");
     pas.uShowcase.Register_uShowcase();
     console.log("[Init] Registering uUserProfile...");
@@ -14088,7 +14447,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();
@@ -14128,6 +14487,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     routerOpts = new Object();
     routesArr = new Array();
+    r = new Object();
+    r["path"] = "/reports";
+    r["component"] = "reports-view-page";
+    routesArr.push(r);
     r = new Object();
     r["path"] = "/login";
     r["component"] = "login-view-page";

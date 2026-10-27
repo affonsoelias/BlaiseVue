@@ -1,5 +1,5 @@
 <template>
-  <div class="bv-report-viewer-container" :class="'bv-viewer-layout-' + activeLayout">
+  <div class="bv-report-viewer-root bv-report-viewer-container" :class="'bv-viewer-layout-' + activeLayout">
     <div v-if="showToolbar" class="bv-report-toolbar no-print">
       <div class="bv-report-toolbar-left">
         <span class="bv-report-badge">BlaiseReports v5.0</span>
@@ -31,15 +31,15 @@
     <div class="bv-report-sheet" :class="'bv-layout-' + activeLayout">
       <div class="bv-report-banner">
         <div class="bv-report-banner-info">
-          <h2 class="bv-report-title">{{ title }}</h2>
-          <div v-if="company" class="bv-report-company">{{ company }}</div>
-          <div v-if="subtitle" class="bv-report-subtitle">{{ subtitle }}</div>
+          <h2 class="bv-report-title">{{ resolvedTitle }}</h2>
+          <div v-if="resolvedCompany" class="bv-report-company">{{ resolvedCompany }}</div>
+          <div v-if="resolvedSubtitle" class="bv-report-subtitle">{{ resolvedSubtitle }}</div>
         </div>
-        <div class="bv-report-logo-box">BV</div>
+        <div class="bv-report-logo-box">{{ resolvedLogo }}</div>
       </div>
 
-      <div v-if="headerText" class="bv-report-meta">
-        {{ headerText }}
+      <div v-if="resolvedHeader" class="bv-report-meta">
+        {{ resolvedHeader }}
       </div>
 
       <div class="bv-report-table-wrap">
@@ -52,7 +52,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr b-for="row in resolvedRows">
+            <tr b-for="row in formattedRows">
               <td b-for="col in resolvedColumns">
                 {{ row[col.key] }}
               </td>
@@ -69,7 +69,7 @@
       </div>
 
       <div class="bv-report-footer">
-        <span>{{ footerText }}</span>
+        <span>{{ resolvedFooter }}</span>
         <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>
       </div>
     </div>
@@ -78,6 +78,7 @@
 
 <script>
   props:
+    report: JSValue = nil;
     title: string = 'Executive Data Report';
     subtitle: string = '';
     company: string = 'BlaiseVue Enterprise';
@@ -99,57 +100,164 @@
   mounted:
     begin
       asm
-        if (this.pageLayout) {
+        if (this.report && typeof this.report.GetPageLayoutStr === 'function') {
+          this.activeLayout = this.report.GetPageLayoutStr();
+        } else if (this.pageLayout) {
           this.activeLayout = this.pageLayout;
         }
       end;
     end;
 
   computed:
+    function resolvedTitle: string;
+    begin
+      Result := '';
+      asm
+        if (this.report && this.report.FTitle) {
+          Result = this.report.FTitle;
+        } else {
+          Result = this.title || 'Executive Data Report';
+        }
+      end;
+    end;
+
+    function resolvedSubtitle: string;
+    begin
+      Result := '';
+      asm
+        if (this.report && this.report.FSubtitle) {
+          Result = this.report.FSubtitle;
+        } else {
+          Result = this.subtitle || '';
+        }
+      end;
+    end;
+
+    function resolvedCompany: string;
+    begin
+      Result := '';
+      asm
+        if (this.report && this.report.FCompanyName) {
+          Result = this.report.FCompanyName;
+        } else {
+          Result = this.company || '';
+        }
+      end;
+    end;
+
+    function resolvedLogo: string;
+    begin
+      Result := 'BV';
+      asm
+        if (this.report && this.report.FLogoText) {
+          Result = this.report.FLogoText;
+        }
+      end;
+    end;
+
+    function resolvedHeader: string;
+    begin
+      Result := '';
+      asm
+        if (this.report && this.report.FHeader) {
+          Result = this.report.FHeader;
+        } else {
+          Result = this.headerText || '';
+        }
+      end;
+    end;
+
+    function resolvedFooter: string;
+    begin
+      Result := '';
+      asm
+        if (this.report && this.report.FFooter) {
+          Result = this.report.FFooter;
+        } else {
+          Result = this.footerText || '';
+        }
+      end;
+    end;
+
     function resolvedRows: JSValue;
     begin
+      Result := TJSArray.new;
       asm
-        var ds = this.dataset;
-        if (ds) {
-          if (Array.isArray(ds.Data)) return ds.Data;
-          if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-          if (Array.isArray(ds.FRecords)) return ds.FRecords;
-          if (Array.isArray(ds)) return ds;
+        if (this.report && typeof this.report.GetRecordsArray === 'function') {
+          Result = this.report.GetRecordsArray() || [];
+        } else {
+          var ds = this.dataset;
+          if (ds) {
+            if (Array.isArray(ds.Data)) Result = ds.Data;
+            else if (Array.isArray(ds.FActiveRecords)) Result = ds.FActiveRecords;
+            else if (Array.isArray(ds.FRecords)) Result = ds.FRecords;
+            else if (Array.isArray(ds)) Result = ds;
+          } else {
+            Result = (this.items && Array.isArray(this.items)) ? this.items : [];
+          }
         }
-        return (this.items && Array.isArray(this.items)) ? this.items : [];
       end;
     end;
 
     function resolvedColumns: JSValue;
     begin
+      Result := TJSArray.new;
       asm
-        if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
-          return this.columns.map(function(c) {
+        if (this.report && typeof this.report.GetColumnsJS === 'function') {
+          Result = this.report.GetColumnsJS() || [];
+        } else if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+          Result = this.columns.map(function(c) {
             if (typeof c === 'string') {
-              return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1) };
+              return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1), format: '' };
             }
             return {
               key: c.key || c.field || c.FieldName || '',
-              label: c.label || c.caption || c.Caption || c.key || c.field || ''
+              label: c.label || c.caption || c.Caption || c.key || c.field || '',
+              format: c.format || ''
             };
           });
+        } else {
+          var ds = this.dataset;
+          if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+            Result = ds.Fields.ToArray();
+          } else {
+            var list = this.resolvedRows;
+            if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
+              Result = Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
+                return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), format: '' };
+              });
+            }
+          }
         }
-        var ds = this.dataset;
-        if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
-          return ds.Fields.ToArray();
-        }
-        var list = this.resolvedRows;
-        if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
-          return Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
-            return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+      end;
+    end;
+
+    function formattedRows: JSValue;
+    begin
+      Result := TJSArray.new;
+      asm
+        var rows = this.resolvedRows || [];
+        var cols = this.resolvedColumns || [];
+        var rep = this.report;
+        if (!rep || typeof rep.FormatCellValue !== 'function') {
+          Result = rows;
+        } else {
+          Result = rows.map(function(r) {
+            var out = {};
+            for (var i = 0; i < cols.length; i++) {
+              var k = cols[i].key || cols[i].fieldName;
+              var fmt = cols[i].format || '';
+              out[k] = fmt ? rep.FormatCellValue(r[k], fmt) : r[k];
+            }
+            return out;
           });
         }
-        return [];
       end;
     end;
 
     function recordCount: integer;
     begin
+      Result := 0;
       asm
         var r = this.resolvedRows;
         Result = (r && Array.isArray(r)) ? r.length : 0;
@@ -158,58 +266,63 @@
 
     function computedSummaries: JSValue;
     begin
+      Result := TJSArray.new;
       asm
-        var sums = this.summaries;
-        if (!sums || !Array.isArray(sums) || sums.length === 0) return [];
-        var rows = this.resolvedRows || [];
-        var curr = this.currencySymbol || '$';
+        if (this.report && typeof this.report.GetSummariesJS === 'function') {
+          Result = this.report.GetSummariesJS() || [];
+        } else {
+          var sums = this.summaries;
+          if (sums && Array.isArray(sums) && sums.length > 0) {
+            var rows = this.resolvedRows || [];
+            var curr = this.currencySymbol || '$';
+            Result = sums.map(function(s) {
+              var field = s.field || s.FieldName || '';
+              var agg = (s.aggregate || s.type || 'sum').toLowerCase();
+              var label = s.label || s.LabelText || field;
+              var fmt = (s.format || '').toLowerCase();
+              var val = 0;
 
-        return sums.map(function(s) {
-          var field = s.field || s.FieldName || '';
-          var agg = (s.aggregate || s.type || 'sum').toLowerCase();
-          var label = s.label || s.LabelText || field;
-          var fmt = (s.format || '').toLowerCase();
-          var val = 0;
-
-          if (agg === 'count') {
-            val = rows.length;
-          } else if (rows.length > 0) {
-            var sum = 0;
-            var cnt = 0;
-            var minV = null;
-            var maxV = null;
-            for (var i = 0; i < rows.length; i++) {
-              var n = parseFloat(rows[i] ? rows[i][field] : NaN);
-              if (!isNaN(n)) {
-                sum += n;
-                cnt++;
-                if (minV === null || n < minV) minV = n;
-                if (maxV === null || n > maxV) maxV = n;
+              if (agg === 'count') {
+                val = rows.length;
+              } else if (rows.length > 0) {
+                var sum = 0;
+                var cnt = 0;
+                var minV = null;
+                var maxV = null;
+                for (var i = 0; i < rows.length; i++) {
+                  var n = parseFloat(rows[i] ? rows[i][field] : NaN);
+                  if (!isNaN(n)) {
+                    sum += n;
+                    cnt++;
+                    if (minV === null || n < minV) minV = n;
+                    if (maxV === null || n > maxV) maxV = n;
+                  }
+                }
+                if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
+                else if (agg === 'min') val = minV !== null ? minV : 0;
+                else if (agg === 'max') val = maxV !== null ? maxV : 0;
+                else val = sum;
               }
-            }
-            if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
-            else if (agg === 'min') val = minV !== null ? minV : 0;
-            else if (agg === 'max') val = maxV !== null ? maxV : 0;
-            else val = sum;
-          }
 
-          var formatted = '';
-          if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
-            formatted = String(Math.round(val));
-          } else {
-            var parts = Number(val).toFixed(2).split('.');
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
-          }
+              var formatted = '';
+              if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
+                formatted = String(Math.round(val));
+              } else {
+                var parts = Number(val).toFixed(2).split('.');
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
+              }
 
-          return {
-            label: label,
-            field: field,
-            aggregate: agg,
-            value: Math.round(val * 100) / 100,
-            formattedValue: formatted
-          };
-        });
+              return {
+                label: label,
+                field: field,
+                aggregate: agg,
+                value: Math.round(val * 100) / 100,
+                formattedValue: formatted
+              };
+            });
+          }
+        }
       end;
     end;
 
@@ -217,14 +330,26 @@
     procedure setLayout(layoutName: string);
     begin
       this['activeLayout'] := layoutName;
+      asm
+        if (this.report && typeof this.report.PageSize === 'function') {
+          this.report.PageSize(layoutName);
+        }
+      end;
     end;
 
     procedure exportPdf;
     begin
       this['lastExportFormat'] := 'pdf';
       asm
+        var fname = (this.filename || 'report') + '.pdf';
+        if (this.report && typeof this.report.ExportPDF === 'function') {
+          if (typeof this.report.PageSize === 'function') {
+            this.report.PageSize(this.activeLayout || 'a4');
+          }
+          this.report.ExportPDF(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-pdf', { filename: (this.filename || 'report') + '.pdf', layout: this.activeLayout });
+          this.$emit('export-pdf', { filename: fname, layout: this.activeLayout });
         }
       end;
     end;
@@ -233,8 +358,12 @@
     begin
       this['lastExportFormat'] := 'xlsx';
       asm
+        var fname = (this.filename || 'report') + '.xlsx';
+        if (this.report && typeof this.report.ExportExcel === 'function') {
+          this.report.ExportExcel(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-excel', { filename: (this.filename || 'report') + '.xlsx' });
+          this.$emit('export-excel', { filename: fname });
         }
       end;
     end;
@@ -243,8 +372,12 @@
     begin
       this['lastExportFormat'] := 'csv';
       asm
+        var fname = (this.filename || 'report') + '.csv';
+        if (this.report && typeof this.report.ExportCSV === 'function') {
+          this.report.ExportCSV(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-csv', { filename: (this.filename || 'report') + '.csv' });
+          this.$emit('export-csv', { filename: fname });
         }
       end;
     end;

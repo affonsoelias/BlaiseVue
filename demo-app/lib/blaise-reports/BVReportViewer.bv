@@ -330,14 +330,26 @@
     procedure setLayout(layoutName: string);
     begin
       this['activeLayout'] := layoutName;
+      asm
+        if (this.report && typeof this.report.PageSize === 'function') {
+          this.report.PageSize(layoutName);
+        }
+      end;
     end;
 
     procedure exportPdf;
     begin
       this['lastExportFormat'] := 'pdf';
       asm
+        var fname = (this.filename || 'report') + '.pdf';
+        if (this.report && typeof this.report.ExportPDF === 'function') {
+          if (typeof this.report.PageSize === 'function') {
+            this.report.PageSize(this.activeLayout || 'a4');
+          }
+          this.report.ExportPDF(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-pdf', { filename: (this.filename || 'report') + '.pdf', layout: this.activeLayout });
+          this.$emit('export-pdf', { filename: fname, layout: this.activeLayout });
         }
       end;
     end;
@@ -346,8 +358,12 @@
     begin
       this['lastExportFormat'] := 'xlsx';
       asm
+        var fname = (this.filename || 'report') + '.xlsx';
+        if (this.report && typeof this.report.ExportExcel === 'function') {
+          this.report.ExportExcel(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-excel', { filename: (this.filename || 'report') + '.xlsx' });
+          this.$emit('export-excel', { filename: fname });
         }
       end;
     end;
@@ -356,8 +372,12 @@
     begin
       this['lastExportFormat'] := 'csv';
       asm
+        var fname = (this.filename || 'report') + '.csv';
+        if (this.report && typeof this.report.ExportCSV === 'function') {
+          this.report.ExportCSV(fname);
+        }
         if (typeof this.$emit === 'function') {
-          this.$emit('export-csv', { filename: (this.filename || 'report') + '.csv' });
+          this.$emit('export-csv', { filename: fname });
         }
       end;
     end;

@@ -151,6 +151,9 @@ procedure ReportAddSummary(Report: JSValue; const ALabel, AFieldName: string; co
 function ReportExportPDF(Report: JSValue; const AFileName: string = 'report.pdf'): string;
 function ReportExportExcel(Report: JSValue; const AFileName: string = 'report.xlsx'): string;
 function ReportExportCSV(Report: JSValue; const AFileName: string = 'report.csv'): string;
+function ReportGeneratePDF(Report: JSValue): string;
+function ReportGenerateExcel(Report: JSValue): string;
+function ReportGenerateCSV(Report: JSValue): string;
 function ReportPrintPreview(Report: JSValue; const ATargetElementId: string = ''): string;
 function ReportComputeSummary(Report: JSValue; const AFieldName: string; const AAggregate: string = 'sum'): Double;
 
@@ -256,8 +259,11 @@ end;
 procedure CallMethod(Instance: JSValue; const MethodName: string);
 begin
   asm
-    if (Instance && typeof Instance[MethodName] === 'function') {
-      Instance[MethodName]();
+    if (!Instance) return;
+    if (typeof Instance[MethodName] === 'function') {
+      Instance[MethodName](Instance);
+    } else if (Instance.$methods && typeof Instance.$methods[MethodName] === 'function') {
+      Instance.$methods[MethodName](Instance);
     }
   end;
 end;
@@ -1308,6 +1314,30 @@ begin
     Result := '';
 end;
 
+function ReportGeneratePDF(Report: JSValue): string;
+begin
+  if Report <> nil then
+    Result := TBVReport(Report).GeneratePDF
+  else
+    Result := '';
+end;
+
+function ReportGenerateExcel(Report: JSValue): string;
+begin
+  if Report <> nil then
+    Result := TBVReport(Report).GenerateExcel
+  else
+    Result := '';
+end;
+
+function ReportGenerateCSV(Report: JSValue): string;
+begin
+  if Report <> nil then
+    Result := TBVReport(Report).GenerateCSV
+  else
+    Result := '';
+end;
+
 function ReportPrintPreview(Report: JSValue; const ATargetElementId: string = ''): string;
 begin
   if Report <> nil then
@@ -1376,6 +1406,9 @@ begin
     ReportExportPDF(dummy, '');
     ReportExportExcel(dummy, '');
     ReportExportCSV(dummy, '');
+    ReportGeneratePDF(dummy);
+    ReportGenerateExcel(dummy);
+    ReportGenerateCSV(dummy);
     ReportPrintPreview(dummy, '');
     ReportComputeSummary(dummy, '', '');
   end;

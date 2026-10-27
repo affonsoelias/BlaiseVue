@@ -176,7 +176,7 @@ type
     property ReportHeader: string read FHeader write FHeader;
     property ReportFooter: string read FFooter write FFooter;
     property CompanyName: string read FCompanyName write FCompanyName;
-    property LogoText: string read FLogoText write FLogoText;
+    property BadgeLogoText: string read FLogoText write FLogoText;
     property ReportAuthor: string read FAuthor write FAuthor;
     property ColorTheme: string read FThemeColor write FThemeColor;
     property CurrSymbol: string read FCurrencySymbol write FCurrencySymbol;
@@ -266,18 +266,62 @@ end;
   ===================================================================== }
 
 constructor TBVReportColumn.Create(const AFieldName: string; const ACaption: string = ''; AWidth: Integer = 120; AAlign: TBVColumnAlign = caLeft; const AFormat: string = '');
+var
+  Parts: TJSArray;
+  RawSpec, ParsedField, ParsedCap, ParsedFmt, ParsedAlignStr: string;
+  ParsedWidth: Integer;
 begin
-  FFieldName := AFieldName;
-  if ACaption <> '' then
-    FCaption := ACaption
+  RawSpec := Trim(AFieldName);
+  if (Pos(':', RawSpec) > 0) and (ACaption = '') and (AFormat = '') then
+  begin
+    ParsedField := '';
+    ParsedCap := '';
+    ParsedFmt := '';
+    ParsedAlignStr := '';
+    ParsedWidth := AWidth;
+    asm
+      Parts = RawSpec.split(':');
+      ParsedField = (Parts[0] || '').trim();
+      ParsedCap = (Parts.length > 1 && Parts[1]) ? Parts[1].trim() : '';
+      ParsedFmt = (Parts.length > 2 && Parts[2]) ? Parts[2].trim() : '';
+      ParsedAlignStr = (Parts.length > 3 && Parts[3]) ? Parts[3].trim() : '';
+      if (Parts.length > 4 && Parts[4]) {
+        var pw = parseInt(Parts[4], 10);
+        if (!isNaN(pw) && pw > 0) ParsedWidth = pw;
+      }
+    end;
+    FFieldName := ParsedField;
+    if ParsedCap <> '' then
+      FCaption := ParsedCap
+    else
+      FCaption := HumanizeFieldName(ParsedField);
+    FFormat := ParsedFmt;
+    if ParsedAlignStr <> '' then
+      FAlign := ParseColumnAlign(ParsedAlignStr)
+    else if (LowerCase(ParsedFmt) = 'currency') or (LowerCase(ParsedFmt) = 'money') or
+            (LowerCase(ParsedFmt) = 'number') or (LowerCase(ParsedFmt) = 'float') then
+      FAlign := caRight
+    else
+      FAlign := AAlign;
+    if ParsedWidth > 0 then
+      FWidth := ParsedWidth
+    else
+      FWidth := 120;
+  end
   else
-    FCaption := HumanizeFieldName(AFieldName);
-  if AWidth > 0 then
-    FWidth := AWidth
-  else
-    FWidth := 120;
-  FAlign := AAlign;
-  FFormat := AFormat;
+  begin
+    FFieldName := AFieldName;
+    if ACaption <> '' then
+      FCaption := ACaption
+    else
+      FCaption := HumanizeFieldName(AFieldName);
+    if AWidth > 0 then
+      FWidth := AWidth
+    else
+      FWidth := 120;
+    FAlign := AAlign;
+    FFormat := AFormat;
+  end;
 end;
 
 function TBVReportColumn.GetAlignStr: string;
@@ -295,6 +339,7 @@ begin
   Result := TJSObject.new;
   Result['key'] := FFieldName;
   Result['field'] := FFieldName;
+  Result['fieldName'] := FFieldName;
   Result['label'] := FCaption;
   Result['caption'] := FCaption;
   Result['width'] := FWidth;
@@ -536,16 +581,26 @@ begin
   asm
     var ds = this.FDataSet;
     if (ds) {
-      if (Array.isArray(ds.Data)) return ds.Data;
-      if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-      if (Array.isArray(ds.FRecords)) return ds.FRecords;
+      if (Array.isArray(ds.Data)) {
+        Result = ds.Data;
+      } else if (Array.isArray(ds.FActiveRecords)) {
+        Result = ds.FActiveRecords;
+      } else if (Array.isArray(ds.FRecords)) {
+        Result = ds.FRecords;
+      }
+      return Result;
     }
     var raw = this.FRawData;
     if (raw) {
-      if (Array.isArray(raw)) return raw;
-      if (Array.isArray(raw.Data)) return raw.Data;
-      if (Array.isArray(raw.FActiveRecords)) return raw.FActiveRecords;
-      if (Array.isArray(raw.items)) return raw.items;
+      if (Array.isArray(raw)) {
+        Result = raw;
+      } else if (Array.isArray(raw.Data)) {
+        Result = raw.Data;
+      } else if (Array.isArray(raw.FActiveRecords)) {
+        Result = raw.FActiveRecords;
+      } else if (Array.isArray(raw.items)) {
+        Result = raw.items;
+      }
     }
   end;
 end;
@@ -630,54 +685,56 @@ end;
 function TBVReport.ComputeSummary(const AFieldName: string; AAggregate: TBVReportAggregate): Double;
 var
   Recs: TJSArray;
+  AggIdx: Integer;
 begin
   Recs := GetRecordsArray;
+  AggIdx := Ord(AAggregate);
   Result := 0.0;
   asm
     if (!Recs || Recs.length === 0) {
       Result = 0;
       return;
     }
-    if (AAggregate === 2) { // aggCount
+    if (AggIdx === 2) { // aggCount
       Result = Recs.length;
-      return;
-    }
-    var sum = 0;
-    var count = 0;
-    var minVal = null;
-    var maxVal = null;
-    var targetLower = (AFieldName || '').toLowerCase();
+    } else {
+      var sum = 0;
+      var count = 0;
+      var minVal = null;
+      var maxVal = null;
+      var targetLower = (AFieldName || '').toLowerCase();
 
-    for (var i = 0; i < Recs.length; i++) {
-      var row = Recs[i];
-      if (!row || typeof row !== 'object') continue;
-      var rawVal = row[AFieldName];
-      if (rawVal === undefined) {
-        var keys = Object.keys(row);
-        for (var k = 0; k < keys.length; k++) {
-          if (keys[k].toLowerCase() === targetLower) {
-            rawVal = row[keys[k]];
-            break;
+      for (var i = 0; i < Recs.length; i++) {
+        var row = Recs[i];
+        if (!row || typeof row !== 'object') continue;
+        var rawVal = row[AFieldName];
+        if (rawVal === undefined) {
+          var keys = Object.keys(row);
+          for (var k = 0; k < keys.length; k++) {
+            if (keys[k].toLowerCase() === targetLower) {
+              rawVal = row[keys[k]];
+              break;
+            }
           }
         }
+        var num = parseFloat(rawVal);
+        if (!isNaN(num)) {
+          sum += num;
+          count++;
+          if (minVal === null || num < minVal) minVal = num;
+          if (maxVal === null || num > maxVal) maxVal = num;
+        }
       }
-      var num = parseFloat(rawVal);
-      if (!isNaN(num)) {
-        sum += num;
-        count++;
-        if (minVal === null || num < minVal) minVal = num;
-        if (maxVal === null || num > maxVal) maxVal = num;
-      }
-    }
 
-    if (AAggregate === 0) { // aggSum
-      Result = Math.round(sum * 100) / 100;
-    } else if (AAggregate === 1) { // aggAverage
-      Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
-    } else if (AAggregate === 3) { // aggMin
-      Result = minVal !== null ? minVal : 0;
-    } else if (AAggregate === 4) { // aggMax
-      Result = maxVal !== null ? maxVal : 0;
+      if (AggIdx === 0) { // aggSum
+        Result = Math.round(sum * 100) / 100;
+      } else if (AggIdx === 1) { // aggAverage
+        Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
+      } else if (AggIdx === 3) { // aggMin
+        Result = minVal !== null ? minVal : 0;
+      } else if (AggIdx === 4) { // aggMax
+        Result = maxVal !== null ? maxVal : 0;
+      }
     }
   end;
 end;
@@ -718,15 +775,14 @@ begin
   asm
     if (AValue === null || AValue === undefined) {
       Result = '';
-      return;
-    }
-    if (Fmt === 'currency' || Fmt === 'money') {
+    } else if (Fmt === 'currency' || Fmt === 'money') {
       var num = parseFloat(AValue);
       if (!isNaN(num)) {
         var parts = num.toFixed(2).split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         Result = Curr + parts.join('.');
-        return;
+      } else {
+        Result = String(AValue);
       }
     } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
       var fnum = parseFloat(AValue);
@@ -734,25 +790,28 @@ begin
         var fparts = fnum.toFixed(2).split('.');
         fparts[0] = fparts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         Result = fparts.join('.');
-        return;
+      } else {
+        Result = String(AValue);
       }
     } else if (Fmt === 'integer' || Fmt === 'int') {
       var inum = parseInt(AValue, 10);
       if (!isNaN(inum)) {
         Result = String(inum);
-        return;
+      } else {
+        Result = String(AValue);
       }
     } else if (Fmt === 'percent' || Fmt === '%') {
       var pnum = parseFloat(AValue);
       if (!isNaN(pnum)) {
         Result = pnum.toFixed(2) + '%';
-        return;
+      } else {
+        Result = String(AValue);
       }
     } else if (Fmt === 'boolean' || Fmt === 'bool') {
       Result = AValue ? 'Yes' : 'No';
-      return;
+    } else {
+      Result = String(AValue);
     }
-    Result = String(AValue);
   end;
 end;
 
@@ -877,18 +936,22 @@ end;
 
 function GetRecordFieldCaseInsensitive(ARow: JSValue; const AFieldName: string): JSValue;
 begin
-  Result := nil;
+  Result := '';
   asm
-    if (!ARow || typeof ARow !== 'object') return null;
-    if (ARow[AFieldName] !== undefined) return ARow[AFieldName];
-    var target = (AFieldName || '').toLowerCase();
-    var keys = Object.keys(ARow);
-    for (var i = 0; i < keys.length; i++) {
-      if (keys[i].toLowerCase() === target) {
-        return ARow[keys[i]];
+    if (ARow && typeof ARow === 'object') {
+      if (ARow[AFieldName] !== undefined) {
+        Result = ARow[AFieldName];
+      } else {
+        var target = (AFieldName || '').toLowerCase();
+        var keys = Object.keys(ARow);
+        for (var i = 0; i < keys.length; i++) {
+          if (keys[i].toLowerCase() === target) {
+            Result = ARow[keys[i]];
+            break;
+          }
+        }
       }
     }
-    return '';
   end;
 end;
 
