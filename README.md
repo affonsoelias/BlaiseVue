@@ -236,13 +236,25 @@ git clone -b develop https://github.com/affonsoelias/BlaiseVue.git
 cd BlaiseVue
 ```
 
-### 2. Verify Environment Health
-Run the built-in diagnostic doctor:
+### 2. Configure PATH & Executable Permissions (Linux / macOS)
+On Linux and macOS, ensure executable permissions (`+x`) are set on the CLI and the bundled `pas2js` transpiler binaries, and add `bin/` to your shell `PATH`:
 ```bash
-.\bin\bv.exe doctor
+chmod +x bin/bv vendor/pas2js/pas2js-*/bin/{pas2js,compileserver,makestub,webidl2pas} 2>/dev/null || true
+
+# Add to ~/.zshrc (if using Zsh, e.g. Manjaro/macOS) or ~/.bashrc (if using Bash):
+export PATH="$HOME/BlaiseVue/bin:$PATH"
+
+# Reload your active shell (use ~/.zshrc in Zsh or ~/.bashrc in Bash):
+source ~/.zshrc   # or: source ~/.bashrc
 ```
 
-### 3. Compile the BlaiseVue CLI (Optional)
+### 3. Verify Environment Health
+Run the built-in diagnostic doctor:
+```bash
+bv doctor          # or .\bin\bv.exe doctor on Windows
+```
+
+### 4. Compile the BlaiseVue CLI (Optional)
 Pre-compiled binaries are provided in `bin/`. To rebuild manually with **Free Pascal Compiler 3.2+**:
 ```bash
 cd bin
@@ -250,13 +262,13 @@ fpc -O2 bv.pas
 # Move bv or bv.exe to your PATH or use directly from bin/
 ```
 
-### 4. Pre-bundled Pas2JS Compiler
+### 5. Pre-bundled Pas2JS Compiler
 BlaiseVue comes with the `pas2js` transpiler already included under `vendor/pas2js/`. The CLI automatically detects your platform (Windows, Linux, macOS) with zero manual configuration required!
 
-### 5. Launch the Demo App
+### 6. Launch the Demo App
 ```bash
 cd demo-app
-..\bin\bv.exe serve
+bv serve           # or ..\bin\bv.exe serve on Windows
 # Open http://localhost:8080 in your browser
 ```
 

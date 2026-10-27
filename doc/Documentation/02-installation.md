@@ -74,15 +74,27 @@ if ($userPath -notlike "*$sdkBin*") {
 ```
 
 ### Linux & macOS (Bash / Zsh)
-Add the following line to your `~/.bashrc`, `~/.zshrc`, or `~/.profile`:
+Add the `bin/` folder to your shell configuration file (`~/.zshrc` for Zsh users such as Manjaro/macOS, or `~/.bashrc` for Bash users):
 ```bash
 export PATH="$HOME/path/to/BlaiseVue/bin:$PATH"
-chmod +x "$HOME/path/to/BlaiseVue/bin/bv"
 ```
-Then reload your shell:
+Ensure both the `bv` CLI and the bundled `pas2js` transpiler binaries have executable permissions (`+x`):
 ```bash
-source ~/.bashrc  # or source ~/.zshrc
+chmod +x "$HOME/path/to/BlaiseVue/bin/bv"
+chmod +x "$HOME/path/to/BlaiseVue/vendor/pas2js/"pas2js-*/bin/{pas2js,compileserver,makestub,webidl2pas} 2>/dev/null || true
 ```
+*(Without executable permissions on `vendor/pas2js/.../bin/pas2js`, compilation fails with `EOSError: Failed to execute ".../bin/pas2js", error code: 127`.)*
+
+Then reload your active shell configuration:
+```bash
+# If your terminal runs Zsh (default on Manjaro & macOS — check with `echo $SHELL`):
+source ~/.zshrc
+
+# If your terminal runs Bash:
+source ~/.bashrc
+```
+> [!TIP]
+> **Zsh vs. Bash:** Only `source` the configuration file matching your current terminal shell. Running `source ~/.bashrc` inside a **Zsh** terminal will trigger syntax warnings (`bad option: -P` or `command not found: shopt`) because `.bashrc` uses Bash-specific builtins.
 
 ---
 
