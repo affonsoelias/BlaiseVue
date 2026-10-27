@@ -1,0 +1,257 @@
+<template>
+  <div class="reports-view-page">
+    <!-- TOP BANNER -->
+    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>
+          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>
+        </div>
+        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>
+        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>
+        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>
+        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>
+      </div>
+    </div>
+
+    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->
+    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'sales' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadSalesPreset">
+          💼 Faturamento Corporativo (A4)
+        </button>
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'pos' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadPosReceiptPreset">
+          🧾 Cupom Térmico PDV (80mm)
+        </button>
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'inventory' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadInventoryPreset">
+          📦 Auditoria de Estoque (Paisagem)
+        </button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">
+          ➕ Adicionar Linha ao DataSet
+        </button>
+      </div>
+    </div>
+
+    <!-- STATUS NOTIFICATION BANNER -->
+    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+      <span>✅ <strong>{{ statusMessage }}</strong></span>
+      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>
+    </div>
+
+    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->
+    <bv-report-viewer
+      :report="activeReport"
+      :dataset="salesDS"
+      filename="blaisevue_report_v5"
+    ></bv-report-viewer>
+
+    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->
+    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>
+          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>
+          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>
+          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>
+        </div>
+      </div>
+      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    salesDS: JSValue = nil;
+    activeReport: JSValue = nil;
+    activePreset: string = 'sales';
+    statusMessage: string = 'Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.';
+    rawOutputPreview: string = '';
+    nextInvoiceId: integer = 1006;
+
+  computed:
+    function recordCount: integer;
+    begin
+      Result := 0;
+      asm
+        if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
+          Result = this.salesDS.GetRecordCount();
+        }
+      end;
+    end;
+
+  created:
+    begin
+      this['salesDS'] := NewDataSet;
+      this['nextInvoiceId'] := 1006;
+      CallMethod(this, 'loadSalesPreset');
+    end;
+
+  methods:
+    procedure loadSalesPreset;
+    var
+      mockJson: string;
+      rep: JSValue;
+    begin
+      this['activePreset'] := 'sales';
+      mockJson := '[' +
+        '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' +
+        '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' +
+        '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' +
+        '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' +
+        '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' +
+      ']';
+      DataSetLoad(this['salesDS'], JsonParse(mockJson));
+
+      rep := NewReport(this['salesDS']);
+      ReportSetTitle(rep, 'Relatório Executivo de Faturamento Q4', 'Consolidação Financeira Auditada — BlaiseVue 5.0');
+      ReportSetCompany(rep, 'BlaiseVue Enterprise Cloud S.A.', 'BV-5.0');
+      ReportSetHeader(rep, 'Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet', 'Documento Confidencial — BlaiseReports Native Vector PDF Engine');
+      ReportSetPageLayout(rep, 'a4');
+      ReportSetColumns(rep, [
+        'id:Fatura #:integer:center:75',
+        'customer:Cliente Corporativo:string:left:190',
+        'segment:Unidade de Negócio:string:left:140',
+        'status:Status:string:center:85',
+        'total:Valor Total:currency:right:115'
+      ]);
+      ReportAddSummary(rep, 'Receita Bruta Total', 'total', 'sum', 'currency');
+      ReportAddSummary(rep, 'Ticket Médio', 'total', 'avg', 'currency');
+      ReportAddSummary(rep, 'Maior Contrato', 'total', 'max', 'currency');
+      ReportAddSummary(rep, 'Total de Faturas', 'id', 'count', 'integer');
+
+      this['activeReport'] := rep;
+      this['statusMessage'] := 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
+      CallMethod(this, 'inspectPDF');
+    end;
+
+    procedure loadPosReceiptPreset;
+    var
+      mockJson: string;
+      rep: JSValue;
+    begin
+      this['activePreset'] := 'pos';
+      mockJson := '[' +
+        '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' +
+        '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' +
+        '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' +
+        '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' +
+      ']';
+      DataSetLoad(this['salesDS'], JsonParse(mockJson));
+
+      rep := NewReport(this['salesDS']);
+      ReportSetTitle(rep, 'CUPOM FISCAL PDV #9042', 'Caixa 01 - Operador: Pascal POS');
+      ReportSetCompany(rep, 'BLAISE CAFÉ & BISTRÔ LTDA', 'POS');
+      ReportSetHeader(rep, 'CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm', 'Obrigado pela preferência! Volte sempre.');
+      ReportSetPageLayout(rep, 'thermal-80mm');
+      ReportSetColumns(rep, [
+        'customer:Item / Descrição:string:left:140',
+        'total:Subtotal:currency:right:70'
+      ]);
+      ReportAddSummary(rep, 'TOTAL A PAGAR', 'total', 'sum', 'currency');
+      ReportAddSummary(rep, 'QTD ITENS', 'id', 'count', 'integer');
+
+      this['activeReport'] := rep;
+      this['statusMessage'] := 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
+      CallMethod(this, 'inspectPDF');
+    end;
+
+    procedure loadInventoryPreset;
+    var
+      mockJson: string;
+      rep: JSValue;
+    begin
+      this['activePreset'] := 'inventory';
+      mockJson := '[' +
+        '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' +
+        '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' +
+        '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' +
+        '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' +
+      ']';
+      DataSetLoad(this['salesDS'], JsonParse(mockJson));
+
+      rep := NewReport(this['salesDS']);
+      ReportSetTitle(rep, 'Auditoria Física de Ativos & Inventário', 'Relatório em Formato A4 Paisagem (Landscape)');
+      ReportSetCompany(rep, 'BlaiseVue Infraestrutura & DataCenter', 'INFRA');
+      ReportSetHeader(rep, 'Galpão Central SP | Auditoria Trimestral', 'Assinatura do Auditor Responsável');
+      ReportSetPageLayout(rep, 'a4-landscape');
+      ReportSetColumns(rep, [
+        'id:Patrimônio:integer:center:80',
+        'customer:Equipamento / Ativo:string:left:220',
+        'segment:Setor:string:left:120',
+        'status:Situação:string:center:100',
+        'total:Valor Contábil:currency:right:120'
+      ]);
+      ReportAddSummary(rep, 'Patrimônio Total', 'total', 'sum', 'currency');
+      ReportAddSummary(rep, 'Média por Ativo', 'total', 'avg', 'currency');
+
+      this['activeReport'] := rep;
+      this['statusMessage'] := 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
+      CallMethod(this, 'inspectPDF');
+    end;
+
+    procedure addSampleInvoice;
+    var
+      newId: integer;
+    begin
+      newId := Integer(this['nextInvoiceId']);
+      this['nextInvoiceId'] := newId + 1;
+
+      DataSetAppend(this['salesDS']);
+      DataSetSetFieldVal(this['salesDS'], 'id', newId);
+      DataSetSetFieldVal(this['salesDS'], 'customer', 'Novo Cliente Enterprise #' + IntToStr(newId));
+      DataSetSetFieldVal(this['salesDS'], 'segment', 'Cloud Expansion');
+      DataSetSetFieldVal(this['salesDS'], 'status', 'Pago');
+      DataSetSetFieldVal(this['salesDS'], 'total', 3750.00);
+      DataSetPost(this['salesDS']);
+
+      this['statusMessage'] := 'Fatura #' + IntToStr(newId) + ' adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.';
+      CallMethod(this, 'inspectPDF');
+    end;
+
+    procedure doExportPDF;
+    begin
+      ReportExportPDF(this['activeReport'], 'relatorio_blaisevue_v5.pdf');
+      this['statusMessage'] := 'Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!';
+      CallMethod(this, 'inspectPDF');
+    end;
+
+    procedure doExportExcel;
+    begin
+      ReportExportExcel(this['activeReport'], 'relatorio_blaisevue_v5.xlsx');
+      this['statusMessage'] := 'Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!';
+      CallMethod(this, 'inspectExcel');
+    end;
+
+    procedure doExportCSV;
+    begin
+      ReportExportCSV(this['activeReport'], 'relatorio_blaisevue_v5.csv');
+      this['statusMessage'] := 'Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!';
+      CallMethod(this, 'inspectCSV');
+    end;
+
+    procedure inspectPDF;
+    begin
+      this['rawOutputPreview'] := ReportGeneratePDF(this['activeReport']);
+    end;
+
+    procedure inspectExcel;
+    begin
+      this['rawOutputPreview'] := ReportGenerateExcel(this['activeReport']);
+    end;
+
+    procedure inspectCSV;
+    begin
+      this['rawOutputPreview'] := ReportGenerateCSV(this['activeReport']);
+    end;
+</script>

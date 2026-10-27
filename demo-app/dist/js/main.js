@@ -3821,10 +3821,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    Promise.all(Data.FData.$pendingPromises).then(function() {
                       if (fbNode.parentNode) fbNode.remove();
                       el.style.display = '';
-                      bv.traverse(el, Data, Methods);
+                      bv.nonReactive(function() {
+                        bv.traverse(el, Data, Methods);
+                      });
                    });
                 } else {
-                   bv.traverse(el, Data, Methods);
+                   bv.nonReactive(function() {
+                     bv.traverse(el, Data, Methods);
+                   });
                 }
                 return;
               }
@@ -4024,7 +4028,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           },
                           SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                         };
-                        bv.traverse(cl, ld, Methods);
+                        bv.nonReactive(function() {
+                          bv.traverse(cl, ld, Methods);
+                        });
                       });
                     }
                   });
@@ -4045,7 +4051,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   if (res && !active) { 
                      m.parentNode.insertBefore(el, m.nextSibling); 
                      active = true; 
-                     bv.traverse(el, Data, Methods); 
+                     bv.nonReactive(function() {
+                       bv.traverse(el, Data, Methods);
+                     });
                      if (tName) bv.applyTransition(el, 'enter', tName);
                   }
                   else if (!res && active) { 
@@ -4067,7 +4075,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   if (res) {
                      if (el.style.display === 'none') {
                         el.style.display = '';
-                        bv.traverse(el, Data, Methods);
+                        bv.nonReactive(function() {
+                          bv.traverse(el, Data, Methods);
+                        });
                         if (tName) bv.applyTransition(el, 'enter', tName);
                      }
                   } else {
@@ -4441,12 +4451,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (opts.methods) { 
                    Object.keys(opts.methods).forEach(function(k) { 
                      let rM = opts.methods[k];
-                     dRaw[k] = function() { 
-                       if (arguments.length > 0 && arguments[0] === this) {
-                         return rM.apply(this, arguments);
+                     const boundFn = function() { 
+                       if (arguments.length > 0 && arguments[0] === pRef) {
+                         return rM.apply(pRef, arguments);
                        }
-                       return rM.apply(this, [this, ...arguments]); 
+                       return rM.apply(pRef, [pRef, ...arguments]); 
                      }; 
+                     dRaw[k] = boundFn;
+                     pRef[k] = boundFn;
                    }); 
                 }
                 
@@ -4465,7 +4477,8 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 
                 if (opts.created) opts.created.call(pRef, pRef);
                 
-                pRef['$emit'] = function(ev, arg) {
+                pRef['$emit'] = function(ev, ...args) {
+                   let arg = args[0];
                    if (!pRef['__emitted__']) pRef['__emitted__'] = {};
                    if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
                    pRef['__emitted__'][ev].push(arg);
@@ -4486,12 +4499,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                          }
                          let expr = evt.expr;
                          if (expr) {
-                            let r = Data.Evaluate(expr, arg);
+                            let r = Data.Evaluate(expr, ...args);
                             if (typeof r === 'function') {
-                               try { r.call(Data.FData, Data.FData, arg); }
+                               try { r.call(Data.FData, Data.FData, ...args); }
                                catch(e) { console.error("[Compiler] Event handler error:", e); }
                             } else if (Methods && typeof Methods[expr] === 'function') {
-                               try { Methods[expr].call(Data.FData, Data.FData, arg); }
+                               try { Methods[expr].call(Data.FData, Data.FData, ...args); }
                                catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
                             }
                          }
@@ -7296,7 +7309,1065 @@ rtl.module("BVRpc",["System","JS","Web","SysUtils","BVReactivity"],function () {
     $mod.TBVRpcClient.EnsureBridge();
   };
 });
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],function () {
+rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.REPORT_LAYOUT_A4_PORTRAIT = "a4";
+  this.REPORT_LAYOUT_A4_LANDSCAPE = "a4-landscape";
+  this.REPORT_LAYOUT_LETTER_PORTRAIT = "letter";
+  this.REPORT_LAYOUT_LETTER_LANDSCAPE = "letter-landscape";
+  this.REPORT_LAYOUT_THERMAL_80MM = "thermal-80mm";
+  this.REPORT_LAYOUT_THERMAL_58MM = "thermal-58mm";
+  this.TBVReportAggregate = {"0": "aggSum", aggSum: 0, "1": "aggAverage", aggAverage: 1, "2": "aggCount", aggCount: 2, "3": "aggMin", aggMin: 3, "4": "aggMax", aggMax: 4};
+  this.TBVPageLayout = {"0": "plA4Portrait", plA4Portrait: 0, "1": "plA4Landscape", plA4Landscape: 1, "2": "plLetterPortrait", plLetterPortrait: 2, "3": "plLetterLandscape", plLetterLandscape: 3, "4": "plThermal80mm", plThermal80mm: 4, "5": "plThermal58mm", plThermal58mm: 5};
+  this.TBVColumnAlign = {"0": "caLeft", caLeft: 0, "1": "caCenter", caCenter: 1, "2": "caRight", caRight: 2};
+  rtl.createClass(this,"TBVReportColumn",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FFieldName = "";
+      this.FCaption = "";
+      this.FWidth = 0;
+      this.FAlign = 0;
+      this.FFormat = "";
+    };
+    this.Create$1 = function (AFieldName, ACaption, AWidth, AAlign, AFormat) {
+      var RawSpec = "";
+      var ParsedField = "";
+      var ParsedCap = "";
+      var ParsedFmt = "";
+      var ParsedAlignStr = "";
+      var ParsedWidth = 0;
+      RawSpec = pas.SysUtils.Trim(AFieldName);
+      if ((pas.System.Pos(":",RawSpec) > 0) && (ACaption === "") && (AFormat === "")) {
+        ParsedField = "";
+        ParsedCap = "";
+        ParsedFmt = "";
+        ParsedAlignStr = "";
+        ParsedWidth = AWidth;
+        var parts = RawSpec.split(':');
+        ParsedField = (parts[0] || '').trim();
+        ParsedCap = (parts.length > 1 && parts[1]) ? parts[1].trim() : '';
+        ParsedFmt = (parts.length > 2 && parts[2]) ? parts[2].trim() : '';
+        ParsedAlignStr = (parts.length > 3 && parts[3]) ? parts[3].trim() : '';
+        if (parts.length > 4 && parts[4]) {
+          var pw = parseInt(parts[4], 10);
+          if (!isNaN(pw) && pw > 0) ParsedWidth = pw;
+        };
+        this.FFieldName = ParsedField;
+        if (ParsedCap !== "") {
+          this.FCaption = ParsedCap}
+         else this.FCaption = $impl.HumanizeFieldName(ParsedField);
+        this.FFormat = ParsedFmt;
+        if (ParsedAlignStr !== "") {
+          this.FAlign = $mod.ParseColumnAlign(ParsedAlignStr)}
+         else if ((pas.SysUtils.LowerCase(ParsedFmt) === "currency") || (pas.SysUtils.LowerCase(ParsedFmt) === "money") || (pas.SysUtils.LowerCase(ParsedFmt) === "number") || (pas.SysUtils.LowerCase(ParsedFmt) === "float")) {
+          this.FAlign = $mod.TBVColumnAlign.caRight}
+         else this.FAlign = AAlign;
+        if (ParsedWidth > 0) {
+          this.FWidth = ParsedWidth}
+         else this.FWidth = 120;
+      } else {
+        this.FFieldName = AFieldName;
+        if (ACaption !== "") {
+          this.FCaption = ACaption}
+         else this.FCaption = $impl.HumanizeFieldName(AFieldName);
+        if (AWidth > 0) {
+          this.FWidth = AWidth}
+         else this.FWidth = 120;
+        this.FAlign = AAlign;
+        this.FFormat = AFormat;
+      };
+      return this;
+    };
+    this.GetAlignStr = function () {
+      var Result = "";
+      var $tmp = this.FAlign;
+      if ($tmp === $mod.TBVColumnAlign.caCenter) {
+        Result = "center"}
+       else if ($tmp === $mod.TBVColumnAlign.caRight) {
+        Result = "right"}
+       else {
+        Result = "left";
+      };
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVReportSummary",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FLabelText = "";
+      this.FFieldName = "";
+      this.FAggregate = 0;
+      this.FFormat = "";
+    };
+    this.Create$1 = function (ALabel, AFieldName, AAggregate, AFormat) {
+      this.FLabelText = ALabel;
+      this.FFieldName = AFieldName;
+      this.FAggregate = AAggregate;
+      this.FFormat = AFormat;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TBVReport",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FRawData = undefined;
+      this.FTitle = "";
+      this.FSubtitle = "";
+      this.FHeader = "";
+      this.FFooter = "";
+      this.FCompanyName = "";
+      this.FLogoText = "";
+      this.FAuthor = "";
+      this.FThemeColor = "";
+      this.FCurrencySymbol = "";
+      this.FCSVDelimiter = "";
+      this.FIncludeBOM = false;
+      this.FPageLayout = 0;
+      this.FRowsPerPage = 0;
+      this.FColumns = null;
+      this.FSummaries = null;
+      this.FLastExportedContent = "";
+      this.FLastExportedFileName = "";
+      this.FLastExportedMimeType = "";
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      this.FColumns = undefined;
+      this.FSummaries = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.EnsureAutoColumns = function (ARecords) {
+      if ((this.FColumns.length & 0xFFFFFFFF) > 0) return;
+      var ds = this.FDataSet;
+      if (ds && ds.Fields && typeof ds.Fields.Count === 'function' && ds.Fields.Count() > 0) {
+        var cnt = ds.Fields.Count();
+        for (var i = 0; i < cnt; i++) {
+          var f = ds.Fields.Item(i);
+          if (f && f.FieldName) {
+            this.AddColumn(f.FieldName, f.FieldName, 120, 0, '');
+          }
+        }
+        return;
+      }
+      if (ARecords && ARecords.length > 0 && typeof ARecords[0] === 'object' && ARecords[0] !== null) {
+        var keys = Object.keys(ARecords[0]);
+        for (var k = 0; k < keys.length; k++) {
+          if (keys[k].charAt(0) !== '_') {
+            this.AddColumn(keys[k], '', 120, 0, '');
+          }
+        }
+      };
+    };
+    this.TriggerBrowserDownload = function (AContent, AFileName, AMimeType) {
+      this.FLastExportedContent = AContent;
+      this.FLastExportedFileName = AFileName;
+      this.FLastExportedMimeType = AMimeType;
+      try {
+        if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
+          var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
+          if (!isTestEnv && window.URL && typeof window.URL.createObjectURL === 'function') {
+            var blob = new Blob([AContent], { type: AMimeType });
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = AFileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            }, 150);
+          }
+        }
+      } catch (e) {};
+    };
+    this.EscapePDFString = function (S) {
+      var Result = "";
+      Result = S;
+      Result = pas.SysUtils.StringReplace(Result,"\\","\\\\",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"(","\\(",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,")","\\)",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\r\n"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\r"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\n"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      return Result;
+    };
+    this.EscapeXMLString = function (S) {
+      var Result = "";
+      Result = S;
+      Result = pas.SysUtils.StringReplace(Result,"&","&amp;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"<","&lt;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,">","&gt;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,'"',"&quot;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"'","&apos;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      return Result;
+    };
+    this.EscapeCSVField = function (S) {
+      var Result = "";
+      var Delim = "";
+      var NeedsQuotes = false;
+      Delim = this.FCSVDelimiter;
+      if (Delim === "") Delim = ",";
+      NeedsQuotes = (pas.System.Pos(Delim,S) > 0) || (pas.System.Pos('"',S) > 0) || (pas.System.Pos("\n",S) > 0) || (pas.System.Pos("\r",S) > 0);
+      if (NeedsQuotes) {
+        Result = '"' + pas.SysUtils.StringReplace(S,'"','""',rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll)) + '"'}
+       else Result = S;
+      return Result;
+    };
+    this.HexToPDFRgb = function (AHex) {
+      var Result = "";
+      var H = "";
+      var R = 0;
+      var G = 0;
+      var B = 0;
+      H = pas.SysUtils.Trim(AHex);
+      if ((H.length > 0) && (H.charAt(0) === "#")) H = pas.System.Copy(H,2,2147483647);
+      if (H.length === 6) {
+        R = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,1,2),30);
+        G = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,3,2),41);
+        B = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,5,2),59);
+        Result = (R / 255).toFixed(3) + ' ' + (G / 255).toFixed(3) + ' ' + (B / 255).toFixed(3);
+      } else Result = "0.118 0.161 0.231";
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.FDataSet = null;
+      this.FRawData = null;
+      this.FTitle = "Executive Data Report";
+      this.FSubtitle = "";
+      this.FHeader = "";
+      this.FFooter = "Generated by BlaiseReports Engine v5.0";
+      this.FCompanyName = "BlaiseVue Enterprise";
+      this.FLogoText = "BV";
+      this.FAuthor = "BlaiseVue System";
+      this.FThemeColor = "#1e293b";
+      this.FCurrencySymbol = "$";
+      this.FCSVDelimiter = ",";
+      this.FIncludeBOM = true;
+      this.FPageLayout = $mod.TBVPageLayout.plA4Portrait;
+      this.FRowsPerPage = 25;
+      this.FColumns = new Array();
+      this.FSummaries = new Array();
+      this.FLastExportedContent = "";
+      this.FLastExportedFileName = "";
+      this.FLastExportedMimeType = "";
+      return this;
+    };
+    this.Create$3 = function (AData) {
+      this.Create$1();
+      this.SetData(AData);
+      return this;
+    };
+    this.Destroy = function () {
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.SetData = function (AData) {
+      var Result = null;
+      if (AData) {
+        if (Array.isArray(AData.FActiveRecords) || Array.isArray(AData.Data) || typeof AData.GetRecordCount === 'function') {
+          this.FDataSet = AData;
+          this.FRawData = null;
+        } else {
+          this.FRawData = AData;
+        }
+      };
+      Result = this;
+      return Result;
+    };
+    this.Title = function (ATitle) {
+      var Result = null;
+      this.FTitle = ATitle;
+      Result = this;
+      return Result;
+    };
+    this.Subtitle = function (ASubtitle) {
+      var Result = null;
+      this.FSubtitle = ASubtitle;
+      Result = this;
+      return Result;
+    };
+    this.Header = function (AHeader) {
+      var Result = null;
+      this.FHeader = AHeader;
+      Result = this;
+      return Result;
+    };
+    this.Footer = function (AFooter) {
+      var Result = null;
+      this.FFooter = AFooter;
+      Result = this;
+      return Result;
+    };
+    this.Company = function (ACompanyName, ALogoText) {
+      var Result = null;
+      this.FCompanyName = ACompanyName;
+      if (ALogoText !== "") this.FLogoText = ALogoText;
+      Result = this;
+      return Result;
+    };
+    this.PageSize = function (ALayoutName) {
+      var Result = null;
+      this.FPageLayout = $mod.ParsePageLayout(ALayoutName);
+      Result = this;
+      return Result;
+    };
+    this.Columns = function (AFieldNames) {
+      var Result = null;
+      var i = 0;
+      this.FColumns = new Array();
+      for (var $l = 0, $end = rtl.length(AFieldNames) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.AddColumn(AFieldNames[i],"",120,$mod.TBVColumnAlign.caLeft,"");
+      };
+      Result = this;
+      return Result;
+    };
+    this.AddColumn = function (AFieldName, ACaption, AWidth, AAlign, AFormat) {
+      var Result = null;
+      var Col = null;
+      Col = $mod.TBVReportColumn.$create("Create$1",[AFieldName,ACaption,AWidth,AAlign,AFormat]);
+      this.FColumns.push(Col);
+      Result = this;
+      return Result;
+    };
+    this.AddSummary = function (ALabel, AFieldName, AAggregate, AFormat) {
+      var Result = null;
+      var SumItem = null;
+      SumItem = $mod.TBVReportSummary.$create("Create$1",[ALabel,AFieldName,AAggregate,AFormat]);
+      this.FSummaries.push(SumItem);
+      Result = this;
+      return Result;
+    };
+    this.GetRecordsArray = function () {
+      var Result = null;
+      Result = new Array();
+      var ds = this.FDataSet;
+      if (ds) {
+        if (Array.isArray(ds.Data)) {
+          Result = ds.Data;
+        } else if (Array.isArray(ds.FActiveRecords)) {
+          Result = ds.FActiveRecords;
+        } else if (Array.isArray(ds.FRecords)) {
+          Result = ds.FRecords;
+        }
+        return Result;
+      }
+      var raw = this.FRawData;
+      if (raw) {
+        if (Array.isArray(raw)) {
+          Result = raw;
+        } else if (Array.isArray(raw.Data)) {
+          Result = raw.Data;
+        } else if (Array.isArray(raw.FActiveRecords)) {
+          Result = raw.FActiveRecords;
+        } else if (Array.isArray(raw.items)) {
+          Result = raw.items;
+        }
+      };
+      return Result;
+    };
+    this.GetRecordCount = function () {
+      var Result = 0;
+      var Recs = null;
+      Recs = this.GetRecordsArray();
+      Result = Recs.length & 0xFFFFFFFF;
+      return Result;
+    };
+    this.GetPageCount = function () {
+      var Result = 0;
+      var TotalRows = 0;
+      var Limit = 0;
+      TotalRows = this.GetRecordCount();
+      Limit = this.FRowsPerPage;
+      if (Limit <= 0) Limit = 25;
+      if (TotalRows <= 0) {
+        Result = 1}
+       else Result = rtl.trunc(((TotalRows + Limit) - 1) / Limit);
+      return Result;
+    };
+    this.GetPageLayoutStr = function () {
+      var Result = "";
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        Result = $mod.REPORT_LAYOUT_A4_LANDSCAPE}
+       else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        Result = $mod.REPORT_LAYOUT_LETTER_PORTRAIT}
+       else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        Result = $mod.REPORT_LAYOUT_LETTER_LANDSCAPE}
+       else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        Result = $mod.REPORT_LAYOUT_THERMAL_80MM}
+       else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        Result = $mod.REPORT_LAYOUT_THERMAL_58MM}
+       else {
+        Result = $mod.REPORT_LAYOUT_A4_PORTRAIT;
+      };
+      return Result;
+    };
+    this.ComputeSummary = function (AFieldName, AAggregate) {
+      var Result = 0.0;
+      var Recs = null;
+      var AggIdx = 0;
+      Recs = this.GetRecordsArray();
+      AggIdx = AAggregate;
+      Result = 0.0;
+      if (!Recs || Recs.length === 0) {
+            Result = 0;
+            return;
+          }
+          if (AggIdx === 2) { // aggCount
+            Result = Recs.length;
+          } else {
+            var sum = 0;
+            var count = 0;
+            var minVal = null;
+            var maxVal = null;
+            var targetLower = (AFieldName || '').toLowerCase();
+      
+            for (var i = 0; i < Recs.length; i++) {
+              var row = Recs[i];
+              if (!row || typeof row !== 'object') continue;
+              var rawVal = row[AFieldName];
+              if (rawVal === undefined) {
+                var keys = Object.keys(row);
+                for (var k = 0; k < keys.length; k++) {
+                  if (keys[k].toLowerCase() === targetLower) {
+                    rawVal = row[keys[k]];
+                    break;
+                  }
+                }
+              }
+              var num = parseFloat(rawVal);
+              if (!isNaN(num)) {
+                sum += num;
+                count++;
+                if (minVal === null || num < minVal) minVal = num;
+                if (maxVal === null || num > maxVal) maxVal = num;
+              }
+            }
+      
+            if (AggIdx === 0) { // aggSum
+              Result = Math.round(sum * 100) / 100;
+            } else if (AggIdx === 1) { // aggAverage
+              Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
+            } else if (AggIdx === 3) { // aggMin
+              Result = minVal !== null ? minVal : 0;
+            } else if (AggIdx === 4) { // aggMax
+              Result = maxVal !== null ? maxVal : 0;
+            }
+          };
+      return Result;
+    };
+    this.FormatCellValue = function (AValue, AFormat) {
+      var Result = "";
+      var Fmt = "";
+      var Curr = "";
+      Fmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AFormat));
+      Curr = this.FCurrencySymbol;
+      Result = "";
+      if (AValue === null || AValue === undefined) {
+        Result = '';
+      } else if (Fmt === 'currency' || Fmt === 'money') {
+        var num = parseFloat(AValue);
+        if (!isNaN(num)) {
+          var parts = num.toFixed(2).split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          Result = Curr + parts.join('.');
+        } else {
+          Result = String(AValue);
+        }
+      } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
+        var fnum = parseFloat(AValue);
+        if (!isNaN(fnum)) {
+          var fparts = fnum.toFixed(2).split('.');
+          fparts[0] = fparts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          Result = fparts.join('.');
+        } else {
+          Result = String(AValue);
+        }
+      } else if (Fmt === 'integer' || Fmt === 'int') {
+        var inum = parseInt(AValue, 10);
+        if (!isNaN(inum)) {
+          Result = String(inum);
+        } else {
+          Result = String(AValue);
+        }
+      } else if (Fmt === 'percent' || Fmt === '%') {
+        var pnum = parseFloat(AValue);
+        if (!isNaN(pnum)) {
+          Result = pnum.toFixed(2) + '%';
+        } else {
+          Result = String(AValue);
+        }
+      } else if (Fmt === 'boolean' || Fmt === 'bool') {
+        Result = AValue ? 'Yes' : 'No';
+      } else {
+        Result = String(AValue);
+      };
+      return Result;
+    };
+    this.FormatSummaryNumber = function (AValue, AFormat) {
+      var Result = "";
+      var Fmt = "";
+      var Curr = "";
+      Fmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AFormat));
+      Curr = this.FCurrencySymbol;
+      Result = "";
+      var n = Number(AValue) || 0;
+      if (Fmt === 'integer' || Fmt === 'int' || Fmt === 'count') {
+        Result = String(Math.round(n));
+      } else if (Fmt === 'percent' || Fmt === '%') {
+        Result = n.toFixed(2) + '%';
+      } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
+        var parts = n.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        Result = parts.join('.');
+      } else {
+        var cParts = n.toFixed(2).split('.');
+        cParts[0] = cParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        Result = Curr + cParts.join('.');
+      };
+      return Result;
+    };
+    this.GeneratePDF = function () {
+      var Result = "";
+      var Recs = null;
+      var TotalRecords = 0;
+      var TotalPages = 0;
+      var Limit = 0;
+      var PageIdx = 0;
+      var StartIdx = 0;
+      var EndIdx = 0;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var PageW = 0;
+      var PageH = 0;
+      var MarginX = 0;
+      var CurY = 0;
+      var ColWidth = 0;
+      var ColX = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var CellText = "";
+      var SumLine = "";
+      var ThemeRgb = "";
+      var PageStream = "";
+      var RawVal = undefined;
+      var PageStreams = null;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      TotalRecords = Recs.length & 0xFFFFFFFF;
+      Limit = this.FRowsPerPage;
+      if (Limit <= 0) Limit = 25;
+      TotalPages = this.GetPageCount();
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        PageW = 842;
+        PageH = 595;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        PageW = 612;
+        PageH = 792;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        PageW = 792;
+        PageH = 612;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        PageW = 226;
+        PageH = 650;
+        MarginX = 12;
+      } else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        PageW = 164;
+        PageH = 550;
+        MarginX = 8;
+      } else {
+        PageW = 595;
+        PageH = 842;
+        MarginX = 36;
+      };
+      ThemeRgb = this.HexToPDFRgb(this.FThemeColor);
+      PageStreams = new Array();
+      if ((this.FColumns.length & 0xFFFFFFFF) > 0) {
+        ColWidth = rtl.trunc((PageW - (MarginX * 2)) / (this.FColumns.length & 0xFFFFFFFF))}
+       else ColWidth = PageW - (MarginX * 2);
+      for (var $l = 1, $end = TotalPages; $l <= $end; $l++) {
+        PageIdx = $l;
+        PageStream = "";
+        CurY = PageH - 45;
+        PageStream = PageStream + ThemeRgb + " rg" + "\n";
+        PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 22) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 38 re f" + "\n";
+        PageStream = PageStream + "1 1 1 rg" + "\n";
+        PageStream = PageStream + "BT /F2 13 Tf " + pas.SysUtils.IntToStr(MarginX + 10) + " " + pas.SysUtils.IntToStr(CurY - 4) + " Td (" + this.EscapePDFString(this.FTitle) + ") Tj ET" + "\n";
+        if (this.FCompanyName !== "") PageStream = PageStream + "BT /F1 8 Tf " + pas.SysUtils.IntToStr(MarginX + 10) + " " + pas.SysUtils.IntToStr(CurY - 16) + " Td (" + this.EscapePDFString(this.FCompanyName) + ") Tj ET" + "\n";
+        CurY = CurY - 38;
+        if (this.FHeader !== "") {
+          PageStream = PageStream + "0.25 0.30 0.38 rg" + "\n";
+          PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(this.FHeader) + ") Tj ET" + "\n";
+          CurY = CurY - 16;
+        };
+        if (this.FSubtitle !== "") {
+          PageStream = PageStream + "0.35 0.40 0.48 rg" + "\n";
+          PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(this.FSubtitle) + ") Tj ET" + "\n";
+          CurY = CurY - 16;
+        };
+        PageStream = PageStream + "0.91 0.93 0.96 rg" + "\n";
+        PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 6) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 18 re f" + "\n";
+        PageStream = PageStream + "0.10 0.15 0.22 rg" + "\n";
+        for (var $l1 = 0, $end1 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+          ColIdx = $l1;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          ColX = MarginX + 6 + (ColIdx * ColWidth);
+          PageStream = PageStream + "BT /F2 9 Tf " + pas.SysUtils.IntToStr(ColX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(Col.FCaption) + ") Tj ET" + "\n";
+        };
+        CurY = CurY - 20;
+        StartIdx = (PageIdx - 1) * Limit;
+        EndIdx = (StartIdx + Limit) - 1;
+        if (EndIdx >= TotalRecords) EndIdx = TotalRecords - 1;
+        for (var $l2 = StartIdx, $end2 = EndIdx; $l2 <= $end2; $l2++) {
+          RowIdx = $l2;
+          if (((RowIdx - StartIdx) % 2) === 1) {
+            PageStream = PageStream + "0.97 0.98 0.99 rg" + "\n";
+            PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 4) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 16 re f" + "\n";
+          };
+          PageStream = PageStream + "0.15 0.20 0.28 rg" + "\n";
+          for (var $l3 = 0, $end3 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+            ColIdx = $l3;
+            Col = rtl.getObject(this.FColumns[ColIdx]);
+            ColX = MarginX + 6 + (ColIdx * ColWidth);
+            RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+            CellText = this.FormatCellValue(RawVal,Col.FFormat);
+            PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(ColX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(CellText) + ") Tj ET" + "\n";
+          };
+          CurY = CurY - 16;
+        };
+        if ((PageIdx === TotalPages) && ((this.FSummaries.length & 0xFFFFFFFF) > 0)) {
+          CurY = CurY - 8;
+          PageStream = PageStream + "0.80 0.84 0.88 RG 0.8 w " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY + 12) + " m " + pas.SysUtils.IntToStr(PageW - MarginX) + " " + pas.SysUtils.IntToStr(CurY + 12) + " l S" + "\n";
+          for (var $l4 = 0, $end4 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l4 <= $end4; $l4++) {
+            SumIdx = $l4;
+            SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+            SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+            SumFmt = SumDef.FFormat;
+            if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+            SumLine = SumDef.FLabelText + ": " + this.FormatSummaryNumber(SumVal,SumFmt);
+            PageStream = PageStream + "0.08 0.12 0.18 rg" + "\n";
+            PageStream = PageStream + "BT /F2 10 Tf " + pas.SysUtils.IntToStr(MarginX + 6) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(SumLine) + ") Tj ET" + "\n";
+            CurY = CurY - 15;
+          };
+        };
+        PageStream = PageStream + "0.75 0.79 0.84 RG 0.5 w " + pas.SysUtils.IntToStr(MarginX) + " 42 m " + pas.SysUtils.IntToStr(PageW - MarginX) + " 42 l S" + "\n";
+        PageStream = PageStream + "0.40 0.45 0.52 rg" + "\n";
+        if (this.FFooter !== "") PageStream = PageStream + "BT /F1 8 Tf " + pas.SysUtils.IntToStr(MarginX) + " 28 Td (" + this.EscapePDFString(this.FFooter) + ") Tj ET" + "\n";
+        PageStream = PageStream + "BT /F2 8 Tf " + pas.SysUtils.IntToStr(PageW - MarginX - 65) + " 28 Td (Page " + pas.SysUtils.IntToStr(PageIdx) + " of " + pas.SysUtils.IntToStr(TotalPages) + ") Tj ET" + "\n";
+        PageStreams.push(PageStream);
+      };
+      Result = "";
+      var objects = [];
+          function addObj(body) {
+            objects.push(body);
+            return objects.length;
+          }
+      
+          // Obj 1: Catalog
+          addObj('<< /Type /Catalog /Pages 2 0 R >>');
+          // Obj 2: Pages placeholder
+          addObj('');
+          // Obj 3: Font Regular
+          addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+          // Obj 4: Font Bold
+          addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+          // Obj 5: Document Info
+          var infoStr = '<< /Title (' + this.EscapePDFString(this.FTitle) + ') /Author (' + this.EscapePDFString(this.FAuthor) + ') /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
+          addObj(infoStr);
+      
+          var pageRefs = [];
+          for (var p = 0; p < PageStreams.length; p++) {
+            var streamData = PageStreams[p];
+            var contentObjId = addObj('<< /Length ' + streamData.length + ' >>\nstream\n' + streamData + 'endstream');
+            var pageObjId = addObj(
+              '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PageW + ' ' + PageH + '] ' +
+              '/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> ' +
+              '/Contents ' + contentObjId + ' 0 R >>'
+            );
+            pageRefs.push(pageObjId + ' 0 R');
+          }
+      
+          objects[1] = '<< /Type /Pages /Kids [ ' + pageRefs.join(' ') + ' ] /Count ' + pageRefs.length + ' >>';
+      
+          var pdf = '%PDF-1.4\n';
+          var offsets = [];
+          for (var i = 0; i < objects.length; i++) {
+            offsets.push(pdf.length);
+            pdf += (i + 1) + ' 0 obj\n' + objects[i] + '\nendobj\n';
+          }
+      
+          var xrefOffset = pdf.length;
+          pdf += 'xref\n0 ' + (objects.length + 1) + '\n';
+          pdf += '0000000000 65535 f \n';
+          for (var j = 0; j < offsets.length; j++) {
+            var offStr = String(offsets[j]);
+            while (offStr.length < 10) offStr = '0' + offStr;
+            pdf += offStr + ' 00000 n \n';
+          }
+      
+          pdf += 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R /Info 5 0 R >>\n';
+          pdf += 'startxref\n' + xrefOffset + '\n%%EOF';
+          Result = pdf;
+      return Result;
+    };
+    this.ExportPDF = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.pdf";
+      Result = this.GeneratePDF();
+      this.TriggerBrowserDownload(Result,FinalName,"application/pdf");
+      return Result;
+    };
+    this.GenerateExcel = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var Xml = "";
+      var ColFmt = "";
+      var CellType = "";
+      var CellStyle = "";
+      var CellValStr = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      Xml = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + '<?mso-application progid="Excel.Sheet"?>' + "\n" + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' + "\n" + ' xmlns:o="urn:schemas-microsoft-com:office:office"' + "\n" + ' xmlns:x="urn:schemas-microsoft-com:office:excel"' + "\n" + ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' + "\n" + '  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' + "\n" + "    <Title>" + this.EscapeXMLString(this.FTitle) + "</Title>" + "\n" + "    <Author>" + this.EscapeXMLString(this.FAuthor) + "</Author>" + "\n" + "    <Company>" + this.EscapeXMLString(this.FCompanyName) + "</Company>" + "\n" + "  </DocumentProperties>" + "\n" + "  <Styles>" + "\n" + '    <Style ss:ID="Default" ss:Name="Normal"><Font ss:FontName="Segoe UI" ss:Size="10"/></Style>' + "\n" + '    <Style ss:ID="sTitle"><Font ss:FontName="Segoe UI" ss:Size="14" ss:Bold="1" ss:Color="#0F172A"/></Style>' + "\n" + '    <Style ss:ID="sHeaderMeta"><Font ss:FontName="Segoe UI" ss:Size="9" ss:Italic="1" ss:Color="#475569"/></Style>' + "\n" + '    <Style ss:ID="sColHeader"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="' + this.EscapeXMLString(this.FThemeColor) + '" ss:Pattern="Solid"/></Style>' + "\n" + '    <Style ss:ID="sString"><Font ss:FontName="Segoe UI" ss:Size="10"/></Style>' + "\n" + '    <Style ss:ID="sInteger"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="0"/></Style>' + "\n" + '    <Style ss:ID="sNumber"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="#,##0.00"/></Style>' + "\n" + '    <Style ss:ID="sCurrency"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="&quot;' + this.EscapeXMLString(this.FCurrencySymbol) + '&quot;#,##0.00"/></Style>' + "\n" + '    <Style ss:ID="sSummaryLabel"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style>' + "\n" + '    <Style ss:ID="sSummaryValue"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/></Style>' + "\n" + "  </Styles>" + "\n" + '  <Worksheet ss:Name="' + this.EscapeXMLString(pas.System.Copy(this.FTitle,1,31)) + '">' + "\n" + "    <Table>" + "\n";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        Xml = Xml + '      <Column ss:Width="' + pas.SysUtils.IntToStr(Col.FWidth) + '"/>' + "\n";
+      };
+      Xml = Xml + '      <Row><Cell ss:StyleID="sTitle"><Data ss:Type="String">' + this.EscapeXMLString(this.FTitle) + "</Data></Cell></Row>" + "\n";
+      if (this.FHeader !== "") Xml = Xml + '      <Row><Cell ss:StyleID="sHeaderMeta"><Data ss:Type="String">' + this.EscapeXMLString(this.FHeader) + "</Data></Cell></Row>" + "\n";
+      Xml = Xml + "      <Row>" + "\n";
+      for (var $l1 = 0, $end1 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        ColIdx = $l1;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        Xml = Xml + '        <Cell ss:StyleID="sColHeader"><Data ss:Type="String">' + this.EscapeXMLString(Col.FCaption) + "</Data></Cell>" + "\n";
+      };
+      Xml = Xml + "      </Row>" + "\n";
+      for (var $l2 = 0, $end2 = (Recs.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+        RowIdx = $l2;
+        Xml = Xml + "      <Row>" + "\n";
+        for (var $l3 = 0, $end3 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          ColIdx = $l3;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          ColFmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(Col.FFormat));
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          CellType = "String";
+          CellStyle = "sString";
+          CellValStr = "";
+          if (RawVal === null || RawVal === undefined) {
+            CellType = 'String';
+            CellValStr = '';
+          } else if (typeof RawVal === 'boolean') {
+            CellType = 'Boolean';
+            CellValStr = RawVal ? '1' : '0';
+          } else if (typeof RawVal === 'number' || ColFmt === 'currency' || ColFmt === 'money' || ColFmt === 'number' || ColFmt === 'float' || ColFmt === 'integer' || ColFmt === 'int') {
+            var num = Number(RawVal);
+            if (!isNaN(num) && String(RawVal).trim() !== '') {
+              CellType = 'Number';
+              CellValStr = String(num);
+              if (ColFmt === 'currency' || ColFmt === 'money') {
+                CellStyle = 'sCurrency';
+              } else if (ColFmt === 'integer' || ColFmt === 'int' || (Number.isInteger(num) && ColFmt === '')) {
+                CellStyle = 'sInteger';
+              } else {
+                CellStyle = 'sNumber';
+              }
+            } else {
+              CellType = 'String';
+              CellValStr = String(RawVal);
+            }
+          } else {
+            CellType = 'String';
+            CellValStr = String(RawVal);
+          };
+          Xml = Xml + '        <Cell ss:StyleID="' + CellStyle + '"><Data ss:Type="' + CellType + '">' + this.EscapeXMLString(CellValStr) + "</Data></Cell>" + "\n";
+        };
+        Xml = Xml + "      </Row>" + "\n";
+      };
+      for (var $l4 = 0, $end4 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l4 <= $end4; $l4++) {
+        SumIdx = $l4;
+        SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+        SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+        SumFmt = SumDef.FFormat;
+        if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+        Xml = Xml + "      <Row>" + "\n" + '        <Cell ss:StyleID="sSummaryLabel"><Data ss:Type="String">' + this.EscapeXMLString(SumDef.FLabelText) + "</Data></Cell>" + "\n" + '        <Cell ss:StyleID="sSummaryValue"><Data ss:Type="Number">' + pas.SysUtils.FloatToStr(SumVal) + "</Data></Cell>" + "\n" + '        <Cell ss:StyleID="sSummaryLabel"><Data ss:Type="String">' + this.EscapeXMLString(this.FormatSummaryNumber(SumVal,SumFmt)) + "</Data></Cell>" + "\n" + "      </Row>" + "\n";
+      };
+      Xml = Xml + "    </Table>" + "\n" + "  </Worksheet>" + "\n" + "</Workbook>";
+      Result = Xml;
+      return Result;
+    };
+    this.ExportExcel = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.xlsx";
+      Result = this.GenerateExcel();
+      this.TriggerBrowserDownload(Result,FinalName,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      return Result;
+    };
+    this.GenerateCSV = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var Delim = "";
+      var Line = "";
+      var CsvOut = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      Delim = this.FCSVDelimiter;
+      if (Delim === "") Delim = ",";
+      CsvOut = "";
+      if (this.FIncludeBOM) {
+        CsvOut = '\uFEFF';
+      };
+      Line = "";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        if (ColIdx > 0) Line = Line + Delim;
+        Line = Line + this.EscapeCSVField(Col.FCaption);
+      };
+      CsvOut = CsvOut + Line + "\r\n";
+      for (var $l1 = 0, $end1 = (Recs.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        RowIdx = $l1;
+        Line = "";
+        for (var $l2 = 0, $end2 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+          ColIdx = $l2;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          if (ColIdx > 0) Line = Line + Delim;
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          if (Col.FFormat !== "") {
+            Line = Line + this.EscapeCSVField(this.FormatCellValue(RawVal,Col.FFormat))}
+           else {
+            var v = (RawVal !== null && RawVal !== undefined) ? String(RawVal) : '';
+            Line += this.EscapeCSVField(v);
+          };
+        };
+        CsvOut = CsvOut + Line + "\r\n";
+      };
+      if ((this.FSummaries.length & 0xFFFFFFFF) > 0) {
+        for (var $l3 = 0, $end3 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          SumIdx = $l3;
+          SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+          SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+          SumFmt = SumDef.FFormat;
+          if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+          Line = this.EscapeCSVField(SumDef.FLabelText) + Delim + this.EscapeCSVField(this.FormatSummaryNumber(SumVal,SumFmt));
+          CsvOut = CsvOut + Line + "\r\n";
+        };
+      };
+      Result = CsvOut;
+      return Result;
+    };
+    this.ExportCSV = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.csv";
+      Result = this.GenerateCSV();
+      this.TriggerBrowserDownload(Result,FinalName,"text/csv;charset=utf-8;");
+      return Result;
+    };
+    this.GeneratePrintHTML = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var PageSizeCSS = "";
+      var SheetClass = "";
+      var Html = "";
+      var AlignStyle = "";
+      var CellStr = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        PageSizeCSS = "@page { size: A4 landscape; margin: 12mm; }";
+        SheetClass = "bv-report-sheet bv-layout-a4-landscape";
+      } else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        PageSizeCSS = "@page { size: letter portrait; margin: 0.5in; }";
+        SheetClass = "bv-report-sheet bv-layout-letter";
+      } else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        PageSizeCSS = "@page { size: letter landscape; margin: 0.5in; }";
+        SheetClass = "bv-report-sheet bv-layout-letter-landscape";
+      } else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        PageSizeCSS = "@page { size: 80mm auto; margin: 2mm; }";
+        SheetClass = "bv-report-sheet bv-layout-thermal-80mm";
+      } else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        PageSizeCSS = "@page { size: 58mm auto; margin: 1.5mm; }";
+        SheetClass = "bv-report-sheet bv-layout-thermal-58mm";
+      } else {
+        PageSizeCSS = "@page { size: A4 portrait; margin: 12mm; }";
+        SheetClass = "bv-report-sheet bv-layout-a4";
+      };
+      Html = "<style>" + "\n" + PageSizeCSS + "\n" + "@media print {" + "\n" + "  .no-print, .bv-report-toolbar, nav, header, aside, .bui-navbar { display: none !important; }" + "\n" + "  body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }" + "\n" + "  .bv-report-sheet { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; }" + "\n" + "}" + "\n" + '.bv-report-sheet { background: #ffffff; color: #0f172a; font-family: "Inter", "Segoe UI", sans-serif; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; }' + "\n" + '.bv-layout-thermal-80mm { width: 80mm; max-width: 80mm; font-family: "Courier New", monospace; font-size: 11px; padding: 8px; }' + "\n" + '.bv-layout-thermal-58mm { width: 58mm; max-width: 58mm; font-family: "Courier New", monospace; font-size: 10px; padding: 6px; }' + "\n" + ".bv-report-banner { background: " + this.EscapeXMLString(this.FThemeColor) + "; color: #ffffff; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }" + "\n" + ".bv-report-title { font-size: 20px; font-weight: 700; margin: 0; }" + "\n" + ".bv-report-company { font-size: 12px; opacity: 0.9; margin-top: 4px; }" + "\n" + ".bv-report-meta { font-size: 12px; color: #475569; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }" + "\n" + ".bv-report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }" + "\n" + ".bv-report-table th { background: #f1f5f9; color: #1e293b; font-weight: 600; padding: 10px 12px; border-bottom: 2px solid #cbd5e1; text-align: left; }" + "\n" + ".bv-report-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }" + "\n" + ".bv-report-table tr:nth-child(even) td { background: #f8fafc; }" + "\n" + ".bv-report-summaries { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 2px solid #cbd5e1; margin-top: 12px; }" + "\n" + ".bv-report-summary-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 14px; min-width: 140px; text-align: right; }" + "\n" + ".bv-report-summary-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }" + "\n" + ".bv-report-summary-value { font-size: 16px; color: #0f172a; font-weight: 700; margin-top: 2px; }" + "\n" + ".bv-report-footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; }" + "\n" + "</style>" + "\n";
+      Html = Html + '<div class="' + SheetClass + '" data-layout="' + this.GetPageLayoutStr() + '">' + "\n" + '  <div class="bv-report-banner">' + "\n" + "    <div>" + "\n" + '      <h1 class="bv-report-title">' + this.EscapeXMLString(this.FTitle) + "</h1>" + "\n";
+      if (this.FCompanyName !== "") Html = Html + '      <div class="bv-report-company">' + this.EscapeXMLString(this.FCompanyName) + "</div>" + "\n";
+      Html = Html + "    </div>" + "\n";
+      if (this.FLogoText !== "") Html = Html + '    <div class="bv-report-logo" style="font-weight:800;font-size:18px;border:2px solid rgba(255,255,255,0.6);padding:6px 10px;border-radius:6px;">' + this.EscapeXMLString(this.FLogoText) + "</div>" + "\n";
+      Html = Html + "  </div>" + "\n";
+      if (this.FHeader !== "") Html = Html + '  <div class="bv-report-meta">' + this.EscapeXMLString(this.FHeader) + "</div>" + "\n";
+      Html = Html + '  <table class="bv-report-table">' + "\n" + "    <thead><tr>" + "\n";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        AlignStyle = "text-align:" + Col.GetAlignStr() + ";";
+        Html = Html + '      <th style="' + AlignStyle + '">' + this.EscapeXMLString(Col.FCaption) + "</th>" + "\n";
+      };
+      Html = Html + "    </tr></thead>" + "\n" + "    <tbody>" + "\n";
+      for (var $l1 = 0, $end1 = (Recs.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        RowIdx = $l1;
+        Html = Html + "      <tr>" + "\n";
+        for (var $l2 = 0, $end2 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+          ColIdx = $l2;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          AlignStyle = "text-align:" + Col.GetAlignStr() + ";";
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          CellStr = this.FormatCellValue(RawVal,Col.FFormat);
+          Html = Html + '        <td style="' + AlignStyle + '">' + this.EscapeXMLString(CellStr) + "</td>" + "\n";
+        };
+        Html = Html + "      </tr>" + "\n";
+      };
+      Html = Html + "    </tbody>" + "\n" + "  </table>" + "\n";
+      if ((this.FSummaries.length & 0xFFFFFFFF) > 0) {
+        Html = Html + '  <div class="bv-report-summaries">' + "\n";
+        for (var $l3 = 0, $end3 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          SumIdx = $l3;
+          SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+          SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+          SumFmt = SumDef.FFormat;
+          if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+          Html = Html + '    <div class="bv-report-summary-card">' + "\n" + '      <div class="bv-report-summary-label">' + this.EscapeXMLString(SumDef.FLabelText) + "</div>" + "\n" + '      <div class="bv-report-summary-value">' + this.EscapeXMLString(this.FormatSummaryNumber(SumVal,SumFmt)) + "</div>" + "\n" + "    </div>" + "\n";
+        };
+        Html = Html + "  </div>" + "\n";
+      };
+      Html = Html + '  <div class="bv-report-footer">' + "\n" + "    <span>" + this.EscapeXMLString(this.FFooter) + "</span>" + "\n" + "    <span>Page 1 of " + pas.SysUtils.IntToStr(this.GetPageCount()) + " | Records: " + pas.SysUtils.IntToStr(this.GetRecordCount()) + "</span>" + "\n" + "  </div>" + "\n" + "</div>";
+      Result = Html;
+      return Result;
+    };
+    this.PrintPreview = function (ATargetElementId) {
+      var Result = "";
+      Result = this.GeneratePrintHTML();
+      this.FLastExportedContent = Result;
+      this.FLastExportedFileName = "print-preview.html";
+      this.FLastExportedMimeType = "text/html";
+      try {
+        if (typeof document !== 'undefined' && ATargetElementId) {
+          var el = document.getElementById(ATargetElementId);
+          if (el) {
+            el.innerHTML = Result;
+          }
+        }
+      } catch (e) {};
+      return Result;
+    };
+  });
+  this.ParseAggregateType = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if ((L === "avg") || (L === "average") || (L === "aggaverage")) {
+      Result = $mod.TBVReportAggregate.aggAverage}
+     else if ((L === "count") || (L === "aggcount")) {
+      Result = $mod.TBVReportAggregate.aggCount}
+     else if ((L === "min") || (L === "aggmin")) {
+      Result = $mod.TBVReportAggregate.aggMin}
+     else if ((L === "max") || (L === "aggmax")) {
+      Result = $mod.TBVReportAggregate.aggMax}
+     else Result = $mod.TBVReportAggregate.aggSum;
+    return Result;
+  };
+  this.ParsePageLayout = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if ((L === "a4-landscape") || (L === "landscape")) {
+      Result = $mod.TBVPageLayout.plA4Landscape}
+     else if ((L === "letter") || (L === "letter-portrait")) {
+      Result = $mod.TBVPageLayout.plLetterPortrait}
+     else if (L === "letter-landscape") {
+      Result = $mod.TBVPageLayout.plLetterLandscape}
+     else if ((L === "thermal-80mm") || (L === "80mm") || (L === "pos-80mm") || (L === "pos")) {
+      Result = $mod.TBVPageLayout.plThermal80mm}
+     else if ((L === "thermal-58mm") || (L === "58mm") || (L === "pos-58mm")) {
+      Result = $mod.TBVPageLayout.plThermal58mm}
+     else Result = $mod.TBVPageLayout.plA4Portrait;
+    return Result;
+  };
+  this.ParseColumnAlign = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if (L === "center") {
+      Result = $mod.TBVColumnAlign.caCenter}
+     else if (L === "right") {
+      Result = $mod.TBVColumnAlign.caRight}
+     else Result = $mod.TBVColumnAlign.caLeft;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.HumanizeFieldName = function (AField) {
+      var Result = "";
+      if (AField === "") return "";
+      Result = pas.SysUtils.UpperCase(pas.System.Copy(AField,1,1)) + pas.System.Copy(AField,2,2147483647);
+      return Result;
+    };
+    $impl.GetRecordFieldCaseInsensitive = function (ARow, AFieldName) {
+      var Result = undefined;
+      Result = "";
+      if (ARow && typeof ARow === 'object') {
+        if (ARow[AFieldName] !== undefined) {
+          Result = ARow[AFieldName];
+        } else {
+          var target = (AFieldName || '').toLowerCase();
+          var keys = Object.keys(ARow);
+          for (var i = 0; i < keys.length; i++) {
+            if (keys[i].toLowerCase() === target) {
+              Result = ARow[keys[i]];
+              break;
+            }
+          }
+        }
+      };
+      return Result;
+    };
+  };
+},[]);
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","BlaiseReports"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -7336,8 +8407,11 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
     return Result;
   };
   this.CallMethod = function (Instance, MethodName) {
-    if (Instance && typeof Instance[MethodName] === 'function') {
-      Instance[MethodName]();
+    if (!Instance) return;
+    if (typeof Instance[MethodName] === 'function') {
+      Instance[MethodName](Instance);
+    } else if (Instance.$methods && typeof Instance.$methods[MethodName] === 'function') {
+      Instance.$methods[MethodName](Instance);
     };
   };
   this.CallMethod$1 = function (Instance, MethodName, Args) {
@@ -7973,6 +9047,94 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
     Result = pas.BVRpc.TBVRpcClient.InvokeAsync(ServiceName,MethodName,Params);
     return Result;
   };
+  this.NewReport = function (DataSetOrArray) {
+    var Result = undefined;
+    Result = pas.BlaiseReports.TBVReport.$create("Create$3",[DataSetOrArray]);
+    return Result;
+  };
+  this.ReportSetTitle = function (Report, ATitle, ASubtitle) {
+    if (Report != null) {
+      rtl.getObject(Report).Title(ATitle);
+      if (ASubtitle !== "") rtl.getObject(Report).Subtitle(ASubtitle);
+    };
+  };
+  this.ReportSetHeader = function (Report, AHeader, AFooter) {
+    if (Report != null) {
+      rtl.getObject(Report).Header(AHeader);
+      if (AFooter !== "") rtl.getObject(Report).Footer(AFooter);
+    };
+  };
+  this.ReportSetCompany = function (Report, ACompanyName, ALogoText) {
+    if (Report != null) rtl.getObject(Report).Company(ACompanyName,ALogoText);
+  };
+  this.ReportSetPageLayout = function (Report, ALayoutName) {
+    if (Report != null) rtl.getObject(Report).PageSize(ALayoutName);
+  };
+  this.ReportSetColumns = function (Report, AFields) {
+    if (Report != null) rtl.getObject(Report).Columns(AFields);
+  };
+  this.ReportAddColumn = function (Report, AFieldName, ACaption, AWidth, AAlign, AFormat) {
+    if (Report != null) rtl.getObject(Report).AddColumn(AFieldName,ACaption,AWidth,pas.BlaiseReports.ParseColumnAlign(AAlign),AFormat);
+  };
+  this.ReportAddSummary = function (Report, ALabel, AFieldName, AAggregate, AFormat) {
+    if (Report != null) rtl.getObject(Report).AddSummary(ALabel,AFieldName,pas.BlaiseReports.ParseAggregateType(AAggregate),AFormat);
+  };
+  this.ReportExportPDF = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportPDF(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportExportExcel = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportExcel(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportExportCSV = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportCSV(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportGeneratePDF = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GeneratePDF()}
+     else Result = "";
+    return Result;
+  };
+  this.ReportGenerateExcel = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GenerateExcel()}
+     else Result = "";
+    return Result;
+  };
+  this.ReportGenerateCSV = function (Report) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).GenerateCSV()}
+     else Result = "";
+    return Result;
+  };
+  this.ReportPrintPreview = function (Report, ATargetElementId) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).PrintPreview(ATargetElementId)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportComputeSummary = function (Report, AFieldName, AAggregate) {
+    var Result = 0.0;
+    if (Report != null) {
+      Result = rtl.getObject(Report).ComputeSummary(AFieldName,pas.BlaiseReports.ParseAggregateType(AAggregate))}
+     else Result = 0.0;
+    return Result;
+  };
   $mod.$implcode = function () {
     $impl.RetainDXDataSetSymbols = function () {
       var dummy = undefined;
@@ -8012,6 +9174,22 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
         $mod.RpcSetUsePack(false);
         $mod.RpcCall("","",null,null,null);
         $mod.RpcCallAsync("","",null);
+        dummy = $mod.NewReport(null);
+        $mod.ReportSetTitle(dummy,"","");
+        $mod.ReportSetHeader(dummy,"","");
+        $mod.ReportSetCompany(dummy,"","");
+        $mod.ReportSetPageLayout(dummy,"");
+        $mod.ReportSetColumns(dummy,[""]);
+        $mod.ReportAddColumn(dummy,"","",100,"","");
+        $mod.ReportAddSummary(dummy,"","","","");
+        $mod.ReportExportPDF(dummy,"");
+        $mod.ReportExportExcel(dummy,"");
+        $mod.ReportExportCSV(dummy,"");
+        $mod.ReportGeneratePDF(dummy);
+        $mod.ReportGenerateExcel(dummy);
+        $mod.ReportGenerateCSV(dummy);
+        $mod.ReportPrintPreview(dummy,"");
+        $mod.ReportComputeSummary(dummy,"","");
       };
     };
   };
@@ -9385,7 +10563,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -9597,6 +10775,27 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
           pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
         });
       };
+    };
+    m["doExportDatasetPDF"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
+      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
+      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
+    };
+    m["doExportDatasetExcel"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
+      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -10214,6 +11413,141 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
+rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uReportsView = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["salesDS"] = null;
+      d["activeReport"] = null;
+      d["activePreset"] = "sales";
+      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
+      d["rawOutputPreview"] = "";
+      d["nextInvoiceId"] = 1006;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["loadSalesPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "sales";
+      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
+      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadPosReceiptPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "pos";
+      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
+      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
+      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
+      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadInventoryPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "inventory";
+      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
+      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["addSampleInvoice"] = function (_this) {
+      var newId = 0;
+      newId = rtl.trunc(_this["nextInvoiceId"]);
+      _this["nextInvoiceId"] = newId + 1;
+      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
+      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
+      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportPDF"] = function (_this) {
+      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
+      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportExcel"] = function (_this) {
+      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
+      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
+    };
+    m["doExportCSV"] = function (_this) {
+      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
+      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
+    };
+    m["inspectPDF"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
+    };
+    m["inspectExcel"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
+    };
+    m["inspectCSV"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
+      _this["nextInvoiceId"] = 1006;
+      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      Result = 0;
+      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
+        Result = this.salesDS.GetRecordCount();
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("reports-view-page",comp);
+  };
+});
 rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -10793,6 +12127,314 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+  };
+});
+rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVReportViewer = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bv-report-viewer-container {     display: flex;     flex-direction: column;     gap: 16px;     width: 100%;     box-sizing: border-box;   }    .bv-report-toolbar {     display: flex;     flex-wrap: wrap;     justify-content: space-between;     align-items: center;     gap: 12px;     background: #1e293b;     color: #f8fafc;     padding: 12px 16px;     border-radius: 8px;   }    .bv-report-toolbar-left {     display: flex;     align-items: center;     gap: 10px;   }    .bv-report-badge {     background: #3b82f6;     color: #ffffff;     font-size: 11px;     font-weight: 700;     padding: 4px 8px;     border-radius: 4px;     text-transform: uppercase;   }    .bv-report-layout-select {     background: #0f172a;     color: #f8fafc;     border: 1px solid #334155;     border-radius: 6px;     padding: 6px 10px;     font-size: 13px;   }    .bv-report-count-pill {     font-size: 12px;     color: #94a3b8;   }    .bv-report-toolbar-actions {     display: flex;     flex-wrap: wrap;     gap: 8px;   }    .bv-report-btn {     border: none;     border-radius: 6px;     padding: 7px 12px;     font-size: 12px;     font-weight: 600;     cursor: pointer;     color: #ffffff;   }    .bv-report-btn-pdf { background: #ef4444; }   .bv-report-btn-excel { background: #10b981; }   .bv-report-btn-csv { background: #3b82f6; }   .bv-report-btn-print { background: #6366f1; }    .bv-report-sheet {     background: #ffffff;     color: #0f172a;     padding: 24px;     border-radius: 8px;     border: 1px solid #cbd5e1;     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);     margin: 0 auto;     width: 100%;     box-sizing: border-box;   }    .bv-layout-thermal-80mm {     max-width: 320px;     font-family: 'Courier New', monospace;     font-size: 12px;     padding: 12px;   }    .bv-layout-thermal-58mm {     max-width: 240px;     font-family: 'Courier New', monospace;     font-size: 11px;     padding: 8px;   }    .bv-report-banner {     background: #1e293b;     color: #ffffff;     padding: 16px 20px;     border-radius: 6px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 16px;   }    .bv-report-title {     margin: 0;     font-size: 18px;     font-weight: 700;   }    .bv-report-company {     font-size: 12px;     opacity: 0.85;     margin-top: 4px;   }    .bv-report-logo-box {     font-weight: 800;     font-size: 16px;     border: 2px solid rgba(255, 255, 255, 0.5);     padding: 6px 10px;     border-radius: 6px;   }    .bv-report-meta {     font-size: 12px;     color: #475569;     margin-bottom: 14px;     padding-bottom: 8px;     border-bottom: 1px solid #e2e8f0;   }    .bv-report-table {     width: 100%;     border-collapse: collapse;     font-size: 13px;     margin-bottom: 16px;   }    .bv-report-table th {     background: #f1f5f9;     color: #1e293b;     text-align: left;     padding: 9px 12px;     border-bottom: 2px solid #cbd5e1;     font-weight: 600;   }    .bv-report-table td {     padding: 8px 12px;     border-bottom: 1px solid #e2e8f0;     color: #334155;   }    .bv-report-summaries {     display: flex;     flex-wrap: wrap;     gap: 12px;     justify-content: flex-end;     padding-top: 12px;     border-top: 2px solid #cbd5e1;   }    .bv-report-summary-card {     background: #f8fafc;     border: 1px solid #cbd5e1;     border-radius: 6px;     padding: 8px 14px;     min-width: 130px;     text-align: right;   }    .bv-report-summary-label {     font-size: 11px;     color: #64748b;     text-transform: uppercase;     font-weight: 600;   }    .bv-report-summary-value {     font-size: 15px;     color: #0f172a;     font-weight: 700;     margin-top: 2px;   }    .bv-report-footer {     margin-top: 18px;     padding-top: 10px;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     font-size: 11px;     color: #64748b;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bv-report-viewer-root bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports v5.0</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ resolvedTitle }}</h2>' + '          <div v-if="resolvedCompany" class="bv-report-company">{{ resolvedCompany }}</div>' + '          <div v-if="resolvedSubtitle" class="bv-report-subtitle">{{ resolvedSubtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">{{ resolvedLogo }}</div>' + "      </div>" + "" + '      <div v-if="resolvedHeader" class="bv-report-meta">' + "        {{ resolvedHeader }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in formattedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ resolvedFooter }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["activeLayout"] = "a4";
+      d["lastExportFormat"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("report");
+    comp["defaultProps"]["report"] = null;
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Executive Data Report";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    comp["props"].push("company");
+    comp["defaultProps"]["company"] = "BlaiseVue Enterprise";
+    comp["props"].push("headerText");
+    comp["defaultProps"]["headerText"] = "";
+    comp["props"].push("footerText");
+    comp["defaultProps"]["footerText"] = "Generated by BlaiseReports Engine v5.0";
+    comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("summaries");
+    comp["defaultProps"]["summaries"] = new Array();
+    comp["props"].push("pageLayout");
+    comp["defaultProps"]["pageLayout"] = "a4";
+    comp["props"].push("currencySymbol");
+    comp["defaultProps"]["currencySymbol"] = "$";
+    comp["props"].push("filename");
+    comp["defaultProps"]["filename"] = "report";
+    comp["props"].push("showToolbar");
+    comp["defaultProps"]["showToolbar"] = true;
+    m = new Object();
+    m["setLayout"] = function (_this, layoutName) {
+      _this["activeLayout"] = layoutName;
+      if (this.report && typeof this.report.PageSize === 'function') {
+        this.report.PageSize(layoutName);
+      };
+    };
+    m["exportPdf"] = function (_this) {
+      _this["lastExportFormat"] = "pdf";
+      var fname = (this.filename || 'report') + '.pdf';
+      if (this.report && typeof this.report.ExportPDF === 'function') {
+        if (typeof this.report.PageSize === 'function') {
+          this.report.PageSize(this.activeLayout || 'a4');
+        }
+        this.report.ExportPDF(fname);
+      }
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-pdf', { filename: fname, layout: this.activeLayout });
+      };
+    };
+    m["exportExcel"] = function (_this) {
+      _this["lastExportFormat"] = "xlsx";
+      var fname = (this.filename || 'report') + '.xlsx';
+      if (this.report && typeof this.report.ExportExcel === 'function') {
+        this.report.ExportExcel(fname);
+      }
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-excel', { filename: fname });
+      };
+    };
+    m["exportCsv"] = function (_this) {
+      _this["lastExportFormat"] = "csv";
+      var fname = (this.filename || 'report') + '.csv';
+      if (this.report && typeof this.report.ExportCSV === 'function') {
+        this.report.ExportCSV(fname);
+      }
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-csv', { filename: fname });
+      };
+    };
+    m["printReport"] = function (_this) {
+      _this["lastExportFormat"] = "print";
+      if (typeof this.$emit === 'function') {
+        this.$emit('print', { layout: this.activeLayout });
+      }
+      try {
+        var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
+        if (!isTestEnv && typeof window !== 'undefined' && typeof window.print === 'function') {
+          window.print();
+        }
+      } catch (e) {};
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.report && typeof this.report.GetPageLayoutStr === 'function') {
+        this.activeLayout = this.report.GetPageLayoutStr();
+      } else if (this.pageLayout) {
+        this.activeLayout = this.pageLayout;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedTitle"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FTitle) {
+        Result = this.report.FTitle;
+      } else {
+        Result = this.title || 'Executive Data Report';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedSubtitle"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FSubtitle) {
+        Result = this.report.FSubtitle;
+      } else {
+        Result = this.subtitle || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedCompany"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FCompanyName) {
+        Result = this.report.FCompanyName;
+      } else {
+        Result = this.company || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedLogo"] = function (_this) {
+      var Result = undefined;
+      Result = "BV";
+      if (this.report && this.report.FLogoText) {
+        Result = this.report.FLogoText;
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedHeader"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FHeader) {
+        Result = this.report.FHeader;
+      } else {
+        Result = this.headerText || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedFooter"] = function (_this) {
+      var Result = undefined;
+      Result = "";
+      if (this.report && this.report.FFooter) {
+        Result = this.report.FFooter;
+      } else {
+        Result = this.footerText || '';
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedRows"] = function (_this) {
+      var Result = undefined;
+      Result = new Array();
+      if (this.report && typeof this.report.GetRecordsArray === 'function') {
+        Result = this.report.GetRecordsArray() || [];
+      } else {
+        var ds = this.dataset;
+        if (ds) {
+          if (Array.isArray(ds.Data)) Result = ds.Data;
+          else if (Array.isArray(ds.FActiveRecords)) Result = ds.FActiveRecords;
+          else if (Array.isArray(ds.FRecords)) Result = ds.FRecords;
+          else if (Array.isArray(ds)) Result = ds;
+        } else {
+          Result = (this.items && Array.isArray(this.items)) ? this.items : [];
+        }
+      };
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      Result = new Array();
+      if (this.report && typeof this.report.GetColumnsJS === 'function') {
+        Result = this.report.GetColumnsJS() || [];
+      } else if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        Result = this.columns.map(function(c) {
+          if (typeof c === 'string') {
+            return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1), format: '' };
+          }
+          return {
+            key: c.key || c.field || c.FieldName || '',
+            label: c.label || c.caption || c.Caption || c.key || c.field || '',
+            format: c.format || ''
+          };
+        });
+      } else {
+        var ds = this.dataset;
+        if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+          Result = ds.Fields.ToArray();
+        } else {
+          var list = this.resolvedRows;
+          if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
+            Result = Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
+              return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), format: '' };
+            });
+          }
+        }
+      };
+      return Result;
+    };
+    comp["computed"]["formattedRows"] = function (_this) {
+      var Result = undefined;
+      Result = new Array();
+      var rows = this.resolvedRows || [];
+      var cols = this.resolvedColumns || [];
+      var rep = this.report;
+      if (!rep || typeof rep.FormatCellValue !== 'function') {
+        Result = rows;
+      } else {
+        Result = rows.map(function(r) {
+          var out = {};
+          for (var i = 0; i < cols.length; i++) {
+            var k = cols[i].key || cols[i].fieldName;
+            var fmt = cols[i].format || '';
+            out[k] = fmt ? rep.FormatCellValue(r[k], fmt) : r[k];
+          }
+          return out;
+        });
+      };
+      return Result;
+    };
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      Result = 0;
+      var r = this.resolvedRows;
+      Result = (r && Array.isArray(r)) ? r.length : 0;
+      return Result;
+    };
+    comp["computed"]["computedSummaries"] = function (_this) {
+      var Result = undefined;
+      Result = new Array();
+      if (this.report && typeof this.report.GetSummariesJS === 'function') {
+        Result = this.report.GetSummariesJS() || [];
+      } else {
+        var sums = this.summaries;
+        if (sums && Array.isArray(sums) && sums.length > 0) {
+          var rows = this.resolvedRows || [];
+          var curr = this.currencySymbol || '$';
+          Result = sums.map(function(s) {
+            var field = s.field || s.FieldName || '';
+            var agg = (s.aggregate || s.type || 'sum').toLowerCase();
+            var label = s.label || s.LabelText || field;
+            var fmt = (s.format || '').toLowerCase();
+            var val = 0;
+            if (agg === 'count') {
+              val = rows.length;
+            } else if (rows.length > 0) {
+              var sum = 0;
+              var cnt = 0;
+              var minV = null;
+              var maxV = null;
+              for (var i = 0; i < rows.length; i++) {
+                var n = parseFloat(rows[i] ? rows[i][field] : NaN);
+                if (!isNaN(n)) {
+                  sum += n;
+                  cnt++;
+                  if (minV === null || n < minV) minV = n;
+                  if (maxV === null || n > maxV) maxV = n;
+                }
+              }
+              if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
+              else if (agg === 'min') val = minV !== null ? minV : 0;
+              else if (agg === 'max') val = maxV !== null ? maxV : 0;
+              else val = sum;
+            }
+            var formatted = '';
+            if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
+              formatted = String(Math.round(val));
+            } else {
+              var parts = Number(val).toFixed(2).split('.');
+              parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+              formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
+            }
+            return {
+              label: label,
+              field: field,
+              aggregate: agg,
+              value: Math.round(val * 100) / 100,
+              formattedValue: formatted
+            };
+          });
+        }
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
   };
 });
 rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12631,7 +14273,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -12688,6 +14330,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uProductView.Register_uProductView();
     console.log("[Init] Registering uProFeatures...");
     pas.uProFeatures.Register_uProFeatures();
+    console.log("[Init] Registering uReportsView...");
+    pas.uReportsView.Register_uReportsView();
     console.log("[Init] Registering uShowcase...");
     pas.uShowcase.Register_uShowcase();
     console.log("[Init] Registering uUserProfile...");
@@ -12710,6 +14354,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVRadarChart.Register_uBVRadarChart();
     console.log("[Init] Registering uBVScatterChart...");
     pas.uBVScatterChart.Register_uBVScatterChart();
+    console.log("[Init] Registering uBVReportViewer...");
+    pas.uBVReportViewer.Register_uBVReportViewer();
     console.log("[Init] Registering uBVAccordion...");
     pas.uBVAccordion.Register_uBVAccordion();
     console.log("[Init] Registering uBVAlert...");
@@ -12801,7 +14447,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue SPA v4.0 Enterprise";
     methods = new Object();
@@ -12841,6 +14487,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     routerOpts = new Object();
     routesArr = new Array();
+    r = new Object();
+    r["path"] = "/reports";
+    r["component"] = "reports-view-page";
+    routesArr.push(r);
     r = new Object();
     r["path"] = "/login";
     r["component"] = "login-view-page";

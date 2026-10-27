@@ -14,6 +14,8 @@
         <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>
         <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>
         <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>
+        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>
+        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>
         <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">
           <span v-if="isSyncing">⏳ Sincronizando...</span>
           <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>
@@ -535,6 +537,33 @@
         }
       end;
     end;
+    procedure doExportDatasetPDF;
+    var
+      rep: JSValue;
+    begin
+      rep := NewReport(this['productsDS']);
+      ReportSetTitle(rep, 'Relatório de Produtos (TBVDataSet)', 'Exportado diretamente da View DataSet v4.4/v5.0');
+      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'BV-5.0');
+      ReportSetColumns(rep, ['id:ID:integer', 'title:Produto', 'category:Categoria', 'price:Preço Unit.:currency', 'stock:Estoque:integer']);
+      ReportAddSummary(rep, 'Soma Preços Unitários', 'price', 'sum', 'currency');
+      ReportAddSummary(rep, 'Total de Produtos', 'id', 'count', 'integer');
+      ReportExportPDF(rep, 'dataset_produtos.pdf');
+      ShowToast('PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!');
+    end;
+
+    procedure doExportDatasetExcel;
+    var
+      rep: JSValue;
+    begin
+      rep := NewReport(this['productsDS']);
+      ReportSetTitle(rep, 'Planilha de Produtos (TBVDataSet)', 'Exportado via BlaiseReports');
+      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'BV-5.0');
+      ReportSetColumns(rep, ['id:ID:integer', 'title:Produto', 'category:Categoria', 'price:Preço Unit.:currency', 'stock:Estoque:integer']);
+      ReportAddSummary(rep, 'Soma Preços Unitários', 'price', 'sum', 'currency');
+      ReportExportExcel(rep, 'dataset_produtos.xlsx');
+      ShowToast('Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!');
+    end;
+
 </script>
 
 <style>

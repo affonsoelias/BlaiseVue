@@ -1,0 +1,46 @@
+/*
+  BlaiseReports v5.0 - Enterprise Reporting & Print Engine Stylesheet
+  Includes @media print rules for A4, Letter, and Thermal POS (80mm/58mm)
+*/
+
+@media print {
+  .no-print,
+  .bv-report-toolbar,
+  .bui-navbar,
+  .bui-drawer,
+  .bui-bottom-nav,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .bv-report-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .bv-layout-thermal-80mm {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 11px !important;
+  }
+
+  .bv-layout-thermal-58mm {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 10px !important;
+  }
+}
