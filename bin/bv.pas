@@ -6400,6 +6400,32 @@ begin
 
   end
 
+  else if (AliasLower = 'reports') or (AliasLower = 'blaise-reports') then
+
+  begin
+
+    WriteLn('Installing official package: blaise-reports ...');
+
+    PkgSource := GetPackagesPath + 'blaise-reports';
+
+    if DirectoryExists(PkgSource) then
+
+    begin
+
+      CopyDir(PkgSource, LibPath + 'blaise-reports', []);
+
+      WriteLn('Package "blaise-reports" installed successfully in lib/blaise-reports/.');
+
+      Exit;
+
+    end
+
+    else
+
+      DownloadURL := 'https://github.com/blaisevue/blaise-reports/releases/latest/download/blaise-reports.zip';
+
+  end
+
   else if FileExists(URL) or FileExists(ExpandFileName(URL)) then
   begin
     PkgSource := URL;

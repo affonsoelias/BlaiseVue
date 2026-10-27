@@ -2,20 +2,20 @@
 
 .bui-chart-wrapper {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  transition: opacity 0.25s ease;
+  background: transparent;
+  margin-bottom: 0;
+  padding: 0;
 }
 
 .bui-chart-wrapper canvas {
   display: block;
   box-sizing: border-box;
+  width: 100% !important;
   max-width: 100%;
 }
 

@@ -3,7 +3,7 @@
 This document defines the technical strategy, architectural goals, and specifications for the evolution of the platform: **BlaiseVue 2.0 to 5.0**.
 
 > [!NOTE]
-> **Current Status**: 🚀 **BlaiseVue 4.4 100% Delivered ✅ (All 5 Pillars Verified)**. Covered by 335+ automated unit tests across 68 test suites. Planning and architectural specifications for **BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon** established.
+> **Current Status**: 🚀 **BlaiseVue 4.4 100% Delivered ✅ & BlaiseVue 5.0 Pillar 1 (`BlaiseReports`) Delivered ✅**. Covered by 345+ automated unit tests across 69 test suites.
 
 ---
 
@@ -686,7 +686,15 @@ With the completion of **BlaiseVue 4.0** (all 8 Pillars fully delivered) and the
 
 ---
 
-## 🔮 The Next Horizon: BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon (Planned 🎯)
+## 🔮 The Next Horizon: BlaiseVue 5.0 — The Enterprise Cloud & Real-Time Horizon (In Progress 🚀)
+
+| 5.0 Pillar | Status | Implementation Files |
+|---|:---:|---|
+| **Pillar 1: BlaiseReports (`packages/blaise-reports`)** | ✅ Completed | [`core/BlaiseReports.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BlaiseReports.pas), [`packages/blaise-reports/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-reports/), [`BVReportViewer.bv`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/blaise-reports/BVReportViewer.bv), [`core/BVPascalDX.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVPascalDX.pas), [`demo-app/tests/framework/reports.test.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/demo-app/tests/framework/reports.test.pas) |
+| **Pillar 2: BlaiseX (`TBVStore 2.0` & State Machines)** | 🎯 Planned | `core/BVStore.pas` |
+| **Pillar 3: Full PWA Engine & Background Sync (`bv pwa`)** | 🎯 Planned | `bin/bv.pas`, `core/BVDataSet.pas` |
+| **Pillar 4: Node-Free Dynamic SSR (mORMot 2 SSR)** | 🎯 Planned | `bin/bv.pas`, `server/` |
+| **Pillar 5: BlaiseVue Studio 2.0 (Visual Cockpit & DB Modeler)** | 🎯 Planned | `packages/blaise-studio/` |
 
 With the complete delivery of **BlaiseVue 4.4** establishing compiler template type-checking, native fast templates, relational master-detail CRUD, virtualized grids, and offline delta sync, **BlaiseVue 5.0** sets the architectural course for enterprise document reporting, centralized reactive state machines, native Progressive Web App (PWA) sync, dynamic server-side rendering (SSR) without Node.js, and visual studio modeling.
 
@@ -706,7 +714,7 @@ With the complete delivery of **BlaiseVue 4.4** establishing compiler template t
 
 ---
 
-### 📊 Pillar 1: Enterprise Reporting & Multi-Format Document Export (`packages/blaise-reports`) (NEW ✨)
+### 📊 Pillar 1: Enterprise Reporting & Multi-Format Document Export (`packages/blaise-reports`) (✅ Completed)
 **Goal**: Provide an official, standalone enterprise reporting suite in pure Object Pascal, enabling seamless generation of vector PDF reports, Excel (`.xlsx`) spreadsheets, CSV data exports, and print-optimized documents directly from `TBVDataSet` and `<bv-data-grid>`.
 
 - **Motivation**: Real-world enterprise ERP, CRM, and financial management applications require high-fidelity business reports, thermal/A4 printing, and multi-format data export without relying on heavy external dependencies or cloud conversion APIs.

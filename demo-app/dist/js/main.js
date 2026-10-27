@@ -3821,10 +3821,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    Promise.all(Data.FData.$pendingPromises).then(function() {
                       if (fbNode.parentNode) fbNode.remove();
                       el.style.display = '';
-                      bv.traverse(el, Data, Methods);
+                      bv.nonReactive(function() {
+                        bv.traverse(el, Data, Methods);
+                      });
                    });
                 } else {
-                   bv.traverse(el, Data, Methods);
+                   bv.nonReactive(function() {
+                     bv.traverse(el, Data, Methods);
+                   });
                 }
                 return;
               }
@@ -4024,7 +4028,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                           },
                           SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                         };
-                        bv.traverse(cl, ld, Methods);
+                        bv.nonReactive(function() {
+                          bv.traverse(cl, ld, Methods);
+                        });
                       });
                     }
                   });
@@ -4045,7 +4051,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   if (res && !active) { 
                      m.parentNode.insertBefore(el, m.nextSibling); 
                      active = true; 
-                     bv.traverse(el, Data, Methods); 
+                     bv.nonReactive(function() {
+                       bv.traverse(el, Data, Methods);
+                     });
                      if (tName) bv.applyTransition(el, 'enter', tName);
                   }
                   else if (!res && active) { 
@@ -4067,7 +4075,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   if (res) {
                      if (el.style.display === 'none') {
                         el.style.display = '';
-                        bv.traverse(el, Data, Methods);
+                        bv.nonReactive(function() {
+                          bv.traverse(el, Data, Methods);
+                        });
                         if (tName) bv.applyTransition(el, 'enter', tName);
                      }
                   } else {
@@ -4441,12 +4451,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (opts.methods) { 
                    Object.keys(opts.methods).forEach(function(k) { 
                      let rM = opts.methods[k];
-                     dRaw[k] = function() { 
-                       if (arguments.length > 0 && arguments[0] === this) {
-                         return rM.apply(this, arguments);
+                     const boundFn = function() { 
+                       if (arguments.length > 0 && arguments[0] === pRef) {
+                         return rM.apply(pRef, arguments);
                        }
-                       return rM.apply(this, [this, ...arguments]); 
+                       return rM.apply(pRef, [pRef, ...arguments]); 
                      }; 
+                     dRaw[k] = boundFn;
+                     pRef[k] = boundFn;
                    }); 
                 }
                 
@@ -4465,7 +4477,8 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 
                 if (opts.created) opts.created.call(pRef, pRef);
                 
-                pRef['$emit'] = function(ev, arg) {
+                pRef['$emit'] = function(ev, ...args) {
+                   let arg = args[0];
                    if (!pRef['__emitted__']) pRef['__emitted__'] = {};
                    if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
                    pRef['__emitted__'][ev].push(arg);
@@ -4486,12 +4499,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                          }
                          let expr = evt.expr;
                          if (expr) {
-                            let r = Data.Evaluate(expr, arg);
+                            let r = Data.Evaluate(expr, ...args);
                             if (typeof r === 'function') {
-                               try { r.call(Data.FData, Data.FData, arg); }
+                               try { r.call(Data.FData, Data.FData, ...args); }
                                catch(e) { console.error("[Compiler] Event handler error:", e); }
                             } else if (Methods && typeof Methods[expr] === 'function') {
-                               try { Methods[expr].call(Data.FData, Data.FData, arg); }
+                               try { Methods[expr].call(Data.FData, Data.FData, ...args); }
                                catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
                             }
                          }
@@ -7296,7 +7309,1010 @@ rtl.module("BVRpc",["System","JS","Web","SysUtils","BVReactivity"],function () {
     $mod.TBVRpcClient.EnsureBridge();
   };
 });
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],function () {
+rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  this.REPORT_LAYOUT_A4_PORTRAIT = "a4";
+  this.REPORT_LAYOUT_A4_LANDSCAPE = "a4-landscape";
+  this.REPORT_LAYOUT_LETTER_PORTRAIT = "letter";
+  this.REPORT_LAYOUT_LETTER_LANDSCAPE = "letter-landscape";
+  this.REPORT_LAYOUT_THERMAL_80MM = "thermal-80mm";
+  this.REPORT_LAYOUT_THERMAL_58MM = "thermal-58mm";
+  this.TBVReportAggregate = {"0": "aggSum", aggSum: 0, "1": "aggAverage", aggAverage: 1, "2": "aggCount", aggCount: 2, "3": "aggMin", aggMin: 3, "4": "aggMax", aggMax: 4};
+  this.TBVPageLayout = {"0": "plA4Portrait", plA4Portrait: 0, "1": "plA4Landscape", plA4Landscape: 1, "2": "plLetterPortrait", plLetterPortrait: 2, "3": "plLetterLandscape", plLetterLandscape: 3, "4": "plThermal80mm", plThermal80mm: 4, "5": "plThermal58mm", plThermal58mm: 5};
+  this.TBVColumnAlign = {"0": "caLeft", caLeft: 0, "1": "caCenter", caCenter: 1, "2": "caRight", caRight: 2};
+  rtl.createClass(this,"TBVReportColumn",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FFieldName = "";
+      this.FCaption = "";
+      this.FWidth = 0;
+      this.FAlign = 0;
+      this.FFormat = "";
+    };
+    this.Create$1 = function (AFieldName, ACaption, AWidth, AAlign, AFormat) {
+      this.FFieldName = AFieldName;
+      if (ACaption !== "") {
+        this.FCaption = ACaption}
+       else this.FCaption = $impl.HumanizeFieldName(AFieldName);
+      if (AWidth > 0) {
+        this.FWidth = AWidth}
+       else this.FWidth = 120;
+      this.FAlign = AAlign;
+      this.FFormat = AFormat;
+      return this;
+    };
+    this.GetAlignStr = function () {
+      var Result = "";
+      var $tmp = this.FAlign;
+      if ($tmp === $mod.TBVColumnAlign.caCenter) {
+        Result = "center"}
+       else if ($tmp === $mod.TBVColumnAlign.caRight) {
+        Result = "right"}
+       else {
+        Result = "left";
+      };
+      return Result;
+    };
+  });
+  rtl.createClass(this,"TBVReportSummary",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FLabelText = "";
+      this.FFieldName = "";
+      this.FAggregate = 0;
+      this.FFormat = "";
+    };
+    this.Create$1 = function (ALabel, AFieldName, AAggregate, AFormat) {
+      this.FLabelText = ALabel;
+      this.FFieldName = AFieldName;
+      this.FAggregate = AAggregate;
+      this.FFormat = AFormat;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TBVReport",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FDataSet = null;
+      this.FRawData = undefined;
+      this.FTitle = "";
+      this.FSubtitle = "";
+      this.FHeader = "";
+      this.FFooter = "";
+      this.FCompanyName = "";
+      this.FLogoText = "";
+      this.FAuthor = "";
+      this.FThemeColor = "";
+      this.FCurrencySymbol = "";
+      this.FCSVDelimiter = "";
+      this.FIncludeBOM = false;
+      this.FPageLayout = 0;
+      this.FRowsPerPage = 0;
+      this.FColumns = null;
+      this.FSummaries = null;
+      this.FLastExportedContent = "";
+      this.FLastExportedFileName = "";
+      this.FLastExportedMimeType = "";
+    };
+    this.$final = function () {
+      this.FDataSet = undefined;
+      this.FColumns = undefined;
+      this.FSummaries = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.EnsureAutoColumns = function (ARecords) {
+      if ((this.FColumns.length & 0xFFFFFFFF) > 0) return;
+      var ds = this.FDataSet;
+      if (ds && ds.Fields && typeof ds.Fields.Count === 'function' && ds.Fields.Count() > 0) {
+        var cnt = ds.Fields.Count();
+        for (var i = 0; i < cnt; i++) {
+          var f = ds.Fields.Item(i);
+          if (f && f.FieldName) {
+            this.AddColumn(f.FieldName, f.FieldName, 120, 0, '');
+          }
+        }
+        return;
+      }
+      if (ARecords && ARecords.length > 0 && typeof ARecords[0] === 'object' && ARecords[0] !== null) {
+        var keys = Object.keys(ARecords[0]);
+        for (var k = 0; k < keys.length; k++) {
+          if (keys[k].charAt(0) !== '_') {
+            this.AddColumn(keys[k], '', 120, 0, '');
+          }
+        }
+      };
+    };
+    this.TriggerBrowserDownload = function (AContent, AFileName, AMimeType) {
+      this.FLastExportedContent = AContent;
+      this.FLastExportedFileName = AFileName;
+      this.FLastExportedMimeType = AMimeType;
+      try {
+        if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
+          var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
+          if (!isTestEnv && window.URL && typeof window.URL.createObjectURL === 'function') {
+            var blob = new Blob([AContent], { type: AMimeType });
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = AFileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function() {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            }, 150);
+          }
+        }
+      } catch (e) {};
+    };
+    this.EscapePDFString = function (S) {
+      var Result = "";
+      Result = S;
+      Result = pas.SysUtils.StringReplace(Result,"\\","\\\\",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"(","\\(",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,")","\\)",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\r\n"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\r"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"\n"," ",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      return Result;
+    };
+    this.EscapeXMLString = function (S) {
+      var Result = "";
+      Result = S;
+      Result = pas.SysUtils.StringReplace(Result,"&","&amp;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"<","&lt;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,">","&gt;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,'"',"&quot;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      Result = pas.SysUtils.StringReplace(Result,"'","&apos;",rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll));
+      return Result;
+    };
+    this.EscapeCSVField = function (S) {
+      var Result = "";
+      var Delim = "";
+      var NeedsQuotes = false;
+      Delim = this.FCSVDelimiter;
+      if (Delim === "") Delim = ",";
+      NeedsQuotes = (pas.System.Pos(Delim,S) > 0) || (pas.System.Pos('"',S) > 0) || (pas.System.Pos("\n",S) > 0) || (pas.System.Pos("\r",S) > 0);
+      if (NeedsQuotes) {
+        Result = '"' + pas.SysUtils.StringReplace(S,'"','""',rtl.createSet(pas.SysUtils.TStringReplaceFlag.rfReplaceAll)) + '"'}
+       else Result = S;
+      return Result;
+    };
+    this.HexToPDFRgb = function (AHex) {
+      var Result = "";
+      var H = "";
+      var R = 0;
+      var G = 0;
+      var B = 0;
+      H = pas.SysUtils.Trim(AHex);
+      if ((H.length > 0) && (H.charAt(0) === "#")) H = pas.System.Copy(H,2,2147483647);
+      if (H.length === 6) {
+        R = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,1,2),30);
+        G = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,3,2),41);
+        B = pas.SysUtils.StrToIntDef("$" + pas.System.Copy(H,5,2),59);
+        Result = (R / 255).toFixed(3) + ' ' + (G / 255).toFixed(3) + ' ' + (B / 255).toFixed(3);
+      } else Result = "0.118 0.161 0.231";
+      return Result;
+    };
+    this.Create$1 = function () {
+      this.FDataSet = null;
+      this.FRawData = null;
+      this.FTitle = "Executive Data Report";
+      this.FSubtitle = "";
+      this.FHeader = "";
+      this.FFooter = "Generated by BlaiseReports Engine v5.0";
+      this.FCompanyName = "BlaiseVue Enterprise";
+      this.FLogoText = "BV";
+      this.FAuthor = "BlaiseVue System";
+      this.FThemeColor = "#1e293b";
+      this.FCurrencySymbol = "$";
+      this.FCSVDelimiter = ",";
+      this.FIncludeBOM = true;
+      this.FPageLayout = $mod.TBVPageLayout.plA4Portrait;
+      this.FRowsPerPage = 25;
+      this.FColumns = new Array();
+      this.FSummaries = new Array();
+      this.FLastExportedContent = "";
+      this.FLastExportedFileName = "";
+      this.FLastExportedMimeType = "";
+      return this;
+    };
+    this.Create$3 = function (AData) {
+      this.Create$1();
+      this.SetData(AData);
+      return this;
+    };
+    this.Destroy = function () {
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.SetData = function (AData) {
+      var Result = null;
+      if (AData) {
+        if (Array.isArray(AData.FActiveRecords) || Array.isArray(AData.Data) || typeof AData.GetRecordCount === 'function') {
+          this.FDataSet = AData;
+          this.FRawData = null;
+        } else {
+          this.FRawData = AData;
+        }
+      };
+      Result = this;
+      return Result;
+    };
+    this.Title = function (ATitle) {
+      var Result = null;
+      this.FTitle = ATitle;
+      Result = this;
+      return Result;
+    };
+    this.Subtitle = function (ASubtitle) {
+      var Result = null;
+      this.FSubtitle = ASubtitle;
+      Result = this;
+      return Result;
+    };
+    this.Header = function (AHeader) {
+      var Result = null;
+      this.FHeader = AHeader;
+      Result = this;
+      return Result;
+    };
+    this.Footer = function (AFooter) {
+      var Result = null;
+      this.FFooter = AFooter;
+      Result = this;
+      return Result;
+    };
+    this.Company = function (ACompanyName, ALogoText) {
+      var Result = null;
+      this.FCompanyName = ACompanyName;
+      if (ALogoText !== "") this.FLogoText = ALogoText;
+      Result = this;
+      return Result;
+    };
+    this.PageSize = function (ALayoutName) {
+      var Result = null;
+      this.FPageLayout = $mod.ParsePageLayout(ALayoutName);
+      Result = this;
+      return Result;
+    };
+    this.Columns = function (AFieldNames) {
+      var Result = null;
+      var i = 0;
+      this.FColumns = new Array();
+      for (var $l = 0, $end = rtl.length(AFieldNames) - 1; $l <= $end; $l++) {
+        i = $l;
+        this.AddColumn(AFieldNames[i],"",120,$mod.TBVColumnAlign.caLeft,"");
+      };
+      Result = this;
+      return Result;
+    };
+    this.AddColumn = function (AFieldName, ACaption, AWidth, AAlign, AFormat) {
+      var Result = null;
+      var Col = null;
+      Col = $mod.TBVReportColumn.$create("Create$1",[AFieldName,ACaption,AWidth,AAlign,AFormat]);
+      this.FColumns.push(Col);
+      Result = this;
+      return Result;
+    };
+    this.AddSummary = function (ALabel, AFieldName, AAggregate, AFormat) {
+      var Result = null;
+      var SumItem = null;
+      SumItem = $mod.TBVReportSummary.$create("Create$1",[ALabel,AFieldName,AAggregate,AFormat]);
+      this.FSummaries.push(SumItem);
+      Result = this;
+      return Result;
+    };
+    this.GetRecordsArray = function () {
+      var Result = null;
+      Result = new Array();
+      var ds = this.FDataSet;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+      }
+      var raw = this.FRawData;
+      if (raw) {
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw.Data)) return raw.Data;
+        if (Array.isArray(raw.FActiveRecords)) return raw.FActiveRecords;
+        if (Array.isArray(raw.items)) return raw.items;
+      };
+      return Result;
+    };
+    this.GetRecordCount = function () {
+      var Result = 0;
+      var Recs = null;
+      Recs = this.GetRecordsArray();
+      Result = Recs.length & 0xFFFFFFFF;
+      return Result;
+    };
+    this.GetPageCount = function () {
+      var Result = 0;
+      var TotalRows = 0;
+      var Limit = 0;
+      TotalRows = this.GetRecordCount();
+      Limit = this.FRowsPerPage;
+      if (Limit <= 0) Limit = 25;
+      if (TotalRows <= 0) {
+        Result = 1}
+       else Result = rtl.trunc(((TotalRows + Limit) - 1) / Limit);
+      return Result;
+    };
+    this.GetPageLayoutStr = function () {
+      var Result = "";
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        Result = $mod.REPORT_LAYOUT_A4_LANDSCAPE}
+       else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        Result = $mod.REPORT_LAYOUT_LETTER_PORTRAIT}
+       else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        Result = $mod.REPORT_LAYOUT_LETTER_LANDSCAPE}
+       else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        Result = $mod.REPORT_LAYOUT_THERMAL_80MM}
+       else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        Result = $mod.REPORT_LAYOUT_THERMAL_58MM}
+       else {
+        Result = $mod.REPORT_LAYOUT_A4_PORTRAIT;
+      };
+      return Result;
+    };
+    this.ComputeSummary = function (AFieldName, AAggregate) {
+      var Result = 0.0;
+      var Recs = null;
+      Recs = this.GetRecordsArray();
+      Result = 0.0;
+      if (!Recs || Recs.length === 0) {
+            Result = 0;
+            return;
+          }
+          if (AAggregate === 2) { // aggCount
+            Result = Recs.length;
+            return;
+          }
+          var sum = 0;
+          var count = 0;
+          var minVal = null;
+          var maxVal = null;
+          var targetLower = (AFieldName || '').toLowerCase();
+      
+          for (var i = 0; i < Recs.length; i++) {
+            var row = Recs[i];
+            if (!row || typeof row !== 'object') continue;
+            var rawVal = row[AFieldName];
+            if (rawVal === undefined) {
+              var keys = Object.keys(row);
+              for (var k = 0; k < keys.length; k++) {
+                if (keys[k].toLowerCase() === targetLower) {
+                  rawVal = row[keys[k]];
+                  break;
+                }
+              }
+            }
+            var num = parseFloat(rawVal);
+            if (!isNaN(num)) {
+              sum += num;
+              count++;
+              if (minVal === null || num < minVal) minVal = num;
+              if (maxVal === null || num > maxVal) maxVal = num;
+            }
+          }
+      
+          if (AAggregate === 0) { // aggSum
+            Result = Math.round(sum * 100) / 100;
+          } else if (AAggregate === 1) { // aggAverage
+            Result = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
+          } else if (AAggregate === 3) { // aggMin
+            Result = minVal !== null ? minVal : 0;
+          } else if (AAggregate === 4) { // aggMax
+            Result = maxVal !== null ? maxVal : 0;
+          };
+      return Result;
+    };
+    this.FormatCellValue = function (AValue, AFormat) {
+      var Result = "";
+      var Fmt = "";
+      var Curr = "";
+      Fmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AFormat));
+      Curr = this.FCurrencySymbol;
+      Result = "";
+      if (AValue === null || AValue === undefined) {
+        Result = '';
+        return;
+      }
+      if (Fmt === 'currency' || Fmt === 'money') {
+        var num = parseFloat(AValue);
+        if (!isNaN(num)) {
+          var parts = num.toFixed(2).split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          Result = Curr + parts.join('.');
+          return;
+        }
+      } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
+        var fnum = parseFloat(AValue);
+        if (!isNaN(fnum)) {
+          var fparts = fnum.toFixed(2).split('.');
+          fparts[0] = fparts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          Result = fparts.join('.');
+          return;
+        }
+      } else if (Fmt === 'integer' || Fmt === 'int') {
+        var inum = parseInt(AValue, 10);
+        if (!isNaN(inum)) {
+          Result = String(inum);
+          return;
+        }
+      } else if (Fmt === 'percent' || Fmt === '%') {
+        var pnum = parseFloat(AValue);
+        if (!isNaN(pnum)) {
+          Result = pnum.toFixed(2) + '%';
+          return;
+        }
+      } else if (Fmt === 'boolean' || Fmt === 'bool') {
+        Result = AValue ? 'Yes' : 'No';
+        return;
+      }
+      Result = String(AValue);
+      return Result;
+    };
+    this.FormatSummaryNumber = function (AValue, AFormat) {
+      var Result = "";
+      var Fmt = "";
+      var Curr = "";
+      Fmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AFormat));
+      Curr = this.FCurrencySymbol;
+      Result = "";
+      var n = Number(AValue) || 0;
+      if (Fmt === 'integer' || Fmt === 'int' || Fmt === 'count') {
+        Result = String(Math.round(n));
+      } else if (Fmt === 'percent' || Fmt === '%') {
+        Result = n.toFixed(2) + '%';
+      } else if (Fmt === 'number' || Fmt === 'float' || Fmt === 'decimal') {
+        var parts = n.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        Result = parts.join('.');
+      } else {
+        var cParts = n.toFixed(2).split('.');
+        cParts[0] = cParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        Result = Curr + cParts.join('.');
+      };
+      return Result;
+    };
+    this.GeneratePDF = function () {
+      var Result = "";
+      var Recs = null;
+      var TotalRecords = 0;
+      var TotalPages = 0;
+      var Limit = 0;
+      var PageIdx = 0;
+      var StartIdx = 0;
+      var EndIdx = 0;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var PageW = 0;
+      var PageH = 0;
+      var MarginX = 0;
+      var CurY = 0;
+      var ColWidth = 0;
+      var ColX = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var CellText = "";
+      var SumLine = "";
+      var ThemeRgb = "";
+      var PageStream = "";
+      var RawVal = undefined;
+      var PageStreams = null;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      TotalRecords = Recs.length & 0xFFFFFFFF;
+      Limit = this.FRowsPerPage;
+      if (Limit <= 0) Limit = 25;
+      TotalPages = this.GetPageCount();
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        PageW = 842;
+        PageH = 595;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        PageW = 612;
+        PageH = 792;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        PageW = 792;
+        PageH = 612;
+        MarginX = 36;
+      } else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        PageW = 226;
+        PageH = 650;
+        MarginX = 12;
+      } else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        PageW = 164;
+        PageH = 550;
+        MarginX = 8;
+      } else {
+        PageW = 595;
+        PageH = 842;
+        MarginX = 36;
+      };
+      ThemeRgb = this.HexToPDFRgb(this.FThemeColor);
+      PageStreams = new Array();
+      if ((this.FColumns.length & 0xFFFFFFFF) > 0) {
+        ColWidth = rtl.trunc((PageW - (MarginX * 2)) / (this.FColumns.length & 0xFFFFFFFF))}
+       else ColWidth = PageW - (MarginX * 2);
+      for (var $l = 1, $end = TotalPages; $l <= $end; $l++) {
+        PageIdx = $l;
+        PageStream = "";
+        CurY = PageH - 45;
+        PageStream = PageStream + ThemeRgb + " rg" + "\n";
+        PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 22) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 38 re f" + "\n";
+        PageStream = PageStream + "1 1 1 rg" + "\n";
+        PageStream = PageStream + "BT /F2 13 Tf " + pas.SysUtils.IntToStr(MarginX + 10) + " " + pas.SysUtils.IntToStr(CurY - 4) + " Td (" + this.EscapePDFString(this.FTitle) + ") Tj ET" + "\n";
+        if (this.FCompanyName !== "") PageStream = PageStream + "BT /F1 8 Tf " + pas.SysUtils.IntToStr(MarginX + 10) + " " + pas.SysUtils.IntToStr(CurY - 16) + " Td (" + this.EscapePDFString(this.FCompanyName) + ") Tj ET" + "\n";
+        CurY = CurY - 38;
+        if (this.FHeader !== "") {
+          PageStream = PageStream + "0.25 0.30 0.38 rg" + "\n";
+          PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(this.FHeader) + ") Tj ET" + "\n";
+          CurY = CurY - 16;
+        };
+        if (this.FSubtitle !== "") {
+          PageStream = PageStream + "0.35 0.40 0.48 rg" + "\n";
+          PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(this.FSubtitle) + ") Tj ET" + "\n";
+          CurY = CurY - 16;
+        };
+        PageStream = PageStream + "0.91 0.93 0.96 rg" + "\n";
+        PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 6) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 18 re f" + "\n";
+        PageStream = PageStream + "0.10 0.15 0.22 rg" + "\n";
+        for (var $l1 = 0, $end1 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+          ColIdx = $l1;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          ColX = MarginX + 6 + (ColIdx * ColWidth);
+          PageStream = PageStream + "BT /F2 9 Tf " + pas.SysUtils.IntToStr(ColX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(Col.FCaption) + ") Tj ET" + "\n";
+        };
+        CurY = CurY - 20;
+        StartIdx = (PageIdx - 1) * Limit;
+        EndIdx = (StartIdx + Limit) - 1;
+        if (EndIdx >= TotalRecords) EndIdx = TotalRecords - 1;
+        for (var $l2 = StartIdx, $end2 = EndIdx; $l2 <= $end2; $l2++) {
+          RowIdx = $l2;
+          if (((RowIdx - StartIdx) % 2) === 1) {
+            PageStream = PageStream + "0.97 0.98 0.99 rg" + "\n";
+            PageStream = PageStream + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY - 4) + " " + pas.SysUtils.IntToStr(PageW - (MarginX * 2)) + " 16 re f" + "\n";
+          };
+          PageStream = PageStream + "0.15 0.20 0.28 rg" + "\n";
+          for (var $l3 = 0, $end3 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+            ColIdx = $l3;
+            Col = rtl.getObject(this.FColumns[ColIdx]);
+            ColX = MarginX + 6 + (ColIdx * ColWidth);
+            RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+            CellText = this.FormatCellValue(RawVal,Col.FFormat);
+            PageStream = PageStream + "BT /F1 9 Tf " + pas.SysUtils.IntToStr(ColX) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(CellText) + ") Tj ET" + "\n";
+          };
+          CurY = CurY - 16;
+        };
+        if ((PageIdx === TotalPages) && ((this.FSummaries.length & 0xFFFFFFFF) > 0)) {
+          CurY = CurY - 8;
+          PageStream = PageStream + "0.80 0.84 0.88 RG 0.8 w " + pas.SysUtils.IntToStr(MarginX) + " " + pas.SysUtils.IntToStr(CurY + 12) + " m " + pas.SysUtils.IntToStr(PageW - MarginX) + " " + pas.SysUtils.IntToStr(CurY + 12) + " l S" + "\n";
+          for (var $l4 = 0, $end4 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l4 <= $end4; $l4++) {
+            SumIdx = $l4;
+            SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+            SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+            SumFmt = SumDef.FFormat;
+            if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+            SumLine = SumDef.FLabelText + ": " + this.FormatSummaryNumber(SumVal,SumFmt);
+            PageStream = PageStream + "0.08 0.12 0.18 rg" + "\n";
+            PageStream = PageStream + "BT /F2 10 Tf " + pas.SysUtils.IntToStr(MarginX + 6) + " " + pas.SysUtils.IntToStr(CurY) + " Td (" + this.EscapePDFString(SumLine) + ") Tj ET" + "\n";
+            CurY = CurY - 15;
+          };
+        };
+        PageStream = PageStream + "0.75 0.79 0.84 RG 0.5 w " + pas.SysUtils.IntToStr(MarginX) + " 42 m " + pas.SysUtils.IntToStr(PageW - MarginX) + " 42 l S" + "\n";
+        PageStream = PageStream + "0.40 0.45 0.52 rg" + "\n";
+        if (this.FFooter !== "") PageStream = PageStream + "BT /F1 8 Tf " + pas.SysUtils.IntToStr(MarginX) + " 28 Td (" + this.EscapePDFString(this.FFooter) + ") Tj ET" + "\n";
+        PageStream = PageStream + "BT /F2 8 Tf " + pas.SysUtils.IntToStr(PageW - MarginX - 65) + " 28 Td (Page " + pas.SysUtils.IntToStr(PageIdx) + " of " + pas.SysUtils.IntToStr(TotalPages) + ") Tj ET" + "\n";
+        PageStreams.push(PageStream);
+      };
+      Result = "";
+      var objects = [];
+          function addObj(body) {
+            objects.push(body);
+            return objects.length;
+          }
+      
+          // Obj 1: Catalog
+          addObj('<< /Type /Catalog /Pages 2 0 R >>');
+          // Obj 2: Pages placeholder
+          addObj('');
+          // Obj 3: Font Regular
+          addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+          // Obj 4: Font Bold
+          addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+          // Obj 5: Document Info
+          var infoStr = '<< /Title (' + this.EscapePDFString(this.FTitle) + ') /Author (' + this.EscapePDFString(this.FAuthor) + ') /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
+          addObj(infoStr);
+      
+          var pageRefs = [];
+          for (var p = 0; p < PageStreams.length; p++) {
+            var streamData = PageStreams[p];
+            var contentObjId = addObj('<< /Length ' + streamData.length + ' >>\nstream\n' + streamData + 'endstream');
+            var pageObjId = addObj(
+              '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PageW + ' ' + PageH + '] ' +
+              '/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> ' +
+              '/Contents ' + contentObjId + ' 0 R >>'
+            );
+            pageRefs.push(pageObjId + ' 0 R');
+          }
+      
+          objects[1] = '<< /Type /Pages /Kids [ ' + pageRefs.join(' ') + ' ] /Count ' + pageRefs.length + ' >>';
+      
+          var pdf = '%PDF-1.4\n';
+          var offsets = [];
+          for (var i = 0; i < objects.length; i++) {
+            offsets.push(pdf.length);
+            pdf += (i + 1) + ' 0 obj\n' + objects[i] + '\nendobj\n';
+          }
+      
+          var xrefOffset = pdf.length;
+          pdf += 'xref\n0 ' + (objects.length + 1) + '\n';
+          pdf += '0000000000 65535 f \n';
+          for (var j = 0; j < offsets.length; j++) {
+            var offStr = String(offsets[j]);
+            while (offStr.length < 10) offStr = '0' + offStr;
+            pdf += offStr + ' 00000 n \n';
+          }
+      
+          pdf += 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R /Info 5 0 R >>\n';
+          pdf += 'startxref\n' + xrefOffset + '\n%%EOF';
+          Result = pdf;
+      return Result;
+    };
+    this.ExportPDF = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.pdf";
+      Result = this.GeneratePDF();
+      this.TriggerBrowserDownload(Result,FinalName,"application/pdf");
+      return Result;
+    };
+    this.GenerateExcel = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var Xml = "";
+      var ColFmt = "";
+      var CellType = "";
+      var CellStyle = "";
+      var CellValStr = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      Xml = '<?xml version="1.0" encoding="UTF-8"?>' + "\n" + '<?mso-application progid="Excel.Sheet"?>' + "\n" + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"' + "\n" + ' xmlns:o="urn:schemas-microsoft-com:office:office"' + "\n" + ' xmlns:x="urn:schemas-microsoft-com:office:excel"' + "\n" + ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' + "\n" + '  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">' + "\n" + "    <Title>" + this.EscapeXMLString(this.FTitle) + "</Title>" + "\n" + "    <Author>" + this.EscapeXMLString(this.FAuthor) + "</Author>" + "\n" + "    <Company>" + this.EscapeXMLString(this.FCompanyName) + "</Company>" + "\n" + "  </DocumentProperties>" + "\n" + "  <Styles>" + "\n" + '    <Style ss:ID="Default" ss:Name="Normal"><Font ss:FontName="Segoe UI" ss:Size="10"/></Style>' + "\n" + '    <Style ss:ID="sTitle"><Font ss:FontName="Segoe UI" ss:Size="14" ss:Bold="1" ss:Color="#0F172A"/></Style>' + "\n" + '    <Style ss:ID="sHeaderMeta"><Font ss:FontName="Segoe UI" ss:Size="9" ss:Italic="1" ss:Color="#475569"/></Style>' + "\n" + '    <Style ss:ID="sColHeader"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="' + this.EscapeXMLString(this.FThemeColor) + '" ss:Pattern="Solid"/></Style>' + "\n" + '    <Style ss:ID="sString"><Font ss:FontName="Segoe UI" ss:Size="10"/></Style>' + "\n" + '    <Style ss:ID="sInteger"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="0"/></Style>' + "\n" + '    <Style ss:ID="sNumber"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="#,##0.00"/></Style>' + "\n" + '    <Style ss:ID="sCurrency"><Font ss:FontName="Segoe UI" ss:Size="10"/><NumberFormat ss:Format="&quot;' + this.EscapeXMLString(this.FCurrencySymbol) + '&quot;#,##0.00"/></Style>' + "\n" + '    <Style ss:ID="sSummaryLabel"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style>' + "\n" + '    <Style ss:ID="sSummaryValue"><Font ss:FontName="Segoe UI" ss:Size="10" ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/></Style>' + "\n" + "  </Styles>" + "\n" + '  <Worksheet ss:Name="' + this.EscapeXMLString(pas.System.Copy(this.FTitle,1,31)) + '">' + "\n" + "    <Table>" + "\n";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        Xml = Xml + '      <Column ss:Width="' + pas.SysUtils.IntToStr(Col.FWidth) + '"/>' + "\n";
+      };
+      Xml = Xml + '      <Row><Cell ss:StyleID="sTitle"><Data ss:Type="String">' + this.EscapeXMLString(this.FTitle) + "</Data></Cell></Row>" + "\n";
+      if (this.FHeader !== "") Xml = Xml + '      <Row><Cell ss:StyleID="sHeaderMeta"><Data ss:Type="String">' + this.EscapeXMLString(this.FHeader) + "</Data></Cell></Row>" + "\n";
+      Xml = Xml + "      <Row>" + "\n";
+      for (var $l1 = 0, $end1 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        ColIdx = $l1;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        Xml = Xml + '        <Cell ss:StyleID="sColHeader"><Data ss:Type="String">' + this.EscapeXMLString(Col.FCaption) + "</Data></Cell>" + "\n";
+      };
+      Xml = Xml + "      </Row>" + "\n";
+      for (var $l2 = 0, $end2 = (Recs.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+        RowIdx = $l2;
+        Xml = Xml + "      <Row>" + "\n";
+        for (var $l3 = 0, $end3 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          ColIdx = $l3;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          ColFmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(Col.FFormat));
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          CellType = "String";
+          CellStyle = "sString";
+          CellValStr = "";
+          if (RawVal === null || RawVal === undefined) {
+            CellType = 'String';
+            CellValStr = '';
+          } else if (typeof RawVal === 'boolean') {
+            CellType = 'Boolean';
+            CellValStr = RawVal ? '1' : '0';
+          } else if (typeof RawVal === 'number' || ColFmt === 'currency' || ColFmt === 'money' || ColFmt === 'number' || ColFmt === 'float' || ColFmt === 'integer' || ColFmt === 'int') {
+            var num = Number(RawVal);
+            if (!isNaN(num) && String(RawVal).trim() !== '') {
+              CellType = 'Number';
+              CellValStr = String(num);
+              if (ColFmt === 'currency' || ColFmt === 'money') {
+                CellStyle = 'sCurrency';
+              } else if (ColFmt === 'integer' || ColFmt === 'int' || (Number.isInteger(num) && ColFmt === '')) {
+                CellStyle = 'sInteger';
+              } else {
+                CellStyle = 'sNumber';
+              }
+            } else {
+              CellType = 'String';
+              CellValStr = String(RawVal);
+            }
+          } else {
+            CellType = 'String';
+            CellValStr = String(RawVal);
+          };
+          Xml = Xml + '        <Cell ss:StyleID="' + CellStyle + '"><Data ss:Type="' + CellType + '">' + this.EscapeXMLString(CellValStr) + "</Data></Cell>" + "\n";
+        };
+        Xml = Xml + "      </Row>" + "\n";
+      };
+      for (var $l4 = 0, $end4 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l4 <= $end4; $l4++) {
+        SumIdx = $l4;
+        SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+        SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+        SumFmt = SumDef.FFormat;
+        if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+        Xml = Xml + "      <Row>" + "\n" + '        <Cell ss:StyleID="sSummaryLabel"><Data ss:Type="String">' + this.EscapeXMLString(SumDef.FLabelText) + "</Data></Cell>" + "\n" + '        <Cell ss:StyleID="sSummaryValue"><Data ss:Type="Number">' + pas.SysUtils.FloatToStr(SumVal) + "</Data></Cell>" + "\n" + '        <Cell ss:StyleID="sSummaryLabel"><Data ss:Type="String">' + this.EscapeXMLString(this.FormatSummaryNumber(SumVal,SumFmt)) + "</Data></Cell>" + "\n" + "      </Row>" + "\n";
+      };
+      Xml = Xml + "    </Table>" + "\n" + "  </Worksheet>" + "\n" + "</Workbook>";
+      Result = Xml;
+      return Result;
+    };
+    this.ExportExcel = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.xlsx";
+      Result = this.GenerateExcel();
+      this.TriggerBrowserDownload(Result,FinalName,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      return Result;
+    };
+    this.GenerateCSV = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var Delim = "";
+      var Line = "";
+      var CsvOut = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      Delim = this.FCSVDelimiter;
+      if (Delim === "") Delim = ",";
+      CsvOut = "";
+      if (this.FIncludeBOM) {
+        CsvOut = '\uFEFF';
+      };
+      Line = "";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        if (ColIdx > 0) Line = Line + Delim;
+        Line = Line + this.EscapeCSVField(Col.FCaption);
+      };
+      CsvOut = CsvOut + Line + "\r\n";
+      for (var $l1 = 0, $end1 = (Recs.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        RowIdx = $l1;
+        Line = "";
+        for (var $l2 = 0, $end2 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+          ColIdx = $l2;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          if (ColIdx > 0) Line = Line + Delim;
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          if (Col.FFormat !== "") {
+            Line = Line + this.EscapeCSVField(this.FormatCellValue(RawVal,Col.FFormat))}
+           else {
+            var v = (RawVal !== null && RawVal !== undefined) ? String(RawVal) : '';
+            Line += this.EscapeCSVField(v);
+          };
+        };
+        CsvOut = CsvOut + Line + "\r\n";
+      };
+      if ((this.FSummaries.length & 0xFFFFFFFF) > 0) {
+        for (var $l3 = 0, $end3 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          SumIdx = $l3;
+          SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+          SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+          SumFmt = SumDef.FFormat;
+          if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+          Line = this.EscapeCSVField(SumDef.FLabelText) + Delim + this.EscapeCSVField(this.FormatSummaryNumber(SumVal,SumFmt));
+          CsvOut = CsvOut + Line + "\r\n";
+        };
+      };
+      Result = CsvOut;
+      return Result;
+    };
+    this.ExportCSV = function (AFileName) {
+      var Result = "";
+      var FinalName = "";
+      FinalName = pas.SysUtils.Trim(AFileName);
+      if (FinalName === "") FinalName = "report.csv";
+      Result = this.GenerateCSV();
+      this.TriggerBrowserDownload(Result,FinalName,"text/csv;charset=utf-8;");
+      return Result;
+    };
+    this.GeneratePrintHTML = function () {
+      var Result = "";
+      var Recs = null;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var PageSizeCSS = "";
+      var SheetClass = "";
+      var Html = "";
+      var AlignStyle = "";
+      var CellStr = "";
+      var RawVal = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      var $tmp = this.FPageLayout;
+      if ($tmp === $mod.TBVPageLayout.plA4Landscape) {
+        PageSizeCSS = "@page { size: A4 landscape; margin: 12mm; }";
+        SheetClass = "bv-report-sheet bv-layout-a4-landscape";
+      } else if ($tmp === $mod.TBVPageLayout.plLetterPortrait) {
+        PageSizeCSS = "@page { size: letter portrait; margin: 0.5in; }";
+        SheetClass = "bv-report-sheet bv-layout-letter";
+      } else if ($tmp === $mod.TBVPageLayout.plLetterLandscape) {
+        PageSizeCSS = "@page { size: letter landscape; margin: 0.5in; }";
+        SheetClass = "bv-report-sheet bv-layout-letter-landscape";
+      } else if ($tmp === $mod.TBVPageLayout.plThermal80mm) {
+        PageSizeCSS = "@page { size: 80mm auto; margin: 2mm; }";
+        SheetClass = "bv-report-sheet bv-layout-thermal-80mm";
+      } else if ($tmp === $mod.TBVPageLayout.plThermal58mm) {
+        PageSizeCSS = "@page { size: 58mm auto; margin: 1.5mm; }";
+        SheetClass = "bv-report-sheet bv-layout-thermal-58mm";
+      } else {
+        PageSizeCSS = "@page { size: A4 portrait; margin: 12mm; }";
+        SheetClass = "bv-report-sheet bv-layout-a4";
+      };
+      Html = "<style>" + "\n" + PageSizeCSS + "\n" + "@media print {" + "\n" + "  .no-print, .bv-report-toolbar, nav, header, aside, .bui-navbar { display: none !important; }" + "\n" + "  body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }" + "\n" + "  .bv-report-sheet { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; }" + "\n" + "}" + "\n" + '.bv-report-sheet { background: #ffffff; color: #0f172a; font-family: "Inter", "Segoe UI", sans-serif; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; }' + "\n" + '.bv-layout-thermal-80mm { width: 80mm; max-width: 80mm; font-family: "Courier New", monospace; font-size: 11px; padding: 8px; }' + "\n" + '.bv-layout-thermal-58mm { width: 58mm; max-width: 58mm; font-family: "Courier New", monospace; font-size: 10px; padding: 6px; }' + "\n" + ".bv-report-banner { background: " + this.EscapeXMLString(this.FThemeColor) + "; color: #ffffff; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }" + "\n" + ".bv-report-title { font-size: 20px; font-weight: 700; margin: 0; }" + "\n" + ".bv-report-company { font-size: 12px; opacity: 0.9; margin-top: 4px; }" + "\n" + ".bv-report-meta { font-size: 12px; color: #475569; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }" + "\n" + ".bv-report-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }" + "\n" + ".bv-report-table th { background: #f1f5f9; color: #1e293b; font-weight: 600; padding: 10px 12px; border-bottom: 2px solid #cbd5e1; text-align: left; }" + "\n" + ".bv-report-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }" + "\n" + ".bv-report-table tr:nth-child(even) td { background: #f8fafc; }" + "\n" + ".bv-report-summaries { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; padding-top: 12px; border-top: 2px solid #cbd5e1; margin-top: 12px; }" + "\n" + ".bv-report-summary-card { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 14px; min-width: 140px; text-align: right; }" + "\n" + ".bv-report-summary-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }" + "\n" + ".bv-report-summary-value { font-size: 16px; color: #0f172a; font-weight: 700; margin-top: 2px; }" + "\n" + ".bv-report-footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; }" + "\n" + "</style>" + "\n";
+      Html = Html + '<div class="' + SheetClass + '" data-layout="' + this.GetPageLayoutStr() + '">' + "\n" + '  <div class="bv-report-banner">' + "\n" + "    <div>" + "\n" + '      <h1 class="bv-report-title">' + this.EscapeXMLString(this.FTitle) + "</h1>" + "\n";
+      if (this.FCompanyName !== "") Html = Html + '      <div class="bv-report-company">' + this.EscapeXMLString(this.FCompanyName) + "</div>" + "\n";
+      Html = Html + "    </div>" + "\n";
+      if (this.FLogoText !== "") Html = Html + '    <div class="bv-report-logo" style="font-weight:800;font-size:18px;border:2px solid rgba(255,255,255,0.6);padding:6px 10px;border-radius:6px;">' + this.EscapeXMLString(this.FLogoText) + "</div>" + "\n";
+      Html = Html + "  </div>" + "\n";
+      if (this.FHeader !== "") Html = Html + '  <div class="bv-report-meta">' + this.EscapeXMLString(this.FHeader) + "</div>" + "\n";
+      Html = Html + '  <table class="bv-report-table">' + "\n" + "    <thead><tr>" + "\n";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        AlignStyle = "text-align:" + Col.GetAlignStr() + ";";
+        Html = Html + '      <th style="' + AlignStyle + '">' + this.EscapeXMLString(Col.FCaption) + "</th>" + "\n";
+      };
+      Html = Html + "    </tr></thead>" + "\n" + "    <tbody>" + "\n";
+      for (var $l1 = 0, $end1 = (Recs.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        RowIdx = $l1;
+        Html = Html + "      <tr>" + "\n";
+        for (var $l2 = 0, $end2 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+          ColIdx = $l2;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          AlignStyle = "text-align:" + Col.GetAlignStr() + ";";
+          RawVal = $impl.GetRecordFieldCaseInsensitive(Recs[RowIdx],Col.FFieldName);
+          CellStr = this.FormatCellValue(RawVal,Col.FFormat);
+          Html = Html + '        <td style="' + AlignStyle + '">' + this.EscapeXMLString(CellStr) + "</td>" + "\n";
+        };
+        Html = Html + "      </tr>" + "\n";
+      };
+      Html = Html + "    </tbody>" + "\n" + "  </table>" + "\n";
+      if ((this.FSummaries.length & 0xFFFFFFFF) > 0) {
+        Html = Html + '  <div class="bv-report-summaries">' + "\n";
+        for (var $l3 = 0, $end3 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          SumIdx = $l3;
+          SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+          SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+          SumFmt = SumDef.FFormat;
+          if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+          Html = Html + '    <div class="bv-report-summary-card">' + "\n" + '      <div class="bv-report-summary-label">' + this.EscapeXMLString(SumDef.FLabelText) + "</div>" + "\n" + '      <div class="bv-report-summary-value">' + this.EscapeXMLString(this.FormatSummaryNumber(SumVal,SumFmt)) + "</div>" + "\n" + "    </div>" + "\n";
+        };
+        Html = Html + "  </div>" + "\n";
+      };
+      Html = Html + '  <div class="bv-report-footer">' + "\n" + "    <span>" + this.EscapeXMLString(this.FFooter) + "</span>" + "\n" + "    <span>Page 1 of " + pas.SysUtils.IntToStr(this.GetPageCount()) + " | Records: " + pas.SysUtils.IntToStr(this.GetRecordCount()) + "</span>" + "\n" + "  </div>" + "\n" + "</div>";
+      Result = Html;
+      return Result;
+    };
+    this.PrintPreview = function (ATargetElementId) {
+      var Result = "";
+      Result = this.GeneratePrintHTML();
+      this.FLastExportedContent = Result;
+      this.FLastExportedFileName = "print-preview.html";
+      this.FLastExportedMimeType = "text/html";
+      try {
+        if (typeof document !== 'undefined' && ATargetElementId) {
+          var el = document.getElementById(ATargetElementId);
+          if (el) {
+            el.innerHTML = Result;
+          }
+        }
+      } catch (e) {};
+      return Result;
+    };
+  });
+  this.ParseAggregateType = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if ((L === "avg") || (L === "average") || (L === "aggaverage")) {
+      Result = $mod.TBVReportAggregate.aggAverage}
+     else if ((L === "count") || (L === "aggcount")) {
+      Result = $mod.TBVReportAggregate.aggCount}
+     else if ((L === "min") || (L === "aggmin")) {
+      Result = $mod.TBVReportAggregate.aggMin}
+     else if ((L === "max") || (L === "aggmax")) {
+      Result = $mod.TBVReportAggregate.aggMax}
+     else Result = $mod.TBVReportAggregate.aggSum;
+    return Result;
+  };
+  this.ParsePageLayout = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if ((L === "a4-landscape") || (L === "landscape")) {
+      Result = $mod.TBVPageLayout.plA4Landscape}
+     else if ((L === "letter") || (L === "letter-portrait")) {
+      Result = $mod.TBVPageLayout.plLetterPortrait}
+     else if (L === "letter-landscape") {
+      Result = $mod.TBVPageLayout.plLetterLandscape}
+     else if ((L === "thermal-80mm") || (L === "80mm") || (L === "pos-80mm") || (L === "pos")) {
+      Result = $mod.TBVPageLayout.plThermal80mm}
+     else if ((L === "thermal-58mm") || (L === "58mm") || (L === "pos-58mm")) {
+      Result = $mod.TBVPageLayout.plThermal58mm}
+     else Result = $mod.TBVPageLayout.plA4Portrait;
+    return Result;
+  };
+  this.ParseColumnAlign = function (AName) {
+    var Result = 0;
+    var L = "";
+    L = pas.SysUtils.LowerCase(pas.SysUtils.Trim(AName));
+    if (L === "center") {
+      Result = $mod.TBVColumnAlign.caCenter}
+     else if (L === "right") {
+      Result = $mod.TBVColumnAlign.caRight}
+     else Result = $mod.TBVColumnAlign.caLeft;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.HumanizeFieldName = function (AField) {
+      var Result = "";
+      if (AField === "") return "";
+      Result = pas.SysUtils.UpperCase(pas.System.Copy(AField,1,1)) + pas.System.Copy(AField,2,2147483647);
+      return Result;
+    };
+    $impl.GetRecordFieldCaseInsensitive = function (ARow, AFieldName) {
+      var Result = undefined;
+      Result = null;
+      if (!ARow || typeof ARow !== 'object') return null;
+      if (ARow[AFieldName] !== undefined) return ARow[AFieldName];
+      var target = (AFieldName || '').toLowerCase();
+      var keys = Object.keys(ARow);
+      for (var i = 0; i < keys.length; i++) {
+        if (keys[i].toLowerCase() === target) {
+          return ARow[keys[i]];
+        }
+      }
+      return '';
+      return Result;
+    };
+  };
+},[]);
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","BlaiseReports"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -7973,6 +8989,73 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
     Result = pas.BVRpc.TBVRpcClient.InvokeAsync(ServiceName,MethodName,Params);
     return Result;
   };
+  this.NewReport = function (DataSetOrArray) {
+    var Result = undefined;
+    Result = pas.BlaiseReports.TBVReport.$create("Create$3",[DataSetOrArray]);
+    return Result;
+  };
+  this.ReportSetTitle = function (Report, ATitle, ASubtitle) {
+    if (Report != null) {
+      rtl.getObject(Report).Title(ATitle);
+      if (ASubtitle !== "") rtl.getObject(Report).Subtitle(ASubtitle);
+    };
+  };
+  this.ReportSetHeader = function (Report, AHeader, AFooter) {
+    if (Report != null) {
+      rtl.getObject(Report).Header(AHeader);
+      if (AFooter !== "") rtl.getObject(Report).Footer(AFooter);
+    };
+  };
+  this.ReportSetCompany = function (Report, ACompanyName, ALogoText) {
+    if (Report != null) rtl.getObject(Report).Company(ACompanyName,ALogoText);
+  };
+  this.ReportSetPageLayout = function (Report, ALayoutName) {
+    if (Report != null) rtl.getObject(Report).PageSize(ALayoutName);
+  };
+  this.ReportSetColumns = function (Report, AFields) {
+    if (Report != null) rtl.getObject(Report).Columns(AFields);
+  };
+  this.ReportAddColumn = function (Report, AFieldName, ACaption, AWidth, AAlign, AFormat) {
+    if (Report != null) rtl.getObject(Report).AddColumn(AFieldName,ACaption,AWidth,pas.BlaiseReports.ParseColumnAlign(AAlign),AFormat);
+  };
+  this.ReportAddSummary = function (Report, ALabel, AFieldName, AAggregate, AFormat) {
+    if (Report != null) rtl.getObject(Report).AddSummary(ALabel,AFieldName,pas.BlaiseReports.ParseAggregateType(AAggregate),AFormat);
+  };
+  this.ReportExportPDF = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportPDF(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportExportExcel = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportExcel(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportExportCSV = function (Report, AFileName) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).ExportCSV(AFileName)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportPrintPreview = function (Report, ATargetElementId) {
+    var Result = "";
+    if (Report != null) {
+      Result = rtl.getObject(Report).PrintPreview(ATargetElementId)}
+     else Result = "";
+    return Result;
+  };
+  this.ReportComputeSummary = function (Report, AFieldName, AAggregate) {
+    var Result = 0.0;
+    if (Report != null) {
+      Result = rtl.getObject(Report).ComputeSummary(AFieldName,pas.BlaiseReports.ParseAggregateType(AAggregate))}
+     else Result = 0.0;
+    return Result;
+  };
   $mod.$implcode = function () {
     $impl.RetainDXDataSetSymbols = function () {
       var dummy = undefined;
@@ -8012,6 +9095,19 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc"],fun
         $mod.RpcSetUsePack(false);
         $mod.RpcCall("","",null,null,null);
         $mod.RpcCallAsync("","",null);
+        dummy = $mod.NewReport(null);
+        $mod.ReportSetTitle(dummy,"","");
+        $mod.ReportSetHeader(dummy,"","");
+        $mod.ReportSetCompany(dummy,"","");
+        $mod.ReportSetPageLayout(dummy,"");
+        $mod.ReportSetColumns(dummy,[""]);
+        $mod.ReportAddColumn(dummy,"","",100,"","");
+        $mod.ReportAddSummary(dummy,"","","","");
+        $mod.ReportExportPDF(dummy,"");
+        $mod.ReportExportExcel(dummy,"");
+        $mod.ReportExportCSV(dummy,"");
+        $mod.ReportPrintPreview(dummy,"");
+        $mod.ReportComputeSummary(dummy,"","");
       };
     };
   };
@@ -10795,6 +11891,195 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
   };
 });
+rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVReportViewer = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bv-report-viewer-container {     display: flex;     flex-direction: column;     gap: 16px;     width: 100%;     box-sizing: border-box;   }    .bv-report-toolbar {     display: flex;     flex-wrap: wrap;     justify-content: space-between;     align-items: center;     gap: 12px;     background: #1e293b;     color: #f8fafc;     padding: 12px 16px;     border-radius: 8px;   }    .bv-report-toolbar-left {     display: flex;     align-items: center;     gap: 10px;   }    .bv-report-badge {     background: #3b82f6;     color: #ffffff;     font-size: 11px;     font-weight: 700;     padding: 4px 8px;     border-radius: 4px;     text-transform: uppercase;   }    .bv-report-layout-select {     background: #0f172a;     color: #f8fafc;     border: 1px solid #334155;     border-radius: 6px;     padding: 6px 10px;     font-size: 13px;   }    .bv-report-count-pill {     font-size: 12px;     color: #94a3b8;   }    .bv-report-toolbar-actions {     display: flex;     flex-wrap: wrap;     gap: 8px;   }    .bv-report-btn {     border: none;     border-radius: 6px;     padding: 7px 12px;     font-size: 12px;     font-weight: 600;     cursor: pointer;     color: #ffffff;   }    .bv-report-btn-pdf { background: #ef4444; }   .bv-report-btn-excel { background: #10b981; }   .bv-report-btn-csv { background: #3b82f6; }   .bv-report-btn-print { background: #6366f1; }    .bv-report-sheet {     background: #ffffff;     color: #0f172a;     padding: 24px;     border-radius: 8px;     border: 1px solid #cbd5e1;     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);     margin: 0 auto;     width: 100%;     box-sizing: border-box;   }    .bv-layout-thermal-80mm {     max-width: 320px;     font-family: 'Courier New', monospace;     font-size: 12px;     padding: 12px;   }    .bv-layout-thermal-58mm {     max-width: 240px;     font-family: 'Courier New', monospace;     font-size: 11px;     padding: 8px;   }    .bv-report-banner {     background: #1e293b;     color: #ffffff;     padding: 16px 20px;     border-radius: 6px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 16px;   }    .bv-report-title {     margin: 0;     font-size: 18px;     font-weight: 700;   }    .bv-report-company {     font-size: 12px;     opacity: 0.85;     margin-top: 4px;   }    .bv-report-logo-box {     font-weight: 800;     font-size: 16px;     border: 2px solid rgba(255, 255, 255, 0.5);     padding: 6px 10px;     border-radius: 6px;   }    .bv-report-meta {     font-size: 12px;     color: #475569;     margin-bottom: 14px;     padding-bottom: 8px;     border-bottom: 1px solid #e2e8f0;   }    .bv-report-table {     width: 100%;     border-collapse: collapse;     font-size: 13px;     margin-bottom: 16px;   }    .bv-report-table th {     background: #f1f5f9;     color: #1e293b;     text-align: left;     padding: 9px 12px;     border-bottom: 2px solid #cbd5e1;     font-weight: 600;   }    .bv-report-table td {     padding: 8px 12px;     border-bottom: 1px solid #e2e8f0;     color: #334155;   }    .bv-report-summaries {     display: flex;     flex-wrap: wrap;     gap: 12px;     justify-content: flex-end;     padding-top: 12px;     border-top: 2px solid #cbd5e1;   }    .bv-report-summary-card {     background: #f8fafc;     border: 1px solid #cbd5e1;     border-radius: 6px;     padding: 8px 14px;     min-width: 130px;     text-align: right;   }    .bv-report-summary-label {     font-size: 11px;     color: #64748b;     text-transform: uppercase;     font-weight: 600;   }    .bv-report-summary-value {     font-size: 15px;     color: #0f172a;     font-weight: 700;     margin-top: 2px;   }    .bv-report-footer {     margin-top: 18px;     padding-top: 10px;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     font-size: 11px;     color: #64748b;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports v5.0</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ title }}</h2>' + '          <div v-if="company" class="bv-report-company">{{ company }}</div>' + '          <div v-if="subtitle" class="bv-report-subtitle">{{ subtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">BV</div>' + "      </div>" + "" + '      <div v-if="headerText" class="bv-report-meta">' + "        {{ headerText }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in resolvedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ footerText }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["activeLayout"] = "a4";
+      d["lastExportFormat"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Executive Data Report";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    comp["props"].push("company");
+    comp["defaultProps"]["company"] = "BlaiseVue Enterprise";
+    comp["props"].push("headerText");
+    comp["defaultProps"]["headerText"] = "";
+    comp["props"].push("footerText");
+    comp["defaultProps"]["footerText"] = "Generated by BlaiseReports Engine v5.0";
+    comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("summaries");
+    comp["defaultProps"]["summaries"] = new Array();
+    comp["props"].push("pageLayout");
+    comp["defaultProps"]["pageLayout"] = "a4";
+    comp["props"].push("currencySymbol");
+    comp["defaultProps"]["currencySymbol"] = "$";
+    comp["props"].push("filename");
+    comp["defaultProps"]["filename"] = "report";
+    comp["props"].push("showToolbar");
+    comp["defaultProps"]["showToolbar"] = true;
+    m = new Object();
+    m["setLayout"] = function (_this, layoutName) {
+      _this["activeLayout"] = layoutName;
+    };
+    m["exportPdf"] = function (_this) {
+      _this["lastExportFormat"] = "pdf";
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-pdf', { filename: (this.filename || 'report') + '.pdf', layout: this.activeLayout });
+      };
+    };
+    m["exportExcel"] = function (_this) {
+      _this["lastExportFormat"] = "xlsx";
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-excel', { filename: (this.filename || 'report') + '.xlsx' });
+      };
+    };
+    m["exportCsv"] = function (_this) {
+      _this["lastExportFormat"] = "csv";
+      if (typeof this.$emit === 'function') {
+        this.$emit('export-csv', { filename: (this.filename || 'report') + '.csv' });
+      };
+    };
+    m["printReport"] = function (_this) {
+      _this["lastExportFormat"] = "print";
+      if (typeof this.$emit === 'function') {
+        this.$emit('print', { layout: this.activeLayout });
+      }
+      try {
+        var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
+        if (!isTestEnv && typeof window !== 'undefined' && typeof window.print === 'function') {
+          window.print();
+        }
+      } catch (e) {};
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.pageLayout) {
+        this.activeLayout = this.pageLayout;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedRows"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds)) return ds;
+      }
+      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        return this.columns.map(function(c) {
+          if (typeof c === 'string') {
+            return { key: c, label: c.charAt(0).toUpperCase() + c.slice(1) };
+          }
+          return {
+            key: c.key || c.field || c.FieldName || '',
+            label: c.label || c.caption || c.Caption || c.key || c.field || ''
+          };
+        });
+      }
+      var ds = this.dataset;
+      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+        return ds.Fields.ToArray();
+      }
+      var list = this.resolvedRows;
+      if (list && list.length > 0 && typeof list[0] === 'object' && list[0] !== null) {
+        return Object.keys(list[0]).filter(function(k) { return k.charAt(0) !== '_'; }).map(function(k) {
+          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+        });
+      }
+      return [];
+      return Result;
+    };
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      var r = this.resolvedRows;
+      Result = (r && Array.isArray(r)) ? r.length : 0;
+      return Result;
+    };
+    comp["computed"]["computedSummaries"] = function (_this) {
+      var Result = undefined;
+      var sums = this.summaries;
+      if (!sums || !Array.isArray(sums) || sums.length === 0) return [];
+      var rows = this.resolvedRows || [];
+      var curr = this.currencySymbol || '$';
+      return sums.map(function(s) {
+        var field = s.field || s.FieldName || '';
+        var agg = (s.aggregate || s.type || 'sum').toLowerCase();
+        var label = s.label || s.LabelText || field;
+        var fmt = (s.format || '').toLowerCase();
+        var val = 0;
+        if (agg === 'count') {
+          val = rows.length;
+        } else if (rows.length > 0) {
+          var sum = 0;
+          var cnt = 0;
+          var minV = null;
+          var maxV = null;
+          for (var i = 0; i < rows.length; i++) {
+            var n = parseFloat(rows[i] ? rows[i][field] : NaN);
+            if (!isNaN(n)) {
+              sum += n;
+              cnt++;
+              if (minV === null || n < minV) minV = n;
+              if (maxV === null || n > maxV) maxV = n;
+            }
+          }
+          if (agg === 'avg' || agg === 'average') val = cnt > 0 ? (sum / cnt) : 0;
+          else if (agg === 'min') val = minV !== null ? minV : 0;
+          else if (agg === 'max') val = maxV !== null ? maxV : 0;
+          else val = sum;
+        }
+        var formatted = '';
+        if (agg === 'count' || fmt === 'integer' || fmt === 'int') {
+          formatted = String(Math.round(val));
+        } else {
+          var parts = Number(val).toFixed(2).split('.');
+          parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          formatted = (fmt === 'number' ? '' : curr) + parts.join('.');
+        }
+        return {
+          label: label,
+          field: field,
+          aggregate: agg,
+          value: Math.round(val * 100) / 100,
+          formattedValue: formatted
+        };
+      });
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
+  };
+});
 rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -12631,7 +13916,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -12710,6 +13995,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVRadarChart.Register_uBVRadarChart();
     console.log("[Init] Registering uBVScatterChart...");
     pas.uBVScatterChart.Register_uBVScatterChart();
+    console.log("[Init] Registering uBVReportViewer...");
+    pas.uBVReportViewer.Register_uBVReportViewer();
     console.log("[Init] Registering uBVAccordion...");
     pas.uBVAccordion.Register_uBVAccordion();
     console.log("[Init] Registering uBVAlert...");
