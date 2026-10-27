@@ -267,7 +267,6 @@ end;
 
 constructor TBVReportColumn.Create(const AFieldName: string; const ACaption: string = ''; AWidth: Integer = 120; AAlign: TBVColumnAlign = caLeft; const AFormat: string = '');
 var
-  Parts: TJSArray;
   RawSpec, ParsedField, ParsedCap, ParsedFmt, ParsedAlignStr: string;
   ParsedWidth: Integer;
 begin
@@ -280,13 +279,13 @@ begin
     ParsedAlignStr := '';
     ParsedWidth := AWidth;
     asm
-      Parts = RawSpec.split(':');
-      ParsedField = (Parts[0] || '').trim();
-      ParsedCap = (Parts.length > 1 && Parts[1]) ? Parts[1].trim() : '';
-      ParsedFmt = (Parts.length > 2 && Parts[2]) ? Parts[2].trim() : '';
-      ParsedAlignStr = (Parts.length > 3 && Parts[3]) ? Parts[3].trim() : '';
-      if (Parts.length > 4 && Parts[4]) {
-        var pw = parseInt(Parts[4], 10);
+      var parts = RawSpec.split(':');
+      ParsedField = (parts[0] || '').trim();
+      ParsedCap = (parts.length > 1 && parts[1]) ? parts[1].trim() : '';
+      ParsedFmt = (parts.length > 2 && parts[2]) ? parts[2].trim() : '';
+      ParsedAlignStr = (parts.length > 3 && parts[3]) ? parts[3].trim() : '';
+      if (parts.length > 4 && parts[4]) {
+        var pw = parseInt(parts[4], 10);
         if (!isNaN(pw) && pw > 0) ParsedWidth = pw;
       }
     end;
