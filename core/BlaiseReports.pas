@@ -890,6 +890,48 @@ procedure TBVReport.DownloadBlobPart(APart: JSValue; const AFileName, AMimeType:
 begin
   asm
     try {
+      // Android and iOS WebViews ignore Blob downloads: save to Documents, then open the file (share a CSV).
+      var capacitor = (typeof window !== 'undefined') ? window.Capacitor : null;
+      if (capacitor && typeof capacitor.isNativePlatform === 'function' && capacitor.isNativePlatform()) {
+        var plugins = capacitor.Plugins || {};
+        if (!plugins.Filesystem || !plugins.Share) {
+          console.error('BlaiseReports: exporting on mobile needs @capacitor/filesystem and @capacitor/share.');
+          return;
+        }
+        var bytes = (typeof APart === 'string') ? new TextEncoder().encode(APart) : APart;
+        var binary = '';
+        for (var offset = 0; offset < bytes.length; offset += 32768) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+        }
+        var safeName = String(AFileName).replace(new RegExp('[\\\\/:*?"<>|]', 'g'), '_');
+        var base64 = btoa(binary);
+        var writeTo = function (path, directory) {
+          return plugins.Filesystem.writeFile({ path: path, data: base64, directory: directory });
+        };
+        var dot = safeName.lastIndexOf('.');
+        var uniqueName = (dot > 0 ? safeName.substring(0, dot) : safeName) + '_' + Date.now() + (dot > 0 ? safeName.substring(dot) : '');
+        var shareFile = function (uri) {
+          return plugins.Share.share({ title: safeName, dialogTitle: safeName, files: [uri] });
+        };
+        // Android lets an app overwrite only its own files in Documents, so a same-named
+        // file left by an earlier install needs a unique name.
+        writeTo(safeName, 'DOCUMENTS')
+          .catch(function () { return writeTo(uniqueName, 'DOCUMENTS'); })
+          .catch(function () { return writeTo(safeName, 'CACHE'); })
+          .then(function (written) {
+            var isDocument = String(AMimeType).indexOf('text/csv') !== 0;
+            if (isDocument && plugins.FileViewer) {
+              var localPath = decodeURI(String(written.uri).replace(new RegExp('^file://'), ''));
+              return plugins.FileViewer.openDocumentFromLocalPath({ path: localPath })
+                .catch(function () { return shareFile(written.uri); });
+            }
+            return shareFile(written.uri);
+          })
+          .catch(function (err) {
+            console.warn('BlaiseReports: file export was not completed:', err);
+          });
+        return;
+      }
       if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
         var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
         if (!isTestEnv && window.URL && typeof window.URL.createObjectURL === 'function') {
