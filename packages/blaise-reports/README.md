@@ -28,3 +28,10 @@ Report.Title('Q4 Executive Sales Summary')
       .AddSummary('Average Order', 'TotalAmount', aggAverage)
       .ExportPDF('sales_summary.pdf');
 ```
+
+## PDF fonts
+
+PDF text that fits WinAnsi uses the standard Helvetica fonts. If a report has other
+characters, the file embeds a Latin + Greek subset of DejaVu Sans, which adds about
+60 KB to the file. Characters outside the subset print as `?`. To change the subset,
+edit and run `tools/make_pdf_fonts.py`. The font licence is in `DEJAVU-LICENSE`.
