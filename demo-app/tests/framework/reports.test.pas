@@ -249,7 +249,7 @@ begin
           end;
 
           Expect(SavedPath).ToBe('sales_q4.xlsx');
-          Expect(SavedDir).ToBe('CACHE');
+          Expect(SavedDir).ToBe('DOCUMENTS');
           // Base64 of the ZIP signature "PK"
           Expect(Pos('UEs', SavedData) = 1).ToBe(True);
         end);
