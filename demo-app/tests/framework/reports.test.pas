@@ -218,6 +218,42 @@ begin
           Expect(Pos('<?mso-application', PkgText) > 0).ToBe(False);
         end);
 
+      // 4b. Inside a Capacitor app, exports go through Filesystem and Share instead of a Blob link
+      It('should save exports with Capacitor Filesystem on native mobile platforms', procedure
+        var
+          DS: TBVDataSet;
+          Rep: TBVReport;
+          SavedPath, SavedData, SavedDir: string;
+        begin
+          SavedPath := '';
+          SavedData := '';
+          SavedDir := '';
+          asm
+            window.Capacitor = {
+              isNativePlatform: function () { return true; },
+              Plugins: {
+                Filesystem: { writeFile: function (o) {
+                  SavedPath = o.path; SavedData = o.data; SavedDir = o.directory;
+                  return Promise.resolve({ uri: 'file:///cache/' + o.path });
+                } },
+                Share: { share: function () { return Promise.resolve({}); } }
+              }
+            };
+          end;
+          DS := CreateSampleSalesDataSet;
+          Rep := TBVReport.Create(DS);
+          Rep.Title('Mobile Export').Columns(['id:ID:integer', 'customer:Customer']);
+          Rep.ExportExcel('sales/q4.xlsx');
+          asm
+            delete window.Capacitor;
+          end;
+
+          Expect(SavedPath).ToBe('sales_q4.xlsx');
+          Expect(SavedDir).ToBe('CACHE');
+          // Base64 of the ZIP signature "PK"
+          Expect(Pos('UEs', SavedData) = 1).ToBe(True);
+        end);
+
       // 4. Native Excel (.xlsx / SpreadsheetML) Export with Typed Cells & Styles
       It('should generate native Excel SpreadsheetML with strongly typed Number/String/Boolean cells and currency styles', procedure
         var

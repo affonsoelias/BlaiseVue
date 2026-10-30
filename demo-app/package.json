@@ -15,5 +15,9 @@
     "@capacitor/core": "^8.5.3"
   },
   "license": "MIT",
-  "author": "BlaiseVue Core Team"
+  "author": "BlaiseVue Core Team",
+  "dependencies": {
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3"
+  }
 }
