@@ -133,6 +133,42 @@ begin
           Expect(TJSObject(SummariesJS[2])['formattedValue']).ToBe('4');
         end);
 
+      // 3a. WinAnsi text keeps Helvetica and is written as octal escapes, not raw characters
+      It('should keep Helvetica and write accented WinAnsi text as octal escapes', procedure
+        var
+          DS: TBVDataSet;
+          Rep: TBVReport;
+          PdfContent, Accented: string;
+        begin
+          DS := CreateSampleSalesDataSet;
+          Rep := TBVReport.Create(DS);
+          asm Accented = 'Relat' + String.fromCharCode(0xF3) + 'rio ' + String.fromCharCode(0x20AC); end;
+          Rep.Title(Accented).Columns(['customer:Customer']);
+          PdfContent := Rep.GeneratePDF;
+          Expect(Pos('/BaseFont /Helvetica', PdfContent) > 0).ToBe(True);
+          Expect(Pos('(Relat\363rio \200) Tj', PdfContent) > 0).ToBe(True);
+        end);
+
+      // 3b. Characters Helvetica cannot draw print as a question mark and the file stays ASCII
+      It('should replace characters outside WinAnsi and keep the PDF pure ASCII', procedure
+        var
+          DS: TBVDataSet;
+          Rep: TBVReport;
+          PdfContent, Greek: string;
+          IsAscii: Boolean;
+        begin
+          asm Greek = String.fromCharCode(0x391, 0x3BD); end;
+          DS := CreateSampleSalesDataSet;
+          Rep := TBVReport.Create(DS);
+          Rep.Title(Greek + ' x').Author(Greek).Columns(['customer:Customer']);
+          PdfContent := Rep.GeneratePDF;
+          IsAscii := False;
+          asm IsAscii = !new RegExp('[^\\x00-\\x7F]').test(PdfContent); end;
+          Expect(IsAscii).ToBe(True);
+          Expect(Pos('(?? x) Tj', PdfContent) > 0).ToBe(True);
+          Expect(Pos('/Author <FEFF039103BD>', PdfContent) > 0).ToBe(True);
+        end);
+
       // 3. Native Vector PDF 1.4 Generation & Multi-Page Pagination
       It('should generate valid native Vector PDF 1.4 documents with pagination, headers, footers and xref table', procedure
         var
