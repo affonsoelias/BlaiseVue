@@ -20,7 +20,7 @@ unit BlaiseReports;
 interface
 
 uses
-  JS, Web, SysUtils, Classes, BVDataSet;
+  JS, Web, SysUtils, Classes, BVDataSet, BlaiseReportsFonts;
 
 const
   REPORT_LAYOUT_A4_PORTRAIT      = 'a4';
@@ -969,9 +969,32 @@ var
   SumFmt, CellText, SumLine, ThemeRgb, PageStream: string;
   RawVal: JSValue;
   PageStreams: TJSArray;
+  FontRegular, FontBold: TJSObject;
 begin
   Recs := GetRecordsArray;
   EnsureAutoColumns(Recs);
+  FontRegular := TJSObject.new;
+  FontRegular['name'] := BVPdfFontRegularName;
+  FontRegular['length1'] := BVPdfFontRegularLength1;
+  FontRegular['bbox'] := BVPdfFontRegularBBox;
+  FontRegular['ascent'] := BVPdfFontRegularAscent;
+  FontRegular['descent'] := BVPdfFontRegularDescent;
+  FontRegular['cap'] := BVPdfFontRegularCapHeight;
+  FontRegular['cmap'] := BVPdfFontRegularCmap;
+  FontRegular['widths'] := BVPdfFontRegularWidths;
+  FontRegular['data'] := BVPdfFontRegularData;
+  FontRegular['stemV'] := 80;
+  FontBold := TJSObject.new;
+  FontBold['name'] := BVPdfFontBoldName;
+  FontBold['length1'] := BVPdfFontBoldLength1;
+  FontBold['bbox'] := BVPdfFontBoldBBox;
+  FontBold['ascent'] := BVPdfFontBoldAscent;
+  FontBold['descent'] := BVPdfFontBoldDescent;
+  FontBold['cap'] := BVPdfFontBoldCapHeight;
+  FontBold['cmap'] := BVPdfFontBoldCmap;
+  FontBold['widths'] := BVPdfFontBoldWidths;
+  FontBold['data'] := BVPdfFontBoldData;
+  FontBold['stemV'] := 140;
 
   TotalRecords := Integer(Recs.length);
   Limit := FRowsPerPage;
@@ -1118,34 +1141,104 @@ begin
     addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
     // Obj 5: Document Info
     var self = this;
-    function hex4(n) {
-      var out = n.toString(16).toUpperCase();
-      while (out.length < 4) out = '0' + out;
-      return out;
-    }
     function infoText(text) {
       if (!new RegExp('[^\\x00-\\x7F]').test(text)) return '(' + self.EscapePDFString(text) + ')';
       var hex = 'FEFF';
       for (var h = 0; h < text.length; h++) hex += hex4(text.charCodeAt(h));
       return '<' + hex + '>';
     }
+    function hex4(n) {
+      var out = n.toString(16).toUpperCase();
+      while (out.length < 4) out = '0' + out;
+      return out;
+    }
     var infoStr = '<< /Title ' + infoText(this.FTitle) + ' /Author ' + infoText(this.FAuthor) + ' /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
     addObj(infoStr);
 
     // The page streams still hold raw characters inside their text operands, and every
     // byte of the file must stay ASCII because the xref offsets count string length.
-    // Helvetica covers WinAnsi only, so those characters become octal escapes and any
-    // other character prints as a question mark.
+    // Helvetica covers WinAnsi only, so any other character switches both fonts to the
+    // embedded Latin + Greek subset, drawn through glyph ids in hex strings.
     var winAnsiHigh = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+    var needsEmbed = false;
     var nonAscii = new RegExp('[^\\x00-\\x7F]', 'g');
     var streams = [];
     for (var s = 0; s < PageStreams.length; s++) {
-      streams.push(PageStreams[s].normalize('NFC').replace(nonAscii, function (ch) {
-        var unit = ch.charCodeAt(0);
-        var mapped = winAnsiHigh[unit];
-        if (mapped === undefined) mapped = (unit >= 0xA0 && unit <= 0xFF) ? unit : 0x3F;
-        return mapped < 0x80 ? '?' : '\\' + mapped.toString(8);
-      }));
+      var normalized = PageStreams[s].normalize('NFC');
+      var found = normalized.match(nonAscii) || [];
+      for (var k = 0; k < found.length; k++) {
+        var code = found[k].charCodeAt(0);
+        if (code < 0xA0 && winAnsiHigh[code] === undefined || code > 0xFF && winAnsiHigh[code] === undefined) needsEmbed = true;
+      }
+      streams.push(normalized);
+    }
+
+    function parseCmap(text) {
+      var map = {};
+      var entries = text.split(',');
+      for (var e = 0; e < entries.length; e++) {
+        var pair = entries[e].split(':');
+        map[parseInt(pair[0], 16)] = parseInt(pair[1], 16);
+      }
+      return map;
+    }
+
+    function addEmbeddedFont(slot, font, tag) {
+      var baseName = tag + '+' + font.name;
+      var fileId = addObj('<< /Length ' + font.data.length + ' /Length1 ' + font.length1 + ' /Filter [/ASCII85Decode /FlateDecode] >>\nstream\n' + font.data + '\nendstream');
+      var descId = addObj('<< /Type /FontDescriptor /FontName /' + baseName + ' /Flags 4 /FontBBox [' + font.bbox + '] /ItalicAngle 0 /Ascent ' + font.ascent + ' /Descent ' + font.descent + ' /CapHeight ' + font.cap + ' /StemV ' + font.stemV + ' /FontFile2 ' + fileId + ' 0 R >>');
+      var cidId = addObj('<< /Type /Font /Subtype /CIDFontType2 /BaseFont /' + baseName + ' /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ' + descId + ' 0 R /W [0 [' + font.widths + ']] /CIDToGIDMap /Identity >>');
+      var seen = {};
+      var lines = [];
+      var entries = font.cmap.split(',');
+      for (var e = 0; e < entries.length; e++) {
+        var pair = entries[e].split(':');
+        var gid = parseInt(pair[1], 16);
+        if (seen[gid]) continue;
+        seen[gid] = true;
+        lines.push('<' + hex4(gid) + '> <' + hex4(parseInt(pair[0], 16)) + '>');
+      }
+      var cmapText = '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n';
+      for (var b = 0; b < lines.length; b += 100) {
+        var block = lines.slice(b, b + 100);
+        cmapText += block.length + ' beginbfchar\n' + block.join('\n') + '\nendbfchar\n';
+      }
+      cmapText += 'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n';
+      var unicodeId = addObj('<< /Length ' + cmapText.length + ' >>\nstream\n' + cmapText + 'endstream');
+      objects[slot] = '<< /Type /Font /Subtype /Type0 /BaseFont /' + baseName + ' /Encoding /Identity-H /DescendantFonts [' + cidId + ' 0 R] /ToUnicode ' + unicodeId + ' 0 R >>';
+    }
+
+    function encodeGlyphs(text, map) {
+      var hex = '';
+      var fallback = map[0x3F];
+      for (var c = 0; c < text.length; c++) {
+        var unit = text.charCodeAt(c);
+        if (unit >= 0xD800 && unit <= 0xDBFF) c++;
+        var gid = map[unit];
+        hex += hex4(gid === undefined ? fallback : gid);
+      }
+      return '<' + hex + '>';
+    }
+
+    if (needsEmbed) {
+      addEmbeddedFont(2, FontRegular, 'BVAAAA');
+      addEmbeddedFont(3, FontBold, 'BVAAAB');
+      var maps = {'1': parseCmap(FontRegular.cmap), '2': parseCmap(FontBold.cmap)};
+      var textOp = new RegExp('/F([12]) ([0-9.]+) Tf ([^(]*)\\(((?:[^\\\\()]|\\\\.)*)\\) Tj', 'g');
+      var unescapePdf = new RegExp('\\\\(.)', 'g');
+      for (var t = 0; t < streams.length; t++) {
+        streams[t] = streams[t].replace(textOp, function (all, fontNo, size, between, text) {
+          return '/F' + fontNo + ' ' + size + ' Tf ' + between + encodeGlyphs(text.replace(unescapePdf, '$1'), maps[fontNo]) + ' Tj';
+        });
+      }
+    } else {
+      for (var w = 0; w < streams.length; w++) {
+        streams[w] = streams[w].replace(nonAscii, function (ch) {
+          var unit = ch.charCodeAt(0);
+          var octal = (winAnsiHigh[unit] === undefined ? unit : winAnsiHigh[unit]).toString(8);
+          return '\\' + octal;
+        });
+      }
     }
 
     var pageRefs = [];
