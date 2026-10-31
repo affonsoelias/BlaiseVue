@@ -21,4 +21,14 @@ The `b-model` is not magic; it is a reactive bridge. It handles both the initial
 
 ---
 
+> [!TIP]
+> **Pro Tip: `v-model` Alias**
+> If you are accustomed to Vue.js, BlaiseVue fully supports `v-model` as a direct alias for `b-model`:
+> ```html
+> <input type="text" v-model="userName">
+> ```
+> Both `b-model` and `v-model` are compiled with the exact same two-way reactive binding engine! 🚀
+
+---
+
 **Next Step: Save effort with reactive formulas in Module 05!** 🧠✨

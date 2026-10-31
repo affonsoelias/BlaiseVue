@@ -45,7 +45,7 @@ Open your `Home.bv` and add this code:
 > [!TIP]
 > **Pro Tip: Directive Aliases**
 > For those coming from Vue.js, BlaiseVue supports the `v-` prefix as first-class aliases! 
-> You can use `v-for`, `v-if`, `v-else-if`, `v-else`, and `v-show` instead of `b-` prefixes. The compiler handles both identically. 🚀
+> You can use `v-for`, `v-if`, `v-else-if`, `v-else`, `v-show`, `v-model`, `v-on:` (or `@`), and `v-validate` interchangeably with their `b-` equivalents. The compiler handles both identically. 🚀
 
 **Extra Challenge:** Try to add a "Remove" button inside the `b-for` using what you learned in the previous module! 🛡️✨🏆
 

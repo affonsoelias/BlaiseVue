@@ -1128,8 +1128,8 @@ initialization
                   let mods = parts.slice(1);
                   events.push({ name: evName, expr: a.value, modifiers: mods });
                }
-               else if (n.startsWith(':') || n.startsWith('b-bind:')) {
-                  binds.push({ name: n.replace('b-bind:', '').replace(':', ''), expr: a.value });
+               else if (n.startsWith(':') || n.startsWith('b-bind:') || n.startsWith('v-bind:')) {
+                  binds.push({ name: n.replace('v-bind:', '').replace('b-bind:', '').replace(':', ''), expr: a.value });
                }
             }
           }

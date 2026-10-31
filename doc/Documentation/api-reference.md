@@ -11,16 +11,16 @@ This document is the official technical reference for all directives, components
 | `b-if` / `v-if` | Conditional rendering (DOM creation / complete removal). | `<div b-if="show">...</div>` |
 | `b-else-if` / `v-else-if` | Intermediate conditional branch (must follow `b-if` or `b-else-if`). | `<div b-else-if="status === 'loading'">...</div>` |
 | `b-else` / `v-else` | Fallback conditional branch (must follow `b-if` or `b-else-if`). | `<div b-else>...</div>` |
-| `b-show` | Visibility toggling via inline CSS (`display: none`). | `<div b-show="visible">...</div>` |
-| `b-for` | Reactive array iteration over `TJSArray` or collections. | `<li b-for="item in list">...</li>` |
-| `b-model` | Two-way reactive data synchronization for form elements and custom components. | `<input b-model="name">` |
-| `b-validate` | Declarative validation rules with automatic `$errors` and `$v` tracking. | `<input b-model="email" b-validate="required\|email">` |
-| `b-ref` | Registers an element reference into the component's `$refs` dictionary. | `<canvas b-ref="chart"></canvas>` |
+| `b-show` / `v-show` | Visibility toggling via inline CSS (`display: none`). | `<div b-show="visible">...</div>` |
+| `b-for` / `v-for` | Reactive array iteration over `TJSArray` or collections. | `<li b-for="item in list">...</li>` |
+| `b-model` / `v-model` | Two-way reactive data synchronization for form elements and custom components. | `<input b-model="name">` |
+| `b-validate` / `v-validate` | Declarative validation rules with automatic `$errors` and `$v` tracking. | `<input b-model="email" b-validate="required\|email">` |
+| `b-ref` / `ref` | Registers an element reference into the component's `$refs` dictionary. | `<canvas b-ref="chart"></canvas>` |
 | `b-slot` / `#` | Directs content into named slots or receives scoped slot parameters. | `<template #header="scope">...</template>` |
 | `<teleport to="...">` | Teleports child DOM elements to an external selector outside the parent container. | `<teleport to="body">...</teleport>` |
 | `<suspense>` | Coordinates asynchronous component loading with `#default` and `#fallback` slots. | `<suspense>...</suspense>` |
 | `<transition-group>` | Smooth list and collection animations on insert, remove, and reorder (FLIP). | `<transition-group name="list" tag="ul">` |
-| `:attr` / `v-bind` | Dynamically synchronizes HTML attributes with Pascal expressions. | `<div :class="{ active: isActive }"></div>` |
+| `:attr` / `b-bind:` / `v-bind:` | Dynamically synchronizes HTML attributes with Pascal expressions. | `<div :class="{ active: isActive }"></div>` |
 
 
 ---

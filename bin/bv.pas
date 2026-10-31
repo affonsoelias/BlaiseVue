@@ -4806,6 +4806,14 @@ begin
 
           ((i <= Length(Tpl) - 6) and (Copy(Tpl, i, 6) = 'v-show')) or
 
+          ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-bind:')) or
+
+          ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'v-bind:')) or
+
+          ((i <= Length(Tpl) - 10) and (Copy(Tpl, i, 10) = 'b-validate')) or
+
+          ((i <= Length(Tpl) - 10) and (Copy(Tpl, i, 10) = 'v-validate')) or
+
           ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-field'))) then
 
       begin

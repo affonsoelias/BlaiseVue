@@ -6,11 +6,18 @@ BlaiseVue provides a native, declarative, and typed form validation engine that 
 
 ## 🎯 Key Capabilities
 
-- **Declarative Directive**: Attach validation rules directly to template inputs via `b-validate="required|email|min:5"`.
+- **Declarative Directive**: Attach validation rules directly to template inputs via `b-validate="required|email|min:5"` (or `v-validate="required|email|min:5"`).
 - **Reactive Errors Tracking (`$errors`)**: Automatic reactive map of validation error messages per field (`$errors.email`).
 - **Validation State (`$v`)**: Access `$dirty`, `$invalid`, `$touch()`, `$reset()`, and `$validate()`.
 - **Custom Rules**: Register custom validation logic in Object Pascal with custom localized message templates.
 - **Zero-Boilerplate UI Binding**: Automatically sets CSS state classes (`is-invalid` / `is-valid`) on blurred inputs.
+
+> [!TIP]
+> **Vue-Style Aliases (`v-validate` e `v-model`)**
+> Assim como as demais diretivas do BlaiseVue, o motor de validação aceita indistintamente tanto o prefixo `b-` quanto o prefixo `v-`. Você pode usar `v-validate` em conjunto com `v-model`:
+> ```html
+> <input type="email" v-model="email" v-validate="required|email" />
+> ```
 
 ---
 
