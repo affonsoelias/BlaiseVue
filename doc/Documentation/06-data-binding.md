@@ -74,7 +74,7 @@ Links an input to reactive data in two directions:
 
 ---
 
-## 3. One-Way Attribute Binding `:attr` or `b-bind:attr`
+## 3. One-Way Attribute Binding `:attr`, `b-bind:attr` or `v-bind:attr`
 
 Links an HTML attribute to a reactive data (read-only).
 
@@ -93,7 +93,7 @@ Links an HTML attribute to a reactive data (read-only).
 </script>
 ```
 
-**Short syntax:** `:href="field"` (equivalent to `b-bind:href="field"`)
+**Short syntax:** `:href="field"` (equivalent to `b-bind:href="field"` and `v-bind:href="field"`)
 
 ---
 
