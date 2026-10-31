@@ -37,7 +37,7 @@ my-app/
     │   ├── DatasetView.test.pas
     │   └── CustomerView.test.pas
     │
-    ├── unit/                <- Created via "bv new t <Name>" (business rules, calculations, services)
+    ├── services/            <- Created via "bv new s <Name>" or "bv new t <Name>" (business rules, services)
     │   ├── CalculadoraFrete.test.pas
     │   └── Formatters.test.pas
     │

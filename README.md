@@ -94,11 +94,13 @@ bv clean                   # Cleans generated files (generated/ and dist/)
 
 # === Scaffolding & Generators ===
 bv create <app-name>       # Scaffolds a project with 4-tier testing hierarchy & domain services
-bv new c <Name>            # Scaffolds a component (.bv) & automatic test in tests/components/
-bv new v <Name>            # Scaffolds a route view (.bv) & automatic test in tests/views/
-bv new t <Name>            # Scaffolds a Pascal test file (smart detection: components, views, unit)
-bv remove <c|v|t> <Name>   # Safely deletes a component, view, or test
-bv list <c|v|t|lib>        # Lists project components, views, tests, or installed libs
+bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/ (alias: bv g c)
+bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv g v)
+bv new s <Name>            # Scaffolds a domain service & test in tests/services/ (alias: bv g s)
+bv new t <Name>            # Scaffolds a Pascal test file (smart detection: c, v, services) (alias: bv g t)
+bv remove <c|v|s|t> <Name> # Safely deletes a component, view, service, or test
+bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
+bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 
 # === Package & Theme Management ===
 bv lib install <pkg|url>   # Installs official package (themes, icons, ui) or from URL

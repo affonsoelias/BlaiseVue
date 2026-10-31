@@ -114,9 +114,13 @@ bv run preview             # Local HTTP preview of production build (port 5000)
 # === Scaffolding & Packages ===
 bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services
 bv create <name> --lib     # Scaffolds a standalone library package with license and playground
-bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/
-bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/
-bv new t <Name>            # Scaffolds a test (smart detection: components, views, unit)
+bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/ (alias: bv g c)
+bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv g v)
+bv new s <Name>            # Scaffolds a domain service & test in tests/services/ (alias: bv g s)
+bv new t <Name>            # Scaffolds a test (smart detection: c, v, services) (alias: bv g t)
+bv remove <c|v|s|t> <Name> # Safely deletes a component, view, service, or test
+bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
+bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 bv lib install <pkg|url>   # Installs an official package or local/remote archive into lib/
 bv lib pack [dir]          # Assembles & cryptographically verifies release artifact (.zip with SHA-256)
 bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
