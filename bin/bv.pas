@@ -818,7 +818,7 @@ procedure CmdMeta; forward;
 procedure CmdReset; forward;
 procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
-procedure CmdSelfUpdate; forward;
+procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
 
@@ -24324,7 +24324,7 @@ end;
 //  FRAMEWORK GIT AUTO-UPDATER (bv self-update)
 // =====================================================================
 
-procedure CmdSelfUpdate;
+procedure CmdSelfUpdate(const ChannelOverride: string = '');
 var
   SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FilteredStatus, LineStr, FetchOut: string;
   DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
@@ -24365,7 +24365,7 @@ begin
   // 3. Parse arguments
   CheckOnly := False;
   ForceUpdate := False;
-  TargetBranch := '';
+  TargetBranch := ChannelOverride;
 
   for i := 2 to ParamCount do
   begin
@@ -24519,7 +24519,7 @@ begin
   end;
 
   // Reset local CLI binary modifications before git checkout/pull to avoid binary merge conflicts
-  if HadLocalBinMod then
+  if HadLocalBinMod or (TargetBranch <> CurBranch) then
   begin
     BinDir := SDKDir + DirectorySeparator + 'bin';
     {$IFDEF WINDOWS}
@@ -24537,6 +24537,10 @@ begin
   begin
     WriteLn('  [+] Switching channel: ' + CurBranch + ' -> ' + TargetBranch + '...');
     ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, CheckoutOut);
+    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD', CurBranch);
+    CurBranch := Trim(CurBranch);
+    if CurBranch <> TargetBranch then
+      ExecCmdCapture('git -C "' + SDKDir + '" checkout -f ' + TargetBranch, CheckoutOut);
   end;
 
   // 8. Pull updates
@@ -24632,9 +24636,7 @@ begin
     end;
 
     // Run self-update targeting this branch
-    WriteLn('Switching to channel "' + TargetBranch + '"...');
-    ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, SubCmd);
-    CmdSelfUpdate;
+    CmdSelfUpdate(TargetBranch);
   end
   else
   begin
