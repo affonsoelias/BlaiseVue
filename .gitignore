@@ -16,6 +16,8 @@ bin/bv_old*
 bin/lib/
 **/server/bin/
 **/server/lib/
+**/desktop/bin/
+**/desktop/units/
 
 # 🏰 Pascal Build Artifacts (Global)
 *.o

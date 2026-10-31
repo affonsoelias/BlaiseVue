@@ -65,7 +65,18 @@ begin
   BrowserCmd := 'cmd.exe';
   Result := True;
   {$ELSE}
-  BrowserCmd := 'xdg-open';
+  // Linux & Unix browser discovery
+  BrowserCmd := FileSearch('google-chrome', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('google-chrome-stable', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('chromium', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('chromium-browser', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('brave-browser', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('microsoft-edge', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('microsoft-edge-stable', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('vivaldi', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('firefox', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := FileSearch('xdg-open', GetEnvironmentVariable('PATH'));
+  if BrowserCmd = '' then BrowserCmd := 'xdg-open';
   Result := True;
   {$ENDIF}
 end;
@@ -89,14 +100,28 @@ begin
         Proc.Parameters.Add('''');
         Proc.Parameters.Add(TargetURL);
       end
+      else if (ExtractFileName(BCmd) = 'xdg-open') or (BCmd = 'xdg-open') then
+      begin
+        Proc.Parameters.Add(TargetURL);
+      end
+      else if Pos('firefox', LowerCase(ExtractFileName(BCmd))) > 0 then
+      begin
+        Proc.Parameters.Add('--new-window');
+        Proc.Parameters.Add(TargetURL);
+      end
       else
       begin
+        // Chromium-based browsers (Chrome, Chromium, Brave, Edge, Vivaldi)
         ProfileDir := GetTempDir(False) + 'bv_desktop_profile';
         ForceDirectories(ProfileDir);
         Proc.Parameters.Add('--app=' + TargetURL);
         Proc.Parameters.Add('--window-size=' + IntToStr(DEFAULT_WIDTH) + ',' + IntToStr(DEFAULT_HEIGHT));
         Proc.Parameters.Add('--user-data-dir=' + ProfileDir);
         Proc.Parameters.Add('--no-first-run');
+        Proc.Parameters.Add('--allow-file-access-from-files');
+        {$IFDEF LINUX}
+        Proc.Parameters.Add('--ozone-platform-hint=auto');
+        {$ENDIF}
       end;
       Proc.Options := [poWaitOnExit];
       Proc.Execute;

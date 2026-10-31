@@ -11847,7 +11847,7 @@ begin
         '' + #10 +
 
         'type' + #10 +
-
+        '  Size_t = SizeUInt;' + #10 +
         '  PWebUIEvent = ^TWebUIEvent;' + #10 +
 
         '  TWebUIEvent = record' + #10 +
@@ -12619,89 +12619,70 @@ begin
         '' + #10 +
 
         '  BrowserCmd := ''cmd.exe'';' + #10 +
-
         '  Result := True;' + #10 +
-
         '  {$ELSE}' + #10 +
-
-        '  BrowserCmd := ''xdg-open'';' + #10 +
-
+        '  BrowserCmd := FileSearch(''google-chrome'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''google-chrome-stable'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''chromium'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''chromium-browser'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''brave-browser'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''microsoft-edge'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''microsoft-edge-stable'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''vivaldi'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''firefox'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := FileSearch(''xdg-open'', GetEnvironmentVariable(''PATH''));' + #10 +
+        '  if BrowserCmd = '''' then BrowserCmd := ''xdg-open'';' + #10 +
         '  Result := True;' + #10 +
-
         '  {$ENDIF}' + #10 +
-
         'end;' + #10 +
-
         '' + #10 +
-
         'procedure LaunchNativeBrowserApp(const TargetURL: string);' + #10 +
-
         'var' + #10 +
-
         '  BCmd: string;' + #10 +
-
         '  Proc: TProcess;' + #10 +
-
         '  ProfileDir: string;' + #10 +
-
         'begin' + #10 +
-
         '  WriteLn(''[BlaiseVue Desktop] Launching native Browser App mode...'');' + #10 +
-
         '  if FindAppModeBrowser(TargetURL, BCmd) then' + #10 +
-
         '  begin' + #10 +
-
         '    Proc := TProcess.Create(nil);' + #10 +
-
         '    try' + #10 +
-
         '      Proc.Executable := BCmd;' + #10 +
-
         '      if BCmd = ''cmd.exe'' then' + #10 +
-
         '      begin' + #10 +
-
         '        Proc.Parameters.Add(''/c'');' + #10 +
-
         '        Proc.Parameters.Add(''start'');' + #10 +
-
         '        Proc.Parameters.Add('''''''');' + #10 +
-
         '        Proc.Parameters.Add(TargetURL);' + #10 +
-
         '      end' + #10 +
-
-        '      else' + #10 +
-
+        '      else if (ExtractFileName(BCmd) = ''xdg-open'') or (BCmd = ''xdg-open'') then' + #10 +
         '      begin' + #10 +
-
+        '        Proc.Parameters.Add(TargetURL);' + #10 +
+        '      end' + #10 +
+        '      else if Pos(''firefox'', LowerCase(ExtractFileName(BCmd))) > 0 then' + #10 +
+        '      begin' + #10 +
+        '        Proc.Parameters.Add(''--new-window'');' + #10 +
+        '        Proc.Parameters.Add(TargetURL);' + #10 +
+        '      end' + #10 +
+        '      else' + #10 +
+        '      begin' + #10 +
         '        ProfileDir := GetTempDir(False) + ''bv_desktop_profile'';' + #10 +
-
         '        ForceDirectories(ProfileDir);' + #10 +
-
         '        Proc.Parameters.Add(''--app='' + TargetURL);' + #10 +
-
         '        Proc.Parameters.Add(''--window-size='' + IntToStr(DEFAULT_WIDTH) + '','' + IntToStr(DEFAULT_HEIGHT));' + #10 +
-
         '        Proc.Parameters.Add(''--user-data-dir='' + ProfileDir);' + #10 +
-
         '        Proc.Parameters.Add(''--no-first-run'');' + #10 +
-
+        '        Proc.Parameters.Add(''--allow-file-access-from-files'');' + #10 +
+        '        {$IFDEF LINUX}' + #10 +
+        '        Proc.Parameters.Add(''--ozone-platform-hint=auto'');' + #10 +
+        '        {$ENDIF}' + #10 +
         '      end;' + #10 +
-
         '      Proc.Options := [poWaitOnExit];' + #10 +
-
         '      Proc.Execute;' + #10 +
-
         '    finally' + #10 +
-
         '      Proc.Free;' + #10 +
-
         '    end;' + #10 +
-
         '  end;' + #10 +
-
         'end;' + #10 +
 
         '' + #10 +
@@ -13369,9 +13350,7 @@ begin
         ExecuteProcess('cmd', '/c cd /d "' + ExeDir + '" && "' + TargetExe + '"');
 
         {$ELSE}
-
-        ExecuteProcess('/bin/sh', '-c "cd ''' + ExeDir + ''' && ./' + ExtractFileName(TargetExe) + '"');
-
+        ExecuteProcess('/bin/sh', ['-c', 'cd "' + ExeDir + '" && ./' + ExtractFileName(TargetExe)]);
         {$ENDIF}
 
       end;

@@ -22,6 +22,7 @@ const
   Epic = 11;
 
 type
+  Size_t = SizeUInt;
   PWebUIEvent = ^TWebUIEvent;
   TWebUIEvent = record
     window: Size_t;

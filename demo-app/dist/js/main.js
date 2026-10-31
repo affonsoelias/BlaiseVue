@@ -10011,6 +10011,39 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
     $mod.InitDevTools();
   };
 });
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uFormHeader = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "/* Visual styling using standard CSS. Scoped by the framework to this component. */   .form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background-color: rgba(66, 184, 131, 0.05); border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background-color: rgba(66, 184, 131, 0.1); }   .form-header-title { color: inherit !important; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: inherit !important; opacity: 0.8; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: rgba(128,128,128,0.2); margin-top: 12px; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="form-header">' + "    <!-- reactive title bound to the 'title' data/prop -->" + '    <h2 class="form-header-title" @click="headerClick">{{ title }}</h2>' + "    " + "    <!-- subtitle displaying current reactive state -->" + '    <p class="form-header-subtitle">{{ subtitle }}</p>' + "    " + '    <div class="form-header-line"></div>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Formulário do Sistema";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
+    m = new Object();
+    m["headerClick"] = function (_this) {
+      _this["$emit"].call(_this,"header-clicked","Ola do Header!");
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("form-header",comp);
+  };
+});
 rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -10073,39 +10106,6 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uFormHeader = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "/* Visual styling using standard CSS. Scoped by the framework to this component. */   .form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background-color: rgba(66, 184, 131, 0.05); border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background-color: rgba(66, 184, 131, 0.1); }   .form-header-title { color: inherit !important; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: inherit !important; opacity: 0.8; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: rgba(128,128,128,0.2); margin-top: 12px; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="form-header">' + "    <!-- reactive title bound to the 'title' data/prop -->" + '    <h2 class="form-header-title" @click="headerClick">{{ title }}</h2>' + "    " + "    <!-- subtitle displaying current reactive state -->" + '    <p class="form-header-subtitle">{{ subtitle }}</p>' + "    " + '    <div class="form-header-line"></div>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Formulário do Sistema";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
-    m = new Object();
-    m["headerClick"] = function (_this) {
-      _this["$emit"].call(_this,"header-clicked","Ola do Header!");
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("form-header",comp);
-  };
-});
 rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -10130,6 +10130,523 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("info-card",comp);
+  };
+});
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uMobileView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Última Ação:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>" + "                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>" + "                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>" + "                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>" + "                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>" + "                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>" + "                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["currentMode"] = "md";
+      d["lastAction"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["setIosMode"] = function (_this) {
+      _this["currentMode"] = "ios";
+      pas.BVPascalDX.IonicSetMode("ios");
+      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
+    };
+    m["setMdMode"] = function (_this) {
+      _this["currentMode"] = "md";
+      pas.BVPascalDX.IonicSetMode("md");
+      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
+    };
+    m["showToast"] = function (_this) {
+      pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
+      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
+    };
+    m["showAlert"] = function (_this) {
+      pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
+      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
+    };
+    m["onConfirmOk"] = function (_this) {
+      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
+      pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
+    };
+    m["onConfirmCancel"] = function (_this) {
+      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
+    };
+    m["showConfirm"] = function (_this) {
+      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
+      pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
+    };
+    m["showLoading"] = function (_this) {
+      pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
+      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
+    };
+    m["onSheetSelect"] = function (_this, opt, idx) {
+      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
+      pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
+    };
+    m["showActionSheet"] = function (_this) {
+      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
+      pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
+    };
+    pas.BVComponents.RegisterComponent("mobile-view-page",comp);
+  };
+});
+rtl.module("Services",["System","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.recNewT(this,"TCustomer",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
+  });
+});
+rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TCustomerServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"CustomerService");
+      return this;
+    };
+    this.GetAll$1 = function (OnSuccess, OnError) {
+      var Args = null;
+      Args = new Array();
+      this.CallRemote("GetAll",Args,OnSuccess,OnError);
+    };
+  });
+  rtl.createClass(this,"TProductServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"ProductService");
+      return this;
+    };
+  });
+  rtl.createClass(this,"TSystemServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"SystemService");
+      return this;
+    };
+  });
+  this.CustomerService = function () {
+    var Result = null;
+    if ($impl.GCustomerService === null) $impl.GCustomerService = $mod.TCustomerServiceClient.$create("Create$2");
+    Result = $impl.GCustomerService;
+    return Result;
+  };
+  this.ProductService = function () {
+    var Result = null;
+    if ($impl.GProductService === null) $impl.GProductService = $mod.TProductServiceClient.$create("Create$2");
+    Result = $impl.GProductService;
+    return Result;
+  };
+  this.SystemService = function () {
+    var Result = null;
+    if ($impl.GSystemService === null) $impl.GSystemService = $mod.TSystemServiceClient.$create("Create$2");
+    Result = $impl.GSystemService;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.GCustomerService = null;
+    $impl.GProductService = null;
+    $impl.GSystemService = null;
+  };
+  $mod.$init = function () {
+    $mod.CustomerService();
+    $mod.ProductService();
+    $mod.SystemService();
+  };
+},[]);
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uCustomerView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Customer";
+      d["apiEndpoint"] = "customers";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      var f = null;
+      f = pas.BVPascalDX.NewObject();
+      f["name"] = "";
+      f["email"] = "";
+      f["phone"] = "";
+      f["active"] = true;
+      _this["form"] = f;
+      _this["formError"] = "";
+    };
+    m["openCreateModal"] = function (_this) {
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
+    };
+    m["fetchViaRpc"] = function (_this) {
+      pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
+        _this["items"] = Items;
+        pas.BVPascalDX.ShowToast("Loaded " + pas.SysUtils.IntToStr(rtl.length(Items)) + " customers via Type-Safe Pascal RPC (mORMot 2)!",2500);
+      },function (Err) {
+        pas.BVPascalDX.ShowToast("RPC Error: " + Err,2500);
+      });
+    };
+    m["fetchItems"] = function (_this) {
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+    };
+    m["saveItem"] = function (_this) {
+      if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+    };
+    m["deleteItem"] = function (_this, id) {
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+    };
+    m["setupWebSocket"] = function (_this) {
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("customer-view-page",comp);
+  };
+});
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uProductView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Product";
+      d["apiEndpoint"] = "products";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      var F = undefined;
+      F = pas.BVPascalDX.NewObject();
+      pas.BVPascalDX.SetField(F,"name","");
+      pas.BVPascalDX.SetField(F,"price",0.0);
+      pas.BVPascalDX.SetField(F,"stock",0);
+      pas.BVPascalDX.SetField(F,"category","");
+      _this["form"] = F;
+      _this["formError"] = "";
+    };
+    m["openCreateModal"] = function (_this) {
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
+    };
+    m["fetchItems"] = function (_this) {
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+    };
+    m["saveItem"] = function (_this) {
+      if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+    };
+    m["deleteItem"] = function (_this, id) {
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+    };
+    m["setupWebSocket"] = function (_this) {
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("product-view-page",comp);
+  };
+});
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uUserProfile = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = "  <div>" + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["id"] = "?";
+      d["tab"] = "(none)";
+      d["tema"] = "(none)";
+      d["nomeUsuario"] = "Standard User";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["userLevel"] = function (_this) {
+      var Result = undefined;
+      if (rtl.trunc(_this["id"]) > 50) {
+        Result = "Premium"}
+       else Result = "Basic";
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("user-profile-page",comp);
+  };
+});
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uLibBootstrap = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </bv-col>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Drawer Menu 1\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 2\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 3\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' + '       <div class="p-2">' + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' + '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' + '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' + "             </button>" + "          </div>" + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' + '             <div style="display: flex; gap: 8px;">' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'pt\', \'bui-btn-secondary\': $i18n.locale !== \'pt\' }" type="button" @click="$setLocale(\'pt\')">🇧🇷 Português</button>' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'en\', \'bui-btn-secondary\': $i18n.locale !== \'en\' }" type="button" @click="$setLocale(\'en\')">🇺🇸 English</button>' + "             </div>" + "          </div>" + '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' + "             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly" + "          </div>" + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["count"] = 45;
+      d["libName"] = "Blaise_Demo_2026";
+      d["category"] = "high";
+      d["currentPage"] = 1;
+      d["lastAction"] = "System Ready";
+      d["faqItems"] = "";
+      d["catOptions"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["clickNotif"] = function (_this, info) {
+      _this["lastAction"] = info;
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
+    };
+    m["showModal"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
+    };
+    m["modalConfirm"] = function (_this) {
+      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
+      _this["lastAction"] = "Modal Confirmed";
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
+    };
+    m["updatePage"] = function (_this, p) {
+      _this["currentPage"] = p;
+    };
+    m["tabChanged"] = function (_this, id) {
+      pas.System.Writeln("Tab changed to: ",id);
+    };
+    m["showDrawer"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","open");
+    };
+    m["closeDrawer"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","close");
+    };
+    m["openSettings"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"settingsModal","show");
+    };
+    m["applySettings"] = function (_this) {
+      pas.BVPascalDX.CallMethod$1(_this,"clickNotif",["Configurações salvas!"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var items = null;
+      var q1 = null;
+      var q2 = null;
+      var q3 = null;
+      var opts = null;
+      var o1 = null;
+      var o2 = null;
+      var o3 = null;
+      if (!_this) _this = this;
+      items = pas.BVPascalDX.NewArray();
+      q1 = pas.BVPascalDX.NewObject();
+      q1["id"] = "q1";
+      q1["title"] = "How does Shared State work?";
+      q1["content"] = "BlaiseVue uses B-Store for centralized reactive state management in Pascal.";
+      q2 = pas.BVPascalDX.NewObject();
+      q2["id"] = "q2";
+      q2["title"] = "Unified Design System?";
+      q2["content"] = "BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.";
+      q3 = pas.BVPascalDX.NewObject();
+      q3["id"] = "q3";
+      q3["content"] = "The compiler generates minimalist JavaScript bundles, resulting in instant load times.";
+      q3["title"] = "JIT Optimization?";
+      items.push(q1);
+      items.push(q2);
+      items.push(q3);
+      _this["faqItems"] = items;
+      opts = pas.BVPascalDX.NewArray();
+      o1 = pas.BVPascalDX.NewObject();
+      o1["value"] = "low";
+      o1["text"] = "Low Priority";
+      o2 = pas.BVPascalDX.NewObject();
+      o2["value"] = "med";
+      o2["text"] = "Medium Priority";
+      o3 = pas.BVPascalDX.NewObject();
+      o3["value"] = "high";
+      o3["text"] = "High Priority (Critical)";
+      opts.push(o1);
+      opts.push(o2);
+      opts.push(o3);
+      _this["catOptions"] = opts;
+    };
+    pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
+  };
+});
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uLoginView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-divider span { padding: 0 10px; }   .demo-buttons { display: flex; gap: 8px; }   .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }   .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }   .demo-user:hover { border-color: #10b981; color: #059669; }   .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }   .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }   .user-avatar { font-size: 32px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }   .role-admin { background: #ede9fe; color: #7c3aed; }   .role-manager { background: #dbeafe; color: #2563eb; }   .role-user { background: #e2e8f0; color: #475569; }   .logged-actions { display: flex; gap: 8px; }   .logged-actions .bui-btn { flex: 1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Autenticação BlaiseVue</h2>' + '        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">E-mail de Acesso:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="ex: admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Senha:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Entrar no Sistema 🚀</span>' + '          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Gerente" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 Usuário" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["email"] = "";
+      d["password"] = "";
+      d["errorMessage"] = "";
+      d["successMessage"] = "";
+      d["loading"] = false;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["quickLogin"] = function (_this, e, p) {
+      _this["email"] = e;
+      _this["password"] = p;
+      _this["errorMessage"] = "";
+      pas.BVPascalDX.CallMethod(_this,"submitLogin");
+    };
+    m["submitLogin"] = function (_this) {
+      if ((_this["email"] == "") || (_this["password"] == "")) {
+        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
+        return;
+      };
+      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
+    };
+    m["handleLogout"] = function (_this) {
+      pas.BVPascalDX.AuthLogout(_this);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
 rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -10197,6 +10714,690 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     pas.BVComponents.RegisterComponent("about-page",comp);
+  };
+});
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uHome = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".home-page { padding: 20px; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      { Transition Classes: Managed by the BVCompiler transition engine }   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="home-page">' + "    <h2>🏠 Home: Control Panel (BlaiseVue Features)</h2>" + "    <p>{{ descricao }}</p>" + "" + "    { 1. Slots & Composition }" + "    <card>" + '      <template slot="header">🎨 Composition via Slots</template>' + "      <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "    </card>" + "" + "    { 2. Form Reactivity (B-Model) }" + '    <div class="section">' + "      <h3>✍️ Data Synchronization (B-Model)</h3>" + '      <input type="text" b-model="userName" placeholder="Your name...">' + "      <p>Welcome, <b>{{ userName }}</b>!</p>" + "    </div>" + "" + "    { 3. Global Store (B-Store) }" + '    <div class="section">' + "      <h3>🌍 Global Store (B-Store)</h3>" + "      <p>Framework Version: <badge-blue>{{ $store.appVersion }}</badge-blue></p>" + "      <p>Current User: <b>{{ $store.user }}</b></p>" + "    </div>" + "" + "    { 4. Transitions }" + '    <div class="section">' + "      <h3>✨ Animations & Transitions</h3>" + '      <button @click="toggleVisible">Toggle Visibility</button>' + '      <transition name="fade">' + '        <div v-show="isVisible" class="alert-box">' + "           Fade Effect Active! 👻" + "        </div>" + "      </transition>" + "    </div>" + "" + "    { 5. Provide and Inject }" + "    <info-card>" + '       <template slot="title">Dependency Injection (Provide/Inject)</template>' + "       The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "    </info-card>" + "" + "    { 6. Themes & Icons (Blaise-Themes & Blaise-Icons) }" + '    <div class="section">' + "      <h3>🎨 Dynamic Themes & Vector Icons (v2.6)</h3>" + "      <p>Current Active Theme: <b>{{ $theme.current }}</b> (Dark Mode: <b>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</b>)</p>" + '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "        <bv-theme-toggle></bv-theme-toggle>" + "        <bv-theme-select></bv-theme-select>" + "      </div>" + '      <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["descricao"] = "Welcome to the Framework test center. Below are the main features.";
+      d["userName"] = "Pascal Developer";
+      d["isVisible"] = true;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["toggleVisible"] = function (_this) {
+      _this["isVisible"] = !!(_this["isVisible"] == false);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("home-page",comp);
+  };
+});
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uFormulario = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["nome"] = "";
+      d["email"] = "";
+      d["cidade"] = "";
+      d["meuSub"] = "Este subtítulo é reativo do pai!";
+      d["msgHeader"] = "(clique no título do header)";
+      d["msgSucesso"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["onHeaderClick"] = function (_this, arg) {
+      _this["msgHeader"] = arg;
+      _this["meuSub"] = "O subtítulo mudou reativamente via props!";
+    };
+    m["mudarHeaderRef"] = function (_this) {
+      var refs = null;
+      var header = null;
+      refs = _this["$refs"];
+      if (refs != null) {
+        header = refs["headerComp"];
+        if (header != null) header["title"] = "Título alterado via $refs!";
+      };
+    };
+    m["enviar"] = function (_this) {
+      var valido = false;
+      valido = pas.BVPascalDX.ValidateForm(_this);
+      if (valido) {
+        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
+      } else {
+        _this["msgSucesso"] = "";
+      };
+    };
+    m["preencher"] = function (_this) {
+      _this["nome"] = "Blaise Pascal";
+      _this["email"] = "blaise@pascal.dev";
+      _this["cidade"] = "Clermont-Ferrand";
+      _this["msgSucesso"] = "";
+      pas.BVPascalDX.TouchValidation(_this);
+    };
+    m["limpar"] = function (_this) {
+      _this["nome"] = "";
+      _this["email"] = "";
+      _this["cidade"] = "";
+      _this["msgSucesso"] = "";
+      pas.BVPascalDX.ResetValidation(_this);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("formulario-page",comp);
+  };
+});
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uProFeatures = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; }   .stat-badge { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }    /* Dark mode adjustments */   html[data-bs-theme="dark"] .wasm-box, body.theme-dark .wasm-box,   html[data-bs-theme="dark"] .wasm-bench-container, body.theme-dark .wasm-bench-container {     background: #1e2227;     border-color: #333842;   }   html[data-bs-theme="dark"] .wasm-result, body.theme-dark .wasm-result,   html[data-bs-theme="dark"] .stat-badge, body.theme-dark .stat-badge {     background: #282c34;     border-color: #3e4451;     color: #e0e0e0;   }   html[data-bs-theme="dark"] .wasm-bench-title, body.theme-dark .wasm-bench-title {     color: #abb2bf;   }';
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "" + "    <!-- 7. Aceleração WebAssembly & Benchmarking (BlaiseVue 3.0 Engine) -->" + '    <div class="section wasm-card">' + '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '         <h3 style="color: #6366f1; margin: 0;">⚡ Aceleração WebAssembly ($wasm) - BlaiseVue 3.0</h3>' + '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "       </div>" + '       <p style="color: #64748b; margin-bottom: 16px;">' + "         O BlaiseVue 3.0 integra computação de alto desempenho via <strong>WebAssembly nativo</strong> diretamente do Pascal no navegador através do objeto injetado <code>$wasm</code>, executando com velocidade quase-nativa em relação ao JavaScript tradicional." + "       </p>" + "" + '       <div class="wasm-grid">' + "         <!-- Teste 1: Fibonacci Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Cálculo Fibonacci Acelerado</h4>' + '           <p style="font-size: 13px; color: #64748b;">Calcule o N-ésimo número de Fibonacci via Wasm:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' + '             <button class="btn-primary" @click="calcularWasmFib">Calcular Wasm ⚡</button>' + "           </div>" + '           <div class="wasm-result">' + "             Resultado: <strong>{{ wasmFibResult }}</strong>" + "             <br />" + "             <small>Tempo de execução: <strong>{{ wasmFibTime }} ms</strong></small>" + "           </div>" + "         </div>" + "" + "         <!-- Teste 2: Teste de Primalidade Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Teste de Primalidade Wasm</h4>' + '           <p style="font-size: 13px; color: #64748b;">Valide se um número grande é primo usando algoritmo compilado:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' + '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verificar Primo 🔍</button>' + "           </div>" + '           <div class="wasm-result">' + "             Status: <strong>{{ primeResult }}</strong>" + "           </div>" + "         </div>" + "       </div>" + "" + "       <!-- Teste 3: Benchmark em Tempo Real -->" + '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' + '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "           <div>" + '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Benchmark em Tempo Real: WebAssembly vs JavaScript</h4>' + '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executa 1.000 iterações em paralelo comparando Wasm com JS Vanilla.</p>' + "           </div>" + '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Executar Benchmark 🚀</button>' + "         </div>" + "" + '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '           <div class="stat-badge">' + '             <div class="stat-label">JavaScript Puro</div>' + '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">WebAssembly Nativo</div>' + '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Aceleração Relativa</div>' + '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "           </div>" + "         </div>" + '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' + "           Status do Benchmark: <em>{{ benchSummary }}</em>" + "         </p>" + "       </div>" + "" + "       <!-- Teste 4: SSG / Hydration Engine Demo -->" + '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' + '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 Motor SSG & Hidratação Reativa (BlaiseVue 3.0)</h4>' + '         <p style="font-size: 13px; color: #047857; margin: 0;">' + "           O BlaiseVue 3.0 detecta nós pré-renderizados estaticamente via <code>bv run ssg</code> e executa <strong>Rehydration</strong> reativa no cliente preservando a hierarquia DOM existente sem recriar os elementos do zero." + "         </p>" + "       </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["contador"] = 0;
+      d["showElement"] = true;
+      d["itens"] = "";
+      d["fibInput"] = 20;
+      d["wasmFibResult"] = 6765;
+      d["wasmFibTime"] = "0.04";
+      d["primeInput"] = 999983;
+      d["primeResult"] = "999983 é primo! 💎";
+      d["benchIters"] = 1000;
+      d["benchJsTime"] = "0.00";
+      d["benchWasmTime"] = "0.00";
+      d["benchSpeedup"] = "Calculando...";
+      d["benchSummary"] = "Pronto para execução";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["testarSlot"] = function (_this) {
+      pas.System.Writeln("[Slot Test] O pai está falando!");
+    };
+    m["mudarVersao"] = function (_this) {
+      var currentVer = "";
+      var newVer = "";
+      var newUser = "";
+      currentVer = "" + _this["$store"]["appVersion"];
+      if (currentVer === "2.1.0-ULTRA-PRO") {
+        newVer = "3.0.0-TURBO-HYPER";
+        newUser = "Blaise Visionary 🚀";
+      } else if (currentVer === "3.0.0-TURBO-HYPER") {
+        newVer = "1.0.0-PRO";
+        newUser = "DevMaster 🏆";
+      } else {
+        newVer = "2.1.0-ULTRA-PRO";
+        newUser = "Pascal King 👑";
+      };
+      _this["$store"]["appVersion"] = newVer;
+      _this["$store"]["user"] = newUser;
+      pas.System.Writeln("[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser);
+    };
+    m["incrementar"] = function (_this) {
+      _this["contador"] = rtl.trunc(_this["contador"]) + 1;
+    };
+    m["toggleShow"] = function (_this) {
+      _this["showElement"] = !!(_this["showElement"] == false);
+    };
+    m["embaralhar"] = function (_this) {
+      var Arr = null;
+      var i = 0;
+      var j = 0;
+      var Tmp = undefined;
+      Arr = _this["itens"];
+      if (Arr !== null) {
+        for (var $l = Arr.length - 1; $l >= 1; $l--) {
+          i = $l;
+          j = pas.System.Random(i + 1);
+          Tmp = Arr[i];
+          Arr[i] = Arr[j];
+          Arr[j] = Tmp;
+        };
+        _this["itens"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewArray(),Arr);
+      };
+    };
+    m["adicionarItem"] = function (_this) {
+      var Emojis = ["⚡ Lightning","🔥 Fire","🚀 Rocket","💎 Diamond","🔮 Crystal","🌟 Star","🛡️ Shield","🎯 Target"];
+      var Arr = null;
+      Arr = _this["itens"];
+      if (Arr !== null) Arr.push(Emojis[pas.System.Random(8)] + " #" + pas.SysUtils.IntToStr(Arr.length + 1));
+    };
+    m["removerItem"] = function (_this) {
+      var Arr = null;
+      Arr = _this["itens"];
+      if ((Arr !== null) && (Arr.length > 0)) Arr.shift();
+    };
+    m["resetarLista"] = function (_this) {
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
+    };
+    m["calcularWasmFib"] = function (_this) {
+      var n = 0;
+      var res = 0;
+      var t0 = 0.0;
+      var t1 = 0.0;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],1);
+      t0 = pas.BVPascalDX.NowTimestampMs();
+      res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
+      t1 = pas.BVPascalDX.NowTimestampMs();
+      _this["wasmFibResult"] = res;
+      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
+    };
+    m["testarPrimoWasm"] = function (_this) {
+      var n = 0;
+      var isP = 0;
+      n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
+      isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
+      if (isP === 1) {
+        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " é um NÚMERO PRIMO! 💎"}
+       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " NÃO é primo ❌";
+    };
+    m["rodarBenchmark"] = function (_this) {
+      var n = 0;
+      var rep = undefined;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Executadas 1.000 iterações com sucesso no módulo math.";
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var rep = undefined;
+      if (!_this) _this = this;
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Módulo WebAssembly math ativo e operacional.";
+      };
+    };
+    comp["updated"] = function (_this) {
+      if (!_this) _this = this;
+      pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
+    };
+    comp["inject"] = new Array();
+    comp["inject"].push("getAmbiente");
+    pas.BVComponents.RegisterComponent("pro-features-page",comp);
+  };
+});
+rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uDatasetView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["productsDS"] = null;
+      d["searchQuery"] = "";
+      d["deltaJSONStr"] = "[]";
+      d["isOnline"] = true;
+      d["autoPersistActive"] = true;
+      d["autoSyncActive"] = true;
+      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
+      d["isSyncing"] = false;
+      d["storageEngine"] = "IndexedDB";
+      d["isModalOpen"] = false;
+      d["formTitle"] = "";
+      d["formCategory"] = "Hardware";
+      d["formPrice"] = "99.90";
+      d["formStock"] = "10";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["updateDeltaView"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navFirst"] = function (_this) {
+      pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navPrior"] = function (_this) {
+      pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navNext"] = function (_this) {
+      pas.BVPascalDX.DataSetNext(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navLast"] = function (_this) {
+      pas.BVPascalDX.DataSetLast(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doAppend"] = function (_this) {
+      _this["formTitle"] = "";
+      _this["formCategory"] = "Hardware";
+      _this["formPrice"] = "99.90";
+      _this["formStock"] = "10";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+    };
+    m["saveNewProduct"] = function (_this) {
+      var ds = undefined;
+      var titleVal = "";
+      var categoryVal = "";
+      var priceVal = 0.0;
+      var stockVal = 0;
+      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
+      if (titleVal === "") {
+        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
+        return;
+      };
+      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
+      if (categoryVal === "") categoryVal = "Hardware";
+      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
+      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
+      ds = _this["productsDS"];
+      pas.BVPascalDX.DataSetAppend(ds);
+      var maxId = 0;
+      if (ds && ds.FRecords) {
+        for (var i = 0; i < ds.FRecords.length; i++) {
+          var curId = parseInt(ds.FRecords[i].id, 10);
+          if (!isNaN(curId) && curId > maxId) maxId = curId;
+        }
+      }
+      var nextId = maxId + 1;
+      if (ds && ds.Current) {
+        ds.Current.id = nextId;
+        ds.Current.title = titleVal;
+        ds.Current.category = categoryVal;
+        ds.Current.price = priceVal;
+        ds.Current.stock = stockVal;
+      }
+      if (ds) ds.FModified = true;
+      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      pas.BVPascalDX.DataSetPost(ds);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
+      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
+    };
+    m["doPost"] = function (_this) {
+      pas.BVPascalDX.DataSetPost(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
+      pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
+    };
+    m["doCancel"] = function (_this) {
+      pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
+      pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
+    };
+    m["doDelete"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
+        pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
+        pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
+      };
+    };
+    m["onSelectRow"] = function (_this, row) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["onFieldInput"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doSaveIndexedDB"] = function (_this) {
+      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
+      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
+      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
+    };
+    m["doLoadIndexedDB"] = function (_this) {
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds) return;
+      if (typeof ds.LoadFromIndexedDB === 'function') {
+        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
+          if (success) {
+            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+          } else {
+            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+          }
+        });
+      };
+    };
+    m["toggleAutoPersist"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoPersistActive"] == false);
+      _this["autoPersistActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
+        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
+        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
+      };
+    };
+    m["toggleAutoSync"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoSyncActive"] == false);
+      _this["autoSyncActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
+        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoSync desativado.";
+        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
+      };
+    };
+    m["toggleOnlineSimulation"] = function (_this) {
+      var nextOnline = false;
+      nextOnline = !!(_this["isOnline"] == false);
+      _this["isOnline"] = nextOnline;
+      if (nextOnline) {
+        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
+        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
+        if (!(_this["autoSyncActive"] == false)) {
+          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
+        };
+      } else {
+        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
+        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
+      };
+    };
+    m["doClearDelta"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
+        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
+        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
+      };
+    };
+    m["doApplyUpdates"] = function (_this) {
+      _this["isSyncing"] = true;
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds || ds.ChangeCount === 0) {
+        self.isSyncing = false;
+        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
+        return;
+      }
+      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
+      if (typeof ds.ApplyUpdates === 'function') {
+        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
+          self.isSyncing = false;
+          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+        }, function(err) {
+          self.isSyncing = false;
+          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
+          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+        });
+      };
+    };
+    m["doExportDatasetPDF"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
+      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
+      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
+    };
+    m["doExportDatasetExcel"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
+      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var mockData = "";
+      if (!_this) _this = this;
+      _this["productsDS"] = pas.BVPascalDX.NewDataSet();
+      if (this.productsDS) {
+        this.productsDS.TableName = 'products';
+      };
+      mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
+      pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
+      _this["autoPersistActive"] = true;
+      _this["autoSyncActive"] = true;
+      _this["isOnline"] = true;
+      _this["isSyncing"] = false;
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      var self = this;
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+          self.isOnline = true;
+          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
+          if (self.autoSyncActive) {
+            var ds = self.productsDS;
+            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
+              ds.ApplyUpdates('/api/dataset/apply');
+            }
+          }
+        });
+        window.addEventListener('offline', function() {
+          self.isOnline = false;
+          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
+        });
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["stateBadgeClass"] = function (_this) {
+      var Result = undefined;
+      var ds = this.productsDS;
+      if (!ds) return 'badge-secondary';
+      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
+      if (st === 'insert') return 'badge-warning';
+      if (st === 'edit') return 'badge-danger';
+      if (st === 'browse') return 'badge-success';
+      return 'badge-secondary';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("dataset-view-page",comp);
+    pas.BVComponents.RegisterComponent("data-set-view-page",comp);
+  };
+});
+rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uReportsView = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["salesDS"] = null;
+      d["activeReport"] = null;
+      d["activePreset"] = "sales";
+      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
+      d["rawOutputPreview"] = "";
+      d["nextInvoiceId"] = 1006;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["loadSalesPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "sales";
+      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
+      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadPosReceiptPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "pos";
+      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
+      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
+      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
+      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadInventoryPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "inventory";
+      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
+      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["addSampleInvoice"] = function (_this) {
+      var newId = 0;
+      newId = rtl.trunc(_this["nextInvoiceId"]);
+      _this["nextInvoiceId"] = newId + 1;
+      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
+      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
+      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportPDF"] = function (_this) {
+      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
+      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportExcel"] = function (_this) {
+      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
+      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
+    };
+    m["doExportCSV"] = function (_this) {
+      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
+      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
+    };
+    m["inspectPDF"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
+    };
+    m["inspectExcel"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
+    };
+    m["inspectCSV"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
+      _this["nextInvoiceId"] = 1006;
+      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      Result = 0;
+      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
+        Result = this.salesDS.GetRecordCount();
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("reports-view-page",comp);
   };
 });
 rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
@@ -10829,1171 +12030,6 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("Services",["System","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  rtl.recNewT(this,"TCustomer",function () {
-    this.$eq = function (b) {
-      return true;
-    };
-    this.$assign = function (s) {
-      return this;
-    };
-  });
-});
-rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  rtl.createClass(this,"TCustomerServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"CustomerService");
-      return this;
-    };
-    this.GetAll$1 = function (OnSuccess, OnError) {
-      var Args = null;
-      Args = new Array();
-      this.CallRemote("GetAll",Args,OnSuccess,OnError);
-    };
-  });
-  rtl.createClass(this,"TProductServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"ProductService");
-      return this;
-    };
-  });
-  rtl.createClass(this,"TSystemServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"SystemService");
-      return this;
-    };
-  });
-  this.CustomerService = function () {
-    var Result = null;
-    if ($impl.GCustomerService === null) $impl.GCustomerService = $mod.TCustomerServiceClient.$create("Create$2");
-    Result = $impl.GCustomerService;
-    return Result;
-  };
-  this.ProductService = function () {
-    var Result = null;
-    if ($impl.GProductService === null) $impl.GProductService = $mod.TProductServiceClient.$create("Create$2");
-    Result = $impl.GProductService;
-    return Result;
-  };
-  this.SystemService = function () {
-    var Result = null;
-    if ($impl.GSystemService === null) $impl.GSystemService = $mod.TSystemServiceClient.$create("Create$2");
-    Result = $impl.GSystemService;
-    return Result;
-  };
-  $mod.$implcode = function () {
-    $impl.GCustomerService = null;
-    $impl.GProductService = null;
-    $impl.GSystemService = null;
-  };
-  $mod.$init = function () {
-    $mod.CustomerService();
-    $mod.ProductService();
-    $mod.SystemService();
-  };
-},[]);
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCustomerView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["modelTitle"] = "Customer";
-      d["apiEndpoint"] = "customers";
-      d["items"] = new Array();
-      d["searchQuery"] = "";
-      d["isModalOpen"] = false;
-      d["isEditing"] = false;
-      d["currentEditId"] = 0;
-      d["formError"] = "";
-      d["form"] = null;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["resetForm"] = function (_this) {
-      var f = null;
-      f = pas.BVPascalDX.NewObject();
-      f["name"] = "";
-      f["email"] = "";
-      f["phone"] = "";
-      f["active"] = true;
-      _this["form"] = f;
-      _this["formError"] = "";
-    };
-    m["openCreateModal"] = function (_this) {
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
-    };
-    m["openEditModal"] = function (_this, item) {
-      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
-    };
-    m["fetchViaRpc"] = function (_this) {
-      pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
-        _this["items"] = Items;
-        pas.BVPascalDX.ShowToast("Loaded " + pas.SysUtils.IntToStr(rtl.length(Items)) + " customers via Type-Safe Pascal RPC (mORMot 2)!",2500);
-      },function (Err) {
-        pas.BVPascalDX.ShowToast("RPC Error: " + Err,2500);
-      });
-    };
-    m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
-    };
-    m["saveItem"] = function (_this) {
-      if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
-    };
-    m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
-    };
-    m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      pas.BVPascalDX.CallMethod(_this,"fetchItems");
-      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("customer-view-page",comp);
-  };
-});
-rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uDatasetView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["productsDS"] = null;
-      d["searchQuery"] = "";
-      d["deltaJSONStr"] = "[]";
-      d["isOnline"] = true;
-      d["autoPersistActive"] = true;
-      d["autoSyncActive"] = true;
-      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
-      d["isSyncing"] = false;
-      d["storageEngine"] = "IndexedDB";
-      d["isModalOpen"] = false;
-      d["formTitle"] = "";
-      d["formCategory"] = "Hardware";
-      d["formPrice"] = "99.90";
-      d["formStock"] = "10";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["updateDeltaView"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navFirst"] = function (_this) {
-      pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navPrior"] = function (_this) {
-      pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navNext"] = function (_this) {
-      pas.BVPascalDX.DataSetNext(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navLast"] = function (_this) {
-      pas.BVPascalDX.DataSetLast(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["doAppend"] = function (_this) {
-      _this["formTitle"] = "";
-      _this["formCategory"] = "Hardware";
-      _this["formPrice"] = "99.90";
-      _this["formStock"] = "10";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-    };
-    m["saveNewProduct"] = function (_this) {
-      var ds = undefined;
-      var titleVal = "";
-      var categoryVal = "";
-      var priceVal = 0.0;
-      var stockVal = 0;
-      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
-      if (titleVal === "") {
-        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
-        return;
-      };
-      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
-      if (categoryVal === "") categoryVal = "Hardware";
-      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
-      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
-      ds = _this["productsDS"];
-      pas.BVPascalDX.DataSetAppend(ds);
-      var maxId = 0;
-      if (ds && ds.FRecords) {
-        for (var i = 0; i < ds.FRecords.length; i++) {
-          var curId = parseInt(ds.FRecords[i].id, 10);
-          if (!isNaN(curId) && curId > maxId) maxId = curId;
-        }
-      }
-      var nextId = maxId + 1;
-      if (ds && ds.Current) {
-        ds.Current.id = nextId;
-        ds.Current.title = titleVal;
-        ds.Current.category = categoryVal;
-        ds.Current.price = priceVal;
-        ds.Current.stock = stockVal;
-      }
-      if (ds) ds.FModified = true;
-      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
-      pas.BVPascalDX.DataSetPost(ds);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      _this["isModalOpen"] = false;
-      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
-      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
-    };
-    m["doPost"] = function (_this) {
-      pas.BVPascalDX.DataSetPost(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
-      pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
-    };
-    m["doCancel"] = function (_this) {
-      pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
-      pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
-    };
-    m["doDelete"] = function (_this) {
-      if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
-        pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
-        pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
-      };
-    };
-    m["onSelectRow"] = function (_this, row) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["onFieldInput"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["doSaveIndexedDB"] = function (_this) {
-      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
-      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
-      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
-    };
-    m["doLoadIndexedDB"] = function (_this) {
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds) return;
-      if (typeof ds.LoadFromIndexedDB === 'function') {
-        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
-          if (success) {
-            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
-            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
-          } else {
-            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
-            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
-          }
-        });
-      };
-    };
-    m["toggleAutoPersist"] = function (_this) {
-      var newState = false;
-      newState = !!(_this["autoPersistActive"] == false);
-      _this["autoPersistActive"] = newState;
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
-      if (newState) {
-        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
-        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
-      } else {
-        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
-        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
-      };
-    };
-    m["toggleAutoSync"] = function (_this) {
-      var newState = false;
-      newState = !!(_this["autoSyncActive"] == false);
-      _this["autoSyncActive"] = newState;
-      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
-      if (newState) {
-        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
-        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
-      } else {
-        _this["syncStatusMsg"] = "AutoSync desativado.";
-        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
-      };
-    };
-    m["toggleOnlineSimulation"] = function (_this) {
-      var nextOnline = false;
-      nextOnline = !!(_this["isOnline"] == false);
-      _this["isOnline"] = nextOnline;
-      if (nextOnline) {
-        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
-        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
-        if (!(_this["autoSyncActive"] == false)) {
-          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
-        };
-      } else {
-        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
-        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
-      };
-    };
-    m["doClearDelta"] = function (_this) {
-      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
-        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
-        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
-      };
-    };
-    m["doApplyUpdates"] = function (_this) {
-      _this["isSyncing"] = true;
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds || ds.ChangeCount === 0) {
-        self.isSyncing = false;
-        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
-        return;
-      }
-      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
-      if (typeof ds.ApplyUpdates === 'function') {
-        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
-          self.isSyncing = false;
-          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
-          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
-        }, function(err) {
-          self.isSyncing = false;
-          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
-          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
-        });
-      };
-    };
-    m["doExportDatasetPDF"] = function (_this) {
-      var rep = undefined;
-      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
-      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
-      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
-    };
-    m["doExportDatasetExcel"] = function (_this) {
-      var rep = undefined;
-      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
-      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
-      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var mockData = "";
-      if (!_this) _this = this;
-      _this["productsDS"] = pas.BVPascalDX.NewDataSet();
-      if (this.productsDS) {
-        this.productsDS.TableName = 'products';
-      };
-      mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
-      pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
-      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
-      _this["autoPersistActive"] = true;
-      _this["autoSyncActive"] = true;
-      _this["isOnline"] = true;
-      _this["isSyncing"] = false;
-      _this["isModalOpen"] = false;
-      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      var self = this;
-      if (typeof window !== 'undefined') {
-        window.addEventListener('online', function() {
-          self.isOnline = true;
-          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
-          if (self.autoSyncActive) {
-            var ds = self.productsDS;
-            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
-              ds.ApplyUpdates('/api/dataset/apply');
-            }
-          }
-        });
-        window.addEventListener('offline', function() {
-          self.isOnline = false;
-          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
-        });
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["stateBadgeClass"] = function (_this) {
-      var Result = undefined;
-      var ds = this.productsDS;
-      if (!ds) return 'badge-secondary';
-      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
-      if (st === 'insert') return 'badge-warning';
-      if (st === 'edit') return 'badge-danger';
-      if (st === 'browse') return 'badge-success';
-      return 'badge-secondary';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("dataset-view-page",comp);
-    pas.BVComponents.RegisterComponent("data-set-view-page",comp);
-  };
-});
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uFormulario = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["nome"] = "";
-      d["email"] = "";
-      d["cidade"] = "";
-      d["meuSub"] = "Este subtítulo é reativo do pai!";
-      d["msgHeader"] = "(clique no título do header)";
-      d["msgSucesso"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["onHeaderClick"] = function (_this, arg) {
-      _this["msgHeader"] = arg;
-      _this["meuSub"] = "O subtítulo mudou reativamente via props!";
-    };
-    m["mudarHeaderRef"] = function (_this) {
-      var refs = null;
-      var header = null;
-      refs = _this["$refs"];
-      if (refs != null) {
-        header = refs["headerComp"];
-        if (header != null) header["title"] = "Título alterado via $refs!";
-      };
-    };
-    m["enviar"] = function (_this) {
-      var valido = false;
-      valido = pas.BVPascalDX.ValidateForm(_this);
-      if (valido) {
-        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
-      } else {
-        _this["msgSucesso"] = "";
-      };
-    };
-    m["preencher"] = function (_this) {
-      _this["nome"] = "Blaise Pascal";
-      _this["email"] = "blaise@pascal.dev";
-      _this["cidade"] = "Clermont-Ferrand";
-      _this["msgSucesso"] = "";
-      pas.BVPascalDX.TouchValidation(_this);
-    };
-    m["limpar"] = function (_this) {
-      _this["nome"] = "";
-      _this["email"] = "";
-      _this["cidade"] = "";
-      _this["msgSucesso"] = "";
-      pas.BVPascalDX.ResetValidation(_this);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("formulario-page",comp);
-  };
-});
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uHome = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".home-page { padding: 20px; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      { Transition Classes: Managed by the BVCompiler transition engine }   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="home-page">' + "    <h2>🏠 Home: Control Panel (BlaiseVue Features)</h2>" + "    <p>{{ descricao }}</p>" + "" + "    { 1. Slots & Composition }" + "    <card>" + '      <template slot="header">🎨 Composition via Slots</template>' + "      <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "    </card>" + "" + "    { 2. Form Reactivity (B-Model) }" + '    <div class="section">' + "      <h3>✍️ Data Synchronization (B-Model)</h3>" + '      <input type="text" b-model="userName" placeholder="Your name...">' + "      <p>Welcome, <b>{{ userName }}</b>!</p>" + "    </div>" + "" + "    { 3. Global Store (B-Store) }" + '    <div class="section">' + "      <h3>🌍 Global Store (B-Store)</h3>" + "      <p>Framework Version: <badge-blue>{{ $store.appVersion }}</badge-blue></p>" + "      <p>Current User: <b>{{ $store.user }}</b></p>" + "    </div>" + "" + "    { 4. Transitions }" + '    <div class="section">' + "      <h3>✨ Animations & Transitions</h3>" + '      <button @click="toggleVisible">Toggle Visibility</button>' + '      <transition name="fade">' + '        <div v-show="isVisible" class="alert-box">' + "           Fade Effect Active! 👻" + "        </div>" + "      </transition>" + "    </div>" + "" + "    { 5. Provide and Inject }" + "    <info-card>" + '       <template slot="title">Dependency Injection (Provide/Inject)</template>' + "       The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "    </info-card>" + "" + "    { 6. Themes & Icons (Blaise-Themes & Blaise-Icons) }" + '    <div class="section">' + "      <h3>🎨 Dynamic Themes & Vector Icons (v2.6)</h3>" + "      <p>Current Active Theme: <b>{{ $theme.current }}</b> (Dark Mode: <b>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</b>)</p>" + '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "        <bv-theme-toggle></bv-theme-toggle>" + "        <bv-theme-select></bv-theme-select>" + "      </div>" + '      <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["descricao"] = "Welcome to the Framework test center. Below are the main features.";
-      d["userName"] = "Pascal Developer";
-      d["isVisible"] = true;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["toggleVisible"] = function (_this) {
-      _this["isVisible"] = !!(_this["isVisible"] == false);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("home-page",comp);
-  };
-});
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uLibBootstrap = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </bv-col>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Drawer Menu 1\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 2\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 3\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' + '       <div class="p-2">' + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' + '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' + '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' + "             </button>" + "          </div>" + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' + '             <div style="display: flex; gap: 8px;">' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'pt\', \'bui-btn-secondary\': $i18n.locale !== \'pt\' }" type="button" @click="$setLocale(\'pt\')">🇧🇷 Português</button>' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'en\', \'bui-btn-secondary\': $i18n.locale !== \'en\' }" type="button" @click="$setLocale(\'en\')">🇺🇸 English</button>' + "             </div>" + "          </div>" + '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' + "             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly" + "          </div>" + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["count"] = 45;
-      d["libName"] = "Blaise_Demo_2026";
-      d["category"] = "high";
-      d["currentPage"] = 1;
-      d["lastAction"] = "System Ready";
-      d["faqItems"] = "";
-      d["catOptions"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["clickNotif"] = function (_this, info) {
-      _this["lastAction"] = info;
-      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
-    };
-    m["showModal"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
-    };
-    m["modalConfirm"] = function (_this) {
-      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
-      _this["lastAction"] = "Modal Confirmed";
-      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
-    };
-    m["updatePage"] = function (_this, p) {
-      _this["currentPage"] = p;
-    };
-    m["tabChanged"] = function (_this, id) {
-      pas.System.Writeln("Tab changed to: ",id);
-    };
-    m["showDrawer"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","open");
-    };
-    m["closeDrawer"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","close");
-    };
-    m["openSettings"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"settingsModal","show");
-    };
-    m["applySettings"] = function (_this) {
-      pas.BVPascalDX.CallMethod$1(_this,"clickNotif",["Configurações salvas!"]);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var items = null;
-      var q1 = null;
-      var q2 = null;
-      var q3 = null;
-      var opts = null;
-      var o1 = null;
-      var o2 = null;
-      var o3 = null;
-      if (!_this) _this = this;
-      items = pas.BVPascalDX.NewArray();
-      q1 = pas.BVPascalDX.NewObject();
-      q1["id"] = "q1";
-      q1["title"] = "How does Shared State work?";
-      q1["content"] = "BlaiseVue uses B-Store for centralized reactive state management in Pascal.";
-      q2 = pas.BVPascalDX.NewObject();
-      q2["id"] = "q2";
-      q2["title"] = "Unified Design System?";
-      q2["content"] = "BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.";
-      q3 = pas.BVPascalDX.NewObject();
-      q3["id"] = "q3";
-      q3["content"] = "The compiler generates minimalist JavaScript bundles, resulting in instant load times.";
-      q3["title"] = "JIT Optimization?";
-      items.push(q1);
-      items.push(q2);
-      items.push(q3);
-      _this["faqItems"] = items;
-      opts = pas.BVPascalDX.NewArray();
-      o1 = pas.BVPascalDX.NewObject();
-      o1["value"] = "low";
-      o1["text"] = "Low Priority";
-      o2 = pas.BVPascalDX.NewObject();
-      o2["value"] = "med";
-      o2["text"] = "Medium Priority";
-      o3 = pas.BVPascalDX.NewObject();
-      o3["value"] = "high";
-      o3["text"] = "High Priority (Critical)";
-      opts.push(o1);
-      opts.push(o2);
-      opts.push(o3);
-      _this["catOptions"] = opts;
-    };
-    pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
-  };
-});
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uLoginView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-divider span { padding: 0 10px; }   .demo-buttons { display: flex; gap: 8px; }   .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }   .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }   .demo-user:hover { border-color: #10b981; color: #059669; }   .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }   .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }   .user-avatar { font-size: 32px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }   .role-admin { background: #ede9fe; color: #7c3aed; }   .role-manager { background: #dbeafe; color: #2563eb; }   .role-user { background: #e2e8f0; color: #475569; }   .logged-actions { display: flex; gap: 8px; }   .logged-actions .bui-btn { flex: 1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Autenticação BlaiseVue</h2>' + '        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">E-mail de Acesso:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="ex: admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Senha:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Entrar no Sistema 🚀</span>' + '          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Gerente" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 Usuário" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["email"] = "";
-      d["password"] = "";
-      d["errorMessage"] = "";
-      d["successMessage"] = "";
-      d["loading"] = false;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["quickLogin"] = function (_this, e, p) {
-      _this["email"] = e;
-      _this["password"] = p;
-      _this["errorMessage"] = "";
-      pas.BVPascalDX.CallMethod(_this,"submitLogin");
-    };
-    m["submitLogin"] = function (_this) {
-      if ((_this["email"] == "") || (_this["password"] == "")) {
-        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
-        return;
-      };
-      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
-    };
-    m["handleLogout"] = function (_this) {
-      pas.BVPascalDX.AuthLogout(_this);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("login-view-page",comp);
-  };
-});
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uMobileView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Última Ação:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>" + "                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>" + "                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>" + "                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>" + "                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>" + "                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>" + "                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["currentMode"] = "md";
-      d["lastAction"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["setIosMode"] = function (_this) {
-      _this["currentMode"] = "ios";
-      pas.BVPascalDX.IonicSetMode("ios");
-      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
-    };
-    m["setMdMode"] = function (_this) {
-      _this["currentMode"] = "md";
-      pas.BVPascalDX.IonicSetMode("md");
-      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
-    };
-    m["showToast"] = function (_this) {
-      pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
-      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
-    };
-    m["showAlert"] = function (_this) {
-      pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
-      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
-    };
-    m["onConfirmOk"] = function (_this) {
-      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
-      pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
-    };
-    m["onConfirmCancel"] = function (_this) {
-      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
-    };
-    m["showConfirm"] = function (_this) {
-      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
-      pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
-    };
-    m["showLoading"] = function (_this) {
-      pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
-      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
-    };
-    m["onSheetSelect"] = function (_this, opt, idx) {
-      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
-      pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
-    };
-    m["showActionSheet"] = function (_this) {
-      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
-      pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
-    };
-    pas.BVComponents.RegisterComponent("mobile-view-page",comp);
-  };
-});
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uProductView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["modelTitle"] = "Product";
-      d["apiEndpoint"] = "products";
-      d["items"] = new Array();
-      d["searchQuery"] = "";
-      d["isModalOpen"] = false;
-      d["isEditing"] = false;
-      d["currentEditId"] = 0;
-      d["formError"] = "";
-      d["form"] = null;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["resetForm"] = function (_this) {
-      var F = undefined;
-      F = pas.BVPascalDX.NewObject();
-      pas.BVPascalDX.SetField(F,"name","");
-      pas.BVPascalDX.SetField(F,"price",0.0);
-      pas.BVPascalDX.SetField(F,"stock",0);
-      pas.BVPascalDX.SetField(F,"category","");
-      _this["form"] = F;
-      _this["formError"] = "";
-    };
-    m["openCreateModal"] = function (_this) {
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
-    };
-    m["openEditModal"] = function (_this, item) {
-      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
-    };
-    m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
-    };
-    m["saveItem"] = function (_this) {
-      if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
-    };
-    m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
-    };
-    m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      pas.BVPascalDX.CallMethod(_this,"fetchItems");
-      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("product-view-page",comp);
-  };
-});
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uProFeatures = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; }   .stat-badge { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }    /* Dark mode adjustments */   html[data-bs-theme="dark"] .wasm-box, body.theme-dark .wasm-box,   html[data-bs-theme="dark"] .wasm-bench-container, body.theme-dark .wasm-bench-container {     background: #1e2227;     border-color: #333842;   }   html[data-bs-theme="dark"] .wasm-result, body.theme-dark .wasm-result,   html[data-bs-theme="dark"] .stat-badge, body.theme-dark .stat-badge {     background: #282c34;     border-color: #3e4451;     color: #e0e0e0;   }   html[data-bs-theme="dark"] .wasm-bench-title, body.theme-dark .wasm-bench-title {     color: #abb2bf;   }';
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "" + "    <!-- 7. Aceleração WebAssembly & Benchmarking (BlaiseVue 3.0 Engine) -->" + '    <div class="section wasm-card">' + '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '         <h3 style="color: #6366f1; margin: 0;">⚡ Aceleração WebAssembly ($wasm) - BlaiseVue 3.0</h3>' + '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "       </div>" + '       <p style="color: #64748b; margin-bottom: 16px;">' + "         O BlaiseVue 3.0 integra computação de alto desempenho via <strong>WebAssembly nativo</strong> diretamente do Pascal no navegador através do objeto injetado <code>$wasm</code>, executando com velocidade quase-nativa em relação ao JavaScript tradicional." + "       </p>" + "" + '       <div class="wasm-grid">' + "         <!-- Teste 1: Fibonacci Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Cálculo Fibonacci Acelerado</h4>' + '           <p style="font-size: 13px; color: #64748b;">Calcule o N-ésimo número de Fibonacci via Wasm:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' + '             <button class="btn-primary" @click="calcularWasmFib">Calcular Wasm ⚡</button>' + "           </div>" + '           <div class="wasm-result">' + "             Resultado: <strong>{{ wasmFibResult }}</strong>" + "             <br />" + "             <small>Tempo de execução: <strong>{{ wasmFibTime }} ms</strong></small>" + "           </div>" + "         </div>" + "" + "         <!-- Teste 2: Teste de Primalidade Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Teste de Primalidade Wasm</h4>' + '           <p style="font-size: 13px; color: #64748b;">Valide se um número grande é primo usando algoritmo compilado:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' + '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verificar Primo 🔍</button>' + "           </div>" + '           <div class="wasm-result">' + "             Status: <strong>{{ primeResult }}</strong>" + "           </div>" + "         </div>" + "       </div>" + "" + "       <!-- Teste 3: Benchmark em Tempo Real -->" + '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' + '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "           <div>" + '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Benchmark em Tempo Real: WebAssembly vs JavaScript</h4>' + '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executa 1.000 iterações em paralelo comparando Wasm com JS Vanilla.</p>' + "           </div>" + '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Executar Benchmark 🚀</button>' + "         </div>" + "" + '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '           <div class="stat-badge">' + '             <div class="stat-label">JavaScript Puro</div>' + '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">WebAssembly Nativo</div>' + '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Aceleração Relativa</div>' + '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "           </div>" + "         </div>" + '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' + "           Status do Benchmark: <em>{{ benchSummary }}</em>" + "         </p>" + "       </div>" + "" + "       <!-- Teste 4: SSG / Hydration Engine Demo -->" + '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' + '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 Motor SSG & Hidratação Reativa (BlaiseVue 3.0)</h4>' + '         <p style="font-size: 13px; color: #047857; margin: 0;">' + "           O BlaiseVue 3.0 detecta nós pré-renderizados estaticamente via <code>bv run ssg</code> e executa <strong>Rehydration</strong> reativa no cliente preservando a hierarquia DOM existente sem recriar os elementos do zero." + "         </p>" + "       </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["contador"] = 0;
-      d["showElement"] = true;
-      d["itens"] = "";
-      d["fibInput"] = 20;
-      d["wasmFibResult"] = 6765;
-      d["wasmFibTime"] = "0.04";
-      d["primeInput"] = 999983;
-      d["primeResult"] = "999983 é primo! 💎";
-      d["benchIters"] = 1000;
-      d["benchJsTime"] = "0.00";
-      d["benchWasmTime"] = "0.00";
-      d["benchSpeedup"] = "Calculando...";
-      d["benchSummary"] = "Pronto para execução";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["testarSlot"] = function (_this) {
-      pas.System.Writeln("[Slot Test] O pai está falando!");
-    };
-    m["mudarVersao"] = function (_this) {
-      var currentVer = "";
-      var newVer = "";
-      var newUser = "";
-      currentVer = "" + _this["$store"]["appVersion"];
-      if (currentVer === "2.1.0-ULTRA-PRO") {
-        newVer = "3.0.0-TURBO-HYPER";
-        newUser = "Blaise Visionary 🚀";
-      } else if (currentVer === "3.0.0-TURBO-HYPER") {
-        newVer = "1.0.0-PRO";
-        newUser = "DevMaster 🏆";
-      } else {
-        newVer = "2.1.0-ULTRA-PRO";
-        newUser = "Pascal King 👑";
-      };
-      _this["$store"]["appVersion"] = newVer;
-      _this["$store"]["user"] = newUser;
-      pas.System.Writeln("[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser);
-    };
-    m["incrementar"] = function (_this) {
-      _this["contador"] = rtl.trunc(_this["contador"]) + 1;
-    };
-    m["toggleShow"] = function (_this) {
-      _this["showElement"] = !!(_this["showElement"] == false);
-    };
-    m["embaralhar"] = function (_this) {
-      var Arr = null;
-      var i = 0;
-      var j = 0;
-      var Tmp = undefined;
-      Arr = _this["itens"];
-      if (Arr !== null) {
-        for (var $l = Arr.length - 1; $l >= 1; $l--) {
-          i = $l;
-          j = pas.System.Random(i + 1);
-          Tmp = Arr[i];
-          Arr[i] = Arr[j];
-          Arr[j] = Tmp;
-        };
-        _this["itens"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewArray(),Arr);
-      };
-    };
-    m["adicionarItem"] = function (_this) {
-      var Emojis = ["⚡ Lightning","🔥 Fire","🚀 Rocket","💎 Diamond","🔮 Crystal","🌟 Star","🛡️ Shield","🎯 Target"];
-      var Arr = null;
-      Arr = _this["itens"];
-      if (Arr !== null) Arr.push(Emojis[pas.System.Random(8)] + " #" + pas.SysUtils.IntToStr(Arr.length + 1));
-    };
-    m["removerItem"] = function (_this) {
-      var Arr = null;
-      Arr = _this["itens"];
-      if ((Arr !== null) && (Arr.length > 0)) Arr.shift();
-    };
-    m["resetarLista"] = function (_this) {
-      _this["itens"] = pas.BVPascalDX.NewArray();
-      _this["itens"].push("⚡ Pascal");
-      _this["itens"].push("🔥 BlaiseVue");
-      _this["itens"].push("🚀 WebAssembly");
-      _this["itens"].push("💎 HighPerf");
-    };
-    m["calcularWasmFib"] = function (_this) {
-      var n = 0;
-      var res = 0;
-      var t0 = 0.0;
-      var t1 = 0.0;
-      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],1);
-      t0 = pas.BVPascalDX.NowTimestampMs();
-      res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
-      t1 = pas.BVPascalDX.NowTimestampMs();
-      _this["wasmFibResult"] = res;
-      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
-    };
-    m["testarPrimoWasm"] = function (_this) {
-      var n = 0;
-      var isP = 0;
-      n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
-      isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
-      if (isP === 1) {
-        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " é um NÚMERO PRIMO! 💎"}
-       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " NÃO é primo ❌";
-    };
-    m["rodarBenchmark"] = function (_this) {
-      var n = 0;
-      var rep = undefined;
-      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
-      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
-      if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
-        _this["benchSummary"] = "Executadas 1.000 iterações com sucesso no módulo math.";
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var rep = undefined;
-      if (!_this) _this = this;
-      _this["itens"] = pas.BVPascalDX.NewArray();
-      _this["itens"].push("⚡ Pascal");
-      _this["itens"].push("🔥 BlaiseVue");
-      _this["itens"].push("🚀 WebAssembly");
-      _this["itens"].push("💎 HighPerf");
-      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
-      if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
-        _this["benchSummary"] = "Módulo WebAssembly math ativo e operacional.";
-      };
-    };
-    comp["updated"] = function (_this) {
-      if (!_this) _this = this;
-      pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
-    };
-    comp["inject"] = new Array();
-    comp["inject"].push("getAmbiente");
-    pas.BVComponents.RegisterComponent("pro-features-page",comp);
-  };
-});
-rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uReportsView = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["salesDS"] = null;
-      d["activeReport"] = null;
-      d["activePreset"] = "sales";
-      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
-      d["rawOutputPreview"] = "";
-      d["nextInvoiceId"] = 1006;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["loadSalesPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "sales";
-      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
-      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["loadPosReceiptPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "pos";
-      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
-      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
-      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
-      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["loadInventoryPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "inventory";
-      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
-      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["addSampleInvoice"] = function (_this) {
-      var newId = 0;
-      newId = rtl.trunc(_this["nextInvoiceId"]);
-      _this["nextInvoiceId"] = newId + 1;
-      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
-      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
-      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["doExportPDF"] = function (_this) {
-      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
-      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["doExportExcel"] = function (_this) {
-      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
-      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
-    };
-    m["doExportCSV"] = function (_this) {
-      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
-      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
-    };
-    m["inspectPDF"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
-    };
-    m["inspectExcel"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
-    };
-    m["inspectCSV"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
-      _this["nextInvoiceId"] = 1006;
-      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["recordCount"] = function (_this) {
-      var Result = undefined;
-      Result = 0;
-      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
-        Result = this.salesDS.GetRecordCount();
-      };
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("reports-view-page",comp);
-  };
-});
 rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -12032,42 +12068,6 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uUserProfile = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["id"] = "?";
-      d["tab"] = "(none)";
-      d["tema"] = "(none)";
-      d["nomeUsuario"] = "Standard User";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["userLevel"] = function (_this) {
-      var Result = undefined;
-      if (rtl.trunc(_this["id"]) > 50) {
-        Result = "Premium"}
-       else Result = "Basic";
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("user-profile-page",comp);
-  };
-});
 rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -12103,14 +12103,14 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBVBubbleChart = function () {
+  this.Register_uBVPolarAreaChart = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <bv-chart type="bubble" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12135,7 +12135,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
       this.$emit('chart-click', ev);
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
+    pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
 rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12365,6 +12365,41 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVScatterChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+  };
+});
 rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -12398,111 +12433,6 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
-  };
-});
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVLineChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-line-chart",comp);
-  };
-});
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPieChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
-  };
-});
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPolarAreaChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
 rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12540,14 +12470,14 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBVScatterChart = function () {
+  this.Register_uBVPieChart = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12572,7 +12502,1913 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
       this.$emit('chart-click', ev);
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+    pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
+  };
+});
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVLineChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-line-chart",comp);
+  };
+});
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBubbleChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="bubble" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
+  };
+});
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bv-theme-select-wrapper d-inline-block">' + '    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">' + '      <option value="flatly">Flatly (Claro)</option>' + '      <option value="cosmo">Cosmo (Claro)</option>' + '      <option value="lux">Lux (Claro)</option>' + '      <option value="zephyr">Zephyr (Claro)</option>' + '      <option value="darkly">Darkly (Escuro)</option>' + '      <option value="cyborg">Cyborg (Escuro)</option>' + '      <option value="solar">Solar (Escuro)</option>' + '      <option value="vapor">Vapor (Neon)</option>' + '      <option value="pulse">Pulse (Roxo)</option>' + "    </select>" + "  </div>";
+    m = new Object();
+    m["onThemeChange"] = function (_this, e) {
+      var sel = "";
+      sel = "" + e["target"]["value"];
+      if (sel !== "") {
+        if (window.$theme) {
+          window.$theme.setTheme(sel);
+        };
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-select",comp);
+  };
+});
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeToggle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    type="button"' + '    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"' + '    :title="$theme.isDark ? \'Tema Claro\' : \'Tema Escuro\'"' + '    @click="toggleTheme">' + '    <span v-if="$theme.isDark">☀️ Claro</span>' + '    <span v-if="!$theme.isDark">🌙 Escuro</span>' + "  </button>";
+    m = new Object();
+    m["toggleTheme"] = function (_this) {
+      if (window.$theme) {
+        window.$theme.toggleDarkLight();
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
+  };
+});
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVTabs = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["tabs"] = "";
+      d["activeTabId"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["selectTab"] = function (_this, id) {
+      this.activeTabId = id; 
+      this.$emit('change', id);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      this.tabs = [];
+    };
+    comp["provide"] = function (_this) {
+      var Result = null;
+      Result = new Object();
+      var self = this;
+      Result.registerTab = function(tab) {
+        if (!self.tabs) self.tabs = [];
+        var exists = false;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === tab.id) { exists = true; break; }
+        }
+        if (!exists) {
+          self.tabs.push(tab);
+          if (tab.active || !self.activeTabId || self.activeTabId === '') {
+            self.activeTabId = tab.id;
+          }
+        }
+      };
+      Result.unregisterTab = function(id) {
+        if (!self.tabs) return;
+        var idx = -1;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === id) { idx = i; break; }
+        }
+        if (idx !== -1) self.tabs.splice(idx, 1);
+      };
+      Result.isActive = function(id) {
+        return self.activeTabId === id;
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-tabs",comp);
+  };
+});
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVInput = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + "    <input " + '      :type="type || \'text\'" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder || \'\'"' + '      :value="value !== undefined && value !== null ? value : \'\'"' + '      :readonly="readonly && readonly !== \'false\'"' + '      @input="handleInput"' + "    />" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
+    comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("readonly");
+    comp["defaultProps"]["readonly"] = false;
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      let val = (ev && ev.target) ? ev.target.value : (ev || '');
+      this.value = val;
+      this.$emit('input', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-input",comp);
+  };
+});
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVProgress = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="barClass"' + '         :style="barStyle">' + '       <span v-if="showText">{{ value }}%</span>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = 0;
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = true;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["barClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      return 'bui-progress-bar bui-progress-' + v;
+      return Result;
+    };
+    comp["computed"]["barStyle"] = function (_this) {
+      var Result = undefined;
+      var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
+      return 'width: ' + pct + '%;';
+      return Result;
+    };
+    comp["computed"]["showText"] = function (_this) {
+      var Result = undefined;
+      return this.label !== false && this.label !== 'false';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-progress",comp);
+  };
+});
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDrawer = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-drawer-wrapper {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   z-index: 1050;   pointer-events: none;   visibility: hidden; } .bui-drawer-wrapper.is-open {   pointer-events: auto;   visibility: visible; } .bui-drawer-backdrop {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   background: rgba(0, 0, 0, 0.45);   backdrop-filter: blur(2px);   z-index: 1050;   opacity: 0;   transition: opacity 0.3s ease;   pointer-events: auto; } .bui-drawer-wrapper.is-open .bui-drawer-backdrop {   opacity: 1; } .bui-drawer {   position: fixed;   top: 0;   bottom: 0;   left: 0;   width: 280px;   max-width: 85vw;   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);   z-index: 1060;   display: flex;   flex-direction: column;   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);   box-sizing: border-box;   pointer-events: auto;   visibility: visible; } .bui-drawer-left {   left: 0;   right: auto;   transform: translateX(-100%); } .bui-drawer-left.is-open {   transform: translateX(0); } .bui-drawer-right {   left: auto;   right: 0;   transform: translateX(100%); } .bui-drawer-right.is-open {   transform: translateX(0); }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div :class="\'bui-drawer-wrapper\' + (isOpen ? \' is-open\' : \'\')">' + '    <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>' + '    <aside :class="\'bui-drawer bui-drawer-\' + (position || \'left\') + (isOpen ? \' is-open\' : \'\')" :style="\'width: \' + (width || \'280px\')">' + '      <div class="bui-drawer-header">' + '        <slot name="header">' + '          <strong class="bui-drawer-title">{{ title }}</strong>' + '          <button class="bui-drawer-close" type="button" @click="close">&times;</button>' + "        </slot>" + "      </div>" + '      <div class="bui-drawer-body">' + "        <slot></slot>" + "      </div>" + '      <div class="bui-drawer-footer" v-if="hasFooter">' + '        <slot name="footer"></slot>' + "      </div>" + "    </aside>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      d["position"] = "left";
+      d["width"] = "280px";
+      d["overlay"] = true;
+      d["hasFooter"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Menu";
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "280px";
+    comp["props"].push("position");
+    comp["defaultProps"]["position"] = "left";
+    comp["props"].push("overlay");
+    comp["defaultProps"]["overlay"] = true;
+    comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
+    m = new Object();
+    m["open"] = function (_this) {
+      _this["isOpen"] = true;
+      this.$emit('open');
+    };
+    m["close"] = function (_this) {
+      _this["isOpen"] = false;
+      this.$emit('close');
+    };
+    m["toggle"] = function (_this) {
+      _this["isOpen"] = !!(_this["isOpen"] == false);
+      if (!(_this["isOpen"] == false)) {
+        this.$emit('open');
+      } else {
+        this.$emit('close');
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if ((_this["show"] == true) || (_this["show"] == "true")) {
+        _this["isOpen"] = true}
+       else _this["isOpen"] = false;
+    };
+    pas.BVComponents.RegisterComponent("bv-drawer",comp);
+  };
+});
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBtn = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("outline");
+    comp["defaultProps"]["outline"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var isOut = Boolean(this.outline) || v.startsWith('outline-');
+      var cleanV = v.replace('outline-', '');
+      var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
+      var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
+      return 'bui-btn ' + variantClass + s;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-btn",comp);
+  };
+});
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVToast = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-toast {   position: fixed;   bottom: 20px;   right: 20px;   background: #1e293b;   color: #fff;   padding: 12px 20px;   border-radius: 6px;   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);   display: flex;   align-items: center;   gap: 10px;   z-index: 10000;   border-left: 4px solid var(--bui-primary, #42b883);   animation: bui-toast-slide 0.3s ease-out; } @media (max-width: 576px) {   .bui-toast {     bottom: 74px;     left: 16px;     right: 16px;     max-width: calc(100vw - 32px);     justify-content: space-between;   } } @keyframes bui-toast-slide {   from { transform: translateY(20px); opacity: 0; }   to { transform: translateY(0); opacity: 1; } }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="isVisible">' + '      <div class="bui-toast-content">' + '        <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "        <slot>{{ message }}</slot>" + "      </div>" + '      <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "    </div>" + "  </teleport>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("message");
+    comp["defaultProps"]["message"] = "";
+    comp["props"].push("duration");
+    comp["defaultProps"]["duration"] = 3000;
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "success";
+    m = new Object();
+    m["showToast"] = function (_this) {
+      _this["isOpen"] = true;
+      const dur = this.duration || 3000;
+      if (this._toastTimer) clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => {
+        this.isOpen = false;
+      }, dur);
+    };
+    m["show"] = function (_this) {
+      this.showToast();
+    };
+    m["dismiss"] = function (_this) {
+      _this["isOpen"] = false;
+      this.$emit('dismiss');
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isVisible"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.isOpen);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-toast",comp);
+  };
+});
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumb = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="bui-breadcrumb">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
+  };
+});
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVNavbar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("brand");
+    comp["defaultProps"]["brand"] = "BlaiseVue UI";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-navbar",comp);
+  };
+});
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVNavItem = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-nav-link {   cursor: pointer;   user-select: none; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <li class="bui-nav-item">' + '     <a class="bui-nav-link" :class="{ active: active }" :href="href || \'#\'" @click="handleClick">' + "        <slot>{{ label }}</slot>" + "     </a>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
+        if (ev && ev.preventDefault) ev.preventDefault();
+      }
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-nav-item",comp);
+  };
+});
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVListGroup = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <ul class="bui-list-group">' + "    <slot></slot>" + "  </ul>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-list-group",comp);
+  };
+});
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVFormSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <select class="bui-select" :value="value" @change="onChange">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    m = new Object();
+    m["onChange"] = function (_this, ev) {
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val); 
+      this.$emit('change', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-form-select",comp);
+  };
+});
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDataGrid = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["searchQuery"] = "";
+      d["sortKey"] = "";
+      d["sortAsc"] = true;
+      d["currentPage"] = 1;
+      d["pageSize"] = 5;
+      d["selectedRow"] = null;
+      d["virtualScrollTop"] = 0;
+      d["virtualViewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("virtualScroll");
+    comp["defaultProps"]["virtualScroll"] = false;
+    comp["props"].push("rowHeight");
+    comp["defaultProps"]["rowHeight"] = 40;
+    comp["props"].push("virtualHeight");
+    comp["defaultProps"]["virtualHeight"] = "400px";
+    comp["props"].push("virtualBuffer");
+    comp["defaultProps"]["virtualBuffer"] = 5;
+    m = new Object();
+    m["handleSearch"] = function (_this) {
+      _this["currentPage"] = 1;
+      _this["virtualScrollTop"] = 0;
+    };
+    m["handleTableScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.virtualScrollTop = e.target.scrollTop || 0;
+        this.virtualViewportHeight = e.target.clientHeight || 400;
+      };
+    };
+    m["sortBy"] = function (_this, key) {
+      if (_this["sortKey"] == key) {
+        _this["sortAsc"] = !!(_this["sortAsc"] == false)}
+       else {
+        _this["sortKey"] = key;
+        _this["sortAsc"] = true;
+      };
+    };
+    m["prevPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
+    };
+    m["nextPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
+    };
+    m["selectRow"] = function (_this, row) {
+      var ds = this.dataset;
+      if (ds && row) {
+        if (row.id !== undefined && typeof ds.Locate === 'function') {
+          ds.Locate('id', row.id);
+        } else if (typeof ds.Locate === 'function') {
+          var keys = Object.keys(row);
+          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+        }
+        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
+      }
+      this.selectedRow = row;
+      if (typeof this.$emit === 'function') {
+        this.$emit('row-select', row);
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
+        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds)) return ds;
+      }
+      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        return this.columns;
+      }
+      var ds = this.dataset;
+      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+        return ds.Fields.ToArray();
+      }
+      var list = this.resolvedItems;
+      if (list && list.length > 0 && typeof list[0] === 'object') {
+        return Object.keys(list[0]).map(function(k) {
+          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+        });
+      }
+      return [];
+      return Result;
+    };
+    comp["computed"]["totalItems"] = function (_this) {
+      var Result = undefined;
+      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      return Result;
+    };
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
+      let q = (this.searchQuery || '').toLowerCase();
+      if (q) {
+        list = list.filter(function(item) {
+          return Object.values(item).some(function(v) {
+            return String(v).toLowerCase().indexOf(q) !== -1;
+          });
+        });
+      }
+      let sk = this.sortKey;
+      let asc = this.sortAsc;
+      if (sk) {
+        list.sort(function(a, b) {
+          let va = (a && a[sk] !== undefined) ? a[sk] : '';
+          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+          if (typeof va === 'number' && typeof vb === 'number') {
+            return asc ? (va - vb) : (vb - va);
+          }
+          let sa = String(va).toLowerCase();
+          let sb = String(vb).toLowerCase();
+          if (sa < sb) return asc ? -1 : 1;
+          if (sa > sb) return asc ? 1 : -1;
+          return 0;
+        });
+      }
+      return list;
+      return Result;
+    };
+    comp["computed"]["totalPages"] = function (_this) {
+      var Result = undefined;
+      let count = this.filteredItems.length;
+      Result = Math.max(1, Math.ceil(count / this.pageSize));
+      return Result;
+    };
+    comp["computed"]["pagedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+        var recNo = ds.RecNo;
+        if (this._lastRecNo === undefined) {
+          this._lastRecNo = recNo;
+        } else if (recNo !== this._lastRecNo) {
+          this._lastRecNo = recNo;
+          var targetPage = Math.ceil(recNo / this.pageSize);
+          if (targetPage > 0 && targetPage !== this.currentPage) {
+            this.currentPage = targetPage;
+          }
+        }
+      }
+      let list = this.filteredItems || [];
+      let start = (this.currentPage - 1) * this.pageSize;
+      return list.slice(start, start + this.pageSize);
+      return Result;
+    };
+    comp["computed"]["virtualStartIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["virtualEndIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let vh = this.virtualViewportHeight || 400;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
+      Result = Math.min(count, idx);
+      return Result;
+    };
+    comp["computed"]["topSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      Result = this.virtualStartIndex * rh;
+      return Result;
+    };
+    comp["computed"]["bottomSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let rendered = this.virtualEndIndex - this.virtualStartIndex;
+      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
+      Result = remaining * rh;
+      return Result;
+    };
+    comp["computed"]["displayRows"] = function (_this) {
+      var Result = undefined;
+      if (this.virtualScroll) {
+        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
+        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
+      }
+      return this.pagedItems;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-data-grid",comp);
+    pas.BVComponents.RegisterComponent("bv-datagrid",comp);
+  };
+});
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSpinner = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner\', \'bui-spinner-\' + (variant || \'primary\'), (small && small !== \'false\') ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("small");
+    comp["defaultProps"]["small"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-spinner",comp);
+  };
+});
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVContainer = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-container" :class="{ \'bui-container-fluid\': fluid }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("fluid");
+    comp["defaultProps"]["fluid"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-container",comp);
+  };
+});
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-badge" ' + '        :class="badgeClass">' + "    <slot></slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("pill");
+    comp["defaultProps"]["pill"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["badgeClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
+      return 'bui-badge bui-badge-' + v + p;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-badge",comp);
+  };
+});
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNav = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-bottom-nav">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
+  };
+});
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVListGroupItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <span><slot></slot></span>" + '    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>' + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("badge");
+    comp["defaultProps"]["badge"] = "";
+    comp["props"].push("badgeVariant");
+    comp["defaultProps"]["badgeVariant"] = "primary";
+    comp["props"].push("badgevariant");
+    comp["defaultProps"]["badgevariant"] = "primary";
+    m = new Object();
+    m["handleClick"] = function (_this) {
+      this.$emit('click');
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedBadgeVariant"] = function (_this) {
+      var Result = undefined;
+      return this.badgeVariant || this.badgevariant || 'primary';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
+  };
+});
+rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVVirtualScroll = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["scrollTop"] = 0;
+      d["viewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("itemHeight");
+    comp["defaultProps"]["itemHeight"] = 40;
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
+    comp["props"].push("buffer");
+    comp["defaultProps"]["buffer"] = 5;
+    m = new Object();
+    m["handleScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.scrollTop = e.target.scrollTop || 0;
+        this.viewportHeight = e.target.clientHeight || 400;
+        if (typeof this.$emit === 'function') {
+          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
+        }
+      };
+    };
+    m["scrollToIndex"] = function (_this, idx) {
+      let ih = this.itemHeight || 40;
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = idx * ih;
+      };
+    };
+    m["scrollToTop"] = function (_this) {
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = 0;
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.$refs && this.$refs.viewport) {
+        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["totalCount"] = function (_this) {
+      var Result = undefined;
+      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      return Result;
+    };
+    comp["computed"]["totalHeight"] = function (_this) {
+      var Result = undefined;
+      Result = this.totalCount * (this.itemHeight || 40);
+      return Result;
+    };
+    comp["computed"]["startIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let idx = Math.floor(this.scrollTop / ih) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["endIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let vh = this.viewportHeight || 400;
+      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
+      Result = Math.min(this.totalCount, idx);
+      return Result;
+    };
+    comp["computed"]["offsetY"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      Result = this.startIndex * ih;
+      return Result;
+    };
+    comp["computed"]["visibleItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
+      return list.slice(this.startIndex, this.endIndex);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
+    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
+  };
+});
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVPagination = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= total }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = 1;
+    comp["props"].push("total");
+    comp["defaultProps"]["total"] = 10;
+    m = new Object();
+    m["changePage"] = function (_this, p) {
+      if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
+        this.$emit('input', p); this.$emit('change', p);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["pages"] = function (_this) {
+      var Result = undefined;
+      var arr = [];
+      var tot = parseInt(this.total) || 1;
+      for (var i = 1; i <= tot; i++) arr.push(i);
+      return arr;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-pagination",comp);
+  };
+});
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-card">' + '    <div class="bui-card-header" b-if="title">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="bui-card-body">' + "      <slot></slot>" + "    </div>" + '    <div class="bui-card-footer" b-if="hasFooter">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-card",comp);
+  };
+});
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNavItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <a :class="\'bui-bottom-nav-item\' + (active ? \' active\' : \'\')" :href="href" @click="handleClick">' + '    <span class="bui-bottom-nav-icon" v-if="icon">{{ icon }}</span>' + '    <span class="bui-bottom-nav-label">{{ label }}</span>' + "  </a>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["href"] = "#/";
+      d["label"] = "Item";
+      d["icon"] = "";
+      d["active"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#/";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "Item";
+    comp["props"].push("icon");
+    comp["defaultProps"]["icon"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, e) {
+      var target = (this && this.href) || (_this && _this.href);
+      if (!target && e && e.currentTarget) {
+        target = e.currentTarget.getAttribute('href');
+      }
+      if (target) {
+        if (target.indexOf('#') !== -1) {
+          if (e && e.preventDefault) e.preventDefault();
+          var hashPart = target.substring(target.indexOf('#'));
+          if (window.__BV_CORE__ && window.__BV_CORE__.router) {
+            window.__BV_CORE__.router.Push(hashPart.replace(/^#/, ''));
+          } else {
+            window.location.hash = hashPart;
+          }
+        } else {
+          window.location.href = target;
+        }
+      }
+      this.$emit('click', e);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      var self = this;
+      var updateActive = function() {
+        var curHash = window.location.hash || '#/';
+        if (self.href && self.href.indexOf('#') !== -1) {
+          var targetHash = self.href.substring(self.href.indexOf('#'));
+          self.active = (curHash === targetHash || (targetHash !== '#/' && curHash.indexOf(targetHash) === 0));
+        }
+      };
+      updateActive();
+      window.addEventListener('hashchange', updateActive);
+    };
+    pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
+  };
+});
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVRow = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-row" :class="rowClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("gutter");
+    comp["defaultProps"]["gutter"] = "md";
+    comp["props"].push("align");
+    comp["defaultProps"]["align"] = "";
+    comp["props"].push("justify");
+    comp["defaultProps"]["justify"] = "";
+    comp["props"].push("noGutters");
+    comp["defaultProps"]["noGutters"] = false;
+    comp["props"].push("nogutters");
+    comp["defaultProps"]["nogutters"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["rowClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      if (this.noGutters || this.nogutters || this.gutter === 'none') {
+        cls.push('bui-gutter-none');
+      } else if (this.gutter === 'sm') {
+        cls.push('bui-gutter-sm');
+      } else if (this.gutter === 'lg') {
+        cls.push('bui-gutter-lg');
+      } else {
+        cls.push('bui-gutter-md');
+      }
+      if (this.align) cls.push('bui-align-' + this.align);
+      if (this.justify) cls.push('bui-justify-' + this.justify);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-row",comp);
+  };
+});
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVInputGroup = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <slot>" + "         <input " + '           type="text" ' + '           class="bui-input-group-field" ' + '           :placeholder="placeholder || \'\'" ' + '           :value="value !== undefined && value !== null ? value : \'\'"' + '           @input="onInput"' + "         >" + "       </slot>" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("prepend");
+    comp["defaultProps"]["prepend"] = "";
+    comp["props"].push("append");
+    comp["defaultProps"]["append"] = "";
+    m = new Object();
+    m["onInput"] = function (_this, ev) {
+      var val = (ev && ev.target) ? ev.target.value : (ev || '');
+      this.$emit('input', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-input-group",comp);
+  };
+});
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCol = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-col" :class="colClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("cols");
+    comp["defaultProps"]["cols"] = "12";
+    comp["props"].push("sm");
+    comp["defaultProps"]["sm"] = "";
+    comp["props"].push("md");
+    comp["defaultProps"]["md"] = "";
+    comp["props"].push("lg");
+    comp["defaultProps"]["lg"] = "";
+    comp["props"].push("xl");
+    comp["defaultProps"]["xl"] = "";
+    comp["props"].push("offset");
+    comp["defaultProps"]["offset"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["colClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      var c = this.cols || '12';
+      cls.push('bui-col-' + c);
+      if (this.sm) cls.push('bui-col-sm-' + this.sm);
+      if (this.md) cls.push('bui-col-md-' + this.md);
+      if (this.lg) cls.push('bui-col-lg-' + this.lg);
+      if (this.xl) cls.push('bui-col-xl-' + this.xl);
+      if (this.offset) cls.push('bui-offset-' + this.offset);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-col",comp);
+  };
+});
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVModal = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-modal-backdrop {   position: fixed;   top: 0; left: 0; right: 0; bottom: 0;   background: rgba(0, 0, 0, 0.6);   display: flex;   align-items: center;   justify-content: center;   z-index: 9999;   backdrop-filter: blur(2px);   padding: 16px;   box-sizing: border-box; } .bui-modal-content {   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   border-radius: 8px;   width: 100%;   max-width: 520px;   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);   overflow: hidden;   animation: bui-scale-in 0.2s ease-out;   box-sizing: border-box; } @keyframes bui-scale-in {   from { transform: scale(0.95); opacity: 0; }   to { transform: scale(1); opacity: 1; } } .bui-modal-header {   padding: 14px 18px;   border-bottom: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: space-between;   align-items: center;   font-weight: 600;   font-size: 16px; } .bui-modal-close {   background: transparent;   border: none;   font-size: 22px;   line-height: 1;   cursor: pointer;   color: var(--bui-text-muted, #64748b);   padding: 0 4px; } .bui-modal-close:hover {   color: var(--bui-text, #1e293b); } .bui-modal-body {    padding: 18px;    max-height: 70vh;   overflow-y: auto; } .bui-modal-footer {   padding: 12px 18px;   border-top: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: flex-end;   gap: 10px;   background: var(--bui-card-footer-bg, #f8fafc); }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-show="isVisible" style="display: none;" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" type="button" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" type="button" @click="close">{{ computedCancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" type="button" @click="confirm">{{ computedOkLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Modal";
+    comp["props"].push("okLabel");
+    comp["defaultProps"]["okLabel"] = "Process";
+    comp["props"].push("oklabel");
+    comp["defaultProps"]["oklabel"] = "Process";
+    comp["props"].push("cancelLabel");
+    comp["defaultProps"]["cancelLabel"] = "Close";
+    comp["props"].push("cancellabel");
+    comp["defaultProps"]["cancellabel"] = "Close";
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
+    m = new Object();
+    m["showModal"] = function (_this) {
+      this.isOpen = true;
+      this.show = true;
+    };
+    m["show"] = function (_this) {
+      this.isOpen = true;
+      this.show = true;
+    };
+    m["close"] = function (_this) {
+      this.isOpen = false;
+      this.show = false;
+      this.$emit('close');
+    };
+    m["confirm"] = function (_this) {
+      this.isOpen = false;
+      this.show = false;
+      this.$emit('ok');
+    };
+    m["handleBackdropClick"] = function (_this) {
+      this.close();
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.show === true || this.show === 'true') {
+        this.isOpen = true;
+      } else {
+        this.isOpen = false;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["isVisible"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.isOpen === true || this.show === true || this.show === 'true');
+      return Result;
+    };
+    comp["computed"]["computedOkLabel"] = function (_this) {
+      var Result = undefined;
+      return this.okLabel || this.oklabel || 'Process';
+      return Result;
+    };
+    comp["computed"]["computedCancelLabel"] = function (_this) {
+      var Result = undefined;
+      return this.cancelLabel || this.cancellabel || 'Close';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-modal",comp);
+  };
+});
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumbItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#";
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
+  };
+});
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVTab = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Tab";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+        this.registerTab(t);
+      };
+    };
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+        this.registerTab(t);
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["active"] = function (_this) {
+      var Result = undefined;
+      if (typeof this.isActive === 'function') {
+        return Boolean(this.isActive(this.id));
+      }
+      return true;
+      return Result;
+    };
+    comp["inject"] = new Array();
+    comp["inject"].push("registerTab");
+    comp["inject"].push("isActive");
+    pas.BVComponents.RegisterComponent("bv-tab",comp);
+  };
+});
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAlert = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-alert" ' + '       :class="\'bui-alert-\' + variant" ' + '       role="alert"' + '       b-if="visible">' + '    <div class="bui-alert-content">' + "      <slot></slot>" + "    </div>" + '    <button type="button" ' + '            class="bui-alert-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close">' + "      ×" + "    </button>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["visible"] = true;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("dismissible");
+    comp["defaultProps"]["dismissible"] = false;
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = true;
+    m = new Object();
+    m["close"] = function (_this) {
+      _this["visible"] = false;
+      this.$emit('close');
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["visible"] = !(_this["show"] == false);
+    };
+    pas.BVComponents.RegisterComponent("bv-alert",comp);
+  };
+});
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAccordion = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-accordion">' + '    <div class="bui-accordion-item" b-for="item in items">' + '      <h3 class="bui-accordion-header">' + '        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ active: activeId == item.id }">' + "          {{ item.title }}" + "        </button>" + "      </h3>" + '      <div class="bui-accordion-body" b-show="activeId == item.id">' + "        {{ item.content }}" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["activeId"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = null;
+    comp["props"].push("initialActiveId");
+    comp["defaultProps"]["initialActiveId"] = "";
+    comp["props"].push("initialactiveid");
+    comp["defaultProps"]["initialactiveid"] = "";
+    m = new Object();
+    m["toggle"] = function (_this, id) {
+      if (this.activeId === id) {
+        this.activeId = '';
+      } else {
+        this.activeId = id;
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      this.activeId = String(this.initialActiveId || this.initialactiveid || '');
+    };
+    pas.BVComponents.RegisterComponent("bv-accordion",comp);
+  };
+});
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIcon = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("name");
+    comp["defaultProps"]["name"] = "check-circle";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "16";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-icon",comp);
+  };
+});
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-ion-badge" :class="\'bui-ion-badge-\' + color">' + "    <slot>{{ value }}</slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
+  };
+});
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonHeader = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <header class="bui-ion-header">' + "    <slot></slot>" + "  </header>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-header",comp);
+  };
+});
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-card">' + '    <div class="bui-ion-card-header" b-if="title || subtitle">' + '      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>' + '      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>' + "    </div>" + '    <div class="bui-ion-card-content">' + "      <slot></slot>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-card",comp);
+  };
+});
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonToolbar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-toolbar">' + '    <div class="bui-ion-toolbar-start">' + '      <slot name="start"></slot>' + "    </div>" + "    <slot></slot>" + '    <div class="bui-ion-toolbar-end">' + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
+  };
+});
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div :class="wrapperClass">' + '    <div class="bui-ion-item" @click="handleClick">' + '      <div class="bui-ion-item-start" b-if="hasStart">' + '        <slot name="start"></slot>' + "      </div>" + '      <div class="bui-ion-item-content">' + '        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>' + '        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>' + "        <slot></slot>" + "      </div>" + '      <div class="bui-ion-item-end">' + '        <slot name="end"></slot>' + '        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>' + "      </div>" + "    </div>" + '    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">' + '      <slot name="expanded"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isExpanded"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    comp["props"].push("detail");
+    comp["defaultProps"]["detail"] = false;
+    comp["props"].push("expandable");
+    comp["defaultProps"]["expandable"] = false;
+    comp["props"].push("expanded");
+    comp["defaultProps"]["expanded"] = false;
+    comp["props"].push("hasStart");
+    comp["defaultProps"]["hasStart"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (this.expandable === true || this.expandable === 'true') {
+        this.isExpanded = !this.isExpanded;
+        this.$emit('toggle', { expanded: this.isExpanded });
+      }
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.expanded === true || this.expanded === 'true') {
+        this.isExpanded = true;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
+      var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
+      return 'bui-ion-item-wrapper' + exp + open;
+      return Result;
+    };
+    comp["computed"]["detailClass"] = function (_this) {
+      var Result = undefined;
+      var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
+      return 'bui-ion-item-detail' + rot;
+      return Result;
+    };
+    comp["computed"]["showDetail"] = function (_this) {
+      var Result = undefined;
+      var d = Boolean(this.detail === true || this.detail === 'true');
+      var e = Boolean(this.expandable === true || this.expandable === 'true');
+      return d || e;
+      return Result;
+    };
+    comp["computed"]["isContentVisible"] = function (_this) {
+      var Result = undefined;
+      var exp = Boolean(this.expandable === true || this.expandable === 'true');
+      var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
+      return exp && open;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-item",comp);
+  };
+});
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabBar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-ion-tab-bar">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
+  };
+});
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-tab-button"' + '    :class="{ \'is-active\': active }"' + '    @click="handleClick">' + '    <slot name="icon"></slot>' + '    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>' + '    <slot name="badge"></slot>' + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("tab");
+    comp["defaultProps"]["tab"] = "";
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
+  };
+});
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTitle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <h1 class="bui-ion-title">' + "    <slot>{{ title }}</slot>" + "  </h1>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-title",comp);
+  };
+});
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabs = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-tabs">' + '    <div class="bui-ion-tab-content">' + "      <slot></slot>" + "    </div>" + '    <slot name="bottom"></slot>' + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
+  };
+});
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonList = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-list" :class="{ \'bui-ion-list-inset\': inset }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("inset");
+    comp["defaultProps"]["inset"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-list",comp);
+  };
+});
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonApp = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-app" :class="appClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("mode");
+    comp["defaultProps"]["mode"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["appClass"] = function (_this) {
+      var Result = undefined;
+      var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
+      return 'ionic-mode-' + m;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-app",comp);
+  };
+});
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonContent = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <main class="bui-ion-content" :class="{ \'bui-ion-content-padding\': padding }">' + "    <slot></slot>" + "  </main>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("padding");
+    comp["defaultProps"]["padding"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-content",comp);
+  };
+});
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-btn"' + '    :class="btnClass"' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("fill");
+    comp["defaultProps"]["fill"] = "solid";
+    comp["props"].push("expand");
+    comp["defaultProps"]["expand"] = "";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var f = this.fill || 'solid';
+      var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
+      return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
 rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12883,1843 +14719,7 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVAccordion = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-accordion">' + '    <div class="bui-accordion-item" b-for="item in items">' + '      <h3 class="bui-accordion-header">' + '        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ active: activeId == item.id }">' + "          {{ item.title }}" + "        </button>" + "      </h3>" + '      <div class="bui-accordion-body" b-show="activeId == item.id">' + "        {{ item.content }}" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["activeId"] = "";
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = null;
-    comp["props"].push("initialActiveId");
-    comp["defaultProps"]["initialActiveId"] = "";
-    comp["props"].push("initialactiveid");
-    comp["defaultProps"]["initialactiveid"] = "";
-    m = new Object();
-    m["toggle"] = function (_this, id) {
-      if (this.activeId === id) {
-        this.activeId = '';
-      } else {
-        this.activeId = id;
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      this.activeId = String(this.initialActiveId || this.initialactiveid || '');
-    };
-    pas.BVComponents.RegisterComponent("bv-accordion",comp);
-  };
-});
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVAlert = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-alert" ' + '       :class="\'bui-alert-\' + variant" ' + '       role="alert"' + '       b-if="visible">' + '    <div class="bui-alert-content">' + "      <slot></slot>" + "    </div>" + '    <button type="button" ' + '            class="bui-alert-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close">' + "      ×" + "    </button>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["visible"] = true;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("dismissible");
-    comp["defaultProps"]["dismissible"] = false;
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = true;
-    m = new Object();
-    m["close"] = function (_this) {
-      _this["visible"] = false;
-      this.$emit('close');
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["visible"] = !(_this["show"] == false);
-    };
-    pas.BVComponents.RegisterComponent("bv-alert",comp);
-  };
-});
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBadge = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-badge" ' + '        :class="badgeClass">' + "    <slot></slot>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("pill");
-    comp["defaultProps"]["pill"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["badgeClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
-      return 'bui-badge bui-badge-' + v + p;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-badge",comp);
-  };
-});
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBottomNav = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-bottom-nav">' + "    <slot></slot>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
-  };
-});
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBottomNavItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <a :class="\'bui-bottom-nav-item\' + (active ? \' active\' : \'\')" :href="href" @click="handleClick">' + '    <span class="bui-bottom-nav-icon" v-if="icon">{{ icon }}</span>' + '    <span class="bui-bottom-nav-label">{{ label }}</span>' + "  </a>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["href"] = "#/";
-      d["label"] = "Item";
-      d["icon"] = "";
-      d["active"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "#/";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "Item";
-    comp["props"].push("icon");
-    comp["defaultProps"]["icon"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, e) {
-      var target = (this && this.href) || (_this && _this.href);
-      if (!target && e && e.currentTarget) {
-        target = e.currentTarget.getAttribute('href');
-      }
-      if (target) {
-        if (target.indexOf('#') !== -1) {
-          if (e && e.preventDefault) e.preventDefault();
-          var hashPart = target.substring(target.indexOf('#'));
-          if (window.__BV_CORE__ && window.__BV_CORE__.router) {
-            window.__BV_CORE__.router.Push(hashPart.replace(/^#/, ''));
-          } else {
-            window.location.hash = hashPart;
-          }
-        } else {
-          window.location.href = target;
-        }
-      }
-      this.$emit('click', e);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      var self = this;
-      var updateActive = function() {
-        var curHash = window.location.hash || '#/';
-        if (self.href && self.href.indexOf('#') !== -1) {
-          var targetHash = self.href.substring(self.href.indexOf('#'));
-          self.active = (curHash === targetHash || (targetHash !== '#/' && curHash.indexOf(targetHash) === 0));
-        }
-      };
-      updateActive();
-      window.addEventListener('hashchange', updateActive);
-    };
-    pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
-  };
-});
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBreadcrumb = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="bui-breadcrumb">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
-  };
-});
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBreadcrumbItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "#";
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
-  };
-});
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBtn = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("size");
-    comp["defaultProps"]["size"] = "md";
-    comp["props"].push("disabled");
-    comp["defaultProps"]["disabled"] = false;
-    comp["props"].push("outline");
-    comp["defaultProps"]["outline"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
-      if (!isDisabled) {
-        this.$emit('click', ev);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["btnClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      var isOut = Boolean(this.outline) || v.startsWith('outline-');
-      var cleanV = v.replace('outline-', '');
-      var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
-      var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
-      return 'bui-btn ' + variantClass + s;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-btn",comp);
-  };
-});
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVCard = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-card">' + '    <div class="bui-card-header" b-if="title">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="bui-card-body">' + "      <slot></slot>" + "    </div>" + '    <div class="bui-card-footer" b-if="hasFooter">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("hasFooter");
-    comp["defaultProps"]["hasFooter"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-card",comp);
-  };
-});
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVCol = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-col" :class="colClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("cols");
-    comp["defaultProps"]["cols"] = "12";
-    comp["props"].push("sm");
-    comp["defaultProps"]["sm"] = "";
-    comp["props"].push("md");
-    comp["defaultProps"]["md"] = "";
-    comp["props"].push("lg");
-    comp["defaultProps"]["lg"] = "";
-    comp["props"].push("xl");
-    comp["defaultProps"]["xl"] = "";
-    comp["props"].push("offset");
-    comp["defaultProps"]["offset"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["colClass"] = function (_this) {
-      var Result = undefined;
-      var cls = [];
-      var c = this.cols || '12';
-      cls.push('bui-col-' + c);
-      if (this.sm) cls.push('bui-col-sm-' + this.sm);
-      if (this.md) cls.push('bui-col-md-' + this.md);
-      if (this.lg) cls.push('bui-col-lg-' + this.lg);
-      if (this.xl) cls.push('bui-col-xl-' + this.xl);
-      if (this.offset) cls.push('bui-offset-' + this.offset);
-      return cls.join(' ');
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-col",comp);
-  };
-});
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVContainer = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-container" :class="{ \'bui-container-fluid\': fluid }">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("fluid");
-    comp["defaultProps"]["fluid"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-container",comp);
-  };
-});
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVDataGrid = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["searchQuery"] = "";
-      d["sortKey"] = "";
-      d["sortAsc"] = true;
-      d["currentPage"] = 1;
-      d["pageSize"] = 5;
-      d["selectedRow"] = null;
-      d["virtualScrollTop"] = 0;
-      d["virtualViewportHeight"] = 400;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("dataset");
-    comp["defaultProps"]["dataset"] = null;
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = new Array();
-    comp["props"].push("columns");
-    comp["defaultProps"]["columns"] = new Array();
-    comp["props"].push("virtualScroll");
-    comp["defaultProps"]["virtualScroll"] = false;
-    comp["props"].push("rowHeight");
-    comp["defaultProps"]["rowHeight"] = 40;
-    comp["props"].push("virtualHeight");
-    comp["defaultProps"]["virtualHeight"] = "400px";
-    comp["props"].push("virtualBuffer");
-    comp["defaultProps"]["virtualBuffer"] = 5;
-    m = new Object();
-    m["handleSearch"] = function (_this) {
-      _this["currentPage"] = 1;
-      _this["virtualScrollTop"] = 0;
-    };
-    m["handleTableScroll"] = function (_this, e) {
-      if (e && e.target) {
-        this.virtualScrollTop = e.target.scrollTop || 0;
-        this.virtualViewportHeight = e.target.clientHeight || 400;
-      };
-    };
-    m["sortBy"] = function (_this, key) {
-      if (_this["sortKey"] == key) {
-        _this["sortAsc"] = !!(_this["sortAsc"] == false)}
-       else {
-        _this["sortKey"] = key;
-        _this["sortAsc"] = true;
-      };
-    };
-    m["prevPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
-    };
-    m["nextPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
-    };
-    m["selectRow"] = function (_this, row) {
-      var ds = this.dataset;
-      if (ds && row) {
-        if (row.id !== undefined && typeof ds.Locate === 'function') {
-          ds.Locate('id', row.id);
-        } else if (typeof ds.Locate === 'function') {
-          var keys = Object.keys(row);
-          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
-        }
-        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
-      }
-      this.selectedRow = row;
-      if (typeof this.$emit === 'function') {
-        this.$emit('row-select', row);
-      };
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
-        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["resolvedItems"] = function (_this) {
-      var Result = undefined;
-      var ds = this.dataset;
-      if (ds) {
-        if (Array.isArray(ds.Data)) return ds.Data;
-        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-        if (Array.isArray(ds.FRecords)) return ds.FRecords;
-        if (Array.isArray(ds)) return ds;
-      }
-      return (this.items && Array.isArray(this.items)) ? this.items : [];
-      return Result;
-    };
-    comp["computed"]["resolvedColumns"] = function (_this) {
-      var Result = undefined;
-      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
-        return this.columns;
-      }
-      var ds = this.dataset;
-      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
-        return ds.Fields.ToArray();
-      }
-      var list = this.resolvedItems;
-      if (list && list.length > 0 && typeof list[0] === 'object') {
-        return Object.keys(list[0]).map(function(k) {
-          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
-        });
-      }
-      return [];
-      return Result;
-    };
-    comp["computed"]["totalItems"] = function (_this) {
-      var Result = undefined;
-      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      return Result;
-    };
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
-      let q = (this.searchQuery || '').toLowerCase();
-      if (q) {
-        list = list.filter(function(item) {
-          return Object.values(item).some(function(v) {
-            return String(v).toLowerCase().indexOf(q) !== -1;
-          });
-        });
-      }
-      let sk = this.sortKey;
-      let asc = this.sortAsc;
-      if (sk) {
-        list.sort(function(a, b) {
-          let va = (a && a[sk] !== undefined) ? a[sk] : '';
-          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
-          if (typeof va === 'number' && typeof vb === 'number') {
-            return asc ? (va - vb) : (vb - va);
-          }
-          let sa = String(va).toLowerCase();
-          let sb = String(vb).toLowerCase();
-          if (sa < sb) return asc ? -1 : 1;
-          if (sa > sb) return asc ? 1 : -1;
-          return 0;
-        });
-      }
-      return list;
-      return Result;
-    };
-    comp["computed"]["totalPages"] = function (_this) {
-      var Result = undefined;
-      let count = this.filteredItems.length;
-      Result = Math.max(1, Math.ceil(count / this.pageSize));
-      return Result;
-    };
-    comp["computed"]["pagedItems"] = function (_this) {
-      var Result = undefined;
-      var ds = this.dataset;
-      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
-        var recNo = ds.RecNo;
-        if (this._lastRecNo === undefined) {
-          this._lastRecNo = recNo;
-        } else if (recNo !== this._lastRecNo) {
-          this._lastRecNo = recNo;
-          var targetPage = Math.ceil(recNo / this.pageSize);
-          if (targetPage > 0 && targetPage !== this.currentPage) {
-            this.currentPage = targetPage;
-          }
-        }
-      }
-      let list = this.filteredItems || [];
-      let start = (this.currentPage - 1) * this.pageSize;
-      return list.slice(start, start + this.pageSize);
-      return Result;
-    };
-    comp["computed"]["virtualStartIndex"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
-      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
-      Result = Math.max(0, idx);
-      return Result;
-    };
-    comp["computed"]["virtualEndIndex"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
-      let vh = this.virtualViewportHeight || 400;
-      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
-      Result = Math.min(count, idx);
-      return Result;
-    };
-    comp["computed"]["topSpacerHeight"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      Result = this.virtualStartIndex * rh;
-      return Result;
-    };
-    comp["computed"]["bottomSpacerHeight"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      let rendered = this.virtualEndIndex - this.virtualStartIndex;
-      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
-      Result = remaining * rh;
-      return Result;
-    };
-    comp["computed"]["displayRows"] = function (_this) {
-      var Result = undefined;
-      if (this.virtualScroll) {
-        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
-        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
-      }
-      return this.pagedItems;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-data-grid",comp);
-    pas.BVComponents.RegisterComponent("bv-datagrid",comp);
-  };
-});
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVDrawer = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-drawer-wrapper {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   z-index: 1050;   pointer-events: none;   visibility: hidden; } .bui-drawer-wrapper.is-open {   pointer-events: auto;   visibility: visible; } .bui-drawer-backdrop {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   background: rgba(0, 0, 0, 0.45);   backdrop-filter: blur(2px);   z-index: 1050;   opacity: 0;   transition: opacity 0.3s ease;   pointer-events: auto; } .bui-drawer-wrapper.is-open .bui-drawer-backdrop {   opacity: 1; } .bui-drawer {   position: fixed;   top: 0;   bottom: 0;   left: 0;   width: 280px;   max-width: 85vw;   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);   z-index: 1060;   display: flex;   flex-direction: column;   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);   box-sizing: border-box;   pointer-events: auto;   visibility: visible; } .bui-drawer-left {   left: 0;   right: auto;   transform: translateX(-100%); } .bui-drawer-left.is-open {   transform: translateX(0); } .bui-drawer-right {   left: auto;   right: 0;   transform: translateX(100%); } .bui-drawer-right.is-open {   transform: translateX(0); }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div :class="\'bui-drawer-wrapper\' + (isOpen ? \' is-open\' : \'\')">' + '    <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>' + '    <aside :class="\'bui-drawer bui-drawer-\' + (position || \'left\') + (isOpen ? \' is-open\' : \'\')" :style="\'width: \' + (width || \'280px\')">' + '      <div class="bui-drawer-header">' + '        <slot name="header">' + '          <strong class="bui-drawer-title">{{ title }}</strong>' + '          <button class="bui-drawer-close" type="button" @click="close">&times;</button>' + "        </slot>" + "      </div>" + '      <div class="bui-drawer-body">' + "        <slot></slot>" + "      </div>" + '      <div class="bui-drawer-footer" v-if="hasFooter">' + '        <slot name="footer"></slot>' + "      </div>" + "    </aside>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      d["position"] = "left";
-      d["width"] = "280px";
-      d["overlay"] = true;
-      d["hasFooter"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Menu";
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "280px";
-    comp["props"].push("position");
-    comp["defaultProps"]["position"] = "left";
-    comp["props"].push("overlay");
-    comp["defaultProps"]["overlay"] = true;
-    comp["props"].push("hasFooter");
-    comp["defaultProps"]["hasFooter"] = false;
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = false;
-    m = new Object();
-    m["open"] = function (_this) {
-      _this["isOpen"] = true;
-      this.$emit('open');
-    };
-    m["close"] = function (_this) {
-      _this["isOpen"] = false;
-      this.$emit('close');
-    };
-    m["toggle"] = function (_this) {
-      _this["isOpen"] = !!(_this["isOpen"] == false);
-      if (!(_this["isOpen"] == false)) {
-        this.$emit('open');
-      } else {
-        this.$emit('close');
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if ((_this["show"] == true) || (_this["show"] == "true")) {
-        _this["isOpen"] = true}
-       else _this["isOpen"] = false;
-    };
-    pas.BVComponents.RegisterComponent("bv-drawer",comp);
-  };
-});
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVFormSelect = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <select class="bui-select" :value="value" @change="onChange">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    m = new Object();
-    m["onChange"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : ev;
-      this.$emit('input', val); 
-      this.$emit('change', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-form-select",comp);
-  };
-});
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIcon = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("name");
-    comp["defaultProps"]["name"] = "check-circle";
-    comp["props"].push("size");
-    comp["defaultProps"]["size"] = "16";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-icon",comp);
-  };
-});
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVInput = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + "    <input " + '      :type="type || \'text\'" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder || \'\'"' + '      :value="value !== undefined && value !== null ? value : \'\'"' + '      :readonly="readonly && readonly !== \'false\'"' + '      @input="handleInput"' + "    />" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("placeholder");
-    comp["defaultProps"]["placeholder"] = "";
-    comp["props"].push("type");
-    comp["defaultProps"]["type"] = "text";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("readonly");
-    comp["defaultProps"]["readonly"] = false;
-    m = new Object();
-    m["handleInput"] = function (_this, ev) {
-      let val = (ev && ev.target) ? ev.target.value : (ev || '');
-      this.value = val;
-      this.$emit('input', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-input",comp);
-  };
-});
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVInputGroup = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <slot>" + "         <input " + '           type="text" ' + '           class="bui-input-group-field" ' + '           :placeholder="placeholder || \'\'" ' + '           :value="value !== undefined && value !== null ? value : \'\'"' + '           @input="onInput"' + "         >" + "       </slot>" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("placeholder");
-    comp["defaultProps"]["placeholder"] = "";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("prepend");
-    comp["defaultProps"]["prepend"] = "";
-    comp["props"].push("append");
-    comp["defaultProps"]["append"] = "";
-    m = new Object();
-    m["onInput"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : (ev || '');
-      this.$emit('input', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-input-group",comp);
-  };
-});
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVListGroup = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <ul class="bui-list-group">' + "    <slot></slot>" + "  </ul>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-list-group",comp);
-  };
-});
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVListGroupItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <span><slot></slot></span>" + '    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>' + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("badge");
-    comp["defaultProps"]["badge"] = "";
-    comp["props"].push("badgeVariant");
-    comp["defaultProps"]["badgeVariant"] = "primary";
-    comp["props"].push("badgevariant");
-    comp["defaultProps"]["badgevariant"] = "primary";
-    m = new Object();
-    m["handleClick"] = function (_this) {
-      this.$emit('click');
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["resolvedBadgeVariant"] = function (_this) {
-      var Result = undefined;
-      return this.badgeVariant || this.badgevariant || 'primary';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
-  };
-});
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVModal = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-modal-backdrop {   position: fixed;   top: 0; left: 0; right: 0; bottom: 0;   background: rgba(0, 0, 0, 0.6);   display: flex;   align-items: center;   justify-content: center;   z-index: 9999;   backdrop-filter: blur(2px);   padding: 16px;   box-sizing: border-box; } .bui-modal-content {   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   border-radius: 8px;   width: 100%;   max-width: 520px;   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);   overflow: hidden;   animation: bui-scale-in 0.2s ease-out;   box-sizing: border-box; } @keyframes bui-scale-in {   from { transform: scale(0.95); opacity: 0; }   to { transform: scale(1); opacity: 1; } } .bui-modal-header {   padding: 14px 18px;   border-bottom: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: space-between;   align-items: center;   font-weight: 600;   font-size: 16px; } .bui-modal-close {   background: transparent;   border: none;   font-size: 22px;   line-height: 1;   cursor: pointer;   color: var(--bui-text-muted, #64748b);   padding: 0 4px; } .bui-modal-close:hover {   color: var(--bui-text, #1e293b); } .bui-modal-body {    padding: 18px;    max-height: 70vh;   overflow-y: auto; } .bui-modal-footer {   padding: 12px 18px;   border-top: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: flex-end;   gap: 10px;   background: var(--bui-card-footer-bg, #f8fafc); }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-show="isVisible" style="display: none;" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" type="button" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" type="button" @click="close">{{ computedCancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" type="button" @click="confirm">{{ computedOkLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Modal";
-    comp["props"].push("okLabel");
-    comp["defaultProps"]["okLabel"] = "Process";
-    comp["props"].push("oklabel");
-    comp["defaultProps"]["oklabel"] = "Process";
-    comp["props"].push("cancelLabel");
-    comp["defaultProps"]["cancelLabel"] = "Close";
-    comp["props"].push("cancellabel");
-    comp["defaultProps"]["cancellabel"] = "Close";
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = false;
-    m = new Object();
-    m["showModal"] = function (_this) {
-      this.isOpen = true;
-      this.show = true;
-    };
-    m["show"] = function (_this) {
-      this.isOpen = true;
-      this.show = true;
-    };
-    m["close"] = function (_this) {
-      this.isOpen = false;
-      this.show = false;
-      this.$emit('close');
-    };
-    m["confirm"] = function (_this) {
-      this.isOpen = false;
-      this.show = false;
-      this.$emit('ok');
-    };
-    m["handleBackdropClick"] = function (_this) {
-      this.close();
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.show === true || this.show === 'true') {
-        this.isOpen = true;
-      } else {
-        this.isOpen = false;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["isVisible"] = function (_this) {
-      var Result = undefined;
-      return Boolean(this.isOpen === true || this.show === true || this.show === 'true');
-      return Result;
-    };
-    comp["computed"]["computedOkLabel"] = function (_this) {
-      var Result = undefined;
-      return this.okLabel || this.oklabel || 'Process';
-      return Result;
-    };
-    comp["computed"]["computedCancelLabel"] = function (_this) {
-      var Result = undefined;
-      return this.cancelLabel || this.cancellabel || 'Close';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-modal",comp);
-  };
-});
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVNavbar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("brand");
-    comp["defaultProps"]["brand"] = "BlaiseVue UI";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-navbar",comp);
-  };
-});
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVNavItem = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-nav-link {   cursor: pointer;   user-select: none; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <li class="bui-nav-item">' + '     <a class="bui-nav-link" :class="{ active: active }" :href="href || \'#\'" @click="handleClick">' + "        <slot>{{ label }}</slot>" + "     </a>" + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
-        if (ev && ev.preventDefault) ev.preventDefault();
-      }
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-nav-item",comp);
-  };
-});
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPagination = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= total }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = 1;
-    comp["props"].push("total");
-    comp["defaultProps"]["total"] = 10;
-    m = new Object();
-    m["changePage"] = function (_this, p) {
-      if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
-        this.$emit('input', p); this.$emit('change', p);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["pages"] = function (_this) {
-      var Result = undefined;
-      var arr = [];
-      var tot = parseInt(this.total) || 1;
-      for (var i = 1; i <= tot; i++) arr.push(i);
-      return arr;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-pagination",comp);
-  };
-});
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVProgress = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="barClass"' + '         :style="barStyle">' + '       <span v-if="showText">{{ value }}%</span>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = 0;
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = true;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["barClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      return 'bui-progress-bar bui-progress-' + v;
-      return Result;
-    };
-    comp["computed"]["barStyle"] = function (_this) {
-      var Result = undefined;
-      var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
-      return 'width: ' + pct + '%;';
-      return Result;
-    };
-    comp["computed"]["showText"] = function (_this) {
-      var Result = undefined;
-      return this.label !== false && this.label !== 'false';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-progress",comp);
-  };
-});
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVRow = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-row" :class="rowClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("gutter");
-    comp["defaultProps"]["gutter"] = "md";
-    comp["props"].push("align");
-    comp["defaultProps"]["align"] = "";
-    comp["props"].push("justify");
-    comp["defaultProps"]["justify"] = "";
-    comp["props"].push("noGutters");
-    comp["defaultProps"]["noGutters"] = false;
-    comp["props"].push("nogutters");
-    comp["defaultProps"]["nogutters"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["rowClass"] = function (_this) {
-      var Result = undefined;
-      var cls = [];
-      if (this.noGutters || this.nogutters || this.gutter === 'none') {
-        cls.push('bui-gutter-none');
-      } else if (this.gutter === 'sm') {
-        cls.push('bui-gutter-sm');
-      } else if (this.gutter === 'lg') {
-        cls.push('bui-gutter-lg');
-      } else {
-        cls.push('bui-gutter-md');
-      }
-      if (this.align) cls.push('bui-align-' + this.align);
-      if (this.justify) cls.push('bui-justify-' + this.justify);
-      return cls.join(' ');
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-row",comp);
-  };
-});
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVSpinner = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner\', \'bui-spinner-\' + (variant || \'primary\'), (small && small !== \'false\') ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("small");
-    comp["defaultProps"]["small"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-spinner",comp);
-  };
-});
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVTab = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("id");
-    comp["defaultProps"]["id"] = "";
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Tab";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (typeof this.registerTab === 'function') {
-        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
-        this.registerTab(t);
-      };
-    };
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (typeof this.registerTab === 'function') {
-        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
-        this.registerTab(t);
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["active"] = function (_this) {
-      var Result = undefined;
-      if (typeof this.isActive === 'function') {
-        return Boolean(this.isActive(this.id));
-      }
-      return true;
-      return Result;
-    };
-    comp["inject"] = new Array();
-    comp["inject"].push("registerTab");
-    comp["inject"].push("isActive");
-    pas.BVComponents.RegisterComponent("bv-tab",comp);
-  };
-});
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVTabs = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["tabs"] = "";
-      d["activeTabId"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["selectTab"] = function (_this, id) {
-      this.activeTabId = id; 
-      this.$emit('change', id);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      this.tabs = [];
-    };
-    comp["provide"] = function (_this) {
-      var Result = null;
-      Result = new Object();
-      var self = this;
-      Result.registerTab = function(tab) {
-        if (!self.tabs) self.tabs = [];
-        var exists = false;
-        for (var i = 0; i < self.tabs.length; i++) {
-          if (self.tabs[i].id === tab.id) { exists = true; break; }
-        }
-        if (!exists) {
-          self.tabs.push(tab);
-          if (tab.active || !self.activeTabId || self.activeTabId === '') {
-            self.activeTabId = tab.id;
-          }
-        }
-      };
-      Result.unregisterTab = function(id) {
-        if (!self.tabs) return;
-        var idx = -1;
-        for (var i = 0; i < self.tabs.length; i++) {
-          if (self.tabs[i].id === id) { idx = i; break; }
-        }
-        if (idx !== -1) self.tabs.splice(idx, 1);
-      };
-      Result.isActive = function(id) {
-        return self.activeTabId === id;
-      };
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-tabs",comp);
-  };
-});
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVToast = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-toast {   position: fixed;   bottom: 20px;   right: 20px;   background: #1e293b;   color: #fff;   padding: 12px 20px;   border-radius: 6px;   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);   display: flex;   align-items: center;   gap: 10px;   z-index: 10000;   border-left: 4px solid var(--bui-primary, #42b883);   animation: bui-toast-slide 0.3s ease-out; } @media (max-width: 576px) {   .bui-toast {     bottom: 74px;     left: 16px;     right: 16px;     max-width: calc(100vw - 32px);     justify-content: space-between;   } } @keyframes bui-toast-slide {   from { transform: translateY(20px); opacity: 0; }   to { transform: translateY(0); opacity: 1; } }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="isVisible">' + '      <div class="bui-toast-content">' + '        <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "        <slot>{{ message }}</slot>" + "      </div>" + '      <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "    </div>" + "  </teleport>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("message");
-    comp["defaultProps"]["message"] = "";
-    comp["props"].push("duration");
-    comp["defaultProps"]["duration"] = 3000;
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "success";
-    m = new Object();
-    m["showToast"] = function (_this) {
-      _this["isOpen"] = true;
-      const dur = this.duration || 3000;
-      if (this._toastTimer) clearTimeout(this._toastTimer);
-      this._toastTimer = setTimeout(() => {
-        this.isOpen = false;
-      }, dur);
-    };
-    m["show"] = function (_this) {
-      this.showToast();
-    };
-    m["dismiss"] = function (_this) {
-      _this["isOpen"] = false;
-      this.$emit('dismiss');
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["isVisible"] = function (_this) {
-      var Result = undefined;
-      return Boolean(this.isOpen);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-toast",comp);
-  };
-});
-rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVVirtualScroll = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["scrollTop"] = 0;
-      d["viewportHeight"] = 400;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = new Array();
-    comp["props"].push("itemHeight");
-    comp["defaultProps"]["itemHeight"] = 40;
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "400px";
-    comp["props"].push("buffer");
-    comp["defaultProps"]["buffer"] = 5;
-    m = new Object();
-    m["handleScroll"] = function (_this, e) {
-      if (e && e.target) {
-        this.scrollTop = e.target.scrollTop || 0;
-        this.viewportHeight = e.target.clientHeight || 400;
-        if (typeof this.$emit === 'function') {
-          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
-        }
-      };
-    };
-    m["scrollToIndex"] = function (_this, idx) {
-      let ih = this.itemHeight || 40;
-      if (this.$refs && this.$refs.viewport) {
-        this.$refs.viewport.scrollTop = idx * ih;
-      };
-    };
-    m["scrollToTop"] = function (_this) {
-      if (this.$refs && this.$refs.viewport) {
-        this.$refs.viewport.scrollTop = 0;
-      };
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.$refs && this.$refs.viewport) {
-        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["totalCount"] = function (_this) {
-      var Result = undefined;
-      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
-      return Result;
-    };
-    comp["computed"]["totalHeight"] = function (_this) {
-      var Result = undefined;
-      Result = this.totalCount * (this.itemHeight || 40);
-      return Result;
-    };
-    comp["computed"]["startIndex"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      let buf = this.buffer !== undefined ? this.buffer : 5;
-      let idx = Math.floor(this.scrollTop / ih) - buf;
-      Result = Math.max(0, idx);
-      return Result;
-    };
-    comp["computed"]["endIndex"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      let buf = this.buffer !== undefined ? this.buffer : 5;
-      let vh = this.viewportHeight || 400;
-      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
-      Result = Math.min(this.totalCount, idx);
-      return Result;
-    };
-    comp["computed"]["offsetY"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      Result = this.startIndex * ih;
-      return Result;
-    };
-    comp["computed"]["visibleItems"] = function (_this) {
-      var Result = undefined;
-      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
-      return list.slice(this.startIndex, this.endIndex);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
-    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
-  };
-});
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonApp = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-app" :class="appClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("mode");
-    comp["defaultProps"]["mode"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["appClass"] = function (_this) {
-      var Result = undefined;
-      var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
-      return 'ionic-mode-' + m;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-app",comp);
-  };
-});
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonBadge = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-ion-badge" :class="\'bui-ion-badge-\' + color">' + "    <slot>{{ value }}</slot>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("color");
-    comp["defaultProps"]["color"] = "primary";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
-  };
-});
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonButton = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button" + '    class="bui-ion-btn"' + '    :class="btnClass"' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("color");
-    comp["defaultProps"]["color"] = "primary";
-    comp["props"].push("fill");
-    comp["defaultProps"]["fill"] = "solid";
-    comp["props"].push("expand");
-    comp["defaultProps"]["expand"] = "";
-    comp["props"].push("disabled");
-    comp["defaultProps"]["disabled"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
-      if (!isDisabled) {
-        this.$emit('click', ev);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["btnClass"] = function (_this) {
-      var Result = undefined;
-      var c = this.color || 'primary';
-      var f = this.fill || 'solid';
-      var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
-      return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-button",comp);
-  };
-});
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonCard = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-card">' + '    <div class="bui-ion-card-header" b-if="title || subtitle">' + '      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>' + '      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>' + "    </div>" + '    <div class="bui-ion-card-content">' + "      <slot></slot>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-card",comp);
-  };
-});
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonContent = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <main class="bui-ion-content" :class="{ \'bui-ion-content-padding\': padding }">' + "    <slot></slot>" + "  </main>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("padding");
-    comp["defaultProps"]["padding"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-content",comp);
-  };
-});
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonHeader = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <header class="bui-ion-header">' + "    <slot></slot>" + "  </header>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-header",comp);
-  };
-});
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div :class="wrapperClass">' + '    <div class="bui-ion-item" @click="handleClick">' + '      <div class="bui-ion-item-start" b-if="hasStart">' + '        <slot name="start"></slot>' + "      </div>" + '      <div class="bui-ion-item-content">' + '        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>' + '        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>' + "        <slot></slot>" + "      </div>" + '      <div class="bui-ion-item-end">' + '        <slot name="end"></slot>' + '        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>' + "      </div>" + "    </div>" + '    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">' + '      <slot name="expanded"></slot>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isExpanded"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "";
-    comp["props"].push("detail");
-    comp["defaultProps"]["detail"] = false;
-    comp["props"].push("expandable");
-    comp["defaultProps"]["expandable"] = false;
-    comp["props"].push("expanded");
-    comp["defaultProps"]["expanded"] = false;
-    comp["props"].push("hasStart");
-    comp["defaultProps"]["hasStart"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      if (this.expandable === true || this.expandable === 'true') {
-        this.isExpanded = !this.isExpanded;
-        this.$emit('toggle', { expanded: this.isExpanded });
-      }
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.expanded === true || this.expanded === 'true') {
-        this.isExpanded = true;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["wrapperClass"] = function (_this) {
-      var Result = undefined;
-      var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
-      var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
-      return 'bui-ion-item-wrapper' + exp + open;
-      return Result;
-    };
-    comp["computed"]["detailClass"] = function (_this) {
-      var Result = undefined;
-      var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
-      return 'bui-ion-item-detail' + rot;
-      return Result;
-    };
-    comp["computed"]["showDetail"] = function (_this) {
-      var Result = undefined;
-      var d = Boolean(this.detail === true || this.detail === 'true');
-      var e = Boolean(this.expandable === true || this.expandable === 'true');
-      return d || e;
-      return Result;
-    };
-    comp["computed"]["isContentVisible"] = function (_this) {
-      var Result = undefined;
-      var exp = Boolean(this.expandable === true || this.expandable === 'true');
-      var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
-      return exp && open;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-item",comp);
-  };
-});
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonList = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-list" :class="{ \'bui-ion-list-inset\': inset }">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("inset");
-    comp["defaultProps"]["inset"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-list",comp);
-  };
-});
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabBar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-ion-tab-bar">' + "    <slot></slot>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
-  };
-});
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabButton = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button" + '    class="bui-ion-tab-button"' + '    :class="{ \'is-active\': active }"' + '    @click="handleClick">' + '    <slot name="icon"></slot>' + '    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>' + '    <slot name="badge"></slot>' + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("tab");
-    comp["defaultProps"]["tab"] = "";
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
-  };
-});
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabs = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-tabs">' + '    <div class="bui-ion-tab-content">' + "      <slot></slot>" + "    </div>" + '    <slot name="bottom"></slot>' + "  </div>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
-  };
-});
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTitle = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <h1 class="bui-ion-title">' + "    <slot>{{ title }}</slot>" + "  </h1>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-title",comp);
-  };
-});
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonToolbar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-toolbar">' + '    <div class="bui-ion-toolbar-start">' + '      <slot name="start"></slot>' + "    </div>" + "    <slot></slot>" + '    <div class="bui-ion-toolbar-end">' + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
-  };
-});
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVThemeSelect = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bv-theme-select-wrapper d-inline-block">' + '    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">' + '      <option value="flatly">Flatly (Claro)</option>' + '      <option value="cosmo">Cosmo (Claro)</option>' + '      <option value="lux">Lux (Claro)</option>' + '      <option value="zephyr">Zephyr (Claro)</option>' + '      <option value="darkly">Darkly (Escuro)</option>' + '      <option value="cyborg">Cyborg (Escuro)</option>' + '      <option value="solar">Solar (Escuro)</option>' + '      <option value="vapor">Vapor (Neon)</option>' + '      <option value="pulse">Pulse (Roxo)</option>' + "    </select>" + "  </div>";
-    m = new Object();
-    m["onThemeChange"] = function (_this, e) {
-      var sel = "";
-      sel = "" + e["target"]["value"];
-      if (sel !== "") {
-        if (window.$theme) {
-          window.$theme.setTheme(sel);
-        };
-      };
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-theme-select",comp);
-  };
-});
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVThemeToggle = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button " + '    type="button"' + '    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"' + '    :title="$theme.isDark ? \'Tema Claro\' : \'Tema Escuro\'"' + '    @click="toggleTheme">' + '    <span v-if="$theme.isDark">☀️ Claro</span>' + '    <span v-if="!$theme.isDark">🌙 Escuro</span>' + "  </button>";
-    m = new Object();
-    m["toggleTheme"] = function (_this) {
-      if (window.$theme) {
-        window.$theme.toggleDarkLight();
-      };
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
-  };
-});
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uFormHeader","uCard","uCounter","uInfoCard","uMobileView","uCustomerView","uProductView","uUserProfile","uLibBootstrap","uLoginView","uAbout","uHome","uFormulario","uProFeatures","uDatasetView","uReportsView","uCharts","uShowcase","uBVBarChart","uBVPolarAreaChart","uBVChart","uBVScatterChart","uBVDoughnutChart","uBVRadarChart","uBVPieChart","uBVLineChart","uBVBubbleChart","uBVThemeSelect","uBVThemeToggle","uBVTabs","uBVInput","uBVProgress","uBVDrawer","uBVBtn","uBVToast","uBVBreadcrumb","uBVNavbar","uBVNavItem","uBVListGroup","uBVFormSelect","uBVDataGrid","uBVSpinner","uBVContainer","uBVBadge","uBVBottomNav","uBVListGroupItem","uBVVirtualScroll","uBVPagination","uBVCard","uBVBottomNavItem","uBVRow","uBVInputGroup","uBVCol","uBVModal","uBVBreadcrumbItem","uBVTab","uBVAlert","uBVAccordion","uBVIcon","uBVIonBadge","uBVIonHeader","uBVIonCard","uBVIonToolbar","uBVIonItem","uBVIonTabBar","uBVIonTabButton","uBVIonTitle","uBVIonTabs","uBVIonList","uBVIonApp","uBVIonContent","uBVIonButton","uBVReportViewer"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -14746,152 +14746,152 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     _styleEl = document.createElement("style");
     _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .drawer-btn { background: rgba(255,255,255,0.12); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; padding: 5px 10px; font-size: 16px; cursor: pointer; transition: background 0.2s; }   .drawer-btn:hover { background: rgba(255,255,255,0.25); }   .drawer-nav { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }   .drawer-link { color: inherit; text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 15px; font-weight: 500; display: block; transition: all 0.2s; }   .drawer-link:hover { background: rgba(66, 184, 131, 0.15); color: #42b883; font-weight: 600; }   .mobile-bottom-bar { display: none; }   .main-content-container { max-width: 960px; margin: 24px auto; padding: 0 16px; }   @media (max-width: 768px) {     .nav-links { display: none; } /* Hide wide links on mobile; drawer & bottom nav take over! */     .mobile-bottom-bar { display: flex; }     .desktop-only-footer { display: none; }     .main-content-container { padding-bottom: 75px; }   }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
     document.head.appendChild(_styleEl);
+    console.log("[Init] Registering uFormHeader...");
+    pas.uFormHeader.Register_uFormHeader();
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
     console.log("[Init] Registering uCounter...");
     pas.uCounter.Register_uCounter();
-    console.log("[Init] Registering uFormHeader...");
-    pas.uFormHeader.Register_uFormHeader();
     console.log("[Init] Registering uInfoCard...");
     pas.uInfoCard.Register_uInfoCard();
-    console.log("[Init] Registering uAbout...");
-    pas.uAbout.Register_uAbout();
-    console.log("[Init] Registering uCharts...");
-    pas.uCharts.Register_uCharts();
+    console.log("[Init] Registering uMobileView...");
+    pas.uMobileView.Register_uMobileView();
     console.log("[Init] Registering uCustomerView...");
     pas.uCustomerView.Register_uCustomerView();
-    console.log("[Init] Registering uDatasetView...");
-    pas.uDatasetView.Register_uDatasetView();
-    console.log("[Init] Registering uFormulario...");
-    pas.uFormulario.Register_uFormulario();
-    console.log("[Init] Registering uHome...");
-    pas.uHome.Register_uHome();
+    console.log("[Init] Registering uProductView...");
+    pas.uProductView.Register_uProductView();
+    console.log("[Init] Registering uUserProfile...");
+    pas.uUserProfile.Register_uUserProfile();
     console.log("[Init] Registering uLibBootstrap...");
     pas.uLibBootstrap.Register_uLibBootstrap();
     console.log("[Init] Registering uLoginView...");
     pas.uLoginView.Register_uLoginView();
-    console.log("[Init] Registering uMobileView...");
-    pas.uMobileView.Register_uMobileView();
-    console.log("[Init] Registering uProductView...");
-    pas.uProductView.Register_uProductView();
+    console.log("[Init] Registering uAbout...");
+    pas.uAbout.Register_uAbout();
+    console.log("[Init] Registering uHome...");
+    pas.uHome.Register_uHome();
+    console.log("[Init] Registering uFormulario...");
+    pas.uFormulario.Register_uFormulario();
     console.log("[Init] Registering uProFeatures...");
     pas.uProFeatures.Register_uProFeatures();
+    console.log("[Init] Registering uDatasetView...");
+    pas.uDatasetView.Register_uDatasetView();
     console.log("[Init] Registering uReportsView...");
     pas.uReportsView.Register_uReportsView();
+    console.log("[Init] Registering uCharts...");
+    pas.uCharts.Register_uCharts();
     console.log("[Init] Registering uShowcase...");
     pas.uShowcase.Register_uShowcase();
-    console.log("[Init] Registering uUserProfile...");
-    pas.uUserProfile.Register_uUserProfile();
     console.log("[Init] Registering uBVBarChart...");
     pas.uBVBarChart.Register_uBVBarChart();
-    console.log("[Init] Registering uBVBubbleChart...");
-    pas.uBVBubbleChart.Register_uBVBubbleChart();
-    console.log("[Init] Registering uBVChart...");
-    pas.uBVChart.Register_uBVChart();
-    console.log("[Init] Registering uBVDoughnutChart...");
-    pas.uBVDoughnutChart.Register_uBVDoughnutChart();
-    console.log("[Init] Registering uBVLineChart...");
-    pas.uBVLineChart.Register_uBVLineChart();
-    console.log("[Init] Registering uBVPieChart...");
-    pas.uBVPieChart.Register_uBVPieChart();
     console.log("[Init] Registering uBVPolarAreaChart...");
     pas.uBVPolarAreaChart.Register_uBVPolarAreaChart();
-    console.log("[Init] Registering uBVRadarChart...");
-    pas.uBVRadarChart.Register_uBVRadarChart();
+    console.log("[Init] Registering uBVChart...");
+    pas.uBVChart.Register_uBVChart();
     console.log("[Init] Registering uBVScatterChart...");
     pas.uBVScatterChart.Register_uBVScatterChart();
-    console.log("[Init] Registering uBVReportViewer...");
-    pas.uBVReportViewer.Register_uBVReportViewer();
-    console.log("[Init] Registering uBVAccordion...");
-    pas.uBVAccordion.Register_uBVAccordion();
-    console.log("[Init] Registering uBVAlert...");
-    pas.uBVAlert.Register_uBVAlert();
-    console.log("[Init] Registering uBVBadge...");
-    pas.uBVBadge.Register_uBVBadge();
-    console.log("[Init] Registering uBVBottomNav...");
-    pas.uBVBottomNav.Register_uBVBottomNav();
-    console.log("[Init] Registering uBVBottomNavItem...");
-    pas.uBVBottomNavItem.Register_uBVBottomNavItem();
-    console.log("[Init] Registering uBVBreadcrumb...");
-    pas.uBVBreadcrumb.Register_uBVBreadcrumb();
-    console.log("[Init] Registering uBVBreadcrumbItem...");
-    pas.uBVBreadcrumbItem.Register_uBVBreadcrumbItem();
-    console.log("[Init] Registering uBVBtn...");
-    pas.uBVBtn.Register_uBVBtn();
-    console.log("[Init] Registering uBVCard...");
-    pas.uBVCard.Register_uBVCard();
-    console.log("[Init] Registering uBVCol...");
-    pas.uBVCol.Register_uBVCol();
-    console.log("[Init] Registering uBVContainer...");
-    pas.uBVContainer.Register_uBVContainer();
-    console.log("[Init] Registering uBVDataGrid...");
-    pas.uBVDataGrid.Register_uBVDataGrid();
-    console.log("[Init] Registering uBVDrawer...");
-    pas.uBVDrawer.Register_uBVDrawer();
-    console.log("[Init] Registering uBVFormSelect...");
-    pas.uBVFormSelect.Register_uBVFormSelect();
-    console.log("[Init] Registering uBVIcon...");
-    pas.uBVIcon.Register_uBVIcon();
-    console.log("[Init] Registering uBVInput...");
-    pas.uBVInput.Register_uBVInput();
-    console.log("[Init] Registering uBVInputGroup...");
-    pas.uBVInputGroup.Register_uBVInputGroup();
-    console.log("[Init] Registering uBVListGroup...");
-    pas.uBVListGroup.Register_uBVListGroup();
-    console.log("[Init] Registering uBVListGroupItem...");
-    pas.uBVListGroupItem.Register_uBVListGroupItem();
-    console.log("[Init] Registering uBVModal...");
-    pas.uBVModal.Register_uBVModal();
-    console.log("[Init] Registering uBVNavbar...");
-    pas.uBVNavbar.Register_uBVNavbar();
-    console.log("[Init] Registering uBVNavItem...");
-    pas.uBVNavItem.Register_uBVNavItem();
-    console.log("[Init] Registering uBVPagination...");
-    pas.uBVPagination.Register_uBVPagination();
-    console.log("[Init] Registering uBVProgress...");
-    pas.uBVProgress.Register_uBVProgress();
-    console.log("[Init] Registering uBVRow...");
-    pas.uBVRow.Register_uBVRow();
-    console.log("[Init] Registering uBVSpinner...");
-    pas.uBVSpinner.Register_uBVSpinner();
-    console.log("[Init] Registering uBVTab...");
-    pas.uBVTab.Register_uBVTab();
-    console.log("[Init] Registering uBVTabs...");
-    pas.uBVTabs.Register_uBVTabs();
-    console.log("[Init] Registering uBVToast...");
-    pas.uBVToast.Register_uBVToast();
-    console.log("[Init] Registering uBVVirtualScroll...");
-    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
-    console.log("[Init] Registering uBVIonApp...");
-    pas.uBVIonApp.Register_uBVIonApp();
-    console.log("[Init] Registering uBVIonBadge...");
-    pas.uBVIonBadge.Register_uBVIonBadge();
-    console.log("[Init] Registering uBVIonButton...");
-    pas.uBVIonButton.Register_uBVIonButton();
-    console.log("[Init] Registering uBVIonCard...");
-    pas.uBVIonCard.Register_uBVIonCard();
-    console.log("[Init] Registering uBVIonContent...");
-    pas.uBVIonContent.Register_uBVIonContent();
-    console.log("[Init] Registering uBVIonHeader...");
-    pas.uBVIonHeader.Register_uBVIonHeader();
-    console.log("[Init] Registering uBVIonItem...");
-    pas.uBVIonItem.Register_uBVIonItem();
-    console.log("[Init] Registering uBVIonList...");
-    pas.uBVIonList.Register_uBVIonList();
-    console.log("[Init] Registering uBVIonTabBar...");
-    pas.uBVIonTabBar.Register_uBVIonTabBar();
-    console.log("[Init] Registering uBVIonTabButton...");
-    pas.uBVIonTabButton.Register_uBVIonTabButton();
-    console.log("[Init] Registering uBVIonTabs...");
-    pas.uBVIonTabs.Register_uBVIonTabs();
-    console.log("[Init] Registering uBVIonTitle...");
-    pas.uBVIonTitle.Register_uBVIonTitle();
-    console.log("[Init] Registering uBVIonToolbar...");
-    pas.uBVIonToolbar.Register_uBVIonToolbar();
+    console.log("[Init] Registering uBVDoughnutChart...");
+    pas.uBVDoughnutChart.Register_uBVDoughnutChart();
+    console.log("[Init] Registering uBVRadarChart...");
+    pas.uBVRadarChart.Register_uBVRadarChart();
+    console.log("[Init] Registering uBVPieChart...");
+    pas.uBVPieChart.Register_uBVPieChart();
+    console.log("[Init] Registering uBVLineChart...");
+    pas.uBVLineChart.Register_uBVLineChart();
+    console.log("[Init] Registering uBVBubbleChart...");
+    pas.uBVBubbleChart.Register_uBVBubbleChart();
     console.log("[Init] Registering uBVThemeSelect...");
     pas.uBVThemeSelect.Register_uBVThemeSelect();
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
+    console.log("[Init] Registering uBVTabs...");
+    pas.uBVTabs.Register_uBVTabs();
+    console.log("[Init] Registering uBVInput...");
+    pas.uBVInput.Register_uBVInput();
+    console.log("[Init] Registering uBVProgress...");
+    pas.uBVProgress.Register_uBVProgress();
+    console.log("[Init] Registering uBVDrawer...");
+    pas.uBVDrawer.Register_uBVDrawer();
+    console.log("[Init] Registering uBVBtn...");
+    pas.uBVBtn.Register_uBVBtn();
+    console.log("[Init] Registering uBVToast...");
+    pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVBreadcrumb...");
+    pas.uBVBreadcrumb.Register_uBVBreadcrumb();
+    console.log("[Init] Registering uBVNavbar...");
+    pas.uBVNavbar.Register_uBVNavbar();
+    console.log("[Init] Registering uBVNavItem...");
+    pas.uBVNavItem.Register_uBVNavItem();
+    console.log("[Init] Registering uBVListGroup...");
+    pas.uBVListGroup.Register_uBVListGroup();
+    console.log("[Init] Registering uBVFormSelect...");
+    pas.uBVFormSelect.Register_uBVFormSelect();
+    console.log("[Init] Registering uBVDataGrid...");
+    pas.uBVDataGrid.Register_uBVDataGrid();
+    console.log("[Init] Registering uBVSpinner...");
+    pas.uBVSpinner.Register_uBVSpinner();
+    console.log("[Init] Registering uBVContainer...");
+    pas.uBVContainer.Register_uBVContainer();
+    console.log("[Init] Registering uBVBadge...");
+    pas.uBVBadge.Register_uBVBadge();
+    console.log("[Init] Registering uBVBottomNav...");
+    pas.uBVBottomNav.Register_uBVBottomNav();
+    console.log("[Init] Registering uBVListGroupItem...");
+    pas.uBVListGroupItem.Register_uBVListGroupItem();
+    console.log("[Init] Registering uBVVirtualScroll...");
+    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
+    console.log("[Init] Registering uBVPagination...");
+    pas.uBVPagination.Register_uBVPagination();
+    console.log("[Init] Registering uBVCard...");
+    pas.uBVCard.Register_uBVCard();
+    console.log("[Init] Registering uBVBottomNavItem...");
+    pas.uBVBottomNavItem.Register_uBVBottomNavItem();
+    console.log("[Init] Registering uBVRow...");
+    pas.uBVRow.Register_uBVRow();
+    console.log("[Init] Registering uBVInputGroup...");
+    pas.uBVInputGroup.Register_uBVInputGroup();
+    console.log("[Init] Registering uBVCol...");
+    pas.uBVCol.Register_uBVCol();
+    console.log("[Init] Registering uBVModal...");
+    pas.uBVModal.Register_uBVModal();
+    console.log("[Init] Registering uBVBreadcrumbItem...");
+    pas.uBVBreadcrumbItem.Register_uBVBreadcrumbItem();
+    console.log("[Init] Registering uBVTab...");
+    pas.uBVTab.Register_uBVTab();
+    console.log("[Init] Registering uBVAlert...");
+    pas.uBVAlert.Register_uBVAlert();
+    console.log("[Init] Registering uBVAccordion...");
+    pas.uBVAccordion.Register_uBVAccordion();
+    console.log("[Init] Registering uBVIcon...");
+    pas.uBVIcon.Register_uBVIcon();
+    console.log("[Init] Registering uBVIonBadge...");
+    pas.uBVIonBadge.Register_uBVIonBadge();
+    console.log("[Init] Registering uBVIonHeader...");
+    pas.uBVIonHeader.Register_uBVIonHeader();
+    console.log("[Init] Registering uBVIonCard...");
+    pas.uBVIonCard.Register_uBVIonCard();
+    console.log("[Init] Registering uBVIonToolbar...");
+    pas.uBVIonToolbar.Register_uBVIonToolbar();
+    console.log("[Init] Registering uBVIonItem...");
+    pas.uBVIonItem.Register_uBVIonItem();
+    console.log("[Init] Registering uBVIonTabBar...");
+    pas.uBVIonTabBar.Register_uBVIonTabBar();
+    console.log("[Init] Registering uBVIonTabButton...");
+    pas.uBVIonTabButton.Register_uBVIonTabButton();
+    console.log("[Init] Registering uBVIonTitle...");
+    pas.uBVIonTitle.Register_uBVIonTitle();
+    console.log("[Init] Registering uBVIonTabs...");
+    pas.uBVIonTabs.Register_uBVIonTabs();
+    console.log("[Init] Registering uBVIonList...");
+    pas.uBVIonList.Register_uBVIonList();
+    console.log("[Init] Registering uBVIonApp...");
+    pas.uBVIonApp.Register_uBVIonApp();
+    console.log("[Init] Registering uBVIonContent...");
+    pas.uBVIonContent.Register_uBVIonContent();
+    console.log("[Init] Registering uBVIonButton...");
+    pas.uBVIonButton.Register_uBVIonButton();
+    console.log("[Init] Registering uBVReportViewer...");
+    pas.uBVReportViewer.Register_uBVReportViewer();
     console.log("[Init] Setting #app template...");
     document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
