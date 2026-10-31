@@ -1101,6 +1101,7 @@ initialization
 
           // 3. Directive Collection
           let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null, vfield = null;
+          let velseif = null, velse = false;
           let binds = [];
           let events = [];
           if (el.attributes) {
@@ -1116,6 +1117,8 @@ initialization
                }
                else if (n === 'b-for' || n === 'v-for') vfor = a.value;
                else if (n === 'b-if' || n === 'v-if') vif = a.value;
+               else if (n === 'b-else-if' || n === 'v-else-if') velseif = a.value;
+               else if (n === 'b-else' || n === 'v-else') velse = true;
                else if (n === 'b-show' || n === 'v-show') vshow = a.value;
                else if (n === 'b-ref' || n === 'ref') vref = a.value; 
                else if (n.startsWith('@') || n.startsWith('v-on:') || n.startsWith('b-on:')) {
@@ -1129,6 +1132,15 @@ initialization
                   binds.push({ name: n.replace('b-bind:', '').replace(':', ''), expr: a.value });
                }
             }
+          }
+
+          // Handle orphan b-else / b-else-if (without preceding b-if)
+          if ((velse || velseif !== null) && !el['bvManaged'] && !vif) {
+             console.warn("[Compiler] Orphan " + (velse ? "b-else/v-else" : "b-else-if/v-else-if") + " directive without preceding b-if/v-if on <" + tagName + ">");
+             el.removeAttribute('b-else'); el.removeAttribute('v-else');
+             el.removeAttribute('b-else-if'); el.removeAttribute('v-else-if');
+             bv.unmount(el);
+             return;
           }
 
           // 4. Handle Refs
@@ -1310,37 +1322,176 @@ initialization
             return;
           }
 
-          // 7. b-if directive
+          // 7. b-if / b-else-if / b-else conditional chain
           if (vif) {
             el.removeAttribute('b-if'); el.removeAttribute('v-if');
             let m = document.createElement('script'); m.type = 'text/if-marker'; m['bvManaged'] = true;
-            el.parentNode.insertBefore(m, el);
-            let active = true;
-            let firstRun = true;
-            let tName = el.getAttribute('bv-transition');
-            // A component uses up its placeholder and slot content, so reopening needs a fresh copy
-            let componentCopy = opts ? el.cloneNode(true) : null;
-            if (componentCopy && vmodel) componentCopy.setAttribute('b-model', vmodel);
-            bv.effect(function() {
-              let res = !!Data.Evaluate(vif);
-              if (res && !active) { 
-                 if (componentCopy) el = componentCopy.cloneNode(true);
-                 m.parentNode.insertBefore(el, m.nextSibling); 
-                 active = true; 
-                 bv.nonReactive(function() {
-                   bv.traverse(el, Data, Methods);
-                 });
-                 if (tName) bv.applyTransition(el, 'enter', tName);
-              }
-              else if (!res && active) { 
-                 let shown = el['__bv_replacement__'] || el;
-                 if (tName && !firstRun) bv.applyTransition(shown, 'leave', tName, function() { bv.unmount(el); });
-                 else bv.unmount(el); 
-                 active = false; 
-              }
-              firstRun = false;
+            if (el.parentNode) el.parentNode.insertBefore(m, el);
+
+            let branches = [];
+            let componentCopy0 = opts ? el.cloneNode(true) : null;
+            if (componentCopy0 && vmodel) componentCopy0.setAttribute('b-model', vmodel);
+            branches.push({
+              el: el,
+              expr: vif,
+              isElse: false,
+              componentCopy: componentCopy0,
+              vmodel: vmodel,
+              tName: el.getAttribute('bv-transition'),
+              opts: opts
             });
-            if (!active) return;
+
+            // Scan adjacent siblings for b-else-if / v-else-if and b-else / v-else
+            let cur = el.nextSibling;
+            let whitespacesToRemove = [];
+            while (cur) {
+              if (cur.nodeType === 3 && !cur.nodeValue.trim()) {
+                whitespacesToRemove.push(cur);
+                cur = cur.nextSibling;
+                continue;
+              }
+              if (cur.nodeType === 8) { // comment
+                cur = cur.nextSibling;
+                continue;
+              }
+              if (cur.nodeType === 1) {
+                let nextEl = cur;
+                let hasElseIf = nextEl.hasAttribute('b-else-if') || nextEl.hasAttribute('v-else-if');
+                let hasElse = nextEl.hasAttribute('b-else') || nextEl.hasAttribute('v-else');
+                if (hasElseIf) {
+                  let elseIfExpr = nextEl.getAttribute('b-else-if') || nextEl.getAttribute('v-else-if');
+                  nextEl.removeAttribute('b-else-if');
+                  nextEl.removeAttribute('v-else-if');
+                  nextEl['bvManaged'] = true;
+                  let nextTag = nextEl.tagName.toLowerCase();
+                  let nextOpts = (bv.components ? bv.components[nextTag] : null);
+                  let nextModel = nextEl.getAttribute('b-model') || nextEl.getAttribute('v-model');
+                  let nextCopy = nextOpts ? nextEl.cloneNode(true) : null;
+                  if (nextCopy && nextModel) nextCopy.setAttribute('b-model', nextModel);
+                  branches.push({
+                    el: nextEl,
+                    expr: elseIfExpr,
+                    isElse: false,
+                    componentCopy: nextCopy,
+                    vmodel: nextModel,
+                    tName: nextEl.getAttribute('bv-transition'),
+                    opts: nextOpts
+                  });
+                  whitespacesToRemove.forEach(function(ws) { if (ws.parentNode) ws.parentNode.removeChild(ws); });
+                  whitespacesToRemove = [];
+                  cur = nextEl.nextSibling;
+                  continue;
+                } else if (hasElse) {
+                  nextEl.removeAttribute('b-else');
+                  nextEl.removeAttribute('v-else');
+                  nextEl['bvManaged'] = true;
+                  let nextTag = nextEl.tagName.toLowerCase();
+                  let nextOpts = (bv.components ? bv.components[nextTag] : null);
+                  let nextModel = nextEl.getAttribute('b-model') || nextEl.getAttribute('v-model');
+                  let nextCopy = nextOpts ? nextEl.cloneNode(true) : null;
+                  if (nextCopy && nextModel) nextCopy.setAttribute('b-model', nextModel);
+                  branches.push({
+                    el: nextEl,
+                    expr: null,
+                    isElse: true,
+                    componentCopy: nextCopy,
+                    vmodel: nextModel,
+                    tName: nextEl.getAttribute('bv-transition'),
+                    opts: nextOpts
+                  });
+                  whitespacesToRemove.forEach(function(ws) { if (ws.parentNode) ws.parentNode.removeChild(ws); });
+                  whitespacesToRemove = [];
+                  break;
+                } else {
+                  break;
+                }
+              } else {
+                break;
+              }
+            }
+
+            // Detach branches 1..n from DOM initially
+            for (let bIdx = 1; bIdx < branches.length; bIdx++) {
+              if (branches[bIdx].el.parentNode) {
+                branches[bIdx].el.parentNode.removeChild(branches[bIdx].el);
+              }
+            }
+
+            let activeIndex = 0;
+            let firstRun = true;
+
+            bv.effect(function() {
+              let chosenIndex = -1;
+              for (let i = 0; i < branches.length; i++) {
+                let b = branches[i];
+                if (b.isElse) {
+                  chosenIndex = i;
+                  break;
+                } else {
+                  let res = !!Data.Evaluate(b.expr);
+                  if (res) {
+                    chosenIndex = i;
+                    break;
+                  }
+                }
+              }
+
+              if (firstRun) {
+                firstRun = false;
+                if (chosenIndex === 0) {
+                  activeIndex = 0;
+                  return;
+                } else {
+                  let shown0 = branches[0].el['__bv_replacement__'] || branches[0].el;
+                  bv.unmount(branches[0].el);
+                  activeIndex = -1;
+                  if (chosenIndex > 0) {
+                    let branch = branches[chosenIndex];
+                    let mountEl = branch.componentCopy ? branch.componentCopy.cloneNode(true) : branch.el;
+                    branch.el = mountEl;
+                    if (m.parentNode) m.parentNode.insertBefore(mountEl, m.nextSibling);
+                    activeIndex = chosenIndex;
+                    bv.nonReactive(function() {
+                      bv.traverse(mountEl, Data, Methods);
+                    });
+                    if (branch.tName) bv.applyTransition(mountEl, 'enter', branch.tName);
+                  }
+                  return;
+                }
+              }
+
+              if (chosenIndex === activeIndex) {
+                return;
+              }
+
+              if (activeIndex >= 0) {
+                let oldBranch = branches[activeIndex];
+                let shown = oldBranch.el['__bv_replacement__'] || oldBranch.el;
+                let oldEl = oldBranch.el;
+                if (oldBranch.tName) {
+                  bv.applyTransition(shown, 'leave', oldBranch.tName, function() {
+                    bv.unmount(oldEl);
+                  });
+                } else {
+                  bv.unmount(oldEl);
+                }
+                activeIndex = -1;
+              }
+
+              if (chosenIndex >= 0) {
+                let newBranch = branches[chosenIndex];
+                let mountEl = newBranch.componentCopy ? newBranch.componentCopy.cloneNode(true) : newBranch.el;
+                newBranch.el = mountEl;
+                if (m.parentNode) m.parentNode.insertBefore(mountEl, m.nextSibling);
+                activeIndex = chosenIndex;
+                bv.nonReactive(function() {
+                  bv.traverse(mountEl, Data, Methods);
+                });
+                if (newBranch.tName) bv.applyTransition(mountEl, 'enter', newBranch.tName);
+              }
+            });
+
+            if (activeIndex !== 0) return;
           }
 
           // 8. b-show directive

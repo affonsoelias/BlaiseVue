@@ -111,16 +111,31 @@ Links an HTML attribute to a reactive data (read-only).
 
 BlaiseVue offers directives for flow control and dynamic DOM manipulation.
 
-## 1. Conditional `b-if` and `b-else`
+## 1. Conditionals (`b-if`, `b-else-if`, `b-else`)
 
-Renders or removes elements from the DOM based on a condition.
+Renders or removes elements from the DOM based on reactive conditions. 
+
+BlaiseVue supports full `if / else-if / else` branching. Elements with `b-else-if` and `b-else` must immediately follow an element with `b-if` or `b-else-if` (whitespace and HTML comments between siblings are automatically ignored).
 
 ```html
 <template>
+  <!-- Simple If / Else -->
   <div b-if="loggedIn" class="badge">Active User</div>
   <div b-else class="badge-red">Please log in</div>
+
+  <!-- Multi-branch If / Else-If / Else -->
+  <div class="score-card">
+    <p b-if="score >= 90" class="grade-a">Grade A 🏆</p>
+    <p b-else-if="score >= 70" class="grade-b">Grade B 🥈</p>
+    <p b-else-if="score >= 50" class="grade-c">Grade C 🥉</p>
+    <p b-else class="grade-f">Retake Test ⚠️</p>
+  </div>
 </template>
 ```
+
+> [!TIP]
+> **Vue Aliases (`v-if`, `v-else-if`, `v-else`)**
+> All conditional directives can be written using either the `b-` prefix (`b-if`, `b-else-if`, `b-else`) or the standard Vue `v-` prefix (`v-if`, `v-else-if`, `v-else`). Both formats are treated identically by the runtime compiler.
 
 ## 2. Visibility `b-show`
 

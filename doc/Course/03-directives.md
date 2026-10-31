@@ -37,15 +37,15 @@ Open your `Home.bv` and add this code:
 
 ## 👁️ What You Learned Today:
 - **`b-for`**: How to repeat elements based on a Pascal Array.
-- **`b-if`**: How to show messages only when conditions are met.
+- **`b-if` / `b-else-if` / `b-else`**: How to create conditional UI branches with fallbacks.
 - **`b-show`**: How to toggle visibility instantly without reloading! ✨✨✨
 
 ---
 
 > [!TIP]
 > **Pro Tip: Directive Aliases**
-> For those coming from Vue.js, BlaiseVue also supports the `v-` prefix! 
-> You can use `v-for`, `v-if`, and `v-show` instead of `b-` prefixes if it helps your workflow. The compiler handles both identically. 🚀
+> For those coming from Vue.js, BlaiseVue supports the `v-` prefix as first-class aliases! 
+> You can use `v-for`, `v-if`, `v-else-if`, `v-else`, and `v-show` instead of `b-` prefixes. The compiler handles both identically. 🚀
 
 **Extra Challenge:** Try to add a "Remove" button inside the `b-for` using what you learned in the previous module! 🛡️✨🏆
 

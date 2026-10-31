@@ -8,7 +8,9 @@ This document is the official technical reference for all directives, components
 
 | Directive / Tag | Description | Example |
 |---|---|---|
-| `b-if` | Conditional rendering (DOM creation / complete removal). | `<div b-if="show">...</div>` |
+| `b-if` / `v-if` | Conditional rendering (DOM creation / complete removal). | `<div b-if="show">...</div>` |
+| `b-else-if` / `v-else-if` | Intermediate conditional branch (must follow `b-if` or `b-else-if`). | `<div b-else-if="status === 'loading'">...</div>` |
+| `b-else` / `v-else` | Fallback conditional branch (must follow `b-if` or `b-else-if`). | `<div b-else>...</div>` |
 | `b-show` | Visibility toggling via inline CSS (`display: none`). | `<div b-show="visible">...</div>` |
 | `b-for` | Reactive array iteration over `TJSArray` or collections. | `<li b-for="item in list">...</li>` |
 | `b-model` | Two-way reactive data synchronization for form elements and custom components. | `<input b-model="name">` |

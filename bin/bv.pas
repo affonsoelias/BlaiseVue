@@ -4794,6 +4794,10 @@ begin
 
           ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'v-model')) or
 
+          ((i <= Length(Tpl) - 9) and (Copy(Tpl, i, 9) = 'b-else-if')) or
+
+          ((i <= Length(Tpl) - 9) and (Copy(Tpl, i, 9) = 'v-else-if')) or
+
           ((i <= Length(Tpl) - 4) and (Copy(Tpl, i, 4) = 'b-if')) or
 
           ((i <= Length(Tpl) - 4) and (Copy(Tpl, i, 4) = 'v-if')) or
