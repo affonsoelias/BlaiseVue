@@ -24437,7 +24437,7 @@ begin
   WriteLn('======================================================================');
   WriteLn('');
 
-  // 4. Safety check for dirty workspace (ignoring compiled CLI binary & build logs)
+  // 4. Safety check for dirty workspace (ignoring compiled CLI binary, untracked files & build logs)
   ExecCmdCapture('git -C "' + SDKDir + '" status --porcelain', GitStatusOut);
   FilteredStatus := '';
   HadLocalBinMod := False;
@@ -24448,9 +24448,13 @@ begin
     begin
       LineStr := StringReplace(Trim(DiffList[i]), '\', '/', [rfReplaceAll]);
       if LineStr = '' then Continue;
+      // Untracked (??) or ignored (!!) files are not uncommitted tracked modifications
+      if (Copy(LineStr, 1, 2) = '??') or (Copy(LineStr, 1, 2) = '!!') then
+        Continue;
       if (Pos('bin/bv.o', LineStr) > 0) or
          (Pos('bin/bv.exe', LineStr) > 0) or
-         (Copy(LineStr, Length(LineStr) - 5, 6) = 'bin/bv') or
+         ((Pos('bin/bv', LineStr) > 0) and (Pos('bin/bv.pas', LineStr) = 0)) or
+         (Pos('bin/bv_old', LineStr) > 0) or
          (Pos('compile_log.txt', LineStr) > 0) or
          (Pos('compile_err.txt', LineStr) > 0) then
       begin
@@ -24467,10 +24471,21 @@ begin
 
   if (Trim(GitStatusOut) <> '') and (not CheckOnly) then
   begin
-    WriteLn('  [WARNING] You have uncommitted local changes in the BlaiseVue repository:');
-    WriteLn(GitStatusOut);
-    WriteLn('  Run "git stash" or commit before updating to avoid overwriting your changes.');
-    Halt(1);
+    if ForceUpdate then
+    begin
+      WriteLn('  [INFO] Local uncommitted changes detected, but --force was specified.');
+      WriteLn('         Resetting local modifications to ensure a clean update from GitHub...');
+      ExecCmdCapture('git -C "' + SDKDir + '" checkout -- .', DummyOut);
+      HadLocalBinMod := True;
+    end
+    else
+    begin
+      WriteLn('  [WARNING] You have uncommitted local changes in the BlaiseVue repository:');
+      WriteLn(GitStatusOut);
+      WriteLn('  Run "git stash" or commit before updating to avoid overwriting your changes,');
+      WriteLn('  or run "bv self-update --force" to bypass and force update.');
+      Halt(1);
+    end;
   end
   else if (Trim(GitStatusOut) <> '') and CheckOnly then
   begin
@@ -24535,14 +24550,14 @@ begin
   end;
 
   // Reset local CLI binary modifications before git checkout/pull to avoid binary merge conflicts
-  if HadLocalBinMod or (TargetBranch <> CurBranch) then
+  if HadLocalBinMod or (TargetBranch <> CurBranch) or ForceUpdate then
   begin
     BinDir := SDKDir + DirectorySeparator + 'bin';
     {$IFDEF WINDOWS}
-    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && move /y bv.exe bv_old.exe > nul 2>&1';
+    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1';
     ExecCmdCapture(MoveCmd, DummyOut);
     {$ELSE}
-    MoveCmd := 'cd ''' + BinDir + ''' && mv -f bv bv_old 2>/dev/null';
+    MoveCmd := 'cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null; mv -f bv bv_old 2>/dev/null';
     ExecCmdCapture(MoveCmd, DummyOut);
     {$ENDIF}
     ExecCmdCapture('git -C "' + SDKDir + '" checkout -- bin/bv bin/bv.exe bin/bv.o', DummyOut);
@@ -24559,9 +24574,24 @@ begin
       ExecCmdCapture('git -C "' + SDKDir + '" checkout -f ' + TargetBranch, CheckoutOut);
   end;
 
-  // 8. Pull updates
-  WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
-  ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
+  // 8. Pull updates (or reset --hard if force update requested)
+  if ForceUpdate then
+  begin
+    WriteLn('  [+] Force synchronizing files (git reset --hard origin/' + TargetBranch + ')...');
+    ExecCmdCapture('git -C "' + SDKDir + '" reset --hard origin/' + TargetBranch, PullOut);
+  end
+  else
+  begin
+    WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
+    ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
+    if (Pos('error:', LowerCase(PullOut)) > 0) or (Pos('erro:', LowerCase(PullOut)) > 0) or (Pos('abortando', LowerCase(PullOut)) > 0) or (Pos('aborting', LowerCase(PullOut)) > 0) then
+    begin
+      WriteLn('  [ERROR] Git pull failed with conflicts or unmerged files:');
+      WriteLn('  ' + Trim(PullOut));
+      WriteLn('  Run "bv self-update --force" to overwrite conflicts and force update.');
+      Halt(1);
+    end;
+  end;
 
   // 9. Recompile binary if bv.pas was updated, switched branch, or restored local binary
   NeedRecompile := ForceUpdate or (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0) or HadLocalBinMod;
@@ -24577,12 +24607,12 @@ begin
 
     BinDir := SDKDir + DirectorySeparator + 'bin';
     {$IFDEF WINDOWS}
-    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && move /y bv.exe bv_old.exe > nul 2>&1';
+    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1';
     ExecCmdCapture(MoveCmd, DummyOut);
     CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh bv.pas';
     ExecCmdCapture(CompCmd, CompOut);
     {$ELSE}
-    MoveCmd := 'cd ''' + BinDir + ''' && mv -f bv bv_old 2>/dev/null';
+    MoveCmd := 'cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null; mv -f bv bv_old 2>/dev/null';
     ExecCmdCapture(MoveCmd, DummyOut);
     CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv';
     ExecCmdCapture(CompCmd, CompOut);

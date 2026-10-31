@@ -71,6 +71,7 @@ deploy/
 .bv_backup/
 **/.bv_backup/
 *.zip
+**/desktop/assets/js/main.*.js
 
 
 # 🍎 OS Files
