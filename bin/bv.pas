@@ -23288,7 +23288,7 @@ begin
         WriteLn('    rename project <NewName>   Renames project, syncs package.json & prompt');
         WriteLn('    update [--dry-run]         Updates project infrastructure non-destructively');
         WriteLn('    doctor                     Diagnoses environment tools (Git, Lazarus, FPC, etc.)');
-        WriteLn('    self-update [--check]      Updates BlaiseVue framework directly from GitHub');
+        WriteLn('    self-update [--check] [--force] Updates BlaiseVue framework directly from GitHub');
         WriteLn('    channel [use <name>]       Inspects or switches framework branch (main/develop)');
         WriteLn('');
         WriteLn('  Backend & Full-Stack (mORMot 2):');
@@ -24330,7 +24330,7 @@ var
   DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
   BinDir, CompCmd, CompOut, TargetBv, MoveCmd, DummyOut: string;
   DiffList: TStringList;
-  CheckOnly, NeedRecompile, HadLocalBinMod: Boolean;
+  CheckOnly, ForceUpdate, NeedRecompile, HadLocalBinMod: Boolean;
   i: Integer;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -24364,12 +24364,15 @@ begin
 
   // 3. Parse arguments
   CheckOnly := False;
+  ForceUpdate := False;
   TargetBranch := '';
 
   for i := 2 to ParamCount do
   begin
     if (ParamStr(i) = '--check') or (ParamStr(i) = '-c') then
       CheckOnly := True
+    else if (ParamStr(i) = '--force') or (ParamStr(i) = '-f') then
+      ForceUpdate := True
     else if Copy(ParamStr(i), 1, 10) = '--channel=' then
       TargetBranch := LowerCase(Trim(Copy(ParamStr(i), 11, MaxInt)))
     else if Copy(ParamStr(i), 1, 9) = '--branch=' then
@@ -24383,6 +24386,7 @@ begin
       WriteLn('');
       WriteLn('  Options:');
       WriteLn('    --check              Check for GitHub updates without applying');
+      WriteLn('    --force, -f          Force update and recompilation of CLI');
       WriteLn('    --channel=<name>     Switch to channel (main | develop)');
       WriteLn('    --branch=<name>      Alias for --channel');
       WriteLn('    -h, --help           Show this help message');
@@ -24472,7 +24476,7 @@ begin
   if TargetBranch = CurBranch then
   begin
     // Check if GitHub has zero incoming commits
-    if (BehindOut = '0') or (BehindOut = '') then
+    if ((BehindOut = '0') or (BehindOut = '')) and (not ForceUpdate) then
     begin
       WriteLn('  [v] BlaiseVue is already up to date with GitHub.');
       if (AheadOut <> '0') and (AheadOut <> '') then
@@ -24521,6 +24525,9 @@ begin
     {$IFDEF WINDOWS}
     MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && move /y bv.exe bv_old.exe > nul 2>&1';
     ExecCmdCapture(MoveCmd, DummyOut);
+    {$ELSE}
+    MoveCmd := 'cd ''' + BinDir + ''' && mv -f bv bv_old 2>/dev/null';
+    ExecCmdCapture(MoveCmd, DummyOut);
     {$ENDIF}
     ExecCmdCapture('git -C "' + SDKDir + '" checkout -- bin/bv bin/bv.exe bin/bv.o', DummyOut);
   end;
@@ -24537,7 +24544,7 @@ begin
   ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
 
   // 9. Recompile binary if bv.pas was updated, switched branch, or restored local binary
-  NeedRecompile := (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0) or HadLocalBinMod;
+  NeedRecompile := ForceUpdate or (TargetBranch <> CurBranch) or (Pos('bin/bv.pas', DiffOut) > 0) or (Pos('bin\bv.pas', DiffOut) > 0) or HadLocalBinMod;
   if NeedRecompile then
   begin
     WriteLn('  [BUILD] CLI source code was updated. Recompiling with Free Pascal...');
@@ -24555,6 +24562,8 @@ begin
     CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh bv.pas';
     ExecCmdCapture(CompCmd, CompOut);
     {$ELSE}
+    MoveCmd := 'cd ''' + BinDir + ''' && mv -f bv bv_old 2>/dev/null';
+    ExecCmdCapture(MoveCmd, DummyOut);
     CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv';
     ExecCmdCapture(CompCmd, CompOut);
     {$ENDIF}
@@ -24565,6 +24574,8 @@ begin
       WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) + ' recompiled successfully!');
       {$IFDEF WINDOWS}
       ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1', DummyOut);
+      {$ELSE}
+      ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null', DummyOut);
       {$ENDIF}
     end
     else
@@ -24573,6 +24584,8 @@ begin
       WriteLn(CompOut);
       {$IFDEF WINDOWS}
       ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && move /y bv_old.exe bv.exe > nul 2>&1', DummyOut);
+      {$ELSE}
+      ExecCmdCapture('cd ''' + BinDir + ''' && mv -f bv_old bv 2>/dev/null', DummyOut);
       {$ENDIF}
     end;
   end;
@@ -24749,7 +24762,7 @@ begin
     WriteLn('');
     WriteLn('  # === Framework Diagnostics & Git Auto-Updater ===');
     WriteLn('  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
-    WriteLn('  bv self-update [--check]   Syncs & recompiles BlaiseVue directly from GitHub via Git');
+    WriteLn('  bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git');
     WriteLn('  bv channel [use <name>]    Inspects or switches framework branch (main/develop)');
     WriteLn('  bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features');
     WriteLn('');
