@@ -196,7 +196,13 @@ begin
       begin
         TermChar := #0;
         ReadLen := fpRead(0, TermChar, 1);
-        if (ReadLen <= 0) or (TermChar = #10) or (TermChar = #13) then
+        if ReadLen <= 0 then
+        begin
+          // When stdin is not a TTY or running in background, keep server alive until signal (SIGINT/SIGTERM)
+          Sleep(1000);
+          Continue;
+        end;
+        if (TermChar = #10) or (TermChar = #13) then
           Break;
       end;
       {$endif}
