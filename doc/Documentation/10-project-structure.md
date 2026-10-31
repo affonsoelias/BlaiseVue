@@ -76,8 +76,8 @@ The BlaiseVue CLI (`bv create`) scaffolds an enterprise-ready 4-tier testing hie
 2. **`tests/views/`**:
    - Automatically populated by `bv new view <Name>`.
    - Tests entire pages, user interaction flows, modal toggles, and form submissions.
-3. **`tests/unit/`**:
-   - Created with `bv new test <Name>` for pure business logic.
+3. **`tests/services/`**:
+   - Automatically populated by `bv new service <Name>` and `bv new test <Name>` for pure business logic and services.
    - Tests classes, calculation engines, and service units without requiring DOM rendering.
 4. **`tests/framework/`**:
    - BlaiseVue core subsystem verification (Reactivity, Routing, DataSet, RPC, Transitions).

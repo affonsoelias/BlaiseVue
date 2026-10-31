@@ -45,7 +45,7 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
    - Embedded directly into the `bv.exe` executable at compile-time.
 3. **Standalone Binary & 4-Tier Scaffolding**:
    - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
-   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/unit/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
+   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/services/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
 
 ---
 
@@ -85,7 +85,7 @@ bv new s PaymentProcessor
 bv g s PaymentProcessor
 ```
 - Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
-- Automatically generates: `tests/unit/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
+- Automatically generates: `tests/services/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
 - Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
 
 ### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
@@ -97,9 +97,8 @@ bv new t SimpleBadge
 ```
 - **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
 - **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
-- **If it is a service in `src/services/`:** created in `tests/unit/SimpleBadge.test.pas` importing `uSimpleBadge`.
-- **If given a relative path:** `bv new t services/CalculoFrete` -> created in `tests/services/CalculoFrete.test.pas`.
-- **Otherwise:** created in `tests/unit/SimpleBadge.test.pas` for pure Object Pascal business logic.
+- **If it is a service in `src/services/`:** created in `tests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
+- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
 
 ### 5. List Elements: `bv list <c|v|s|t|lib>`
 Lists registered files across the project:
@@ -142,7 +141,7 @@ bv rename project my-new-erp
 # Shorthand:
 bv rename p my-new-erp
 ```
-* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/unit/<New>.test.pas`.
+* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/services/<New>.test.pas`.
 * **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
 * **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
 * **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
@@ -156,7 +155,7 @@ The `bv test` command compiles and executes all unit and integration tests acros
 bv test
 ```
 1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
-2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/unit/`, and `tests/framework/`.
+2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/services/`, and `tests/framework/`.
 3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
 4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
 5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.

@@ -5,7 +5,7 @@ program formatters_unit_test;
 uses JS, Web, BVTestUtils, uFormatters;
 
 begin
-  Describe('Unit: Formatters (Regras e Formatadores)', procedure
+  Describe('Service: Formatters (Regras e Formatadores)', procedure
     begin
        It('deve formatar valor monetario em Real (BRL)', procedure
          begin

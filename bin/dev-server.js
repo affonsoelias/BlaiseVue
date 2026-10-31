@@ -11,6 +11,13 @@ const ROOT_DIR = process.cwd();
 let DIST_DIR = path.resolve(ROOT_DIR, 'dist');
 let SRC_DIR = path.resolve(ROOT_DIR, 'src');
 
+process.on('SIGINT', () => {
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  process.exit(0);
+});
+
 if (!fs.existsSync(DIST_DIR) && fs.existsSync(path.resolve(ROOT_DIR, 'demo-app', 'dist'))) {
   DIST_DIR = path.resolve(ROOT_DIR, 'demo-app', 'dist');
   SRC_DIR = path.resolve(ROOT_DIR, 'demo-app', 'src');
@@ -102,30 +109,52 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.log(`\x1b[33m⚡ BlaiseVue Dev Server is already running on port ${PORT} (http://localhost:${PORT}/)\x1b[0m`);
-    process.exit(0);
-  } else {
-    console.error(err);
-    process.exit(1);
-  }
-});
+let currentHttpPort = PORT;
+let currentWsPort = WS_PORT;
+let wss = null;
 
-server.listen(PORT, () => {
-  console.log(`\x1b[32m🛡️  BlaiseVue 2.0 Dev Server running at http://localhost:${PORT}/\x1b[0m`);
-});
+function startHttp(port) {
+  server.removeAllListeners('error');
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`\x1b[33m[!] HTTP Port ${port} is busy. Switching to port ${port + 1}...\x1b[0m`);
+      startHttp(port + 1);
+    } else {
+      console.error(err);
+      process.exit(1);
+    }
+  });
+  server.listen(port, () => {
+    currentHttpPort = port;
+    console.log(`\x1b[32m🛡️  BlaiseVue 2.0 Dev Server running at http://localhost:${port}/\x1b[0m`);
+    startWs(currentWsPort);
+  });
+}
 
-// 2. WebSocket Server for HMR
-const wss = new WebSocketServer({ port: WS_PORT });
-wss.on('error', (err) => {
-  if (err.code !== 'EADDRINUSE') {
-    console.error(`[HMR WebSocket Error]`, err);
+function startWs(port) {
+  try {
+    wss = new WebSocketServer({ port: port });
+    wss.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`\x1b[33m[!] WebSocket Port ${port} is busy. Switching to port ${port + 1}...\x1b[0m`);
+        startWs(port + 1);
+      } else {
+        console.error(`[HMR WebSocket Error]`, err);
+      }
+    });
+    wss.on('listening', () => {
+      currentWsPort = port;
+      console.log(`\x1b[36m⚡ HMR WebSocket service listening on port ${port}\x1b[0m`);
+    });
+  } catch (e) {
+    startWs(port + 1);
   }
-});
-console.log(`\x1b[36m⚡ HMR WebSocket service listening on port ${WS_PORT}\x1b[0m`);
+}
+
+startHttp(PORT);
 
 function broadcast(msg) {
+  if (!wss) return;
   const data = JSON.stringify(msg);
   wss.clients.forEach(client => {
     if (client.readyState === 1) client.send(data);
@@ -154,11 +183,15 @@ function watchDir(dir) {
         }
         isBuilding = true;
         try {
+          const isWindows = process.platform === 'win32';
+          const binName = isWindows ? 'bv.exe' : 'bv';
           const candidateExes = [
+            path.resolve(ROOT_DIR, 'bin', binName),
+            path.resolve(ROOT_DIR, binName),
+            path.resolve(ROOT_DIR, '..', 'bin', binName),
+            path.resolve(ROOT_DIR, '..', binName),
             path.resolve(ROOT_DIR, 'bin', 'bv.exe'),
-            path.resolve(ROOT_DIR, 'bv.exe'),
-            path.resolve(ROOT_DIR, '..', 'bin', 'bv.exe'),
-            path.resolve(ROOT_DIR, '..', 'bv.exe')
+            path.resolve(ROOT_DIR, 'bin', 'bv')
           ];
           const bvExe = candidateExes.find(p => fs.existsSync(p));
           const appDir = fs.existsSync(path.resolve(ROOT_DIR, 'demo-app')) ? path.resolve(ROOT_DIR, 'demo-app') : ROOT_DIR;

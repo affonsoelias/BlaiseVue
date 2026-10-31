@@ -8,7 +8,7 @@ var
   Service: T{{SERVICE_NAME}};
 
 begin
-  Describe('Unit: {{SERVICE_NAME}} (Domain Service)', procedure
+  Describe('Service: {{SERVICE_NAME}} (Domain Service)', procedure
     begin
        It('deve instanciar o servico e executar com sucesso', procedure
          begin

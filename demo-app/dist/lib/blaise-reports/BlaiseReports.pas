@@ -8,7 +8,7 @@ unit BlaiseReports;
   to TBVDataSet and <bv-datagrid>, generating:
   - Native Vector PDF 1.4 documents with pagination, running headers/footers,
     "Page X of Y" numbering, vector tables, brand logos, and summary bands.
-  - Native Excel (.xlsx / SpreadsheetML) spreadsheets preserving strongly typed
+  - Native Excel (.xlsx, Office Open XML) spreadsheets preserving strongly typed
     cells (Currency, Number, Integer, Boolean, DateTime, String) and styles.
   - Streaming RFC 4180 CSV exports with configurable delimiters and UTF-8 BOM.
   - Print-optimized HTML layouts with @media print and @page rules for A4,
@@ -20,7 +20,7 @@ unit BlaiseReports;
 interface
 
 uses
-  JS, Web, SysUtils, Classes, BVDataSet;
+  JS, Web, SysUtils, Classes, BVDataSet, BlaiseReportsFonts;
 
 const
   REPORT_LAYOUT_A4_PORTRAIT      = 'a4';
@@ -107,6 +107,10 @@ type
 
     procedure EnsureAutoColumns(ARecords: TJSArray);
     procedure TriggerBrowserDownload(const AContent, AFileName, AMimeType: string);
+    procedure DownloadBlobPart(APart: JSValue; const AFileName, AMimeType: string);
+    function XlsxEscape(const S: string): string;
+    function BuildXlsxSheetXml(ARecords: TJSArray): string;
+    function BuildXlsxStylesXml: string;
     function EscapePDFString(const S: string): string;
     function EscapeXMLString(const S: string): string;
     function EscapeCSVField(const S: string): string;
@@ -162,6 +166,7 @@ type
     function ExportPDF(const AFileName: string = 'report.pdf'): string;
 
     function GenerateExcel: string;
+    function GenerateXlsx: JSValue;
     function ExportExcel(const AFileName: string = 'report.xlsx'): string;
 
     function GenerateCSV: string;
@@ -878,12 +883,59 @@ begin
   FLastExportedContent := AContent;
   FLastExportedFileName := AFileName;
   FLastExportedMimeType := AMimeType;
+  DownloadBlobPart(AContent, AFileName, AMimeType);
+end;
+
+procedure TBVReport.DownloadBlobPart(APart: JSValue; const AFileName, AMimeType: string);
+begin
   asm
     try {
+      // Android and iOS WebViews ignore Blob downloads: save to Documents, then open the file (share a CSV).
+      var capacitor = (typeof window !== 'undefined') ? window.Capacitor : null;
+      if (capacitor && typeof capacitor.isNativePlatform === 'function' && capacitor.isNativePlatform()) {
+        var plugins = capacitor.Plugins || {};
+        if (!plugins.Filesystem || !plugins.Share) {
+          console.error('BlaiseReports: exporting on mobile needs @capacitor/filesystem and @capacitor/share.');
+          return;
+        }
+        var bytes = (typeof APart === 'string') ? new TextEncoder().encode(APart) : APart;
+        var binary = '';
+        for (var offset = 0; offset < bytes.length; offset += 32768) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+        }
+        var safeName = String(AFileName).replace(new RegExp('[\\\\/:*?"<>|]', 'g'), '_');
+        var base64 = btoa(binary);
+        var writeTo = function (path, directory) {
+          return plugins.Filesystem.writeFile({ path: path, data: base64, directory: directory });
+        };
+        var dot = safeName.lastIndexOf('.');
+        var uniqueName = (dot > 0 ? safeName.substring(0, dot) : safeName) + '_' + Date.now() + (dot > 0 ? safeName.substring(dot) : '');
+        var shareFile = function (uri) {
+          return plugins.Share.share({ title: safeName, dialogTitle: safeName, files: [uri] });
+        };
+        // Android lets an app overwrite only its own files in Documents, so a same-named
+        // file left by an earlier install needs a unique name.
+        writeTo(safeName, 'DOCUMENTS')
+          .catch(function () { return writeTo(uniqueName, 'DOCUMENTS'); })
+          .catch(function () { return writeTo(safeName, 'CACHE'); })
+          .then(function (written) {
+            var isDocument = String(AMimeType).indexOf('text/csv') !== 0;
+            if (isDocument && plugins.FileViewer) {
+              var localPath = decodeURI(String(written.uri).replace(new RegExp('^file://'), ''));
+              return plugins.FileViewer.openDocumentFromLocalPath({ path: localPath })
+                .catch(function () { return shareFile(written.uri); });
+            }
+            return shareFile(written.uri);
+          })
+          .catch(function (err) {
+            console.warn('BlaiseReports: file export was not completed:', err);
+          });
+        return;
+      }
       if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
         var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
         if (!isTestEnv && window.URL && typeof window.URL.createObjectURL === 'function') {
-          var blob = new Blob([AContent], { type: AMimeType });
+          var blob = new Blob([APart], { type: AMimeType });
           var url = window.URL.createObjectURL(blob);
           var a = document.createElement('a');
           a.style.display = 'none';
@@ -969,9 +1021,32 @@ var
   SumFmt, CellText, SumLine, ThemeRgb, PageStream: string;
   RawVal: JSValue;
   PageStreams: TJSArray;
+  FontRegular, FontBold: TJSObject;
 begin
   Recs := GetRecordsArray;
   EnsureAutoColumns(Recs);
+  FontRegular := TJSObject.new;
+  FontRegular['name'] := BVPdfFontRegularName;
+  FontRegular['length1'] := BVPdfFontRegularLength1;
+  FontRegular['bbox'] := BVPdfFontRegularBBox;
+  FontRegular['ascent'] := BVPdfFontRegularAscent;
+  FontRegular['descent'] := BVPdfFontRegularDescent;
+  FontRegular['cap'] := BVPdfFontRegularCapHeight;
+  FontRegular['cmap'] := BVPdfFontRegularCmap;
+  FontRegular['widths'] := BVPdfFontRegularWidths;
+  FontRegular['data'] := BVPdfFontRegularData;
+  FontRegular['stemV'] := 80;
+  FontBold := TJSObject.new;
+  FontBold['name'] := BVPdfFontBoldName;
+  FontBold['length1'] := BVPdfFontBoldLength1;
+  FontBold['bbox'] := BVPdfFontBoldBBox;
+  FontBold['ascent'] := BVPdfFontBoldAscent;
+  FontBold['descent'] := BVPdfFontBoldDescent;
+  FontBold['cap'] := BVPdfFontBoldCapHeight;
+  FontBold['cmap'] := BVPdfFontBoldCmap;
+  FontBold['widths'] := BVPdfFontBoldWidths;
+  FontBold['data'] := BVPdfFontBoldData;
+  FontBold['stemV'] := 140;
 
   TotalRecords := Integer(Recs.length);
   Limit := FRowsPerPage;
@@ -1117,12 +1192,110 @@ begin
     // Obj 4: Font Bold
     addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
     // Obj 5: Document Info
-    var infoStr = '<< /Title (' + this.EscapePDFString(this.FTitle) + ') /Author (' + this.EscapePDFString(this.FAuthor) + ') /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
+    var self = this;
+    function infoText(text) {
+      if (!new RegExp('[^\\x00-\\x7F]').test(text)) return '(' + self.EscapePDFString(text) + ')';
+      var hex = 'FEFF';
+      for (var h = 0; h < text.length; h++) hex += hex4(text.charCodeAt(h));
+      return '<' + hex + '>';
+    }
+    function hex4(n) {
+      var out = n.toString(16).toUpperCase();
+      while (out.length < 4) out = '0' + out;
+      return out;
+    }
+    var infoStr = '<< /Title ' + infoText(this.FTitle) + ' /Author ' + infoText(this.FAuthor) + ' /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
     addObj(infoStr);
 
+    // The page streams still hold raw characters inside their text operands, and every
+    // byte of the file must stay ASCII because the xref offsets count string length.
+    // Helvetica covers WinAnsi only, so any other character switches both fonts to the
+    // embedded Latin + Greek subset, drawn through glyph ids in hex strings.
+    var winAnsiHigh = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+    var needsEmbed = false;
+    var nonAscii = new RegExp('[^\\x00-\\x7F]', 'g');
+    var streams = [];
+    for (var s = 0; s < PageStreams.length; s++) {
+      var normalized = PageStreams[s].normalize('NFC');
+      var found = normalized.match(nonAscii) || [];
+      for (var k = 0; k < found.length; k++) {
+        var code = found[k].charCodeAt(0);
+        if (code < 0xA0 && winAnsiHigh[code] === undefined || code > 0xFF && winAnsiHigh[code] === undefined) needsEmbed = true;
+      }
+      streams.push(normalized);
+    }
+
+    function parseCmap(text) {
+      var map = {};
+      var entries = text.split(',');
+      for (var e = 0; e < entries.length; e++) {
+        var pair = entries[e].split(':');
+        map[parseInt(pair[0], 16)] = parseInt(pair[1], 16);
+      }
+      return map;
+    }
+
+    function addEmbeddedFont(slot, font, tag) {
+      var baseName = tag + '+' + font.name;
+      var fileId = addObj('<< /Length ' + font.data.length + ' /Length1 ' + font.length1 + ' /Filter [/ASCII85Decode /FlateDecode] >>\nstream\n' + font.data + '\nendstream');
+      var descId = addObj('<< /Type /FontDescriptor /FontName /' + baseName + ' /Flags 4 /FontBBox [' + font.bbox + '] /ItalicAngle 0 /Ascent ' + font.ascent + ' /Descent ' + font.descent + ' /CapHeight ' + font.cap + ' /StemV ' + font.stemV + ' /FontFile2 ' + fileId + ' 0 R >>');
+      var cidId = addObj('<< /Type /Font /Subtype /CIDFontType2 /BaseFont /' + baseName + ' /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ' + descId + ' 0 R /W [0 [' + font.widths + ']] /CIDToGIDMap /Identity >>');
+      var seen = {};
+      var lines = [];
+      var entries = font.cmap.split(',');
+      for (var e = 0; e < entries.length; e++) {
+        var pair = entries[e].split(':');
+        var gid = parseInt(pair[1], 16);
+        if (seen[gid]) continue;
+        seen[gid] = true;
+        lines.push('<' + hex4(gid) + '> <' + hex4(parseInt(pair[0], 16)) + '>');
+      }
+      var cmapText = '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n';
+      for (var b = 0; b < lines.length; b += 100) {
+        var block = lines.slice(b, b + 100);
+        cmapText += block.length + ' beginbfchar\n' + block.join('\n') + '\nendbfchar\n';
+      }
+      cmapText += 'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n';
+      var unicodeId = addObj('<< /Length ' + cmapText.length + ' >>\nstream\n' + cmapText + 'endstream');
+      objects[slot] = '<< /Type /Font /Subtype /Type0 /BaseFont /' + baseName + ' /Encoding /Identity-H /DescendantFonts [' + cidId + ' 0 R] /ToUnicode ' + unicodeId + ' 0 R >>';
+    }
+
+    function encodeGlyphs(text, map) {
+      var hex = '';
+      var fallback = map[0x3F];
+      for (var c = 0; c < text.length; c++) {
+        var unit = text.charCodeAt(c);
+        if (unit >= 0xD800 && unit <= 0xDBFF) c++;
+        var gid = map[unit];
+        hex += hex4(gid === undefined ? fallback : gid);
+      }
+      return '<' + hex + '>';
+    }
+
+    if (needsEmbed) {
+      addEmbeddedFont(2, FontRegular, 'BVAAAA');
+      addEmbeddedFont(3, FontBold, 'BVAAAB');
+      var maps = {'1': parseCmap(FontRegular.cmap), '2': parseCmap(FontBold.cmap)};
+      var textOp = new RegExp('/F([12]) ([0-9.]+) Tf ([^(]*)\\(((?:[^\\\\()]|\\\\.)*)\\) Tj', 'g');
+      var unescapePdf = new RegExp('\\\\(.)', 'g');
+      for (var t = 0; t < streams.length; t++) {
+        streams[t] = streams[t].replace(textOp, function (all, fontNo, size, between, text) {
+          return '/F' + fontNo + ' ' + size + ' Tf ' + between + encodeGlyphs(text.replace(unescapePdf, '$1'), maps[fontNo]) + ' Tj';
+        });
+      }
+    } else {
+      for (var w = 0; w < streams.length; w++) {
+        streams[w] = streams[w].replace(nonAscii, function (ch) {
+          var unit = ch.charCodeAt(0);
+          var octal = (winAnsiHigh[unit] === undefined ? unit : winAnsiHigh[unit]).toString(8);
+          return '\\' + octal;
+        });
+      }
+    }
+
     var pageRefs = [];
-    for (var p = 0; p < PageStreams.length; p++) {
-      var streamData = PageStreams[p];
+    for (var p = 0; p < streams.length; p++) {
+      var streamData = streams[p];
       var contentObjId = addObj('<< /Length ' + streamData.length + ' >>\nstream\n' + streamData + 'endstream');
       var pageObjId = addObj(
         '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PageW + ' ' + PageH + '] ' +
@@ -1309,15 +1482,360 @@ begin
   Result := Xml;
 end;
 
+{ =====================================================================
+  Office Open XML (.xlsx) package writer
+  An .xlsx file is a ZIP archive of XML parts; entries are stored without
+  compression, which every spreadsheet reader accepts.
+  ===================================================================== }
+
+function XlsxColumnName(AIndex: Integer): string;
+var
+  N: Integer;
+begin
+  Result := '';
+  N := AIndex + 1;
+  while N > 0 do
+  begin
+    Result := Chr(65 + ((N - 1) mod 26)) + Result;
+    N := (N - 1) div 26;
+  end;
+end;
+
+function XlsxBuildZip(AEntries: JSValue): JSValue;
+begin
+  Result := nil;
+  asm
+    if (typeof TextEncoder !== 'undefined') {
+      var encoder = new TextEncoder();
+      var crcTable = [];
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) {
+          c = (c & 1) ? (3988292384 ^ (c >>> 1)) : (c >>> 1);
+        }
+        crcTable[n] = c >>> 0;
+      }
+      var parts = [];
+      var total = 0;
+      var centralSize = 0;
+      for (var i = 0; i < AEntries.length; i++) {
+        var nameBytes = encoder.encode(AEntries[i].name);
+        var dataBytes = encoder.encode(AEntries[i].text);
+        var crc = 4294967295;
+        for (var b = 0; b < dataBytes.length; b++) {
+          crc = crcTable[(crc ^ dataBytes[b]) & 255] ^ (crc >>> 8);
+        }
+        crc = (crc ^ 4294967295) >>> 0;
+        parts.push({ nameBytes: nameBytes, dataBytes: dataBytes, crc: crc, offset: total });
+        total += 30 + nameBytes.length + dataBytes.length;
+        centralSize += 46 + nameBytes.length;
+      }
+      var zip = new Uint8Array(total + centralSize + 22);
+      var view = new DataView(zip.buffer);
+      var writeHeaderFields = function (at, part) {
+        view.setUint16(at, 20, true);
+        view.setUint16(at + 2, 2048, true);
+        view.setUint16(at + 4, 0, true);
+        view.setUint16(at + 6, 0, true);
+        view.setUint16(at + 8, 33, true);
+        view.setUint32(at + 10, part.crc, true);
+        view.setUint32(at + 14, part.dataBytes.length, true);
+        view.setUint32(at + 18, part.dataBytes.length, true);
+        view.setUint16(at + 22, part.nameBytes.length, true);
+        view.setUint16(at + 24, 0, true);
+      };
+      for (var p = 0; p < parts.length; p++) {
+        var part = parts[p];
+        view.setUint32(part.offset, 67324752, true);
+        writeHeaderFields(part.offset + 4, part);
+        zip.set(part.nameBytes, part.offset + 30);
+        zip.set(part.dataBytes, part.offset + 30 + part.nameBytes.length);
+      }
+      var cursor = total;
+      for (var q = 0; q < parts.length; q++) {
+        var entry = parts[q];
+        view.setUint32(cursor, 33639248, true);
+        view.setUint16(cursor + 4, 20, true);
+        writeHeaderFields(cursor + 6, entry);
+        view.setUint32(cursor + 42, entry.offset, true);
+        zip.set(entry.nameBytes, cursor + 46);
+        cursor += 46 + entry.nameBytes.length;
+      }
+      view.setUint32(cursor, 101010256, true);
+      view.setUint16(cursor + 8, parts.length, true);
+      view.setUint16(cursor + 10, parts.length, true);
+      view.setUint32(cursor + 12, centralSize, true);
+      view.setUint32(cursor + 16, total, true);
+      Result = zip;
+    }
+  end;
+end;
+
+function TBVReport.XlsxEscape(const S: string): string;
+var
+  Clean: string;
+begin
+  Clean := S;
+  asm
+    Clean = String(Clean).replace(new RegExp('[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\uFFFE\\uFFFF]', 'g'), '');
+  end;
+  Result := EscapeXMLString(Clean);
+end;
+
+function TBVReport.BuildXlsxSheetXml(ARecords: TJSArray): string;
+const
+  STYLE_TITLE = 1;
+  STYLE_META = 2;
+  STYLE_COL_HEADER = 3;
+  STYLE_SUMMARY_LABEL = 8;
+  STYLE_SUMMARY_VALUE = 9;
+var
+  RowNum, RowIdx, ColIdx, SumIdx, CellStyle: Integer;
+  Col: TBVReportColumn;
+  SumDef: TBVReportSummary;
+  SumVal: Double;
+  SumFmt, Cols, Rows, RowXml, ColFmt, CellKind, CellValStr, WidthStr, NumStr: string;
+  RawVal: JSValue;
+
+  function TextCell(const ARef: string; AStyle: Integer; const AText: string): string;
+  begin
+    if AText = '' then
+      Result := '<c r="' + ARef + '" s="' + IntToStr(AStyle) + '"/>'
+    else
+      Result := '<c r="' + ARef + '" s="' + IntToStr(AStyle) + '" t="inlineStr"><is><t xml:space="preserve">' + XlsxEscape(AText) + '</t></is></c>';
+  end;
+
+begin
+  Cols := '';
+  for ColIdx := 0 to Integer(FColumns.length) - 1 do
+  begin
+    Col := TBVReportColumn(FColumns[ColIdx]);
+    WidthStr := '';
+    asm
+      WidthStr = (Math.max(Number(Col.FWidth) || 120, 20) / 7).toFixed(2);
+    end;
+    Cols := Cols + '<col min="' + IntToStr(ColIdx + 1) + '" max="' + IntToStr(ColIdx + 1) + '" width="' + WidthStr + '" customWidth="1"/>';
+  end;
+  if Cols <> '' then
+    Cols := '<cols>' + Cols + '</cols>';
+
+  RowNum := 1;
+  Rows := '<row r="1">' + TextCell('A1', STYLE_TITLE, FTitle) + '</row>';
+  if FHeader <> '' then
+  begin
+    RowNum := RowNum + 1;
+    Rows := Rows + '<row r="' + IntToStr(RowNum) + '">' + TextCell('A' + IntToStr(RowNum), STYLE_META, FHeader) + '</row>';
+  end;
+
+  RowNum := RowNum + 1;
+  RowXml := '';
+  for ColIdx := 0 to Integer(FColumns.length) - 1 do
+  begin
+    Col := TBVReportColumn(FColumns[ColIdx]);
+    RowXml := RowXml + TextCell(XlsxColumnName(ColIdx) + IntToStr(RowNum), STYLE_COL_HEADER, Col.Caption);
+  end;
+  Rows := Rows + '<row r="' + IntToStr(RowNum) + '">' + RowXml + '</row>';
+
+  for RowIdx := 0 to Integer(ARecords.length) - 1 do
+  begin
+    RowNum := RowNum + 1;
+    RowXml := '';
+    for ColIdx := 0 to Integer(FColumns.length) - 1 do
+    begin
+      Col := TBVReportColumn(FColumns[ColIdx]);
+      ColFmt := LowerCase(Trim(Col.Format));
+      RawVal := GetRecordFieldCaseInsensitive(ARecords[RowIdx], Col.FieldName);
+      CellKind := 'text';
+      CellStyle := 4;
+      CellValStr := '';
+      asm
+        if (RawVal === null || RawVal === undefined) {
+          CellValStr = '';
+        } else if (typeof RawVal === 'boolean') {
+          CellKind = 'bool';
+          CellValStr = RawVal ? '1' : '0';
+        } else if (typeof RawVal === 'number' || ColFmt === 'currency' || ColFmt === 'money' || ColFmt === 'number' || ColFmt === 'float' || ColFmt === 'integer' || ColFmt === 'int') {
+          var num = Number(RawVal);
+          if (isFinite(num) && String(RawVal).trim() !== '') {
+            CellKind = 'number';
+            CellValStr = String(num);
+            if (ColFmt === 'currency' || ColFmt === 'money') {
+              CellStyle = 7;
+            } else if (ColFmt === 'integer' || ColFmt === 'int' || (Number.isInteger(num) && ColFmt === '')) {
+              CellStyle = 5;
+            } else {
+              CellStyle = 6;
+            }
+          } else {
+            CellValStr = String(RawVal);
+          }
+        } else {
+          CellValStr = String(RawVal);
+        }
+      end;
+      if CellKind = 'number' then
+        RowXml := RowXml + '<c r="' + XlsxColumnName(ColIdx) + IntToStr(RowNum) + '" s="' + IntToStr(CellStyle) + '"><v>' + CellValStr + '</v></c>'
+      else if CellKind = 'bool' then
+        RowXml := RowXml + '<c r="' + XlsxColumnName(ColIdx) + IntToStr(RowNum) + '" s="' + IntToStr(CellStyle) + '" t="b"><v>' + CellValStr + '</v></c>'
+      else
+        RowXml := RowXml + TextCell(XlsxColumnName(ColIdx) + IntToStr(RowNum), CellStyle, CellValStr);
+    end;
+    Rows := Rows + '<row r="' + IntToStr(RowNum) + '">' + RowXml + '</row>';
+  end;
+
+  for SumIdx := 0 to Integer(FSummaries.length) - 1 do
+  begin
+    SumDef := TBVReportSummary(FSummaries[SumIdx]);
+    SumVal := ComputeSummary(SumDef.FieldName, SumDef.Aggregate);
+    SumFmt := SumDef.Format;
+    if (SumFmt = '') and (SumDef.Aggregate = aggCount) then
+      SumFmt := 'integer';
+    NumStr := '0';
+    asm
+      NumStr = isFinite(SumVal) ? String(SumVal) : '0';
+    end;
+    RowNum := RowNum + 1;
+    Rows := Rows + '<row r="' + IntToStr(RowNum) + '">' +
+      TextCell('A' + IntToStr(RowNum), STYLE_SUMMARY_LABEL, SumDef.LabelText) +
+      '<c r="B' + IntToStr(RowNum) + '" s="' + IntToStr(STYLE_SUMMARY_VALUE) + '"><v>' + NumStr + '</v></c>' +
+      TextCell('C' + IntToStr(RowNum), STYLE_SUMMARY_LABEL, FormatSummaryNumber(SumVal, SumFmt)) +
+      '</row>';
+  end;
+
+  Result := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + #10 +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    Cols + '<sheetData>' + Rows + '</sheetData></worksheet>';
+end;
+
+function TBVReport.BuildXlsxStylesXml: string;
+var
+  ThemeArgb: string;
+begin
+  ThemeArgb := FThemeColor;
+  asm
+    var hex = String(ThemeArgb).trim();
+    ThemeArgb = new RegExp('^#?[0-9a-fA-F]{6}$').test(hex) ? ('FF' + hex.replace('#', '').toUpperCase()) : 'FF334155';
+  end;
+  Result := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + #10 +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;' + XlsxEscape(FCurrencySymbol) + '&quot;#,##0.00"/></numFmts>' +
+    '<fonts count="5">' +
+    '<font><sz val="10"/><name val="Segoe UI"/></font>' +
+    '<font><b/><sz val="14"/><color rgb="FF0F172A"/><name val="Segoe UI"/></font>' +
+    '<font><i/><sz val="9"/><color rgb="FF475569"/><name val="Segoe UI"/></font>' +
+    '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Segoe UI"/></font>' +
+    '<font><b/><sz val="10"/><name val="Segoe UI"/></font>' +
+    '</fonts>' +
+    '<fills count="4">' +
+    '<fill><patternFill patternType="none"/></fill>' +
+    '<fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="' + ThemeArgb + '"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill>' +
+    '</fills>' +
+    '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="10">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' +
+    '<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="1" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' +
+    '<xf numFmtId="0" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' +
+    '<xf numFmtId="4" fontId="4" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>' +
+    '</cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+end;
+
+function TBVReport.GenerateXlsx: JSValue;
+const
+  XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + #10;
+var
+  Recs: TJSArray;
+  SheetName, SheetXml, StylesXml, ContentTypes, RootRels, WorkbookXml, WorkbookRels, CoreXml, AppXml: string;
+  Entries: JSValue;
+begin
+  Recs := GetRecordsArray;
+  EnsureAutoColumns(Recs);
+
+  SheetName := FTitle;
+  asm
+    SheetName = String(SheetName).replace(new RegExp('[\\[\\]:*?/\\\\]', 'g'), ' ').trim().substring(0, 31);
+    SheetName = SheetName.replace(new RegExp('^\\u0027+|\\u0027+$', 'g'), '').trim();
+    if (SheetName === '') SheetName = 'Report';
+  end;
+
+  SheetXml := BuildXlsxSheetXml(Recs);
+  StylesXml := BuildXlsxStylesXml;
+  ContentTypes := XML_DECL +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+    '</Types>';
+  RootRels := XML_DECL +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
+    '</Relationships>';
+  WorkbookXml := XML_DECL +
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets><sheet name="' + XlsxEscape(SheetName) + '" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  WorkbookRels := XML_DECL +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+    '</Relationships>';
+  CoreXml := XML_DECL +
+    '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">' +
+    '<dc:title>' + XlsxEscape(FTitle) + '</dc:title><dc:creator>' + XlsxEscape(FAuthor) + '</dc:creator></cp:coreProperties>';
+  AppXml := XML_DECL +
+    '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">' +
+    '<Application>BlaiseVue</Application><Company>' + XlsxEscape(FCompanyName) + '</Company></Properties>';
+
+  Entries := nil;
+  asm
+    Entries = [
+      { name: '[Content_Types].xml', text: ContentTypes },
+      { name: '_rels/.rels', text: RootRels },
+      { name: 'docProps/core.xml', text: CoreXml },
+      { name: 'docProps/app.xml', text: AppXml },
+      { name: 'xl/workbook.xml', text: WorkbookXml },
+      { name: 'xl/_rels/workbook.xml.rels', text: WorkbookRels },
+      { name: 'xl/styles.xml', text: StylesXml },
+      { name: 'xl/worksheets/sheet1.xml', text: SheetXml }
+    ];
+  end;
+  Result := XlsxBuildZip(Entries);
+end;
+
 function TBVReport.ExportExcel(const AFileName: string = 'report.xlsx'): string;
+const
+  XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 var
   FinalName: string;
+  Package: JSValue;
 begin
   FinalName := Trim(AFileName);
   if FinalName = '' then
     FinalName := 'report.xlsx';
+  { The returned string stays the readable SpreadsheetML preview; the file saved
+    by the browser is the binary .xlsx package. }
   Result := GenerateExcel;
-  TriggerBrowserDownload(Result, FinalName, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  FLastExportedContent := Result;
+  FLastExportedFileName := FinalName;
+  FLastExportedMimeType := XLSX_MIME;
+  Package := GenerateXlsx;
+  if Assigned(Package) then
+    DownloadBlobPart(Package, FinalName, XLSX_MIME);
 end;
 
 { =====================================================================

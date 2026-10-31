@@ -14,6 +14,10 @@ program server;
 {$endif OSWINDOWS}
 
 uses
+  {$ifdef UNIX}
+  cthreads,
+  BaseUnix,
+  {$endif UNIX}
   {$ifdef OSWINDOWS}
   windows,
   {$endif OSWINDOWS}
@@ -30,6 +34,8 @@ var
   DistPath, EnvPath, EnvLine, EnvKey, EnvVal: string;
   EnvLines: TStringList;
   eqPos, i: Integer;
+  TermChar: Char;
+  ReadLen: Integer;
 
 {$ifdef OSWINDOWS}
 function ConsoleCtrlHandler(dwCtrlType: DWORD): BOOL; stdcall;
@@ -57,10 +63,32 @@ begin
 end;
 {$endif OSWINDOWS}
 
+{$ifdef UNIX}
+procedure UnixSigIntHandler(Sig: LongInt); cdecl;
+begin
+  WriteLn('');
+  WriteLn('[+] Signal received (Ctrl+C). Gracefully closing mORMot 2 server...');
+  if Assigned(App) then
+  begin
+    try
+      App.Free;
+      App := nil;
+    except
+    end;
+  end;
+  WriteLn('[+] mORMot 2 server stopped cleanly. Ports released.');
+  Halt(0);
+end;
+{$endif UNIX}
+
 begin
   {$ifdef OSWINDOWS}
   SetConsoleCtrlHandler(@ConsoleCtrlHandler, True);
   {$endif OSWINDOWS}
+  {$ifdef UNIX}
+  fpSignal(SIGINT, @UnixSigIntHandler);
+  fpSignal(SIGTERM, @UnixSigIntHandler);
+  {$endif UNIX}
   Port := '8090';
 
   // Read .env configuration if present
@@ -158,12 +186,20 @@ begin
   try
     App := TBlaiseServerApp.Create(Port, DistPath);
     try
+      {$ifdef OSWINDOWS}
       try
         ReadLn;
       except
-        while True do
-          Sleep(1000);
       end;
+      {$else}
+      while True do
+      begin
+        TermChar := #0;
+        ReadLen := fpRead(0, TermChar, 1);
+        if (ReadLen <= 0) or (TermChar = #10) or (TermChar = #13) then
+          Break;
+      end;
+      {$endif}
     finally
       WriteLn(#10'[+] Shutting down mORMot 2 server...');
       App.Free;

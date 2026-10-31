@@ -7309,7 +7309,29 @@ rtl.module("BVRpc",["System","JS","Web","SysUtils","BVReactivity"],function () {
     $mod.TBVRpcClient.EnsureBridge();
   };
 });
-rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"],function () {
+rtl.module("BlaiseReportsFonts",["System"],function () {
+  "use strict";
+  var $mod = this;
+  this.BVPdfFontRegularName = "DejaVuSans";
+  this.BVPdfFontRegularLength1 = 28236;
+  this.BVPdfFontRegularBBox = "-411 -261 1287 978";
+  this.BVPdfFontRegularAscent = 928;
+  this.BVPdfFontRegularDescent = -236;
+  this.BVPdfFontRegularCapHeight = 729;
+  this.BVPdfFontRegularCmap = "20:1,21:2,22:3,23:4,24:5,25:6,26:7,27:8,28:9,29:a,2a:b,2b:c,2c:d,2d:e,2e:f,2f:10,30:11,31:12,32:13,3" + "3:14,34:15,35:16,36:17,37:18,38:19,39:1a,3a:1b,3b:1c,3c:1d,3d:1e,3e:1f,3f:20,40:21,41:22,42:23,43:24" + ",44:25,45:26,46:27,47:28,48:29,49:2a,4a:2b,4b:2c,4c:2d,4d:2e,4e:2f,4f:30,50:31,51:32,52:33,53:34,54:" + "35,55:36,56:37,57:38,58:39,59:3a,5a:3b,5b:3c,5c:3d,5d:3e,5e:3f,5f:40,60:41,61:42,62:43,63:44,64:45,6" + "5:46,66:47,67:48,68:49,69:4a,6a:4b,6b:4c,6c:4d,6d:4e,6e:4f,6f:50,70:51,71:52,72:53,73:54,74:55,75:56" + ",76:57,77:58,78:59,79:5a,7a:5b,7b:5c,7c:5d,7d:5e,7e:5f,a0:60,a1:61,a2:62,a3:63,a4:64,a5:65,a6:66,a7:" + "67,a8:68,a9:69,aa:6a,ab:6b,ac:6c,ad:6d,ae:6e,af:6f,b0:70,b1:71,b2:72,b3:73,b4:74,b5:75,b6:76,b7:77,b" + "8:78,b9:79,ba:7a,bb:7b,bc:7c,bd:7d,be:7e,bf:7f,c0:80,c1:81,c2:82,c3:83,c4:84,c5:85,c6:86,c7:87,c8:88" + ",c9:89,ca:8a,cb:8b,cc:8c,cd:8d,ce:8e,cf:8f,d0:90,d1:91,d2:92,d3:93,d4:94,d5:95,d6:96,d7:97,d8:98,d9:" + "99,da:9a,db:9b,dc:9c,dd:9d,de:9e,df:9f,e0:a0,e1:a1,e2:a2,e3:a3,e4:a4,e5:a5,e6:a6,e7:a7,e8:a8,e9:a9,e" + "a:aa,eb:ab,ec:ac,ed:ad,ee:ae,ef:af,f0:b0,f1:b1,f2:b2,f3:b3,f4:b4,f5:b5,f6:b6,f7:b7,f8:b8,f9:b9,fa:ba" + ",fb:bb,fc:bc,fd:bd,fe:be,ff:bf,152:c1,153:c2,160:c3,161:c4,178:c5,17d:c6,17e:c7,192:c9,2c6:cc,2dc:cf" + ",370:d1,371:d2,372:d3,373:d4,374:d5,375:d6,376:d7,377:d8,37a:d9,37b:da,37c:db,37d:dc,37e:dd,37f:de,3" + "84:df,385:e0,386:e1,387:e2,388:e3,389:e4,38a:e5,38c:e6,38e:e7,38f:e8,390:e9,391:ea,392:eb,393:ec,394" + ":ed,395:ee,396:ef,397:f0,398:f1,399:f2,39a:f3,39b:f4,39c:f5,39d:f6,39e:f7,39f:f8,3a0:f9,3a1:fa,3a3:f" + "b,3a4:fc,3a5:fd,3a6:fe,3a7:ff,3a8:100,3a9:101,3aa:102,3ab:103,3ac:104,3ad:105,3ae:106,3af:107,3b0:10" + "8,3b1:109,3b2:10a,3b3:10b,3b4:10c,3b5:10d,3b6:10e,3b7:10f,3b8:110,3b9:111,3ba:112,3bb:113,3bc:114,3b" + "d:115,3be:116,3bf:117,3c0:118,3c1:119,3c2:11a,3c3:11b,3c4:11c,3c5:11d,3c6:11e,3c7:11f,3c8:120,3c9:12" + "1,3ca:122,3cb:123,3cc:124,3cd:125,3ce:126,3cf:127,3d0:128,3d1:129,3d2:12a,3d3:12b,3d4:12c,3d5:12d,3d" + "6:12e,3d7:12f,3d8:130,3d9:131,3da:132,3db:133,3dc:134,3dd:135,3de:136,3df:137,3e0:138,3e1:139,3e2:13" + "a,3e3:13b,3e4:13c,3e5:13d,3e6:13e,3e7:13f,3e8:140,3e9:141,3ea:142,3eb:143,3ec:144,3ed:145,3ee:146,3e" + "f:147,3f0:148,3f1:149,3f2:14a,3f3:14b,3f4:14c,3f5:14d,3f6:14e,3f7:14f,3f8:150,3f9:151,3fa:152,3fb:15" + "3,3fc:154,3fd:155,3fe:156,3ff:157,2013:15b,2014:15c,2018:15d,2019:15e,201a:15f,201c:160,201d:161,201" + "e:162,2020:163,2021:164,2022:165,2026:166,2030:167,2039:168,203a:169,20ac:16c,2122:16d";
+  this.BVPdfFontRegularWidths = "600 318 401 460 838 636 950 780 275 390 390 500 838 318 361 318 337 636 636 636 636 636 636 636 636 " + "636 636 337 337 838 838 838 531 1000 684 686 698 770 632 575 775 752 295 295 656 557 863 748 787 603" + " 787 695 635 611 732 684 989 685 611 685 390 337 390 838 500 500 613 635 550 635 615 352 635 634 278" + " 278 579 278 974 634 612 635 635 411 521 392 634 592 818 592 592 525 636 337 636 838 318 401 636 636" + " 636 636 337 500 500 1000 471 612 838 361 1000 500 500 838 401 401 500 636 636 318 500 401 471 612 9" + "69 969 969 531 684 684 684 684 684 684 974 698 632 632 632 632 295 295 295 295 775 748 787 787 787 7" + "87 787 838 787 732 732 732 732 611 605 630 613 613 613 613 613 613 982 550 615 615 615 615 278 278 2" + "78 278 612 634 612 612 612 612 612 838 612 634 634 634 634 592 635 592 278 1070 1023 635 521 611 685" + " 525 703 352 787 549 500 500 500 500 0 654 568 862 647 278 278 748 650 500 549 550 549 337 295 500 5" + "00 692 318 746 871 408 812 825 826 338 684 686 557 684 632 685 752 787 295 656 684 863 748 632 787 7" + "52 603 632 611 611 787 685 787 764 295 611 659 541 634 338 579 659 638 592 612 541 544 634 612 338 5" + "89 592 636 559 558 612 602 635 587 634 602 579 660 578 660 837 338 579 612 579 837 656 614 619 699 8" + "42 699 660 837 664 787 612 648 587 575 458 660 660 865 627 934 837 758 659 792 615 687 607 768 625 6" + "99 612 611 536 664 635 550 278 787 615 615 605 635 698 863 651 635 703 698 703 748 752 650 500 1000 " + "318 318 318 518 518 518 500 500 590 1000 1342 400 400 167 401 636 1000 500 500 500 500 500 500 500 5" + "00 500 500 500 500 750 750 750 750 750 750 750 654 568 0 0 0 0 0 0";
+  this.BVPdfFontRegularData = 'GhSF2#=)6Yd.#dkmLTsjNZq3d3/XA<3<;4oZ"$-(7@K$dU1c*VLo?,cfIJ-i.Nq=sN<0`.XCs/<,du@#8M"OK@_&uGZhs1[0]rDL' + ':L)b\'>A%S]B4kjh(BuT&e!O:VE(mke4\\#[WhK-"X_bAn10Pp!XO_m0RWN^\'R0W5ZG$As_!8GpH+jVW`7(IPdWUhOm[mb^$POC??S' + "0hb^8fSL3fW]JaRaBJte-PdoMB:(f4pGWXg@cM(G$#fFk2Q1OO_oV2B,t(1\\\\XDrM@2`E_(sXT`@SS-$bcHHhArp@7*t^GoIr7Cj" + "i3@h$fYiH=R<>K&#^jrAkmW-6%4dY(1>3%/]D]].R5!]/or1tQnpFmbBWjKKrbac!IN:VK7.Ll2alBT=_jFKi%c[uH_6bPaIqT.F" + "5oImC7aCX8peT<uL1Lp7%_WDj7aMKH+E)>cao0/rYa,8i@i<=Tn1;a9@[O?mN2`Li?qfHk`h-,-SRkjS$>l'KTna3884qts6hsES" + "`uB;F--R7[+XU9pAW#PQRH_$F9Id)Sc>YA&r=B<\\L?T342^!T&qiHYhk:O+V+L5S,+l%jW&OHt\\BF(E*C^>_+1*NG[hHC2qU^fcM" + 'rKq_XW,uH#@j*C2/dNDa,aem"c\'\\t;<p#!-$f=\'fJK76Ih+#3kib(RT\'?Hr$k?oWnYEkbH2T/`Ql28H1pVJMZPgh/^NThZ51Yj3L' + '#L@Cc0*Gm3Stk[/FjH^f7JmfG)9Q"L1!F`a:?S6(e(JM1>OjCK1)4V<js8]lmM;EJ^!!ID$51ZLVYM`55&MKj[pft0%H@h1-%%#s' + "/!C9kB34ZLCRJSH('16VSil\\UUpp[-'GDHP#_Og_j8ld1628QT5n;ZfkiZF^G6IXc%ao)7S0i6G2\\QB=&kFAVb*N\\;POX3B%E)mE" + 'q/@a3;LXeNd"b0-I5](AB*._OKT$\'P#NGgEckSl2N!4s6%*$?;0Fn*iLQEN=A*@#3"Ypkk:JdZ4i!]&R\\KJWjcPU@9N!#$T3PbZ0' + "Gl@d'%E6)2*'OgRHlk-FA1WZA)%/LVn0DLXP0G8?[&)fM:<(UF.s/GpQmDB/>mdF7M+e97qkQEgJ8glaFD$8E5a.V[8_IV;P8E/U" + '$^4\'^_2Ft?Fr5=gQ6lK\\-^b\'iQH<6knJ,(Y(1aM"[rkJWDsRD`qU@Zp/ZO.LgJW6&[]Ss5q[Fbejp.T.qG,$4?mKfG^ddGkR2[Er' + '0K2ND3Y%7,bRln6?uD)*dJ3k8Ju1Ua6ciHYIeNp]7l!^dc%!XtiHI$r8=\\VRS,dr9-uL3!%q2=Rn4rQq@?+:!!q#N!R">/ObZ(&*' + ")DdK7\\s/3gq2V=pp1G$6*DBQ*PT=;_8KUMd/H\\c]8*Ba;b[18XPhj9:OaUGXT02dXH4%RJ3LJ*Mks@HYPI*W##5;,g5NFg1iOJ4l" + '1ID_@g%%/M:T.3hJ:9k8A>>jd5F=@G6=q\'aMi!b15Wl+k_Ifc2rZTaZ*shHTg+`""1B2\'8&hSQ&Bpd+m_QsNn]pTT0*_g=&c5lI$' + 'F+ZEu!L^E]DjEX:,u<CJ-nn>-)Tn-Wni\\e2"J2?!EZpr@5r\\u/Yohm?()Gs@q=Z`UCt?A]5/tb_G*e.r$DjZj47HlGr;nSN,UU>7' + "Au<27]:rYXUu81Y;;T))U>J*)1H[b7WlQu^bX/0:NC4@l%U+\\>Z=hkFgh\\Ts>J[H&G&h^T/![fJ\\]S(:VJ<$oU+02*f@A:A1_5R2" + 'iD=-;^.]_0O\';Zs<cP`N8l[[4UImtuFI()!h6/n;QV\\Ju2l(=VSM-:cIu4it">Nja&]]dFpB0jX^#/"%n,*+YIIFYYGN.JP:KQ6L' + 'eNYk$*k0UJ;7Q\\D6>70InfSLr_r5Y>KTYa6GXLOR!o?_jF,gs%1[nWLJWr;*ca?YY0#24M<XR%sGi"_f!uU26+j>]8C[di!+U-_@' + '^iKg8(%?YgSh$YQr!LbM&9\\]6".m+I&D0/Ha@Z_=csA+_TarW"GR(cK"llOr0#=T?I]8jr4URcu;Euu+CaTBC$(d\\2FFj0gGSWpQ' + "9k,$JZP64UZtBh4XVa8LR5p&(;&#IZ<hU^Z(&`mDYqjmn<O%,A,^'i*c.6nbD?;bL/*Hoj:&*k`QLDkLnEU2j_*nVE151?IQ#KN2" + '.r-[$-6"+dP:_l5P9#lNOdjMjbNHs]Oe8!?0!@\'F@FE&([)k.gKdKqL4&!@C3G!6EO_LRCNFEfCCimD=;c@nh!N)Qf?^RuSh/7P`' + "oQB3VNJB>sco@rn:Q=8#3L[?3)e'Rq[aJuY=cM+P-Itof_U#_=>FKqPDJn=UI(4I,q=1=g:#h[S2r2lgfYZ=9X[S&b4Gs9!?S%ct" + "RO^ELqC5qgo+bU^/h??<Sh!3%+3RuV6S1YV@k;7p(0gcGH-c&Lj]a%7Zqre5>:M]arKT1'$^E6,)jU6A&nQdf[ZuW5[oH5)+]`*T" + '-<dOU\\nZB2l;t#f<]Y$,[AA#YofVPOen_C/Xc\'7k>G&5#hYO*DEuRmoD]=1q5rM"e&N7`hVes/W\\RG*Nk,$=L>>JIAgV1,&D(jPm' + 'f\\X)cDYpRShlL=on]`sM44W\\QAl%c^fQFG<AiI_IK&(7T<H^BG7<YMN\'mA,N\\*T^=rFu#BT!MMN45"u5\\$tg75KH%@52(Isr;uj)' + 'q_e(OljN3AgRkge@fMXE[=aZqX$\\6>Itn#Z.#4c38IiiP)]`r>p,G0WW--TLL-&.OSE$"!\\B8fliuZ5CNdj\'sFR&=ZmIYI@e)ju]' + "V`%o9HtW$ac-J=ufqM1KmhVTK<jk!BiiU?meQ8$=3imY'[T#1eH`0$+rR?JL;q*,Y-dKu-><2RAcZB(h,A;C:Anf!14Oj;fipJSU" + 'AZEopQYKU(lR^XSf:Uj"gm5RCG\'i[Ad_3a#c^$^tL:3W.nr*h:dF^hNiSZH-A%BWpO3J_k*lgB\\Grg1b4PP1*oc336j13MmdrVkY' + 'Q_"q`(HikL@TqHolHj9fX(e]%[!LP3f%Qh*8*dmkf<d`i]"7RJf"*cag:4QTeRh4=$#L=0UpaFV-FZ]PRn%>\\]Ze%D]gd=eGqJSj' + "kI&@rOOjT<=)GLV2B]-Bi/N,C:]T9Kc7hkE>2cJ^W+1'AQc(oJ*oi6#o=(o9J=Oe,Dj^K^:]i^D,'VR@CD9qUVr<_]<E5;a^,<ns" + "NAqqs6PCWt)6SeoNTPpuO[90CC(r(iLik.u>W$=J&g1O6lum3!A!!ktjAU,7N`.I9SD%.@K18Fb\\!dNX(>g!`>l2G`QcXN::a`ns" + '"R:QI`TBn3[jLL$`Fi$B.!uFtNo?;`;D&t[TH-"$.k]Y0,>g\'">L:a!BEqZfMJtEp-aR:39M;676R5Gd2g90Z)dA#cRs.@E?Z3&(' + "Hrrb3_T'UL8g`^817>NbV#0q3GB@=*7AIuVVo2h5\\9$WkV<IFq,=d2Gmbs3;IuKsZDu0Ese7;gDg9>GJ*:iQTd!:u;NOp[bs*2\\q" + "E;8/9MoVSMLN:*kh%\\G<X\\GYq#DLdf@>aiAi)nVf9s8mlpCM(JheC8I(jAFWYW7o%[2hfMmMuQe)J9,HEP/=fBp;)$_R2*q;.E'c" + '7?,Tp34_8Vii$`n:fQMC0i?>\'q`J.T?AmU]UH<X`=0QJk03Pqr_rA$4.CY?Z]liXSjXiB"_r<!.f.T_OR.BZ@=d*&[^V+onZJmd$' + "<GL>W!<[.t(rC?*qUU',o'u8#b#g[P\\BCOnL>\\,%;;6Yr:dY7PY<th[O>gUo!1]!i?$j[Cb[SU;>?uF=UU4+tqdmt)FnheLjR1E*" + 'Er/O*lcNprmgNNLb0Q^)(>k.SR^!"UL%sW<Z"&mdVa^?Tr"aCt5NCaD\\8D+r@-o5Fh>t<`"A3Tsg47Ts1*^N1nS:$cB#ukQ:p\\_R' + 'QF7\\jf"7]R0:TUjESAjRN>pGeP$.dAHTZS*]0?2rS\\94`IJ8\\b/:`li;G!_9`mWRuQ"tau]fWM\':h[bd]VT=V1<X=?gYI4db9)em' + "R3teW.8m<14-2N5Qr:_T+NRgh,/N*ceQ78=j3!q4>L9/uGlJ2b^C-K`[raoe1Jf3DpXJHK.\\)O]<^iTD'iftMiq+_!$eA;9QG<Sk" + "5gNh5OLaGS<cB@$)mQtNXCg2m]NAH-?A_jZOC3+p/CA/9P9%0:ef*[HD08/0#[E<a+FfOqNUF)$C`:-T&h8iP*Q6!7=okGSK&dOm" + 'ajH9?>Lh7@;e_u/(L*o[/l3I%;C&s["M]isW^s=?aCjff(2/t5=BK<"==Pk(pC</!JcU1JheZoMp?h@!qt:Q!&cUt2#Q,*I,R!,M' + 'p_&8\':oP4Q7+sbnKU:Y>S:n2p>Vlt&6/2-Bk8sbBK1tI/<X@Qb>(Qp:"p,Pf?:4m<"\\!f:5Zto"RNfhd&TSBbBL$l_Kl#U0N%^a+' + "5_F)q+.u/r9P,.j0\\DT#_9e3#@`[D;'<:6>q]Y_`ZK`BDLYid\\(!T3`]#8G(0RI<5hNur?G^=,[mR/H##Lo@J]hO+T>=)['A)Pn_" + "P]'+A:o!R3^DJoMq5r>(YMuHgkGF2!+*['Vq<jE`)fg.>*dMQkdY4s@,-t:>CQ%X^hg+VSHFeN[NS-r_m$XE3PjICQ8>Wmu3r^_I" + 'G,(a<"b6cB;DBjtXb&67649:lZNtp<R[OUnR,FukaBdA2$ZR3p5:oaM6TuD\\3_?*K+AafD_"elK%e/?6m)6Qf_6)T>(]4Aa)0S&!' + "jM]Pr(GG1q^2oN8;hWa\\D2M]urX/\\%;H:,CG;pu5Y_sI9P7@2'UuUplOB3Sdoi]SeTLM?u6/BA3/Qf_sa)VHadGSkocW<'m=uu=?" + "&od4?/E.Ho&310U`c\\E)hg+kXcMS#mDOHD%IZ7]p)38/(nLOU0dRGM99nYm2&F^;?]p$k#+Uq<cE[Sd1eHh(:TdJuOWmD*O2A9KB" + 'UbHO3[l<H>##7VNJrZeLf`biL<Zb2VB!1"(HhHYe]CG=.C[-AZMq=c-h1bn)k9\'Ut6,8qr`Tu),:0YW-fp\\MHFka4oX[/u870g#&' + "4h.Fija8u``m^hEZHo8$R>Vm-KHTe^4rp;17PNsta1tTPkF@K3_NM5E1:.OahB/7D#k6??FP8nU!EhNM*)b\\sq!m8^e3f;?(4[^\\" + '"Bbqg6V[UU("ps%Zic(AB/^\\^8a*)gH@MC88F*Q7?,Nd%[FNf<VXk^"<b0\'1BT>Q8ld6]:LK"p>!dV^\'opk(IBRk!jHO0<aZ.?u8' + '$+E+2j\\=TAJ`UY:)SGJl]!_iLK3E2dE8_S!YEq"p%a!$+JL+IV@kPO#[]!V_8oI*IUfhp[=*kdnh1OH\'-=T)1oUsug^`Z-$80eeD' + "L+GBX9Q`ClEZ%PpR5IU?W]G46;b0GlD;)@*#:%)\\:+Ejp&/*dLh*`U-(p2IPEH0?-n$)Lqj88MPm+gjTNklT!6#F=&XLiU#/Z.PJ" + 'q/dc%-tk;Vgk[kM9Y]YO`Qh[<M$NHd/d)MqZ*E90.VUCXK]Og<4?bC5)/OlX//[U.Wqjb>X67aPB%>_G9e-/,kH?5oFNn.(gWr)"' + 'fBc:^&AJ*.;VYen[6=1gCrc[*@rjX_>I8(snqF&V`4%t(WQBdIiD]M#CR;`8@+EEU"ZTo2J9U2&^E59l9iTg$4YX9!0J0W/Igl>=' + 'j:;+bPh<K#_\\44@V(Gf"#(1b7%:#!X?BQ-#CGL?oYJN2e!I_6b90%t\\jYVYLK35!Z/+F"u\'dl4X4\'u>I:0:gIR#?,mano*e"fK4.' + "^g<.Q#3ANdePjl'8jZDRMlYQVP,Zhie7[D,mCR<`C:/N8Re=0Fb<L9eB`<bB\\FtRMPeA3r8^CYPP`<LB&nXg5giMI?7_Y.fC@h7j" + 'K^t9k(3\'QdY_*J\'BCrjUa4D6L_n]pgpR!=dlPNlb/.f/_8^*F^9CP,-%kU-nQTZ-/CF4_nF80Bq".osj:`U*tG+_DT(@C;rI>?Yb' + "qt7XR^?B4+X'0fNn8Eh:>N#Cg$MT-mV._*6`IU!8B_u3rC50AtCLk$^Do.DtDV5<b''s-qI?!o)=<B/7qaGl*SCj6XX6W'=Cqh1a" + '@?Eag#4a].b-/@kKntS%TXb"GaVmu$qW]e$GT6-r="5\'fU$30)gDZiA5E-2[QF$(aGrQnl6CB6</WqJ,l8%l;r#@/Jjj_-cZt>Ad' + '13,5*K&TThg(Md$V[;>WH[H90a5=Ka&mRb)I6V*_#\'kr\\p(o?e^KeE"3Wic!%NGA\\($UoG5?]F+%Zhe\'6&t\\-.]_<[@q^a!PD)]F' + 'G$_\\\'q;Dn"Aatk!*IdsaB]COiX&C8]!:g1c_LL9Q0&f;)c6!!;C.ZkllteCApQ3\'4[b\'Q$PS,6D!S\\FDT6(a>Ae5]QFBJuB2^:;:' + ".Z)rZ+n_QfT]\\m4D9h((.\\-(#:noi*hS*nS[*X@.l2?#4*jg[l!W#VhJ<0rHnN0u+:4Y/B>4D:D\\)Qk+BL2Cu)5S8oV'IfA=t1W)" + '9>a,HF7-NBLq)3K&]/\\";&;%o0?7_q)\'Tb%K5hcXN.8fX-ihpF#8C!b6ZF_enYcGR6Wam;M/N,?9".Db\\+N[\\-^,#C#.+kQD;CY7' + "4/)6f82D@W7A6i.ASq:L[<itO](80<,gbP[H>&if6E?>]r/WP<%:JlsVJkn$2&6hGW%7,L[=:RCrX-C2P%E$Y:r<=hZl_?A8e8Z:" + 'dKVu*80ofk-/"]#W2-14m%_9j>ZT23*g^db+.,(Op-j\'E0tK1r"0^Ob@4b\\tZ[*dT74B0#`=/I&a.K[ffO<ctoX)!%0QKQfc%j$D' + 'lT#2U?u9c\\/^1c;\'@?e>[1+4>FD8V[K<t<rHgh]_K:bh_\\L@:,N.$uU>E^.67(.S>^*sbdnb$&W7F]6kG-,X%^2^>^gT,c"/RK>Z' + '^I>Ie-b_Y=La]@ihS\\!-4Ya$gS6h;DnLqit<T4CRcgPWP\\m$Te9(@F:$;._S8d"]3iOcIsjRfF7.XW&Zq&%umb+&VCF"N`X)i&@l' + '+-@op6<HA]LNSjNDtqWg\'[KgT)sHF,nJooQ/cQc\\KhNSmp[-AS!Lf.TH\\=5(0#?1_IRnon`YfTtoFu-15?RJ08:\\6Yn\\1=WFH$"r' + "/Pf!6e/KeBc+8I+Yk$goGjJ/U>/0IVlJAhgi_kdJ<ZTg:q'VD1)31!eSFAI60%tJ9XK@'e>M0kLCZ(6986b,IXVURl&J=OSWK[)d" + "\\j5]=L[NrHh'A\\+l\\C.fXo'+9XtLW8pl`9UU_rcR<*3@_+Yrqc0)Li\\%8\\r4U)P&WYE>r>e8oa+B-h7Ge?HAs]\\*E-r:6].lKp7X" + '1-V0u/6j@bc7#R_?0<]j()Loi%_0:UY[TK4`3\\[AXR6sLiiR/Sh*hA2][_e0EH*n9V22<d1Lr3sL")99m\'km[=U\\Vf^*\'a+)/-Gf' + "T+(YDeQ@.jp'$QCjUZJ9fnV_6[l?6R96j[.?fgk<.e*UMpML=&4DNl\\O?[M`D+nt\\dZ$U8K>l?7R#$t%hk%&Gan5-REd-,tp*u`K" + "!pFo>3XZBp-o?cOh.1R3D7UCVEf]st?+ZF+EE/>-ad;;X/gVV';I7YWXa9Q6$3E:53W`CB\\+!<6&R?e0Wa;F]i1<2`m#:,#<kirB" + 'lW8#majBF+#LAu)(q>"XOPSqc+R_3Z2EIK)/oK5)iT85n>I>r$EBuaL3O2%Y1^%]pQOeWo/1B:aEMDZZp7sUd@N1Y@<n?BJr2R?>' + "Wqcn<F3oKT6KePrQjnE:X=u[:og'qodjG3$lT8RS56]uR@N=SKg=-5,ddp!im>[W3d?U/+4u25)ACT//p^KEB4EM*q]St[[Hu$8Q" + ')]!J\\>fVjNSukj;A-ttJDg^`[9nu>]$#X.#_S1^f&H6N@0Ol^)$<S@k.\'mjd7h%b$n[7rdqb+Yg=`"J(NQTh[jfW/*4\\BpUdr>q4' + 'WfplX=uI?^>79#<^DS7#jAmm_pP/@QGH]o.]+!`o&]MYCkDo?";!6:&hs5CAcS+Zj`caRrqtBi,[r;:t+5l%HRNHA5q<d_!W(>hX' + '*9\'h^a=+Ws_BsnrejBs59?euCVN=\\%+\'gdSreBG\'nm2Q6SNP(2Lu[.C*P\'2t`,qE4Qod&!-0YH8;TshUUqHhl0L3K>=U+p$n.0e"' + "X5=c&mM6;,GoAJ5,sH%)+/HQ]^?O6unmGX/jc:d0,.>QrrhbH'#>47B#g07`RYl.:oae<\\SQ[P8/!jE'-DQ@U)mPd\\Lj,N97qa;%" + '!/Je`h(sIdj\\C>?@U5)h)ob&?fQCu/lQ1IM/H5KJq2AJ0Hcg!FcIu3\'m^I]6]W\\i(q-X\'mJ08<6%RC5eS%n@c/hrn-0:<M7^E0<"' + 'cG+=5rBK3SWZW^Tk]R`<$/88KM+0OpV"M]6D-0kE]WN#QiYT#+n4TS8mQS1#iQ9R?kC1UjkOCA+*([Ur:okE,]`=Z)=t>,Ll$RQS' + '#>*5a)DI2Io(%,+^ihIeNC\'m<Am/``+j_<cl"3W2Nh>!GIAC-[C>\'RQ0Ul$+X1OU]eT2n=`+Vb5(VT]MO&p3Ae5%?;[ni*#b7/8B' + 'TQSOdJ@]3hd`[b7A>uLg-C+^*A"pb2MjOY*@HX<UBB0?8O[#*U8>TSRd)(m\'N6([@hsLF+kE+0A@a7Fo?9.O+s0"?<q`a-RmoRrC' + 'jeu&U"4ZJ)>;C4/CGa)E]uLU)\'^49#A]*N_io\\Uf02.JZ6EW]aKJ<I1JDsu@+:LSfAtrnLFAUDphq$kdV[L\'1<480\\0m)`AlYLf(' + "l9T#`$.)!mV'[^eml(k6oP4a_+nW.FXK;/I=XVOj/#\\'U,=_%PENF[brfC2$'333j8h3-q_Jm(fQc+XHVbn9<4,q:okJMG;\\De$E" + '"Ns(RAU?d..UaaiJ(RS<R\\6rn+5ckdE>cK5j43H7:gtY.KnKt^gd^*6;R.g[0Gd>>-JAX7[ZVNO8)pSIkQ\\3*\'fXK*4Q?Y:5TY<_' + 'GZR"ab&@>BOL;pR&Qr,G"8rc:JO9\\u4b)toV(rOmDWprml_Y+4V,cQY\'%jJPkA:Z12MrTV>L-#rd_S0h\\"IgFBk\'1_73\'MmdOei;' + 'M%f^S6J\\bdKq\'YEg\'fUqD1P?1pa+;Gpo"WIA$;.W\\[;5[1P3+\'na=S7X1EN$T).Q\\*dt>G6K8_GK!LE=?@V/"VO?+/)f"iCb7;gD' + ']7#s8_lB69=i&GhO.B)RGX**fga,BEVmk0"X\'to%7YqW3!/8p94VSeD@f!2H*KlKq14!Lr^NY%&Xm4;De[3$Yr/Lql^WfpC@(0nJ' + "gJqahfA3F^OH_nLe&si=M6)?06&3p\\mKr)DmI!Gml=CH0)tF*5$b%H)N/1iq=HGJt()C-p8\\WcD$7=oi_LfM_g6W<8e!4Q+TuW7W" + 'V8N.QUT]<,I0jPl$t,T?Se*&XN<8<tA\\c#jSSuJ9@b=aoUPX47U#TU0%X,p_Jc=/PpJ>o6R>C:(E$S)^*(mgT^?2KC.W\'"S4mNF^' + '=GqaRqk/BU!Bi5n`4R9TkZ9KP5XlY.D#\'a*quO:5fY`p%jU%OH7Em]1r!9:\'#e;&nJb/rSI9oY31)9".&p=fr+(r<qIZI6X7\'3p%' + 'ji^!r0CQW(-;)="ff$DWcd&*YnS._l_P+jg*nu/=.3#`J.RMam?Qe<\'\\jHm97du]$(F!QAI;S)/h8r\\mN@Ji6Ed,X(ip6#J93IM-' + 'LqRiN=(ZjKlJgCcg5IOfB6N`!Vu)bD=\'S&#GpV^4mnEb!Zc6jOOdNb/qXbcqrjAQj]?]j\'QdcnYZugA3]or#9O"\\*>cg::PdM6t-' + '(Hap%ldiul3SU7*i&AHD#3iQ6Z->jp#B+h]-1)A=^N+*IT7s$mi,Fo>$6MS]q"-;*N922%Vr7NC;4ngfLHD8PakCURYQa:/<f2Zr' + '[t.D7"_u=Q,qsf@(.+icdt!_.U+,suc]I#e1ZRc3F89o:g;@<BZDD:oV1J(J\\uXF72;l2pk$)bb6HO[>1>i!%aM\'Jd]2QYTn*SB#' + 'e&IC9dJ;5)!F(2sXR?cXrJo]pMoLNqm<X6-J1Y$"=,>JdV<Mh`]`p\'$f+kg-#PJ["C2,MNlbnmMhAtYS<u!bV60tPd1!/R![`!i2' + "[r7hiGOZ.jJGLXe+6OfRd.\\'J*mmol@9$<PDH2tGio7q8^gI`#OR05k):moXbQ,^Se:Q2qe50FalV+^R<hu@@Ms7X.DRTS2T(O,c" + "RE\\8D(H627>TA4%Gr'ms]d*@8Zj1#JiSe3R&(6b+$l_DpCg>W1]tG3Ug9C=PD>s-Qp!2dqo7mi@%p1GhNea@t[r02-io8tV*=84E" + "+rS$h$4@5g]K#Rm=P/95@H/H*/U]TB/F9Q>[Hd)F4%`[9V`6]N\\U*YN,P4))eSnfnT!gZ>+_e6DnWlVu@*9aAgt6/Cqo(h/A4,\\5" + 'itlPr??peHX<,R^$s;!Qa?f`?kJG:PZ&@;NA@;pD-i3L-T:WcK%h3Z):2tC2?e]pps,bbeS/?!FcJi+qP:`Of\'5KuMb"Cp7]+P2t' + 'DP`I:]]M0Zl#2TWr"1?lrfq6.;%)<-@8r"MB)j?U$U=":_I0e)nGfbinI7sr\'@e$$`u)Dfa-\\A7$=fhad\'g\'Y`a,bViL/"#j-\'EZ' + "ncd.WnRI/\\p6SG_Dq<YnUH#[I!2!TPKUC)Fj.u\\nFW?71ob]O<Dpn!_6&>r4+Tq.=$eOAXXq+p67Yp,/$%Enu:r<Ko7DdsJ@15nP" + 'ZafFFmb7]aP$K^k!@b6H@!m?0@!ogFs"@Q$H\'L$U5?&sT,QnU8M]4Q*0t"\\rRi/o**\'\'7tN*7r"g-hDg[#,KfA7QPmX/Uf(`s[do' + '!gH`=dQ["@g=7l8LHS$W0FV7>I=.GY$jT=XbYY!8jQqYR@n1a5(GKB6k;=R\\RnfLLN;+0Z;#@J\'__mln8&lq)1@_,_:hM&C`EkI.' + '$oSe$s(rW!=]i"M\'9=0t]V&WPftHG.,YSRQ$]Bh4cn]5.J472Q^C9)=/`T=E?Y4.4f>2o<^O_$8q/u#Oh9n2Q@JN>khf)]jPP>sL' + '#ef)FfOZkbiJK4[2HUIYP^rDt(fjSc-W6NjX3`LOMNY7[l0C9mBj;UV*\'FL>qMo7C@819+[O2QJR>M#\\ee]+-=h=NKSK"\'#\\$[(l' + "3,I6oU#Jkt[b-l6%-p7orVAd.W7$WqMb[e'>P6Gei'(E;/k4FOh0j1>i_J13Vo6a%#+uU3T<tAf<bAKV-Ai=1Pe_0paL:B[LsbQ;" + "?_9>cG`?G!4Kr\\SDQVXbR+uRqW0peWU1l]mk$tudfpVs%H:GEFhquPhI>O4gSTF&`Y8N\\GT/]b-b%%<\\fIEJ;J:n#CMPe%c.9XbA" + 'D_gmVYVi.Tb)K6e_=,-\'8F1Yd(T,,G?8*H\\&FXT$q!hRtNuc!!Zuc&k]Y(\'YH$\'(T`<R7TNfoj9OK8"5M/$u[i&K7p1!m[d74i<Y' + "%Qb0mAp4+4/,1,sJ1jHN:i#%0b[hV!G;PT2'Vd8@BF8uc1AZ+-O6OlI:XUKRb:!8#4L*]$GcmE3L^RL^,\\u)2CC.8G&RGVf2D'5r" + 'bVpfCM`*/)kb7LM\'9gT,%2^&>cHSa0qsNH4p.EWK`FFKaCI@\\Zjqo58H:dp39/j.h#"Y\'MQ"\\`]ig2KXO/n=;D\\+!k+2>0Kr6Y<8' + '1_L<DXKMm(KfP82NAm^SQkG?P^lks\\)`?3mIn[)=hq62`Q;uu\'mQG_=c.M:4NO=q.?a:6XZ"&+V"UF\'P_$W*M,ABD@hTd#;^@6B>' + '8aTq;Oiuhe0K5FmR[e\\fNrl=O[P2"JhP,YZo[@*Ic+D1pcbtT9<P9-\'e0EK(l=r<e17CdZ(9r*Mhcr_0QoV)S*G&tgU:>9nj#!+^' + 'im[ZK%H?F5j3nsc&$:mge&T?Y$rtZ#4Jhnb[PU/i8>q5>r":Hm%NIsjE*C!jT<?KNqa<?0eh>"?Oa,!j-ra"PZlPQgH35)uUQlO!' + 'HIH(Ub!QELau1-=CuH0_<1uRis%e7V:8fn7g=XQukTP+Q/cKXl_Wc%cBIUX%e^Fo\'0N"kZm6`t7Dh@k!j-MTYO/n=;D\\+!k+2>0K' + "r6Y<81_L=hc47L^F8.Q>c;ose4$qjp-0/H@FC@);Ed3(bcJqZ,TINp[%u,#[\\Yoj^cUAXHeQhI#WX/W^WN-RObA:UjUh#92*t^ua" + '.&][&\'KR@La?c&`W`33.SZoJuIKcs<i"(b"*]ka"ai8aHGBdTEh0mu\'@DlW]ps,9)R%g:*`:1.t:2\'VP5$1nOhj[_c\'$JGqHP9=Q' + '@V)1e(hAe"Cc=]c*?TWO\')n@=U\';&f*Xo`Z((?\'`+$E\',T\\0#rIS#1e\\GH!m#4Y(Hj3sfKa_F*,l(Y@/M,KMQp14G7^4cN%l]#4C' + 'K@/o"7;T2S>m*7AQ;p11DsuStr;`2Rmc(X^bEf9(RN^%?\'Z4f,W\'r.<p1=8VG/r4-5cT\'SoBIoF;dl#aSbIfpYP)<e+E1o<R<,r7' + "*#CeNmj=7*l&1lMjen`cp%4hI;L$sTSuu!m72I&NCKAg;BgScUW#iZYdmI&kSL,XpVL;Q:BUA#`AMMQd?I2modrWIj@V:-Jp6&:S" + 'DggseUKEHNf[u7iE`mhWpEKsG6**0LF@J%T8*j[2QHAfk4iV5UK1PNNHNa(?\\<e4*]/-m[S+dfq_ib8G">o5,Nl7NMNkRPcn(Suf' + 'Ia7rd]!8YP<R"1YP/4:K.WX#k,RiRU+*.:l[l5_^kK]YTk@igEo0kWVVDi@RhFttrLn+QmdmrDc9K)"#<0\'iFe;qWDA26@g5P%,!' + '0/\\QpW/m")ip2E2C6\'nMf&WEFYSFF-0dgX`384ZR,n`Gk354esL`].Q59\\QQ;B[+,#."2@rDJ"oM)XX>JNh>XZtZlN,b&8KQXKI2' + '6pS<Ni-FOh[<8kl\\:,HM4nb2.XBecadqI\\Kr92`[pbB(cA(f7N#<o+VG2GDS5ss/s#.I?9nal"f?[euE=,G_<n\\\'?np]C#gH]NOX' + 'iR$)QEL56%6ps@k,],c>XC2gW/\'R.%]Zd,K$\']*]l#X*c59"sk.+Yjkp52_K7=Aug&u!SiE0fr.T0RVSNMX<HYlYKYT"Y"[r"Isd' + '0;=-7Z/o>/cQZ76TIuk_JQ"fC\\>OdCVH;l2.EC1pU/4b-&3W&4Sm2K.o9e$K?*Vp>cUg8XIAsSWi8]G(YK$%pSN1,\\[h#F__ftrg' + 'L3%*L^Lt`fkD.=9lJ_8\'F[3UkVBKSa\'@"(rA)XYE6dEt#g@UEZ_P,=4Wg0D_#a-m-b^:a\\k%A0W)9#e/a2ZP0WWT)C6_kX;(k^]%' + '?mg#t2p_Doo_.ic@fC!Tp[tXle@->8<c?Rj0#E/U"gt0T_3d!<fQ87!GTFSF+Z&\'6(6Vt-?=K\'#!*d.gJQDd,i%jo_-Thh37*!]+' + "8ZDJEECrS];a8E#o2-^AZ-4j&$/lq-bfPDMl<et.E\\bbG>2j)0B6]eSd'KFW2TF9\\K#pa?!lD[]!6VjLS<!fuQ1oTLs(a-aalM!p" + 'l<ZiMAcl[m^L(nV@FoE]=H_ueYkl>Z`Q&jt-jeA"-K7,O"tL(t*q`@&lX<;p^+JM(l$>lP%Wj6ldFi].GGe\\4=q?D>YD6h&4bWa_' + "?;BhNWitS&NMi4^>#-OeS]_M8GZ6,ccNZ<r]$fh-AFcPKkMSIVQJm+6hid/$^qC(0a9'uE&bdauZ@@?DJN)U@3$KK<H9rJ@d2fV_" + 'S\\le)ofE<^;7i\\m"2!\\c]A9CYc\'!!<i6B?aq;IC0?bm-=.9S\\l,G,lI$FR^0#(D3NMHoPg,"ppRX@r];V@.XD&9jR!i(sMGpb(,P' + 'AmDT$(5#:EgqNa<K`+X6M6[52;8Ar]4+eWG5)gQ$H+4?+RGAHJE0LDKn<[[p<`6L__GU:"5(siSOXI<OmmlOOrb043[4X)i7I_;O' + "Xj1Z<oepVamn)0PqnYIfGS+VS)L&^r*FAbIk+P/1A2F8;?_?K>['m\\P%NVELrW9?<c<l(;VB=sI$iW>&$3&24V9`g!qc\\Et%C2IU" + 'rHjPBe\'gO+hN"D-*@(o/r.;sSA?^P]?64rU((UdJgd%8\\*ANC&K(h?lL@cB8X^j*5Fgb.+EH>P)YVDhhriQ^EKFhK@ja[s-lQ"H0' + '(P^J2iKNSRe%WohHQs=WV!\\XKoI!5F/"&$>=NF;g?!2]5E*)jSpg2/]I(1.*IWbKs-H%!#(jQ]HX2<&q.no\\lN?le,@]nQ8CnadU' + 'rQbX"VlUm;I?H[QT8@_^q@t\\gEHs^.`C%jbCeiEo!kj3m+DJ":+,b;-@K8;VY7:@<$?\\%V\\jE]5_060mef9FTYdU]bl:m\'P`>ai,' + 'J.c(eA_4)o\\$t(!C1aWb6#(bMa,eKiRZJH[PR"P&b-8_qaTa#Ifk=LD&r?"o)!?NrAeg;lo\'<u86/ljZ4@ARc#N)X37/s5XK!Ie.' + '4[OT<pdHaq4*Sfg3l>j)8i(\\]:!-%VVet\\k4&GZfg(q1n#da1!B$qT(83-#8,T_4,PXRF*Q?bksSc^]#d&5*_.BiDU?Iq=C"0e#Q' + '6<elmP/MuWSnsBM5+\\&O;%YA\\V]\')t5)&Vo"t*FWS=n>B(WijJr4P-E,)ma7;o[0;MAtaT*VM;cXYJ1m_68s3\'e1hT4%0\\F_UZGO' + 'QML``"lar1M.8O6&*7UDn=CB=5AVpI?BBnI2m(ho[\\`_<K(#js[Y]JKI![Qe4HBT9Vj=]VaB:-jCR))a_?(-dKEoY2C6cE#_SXn0' + 'SRG<N4](5,eA]@!06P[:<9dUg=\\1^`/&2%kP"R?8QPC3*/p[[)`\'pl&5jqs&^&%SJi`oT6?%PL@1S49D9qgIHR8:K@Zl84"p:,kN' + 'pc<RCrImVp;CS$`6a->i[.Ls^mGS4`?)srkk4D0[\'N@:ef)<_G(>U5SVAF7773>Eb$p/=QNl]::gDFjBD#G2_d8nuQO.kDPQ_"jV' + 'aI>#:%^7m74j[K9#05LokUou4fL/b;<$_H7-qWmD#ISf+>^>RX(MRuaeJih<@H&(\'$@cf\\dXhZ4Cf+T0FH]1JShIFX+Tj"qX3di*' + 'Oc(#GDS3J6EmZ(U]ZL-Gg[0JrI\'^MlEr2>ar$q"e8S??pNNn6$RBuD4=kG:K6VUG,S`r$oG1\\G%M-o5n4."W<Vm9Ae`H7t?9qo4>' + 'HN$;!iss:f,Mn(R\'G:1lADdKS#E?rn4b_7DQ"<;,iqO6)=2Zbp&]uSQ6tk9Ql^,C;H4-<tIk=c:cFqX`2.&qRKZ%]@F?SOcBk8^"' + "E^b4>W7[@be7jCuMPC')(cCs@)g\\Yf6+<thgVO]1n3Bt&OsN?mN;n`l/enbV?g`Gp'?<sseFqs[rr%&,QBk#,flOEAbo1O;]sq]N" + "6tpAtL(.^ma-e_r^;EsKf!!ErW)j'!-IjM1^L%pQ73nIs:?+c+kBt-2,17!:7(L@oGS7V&puZk[&T5hK5f*hr8:2B;fP$+_OE8e\\" + 'hiu.LJMoI93YW2sXQrC:2q1"K4UJ#S::0G9%ao5(>3+iJ\\+c[KWQ&\'b$^e20<M;m\'@[[Pu!.l@i66]SJ2md^sdUh6i$lV6P=[58P' + '_<$uB1`i[TpomU:$Ep\\bfmh55Q\'-8*q6H!O4HEihq"EdJ2<Y?e\'mJMLn\'Nb#P\\4sP(luqr6-OFTZ\'E+E!d_1XVM8BO?L#!rX+17s' + 'GWKmgj=)V_Dj@&l7\\r@kbMc]JBea@WS,Y0#i=&WCG%g10pd8DiOE$q_9#30T6h"I8%1V(tgr/\'H#l3Apk6WH5oNi?rn=c(O3g!tP' + '5a23lmNGlZnBKMtg@mZ2;f"-(rIHMq79lI=\\b/$gH@Cd^9EM5qXT\\SjTnqq=EsLo"h8.Yr\\Kisa:`&jWk,!l-Y0L49O\\u!r77N%+' + "TH$p[B+Ah1a#@[R&BNh(&I\\O@7DE!cg:8Q-j$3#tjA6am?J=f81+Wf9oYW8O##)d22'_AMZ#elf)T+!YM(\\T!E-hRM!u)129;`\\f" + 'L67F#rJ6V"KENecU7%G%XkSg!h[M2qN!LE[Is0^uI<s5p[QYpDkbumu`fD1s5@i:-^_`uL/(ejdHMW]K)E+s*Zb9+.RWs,RpM86(' + 'ZaNeO8>f4K9%U6dc-8UCpJ"j"&5C+g3$Lj+It,7m29[@@7rK@FKMuk+#UZ#uEQu5-AD!i3J\\1c)W`1R]M"uko.R)m%`7?ANd\',N%' + "JR\\ln(0YKY]j#ih>4`5_/MG01YreONoO!:>6-cn;\\&XmiFnGImF#Gpef#aj=[bsM%+7R\\DX@%crF6IN-2qY=G:jtr:.n^1=8le8#" + "LH693/J('h5YPtI2e^+KOTQL^q?3qT1>H5n]%:Q0^Y2c41GY9&B5pX<cLr!G$?_<QbuojFm%GN$nHtf^6VYf9BGUH=q?K?@A;8)+" + '\'bUgG@9#P.]K$\\flnWEo_P%Pd&3(-,>3"-c-Tpr)p*,_]%NJuXjDS#d*=,ssa,cpLpMbTbgW7Hp@sg7RMlu"MYoh^N(&K]i:FI\'B' + '-M9R<mY\'M8D:j-8E#P%qKr<<?"5?Q[TCkI:pjO16:%o[ciU"EdQD=>#a\\E)r@M\\(W"/3/8!/7iA]+#&?o`=X7[au%u*9H.RZUd5,' + "H8*Z'F.?.Uf?872JRmb\\28;+.d5uYtg=Z3WL48miUR;b&n-EECq`M87/6lIg:2,5f<!k.lg-o_thJ>G8CX<Xjo_);1>0LM/`3V#k" + "(\\OG>;!VL*`1InJ'QiM_UEUXR$G8--CI%bD,MF'aZaq+RB'>YbhBTX`TnuD0RXok`XS0A&>K\\l+?0@0a;3fg^GaTBci$Y1o:!D&Z" + "ZT5U)Y0b8]:dMdW-rh2@OpSr3`[VCtm[Ld/2L$QiXUI6!DKAL-k+c^t=Me?hElXik!$>d>B>d<.GZ5Oj'H+MeI#:V+&H?H`;:b44" + '^.o\';a.uYIUU"=o2n1"L%G^DB9"!`!,@r@tr!b=a3iJ*<Kh^8`,)BnKJqe,RUV;f<c]IDHp[LhqLbdr1]_JmG3Hst6M9@(.D5m1"' + "0@3c?[%STV@@.hKGYWGBm'$9-J]I;?n<cksjKL0c'-@jZHFggV=\\$B2lL66F\\kA6'6jMVK)^fiHC=4(-ZsOcu761/$`(2rLdf'&L" + 'rShM7U=j6(a[o^UUQ<cl0@%B2A!o_%dqa=^=G/e-n#[<FoMUm(8\\iF44&;7qjgYX*Y\'\\J$\'1N6"o3%KEOc`gijP7\'&b@C8<l4Odf' + ',a#-2,E@R#J+m\\ekk6<*E74(&cHS<iXk?#PdX5o%j"B)[8]NG19k(k,?I\\-LNs<lG6"j6ULc7Phah03.aclp6mOmkn%J]K\'<-l(Q' + 'f(T%RgN,O+hS;MC(V!58\'_*[)%/g=X>J:oOZL)a0Ym:(I[7`Xk-Tc\'oX<tk*?S@8`00/Q,A,AHXRT;.hi;=g6]gl/"I<#.?SSQ11' + '5M6HbiK:sibdeWtC\\(l-^1L<_3P+u6%GC0rF"K.kW8!ojX.l@eb?A+`4".Js=%?!nefV;W@p(`1Z0cB$03(G@^LWtm#3qX\\[>,DW' + "iXb+2:XnB4XM+BZ3`&J`^a0o,_DR(=dK6/h,<I0NL\\CQmn&R%FC5R-XdZK`up6Wiu$V7A$;-k1,r%TjYRS$Im8Wk:g3g%a.&3]Pp" + "VEaT>*C(P`q-(B==boe2:47[1Z%W&`:4@3,*a!W@aBX:Z*2jiP]PY<0aGPTuQ,;C6p%8>;L*^!'/L3[VEC5olX8:%/Qfa;%5qi6*" + '\\e(?D-EqQW>q`_0NrLg,DO8/%lnQc34t_ud5&K+/(";Z_]tZ.j:fC<6[6@WDcia4@n4"r+qkF$LD6E-")/9%*V70Z*JXB?;5W37C' + '\'k:qYeouhM[=tI"Ot18(CW"4REsEm8^6DZHp$8)siC@"&s/Ok8g@")9s\'Afl&Q0>&>L[^Lo#^b48*b8A,!([c_h.A*rYG/NG_6q@' + 'L#Lqj5u(h136;cg*EHBW0Z/":jcu.74pK<obkK:"iE>8&,&bQhQ7W_=UYZ#M;%\'i>Sg+tnK9ck%!;pK\\DXe*X`U5;,,XBhWaL"N#' + '49Ho(DPZh6ok<)Q^ZXHf]]Y"O8:bkf.3*Zuq[AV$OXJs.d2;rMOYq);1,=`:cY]dNWFm_":\'!^OjC;57DJ;S[dW9MN00=AgqN+P[' + '"V$lKAGY4=#`Tl6pB=$\'aT6hdo:.Bl5sN,L3Esl(pTl4n>s(>eP-0`OQo++k9Q_2=SokQSKEkZl5-+=A=KAJ1a+?S3d9!H9Of?64' + 'JOU=oHcfNq)ZoWlQ*U]H\'G3_-0"SIhJ%<E4nQ11u$HpSp\'SuY%7FW"&YTjLX>h_p7cpNg\\-%"m8&*5J9PK7\'hbkR44EjFA=p?mb/' + ")^H7:=A*n+q7`/*'dKkOH;P;q3eM/Z+F3^jg9eu2iTGW[I?@/5F8Jt.6iBC>*KZJK'T$a$O`$N_jc?#fTYON,4!<(#)ZFB`o<>?q" + 'd>E3THt\'#0CWF\'Ie"K.+Tgg:Gs!\'sjpL7C]kI%4crdq+e5s_GL+KdipDMB/N$k]NaH3RRm("G*Z9?M@%TKOEQr$j3IG9l4!eA[>E' + ';&O$aRc-ZAgA^#Qp,c(m<)Yrs6",;>@K=r1Ugc$J<?^N<RaCj2@r5\'rcZ<"]PTW"`N<YnK#a49DTV0S!a/4GFp^0bGA5(tM-I\'L!' + '1Qt(R5\'*$m&b,P&%LWOC=QS`W/`\\1@\\WI3(cr\\"]Lpr;V0E5@u20urm>&=^T8UlIBLW5mW2tj"3KMS]\':qd!K!h1UFR_9RkYP9GU' + 'o;IBoH.@sh+r^=U5`m<\\nA?P*/3u>L"RGE(8J%(<8HK%KLI2TD4d5A4Hr(^!LDDo5^AjP`T\\"*qkcWg6nBX.F*5qN&H0.kD<#m9Y' + 'rSt%L3]S>)&jTk<s*M"5r6+dSg1stV4Bg(q1\'mQka"nt7Fk1<@g3;c-DN+T$IW=5EkXLO_$QRE\\p)\'BO04]uiCNh.o2RY&J@A+Mp' + 'J`-;Ggm@d<i0\\2M3Q/bposKNDHsnqMKU-re(p$LqBD/sL6a*k(LJL`a\'kPA\\G<R$(mgI+ciL\\LThtA"/(u<,Gf[]gO]mRP!VPH7_' + '\\F\'Qs@uaoVT9MJMh2kpq""mH[RQ\\h\'&][8q);r(A%^`=\'FtgiAX]?l:7"cL4JU31FT[:L@p@X,,;=*eHbHY-r@W^Z+O+6%Wr.kpu' + 'r%GC3O\']d/m=[+O8p8"Ca_.fm3Tt,8.3+;uU;?%;]!e:!OH*D]ZYJ(VTBn,IPMXX*X8.`oVk=L`]`pBRM#;;BGf(5I`\\fGeia8"H' + 'B_)_D?THjbd]4#9:LE!0Sllnj3oWfrKP$$bQ//(,?;g:aH#Rl9M_e0H4faa!#K[.b.rfVT8g@/Gb2(1r^s,Dccr!AVo"aqk/"/c+' + '9JhB4(!t[e>0;QeI;U(Bcb<L!Z"!._Jk:Bbh;+hRY-":b*8Pc8]2@h+!sU<D&^^P_^O@u*p$CQtIFS-#SYFeapgr!ZH^70Kg+I6n' + 'DYPF1SmhNiKnUO,KJm1&juZK;iT!"[i6,\'Z-HD^+p$-A[jLEmarQ#JuZesa^\\2K%3-[<#"--QHN^So`T=X\'QD[PiFi9-b2jdP8;^' + "0c8U,br&l\\M+GCLNUC*fMR`,)ahF1'3_qrGp%m1Vd,CDU&8HfhZX*4/b9l/a5N#R]XuKIF?`ku+PFF\\MeRD_B<dkYkK7j6hUc_Kq" + '(^*qE4iC*78>j2Ma-D\'r."#`VjQZ+WUMelN\',t.Ta5l;_CdK_-JX/sOnV_TuD;Mo/2.iJo9k@BZnb9)pKDHf7A5\\\'DN"=oL!`*n8' + 'W;fdf_O]24ZX/R*Ao8\'J&N172*]4:b+pO*6I<0*lDMlMlk##8_^J18e1p`\'Vs6aeb5M<2fIc9$okOU"1BTV]`k^]0*2/(DH..aRm' + "]#bComU/OJ(qC_Jeua/DkuZsK,*jgjZ$CV1T7ok'X-0>e]Jt$(A3ThI.4efZ=h89P?Z39I2BBf]Mi1:iZ$kZ<e:kYFGB*mH]iT.1" + 'eSRRO>75XUg+l#@c&C/XjEtmu$Fj!"VKSh%\\5TQ*Q)&Yn=ZS5\\+i%/W-\'4TN\\CN*3/UX*oSLi"0RPqM(W1)K6mlJ5f24g+sJH*`K' + ')W]^qpo*fkMb!PrDBCd8]gI^,ZXWcX"Ea-OkL&(aKia>NM.,";GOf#,bOsP)do^IjE_rg<*Po04fNGV#f&=OXqfA\'MBmQp$m%k"-' + 'S$I(GSScDJ?lV"g451!^m+&LZpU5OrX`aid"qpmW0VFTKi6)P!6f?KE3-&#[<%renb9:s?S:%^o?iE2n0C^$3NQ^"4K@?\\d\'c[S0' + "1okI6ZjXOmPWSL.nNXNd:(?c=qWo'QKjNS=P*7bCr)t2WSM@$CYBfg4@A*(ch]*oR18('b5W)MYe,6gXlH;T6=$S,tmcNtG7/Vc+" + "[<LE9;41ViRp00=*K^'umOqc62/^%g9CWF>\\HQf@@o#g)O>(_%XO\\Ci8)ucq<KM8+hlBj2=k\\SI!]_.^:%[>&3,)f_HgB3D[Kmc-" + 'XS"i/LBQ/%^_%A":iqn\\LUGG8/]+u^p<J,12LX,U(610T[;HA-AK#]5+#Lm7\\Ot\\u[TPOJV*2PQB$010IJ^cDh*8^3X9`+MZ#"W+' + 'eB-R82a,ks&:1hPLJq\'m+AHc?BRJ<oG?264^>eBH-L.<LF]0J5J-Qou"o-J4bTZU3R$Gfi@HJKF]G4^u"=m1/QduKk+)>F(7gJp\'' + 'C&Y7ec^\\_6lCZYOhSHITdb;`5@Jr-""/OCW^k\\lk]%@>"E7*GK\\7;5EUU_BmcSFI)D0\'XJkfLK,CO+b^9?u4Y4+^hp,SS!H2qLgO' + 'htGt8B0VobDi"jP6:#+;D-AT!(c6r4(<62Yc4g4;VN]9odE.=H660IQH&\'-ffTeH=m8)Gt2^iLkZrQ9>.Usi%Sp7n\';J<rp%Eo3#' + "DN?<e>$RK%%;nr;jn_hQ;tgAH-8Jk&[.r7KR4#_>PE_lp/;+'m/a2FC2ZlIV2F\\U=HC0p;)^q\\6fPM-(['oOm(cphXb+_<R\\*>`7" + "c^]ZC9c,gps7j;OKd0*ih%18?4DN@A&L.HdG0[lVqt[VFcPLBgo8S:SlRp8#D_KF-!lfBnJ0N^Hej/muW/iK4V7ikuelkGE(#b3Q" + "iBPD5FKZ$nDQfhmk6^+p+9Tm*RH,>5m*i(i.u'5:LheDQ[I8,2j*bTX3Bs3t8US9HR$S);3>&GAnp&u+.ZY8#O8lm=DG>(<'P2+(" + 's&fUTOnbU`fLJ+?^KpBOIu3&.)Yo\'s1"\'d`H_HZEI2e3.]-S%0<=0PHnYrI_XR`J!n]:sb()`?0F$doj&Wd@5_2d02CGg,H^--5l' + 'aAL#i\'^L\'f=(I[f)Nja\\U2b,aHa=sN3"lJs:P%CFmE(Z?40mgm21,q/qmhd][>U"&"TQdJX\'3r0e*.(p8IL*Q[Bu<!RY(@VrTref' + '2<@BQ"A<pI(hu&Sk/a8?",Fk4_0DuK17K-<d[_n&@VQuBm`X-fNf13PgM:MePJaiQag!QTK@[a=l>7iTVPNfh7F;2&N4ZQJl&dMj' + '"HMs+>K0H,Au\'2>Anp\\:JO:38VSuAT2edS1PUfh@bKL)-&:]E=/GIlK[qj^5;OC[,""Kt23*)(HGDZ\\Ck5TU_$s\'.8j;&VLLRq&G' + "aFI%pIo(VQ<iu:%2?c*K+BaJ?r+lc?UE&J^)(gPpZ)-NOh>78HQ-jn]U&#4&`P74_8GLai0>*\\Wj?b_tP['B(a*'b0Ys\\=TDRC(Y" + 'XCf4mZ4cf(+,T*,;.<uHH=K>q%C\'ld!ES"&E2psH%CbjH`D_8>8(<,KRec%D*,6W@\',Lu/n&-Zbp,dFB0c-%SF/3SnN:%]A\\kQ/f' + '.U>":-uB,/)`@JUnoLW`]<kT_"!N-]&b48T,HM";1um#+$U@^`_F_=8oGa.7cE0=E`HBV"BBQF`;WPhHnkO,r.4*bfE"81;s5And' + "f^DWd\\JU>'D'/>d-g;'m*(E0WF3qPJ&5R<P24O,-6m^4nnA_DmDJ4-WE\\Ksa1pWnd/rnN0f[,L`e/$bQeD`Z?]:YC`obuF7PnIhF" + ',K9L@grOb[9.l7Adb"PZoUD]QEQgqooS!k*\\ZRH,:9pH9mDn6gW,Osn^h`Z(2<6Ab4Dr>t?2XIL7er<[mFEB0,!i7o&91HPLkP`T' + 'j";C.$F[5l[\\*]#8-Bh2%I>ri.3-/MXW#K#&H=!B^4l0n.UK?PR!h4!X0:Y=-nZj8-Ffd9DFO$"Pj<[n0a)CS%mR:*f$q@i=&Xb9' + '5KEpHc#doWRofOon,(Gc=,l(ejRuU6Rh,PZ*0J@41""Cg\\$E`;WP=4RGGVdS)X_8jeYhl_hr=LCCKg0EDJ"=kVm+<_AZN>YOIfo0' + '619>7ZIgFK,0=d6P"kf)a[^[/72EL4b,>0u^ln4B,mId;HULZA)>o3BjQX\\G$+97$"H)c&;cms\'#MJUL9&N1sAoS&W+`Ei5l056g' + 'U_&1!Z]=%?\\;H0SdVV+p9qq%@cW/0=EjatR%kgBnRLH+aeTN5%onF8Uihsn2LOL,IrM#2:kpubUOsA`%3oLgRMq_aU$lrOnrZ#"I' + "XS0n,k`g!\\9B>[qZ5i:^RiHJJBQ>m^NQS;)o$N@=PK=hacA5-%D6)*l[7uDSUbgd0LYTF_Z@8%UPKRa+oL9HQ,,?#8aNZ:6^lj;D" + "l)/s1Ak]CsEC$P&KAMF)cm*oI4;f0m?=DIu4URs.d>Bt;:qfspY:Z!)8hIrc$C#WnY@:9KeqKoU]&1%mkQ0EJET3U8RJ9,C>UkMl" + "j;E\\V8G8Z>/^O2R8\\3a/$>ReX2-Q1N2(V_jNKR2j<TRLlSL;bY?+1c6_,d3[mYbDUDHqtS5D@&1Jn'qo&l]RrCfX.6f&c:ua<Q3`" + '=\\CT<"ZK$C.W2DYr&Y0Y=gVE<n_kcV[N-/T6"uSV#qT7qW0Gbm9%g;pH)n.2<NSn;^g%Xn@7tt^D$-R)QX&`E=Q1Tt8j.Tc::#4J' + ",O-1A5Q/@^]jNf)$MR<O&]<]JrsV'HB\\')(;l7HE@1<UX1FY?_2n9)ahkPH0/VE^B$`]inpYu&'k=M26'S\\G!*8Q2,XT00L9Di'$" + 'L:X?++\'#WZm2cPYh"Zb[\\J:dYIkn9)BCU3AXLi7gpW&49]W_rN)_YPfc^kcq#3(EsmcNg&X]7s(#bpThho0YG7Jn;+TmM"%%>h9U' + "fTJCslFmc&L5QYgd#eVtH$$E3'KX=(M,/-,k&(;;C^%$oqe5LHTF`%U2nj@*M9$/k02#'%071<[CJ`7Sh!Fq/BSQ6=%7%7_p75IO" + '1qo\\NI+)abL%BLZOntpt!]"kiW%8\\M/uT:F6->(q$.-\'`>K/pVC[Sp]Pj6^p.%3_JTgJ<-;JWDr4D7tj?U5tmX]nH^h%7MImuBU@' + 'K&1dY-e7$2UGB9Gp]_7cl?a684X].giZ#<DqK?.g!Y(+,G^]%ZR>c_"Rq-\\D77)#4>[V4MR"k%jgs60u#Ar#gGYQf5$u2dQ;=i7&' + "A:V9!M'!VGW_g:aLNo%%kMiY%?c(nZ@p!'eJaB3:O4Bj*o/[E@7`3^Q=FZcH\\,eNf5dUf'PdjaT#7\\gI%JDB'Zpja/^P,J>@AmV-" + 'n/KnAkmnY6CH<BEdt5#gR_hL!B=epk/hIl5$?GCfY-Y6O;cV!Em%dM(?%pR=o>Vg)a<l@EiR#5oRFX_@4kkRqCBj0<lJ%"#o>G_-' + "D>BI(MbH[b=83SSm=i#=hSirQATd.,4dj/kr-)l>Vg0P;>VVj_W<R9Ge'_.l2uOC`YRcLnbP=VX2]HMX+n+KnUQ,8D2i<q&^MFDW" + 'M2BFj-3?pgbQ@1O89g$trBi4b!Ign(82[2_dN>ip>=_L"I-)NFJ)TE/o+_*0\\sY;D4!]smIpa*^E^.80f:p,$(,C9$^CNWf8,pnb' + '?itrj\'DocKi\\,;)89lYsL3KCR)T7CJIF%]`cGJHNqZ,u=kuM/u-"*nscl35HKosRdVNeWJCuCcK7/3et`IJ+PaLS10^B]"CNedL!' + '&A;_m+7RDlrYcSF,kXu\'QiQfe,[;8,P>ai.2U_+Pj@cN!2krRooZuUqU-@J9qKt)5^?H*tc)(5Fkhd1"q%c<2g&K2BT_UG%%/T]g' + '83Yro.%.fOBFm+`Q;\'.bb<hhp/H+%/j%1_oFebBAIAZ.kcd]Vs1Gq*=AHd&KLGqbX2e80<:JuIoLH"u;DoSa_,aF\'>3"3V_")j!(' + "rZ?Ks5?.~>";
+  this.BVPdfFontBoldName = "DejaVuSans-Bold";
+  this.BVPdfFontBoldLength1 = 26936;
+  this.BVPdfFontBoldBBox = "-435 -236 1417 978";
+  this.BVPdfFontBoldAscent = 928;
+  this.BVPdfFontBoldDescent = -236;
+  this.BVPdfFontBoldCapHeight = 729;
+  this.BVPdfFontBoldCmap = "20:1,21:2,22:3,23:4,24:5,25:6,26:7,27:8,28:9,29:a,2a:b,2b:c,2c:d,2d:e,2e:f,2f:10,30:11,31:12,32:13,3" + "3:14,34:15,35:16,36:17,37:18,38:19,39:1a,3a:1b,3b:1c,3c:1d,3d:1e,3e:1f,3f:20,40:21,41:22,42:23,43:24" + ",44:25,45:26,46:27,47:28,48:29,49:2a,4a:2b,4b:2c,4c:2d,4d:2e,4e:2f,4f:30,50:31,51:32,52:33,53:34,54:" + "35,55:36,56:37,57:38,58:39,59:3a,5a:3b,5b:3c,5c:3d,5d:3e,5e:3f,5f:40,60:41,61:42,62:43,63:44,64:45,6" + "5:46,66:47,67:48,68:49,69:4a,6a:4b,6b:4c,6c:4d,6d:4e,6e:4f,6f:50,70:51,71:52,72:53,73:54,74:55,75:56" + ",76:57,77:58,78:59,79:5a,7a:5b,7b:5c,7c:5d,7d:5e,7e:5f,a0:60,a1:61,a2:62,a3:63,a4:64,a5:65,a6:66,a7:" + "67,a8:68,a9:69,aa:6a,ab:6b,ac:6c,ad:6d,ae:6e,af:6f,b0:70,b1:71,b2:72,b3:73,b4:74,b5:75,b6:76,b7:77,b" + "8:78,b9:79,ba:7a,bb:7b,bc:7c,bd:7d,be:7e,bf:7f,c0:80,c1:81,c2:82,c3:83,c4:84,c5:85,c6:86,c7:87,c8:88" + ",c9:89,ca:8a,cb:8b,cc:8c,cd:8d,ce:8e,cf:8f,d0:90,d1:91,d2:92,d3:93,d4:94,d5:95,d6:96,d7:97,d8:98,d9:" + "99,da:9a,db:9b,dc:9c,dd:9d,de:9e,df:9f,e0:a0,e1:a1,e2:a2,e3:a3,e4:a4,e5:a5,e6:a6,e7:a7,e8:a8,e9:a9,e" + "a:aa,eb:ab,ec:ac,ed:ad,ee:ae,ef:af,f0:b0,f1:b1,f2:b2,f3:b3,f4:b4,f5:b5,f6:b6,f7:b7,f8:b8,f9:b9,fa:ba" + ",fb:bb,fc:bc,fd:bd,fe:be,ff:bf,152:c1,153:c2,160:c3,161:c4,178:c5,17d:c6,17e:c7,192:c8,2c6:cb,2dc:ce" + ",370:d0,371:d1,372:d2,373:d3,374:d4,375:d5,376:d6,377:d7,37a:d8,37b:d9,37c:da,37d:db,37e:dc,37f:dd,3" + "84:de,385:df,386:e0,387:e1,388:e2,389:e3,38a:e4,38c:e5,38e:e6,38f:e7,390:e8,391:e9,392:ea,393:eb,394" + ":ec,395:ed,396:ee,397:ef,398:f0,399:f1,39a:f2,39b:f3,39c:f4,39d:f5,39e:f6,39f:f7,3a0:f8,3a1:f9,3a3:f" + "a,3a4:fb,3a5:fc,3a6:fd,3a7:fe,3a8:ff,3a9:100,3aa:101,3ab:102,3ac:103,3ad:104,3ae:105,3af:106,3b0:107" + ",3b1:108,3b2:109,3b3:10a,3b4:10b,3b5:10c,3b6:10d,3b7:10e,3b8:10f,3b9:110,3ba:111,3bb:112,3bc:113,3bd" + ":114,3be:115,3bf:116,3c0:117,3c1:118,3c2:119,3c3:11a,3c4:11b,3c5:11c,3c6:11d,3c7:11e,3c8:11f,3c9:120" + ",3ca:121,3cb:122,3cc:123,3cd:124,3ce:125,3cf:126,3d0:127,3d1:128,3d2:129,3d3:12a,3d4:12b,3d5:12c,3d6" + ":12d,3d7:12e,3d8:12f,3d9:130,3da:131,3db:132,3dc:133,3dd:134,3de:135,3df:136,3e0:137,3e1:138,3e2:139" + ",3e3:13a,3e4:13b,3e5:13c,3e6:13d,3e7:13e,3e8:13f,3e9:140,3ea:141,3eb:142,3ec:143,3ed:144,3ee:145,3ef" + ":146,3f0:147,3f1:148,3f2:149,3f3:14a,3f4:14b,3f5:14c,3f6:14d,3f7:14e,3f8:14f,3f9:150,3fa:151,3fb:152" + ",3fc:153,3fd:154,3fe:155,3ff:156,2013:15b,2014:15c,2018:15d,2019:15e,201a:15f,201c:160,201d:161,201e" + ":162,2020:163,2021:164,2022:165,2026:166,2030:167,2039:168,203a:169,20ac:16c,2122:16d";
+  this.BVPdfFontBoldWidths = "600 348 456 521 838 696 1002 872 306 457 457 523 838 380 415 380 365 696 696 696 696 696 696 696 696" + " 696 696 400 400 838 838 838 580 1000 774 762 734 830 683 683 821 837 372 372 775 637 995 837 850 73" + "3 850 770 720 682 812 774 1103 771 724 725 457 365 457 838 500 500 675 716 593 716 678 435 716 712 3" + "43 343 665 343 1042 712 687 716 716 493 595 478 712 652 924 645 652 582 712 365 712 838 348 456 696 " + "696 636 696 365 500 500 1000 564 646 838 415 1000 500 500 838 438 438 500 736 636 380 500 438 564 64" + "6 1035 1035 1035 580 774 774 774 774 774 774 1085 734 683 683 683 683 372 372 372 372 838 837 850 85" + "0 850 850 850 838 850 812 812 812 812 724 738 719 675 675 675 675 675 675 1048 593 678 678 678 678 3" + "43 343 343 343 687 712 687 687 687 687 687 838 687 712 712 712 712 652 716 652 343 1167 1094 720 595" + " 724 725 582 435 850 593 500 500 500 500 0 698 565 1022 836 302 302 837 701 500 593 550 549 400 372 " + "441 500 797 380 846 1009 563 891 980 894 390 774 762 637 774 683 725 837 850 372 775 774 995 837 632" + " 850 837 733 683 682 724 850 771 850 850 372 724 687 557 712 390 675 687 716 681 687 557 591 712 687" + " 390 710 633 736 681 591 687 791 716 593 779 638 675 782 645 794 869 390 675 687 675 869 775 651 661" + " 746 981 746 796 869 744 850 687 734 593 683 494 702 660 919 627 1093 837 832 716 928 744 733 650 78" + "9 671 752 716 682 590 744 716 593 343 850 645 644 738 716 734 995 732 716 698 734 698 637 837 837 70" + "1 500 1000 380 380 380 657 657 657 500 500 639 1000 1440 412 412 167 438 696 1000 698 565 0 0 0 0 0 " + "0";
+  this.BVPdfFontBoldData = 'GhSF2#=\'!DfD*XW4%\'74UI`.pSVTfA;6_5f.NfoZ.O$>d+t*_QLk&T:`J,+a"c9pe0ub;Ef,+l66]=1H(mESb@uQ,2qnJQT6h%#2' + "p]!59G&MP9kKTJTDdJoq5n(XJ1,Bf.;%4N3kqhiGe!1>og-]c5fSn4GpY*%DcS4p'L1-XnVrst:>Q&JYL1ujq0F=c/EMJ`J2dO.L" + 'ZF_7`UdBh+J6"JarYJ,NW>R_FrY&?s*o8i>@>$/qPK/]$Fmnej%+?[2hY/R2oX%:KQWXdD%A:@KdccX0#$7ne%$N^WI]ph_S=QE*' + '@>6S^KQcE:6XXI=O+`o+*unkIm2s?.<+D<]Vqg0klQa;\\lc-KfY\'$944")UC,_&WdSq68GVY+2=T%Z5c^8]d-as&iZ.MKeBR6D&Z' + '_/kWF)8r^fCD[*Ki@D!^ZM*:C]>:;IV>sY4"-/T8/B^C^pJIGQJ\'f]nOo]`kg/2I:bttr5"$M2$<oR\'W1=X&=n(ER<G^&;Wlk$Ko' + "=O(_<i0b/0>GcqqAkmF%RJi5IGYc<gT&8T;R1(^&R1.\\_lk=n_3AUlf,=n)](-kKBZiO(0oXbZ4)X#:+KN(:pThg%N;[S>L-hCpY" + 'AQDKaE1]^a<P^Og9X<dL]:,^-hiaccQ2*a1P`rk6B94bKpk??><TXM3:,?HJ0"e5%o&-&Cf9p$74/3B?lCJ9JR0:qS!]+\'t62Pde' + '_#_G!$7SZ]E0T&#f@"GdOMSkV"]198=#7JA>*<tb6B$/-&BF,_q*M>gO-J[25lK0Ycg-N!4PM+a1(Nkc-<tM"*8o\\2hbN$^)"n9q' + "ad)L*O*e[g?A^+'VE\\=f8/Zs$#guiX#2/LP!MAf(#)[oG4jAUlOK*#$$&f2;.ZdD[n,V<VacqnWJ_r6(07`o0;#d=W30Pni<.]IS" + 'pQ$SP]eHTC(A`$t-Q!\'rE@_q:;D2]fXWN>u8r\'(#QPg;p(<mI4Maq_L$$[\\>s%"m^_o1$/aCpuL%-j[oGR.@uMLYRaI#nV?i#5&)' + 'U3V?qTOS1-nuc#59T$YXVusCo`_TA\\AA#DRh\'18`!Xmq4Ss19]Wa_@8\\\\]hnL7\\kGhuS8\\%sUZU2N^CH,-2#q@*f*](])(2".B;f' + '-ZmSW7jH+Ma[S)cA=R1CFEIeb]%d-6?+jL>]-Y4c]-,_h:36,fB@GY?&o!ep"i.%V3uJPa0?>sJ]F^$h$ZlfurEX.8?s\\r/d<q;p' + 'Z:dkLg]p1E0\\Y]!Ah9Rl9Hs7bFuK]eR>iJQi[Pm\\\\<n.\'T(>I?@="G2\\P9q)\\2RiJ.G[9MqOHJ.QAO):.9T`fY79MehC/h@k.mMV' + 'P7;0eb$NM?BV`)rl#Xq@oA#t[\'`\'NtK\\&m&q(5km\\]RAr"n90gn2E.kc@&UR^,S<PO5/X(;IKY`6g2^0P7M<\'#X%-U:^d4ba@qe7' + 'L[m,pjlu:&^R5SK4_CYNa!Ae31?h+LP:YbYo3HmE+T;W[8D;G.:ZaiXY<B3gcnJg\'qB^B;[L(65gWXF-*@e.F7-4rh>"LiVM&)IM' + '_!<>`G[H4ok%C(n_H_jq"/u^#qa9ohm#VFo<OSLBKQ%OI#"U+=*);35gf[a^]*WOcUSg2H_6_jS`i@&D`d*R8Ut%e*[aHYp&q2##' + "RqI2'Wt2994CcMJ0fh-.NCMAn&R*#BA++A^>VW^L>KgsHF=K)3[E;h;W,bm`WOf$OWuZ=D\\d!%=0dm@n'M<L'\\`qlhW3_03U/J#F" + 'WGGQa=slkBUMJ5IcqW)NeOAd"klS)^IA\'B`->J<OLM>eV6Q<l]qD<j`oPWmG&D5q:dts\\$I(1s2J,QdKCT*Tl93eM8kT=)UR8&bK' + 'lq-\\&#1?nh57(E^HSjNML?gZN0k]HK#`7%o#M0]"@_RC.p7.M;Mf??S-KYZ.3YPC4gg>d$F@aAi%s[5%L>WiarB7YC()-9NY"KmS' + 'LAP?:\\ci^tm4EjiKOb;SNIWPO6"LN",N0!iW3R5u<C+B!Nc72uY-)5#.<+qm\'*;<,\'a1KDgo&#3\\!TuQ_l+TpKJK2`F80id63\'Mu' + "a;.K<q.MWHLi/q'/B95B#M+MJa\\HCtg&!>_4Ln&=/FF-ha?/mBHiuZkcfTEXC8$D:<N$P5$'/Z!/3jt&99eP[b%+MXe$;(+2KE_]" + 'ML;Q(8,3f#@fp@r0SAm"`<L)dFrGaFE67$NKBEHM<aAm\'Cpg_%KiX1fG(tj.o*d,X^G`/PI*gTMFe@7<XfGXW\\,N:bDk"6p1Y]!G' + "F/[@V2Li2Qh);e1J@:/KpV>t)Oj(nuW6f4ed7Ihp@kZl%`qPFsM33Xs8X[[IP<+ojMKXjo`G!4_`BM6q`BD15;b,;5dob(0di?im" + 'VFO>+QsMY`A,;\\C8K"KIVAuMX;AL_u-s%iV/,(I,<rT(71c$gA1K0]a2!\\s9goSY7^KHQL2eLs:rFBeR50/,Iq#p:oo+LXmo6\'3!' + '/U.X:$X8P_(4I#^/Kub*/Wq]/=aXe#g7lmP[`\'JL^FbEsj"6HH1G*6AcF7%mH.MPTjo\'Aig829Jeo"6pAaLu$D/4@?b/c\'RC4Oh_' + 'X1;8dXH$GS[CU2IaI9@lZF7/a[dIhb_n*&E@-^\\@j/j\\5(KiDu?>[BlHC+::la,0oXRB<l@K"=egW42iCn,?\'gA\'?CZcTJ?@5Gs$' + "gnrM3Vp0LV3h%'HpMCgcH.t6cdC/SRF)>]0^U=$Vp1N-X[VtL84,$tIh0Q\\sp2^%Dq\\f*7f`,KC*Gcb-3J9FeE7j0SbMdeJCK3;n" + "\\n[Y5<qT(e;+IX!WL'R,eR,6cW/mqH3N=+?3j*Y]ijd>)Kp0MjRaYT@LX((gK:PLlYBE+qI)j4S-.HLabHJ(7Y'jR<\\A$=3d\\LW<" + '[--0SDSNa\\nb.1^*8Q@\\NH-!,2VDrJgKh:DDGT*fl!W)Y]0g=geK$,$m-/Jj_[ddeE9H!kmLJ[AmNM"Nh)!k[h06H&G(8#hUgp<_' + '\'cm$k4PfOBa2]5e*f1q:4Q^skp"8DHa5aF[[Z_#[fpNPeRSONqJ.mNVY>hG8/o$)$KkD=13Le$DGdZ>jont7A5I/?2MU)t$6.,rD' + ')6"@@RY0U7jFC-V1%n&8GcafG4cL+PV=kP)J9RXJG&jQYK>&9RSEP`$I<tE4\'Wbs\'8Koi>@MkN&:s7KFcj&LZ8mb>1Y,9<48X$oX' + '-3TaldNi?WqX/$-NXtkM[Wm;Mh\'DnZl$a9E*JK:-LF=JU7H<!.a?Z]C`M`nUfAgL&E!\\!@klroF7jZl[p_c?)$""KZ1,Hq,l+hO2' + 'b>+S.X%$N+@B%V`])):-":"^k__6(oCM@3cDC1Qg$CT,nbX/97#k7S0j_QDDi?+8i+6T\\s?hidbW_ED(*;iaob:imtloQKXc_3_$' + 'nTEn9FE0aSY!%"D.-khca2&.c*^)2r[)!bF"l(59s.?KTS2K:mOMLV\\n(J^&^ji#=OAJd9"=?P25^lo3PA/9D!d6DZ00nbm!:]Y)' + "m;%(T:em#R=QG-_e]iPI2Cg0Hm2HcX*ZbpHpZN,P*'JW.L=YH=pVjgiV+9k;O-11u'bqc2)9&Hg9Z\\n8aIZ;6rPrEgDVmWYF0kDJ" + 'XR48Ba)9]oG3nAb),mgK$aZbTJ2&S$4ciYEA?H@"XsbD8:b?2=8?J#rS5]n_*^ud+%q*l:eVO@FaWurL3<uq:5>XUr`fnFe(E>YO' + '_JcdM)uQ>)Po\\T=lQa\\M9\\^[03Q-8=YE5<#]lSS2qm_"*hFWLm0,&>B7T_&o^V-?bbs/>RQ8<]-p^aQ\'>lu(%ip31]IBtH[ggFt$' + 'b!Z%Tj\\`TVq^%+Ele[*gK&^F>9Nsj&Y,oC1.088[b`q/XNHHboefqSk1Q1d]Ih?&gSc%Y"mX"U[mK,8Hn-ert=Ap)FlL2c.e/"qD' + 'AurX[-N#$r[:Ll>i>9he\\\\!(5fr+l.*k-(JhZ&`sh:NiV#1uhh%mc;h!)/!a`?e>WpaTNn)*X#U8)T"]EHMDAU0fuZ,_\'j\\hU3Wn' + '4,Q7#\\p$s7@2+d3+,5!q"N%YXdT^M82jbiZ/smRbmM]l>IJ$;2MDZ)mmE6m2QY`-=C`CfK#/87bU"Mh(<^K)"jY`;!DgaC0NU-\'X' + "PRAcaUDih,H_94(8uO,D3SMI=I=.C2^'7N#e<Z\\3,82)t(/c#:(W&@unEc('=JL5s^[;I%D_ci0`onHLSeCEGaFqoj_M!k311AZ^" + '7R=f"]b>#%85#FLO9RN6"MTS.iY/7<dNDW@\'/[CG%j0fgnAF.46g\\hAc9Pqh)s*_JS,mIk!^,u![NU>tTSuO;rY*91/SG9UKOWh%' + "6&+1JE$Pg@kDrt9NCqQ2mfPuF.0!0q&=p`>QQ2m/YDO\\@S;h!E^H9]?qh:<t%f]u6/3Fr\\6#K-K+raoA2Q.dp.!3>Ma9WLJmd]B7" + 'o]l_f()H*TnB^%+@%0H8:%2mfb"\'ClkN(\\Wh)\'&+41aQq]Ghs;I[$+(5CVFSD-P.5QS2KD1pT#Zb"q7URFM[*(X:\'%pE$lT+Lcm:' + '[\';%n?B5p@Qe9+`=fYNB:X%Z"3)6,IO*\\;\\e4eL>&<mjEK7\\N&LSLt7dI-jW]Mb6=YLP8ep,9qKhsm>["SF-]Dh&F/TsgLOZK;9J' + '`nZMe#sLV&P<5Y4g2WJr;BRXj-,*CWVI98fd>Kr%?9G_E?)YdS+15g@T>,c)T6^;Vc`jVW\\Pq\\\'HN7$ad"7JN$u!Ge-0IT=;ijA1' + '5.!nD+FG`mLZ@;GA_]7%Fk$-Kh\'Yl_b""Q^<qmY`NUPkj-l;OoIu8*1/cDr@nIlH-j#,]MpuTabnU7bE9gDY(2AI5K)"2+a58i^X' + '3Dq*p!e-[5-sj]([,+.Jc$)8uA3db\\!2V-@<%#\\l-(HT@M`Ih,g(;;*jU?N2C%`T2m"P)%SFhY:VVi?`(F!W[Otj7K1k4n=+Qe"N' + "oSrMs`[2*91M1mK=LM](Ue/,-P:#H.]Bq.5G4'0`nP6P'a-PP.nDN0/@q`rfUnhG:7O8)tdJtU=^g&sQ\\Nk-k!eIgA!cQV!bL%'h" + '@/tg2-Z"jsI6nNL55ZRQKS#:*3MW0j+[.sG"=bIZ![pc7;\'Rl@^m:#lC45D$jG9_n[<N!!k.j0M4aYbM3O<>D-L3D-ibT=$,fp12' + '=t.r3d0.+:,X)MNiiQbjZV1[E(/g=<"<qcHb.\\)Z67PMgL,X\\kKQdS-\\,#W+6s?kXa<(_t)nU*&hI;&t0&o=on68ld"P(>XDh9<[' + 'S%GeX_45sl$7mY&(3?r,hg*rHI7euW?:]unB=Z3(Z1epurK^8@bEN&S35>gS0krK<l.Y!\'o)$c7QGWbM!;u1d]I"o+B97U@gn:+#' + 'r,5\'=6qgQhcd3.G#1./SR,Ti+r";&E%I>*e\\o_V8rqMlR_h,H1n2L`+&%"8+=3)`sRt.4WTtP\'FJn3=#9GU*I?Vud/\\2k9_kTXPO' + '_3:"iPjqM/c5L\\J$?-4EL]@Kdm_ndc0RR!V`8U5":q?P[@CpIU\\80`%qeJ!RFQkgn5M2FrrU?(Z9H9CX\\?_jK@1s%=c*^p=,;Wt]' + '2SZ0r%6X7rRT(s`&g,(O1osEfP,6Y!92"gE^\'!8?o?H%R^9b3LPSZMZhUc]BSD^P[n:`MsiHNCR`[=5WNZLEsYRpIh"q+GiN;:(D' + 'O*Oi\\s2*ZW^&n>"Bjd7KaW4eULjh<I9Y5E]/nEeb7FhnaC:Bs\\Q]MOQ;lG33cFU57AEMDBs&oDF%:E`m;c[@p$Dm_kihnIW,1eXl' + 'OdJ,&ro]g,SD9ain/:if*W1PuKFL4ua>/H"MiNZ7K[4><a,D$%)X"G-cDO9ar*H>*WQSBKe<0lS.KQK`MIBbgQm/gU;*Z;G-^Y\\_' + 'dXEddMf8e[KQ7HM9q-AbqoY*M=0f#)N!\\j02PY7?"`<ZILbJH0`NOc<KO9N.,?TJfaF\\)$aD.W7"rmZrQD0<\\K3kdu$_P(WrD`Y)' + ".$_%c12fKOb(OJR5CCoSlGfnimbdmN3K;<%LL4uSJc?aW1R`8;GVe4WDf5N&/s9!>DlfMHNn:FDX5;Y:*dee(!GSIAAs57lTh_ZN" + 'Fdd(\'@XWOh4@[32><4hG0>&>ZHqV,6AOUjU%"J-X78=;\\[0eAR$icdfl^L--FrToDR#R^X(.Jlm!Grqbl5PJ#c_"Z_Ck<W=.mbPp' + 'qFFCY$/:jRlIp.^AD6Wk&5Yp3#TM9%K1-)6.@)8kh@`CT=,Kr?1\\#m(E_sE41=u$WW,C&kTO\\M5GYaFMB="DCag.@G"s?k>-N`4d' + 'Nbc<g.r;EF97aV!WjT[&ce&NjTk7dWkTM<R.,NiM2.9`b`kMs3JOK%FM8&it)!X*Q4\'mcQ^VnlHR8Den^cB&Mk<g2,F"ZorQtD_Z' + 'j+XF87B5ce*Dcs#d5K?T@%2aO9V\\PqJc)(e,[F!:6tB1j03Z1NQa6Y@WVm&sSN;:!d96s1)d\\<?UNQK/h"]qbDFFD4YbiX<S;^P.' + "eMnFHTJWlu</C0?B;QiI,VYA6`rge@9r)(4(*bp%%IF#o-@/^@k4Io+J@IfbCUJ*V>!+8Z3B:Bp0^C0``h:.%Jl<>-AjfptOBY8;" + "0=AhnE=,m)`WHdQDL@@)n8eG7s/F^>cikAq(8V]&TGu&nn]D!I?cGGlrmZe<OQIZQkFh3h?=Ln=R0ThNQCptS;7$#g-VVUb`5QNq" + 'LmlJ_b6AaU]S9>p#A,9&4bf"nM8pq;Pnk^n\\K=l\'HC,J7i-:KW8PEYg)9`g+k`(>@EkPplBdnmec6,(9P&@-/70ap+^KBtqlG>R!' + 'Ei\\&ELMu5=9CU8#Q_N%eMEVt6J(7>;8;3!0_!eNCT*aj(&`\'R5413D2RXb>En4.mN,%ICb,4*idhc8S6dtP.>PUiP,DVI"\'%##t.' + "^r=rZbj'CLHo7`KJFbU^;p]RE$D^KkW!DV4?a)4+k/f&S$N>ZR!HjZT]lE)a>]F6[5)m<G!@V&bNUh7\\7+FhFLh<F$BG$]8]n--5" + "r2]WAR#HiPiW`u=karWFY@*TK=N#aFcG4Q8hLn7)iHU2HU$cVYQm<g>amYP53rl06<h.La)sBMhOd4nIGRFct)/s5A<hR/T%'='t" + "C1RZ\\Q@6s5`X\\pJ3!/W\\h5:t&E73fJR%Z0@#0*C>g@KDu5@MeT2ea)57.2;iF-_:3R?Le>O4;k\\UW319kI6L4FX'T&h\\u[fh;>aN" + 'HJQsY/-_826I`4;C^,]"<n]<s=i8ug%3K7P!iSPhOnQb"f!na]p4hc_Ml7C_hgpUC#)Rc1/HZmb&\\RBtK9-4!@HtAi_F"q,#T*mG' + "j6Bd2^MjN$s+5reeq.$*?Y;N8He=?kn851ZRB-8mMnlf;CZ.i/s,8OnV9gUN/c!Ka$skDV_=NL\\QY#/BF#hD[^c8q_Q[A[:!%LQ<" + "EE;tFcs>;HbcDD/`[rHf;#$`I]f/72FhI_,P3d6WZ@C%`Su=5e*RR).Ed<Do4Di3kP`Zb4cQ9>319a\\)Up.7R:0QH_[$_1:BMIWg" + '9/@0GUZqgj.C?0"kiJ2ur;:@b8JLe]PZrnOnZ07V6iD!b8pRdle#)Lo2K%<derL]*^VX1LHo5q<V2Q7KBtsS>?WPEa.:\'o]Xo#b\\' + "^TrEk[r#=i];B6-StWB#li]fF)8D(?`clgCp3lr94s+]jgVEoD$Zl(G3Y7:/aQ:d)$0<mPqGBYC=+Wu`2=JaiU+,i?cE5!fOC;G?" + '_+N.B.J`dE%3,?08`eS-e.6Qgkr5p<!pL.cig:"+!4s--QS>!H*rrHQ"E?O,_oD_`X]V+d[\'1BZs&H]B%=j/`!!VCoGtG!A9N^2:' + "U8$M<pkb=r#f`1O'Qq6ib#/Rf-])o(.trF#8K.e?F-2s-&k\\ruY4Pse2roUpi:?0u90^MA*X@Ehl'TIb>S;k0?gT)*^gVg,T+?0[" + '0?R3m25,&m>1?=>8gN"^U#NK^7P<_fW6OGZlMc=-?+=L`RB_U(7dR=)13pmHm*$>\'C<%TmhJ_;F?3t,N2Ce2(r\'7)JQ3%!H<Lg.*' + 'Fns%W<NE1A."hJ)0SM\\eM+d6>+HeQM54&ZM,n%O\'YAJ&a*o8>e-D?koLF8Y(_!]^l9h+Hk-<WEEp8la"PaQ6pNu@bP;C6dR2n%(\\' + 'G,#aL(RO_bml!J1!-*#BC2b"Afc&F!b$ekEShJXhna_8!.1oI[6Ocg5-d7c/:fW00+)86K6(eRd^72L&:Z3]a!11mQ)@rM65h;4a' + "3qa-N8[)(5-r_t.2bs]+G(T@+#\\\\t:@bPaAM?*Un<@e!9n7#.bo1)1JPBl_'YiMI]W0GCT?J@8JHm\\bb%G<U&VjcA/Rdo`q2NA5b" + 'CMTJ"EVi5m/N3Oj`#YIcDt6J"UQRD*fS;@LMLG*r"oIVPl`guh,KL\\c?3BY[,ar<jdnHKE:Z`B-k2jmUOUG:W"&%6o:pIc)ICXr8' + "RlBd[#r22oquf4@T[(Ue5+Tg*i]&(nhG%Xb9+uggX&1cjN&;oC2WH\\q`#oCC[o.QDAm!TBf5Q:orQn,/B1!Z0%@!bJLL/Ym4cl)*" + 'Ard!(Qi_3MDrM5c9N]L"l.LU<]nniCKh:drQ&\'AH$1rf$&3iRi-25?!V!#Tp"SP"a$V`^ik<(??%t(\'fjHGTt)TN.\\+"Rcs(o[Ic' + 'jMLq`_+Kqs.$[nHs"Gp6m"!JHOKoW10Q/=\'/Y(IT1Eil-7ZZ^[?8dhW"g%8j0/$[^pJ.hp3GmJmn;rhI1@au%\'\'/0-f"f#jMsB-:' + '5t<mP<s@GnV8P0H5iShp<rE?B;6[b_$SUn=E!0PIr]kV6YQ:BE1"[d%:raRN*o.%JTf[PC-D1nf=<"??VZN)4dK\'`hBHsW]RntSM' + "Up0%j1e20!TJ&)r>ssJ#h3fMWdn]N*Cn+aSY@HDFD5nj\\LPWu:Y_%)5QZ*pP-<_T$1`lD1H$iNM>>Fm0'9io\\3G&LBWJ%%Bs$/L$" + "eDVgLjqr,oPQ1o[r*qTD+)3ZR]U!1LhehB*7P(rW#dm+S7S2?db31r_7g0EQ6NqGbNor=7_/n:;ed3Eb&_d-9P@tB]!4AqZf:#$C" + "@m-&3M;8:==ol,SJ>!\\Df([hn]$(b=/YO2e!W2_!^jfBJmP;RDP]QURW8BqealT[>X4aF@$T:V(O\\^;(/_;^qfb=K1K<+f_i&+nh" + "'$Q1LnD90s.)T+k0gq3BTle$Fk,iRMQNROH8cRr(bs%skL/47#Ce/80_u>iI<p/>c=ag,,^4r=S[XPs/b%=5aetka-%3F8t7l%\\'" + ")uZN:1:u-p2QUKe;PV1&TSGjMZj@)43@8S4OPuBN%j/):X>qOD6^M\\m=CPdJjR]KHL,SB[H$OPXrS5pN:@9L<,?,*fVAQ'#,'-(3" + ")HZJQ%+ChB.SC0?J_#P0Ba9hK/i>DG)m<%rh`YR\\2>f4qP@&;k\\<rW1ICdKB`%3lgE7=1Si\\/3-fQhet(fC@M-j]2b#ET4>$)`L?" + '_5ItoC/=G(.%,D*p>Y]A!b!ZWUD).NmLi/R=e1)4;]1+qd$tu-+)irAV1f(W)\\j5.KeE(+g<4`nR\\7JI\\enK-\\%kt%&6k"fQ>sf(' + 'QDJ5qm(`e`4\'k,)$-:.#hmQVF?]_9Nl@dfV#a"5")`Tpp#ak8Z8"eVh]]TjgC.U#XZa.?L^I\\EfRr4"`N1?>jEhNTdmoDY4FUB@)' + "_O&,:r3ODNE;%T?TMkhl6Xe;b,3.95KKJm?K)%J,XCP\\'CII>^TI/#`A7'nREm_X6.G)pL*8!rH6Ig5El>1>)mB<Xmo1BN'8.V_)" + '>A%SaB4"_Hf.!glQh7C)AelbQQs#*r5`YTW*^.q5>qW=e\\$N>nhgpsmH;*h0>B^7"+"g;Z-n\\73=[]cV\'j6;X_Ua&95S!P?^mCk/' + "R&f?2C*<ohiRt^K3p2JM,%l9'/VRgeZjcC.[oJkU3fc2X,dcf88DFO&#+V?Q[1?'OKtupD\\.UrVO_jT:.Rb8*n3C*V2.U&O1?=q_" + "`^goi]`tS81-Gmh8t;<rSqZ%b9JE42QhW?[;V1%@2Mk0sO(@\\2%7((?C960=[kTBlEkmV0+^_*W*tIQNFi[^2ERX!M!PKO\\LcpF7" + "6[KUhmM30,3;c%:nb2<4YdH0$:LWZ\\0=S$3bI?0X4`ti?Bckp`aC+5J=fLMs^68dQX0g@$[>j\\?4XS*fTO7.EJGcLqQ0Sd^<MHi'" + 'e\'S?IfuK0$U;r=+hQL8!@Q4M.07*sZ=]XHhmFSFh<2_ZmAe!9%$`L.`UBaDW;=JS>\\"GT;M$iZ:PCp/uMl--jmaQ#qpZiZ\'mkaQ<' + 'rmd_\'0CE"m_%h84?^JMCaYP^#dk`cKS$d&%)t=ukq32gN:,AeY(HFS->?LlElLaQ-?U9CWl1oHhj5Pg/?2jK-U%*-aPG%\'mo!S6u' + '7`H^`8&Eu#,_LI-pBHl*r=3>X0h.+kW"ZVdU7D.NHDoGi-uZBCcZq?R8(Zq$L3+:k"h".RE,jn.WpbCC0PnhWXTK5[%/B\'W2Y\\6b' + 'N*ged/lRL.`8[B-&`KADPg2#LgssO2OKIn669-!P"ah5l!H(395N[P_%,g-!?%d+uKdsW+p^YZQP1R@VHhR]d3f:5>)p/1%J-2*0' + '<\\6#nJFWR-]AL.sm0Zh`5C*M/VK\'!H]<*.g6"QXKNZ[FphV;7.N%gPm)TpK96@<6]H0-=R=mb8a2)*I,s5"&RDLLn!5Fgrk`NDou' + 'o)?T&$GIT$9mj:mhp9V]@:"CfVSXOgbME#n?FYRp7=h\'NB#)>f+W`%;P.f,jBA\'9<KeftQ(kZQUR>VV1XQt\'0jdVTKYatu"-9QQi' + '^[U<(I7\'lYH$XgaGg-LG4ap:"8.H.P1U_4HEi#t;f<io]q&WkVa%K\'$&hce>YLg:\\\\!QT^Afb=H/*\\#2nV/E9!ugb6NHt7\'O_ur,' + '$I232nH@=VH]P\'qL\'0V84/Q[]TqGf.IU0Q=M&j0=^kP4)a)Rg-f-*N]kk73r4ZneZfT]&>cR7,n_q@r5[$e,("`%l;lYL<fND<#)' + "G@Ak@d#a[O7\\rkMdQ_p!n>L$8K!8QsL2K(,S51o21oR4gdUKDd9@'b(K,8e/H?`QHCfQj7:?[lEdQe$:N2r2E(i&OqcN@hHdPJh!" + '6,mLiNYO$PSQ1O:.nunDjt&u,<&BKGBL6a^pgfVhesNJ&rZaR\\AN>%])qI7(*llFWBQJ7#Z?"Sd>%QU:L2GdN=pu61E1j*F2MG1(' + 'FC"]Q==n49J/$-m%=DsnCJ]AZp<l)XiRP\\7OicLniM*Dk=4dF@I-7Si%H8/1n==V.W:(^W9oF^]3?f-;RkUgU\'#N>\\>lkCk]i+ci' + 'cX:m^?LAljdl^-[B\\R^4M/fHeehQ"=m0.TRmo)s/=!@;KoMt[TX%Vas*r^OY>Kd8UXo()&CPRC74>"+^#=n1#e..D*7>c%9\\/)#.' + '+nblLqVd3Zs#nC+2I8W`Yp2`V%N[>kq"%g/m@?>H[J(Ra^Yu=1jlFXQOcr]H<-f2P:h^Rb,&T@NQ@-<SYaa!<X9;"7)lq@rC_!Q1' + '%^3^F8+BKoL@dD96(&.D0&)(E9f-N-5@\'`ef/+!2+.1-:r8/CVq*Y!`bh"OIp`!%)s#ft<os9XV#7s[_.(pn>#>jmVHZ\'X>FOkdB' + '8K\\%[KI6?6kh4W"4FkJlj]tQ)W=qFFU)0%gnK(Yogr24g1FtRD"J5c,@-uV>nQg_k4AMY^!Y;]/asWXh1([T%,"L=ZK&qG,5O0!Y' + "3C:>iq:SL<;]rj5,NU]b;i'MmV#1XW@^W*sV'/cPUmDghh_*1/Omn;g?la2pU?JY!YdE%@2.sN)cAN):LlCm8M!PXY45n98E9atq" + "i]+_:GPh)=c\\R1'85^Z&h*uAEYp?j/^ku;XQ*a6hC?FDN&.f1j%*HVpgHh=RVJ+/0o)tPKiDRBr]7Ct)!e6F6$74\\(K#&-`R<\\%j" + "LX)]NbVYR/OF6>OTfmT71!:Z5R//L$lP'(ST?,?Cnh#[<M<9!nhp3V7bHoaDo!>->R+pslc15qc))T)EjF>]25Ek.1Y$b4>&_'_H" + '5Wsf.Vb_OFaTFHtn`\'f&BD;h96:4Sf[++X+;tI!7E8o`fHo4*J)tDnep)L@Ui"?Wq(1,*=!")MYIf(X:e:0l[o9/;nlD+/XT?,>m' + 'Oe:$c5=HFhdIN\\l$AgS@A$qeFLqc[Vi)\\b9!r!()=-7G-8"o58@/5]6NiM=[Woe`gGP$\'cT752.W1*32&)C[IC7,1f<D(9%Y!^]i' + "6k's^@0oO>&A75^'ibXh*\\#^F$%B2c+#mhJ''VJ.B)a;),Q((3rl!hrr]9.geqM0NiZqa+9DLIRAU!SMSu'e=n$4Q3i+M>CeHu8<" + 'r,rNh5n/W4T7)0iY+5:2"qJ;57IX"K/[W7n&jA/seU3INoniSdU$"r;1W=ahZU+2p8CW\'U;Nos5f*:6#-/4<\\kcEh:AAnc%363Fb' + "*VIo*(1ZhM2/465Tk0;EOVqZL;+ZPqk#4RoJPf@'JM6/kpF`V7X1bB%&J;-B]0Ya^+;nq#AsrD74uj8u53fP[J*60KnG'dR@I^U\\" + 'QD:5fj+p-Gpq8aRh<Jbme__[oc_]fbgg`3Bm9\\N!L\'N!Y#&:g6%F<_c1M#.6N-C$_"]HLs/-U>@6MWl"js]i+r1$RD?YkiHe<GHZ' + "7D<tEIVSJ%\\P6$%AWdSR#PeQ4f[45;M'HU]aVb%alk_7XQ8G%&dG00]!q(Ou<FeboP/bg)d5Hee'l@F:rR%Zap5Q^A*OS5MNCSuZ" + 'QP\'D8Y37#-2gjEZ7AkT`mr)WY&n?BujDA?&gY,(+N#W*e]iRp_s,"i2PL"-5*&+a$GV\\fJ5d*LCY0%a3pJruD=::=sI.O-/3M4C-' + "fHT4b.6ghVf@<gc2(=#AI(q:pQ7#^-X(M/f@_Rl@+Pg^sIo2P'bCa)R>t<d*k,4Ai^%E6+eqcqqc'1n2Jd%_q)NanG9@,rjV+,=d" + '@OZ83"4R3hMe>c+S^DURDH`5ef`N+6MK5l=Md2?^%8*(JVE*VAlm!I=\\bRbbn(R,jJ6\'t9\\s7Rlo-;bbXjQOKP0r1L9IWOGHNfuI' + '6>HZL>\'nYM*=_C9["RN[+3i.-7/fX;GdI=@VYhr<D6nWYVYjDV%lAVHp)DiMpJO`![GKa@nJi\\IYpYYe^.]/W8!F:d#[cZQn\\pY=' + ":c_3M.CemqRlG8+LUY2(5/h6HGe4!JH%g9a\\ALS8g_k.C[VP>.E83LO*?7nA;&Vo`pZ[GX=(ZKH[Pk`U]CiI4A8f4uZ[6UPm4V>o" + '\'G/H9a,V+YXc!+dLu?t(@soQnOP5467cG[%MO=>r5N`^U(Ra`]ja/rJVb6d7dRq[nQekY,l&0j!oR9#k-3r$"d=WRF-*F,+\\.G*4' + 'p24V*Q*r7>I:tIoHbU*]7#=b`f\\iQE"0A@fQ>dHS5=Ei4(VLfXq)^)R!."SQ!W/l\'_the/6*-laB,_hF?-t6G[\'^]WrUVZQIf[B[' + "8K_Nj>R9Rc7C--Rq^#/.-Usk(h![Cqj!AiK.CtE-6'p`]kg-2SP3\\rg?P_mnU+^s$O/\\`t3cgDCB3,;VS=^$UplMsp-&7Q&m.-T)" + "gRt7FZ$HpV9\\du\\pfnWK$]'`dNROQdV&rtrF862cIAL6]=UO@'FZ`dF9k@!LjYn9aYF5;U>+S1hd/:&pHg:8!Hl/]D&QHr`'MBX5" + '(?%7<<OHQ"<J>!_/c#Z9oWEXm"[@XolK[iAJ;^gVDrP5#W7_K$>S[$:CN]d!ooVFT5r\'a]/:#,iXpUB.!9>Ppajjd36.ApU#bgo?' + "mpgbu?b1=sV&gHoe;c]H/nhWc-f]cQ&*tB$crg'A+7aL7$46O=EWuJ,.rrdsaB@5,qpT0%9&&7YMf),Gh8q''pZg1WDL)/A?1HkE" + "NrqGR2KV`2cS_uGTg#]^+!9k-J1kSc^_ae9mc*W?%s?Rgj[7lc&%).[d,nnKbd^.1K]]s59_J5QeO66PB_\\5/o!Jnu7;/9Q(=>E=" + '0:MUm!R^jKfPLt]CUoGc1Mir@aS"6s:a7HK$j_e7WI3IMWS9rV0ZbFuN;.`=M=)0r\\-,qG6QB-i,J`*i8W;/`fU]c1I3Hc<nhNuk' + 'B@fT47lpBc$at"/G&C+DHOI)2/FUs!X24_!2YQRY-9[">XrYkjj\';SO/e@/@c<P[NS+N);6G83a9kmi<_&E`r-StUTZE0*TbK7I$' + 'DuV%:6/9aYoK.p*_3XpWZBri$3/OV(k`#8=_<#J%h@FC<ic@quBNn?N^7.j1mS8A((YFO+_f;Ujr*Jm:"X8:j/NaGspmW(G]n/Qm' + 'YD8^!:8&b)4ZFC"*4nR>7=?7QNds-21LFL4a2.O,^1K@mX#93@oeI:Z(sJUjRHD9WdRbK`V+YNbs/hZlHUdV\'pg]]1[WE9X&V9H+' + 'SO,%4k\\+*Tb>I\\Sb7W5Np?Q;\\msl50,<Gq"<[rg?+#L?u0NP@#mp;ftHh\\B$Q`N2D:6\\W@TU\\+*,u7+"0eJe\\TA51+MkNq<UBKi\'' + '9YDFaXeS\\kC3hY+5.LjgquCU,hZ7281!PKh,PcCaUQIErC/Bf8_>[+GH/]0C3AFlohc"`_I4P?Ce.nAgPPk<h1oAAA6*]IKVa-t<' + 'Qr7jd?6^f3d86]cA1pI8Tj!E@Q"f);+<eGPJ(S^fO2O8\'Yq>5RD-G7El0kcLD7u[Yh5E`i4FY]?dh.OlME_ipR#5u&rGSBgg>-/?' + 'QF(ju1-4XXObrRMA3PfkP@E/=.\\)E<oE!0`hR`qJmSp8\\@QgE&V[rXd8c&]:`fH8U]h-Y<IS!!mm!3Hp"E%N*Ga^,O>qQ08D9NWd' + 'Pct4-nnRu42!fi,o4C1B%2M<+`Rn&=L->;!2S+O3+lmi(HA\\6.XO7K"Z-G^cYbn=VZp<UViD\'=?f0B,DM`<nNNta#uRm[[8VF$hO' + 'C9[&\'*u&`1=.hg.[5k<O$56Nt5apK^a_CB\\7o*+Dkr=!rg\'\\]UP[1k"epp@2<a<5CU&c)%][D8uRdu%\'8u;KB-"TI2Q&Q_^;`90L' + '^"nDlWi@PYLFka*DobgT/!(GY#]Ksp*eOnmQ2klTpJ.i@\\-fOS_TE*"=T$)C7jeJPm0K;9B"AK_5ViLP3hi$e?4DQEP1\\i<\\FO5\'' + ')D7uYr0li9?tpU@2rFi:/\\F(ThRj1D;SU3Y<5p/rAZ8N-3_tk\'9]Kk27!0L]SZd4@X50@GqtH`:A*9j4$rV0l>"9C\\DfO;s5^I\'a' + ']7#Yd^`1pNU2cfr3N*<\\)c6[P;?;1J%>h3\\ZGg16KrF&7?,\'7"7@mDFA$#*li\'o`C4_?^:?-)7]O?Z>2J9sRm&_)QX,57f\\7g=g8' + '9!ZN/j;MRd2WScVmVlHZMlo!eM[@Yc#j327U0PU%QG65L!%pN@j_\'B2;,EpSZP6^6)C"<pa+b.V9)o2]7Ff0tO?;Q_!`%J%KuTp)' + "*+UODNI(3mB%BjjqT.@HG#%MJao/!I\\<lI6j6OEmLfG>t%qJg^70>hM/*AnZ[4Q1ASpgJpYjAsqEjlie2on0M]i/%=ne4(V%mU8L" + "!+5#o2`CgoUfSBiNIpKOA)N0%W.OB(A#AtT^I;A<E6>l8a>TBkUB>ijY=r'l[\\7+IGA1ab+k\\q8ii%huk.<2cim.R5oldMm%9Y:-" + 'l]#"H8c598_\'oTU@nXP<`c$mdG]3n<C\'_oAE4u`YMIEAm5#D!/V$.f78`N;BE&kYsBHQ.F\\g;H8#\\Saa3T_>b<-PWt`gbUDm]Rft' + '*!VR@H^Q["9fOA<<BH)`?\\ns__$gDL9<GK6Vk@A`EolIXa!Z*1rnHG\'p^$j:2rMSR^-,Q\'-E,Hmm;MtE6=s$8R^6O@-iVGr0dE6Z' + "1?UsQm9fWNljH]th<^mT\\.OFLBieDY*r>]qq[]i9[AL>sAf%9hOSHn7=D5So>,Qo_e8$RT!'9i%/Wi!:!A#V0-OPi+&+#gMo@qW#" + "_aeh'fl^8%k9-DP),j2>pC?GQ'0.>Cn*l!m$2>P?Z\\V>[lHs\\FR_I`tg9c3EUN1DCd*^8?-PoLd0'tN.(=%oJ7Rhb!A1f)<%E!2`" + '&<NjF2>Na>72\\mt0VL%YiQO:5_WlR(_S!I\'eIH4"[-P4@g-UTUk%cl&^9=62X(queNIF4M&0,in&N[%c;6>`"Ni)"t`W(G[g:Q1B' + 'eUN@X;9e<K3f\\l\'&mlcX7j=$n=VAeRfkaq]Fn1%pn\\Yt@jJ\\&^`;%g_5-=iQ"!ImD55lHapQ61pIOTG#6=iM;J7tC]@`@QUlp;Zm' + '!V+A\':p^=!L<h"]\'6TN;"t7keP(-n&`(1[%KriK[W3`N$pUtpMg)<8E:tj-bI#XE>@>&tiSBE$En-)H>8T]4j6Q\\]"(6(UQE"));' + "(^_bG?5s(%^5esp3*5F+IM(VRq<K^e``---_K%3HR&4NPD$M=uef?pnMS@'kpE/F9Y&Sf!kJu\\>hfY\\5.Y-8E?9@*2\\Wj:]pa@q4" + '7QC\\X5S)B@kmWJ)]*E=r[[l/DUmrIT@K(fZS;4u_7a9EZJKra!G5ck]e<ta"j?W\\<\'LPW;#dA,?1;LJ,i8&s[X"&1YMn-1LJof14' + 'N7S^R>)Jpqp)2]o\'Qal%0,"I(CQpreM3-(*1bMu,j`>W49]$h&ImJ=OhX1GG2&W[2!"<kYRp^/+,#h2ulQ;,q&^03f\\S&Q:#DqJN' + 'f+q&dj_+?6+Ap%>*r9;So16f:\'-H:n+=`cFP7!E6V1fU6:"I#?.Q6QLYFm<$e`HGo\\b_D%2HDS#E+`e:g2k97(ZU9[bd@\'TG7Ic0' + ']T6Y-bn"ba1d@]BktO>nB-1:S6+sbgrKjZk[r\'$W`VW%Kie*/4OXTM.4#s>rq`\\@kg</>h4naa_`&R&MP.g95V*4.1IWN?I68I*m' + "=,/A+-`.Xp:7VagJ,/+9]m[%u*pV#g^Q82tRD&?C^h6(Bl%-J7-N=Y6D^KdaeK59P4+@sb2+'TbCF6RC:D&XI2NPM+Y)6]4+nF)\\" + 'V5Sl::1fmRghmM7(o5CCgAtehM=75UJH7/J-c(G+\\M3/Jhbb=+5Jq.\'cKN[5Z>UZ=oFF7ZHBL"R"(QY6:BMY+A.B\\:RKC.NRIo:$' + 'Rb]QHaT5%diHF=:22eN>&[&o=<V*Y\'%U"J-"$RAX+$OQ(.bH\\^kXj?jT\'/1#^dE98iU^S:+8q.*ahG[A7_e_7&bO$Q7eIMgKui![' + '7L7s_PaR.E+!rSk1l9mk=!8P<mW2CcJBVkcCBp6XiONXB#\'GF!bduJ?U=]ZLh"VlP%1IKol9?>72J7sa`V;VL4Uj!eKcWN.+nYno' + 'd[8Z1.]%\\1Hts<rYDf.c`[GC18k)MFF1/1dp8X%tZY`f#mGH6R\\Kkp<pdJ3amiqD?$G=5DWJ1lCQ56!Z%1H(#B[ini3ciaj+l"X8' + "%.]ss3*SWs6MBDAaS-+qZ]64h>lc*,(1qN4TFQ>jjGXI+&AEcnk9p$p*M_GM&<S\\uLYe,<K1(s()^@sC`_@).Qqu#MJUH4<<`rrV" + 'b$0Sg98h6OeeY*U+(@FVVthf>G/nTE03T;D%_NOW7NZG9Zc5&U7@W1^6Q4l3QRr4Z$7ek$X>i@N`G#M*8`BnRKPpq0PR0H",8A9$' + 'VUR)l"nE9Oo+3s@eFj!/b.R(k0K\'hlr#ua6ht9Vh[5.Mn1MdV*lYDE*iBR+QfQlMj_mj`JN1sd;\\=NW)%M*jXa!!8Qjdc)dcao(]' + "nJ=Z\\DYmY&%tEc7aYWu$JK[9`m!q%:1mHn7J:TeG5bf#e/UW,6\\Lhhr6KD_o`GA2ZqBc+ArJB7PT@p6pbQ[cg&H%m;:pb%+s/_m-" + 'gq&n.V[fkRl?fjS833i4b7(m"hnmsG_K5DC[GVJ45CJ/V2A9>I:+,?--VrDdRL4mr-hA>OXB>$c;\\rO@j<1MoVnNT-J;ZM!+3g2h' + 'ZkKS,4VTKmm^@UCL\\*R?4T&[Q(YW0]OD.4Ga8/p`[Ag\\QSrIbPRs6U"(1Uc&lMCc4i^a\\F+!bndoICqlg:hqY6lfh/^S4sM@o:F\'' + 'BdD3W]fpTr2I@UW:ZUFJ8UVe[A6r6-O@#24\\6IeLiZ)fT7=F-T"j,\\$K9X#V8"oXhX^bTU2cdPm;m4(R)=DHQiZtnJ+hnYugn9(L' + '<bN^!D,n(VlgWesq1rO9\\S"k]mKFib8bZ&)SB;-21_pZ?Qs.J6C)\':+&;-gFR@F!J.+I>$:Nh+b2_oXul*T`A_V]2-<OI&a8t!&R' + '/5G;"[!RlAs25CR;GJ(kK(\\mi`%VFiY3X1hAE!`#-Cj3&3[HLQq?>#E[3LeX!s=A;%`@65jCfkN1fXc_P-nRbfeO*En7@*ZjkKg;' + '1,*%&N3ro%\\UUaP(`tT/qcL5Z<n;F?Ch_aeoU5C^iIg8lHo?(Tq`C?=>"7PXg@g`*f7qSCR?!e!iFe]O/#+8(k`e80>F">1ib:?_' + ')_k*n44psJ3[imH$!hr>Z6m0cKL>[KR$^dl\'*H1L74i?dmi9E22]dnML/_o<\\?_L\'EA76"7mgL<G8OQuE>"_U>S(,7NEKFMA$E53' + 'H]K6(o5_I\\h[l;ZR9Wb""h+$$/%9=djpHj]iS(db6fLp5g^r,4#:DSm,uq2:/)X5#@mq$d`=&fa@16-\'OT]d>7KfbM%"LfN[XmXM' + "VuGPf##CeY\\YO2ca:Y]3_CVgj*4t51eD.W8Km'0%I.bQ@^HJ/KS`bchfj6Q\\[_^6Q_UeD,<D]@+r]5_J=<YfmYs;=Ss.MSGZ&?u!" + 'iVkH^#7p:M]Xd3`G3pbJOXQ8`l5\'EqVVVDOMq3b8fFAWPF\\S1$Mpr*,@Dn_OEEj+".p$aL_M:_jNEMRh`MMEu@XL\\dNN*9kS__h3' + 'N9bH7%YTM_W5R`0qLjTm3&paDe$KYI"2C7k@]6YZC24d<IDPVig/1pL;@F#ZT,Y6slI(Z"GQu%nmXS`?1VhQM)6l7\'7K\\oH8_BU9' + '7Zs=)`#8U5k,Ol2O%c&_\'W6*2TlP+BMu$1"i0WHL;)`?8Tr/)RL(-:rg>]m#rGu6"+F$$fhS\'Hq\\3d\'gn\\VLtJ8V&f!S3^?heG(m' + 'Dq+;IY+dY=c0*6W$_[,+T]94KA$m_s\'-TZD64?_KaPuDSR@kAS-4i"+FqjrAhGlB?/3p)R(cJsrI2Tr#p;G.8*#skUeGL\'KCK-X4' + 'O3Hls_q-d5?.bp_oa0@R<>@t"I&B-JqZ"0L0f`F&n\\E?C"oL1i,NAiG\\H]DE&iB%f4]e(m:5$%.b^i<WNZIY)\\GY@ZGt\'t)IJ2.6' + 'Fkr[X-k77a\'gltF[Oc$0=-J,K%KIWPYf">\'9.BND0Sfth!hoj5=s-up:og4OS1MSZM\\=(X+3[HDB*83i-O9-CJo@!YGquo7fSln+' + "add'OT)$hGi5R&nVtJ;&4aW1_$OdrG$4:N6qRCX^5i:'tW5mDLBu+6PC@LUjlZ1UZpsq';aPf:=M$K'6Q'Y>5NQ#?$pr9N,UPTj%" + "1:I/Sf<4QtZB=.INMoq2B5@%$e+iaXhl7HPnM/m0mb=)dAJuU6o7ORR4Pg6.pHVpP;lWuA.]o'L:cVWQbiC;UP_.#tgpaVDjY!Y@" + '"fErD_B[Z(MpkLA;<Rj%GIB,n2n<s&K:r&I=:AY+m_^b#-[qcK90#c0"VgG6aglnB%fUT?RCBfe65.tEH4KEIBS,YGPbt6K[#0\\R' + '6CRnDkF.d*QpJeD-AH?7mltm1>-)":;6^EY=2,Id]m*j]%,^E8f-Te]WVsF,GSAZ^q!W-bI3`p$;ZW0*\'^lp.e:LA_n$\'^/>B"Pj' + ".G;PnoNNI$cCI%X0>NRPZ1p^<r,#oVhn3DC`[6(1`QG3p&ETSd0T,OFSHO7:Qo,i55fr<T,gs)6R,^%Pr64hq!QTZ-0<Yf,R$iH+" + 'Cppt5oL\\5k9[4am010f$q1=6sYkIAFeMGDFpp^(<e@knWOn%[?jqVH=9K\\\'AK32,;0;LOh@QK$52hs$kb3gqJ4ERMi`CI4U"BarW' + 'MI[V3\'\\+mX>)/X=4gcL<;+(-k7>r=T1+l)]D/!Y9[^E)gWP,]F#E<pTfDgf^S3>;1GgChE]UbTu!lN%oB"TQ\'FfQ#n^3In->e)(t' + 'GgE>9j!pt.8fO#+4"cJ5*+ph3:md_UR+iOg&brd]p6K\'=G&H37Q*];^0&aKip%Ac9oi_urPe9\'S`8U"Pq44%%eO=S#)V-Q*&MQ9\\' + '7W"jgMXUth_H5ini!HGL9c0-/UFo])#`5jL1J0olZGO?V0A))I_B\'H8&VD;8V[^,>`,iO9<20B5Vu"d:?WrLPL<nJGS_tNK87+2*' + "/p`7>kj_6BQ7`.&qLA!5189W06JM`Z&_eVcfDj?<X)XcFHLM`-B#@]t1F,B]m?O!n6YV8cH4O8:g*(pi]#*'me!E1'8e-&3VLsU3" + 'l4OY?hJ)64jlu$M=-hk\'aZ./""2Y/-""`8BU=KT6JY:`DeeEG4=fKp..7Do!LZin<"ZmA,g7_g%7?)\\%W2%RQ@\'DNV>uhATZ>O?[' + 'ED0Qg[=`7A#8\\>c..pqdfNOX"\\*K1*RlB3f$l\\0F_o1nZ.*/,&>k+.o5^U*kR:(hHnH/._,\'Gn`0EsT><,b#[rt]Q?iH+O+%\\LKW' + '.a,VXVBtUmHk=$:qY`3UHemEY).0c:V6Ep%40"g![e7#4>.`A.VWTiZB9f7"b#6X1mNOF[n@!h5G%&:C+>aMs/f`49A\\doO((M]f' + '3l$1rhV^\'.EWKup$bC:C4AS:\'+u98a_>CooJT+Z\'V\\qt(akR-J.Rc?eD[JlcrFVm%Ioj:\'j[sn/DuAnD%^*F(U1"iSSSOj!<]]^E' + "PjsaPTtPf.(=*EVdjL*d)VWkcq2Ug:Iao5L(!$U`<c=EbgW[t,Z9qik;/qR'^pO\\H@S#:_*O.uQW9s`N7T/H_r\\)Vi^p+6mgsM=7" + 'ScVRkf$dPt>?i2l[isN!Kt5S7A$aUMO!"/t=B2ig?\\>t7n*p_:PjKl8Z&S?Y_M4F#QsJNuDi#)&rm^$ZD42*KiAX8HnPT2gSO=c3' + '5oVQESJD0<(7[nqS#;(g!G9D(I9e5"Y\'>C35ASS*]`-\\-3&tCee6J=8p6B$QM)(orRCX1WBoaFo/+cCNgS^HuXT8&*iW)(?j0H)O' + '%eMpuLUT]D+.&sro\'i2FBY(ZNZqZ6OgQVl(F"J,i:oiKnDrqGuR#5mJR92`(_!Y2-iTpcU6*a-XA#F&(@n67jY6>*EjpRg`[p=K*' + "H]r0DZL5!U]`Xn\\YoWLRjrXdf0U-mcUg;XBHN;OCIs-D.fF+DNG``*=M!H,`NmNfshC@i#/m*r-SKFI`])Z3oZ$lKZj>C^BU9`s@" + 'oHb)HXk?;"\'s/u%k@R3j7]\'5PbLoYPl`HDQf$ICPULt@RK;K?^/_WO,?U/D5`7Ekb0"Q6\\d)BA=[m[@_U9kF=`>:j?G4+@If%Ll*' + "Ut/BT9@@JF<$onXKtKtRphIW],:%2CTe;c8%:o.uTf+dXZ:\\e9q]3'#dMKEEdJJ8'.5#B.\\=iB@1?,e=5Ft\\=9[)RN)E\\;m'2PQ0" + '%<(tQGJ>>2DBrFgi?DnN/Hoq[m`J//)j`3i45P6!,r<KCOhnY(/H1Z+8#Tt/Pgcso,r0G5UX3Pb,U0ib=J$9S>W/D]m?#"pJ@8@M' + '&sS.fi:>As/l/3qJ""ajIX!V(o-CpTO\\c-,\'RJS(gqtP3RV#1jGLG^jU7r)_/>;NnFb8YF;!oq1_i"kONC!RB6BT*ZhiL-;5NEp=' + 'q<BhViiKn@X`H:W\\frl?/s#\\%R$QG/5C>#i#N^qV>+QVm94r>Un"NMfcY3.4bTH+7U&uUP_I[]A:CPBR*Jh=qSE1n8rR7j&>]6eN' + "%eE;BC_Du7IMW/`OZjPUjdZ)/d#g210j)[JOROt_<kB=E$1DJ9M;JR*k>nh;qA?P1S9*^2[MiXFHmWe29^_hil.L23Sm<W8&R'b\\" + '&QXO.5H%B?iZ[#8$#_#!8t\\jSe(I;(8+I5164lK$"2"pdd5,oUE"GgOo-n%AfO(hCK<sUV&hIaPT1e(h>2PM<c)YQ*=Jg#fL?t:^' + 'UDh,6+[-fZ:2X*r`3Dkj./\'#(ETf!fkb1:ci(9t;M,4kYikm0DXn?Y,k0Sr"oftE8K`:c4\\oO_+Hf`MKh5)gGq@cXe#WVR@)Hr[0' + 'm+jPUPO-chQ"h`)f?i,a?;mjuY51*8DU6*j<VQunJbO[][[\\QX?D=.iOZds\'/U*n>VZpjC+7H:[rFYs%q89ARg&:fm!^=T;m6Ae7' + 'f0@\'kYG>P*ftP0$j:SY)_3p_^7!e]B;_3Pb$*T/,s)p?sAp<O$"k=tK&#\\$fNg!p7aNe.u_f`cpE.[KWE3_(iM3Dd\\SL6qZp5Oml' + "HaNd-YE/[-j7QR>/DInefsYQ83U0Wg*IN353XGI)-f))!ouGg)f,o87k&4C,X\\)r.]=nV84-Ng_/u!]aQk-W12JojT;Qqs7h(+dh" + 'ME@P-dLB&*[QuVR_sSiE);Rg*5WG;&Oe9.c5M=04!Yom54^O[eO-b+.-g/[84^K6U^h./"r:tE_f*`AlMXq!UI#O>)hla/a,lSb=' + ':#JPHn31dh8Tu)N5[Q6J+)V/:T6^_t\\6LTipqr(._^QF]Wlp&ijQd$*N#r-30Q].c,SDXmZHTmWK8tmB53Ti:`*jrb*pji"l[AIA' + 'NVtVuS;nupF5"^OekTe(qA!J]&TCSL$`9LREHZ6cTK#)_qEP=@As%fuPJtmkL`FqIZ$k\\0BIAi,W&(@KlMUI@]Y"J2(ITh,S[E\\9' + 'DP@\'G")TXd\'\'oo5*l*L]`KBBB;E]fKg%$[F@QgpA-B%\'.l-Hi&,4"m_bf(u6@^[PEZoIJ+ehCq#=b4tC"YE=$Yq>?TDNqRc$a7Wp' + 'Ad2sX0;:(VQD+t&YiXUD5<&a]pbcS=<l*5fptlpY5):BSD\\5GE;1p,JA%"0@pTRZ*?c5\\ZlI\'%geQcVDU*2a+_ZU2lQFH;E,88:S' + "ZrpGs1e,L@Jn/h-@R41tk+BIV/]+3'6JBWGcJSp1%#>3UN=\\=RbD3!K3n6h8A#W0gIeQD6,q60Go*8hd&nB$t;eV$b&7K9L=\\3p-" + 'rX5(no"QI>XT4Cte>>t.=n$H98G>6Jlh8c?%.:]ZCc7;F@n&grFY5cq%!RmXDC:+*%,+kT-_@>%qHX\'MUZncQ5<+c)\\=eYr8cSPB' + "rr^cSQbN~>";
+});
+rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet","BlaiseReportsFonts"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
@@ -7465,11 +7487,56 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       this.FLastExportedContent = AContent;
       this.FLastExportedFileName = AFileName;
       this.FLastExportedMimeType = AMimeType;
+      this.DownloadBlobPart(AContent,AFileName,AMimeType);
+    };
+    this.DownloadBlobPart = function (APart, AFileName, AMimeType) {
       try {
+        // Android and iOS WebViews ignore Blob downloads: save to Documents, then open the file (share a CSV).
+        var capacitor = (typeof window !== 'undefined') ? window.Capacitor : null;
+        if (capacitor && typeof capacitor.isNativePlatform === 'function' && capacitor.isNativePlatform()) {
+          var plugins = capacitor.Plugins || {};
+          if (!plugins.Filesystem || !plugins.Share) {
+            console.error('BlaiseReports: exporting on mobile needs @capacitor/filesystem and @capacitor/share.');
+            return;
+          }
+          var bytes = (typeof APart === 'string') ? new TextEncoder().encode(APart) : APart;
+          var binary = '';
+          for (var offset = 0; offset < bytes.length; offset += 32768) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 32768));
+          }
+          var safeName = String(AFileName).replace(new RegExp('[\\\\/:*?"<>|]', 'g'), '_');
+          var base64 = btoa(binary);
+          var writeTo = function (path, directory) {
+            return plugins.Filesystem.writeFile({ path: path, data: base64, directory: directory });
+          };
+          var dot = safeName.lastIndexOf('.');
+          var uniqueName = (dot > 0 ? safeName.substring(0, dot) : safeName) + '_' + Date.now() + (dot > 0 ? safeName.substring(dot) : '');
+          var shareFile = function (uri) {
+            return plugins.Share.share({ title: safeName, dialogTitle: safeName, files: [uri] });
+          };
+          // Android lets an app overwrite only its own files in Documents, so a same-named
+          // file left by an earlier install needs a unique name.
+          writeTo(safeName, 'DOCUMENTS')
+            .catch(function () { return writeTo(uniqueName, 'DOCUMENTS'); })
+            .catch(function () { return writeTo(safeName, 'CACHE'); })
+            .then(function (written) {
+              var isDocument = String(AMimeType).indexOf('text/csv') !== 0;
+              if (isDocument && plugins.FileViewer) {
+                var localPath = decodeURI(String(written.uri).replace(new RegExp('^file://'), ''));
+                return plugins.FileViewer.openDocumentFromLocalPath({ path: localPath })
+                  .catch(function () { return shareFile(written.uri); });
+              }
+              return shareFile(written.uri);
+            })
+            .catch(function (err) {
+              console.warn('BlaiseReports: file export was not completed:', err);
+            });
+          return;
+        }
         if (typeof window !== 'undefined' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
           var isTestEnv = (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().indexOf('jsdom') !== -1);
           if (!isTestEnv && window.URL && typeof window.URL.createObjectURL === 'function') {
-            var blob = new Blob([AContent], { type: AMimeType });
+            var blob = new Blob([APart], { type: AMimeType });
             var url = window.URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.style.display = 'none';
@@ -7484,6 +7551,136 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
           }
         }
       } catch (e) {};
+    };
+    this.XlsxEscape = function (S) {
+      var Result = "";
+      var Clean = "";
+      Clean = S;
+      Clean = String(Clean).replace(new RegExp('[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\uFFFE\\uFFFF]', 'g'), '');
+      Result = this.EscapeXMLString(Clean);
+      return Result;
+    };
+    var STYLE_TITLE = 1;
+    var STYLE_META = 2;
+    var STYLE_COL_HEADER = 3;
+    var STYLE_SUMMARY_LABEL = 8;
+    var STYLE_SUMMARY_VALUE = 9;
+    this.BuildXlsxSheetXml = function (ARecords) {
+      var $Self = this;
+      var Result = "";
+      var RowNum = 0;
+      var RowIdx = 0;
+      var ColIdx = 0;
+      var SumIdx = 0;
+      var CellStyle = 0;
+      var Col = null;
+      var SumDef = null;
+      var SumVal = 0.0;
+      var SumFmt = "";
+      var Cols = "";
+      var Rows = "";
+      var RowXml = "";
+      var ColFmt = "";
+      var CellKind = "";
+      var CellValStr = "";
+      var WidthStr = "";
+      var NumStr = "";
+      var RawVal = undefined;
+      function TextCell(ARef, AStyle, AText) {
+        var Result = "";
+        if (AText === "") {
+          Result = '<c r="' + ARef + '" s="' + pas.SysUtils.IntToStr(AStyle) + '"/>'}
+         else Result = '<c r="' + ARef + '" s="' + pas.SysUtils.IntToStr(AStyle) + '" t="inlineStr"><is><t xml:space="preserve">' + $Self.XlsxEscape(AText) + "</t></is></c>";
+        return Result;
+      };
+      Cols = "";
+      for (var $l = 0, $end = (this.FColumns.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        ColIdx = $l;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        WidthStr = "";
+        WidthStr = (Math.max(Number(Col.FWidth) || 120, 20) / 7).toFixed(2);
+        Cols = Cols + '<col min="' + pas.SysUtils.IntToStr(ColIdx + 1) + '" max="' + pas.SysUtils.IntToStr(ColIdx + 1) + '" width="' + WidthStr + '" customWidth="1"/>';
+      };
+      if (Cols !== "") Cols = "<cols>" + Cols + "</cols>";
+      RowNum = 1;
+      Rows = '<row r="1">' + TextCell("A1",1,this.FTitle) + "</row>";
+      if (this.FHeader !== "") {
+        RowNum = RowNum + 1;
+        Rows = Rows + '<row r="' + pas.SysUtils.IntToStr(RowNum) + '">' + TextCell("A" + pas.SysUtils.IntToStr(RowNum),2,this.FHeader) + "</row>";
+      };
+      RowNum = RowNum + 1;
+      RowXml = "";
+      for (var $l1 = 0, $end1 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l1 <= $end1; $l1++) {
+        ColIdx = $l1;
+        Col = rtl.getObject(this.FColumns[ColIdx]);
+        RowXml = RowXml + TextCell($impl.XlsxColumnName(ColIdx) + pas.SysUtils.IntToStr(RowNum),3,Col.FCaption);
+      };
+      Rows = Rows + '<row r="' + pas.SysUtils.IntToStr(RowNum) + '">' + RowXml + "</row>";
+      for (var $l2 = 0, $end2 = (ARecords.length & 0xFFFFFFFF) - 1; $l2 <= $end2; $l2++) {
+        RowIdx = $l2;
+        RowNum = RowNum + 1;
+        RowXml = "";
+        for (var $l3 = 0, $end3 = (this.FColumns.length & 0xFFFFFFFF) - 1; $l3 <= $end3; $l3++) {
+          ColIdx = $l3;
+          Col = rtl.getObject(this.FColumns[ColIdx]);
+          ColFmt = pas.SysUtils.LowerCase(pas.SysUtils.Trim(Col.FFormat));
+          RawVal = $impl.GetRecordFieldCaseInsensitive(ARecords[RowIdx],Col.FFieldName);
+          CellKind = "text";
+          CellStyle = 4;
+          CellValStr = "";
+          if (RawVal === null || RawVal === undefined) {
+            CellValStr = '';
+          } else if (typeof RawVal === 'boolean') {
+            CellKind = 'bool';
+            CellValStr = RawVal ? '1' : '0';
+          } else if (typeof RawVal === 'number' || ColFmt === 'currency' || ColFmt === 'money' || ColFmt === 'number' || ColFmt === 'float' || ColFmt === 'integer' || ColFmt === 'int') {
+            var num = Number(RawVal);
+            if (isFinite(num) && String(RawVal).trim() !== '') {
+              CellKind = 'number';
+              CellValStr = String(num);
+              if (ColFmt === 'currency' || ColFmt === 'money') {
+                CellStyle = 7;
+              } else if (ColFmt === 'integer' || ColFmt === 'int' || (Number.isInteger(num) && ColFmt === '')) {
+                CellStyle = 5;
+              } else {
+                CellStyle = 6;
+              }
+            } else {
+              CellValStr = String(RawVal);
+            }
+          } else {
+            CellValStr = String(RawVal);
+          };
+          if (CellKind === "number") {
+            RowXml = RowXml + '<c r="' + $impl.XlsxColumnName(ColIdx) + pas.SysUtils.IntToStr(RowNum) + '" s="' + pas.SysUtils.IntToStr(CellStyle) + '"><v>' + CellValStr + "</v></c>"}
+           else if (CellKind === "bool") {
+            RowXml = RowXml + '<c r="' + $impl.XlsxColumnName(ColIdx) + pas.SysUtils.IntToStr(RowNum) + '" s="' + pas.SysUtils.IntToStr(CellStyle) + '" t="b"><v>' + CellValStr + "</v></c>"}
+           else RowXml = RowXml + TextCell($impl.XlsxColumnName(ColIdx) + pas.SysUtils.IntToStr(RowNum),CellStyle,CellValStr);
+        };
+        Rows = Rows + '<row r="' + pas.SysUtils.IntToStr(RowNum) + '">' + RowXml + "</row>";
+      };
+      for (var $l4 = 0, $end4 = (this.FSummaries.length & 0xFFFFFFFF) - 1; $l4 <= $end4; $l4++) {
+        SumIdx = $l4;
+        SumDef = rtl.getObject(this.FSummaries[SumIdx]);
+        SumVal = this.ComputeSummary(SumDef.FFieldName,SumDef.FAggregate);
+        SumFmt = SumDef.FFormat;
+        if ((SumFmt === "") && (SumDef.FAggregate === $mod.TBVReportAggregate.aggCount)) SumFmt = "integer";
+        NumStr = "0";
+        NumStr = isFinite(SumVal) ? String(SumVal) : '0';
+        RowNum = RowNum + 1;
+        Rows = Rows + '<row r="' + pas.SysUtils.IntToStr(RowNum) + '">' + TextCell("A" + pas.SysUtils.IntToStr(RowNum),8,SumDef.FLabelText) + '<c r="B' + pas.SysUtils.IntToStr(RowNum) + '" s="' + pas.SysUtils.IntToStr(9) + '"><v>' + NumStr + "</v></c>" + TextCell("C" + pas.SysUtils.IntToStr(RowNum),8,this.FormatSummaryNumber(SumVal,SumFmt)) + "</row>";
+      };
+      Result = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + "\n" + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + Cols + "<sheetData>" + Rows + "</sheetData></worksheet>";
+      return Result;
+    };
+    this.BuildXlsxStylesXml = function () {
+      var Result = "";
+      var ThemeArgb = "";
+      ThemeArgb = this.FThemeColor;
+      var hex = String(ThemeArgb).trim();
+      ThemeArgb = new RegExp('^#?[0-9a-fA-F]{6}$').test(hex) ? ('FF' + hex.replace('#', '').toUpperCase()) : 'FF334155';
+      Result = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + "\n" + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + '<numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;' + this.XlsxEscape(this.FCurrencySymbol) + '&quot;#,##0.00"/></numFmts>' + '<fonts count="5">' + '<font><sz val="10"/><name val="Segoe UI"/></font>' + '<font><b/><sz val="14"/><color rgb="FF0F172A"/><name val="Segoe UI"/></font>' + '<font><i/><sz val="9"/><color rgb="FF475569"/><name val="Segoe UI"/></font>' + '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Segoe UI"/></font>' + '<font><b/><sz val="10"/><name val="Segoe UI"/></font>' + "</fonts>" + '<fills count="4">' + '<fill><patternFill patternType="none"/></fill>' + '<fill><patternFill patternType="gray125"/></fill>' + '<fill><patternFill patternType="solid"><fgColor rgb="' + ThemeArgb + '"/><bgColor indexed="64"/></patternFill></fill>' + '<fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill>' + "</fills>" + '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' + '<cellXfs count="10">' + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' + '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>' + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>' + '<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' + '<xf numFmtId="1" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' + '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' + '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>' + '<xf numFmtId="0" fontId="4" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' + '<xf numFmtId="4" fontId="4" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/>' + "</cellXfs>" + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' + "</styleSheet>";
+      return Result;
     };
     this.EscapePDFString = function (S) {
       var Result = "";
@@ -7860,8 +8057,32 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       var PageStream = "";
       var RawVal = undefined;
       var PageStreams = null;
+      var FontRegular = null;
+      var FontBold = null;
       Recs = this.GetRecordsArray();
       this.EnsureAutoColumns(Recs);
+      FontRegular = new Object();
+      FontRegular["name"] = pas.BlaiseReportsFonts.BVPdfFontRegularName;
+      FontRegular["length1"] = 28236;
+      FontRegular["bbox"] = pas.BlaiseReportsFonts.BVPdfFontRegularBBox;
+      FontRegular["ascent"] = 928;
+      FontRegular["descent"] = -236;
+      FontRegular["cap"] = 729;
+      FontRegular["cmap"] = pas.BlaiseReportsFonts.BVPdfFontRegularCmap;
+      FontRegular["widths"] = pas.BlaiseReportsFonts.BVPdfFontRegularWidths;
+      FontRegular["data"] = pas.BlaiseReportsFonts.BVPdfFontRegularData;
+      FontRegular["stemV"] = 80;
+      FontBold = new Object();
+      FontBold["name"] = pas.BlaiseReportsFonts.BVPdfFontBoldName;
+      FontBold["length1"] = 26936;
+      FontBold["bbox"] = pas.BlaiseReportsFonts.BVPdfFontBoldBBox;
+      FontBold["ascent"] = 928;
+      FontBold["descent"] = -236;
+      FontBold["cap"] = 729;
+      FontBold["cmap"] = pas.BlaiseReportsFonts.BVPdfFontBoldCmap;
+      FontBold["widths"] = pas.BlaiseReportsFonts.BVPdfFontBoldWidths;
+      FontBold["data"] = pas.BlaiseReportsFonts.BVPdfFontBoldData;
+      FontBold["stemV"] = 140;
       TotalRecords = Recs.length & 0xFFFFFFFF;
       Limit = this.FRowsPerPage;
       if (Limit <= 0) Limit = 25;
@@ -7984,12 +8205,110 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
           // Obj 4: Font Bold
           addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
           // Obj 5: Document Info
-          var infoStr = '<< /Title (' + this.EscapePDFString(this.FTitle) + ') /Author (' + this.EscapePDFString(this.FAuthor) + ') /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
+          var self = this;
+          function infoText(text) {
+            if (!new RegExp('[^\\x00-\\x7F]').test(text)) return '(' + self.EscapePDFString(text) + ')';
+            var hex = 'FEFF';
+            for (var h = 0; h < text.length; h++) hex += hex4(text.charCodeAt(h));
+            return '<' + hex + '>';
+          }
+          function hex4(n) {
+            var out = n.toString(16).toUpperCase();
+            while (out.length < 4) out = '0' + out;
+            return out;
+          }
+          var infoStr = '<< /Title ' + infoText(this.FTitle) + ' /Author ' + infoText(this.FAuthor) + ' /Creator (BlaiseReports v5.0) /Producer (BlaiseVue Vector PDF Engine) >>';
           addObj(infoStr);
       
+          // The page streams still hold raw characters inside their text operands, and every
+          // byte of the file must stay ASCII because the xref offsets count string length.
+          // Helvetica covers WinAnsi only, so any other character switches both fonts to the
+          // embedded Latin + Greek subset, drawn through glyph ids in hex strings.
+          var winAnsiHigh = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
+          var needsEmbed = false;
+          var nonAscii = new RegExp('[^\\x00-\\x7F]', 'g');
+          var streams = [];
+          for (var s = 0; s < PageStreams.length; s++) {
+            var normalized = PageStreams[s].normalize('NFC');
+            var found = normalized.match(nonAscii) || [];
+            for (var k = 0; k < found.length; k++) {
+              var code = found[k].charCodeAt(0);
+              if (code < 0xA0 && winAnsiHigh[code] === undefined || code > 0xFF && winAnsiHigh[code] === undefined) needsEmbed = true;
+            }
+            streams.push(normalized);
+          }
+      
+          function parseCmap(text) {
+            var map = {};
+            var entries = text.split(',');
+            for (var e = 0; e < entries.length; e++) {
+              var pair = entries[e].split(':');
+              map[parseInt(pair[0], 16)] = parseInt(pair[1], 16);
+            }
+            return map;
+          }
+      
+          function addEmbeddedFont(slot, font, tag) {
+            var baseName = tag + '+' + font.name;
+            var fileId = addObj('<< /Length ' + font.data.length + ' /Length1 ' + font.length1 + ' /Filter [/ASCII85Decode /FlateDecode] >>\nstream\n' + font.data + '\nendstream');
+            var descId = addObj('<< /Type /FontDescriptor /FontName /' + baseName + ' /Flags 4 /FontBBox [' + font.bbox + '] /ItalicAngle 0 /Ascent ' + font.ascent + ' /Descent ' + font.descent + ' /CapHeight ' + font.cap + ' /StemV ' + font.stemV + ' /FontFile2 ' + fileId + ' 0 R >>');
+            var cidId = addObj('<< /Type /Font /Subtype /CIDFontType2 /BaseFont /' + baseName + ' /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor ' + descId + ' 0 R /W [0 [' + font.widths + ']] /CIDToGIDMap /Identity >>');
+            var seen = {};
+            var lines = [];
+            var entries = font.cmap.split(',');
+            for (var e = 0; e < entries.length; e++) {
+              var pair = entries[e].split(':');
+              var gid = parseInt(pair[1], 16);
+              if (seen[gid]) continue;
+              seen[gid] = true;
+              lines.push('<' + hex4(gid) + '> <' + hex4(parseInt(pair[0], 16)) + '>');
+            }
+            var cmapText = '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n';
+            for (var b = 0; b < lines.length; b += 100) {
+              var block = lines.slice(b, b + 100);
+              cmapText += block.length + ' beginbfchar\n' + block.join('\n') + '\nendbfchar\n';
+            }
+            cmapText += 'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n';
+            var unicodeId = addObj('<< /Length ' + cmapText.length + ' >>\nstream\n' + cmapText + 'endstream');
+            objects[slot] = '<< /Type /Font /Subtype /Type0 /BaseFont /' + baseName + ' /Encoding /Identity-H /DescendantFonts [' + cidId + ' 0 R] /ToUnicode ' + unicodeId + ' 0 R >>';
+          }
+      
+          function encodeGlyphs(text, map) {
+            var hex = '';
+            var fallback = map[0x3F];
+            for (var c = 0; c < text.length; c++) {
+              var unit = text.charCodeAt(c);
+              if (unit >= 0xD800 && unit <= 0xDBFF) c++;
+              var gid = map[unit];
+              hex += hex4(gid === undefined ? fallback : gid);
+            }
+            return '<' + hex + '>';
+          }
+      
+          if (needsEmbed) {
+            addEmbeddedFont(2, FontRegular, 'BVAAAA');
+            addEmbeddedFont(3, FontBold, 'BVAAAB');
+            var maps = {'1': parseCmap(FontRegular.cmap), '2': parseCmap(FontBold.cmap)};
+            var textOp = new RegExp('/F([12]) ([0-9.]+) Tf ([^(]*)\\(((?:[^\\\\()]|\\\\.)*)\\) Tj', 'g');
+            var unescapePdf = new RegExp('\\\\(.)', 'g');
+            for (var t = 0; t < streams.length; t++) {
+              streams[t] = streams[t].replace(textOp, function (all, fontNo, size, between, text) {
+                return '/F' + fontNo + ' ' + size + ' Tf ' + between + encodeGlyphs(text.replace(unescapePdf, '$1'), maps[fontNo]) + ' Tj';
+              });
+            }
+          } else {
+            for (var w = 0; w < streams.length; w++) {
+              streams[w] = streams[w].replace(nonAscii, function (ch) {
+                var unit = ch.charCodeAt(0);
+                var octal = (winAnsiHigh[unit] === undefined ? unit : winAnsiHigh[unit]).toString(8);
+                return '\\' + octal;
+              });
+            }
+          }
+      
           var pageRefs = [];
-          for (var p = 0; p < PageStreams.length; p++) {
-            var streamData = PageStreams[p];
+          for (var p = 0; p < streams.length; p++) {
+            var streamData = streams[p];
             var contentObjId = addObj('<< /Length ' + streamData.length + ' >>\nstream\n' + streamData + 'endstream');
             var pageObjId = addObj(
               '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PageW + ' ' + PageH + '] ' +
@@ -8117,13 +8436,61 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
       Result = Xml;
       return Result;
     };
+    var XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + "\n";
+    this.GenerateXlsx = function () {
+      var Result = undefined;
+      var Recs = null;
+      var SheetName = "";
+      var SheetXml = "";
+      var StylesXml = "";
+      var ContentTypes = "";
+      var RootRels = "";
+      var WorkbookXml = "";
+      var WorkbookRels = "";
+      var CoreXml = "";
+      var AppXml = "";
+      var Entries = undefined;
+      Recs = this.GetRecordsArray();
+      this.EnsureAutoColumns(Recs);
+      SheetName = this.FTitle;
+      SheetName = String(SheetName).replace(new RegExp('[\\[\\]:*?/\\\\]', 'g'), ' ').trim().substring(0, 31);
+      SheetName = SheetName.replace(new RegExp('^\\u0027+|\\u0027+$', 'g'), '').trim();
+      if (SheetName === '') SheetName = 'Report';
+      SheetXml = this.BuildXlsxSheetXml(Recs);
+      StylesXml = this.BuildXlsxStylesXml();
+      ContentTypes = XML_DECL + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' + '<Default Extension="xml" ContentType="application/xml"/>' + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' + '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' + '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' + "</Types>";
+      RootRels = XML_DECL + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' + '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' + "</Relationships>";
+      WorkbookXml = XML_DECL + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' + '<sheets><sheet name="' + this.XlsxEscape(SheetName) + '" sheetId="1" r:id="rId1"/></sheets></workbook>';
+      WorkbookRels = XML_DECL + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' + "</Relationships>";
+      CoreXml = XML_DECL + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/">' + "<dc:title>" + this.XlsxEscape(this.FTitle) + "</dc:title><dc:creator>" + this.XlsxEscape(this.FAuthor) + "</dc:creator></cp:coreProperties>";
+      AppXml = XML_DECL + '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">' + "<Application>BlaiseVue</Application><Company>" + this.XlsxEscape(this.FCompanyName) + "</Company></Properties>";
+      Entries = null;
+      Entries = [
+        { name: '[Content_Types].xml', text: ContentTypes },
+        { name: '_rels/.rels', text: RootRels },
+        { name: 'docProps/core.xml', text: CoreXml },
+        { name: 'docProps/app.xml', text: AppXml },
+        { name: 'xl/workbook.xml', text: WorkbookXml },
+        { name: 'xl/_rels/workbook.xml.rels', text: WorkbookRels },
+        { name: 'xl/styles.xml', text: StylesXml },
+        { name: 'xl/worksheets/sheet1.xml', text: SheetXml }
+      ];
+      Result = $impl.XlsxBuildZip(Entries);
+      return Result;
+    };
+    var XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
     this.ExportExcel = function (AFileName) {
       var Result = "";
       var FinalName = "";
+      var Package = undefined;
       FinalName = pas.SysUtils.Trim(AFileName);
       if (FinalName === "") FinalName = "report.xlsx";
       Result = this.GenerateExcel();
-      this.TriggerBrowserDownload(Result,FinalName,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      this.FLastExportedContent = Result;
+      this.FLastExportedFileName = FinalName;
+      this.FLastExportedMimeType = XLSX_MIME;
+      Package = this.GenerateXlsx();
+      if (pas.System.Assigned(Package)) this.DownloadBlobPart(Package,FinalName,XLSX_MIME);
       return Result;
     };
     this.GenerateCSV = function () {
@@ -8362,6 +8729,85 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
             }
           }
         }
+      };
+      return Result;
+    };
+    $impl.XlsxColumnName = function (AIndex) {
+      var Result = "";
+      var N = 0;
+      Result = "";
+      N = AIndex + 1;
+      while (N > 0) {
+        Result = String.fromCharCode(65 + ((N - 1) % 26)) + Result;
+        N = rtl.trunc((N - 1) / 26);
+      };
+      return Result;
+    };
+    $impl.XlsxBuildZip = function (AEntries) {
+      var Result = undefined;
+      Result = null;
+      if (typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var crcTable = [];
+        for (var n = 0; n < 256; n++) {
+          var c = n;
+          for (var k = 0; k < 8; k++) {
+            c = (c & 1) ? (3988292384 ^ (c >>> 1)) : (c >>> 1);
+          }
+          crcTable[n] = c >>> 0;
+        }
+        var parts = [];
+        var total = 0;
+        var centralSize = 0;
+        for (var i = 0; i < AEntries.length; i++) {
+          var nameBytes = encoder.encode(AEntries[i].name);
+          var dataBytes = encoder.encode(AEntries[i].text);
+          var crc = 4294967295;
+          for (var b = 0; b < dataBytes.length; b++) {
+            crc = crcTable[(crc ^ dataBytes[b]) & 255] ^ (crc >>> 8);
+          }
+          crc = (crc ^ 4294967295) >>> 0;
+          parts.push({ nameBytes: nameBytes, dataBytes: dataBytes, crc: crc, offset: total });
+          total += 30 + nameBytes.length + dataBytes.length;
+          centralSize += 46 + nameBytes.length;
+        }
+        var zip = new Uint8Array(total + centralSize + 22);
+        var view = new DataView(zip.buffer);
+        var writeHeaderFields = function (at, part) {
+          view.setUint16(at, 20, true);
+          view.setUint16(at + 2, 2048, true);
+          view.setUint16(at + 4, 0, true);
+          view.setUint16(at + 6, 0, true);
+          view.setUint16(at + 8, 33, true);
+          view.setUint32(at + 10, part.crc, true);
+          view.setUint32(at + 14, part.dataBytes.length, true);
+          view.setUint32(at + 18, part.dataBytes.length, true);
+          view.setUint16(at + 22, part.nameBytes.length, true);
+          view.setUint16(at + 24, 0, true);
+        };
+        for (var p = 0; p < parts.length; p++) {
+          var part = parts[p];
+          view.setUint32(part.offset, 67324752, true);
+          writeHeaderFields(part.offset + 4, part);
+          zip.set(part.nameBytes, part.offset + 30);
+          zip.set(part.dataBytes, part.offset + 30 + part.nameBytes.length);
+        }
+        var cursor = total;
+        for (var q = 0; q < parts.length; q++) {
+          var entry = parts[q];
+          view.setUint32(cursor, 33639248, true);
+          view.setUint16(cursor + 4, 20, true);
+          writeHeaderFields(cursor + 6, entry);
+          view.setUint32(cursor + 42, entry.offset, true);
+          zip.set(entry.nameBytes, cursor + 46);
+          cursor += 46 + entry.nameBytes.length;
+        }
+        view.setUint32(cursor, 101010256, true);
+        view.setUint16(cursor + 8, parts.length, true);
+        view.setUint16(cursor + 10, parts.length, true);
+        view.setUint32(cursor + 12, centralSize, true);
+        view.setUint32(cursor + 16, total, true);
+        Result = zip;
       };
       return Result;
     };
@@ -9565,6 +10011,39 @@ rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
     $mod.InitDevTools();
   };
 });
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uFormHeader = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "/* Visual styling using standard CSS. Scoped by the framework to this component. */   .form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background-color: rgba(66, 184, 131, 0.05); border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background-color: rgba(66, 184, 131, 0.1); }   .form-header-title { color: inherit !important; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: inherit !important; opacity: 0.8; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: rgba(128,128,128,0.2); margin-top: 12px; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="form-header">' + "    <!-- reactive title bound to the 'title' data/prop -->" + '    <h2 class="form-header-title" @click="headerClick">{{ title }}</h2>' + "    " + "    <!-- subtitle displaying current reactive state -->" + '    <p class="form-header-subtitle">{{ subtitle }}</p>' + "    " + '    <div class="form-header-line"></div>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Formulário do Sistema";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
+    m = new Object();
+    m["headerClick"] = function (_this) {
+      _this["$emit"].call(_this,"header-clicked","Ola do Header!");
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("form-header",comp);
+  };
+});
 rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -9627,39 +10106,6 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uFormHeader = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "/* Visual styling using standard CSS. Scoped by the framework to this component. */   .form-header { margin-bottom: 24px; padding: 12px; border-left: 4px solid #42b883; background-color: rgba(66, 184, 131, 0.05); border-radius: 0 8px 8px 0; cursor: pointer; transition: background 0.3s; }   .form-header:hover { background-color: rgba(66, 184, 131, 0.1); }   .form-header-title { color: inherit !important; margin: 0; font-size: 1.5rem; }   .form-header-subtitle { color: inherit !important; opacity: 0.8; margin: 4px 0 0 0; font-size: 0.9rem; }   .form-header-line { height: 2px; background: rgba(128,128,128,0.2); margin-top: 12px; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="form-header">' + "    <!-- reactive title bound to the 'title' data/prop -->" + '    <h2 class="form-header-title" @click="headerClick">{{ title }}</h2>' + "    " + "    <!-- subtitle displaying current reactive state -->" + '    <p class="form-header-subtitle">{{ subtitle }}</p>' + "    " + '    <div class="form-header-line"></div>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Formulário do Sistema";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "Preencha os campos abaixo para atualizar o estado reativo.";
-    m = new Object();
-    m["headerClick"] = function (_this) {
-      _this["$emit"].call(_this,"header-clicked","Ola do Header!");
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("form-header",comp);
-  };
-});
 rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -9684,6 +10130,523 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("info-card",comp);
+  };
+});
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uMobileView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Última Ação:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>" + "                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>" + "                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>" + "                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>" + "                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>" + "                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>" + "                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["currentMode"] = "md";
+      d["lastAction"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["setIosMode"] = function (_this) {
+      _this["currentMode"] = "ios";
+      pas.BVPascalDX.IonicSetMode("ios");
+      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
+    };
+    m["setMdMode"] = function (_this) {
+      _this["currentMode"] = "md";
+      pas.BVPascalDX.IonicSetMode("md");
+      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
+    };
+    m["showToast"] = function (_this) {
+      pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
+      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
+    };
+    m["showAlert"] = function (_this) {
+      pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
+      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
+    };
+    m["onConfirmOk"] = function (_this) {
+      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
+      pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
+    };
+    m["onConfirmCancel"] = function (_this) {
+      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
+    };
+    m["showConfirm"] = function (_this) {
+      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
+      pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
+    };
+    m["showLoading"] = function (_this) {
+      pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
+      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
+    };
+    m["onSheetSelect"] = function (_this, opt, idx) {
+      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
+      pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
+    };
+    m["showActionSheet"] = function (_this) {
+      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
+      pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
+    };
+    pas.BVComponents.RegisterComponent("mobile-view-page",comp);
+  };
+});
+rtl.module("Services",["System","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.recNewT(this,"TCustomer",function () {
+    this.$eq = function (b) {
+      return true;
+    };
+    this.$assign = function (s) {
+      return this;
+    };
+  });
+});
+rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],function () {
+  "use strict";
+  var $mod = this;
+  var $impl = $mod.$impl;
+  rtl.createClass(this,"TCustomerServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"CustomerService");
+      return this;
+    };
+    this.GetAll$1 = function (OnSuccess, OnError) {
+      var Args = null;
+      Args = new Array();
+      this.CallRemote("GetAll",Args,OnSuccess,OnError);
+    };
+  });
+  rtl.createClass(this,"TProductServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"ProductService");
+      return this;
+    };
+  });
+  rtl.createClass(this,"TSystemServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
+    this.Create$2 = function () {
+      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"SystemService");
+      return this;
+    };
+  });
+  this.CustomerService = function () {
+    var Result = null;
+    if ($impl.GCustomerService === null) $impl.GCustomerService = $mod.TCustomerServiceClient.$create("Create$2");
+    Result = $impl.GCustomerService;
+    return Result;
+  };
+  this.ProductService = function () {
+    var Result = null;
+    if ($impl.GProductService === null) $impl.GProductService = $mod.TProductServiceClient.$create("Create$2");
+    Result = $impl.GProductService;
+    return Result;
+  };
+  this.SystemService = function () {
+    var Result = null;
+    if ($impl.GSystemService === null) $impl.GSystemService = $mod.TSystemServiceClient.$create("Create$2");
+    Result = $impl.GSystemService;
+    return Result;
+  };
+  $mod.$implcode = function () {
+    $impl.GCustomerService = null;
+    $impl.GProductService = null;
+    $impl.GSystemService = null;
+  };
+  $mod.$init = function () {
+    $mod.CustomerService();
+    $mod.ProductService();
+    $mod.SystemService();
+  };
+},[]);
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uCustomerView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Customer";
+      d["apiEndpoint"] = "customers";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      var f = null;
+      f = pas.BVPascalDX.NewObject();
+      f["name"] = "";
+      f["email"] = "";
+      f["phone"] = "";
+      f["active"] = true;
+      _this["form"] = f;
+      _this["formError"] = "";
+    };
+    m["openCreateModal"] = function (_this) {
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
+    };
+    m["fetchViaRpc"] = function (_this) {
+      pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
+        _this["items"] = Items;
+        pas.BVPascalDX.ShowToast("Loaded " + pas.SysUtils.IntToStr(rtl.length(Items)) + " customers via Type-Safe Pascal RPC (mORMot 2)!",2500);
+      },function (Err) {
+        pas.BVPascalDX.ShowToast("RPC Error: " + Err,2500);
+      });
+    };
+    m["fetchItems"] = function (_this) {
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+    };
+    m["saveItem"] = function (_this) {
+      if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+    };
+    m["deleteItem"] = function (_this, id) {
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+    };
+    m["setupWebSocket"] = function (_this) {
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("customer-view-page",comp);
+  };
+});
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uProductView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modelTitle"] = "Product";
+      d["apiEndpoint"] = "products";
+      d["items"] = new Array();
+      d["searchQuery"] = "";
+      d["isModalOpen"] = false;
+      d["isEditing"] = false;
+      d["currentEditId"] = 0;
+      d["formError"] = "";
+      d["form"] = null;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["resetForm"] = function (_this) {
+      var F = undefined;
+      F = pas.BVPascalDX.NewObject();
+      pas.BVPascalDX.SetField(F,"name","");
+      pas.BVPascalDX.SetField(F,"price",0.0);
+      pas.BVPascalDX.SetField(F,"stock",0);
+      pas.BVPascalDX.SetField(F,"category","");
+      _this["form"] = F;
+      _this["formError"] = "";
+    };
+    m["openCreateModal"] = function (_this) {
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      _this["isEditing"] = false;
+      _this["currentEditId"] = 0;
+      _this["isModalOpen"] = true;
+    };
+    m["openEditModal"] = function (_this, item) {
+      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
+      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this["isEditing"] = true;
+      _this["formError"] = "";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+      _this["formError"] = "";
+    };
+    m["fetchItems"] = function (_this) {
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+    };
+    m["saveItem"] = function (_this) {
+      if (!!(_this["form"] == false)) return;
+      if (this && this.form) {
+        for (var k in this) {
+          if (k.indexOf('form.') === 0) {
+            var fieldName = k.substring(5);
+            this.form[fieldName] = this[k];
+          }
+        }
+      };
+      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+    };
+    m["deleteItem"] = function (_this, id) {
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+    };
+    m["setupWebSocket"] = function (_this) {
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      pas.BVPascalDX.CallMethod(_this,"resetForm");
+      pas.BVPascalDX.CallMethod(_this,"fetchItems");
+      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("product-view-page",comp);
+  };
+});
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uUserProfile = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = "  <div>" + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["id"] = "?";
+      d["tab"] = "(none)";
+      d["tema"] = "(none)";
+      d["nomeUsuario"] = "Standard User";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["userLevel"] = function (_this) {
+      var Result = undefined;
+      if (rtl.trunc(_this["id"]) > 50) {
+        Result = "Premium"}
+       else Result = "Basic";
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("user-profile-page",comp);
+  };
+});
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uLibBootstrap = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </bv-col>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Drawer Menu 1\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 2\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 3\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' + '       <div class="p-2">' + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' + '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' + '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' + "             </button>" + "          </div>" + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' + '             <div style="display: flex; gap: 8px;">' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'pt\', \'bui-btn-secondary\': $i18n.locale !== \'pt\' }" type="button" @click="$setLocale(\'pt\')">🇧🇷 Português</button>' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'en\', \'bui-btn-secondary\': $i18n.locale !== \'en\' }" type="button" @click="$setLocale(\'en\')">🇺🇸 English</button>' + "             </div>" + "          </div>" + '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' + "             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly" + "          </div>" + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["count"] = 45;
+      d["libName"] = "Blaise_Demo_2026";
+      d["category"] = "high";
+      d["currentPage"] = 1;
+      d["lastAction"] = "System Ready";
+      d["faqItems"] = "";
+      d["catOptions"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["clickNotif"] = function (_this, info) {
+      _this["lastAction"] = info;
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
+    };
+    m["showModal"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
+    };
+    m["modalConfirm"] = function (_this) {
+      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
+      _this["lastAction"] = "Modal Confirmed";
+      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
+    };
+    m["updatePage"] = function (_this, p) {
+      _this["currentPage"] = p;
+    };
+    m["tabChanged"] = function (_this, id) {
+      pas.System.Writeln("Tab changed to: ",id);
+    };
+    m["showDrawer"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","open");
+    };
+    m["closeDrawer"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","close");
+    };
+    m["openSettings"] = function (_this) {
+      pas.BVPascalDX.TriggerRef(_this,"settingsModal","show");
+    };
+    m["applySettings"] = function (_this) {
+      pas.BVPascalDX.CallMethod$1(_this,"clickNotif",["Configurações salvas!"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var items = null;
+      var q1 = null;
+      var q2 = null;
+      var q3 = null;
+      var opts = null;
+      var o1 = null;
+      var o2 = null;
+      var o3 = null;
+      if (!_this) _this = this;
+      items = pas.BVPascalDX.NewArray();
+      q1 = pas.BVPascalDX.NewObject();
+      q1["id"] = "q1";
+      q1["title"] = "How does Shared State work?";
+      q1["content"] = "BlaiseVue uses B-Store for centralized reactive state management in Pascal.";
+      q2 = pas.BVPascalDX.NewObject();
+      q2["id"] = "q2";
+      q2["title"] = "Unified Design System?";
+      q2["content"] = "BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.";
+      q3 = pas.BVPascalDX.NewObject();
+      q3["id"] = "q3";
+      q3["content"] = "The compiler generates minimalist JavaScript bundles, resulting in instant load times.";
+      q3["title"] = "JIT Optimization?";
+      items.push(q1);
+      items.push(q2);
+      items.push(q3);
+      _this["faqItems"] = items;
+      opts = pas.BVPascalDX.NewArray();
+      o1 = pas.BVPascalDX.NewObject();
+      o1["value"] = "low";
+      o1["text"] = "Low Priority";
+      o2 = pas.BVPascalDX.NewObject();
+      o2["value"] = "med";
+      o2["text"] = "Medium Priority";
+      o3 = pas.BVPascalDX.NewObject();
+      o3["value"] = "high";
+      o3["text"] = "High Priority (Critical)";
+      opts.push(o1);
+      opts.push(o2);
+      opts.push(o3);
+      _this["catOptions"] = opts;
+    };
+    pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
+  };
+});
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uLoginView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-divider span { padding: 0 10px; }   .demo-buttons { display: flex; gap: 8px; }   .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }   .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }   .demo-user:hover { border-color: #10b981; color: #059669; }   .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }   .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }   .user-avatar { font-size: 32px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }   .role-admin { background: #ede9fe; color: #7c3aed; }   .role-manager { background: #dbeafe; color: #2563eb; }   .role-user { background: #e2e8f0; color: #475569; }   .logged-actions { display: flex; gap: 8px; }   .logged-actions .bui-btn { flex: 1; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Autenticação BlaiseVue</h2>' + '        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">E-mail de Acesso:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="ex: admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Senha:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Entrar no Sistema 🚀</span>' + '          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Gerente" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 Usuário" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["email"] = "";
+      d["password"] = "";
+      d["errorMessage"] = "";
+      d["successMessage"] = "";
+      d["loading"] = false;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["quickLogin"] = function (_this, e, p) {
+      _this["email"] = e;
+      _this["password"] = p;
+      _this["errorMessage"] = "";
+      pas.BVPascalDX.CallMethod(_this,"submitLogin");
+    };
+    m["submitLogin"] = function (_this) {
+      if ((_this["email"] == "") || (_this["password"] == "")) {
+        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
+        return;
+      };
+      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
+    };
+    m["handleLogout"] = function (_this) {
+      pas.BVPascalDX.AuthLogout(_this);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
 rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -9751,6 +10714,690 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       return Result;
     };
     pas.BVComponents.RegisterComponent("about-page",comp);
+  };
+});
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uHome = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".home-page { padding: 20px; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      { Transition Classes: Managed by the BVCompiler transition engine }   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="home-page">' + "    <h2>🏠 Home: Control Panel (BlaiseVue Features)</h2>" + "    <p>{{ descricao }}</p>" + "" + "    { 1. Slots & Composition }" + "    <card>" + '      <template slot="header">🎨 Composition via Slots</template>' + "      <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "    </card>" + "" + "    { 2. Form Reactivity (B-Model) }" + '    <div class="section">' + "      <h3>✍️ Data Synchronization (B-Model)</h3>" + '      <input type="text" b-model="userName" placeholder="Your name...">' + "      <p>Welcome, <b>{{ userName }}</b>!</p>" + "    </div>" + "" + "    { 3. Global Store (B-Store) }" + '    <div class="section">' + "      <h3>🌍 Global Store (B-Store)</h3>" + "      <p>Framework Version: <badge-blue>{{ $store.appVersion }}</badge-blue></p>" + "      <p>Current User: <b>{{ $store.user }}</b></p>" + "    </div>" + "" + "    { 4. Transitions }" + '    <div class="section">' + "      <h3>✨ Animations & Transitions</h3>" + '      <button @click="toggleVisible">Toggle Visibility</button>' + '      <transition name="fade">' + '        <div v-show="isVisible" class="alert-box">' + "           Fade Effect Active! 👻" + "        </div>" + "      </transition>" + "    </div>" + "" + "    { 5. Provide and Inject }" + "    <info-card>" + '       <template slot="title">Dependency Injection (Provide/Inject)</template>' + "       The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "    </info-card>" + "" + "    { 6. Themes & Icons (Blaise-Themes & Blaise-Icons) }" + '    <div class="section">' + "      <h3>🎨 Dynamic Themes & Vector Icons (v2.6)</h3>" + "      <p>Current Active Theme: <b>{{ $theme.current }}</b> (Dark Mode: <b>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</b>)</p>" + '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "        <bv-theme-toggle></bv-theme-toggle>" + "        <bv-theme-select></bv-theme-select>" + "      </div>" + '      <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["descricao"] = "Welcome to the Framework test center. Below are the main features.";
+      d["userName"] = "Pascal Developer";
+      d["isVisible"] = true;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["toggleVisible"] = function (_this) {
+      _this["isVisible"] = !!(_this["isVisible"] == false);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("home-page",comp);
+  };
+});
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uFormulario = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["nome"] = "";
+      d["email"] = "";
+      d["cidade"] = "";
+      d["meuSub"] = "Este subtítulo é reativo do pai!";
+      d["msgHeader"] = "(clique no título do header)";
+      d["msgSucesso"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["onHeaderClick"] = function (_this, arg) {
+      _this["msgHeader"] = arg;
+      _this["meuSub"] = "O subtítulo mudou reativamente via props!";
+    };
+    m["mudarHeaderRef"] = function (_this) {
+      var refs = null;
+      var header = null;
+      refs = _this["$refs"];
+      if (refs != null) {
+        header = refs["headerComp"];
+        if (header != null) header["title"] = "Título alterado via $refs!";
+      };
+    };
+    m["enviar"] = function (_this) {
+      var valido = false;
+      valido = pas.BVPascalDX.ValidateForm(_this);
+      if (valido) {
+        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
+      } else {
+        _this["msgSucesso"] = "";
+      };
+    };
+    m["preencher"] = function (_this) {
+      _this["nome"] = "Blaise Pascal";
+      _this["email"] = "blaise@pascal.dev";
+      _this["cidade"] = "Clermont-Ferrand";
+      _this["msgSucesso"] = "";
+      pas.BVPascalDX.TouchValidation(_this);
+    };
+    m["limpar"] = function (_this) {
+      _this["nome"] = "";
+      _this["email"] = "";
+      _this["cidade"] = "";
+      _this["msgSucesso"] = "";
+      pas.BVPascalDX.ResetValidation(_this);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("formulario-page",comp);
+  };
+});
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uProFeatures = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; }   .stat-badge { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }    /* Dark mode adjustments */   html[data-bs-theme="dark"] .wasm-box, body.theme-dark .wasm-box,   html[data-bs-theme="dark"] .wasm-bench-container, body.theme-dark .wasm-bench-container {     background: #1e2227;     border-color: #333842;   }   html[data-bs-theme="dark"] .wasm-result, body.theme-dark .wasm-result,   html[data-bs-theme="dark"] .stat-badge, body.theme-dark .stat-badge {     background: #282c34;     border-color: #3e4451;     color: #e0e0e0;   }   html[data-bs-theme="dark"] .wasm-bench-title, body.theme-dark .wasm-bench-title {     color: #abb2bf;   }';
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "" + "    <!-- 7. Aceleração WebAssembly & Benchmarking (BlaiseVue 3.0 Engine) -->" + '    <div class="section wasm-card">' + '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '         <h3 style="color: #6366f1; margin: 0;">⚡ Aceleração WebAssembly ($wasm) - BlaiseVue 3.0</h3>' + '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "       </div>" + '       <p style="color: #64748b; margin-bottom: 16px;">' + "         O BlaiseVue 3.0 integra computação de alto desempenho via <strong>WebAssembly nativo</strong> diretamente do Pascal no navegador através do objeto injetado <code>$wasm</code>, executando com velocidade quase-nativa em relação ao JavaScript tradicional." + "       </p>" + "" + '       <div class="wasm-grid">' + "         <!-- Teste 1: Fibonacci Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Cálculo Fibonacci Acelerado</h4>' + '           <p style="font-size: 13px; color: #64748b;">Calcule o N-ésimo número de Fibonacci via Wasm:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' + '             <button class="btn-primary" @click="calcularWasmFib">Calcular Wasm ⚡</button>' + "           </div>" + '           <div class="wasm-result">' + "             Resultado: <strong>{{ wasmFibResult }}</strong>" + "             <br />" + "             <small>Tempo de execução: <strong>{{ wasmFibTime }} ms</strong></small>" + "           </div>" + "         </div>" + "" + "         <!-- Teste 2: Teste de Primalidade Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Teste de Primalidade Wasm</h4>' + '           <p style="font-size: 13px; color: #64748b;">Valide se um número grande é primo usando algoritmo compilado:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' + '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verificar Primo 🔍</button>' + "           </div>" + '           <div class="wasm-result">' + "             Status: <strong>{{ primeResult }}</strong>" + "           </div>" + "         </div>" + "       </div>" + "" + "       <!-- Teste 3: Benchmark em Tempo Real -->" + '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' + '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "           <div>" + '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Benchmark em Tempo Real: WebAssembly vs JavaScript</h4>' + '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executa 1.000 iterações em paralelo comparando Wasm com JS Vanilla.</p>' + "           </div>" + '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Executar Benchmark 🚀</button>' + "         </div>" + "" + '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '           <div class="stat-badge">' + '             <div class="stat-label">JavaScript Puro</div>' + '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">WebAssembly Nativo</div>' + '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Aceleração Relativa</div>' + '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "           </div>" + "         </div>" + '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' + "           Status do Benchmark: <em>{{ benchSummary }}</em>" + "         </p>" + "       </div>" + "" + "       <!-- Teste 4: SSG / Hydration Engine Demo -->" + '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' + '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 Motor SSG & Hidratação Reativa (BlaiseVue 3.0)</h4>' + '         <p style="font-size: 13px; color: #047857; margin: 0;">' + "           O BlaiseVue 3.0 detecta nós pré-renderizados estaticamente via <code>bv run ssg</code> e executa <strong>Rehydration</strong> reativa no cliente preservando a hierarquia DOM existente sem recriar os elementos do zero." + "         </p>" + "       </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["contador"] = 0;
+      d["showElement"] = true;
+      d["itens"] = "";
+      d["fibInput"] = 20;
+      d["wasmFibResult"] = 6765;
+      d["wasmFibTime"] = "0.04";
+      d["primeInput"] = 999983;
+      d["primeResult"] = "999983 é primo! 💎";
+      d["benchIters"] = 1000;
+      d["benchJsTime"] = "0.00";
+      d["benchWasmTime"] = "0.00";
+      d["benchSpeedup"] = "Calculando...";
+      d["benchSummary"] = "Pronto para execução";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["testarSlot"] = function (_this) {
+      pas.System.Writeln("[Slot Test] O pai está falando!");
+    };
+    m["mudarVersao"] = function (_this) {
+      var currentVer = "";
+      var newVer = "";
+      var newUser = "";
+      currentVer = "" + _this["$store"]["appVersion"];
+      if (currentVer === "2.1.0-ULTRA-PRO") {
+        newVer = "3.0.0-TURBO-HYPER";
+        newUser = "Blaise Visionary 🚀";
+      } else if (currentVer === "3.0.0-TURBO-HYPER") {
+        newVer = "1.0.0-PRO";
+        newUser = "DevMaster 🏆";
+      } else {
+        newVer = "2.1.0-ULTRA-PRO";
+        newUser = "Pascal King 👑";
+      };
+      _this["$store"]["appVersion"] = newVer;
+      _this["$store"]["user"] = newUser;
+      pas.System.Writeln("[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser);
+    };
+    m["incrementar"] = function (_this) {
+      _this["contador"] = rtl.trunc(_this["contador"]) + 1;
+    };
+    m["toggleShow"] = function (_this) {
+      _this["showElement"] = !!(_this["showElement"] == false);
+    };
+    m["embaralhar"] = function (_this) {
+      var Arr = null;
+      var i = 0;
+      var j = 0;
+      var Tmp = undefined;
+      Arr = _this["itens"];
+      if (Arr !== null) {
+        for (var $l = Arr.length - 1; $l >= 1; $l--) {
+          i = $l;
+          j = pas.System.Random(i + 1);
+          Tmp = Arr[i];
+          Arr[i] = Arr[j];
+          Arr[j] = Tmp;
+        };
+        _this["itens"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewArray(),Arr);
+      };
+    };
+    m["adicionarItem"] = function (_this) {
+      var Emojis = ["⚡ Lightning","🔥 Fire","🚀 Rocket","💎 Diamond","🔮 Crystal","🌟 Star","🛡️ Shield","🎯 Target"];
+      var Arr = null;
+      Arr = _this["itens"];
+      if (Arr !== null) Arr.push(Emojis[pas.System.Random(8)] + " #" + pas.SysUtils.IntToStr(Arr.length + 1));
+    };
+    m["removerItem"] = function (_this) {
+      var Arr = null;
+      Arr = _this["itens"];
+      if ((Arr !== null) && (Arr.length > 0)) Arr.shift();
+    };
+    m["resetarLista"] = function (_this) {
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
+    };
+    m["calcularWasmFib"] = function (_this) {
+      var n = 0;
+      var res = 0;
+      var t0 = 0.0;
+      var t1 = 0.0;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],1);
+      t0 = pas.BVPascalDX.NowTimestampMs();
+      res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
+      t1 = pas.BVPascalDX.NowTimestampMs();
+      _this["wasmFibResult"] = res;
+      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
+    };
+    m["testarPrimoWasm"] = function (_this) {
+      var n = 0;
+      var isP = 0;
+      n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
+      isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
+      if (isP === 1) {
+        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " é um NÚMERO PRIMO! 💎"}
+       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " NÃO é primo ❌";
+    };
+    m["rodarBenchmark"] = function (_this) {
+      var n = 0;
+      var rep = undefined;
+      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Executadas 1.000 iterações com sucesso no módulo math.";
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var rep = undefined;
+      if (!_this) _this = this;
+      _this["itens"] = pas.BVPascalDX.NewArray();
+      _this["itens"].push("⚡ Pascal");
+      _this["itens"].push("🔥 BlaiseVue");
+      _this["itens"].push("🚀 WebAssembly");
+      _this["itens"].push("💎 HighPerf");
+      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
+      if (rep != null) {
+        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
+        _this["benchSummary"] = "Módulo WebAssembly math ativo e operacional.";
+      };
+    };
+    comp["updated"] = function (_this) {
+      if (!_this) _this = this;
+      pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
+    };
+    comp["inject"] = new Array();
+    comp["inject"].push("getAmbiente");
+    pas.BVComponents.RegisterComponent("pro-features-page",comp);
+  };
+});
+rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uDatasetView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["productsDS"] = null;
+      d["searchQuery"] = "";
+      d["deltaJSONStr"] = "[]";
+      d["isOnline"] = true;
+      d["autoPersistActive"] = true;
+      d["autoSyncActive"] = true;
+      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
+      d["isSyncing"] = false;
+      d["storageEngine"] = "IndexedDB";
+      d["isModalOpen"] = false;
+      d["formTitle"] = "";
+      d["formCategory"] = "Hardware";
+      d["formPrice"] = "99.90";
+      d["formStock"] = "10";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["updateDeltaView"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navFirst"] = function (_this) {
+      pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navPrior"] = function (_this) {
+      pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navNext"] = function (_this) {
+      pas.BVPascalDX.DataSetNext(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["navLast"] = function (_this) {
+      pas.BVPascalDX.DataSetLast(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doAppend"] = function (_this) {
+      _this["formTitle"] = "";
+      _this["formCategory"] = "Hardware";
+      _this["formPrice"] = "99.90";
+      _this["formStock"] = "10";
+      _this["isModalOpen"] = true;
+    };
+    m["closeModal"] = function (_this) {
+      _this["isModalOpen"] = false;
+    };
+    m["saveNewProduct"] = function (_this) {
+      var ds = undefined;
+      var titleVal = "";
+      var categoryVal = "";
+      var priceVal = 0.0;
+      var stockVal = 0;
+      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
+      if (titleVal === "") {
+        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
+        return;
+      };
+      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
+      if (categoryVal === "") categoryVal = "Hardware";
+      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
+      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
+      ds = _this["productsDS"];
+      pas.BVPascalDX.DataSetAppend(ds);
+      var maxId = 0;
+      if (ds && ds.FRecords) {
+        for (var i = 0; i < ds.FRecords.length; i++) {
+          var curId = parseInt(ds.FRecords[i].id, 10);
+          if (!isNaN(curId) && curId > maxId) maxId = curId;
+        }
+      }
+      var nextId = maxId + 1;
+      if (ds && ds.Current) {
+        ds.Current.id = nextId;
+        ds.Current.title = titleVal;
+        ds.Current.category = categoryVal;
+        ds.Current.price = priceVal;
+        ds.Current.stock = stockVal;
+      }
+      if (ds) ds.FModified = true;
+      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      pas.BVPascalDX.DataSetPost(ds);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
+      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
+    };
+    m["doPost"] = function (_this) {
+      pas.BVPascalDX.DataSetPost(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
+      pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
+    };
+    m["doCancel"] = function (_this) {
+      pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
+      pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
+    };
+    m["doDelete"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
+        pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
+        pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
+      };
+    };
+    m["onSelectRow"] = function (_this, row) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["onFieldInput"] = function (_this) {
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+    };
+    m["doSaveIndexedDB"] = function (_this) {
+      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
+      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
+      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
+    };
+    m["doLoadIndexedDB"] = function (_this) {
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds) return;
+      if (typeof ds.LoadFromIndexedDB === 'function') {
+        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
+          if (success) {
+            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
+            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+          } else {
+            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
+            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+          }
+        });
+      };
+    };
+    m["toggleAutoPersist"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoPersistActive"] == false);
+      _this["autoPersistActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
+        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
+        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
+      };
+    };
+    m["toggleAutoSync"] = function (_this) {
+      var newState = false;
+      newState = !!(_this["autoSyncActive"] == false);
+      _this["autoSyncActive"] = newState;
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
+      if (newState) {
+        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
+        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
+      } else {
+        _this["syncStatusMsg"] = "AutoSync desativado.";
+        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
+      };
+    };
+    m["toggleOnlineSimulation"] = function (_this) {
+      var nextOnline = false;
+      nextOnline = !!(_this["isOnline"] == false);
+      _this["isOnline"] = nextOnline;
+      if (nextOnline) {
+        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
+        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
+        if (!(_this["autoSyncActive"] == false)) {
+          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
+        };
+      } else {
+        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
+        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
+      };
+    };
+    m["doClearDelta"] = function (_this) {
+      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
+        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
+        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
+        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
+      };
+    };
+    m["doApplyUpdates"] = function (_this) {
+      _this["isSyncing"] = true;
+      var self = _this || this;
+      var ds = self.productsDS;
+      if (!ds || ds.ChangeCount === 0) {
+        self.isSyncing = false;
+        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
+        return;
+      }
+      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
+      if (typeof ds.ApplyUpdates === 'function') {
+        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
+          self.isSyncing = false;
+          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
+          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
+          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
+          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+        }, function(err) {
+          self.isSyncing = false;
+          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
+          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+        });
+      };
+    };
+    m["doExportDatasetPDF"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
+      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
+      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
+    };
+    m["doExportDatasetExcel"] = function (_this) {
+      var rep = undefined;
+      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
+      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
+      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      var mockData = "";
+      if (!_this) _this = this;
+      _this["productsDS"] = pas.BVPascalDX.NewDataSet();
+      if (this.productsDS) {
+        this.productsDS.TableName = 'products';
+      };
+      mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
+      pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
+      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
+      _this["autoPersistActive"] = true;
+      _this["autoSyncActive"] = true;
+      _this["isOnline"] = true;
+      _this["isSyncing"] = false;
+      _this["isModalOpen"] = false;
+      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
+      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      var self = this;
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', function() {
+          self.isOnline = true;
+          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
+          if (self.autoSyncActive) {
+            var ds = self.productsDS;
+            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
+              ds.ApplyUpdates('/api/dataset/apply');
+            }
+          }
+        });
+        window.addEventListener('offline', function() {
+          self.isOnline = false;
+          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
+        });
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["stateBadgeClass"] = function (_this) {
+      var Result = undefined;
+      var ds = this.productsDS;
+      if (!ds) return 'badge-secondary';
+      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
+      if (st === 'insert') return 'badge-warning';
+      if (st === 'edit') return 'badge-danger';
+      if (st === 'browse') return 'badge-success';
+      return 'badge-secondary';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("dataset-view-page",comp);
+    pas.BVComponents.RegisterComponent("data-set-view-page",comp);
+  };
+});
+rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uReportsView = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["salesDS"] = null;
+      d["activeReport"] = null;
+      d["activePreset"] = "sales";
+      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
+      d["rawOutputPreview"] = "";
+      d["nextInvoiceId"] = 1006;
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["loadSalesPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "sales";
+      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
+      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadPosReceiptPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "pos";
+      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
+      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
+      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
+      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["loadInventoryPreset"] = function (_this) {
+      var mockJson = "";
+      var rep = undefined;
+      _this["activePreset"] = "inventory";
+      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
+      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
+      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
+      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
+      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
+      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
+      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
+      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
+      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
+      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
+      _this["activeReport"] = rep;
+      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["addSampleInvoice"] = function (_this) {
+      var newId = 0;
+      newId = rtl.trunc(_this["nextInvoiceId"]);
+      _this["nextInvoiceId"] = newId + 1;
+      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
+      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
+      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
+      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportPDF"] = function (_this) {
+      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
+      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
+    };
+    m["doExportExcel"] = function (_this) {
+      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
+      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
+    };
+    m["doExportCSV"] = function (_this) {
+      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
+      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
+      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
+    };
+    m["inspectPDF"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
+    };
+    m["inspectExcel"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
+    };
+    m["inspectCSV"] = function (_this) {
+      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
+      _this["nextInvoiceId"] = 1006;
+      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["recordCount"] = function (_this) {
+      var Result = undefined;
+      Result = 0;
+      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
+        Result = this.salesDS.GetRecordCount();
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("reports-view-page",comp);
   };
 });
 rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
@@ -10383,1171 +12030,6 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("charts-page",comp);
   };
 });
-rtl.module("Services",["System","SysUtils"],function () {
-  "use strict";
-  var $mod = this;
-  rtl.recNewT(this,"TCustomer",function () {
-    this.$eq = function (b) {
-      return true;
-    };
-    this.$assign = function (s) {
-      return this;
-    };
-  });
-});
-rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],function () {
-  "use strict";
-  var $mod = this;
-  var $impl = $mod.$impl;
-  rtl.createClass(this,"TCustomerServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"CustomerService");
-      return this;
-    };
-    this.GetAll$1 = function (OnSuccess, OnError) {
-      var Args = null;
-      Args = new Array();
-      this.CallRemote("GetAll",Args,OnSuccess,OnError);
-    };
-  });
-  rtl.createClass(this,"TProductServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"ProductService");
-      return this;
-    };
-  });
-  rtl.createClass(this,"TSystemServiceClient",pas.BVRpc.TBVRemoteProxy,function () {
-    this.Create$2 = function () {
-      pas.BVRpc.TBVRemoteProxy.Create$1.call(this,"SystemService");
-      return this;
-    };
-  });
-  this.CustomerService = function () {
-    var Result = null;
-    if ($impl.GCustomerService === null) $impl.GCustomerService = $mod.TCustomerServiceClient.$create("Create$2");
-    Result = $impl.GCustomerService;
-    return Result;
-  };
-  this.ProductService = function () {
-    var Result = null;
-    if ($impl.GProductService === null) $impl.GProductService = $mod.TProductServiceClient.$create("Create$2");
-    Result = $impl.GProductService;
-    return Result;
-  };
-  this.SystemService = function () {
-    var Result = null;
-    if ($impl.GSystemService === null) $impl.GSystemService = $mod.TSystemServiceClient.$create("Create$2");
-    Result = $impl.GSystemService;
-    return Result;
-  };
-  $mod.$implcode = function () {
-    $impl.GCustomerService = null;
-    $impl.GProductService = null;
-    $impl.GSystemService = null;
-  };
-  $mod.$init = function () {
-    $mod.CustomerService();
-    $mod.ProductService();
-    $mod.SystemService();
-  };
-},[]);
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCustomerView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC (v4.3)</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>BlaiseVue 4.3:</strong> Teste o RPC fortemente tipado clicando no botão roxo <strong>"⚡ Type-Safe RPC (v4.3)"</strong> no cabeçalho acima!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["modelTitle"] = "Customer";
-      d["apiEndpoint"] = "customers";
-      d["items"] = new Array();
-      d["searchQuery"] = "";
-      d["isModalOpen"] = false;
-      d["isEditing"] = false;
-      d["currentEditId"] = 0;
-      d["formError"] = "";
-      d["form"] = null;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["resetForm"] = function (_this) {
-      var f = null;
-      f = pas.BVPascalDX.NewObject();
-      f["name"] = "";
-      f["email"] = "";
-      f["phone"] = "";
-      f["active"] = true;
-      _this["form"] = f;
-      _this["formError"] = "";
-    };
-    m["openCreateModal"] = function (_this) {
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
-    };
-    m["openEditModal"] = function (_this, item) {
-      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
-    };
-    m["fetchViaRpc"] = function (_this) {
-      pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
-        _this["items"] = Items;
-        pas.BVPascalDX.ShowToast("Loaded " + pas.SysUtils.IntToStr(rtl.length(Items)) + " customers via Type-Safe Pascal RPC (mORMot 2)!",2500);
-      },function (Err) {
-        pas.BVPascalDX.ShowToast("RPC Error: " + Err,2500);
-      });
-    };
-    m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
-    };
-    m["saveItem"] = function (_this) {
-      if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
-    };
-    m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
-    };
-    m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      pas.BVPascalDX.CallMethod(_this,"fetchItems");
-      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("customer-view-page",comp);
-  };
-});
-rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uDatasetView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- HEADER SECTION -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!' + "    </div>" + "" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>' + '        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Sincronizando...</span>' + '          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '    <div class="offline-control-bar">' + '      <div class="control-bar-item">' + '        <span class="bar-label">Rede:</span>' + '        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>' + '        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">Storage:</span>' + '        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoPersist:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "" + '      <div class="control-bar-item">' + '        <span class="bar-label">AutoSync:</span>' + '        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- DATASET LIVE STATUS BAR -->" + '    <div class="dataset-status-bar" v-if="productsDS">' + '      <div class="status-left">' + '        <span class="badge" :class="stateBadgeClass">' + "          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "        </span>" + '        <span class="status-indicator">' + "          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>" + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>' + "        </span>" + '        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>' + "        </span>" + "      </div>" + '      <div class="dataset-nav-controls">' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>' + '        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>' + "      </div>" + "    </div>" + "" + "    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>' + '        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>' + "      </div>" + "      " + '      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "    </div>" + "" + "    <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "        <div>" + '          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>' + '          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>' + "        </div>" + '        <div style="display: flex; gap: 8px;">' + '          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Salvar (Post)</button>' + '          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancelar</button>' + '          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>' + "        </div>" + "      </div>" + "" + '      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>' + '          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>' + '          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>' + '          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>' + '          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "        </div>" + '        <div class="form-group">' + '          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>' + '          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "      <!-- DELTA JSON INSPECTOR -->" + '      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>' + '            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>' + "          </div>" + '          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "            Limpar Delta" + "          </button>" + "        </div>" + "" + '        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "      </div>" + "" + "      <!-- SYNC & PERSISTENCE CONSOLE -->" + '      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>' + '          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>' + "        </div>" + '        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "          <div>{{ syncStatusMsg }}</div>" + '          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["productsDS"] = null;
-      d["searchQuery"] = "";
-      d["deltaJSONStr"] = "[]";
-      d["isOnline"] = true;
-      d["autoPersistActive"] = true;
-      d["autoSyncActive"] = true;
-      d["syncStatusMsg"] = "DataSet pronto com suporte a IndexedDB.";
-      d["isSyncing"] = false;
-      d["storageEngine"] = "IndexedDB";
-      d["isModalOpen"] = false;
-      d["formTitle"] = "";
-      d["formCategory"] = "Hardware";
-      d["formPrice"] = "99.90";
-      d["formStock"] = "10";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["updateDeltaView"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navFirst"] = function (_this) {
-      pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navPrior"] = function (_this) {
-      pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navNext"] = function (_this) {
-      pas.BVPascalDX.DataSetNext(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["navLast"] = function (_this) {
-      pas.BVPascalDX.DataSetLast(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["doAppend"] = function (_this) {
-      _this["formTitle"] = "";
-      _this["formCategory"] = "Hardware";
-      _this["formPrice"] = "99.90";
-      _this["formStock"] = "10";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-    };
-    m["saveNewProduct"] = function (_this) {
-      var ds = undefined;
-      var titleVal = "";
-      var categoryVal = "";
-      var priceVal = 0.0;
-      var stockVal = 0;
-      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
-      if (titleVal === "") {
-        pas.BVPascalDX.ShowToast("Por favor, informe o título do produto.",2500);
-        return;
-      };
-      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
-      if (categoryVal === "") categoryVal = "Hardware";
-      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
-      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
-      ds = _this["productsDS"];
-      pas.BVPascalDX.DataSetAppend(ds);
-      var maxId = 0;
-      if (ds && ds.FRecords) {
-        for (var i = 0; i < ds.FRecords.length; i++) {
-          var curId = parseInt(ds.FRecords[i].id, 10);
-          if (!isNaN(curId) && curId > maxId) maxId = curId;
-        }
-      }
-      var nextId = maxId + 1;
-      if (ds && ds.Current) {
-        ds.Current.id = nextId;
-        ds.Current.title = titleVal;
-        ds.Current.category = categoryVal;
-        ds.Current.price = priceVal;
-        ds.Current.stock = stockVal;
-      }
-      if (ds) ds.FModified = true;
-      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
-      pas.BVPascalDX.DataSetPost(ds);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      _this["isModalOpen"] = false;
-      _this["syncStatusMsg"] = "Novo produto cadastrado com sucesso no DataSet.";
-      pas.BVPascalDX.ShowToast("Produto cadastrado com sucesso!",2500);
-    };
-    m["doPost"] = function (_this) {
-      pas.BVPascalDX.DataSetPost(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Registro salvo no DataSet e persistido no IndexedDB.";
-      pas.BVPascalDX.ShowToast("Alterações salvas com sucesso no DataSet!",2500);
-    };
-    m["doCancel"] = function (_this) {
-      pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Edição cancelada. Estado revertido para browse.";
-      pas.BVPascalDX.ShowToast("Edição cancelada.",2500);
-    };
-    m["doDelete"] = function (_this) {
-      if (pas.BVPascalDX.Confirm("Deseja realmente excluir este produto?")) {
-        pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Registro removido. Operação de exclusão gravada no Delta.";
-        pas.BVPascalDX.ShowToast("Registro excluído com sucesso.",2500);
-      };
-    };
-    m["onSelectRow"] = function (_this, row) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["onFieldInput"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-    };
-    m["doSaveIndexedDB"] = function (_this) {
-      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
-      _this["syncStatusMsg"] = "Snapshot completo salvo no IndexedDB (store: demo_products_v44).";
-      pas.BVPascalDX.ShowToast("Dados salvos no IndexedDB com sucesso!",2500);
-    };
-    m["doLoadIndexedDB"] = function (_this) {
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds) return;
-      if (typeof ds.LoadFromIndexedDB === 'function') {
-        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
-          if (success) {
-            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-            self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
-            pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
-          } else {
-            self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
-            pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
-          }
-        });
-      };
-    };
-    m["toggleAutoPersist"] = function (_this) {
-      var newState = false;
-      newState = !!(_this["autoPersistActive"] == false);
-      _this["autoPersistActive"] = newState;
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
-      if (newState) {
-        _this["syncStatusMsg"] = "AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.";
-        pas.BVPascalDX.ShowToast("AutoPersist ativado (IndexedDB)!",2500);
-      } else {
-        _this["syncStatusMsg"] = "AutoPersist desativado: os dados residem apenas na memória RAM.";
-        pas.BVPascalDX.ShowToast("AutoPersist desativado.",2500);
-      };
-    };
-    m["toggleAutoSync"] = function (_this) {
-      var newState = false;
-      newState = !!(_this["autoSyncActive"] == false);
-      _this["autoSyncActive"] = newState;
-      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
-      if (newState) {
-        _this["syncStatusMsg"] = "AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.";
-        pas.BVPascalDX.ShowToast("AutoSync na reconexão ativado!",2500);
-      } else {
-        _this["syncStatusMsg"] = "AutoSync desativado.";
-        pas.BVPascalDX.ShowToast("AutoSync desativado.",2500);
-      };
-    };
-    m["toggleOnlineSimulation"] = function (_this) {
-      var nextOnline = false;
-      nextOnline = !!(_this["isOnline"] == false);
-      _this["isOnline"] = nextOnline;
-      if (nextOnline) {
-        _this["syncStatusMsg"] = "Rede online restabelecida. Verificando deltas pendentes...";
-        pas.BVPascalDX.ShowToast("Conexão restabelecida! (Online)",2500);
-        if (!(_this["autoSyncActive"] == false)) {
-          pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
-        };
-      } else {
-        _this["syncStatusMsg"] = "Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.";
-        pas.BVPascalDX.ShowToast("Modo Offline ativado (simulação)",2500);
-      };
-    };
-    m["doClearDelta"] = function (_this) {
-      if (pas.BVPascalDX.Confirm("Deseja descartar as alterações do Delta sem enviar ao servidor?")) {
-        pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Deltas pendentes descartados pelo usuário.";
-        pas.BVPascalDX.ShowToast("Deltas descartados.",2500);
-      };
-    };
-    m["doApplyUpdates"] = function (_this) {
-      _this["isSyncing"] = true;
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds || ds.ChangeCount === 0) {
-        self.isSyncing = false;
-        pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
-        return;
-      }
-      self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
-      if (typeof ds.ApplyUpdates === 'function') {
-        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
-          self.isSyncing = false;
-          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-          self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
-          pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
-        }, function(err) {
-          self.isSyncing = false;
-          self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
-          pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
-        });
-      };
-    };
-    m["doExportDatasetPDF"] = function (_this) {
-      var rep = undefined;
-      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Relatório de Produtos (TBVDataSet)","Exportado diretamente da View DataSet v4.4/v5.0");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Total de Produtos","id","count","integer");
-      pas.BVPascalDX.ReportExportPDF(rep,"dataset_produtos.pdf");
-      pas.BVPascalDX.ShowToast("PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!",2500);
-    };
-    m["doExportDatasetExcel"] = function (_this) {
-      var rep = undefined;
-      rep = pas.BVPascalDX.NewReport(_this["productsDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Planilha de Produtos (TBVDataSet)","Exportado via BlaiseReports");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise","BV-5.0");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:ID:integer","title:Produto","category:Categoria","price:Preço Unit.:currency","stock:Estoque:integer"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Soma Preços Unitários","price","sum","currency");
-      pas.BVPascalDX.ReportExportExcel(rep,"dataset_produtos.xlsx");
-      pas.BVPascalDX.ShowToast("Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!",2500);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var mockData = "";
-      if (!_this) _this = this;
-      _this["productsDS"] = pas.BVPascalDX.NewDataSet();
-      if (this.productsDS) {
-        this.productsDS.TableName = 'products';
-      };
-      mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
-      pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
-      pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
-      _this["autoPersistActive"] = true;
-      _this["autoSyncActive"] = true;
-      _this["isOnline"] = true;
-      _this["isSyncing"] = false;
-      _this["isModalOpen"] = false;
-      _this["syncStatusMsg"] = "DataSet inicializado com persistência IndexedDB e auto-sync configurados.";
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      var self = this;
-      if (typeof window !== 'undefined') {
-        window.addEventListener('online', function() {
-          self.isOnline = true;
-          self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
-          if (self.autoSyncActive) {
-            var ds = self.productsDS;
-            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
-              ds.ApplyUpdates('/api/dataset/apply');
-            }
-          }
-        });
-        window.addEventListener('offline', function() {
-          self.isOnline = false;
-          self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
-        });
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["stateBadgeClass"] = function (_this) {
-      var Result = undefined;
-      var ds = this.productsDS;
-      if (!ds) return 'badge-secondary';
-      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
-      if (st === 'insert') return 'badge-warning';
-      if (st === 'edit') return 'badge-danger';
-      if (st === 'browse') return 'badge-success';
-      return 'badge-secondary';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("dataset-view-page",comp);
-    pas.BVComponents.RegisterComponent("data-set-view-page",comp);
-  };
-});
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uFormulario = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["nome"] = "";
-      d["email"] = "";
-      d["cidade"] = "";
-      d["meuSub"] = "Este subtítulo é reativo do pai!";
-      d["msgHeader"] = "(clique no título do header)";
-      d["msgSucesso"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["onHeaderClick"] = function (_this, arg) {
-      _this["msgHeader"] = arg;
-      _this["meuSub"] = "O subtítulo mudou reativamente via props!";
-    };
-    m["mudarHeaderRef"] = function (_this) {
-      var refs = null;
-      var header = null;
-      refs = _this["$refs"];
-      if (refs != null) {
-        header = refs["headerComp"];
-        if (header != null) header["title"] = "Título alterado via $refs!";
-      };
-    };
-    m["enviar"] = function (_this) {
-      var valido = false;
-      valido = pas.BVPascalDX.ValidateForm(_this);
-      if (valido) {
-        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
-      } else {
-        _this["msgSucesso"] = "";
-      };
-    };
-    m["preencher"] = function (_this) {
-      _this["nome"] = "Blaise Pascal";
-      _this["email"] = "blaise@pascal.dev";
-      _this["cidade"] = "Clermont-Ferrand";
-      _this["msgSucesso"] = "";
-      pas.BVPascalDX.TouchValidation(_this);
-    };
-    m["limpar"] = function (_this) {
-      _this["nome"] = "";
-      _this["email"] = "";
-      _this["cidade"] = "";
-      _this["msgSucesso"] = "";
-      pas.BVPascalDX.ResetValidation(_this);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("formulario-page",comp);
-  };
-});
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uHome = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".home-page { padding: 20px; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      { Transition Classes: Managed by the BVCompiler transition engine }   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="home-page">' + "    <h2>🏠 Home: Control Panel (BlaiseVue Features)</h2>" + "    <p>{{ descricao }}</p>" + "" + "    { 1. Slots & Composition }" + "    <card>" + '      <template slot="header">🎨 Composition via Slots</template>' + "      <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "    </card>" + "" + "    { 2. Form Reactivity (B-Model) }" + '    <div class="section">' + "      <h3>✍️ Data Synchronization (B-Model)</h3>" + '      <input type="text" b-model="userName" placeholder="Your name...">' + "      <p>Welcome, <b>{{ userName }}</b>!</p>" + "    </div>" + "" + "    { 3. Global Store (B-Store) }" + '    <div class="section">' + "      <h3>🌍 Global Store (B-Store)</h3>" + "      <p>Framework Version: <badge-blue>{{ $store.appVersion }}</badge-blue></p>" + "      <p>Current User: <b>{{ $store.user }}</b></p>" + "    </div>" + "" + "    { 4. Transitions }" + '    <div class="section">' + "      <h3>✨ Animations & Transitions</h3>" + '      <button @click="toggleVisible">Toggle Visibility</button>' + '      <transition name="fade">' + '        <div v-show="isVisible" class="alert-box">' + "           Fade Effect Active! 👻" + "        </div>" + "      </transition>" + "    </div>" + "" + "    { 5. Provide and Inject }" + "    <info-card>" + '       <template slot="title">Dependency Injection (Provide/Inject)</template>' + "       The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "    </info-card>" + "" + "    { 6. Themes & Icons (Blaise-Themes & Blaise-Icons) }" + '    <div class="section">' + "      <h3>🎨 Dynamic Themes & Vector Icons (v2.6)</h3>" + "      <p>Current Active Theme: <b>{{ $theme.current }}</b> (Dark Mode: <b>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</b>)</p>" + '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "        <bv-theme-toggle></bv-theme-toggle>" + "        <bv-theme-select></bv-theme-select>" + "      </div>" + '      <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["descricao"] = "Welcome to the Framework test center. Below are the main features.";
-      d["userName"] = "Pascal Developer";
-      d["isVisible"] = true;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["toggleVisible"] = function (_this) {
-      _this["isVisible"] = !!(_this["isVisible"] == false);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("home-page",comp);
-  };
-});
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uLibBootstrap = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL NAVIGATION (DEMO) -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Engine Load (Reactivity)</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Usage ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'New Emails\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Highlight\')">🌟 Weekly Highlight</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif(\'BlaiseUI Kit\')">💎 BlaiseUI v2.0</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Sync\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "         </bv-col>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Forms" active="true">' + '                     <div class="p-4">' + "                        <h4>Input Controls</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Key" append="Regenerate">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + '                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">' + "                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state." + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Atomic Data Navigation</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Attention: Segment 7 contains simulated network instabilities." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Icons & Themes">' + '                     <div class="p-4">' + "                        <h5>Bootstrap Icons & Bootswatch Themes</h5>" + '                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Drawer Menu 1\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 2\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Drawer Menu 3\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- OVERLAYS: Programmatically triggered via $ref -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to process a state update via Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">' + '       <div class="p-2">' + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>' + '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>' + '                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>' + "             </button>" + "          </div>" + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>' + '             <div style="display: flex; gap: 8px;">' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'pt\', \'bui-btn-secondary\': $i18n.locale !== \'pt\' }" type="button" @click="$setLocale(\'pt\')">🇧🇷 Português</button>' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'en\', \'bui-btn-secondary\': $i18n.locale !== \'en\' }" type="button" @click="$setLocale(\'en\')">🇺🇸 English</button>' + "             </div>" + "          </div>" + '          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">' + "             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly" + "          </div>" + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["count"] = 45;
-      d["libName"] = "Blaise_Demo_2026";
-      d["category"] = "high";
-      d["currentPage"] = 1;
-      d["lastAction"] = "System Ready";
-      d["faqItems"] = "";
-      d["catOptions"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["clickNotif"] = function (_this, info) {
-      _this["lastAction"] = info;
-      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
-    };
-    m["showModal"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
-    };
-    m["modalConfirm"] = function (_this) {
-      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
-      _this["lastAction"] = "Modal Confirmed";
-      pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
-    };
-    m["updatePage"] = function (_this, p) {
-      _this["currentPage"] = p;
-    };
-    m["tabChanged"] = function (_this, id) {
-      pas.System.Writeln("Tab changed to: ",id);
-    };
-    m["showDrawer"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","open");
-    };
-    m["closeDrawer"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"mainDrawer","close");
-    };
-    m["openSettings"] = function (_this) {
-      pas.BVPascalDX.TriggerRef(_this,"settingsModal","show");
-    };
-    m["applySettings"] = function (_this) {
-      pas.BVPascalDX.CallMethod$1(_this,"clickNotif",["Configurações salvas!"]);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var items = null;
-      var q1 = null;
-      var q2 = null;
-      var q3 = null;
-      var opts = null;
-      var o1 = null;
-      var o2 = null;
-      var o3 = null;
-      if (!_this) _this = this;
-      items = pas.BVPascalDX.NewArray();
-      q1 = pas.BVPascalDX.NewObject();
-      q1["id"] = "q1";
-      q1["title"] = "How does Shared State work?";
-      q1["content"] = "BlaiseVue uses B-Store for centralized reactive state management in Pascal.";
-      q2 = pas.BVPascalDX.NewObject();
-      q2["id"] = "q2";
-      q2["title"] = "Unified Design System?";
-      q2["content"] = "BlaiseUI is 100% native Pascal with pure CSS variables and zero external dependencies.";
-      q3 = pas.BVPascalDX.NewObject();
-      q3["id"] = "q3";
-      q3["content"] = "The compiler generates minimalist JavaScript bundles, resulting in instant load times.";
-      q3["title"] = "JIT Optimization?";
-      items.push(q1);
-      items.push(q2);
-      items.push(q3);
-      _this["faqItems"] = items;
-      opts = pas.BVPascalDX.NewArray();
-      o1 = pas.BVPascalDX.NewObject();
-      o1["value"] = "low";
-      o1["text"] = "Low Priority";
-      o2 = pas.BVPascalDX.NewObject();
-      o2["value"] = "med";
-      o2["text"] = "Medium Priority";
-      o3 = pas.BVPascalDX.NewObject();
-      o3["value"] = "high";
-      o3["text"] = "High Priority (Critical)";
-      opts.push(o1);
-      opts.push(o2);
-      opts.push(o3);
-      _this["catOptions"] = opts;
-    };
-    pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
-  };
-});
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uLoginView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-divider span { padding: 0 10px; }   .demo-buttons { display: flex; gap: 8px; }   .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }   .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }   .demo-user:hover { border-color: #10b981; color: #059669; }   .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }   .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }   .user-avatar { font-size: 32px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }   .role-admin { background: #ede9fe; color: #7c3aed; }   .role-manager { background: #dbeafe; color: #2563eb; }   .role-user { background: #e2e8f0; color: #475569; }   .logged-actions { display: flex; gap: 8px; }   .logged-actions .bui-btn { flex: 1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Autenticação BlaiseVue</h2>' + '        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">E-mail de Acesso:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="ex: admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Senha:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Entrar no Sistema 🚀</span>' + '          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Gerente" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 Usuário" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["email"] = "";
-      d["password"] = "";
-      d["errorMessage"] = "";
-      d["successMessage"] = "";
-      d["loading"] = false;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["quickLogin"] = function (_this, e, p) {
-      _this["email"] = e;
-      _this["password"] = p;
-      _this["errorMessage"] = "";
-      pas.BVPascalDX.CallMethod(_this,"submitLogin");
-    };
-    m["submitLogin"] = function (_this) {
-      if ((_this["email"] == "") || (_this["password"] == "")) {
-        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
-        return;
-      };
-      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
-    };
-    m["handleLogout"] = function (_this) {
-      pas.BVPascalDX.AuthLogout(_this);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("login-view-page",comp);
-  };
-});
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uMobileView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Última Ação:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>" + "                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>" + "                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>" + "                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>" + "                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>" + "                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>" + "                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["currentMode"] = "md";
-      d["lastAction"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["setIosMode"] = function (_this) {
-      _this["currentMode"] = "ios";
-      pas.BVPascalDX.IonicSetMode("ios");
-      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
-    };
-    m["setMdMode"] = function (_this) {
-      _this["currentMode"] = "md";
-      pas.BVPascalDX.IonicSetMode("md");
-      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
-    };
-    m["showToast"] = function (_this) {
-      pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
-      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
-    };
-    m["showAlert"] = function (_this) {
-      pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
-      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
-    };
-    m["onConfirmOk"] = function (_this) {
-      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
-      pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
-    };
-    m["onConfirmCancel"] = function (_this) {
-      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
-    };
-    m["showConfirm"] = function (_this) {
-      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
-      pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
-    };
-    m["showLoading"] = function (_this) {
-      pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
-      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
-    };
-    m["onSheetSelect"] = function (_this, opt, idx) {
-      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
-      pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
-    };
-    m["showActionSheet"] = function (_this) {
-      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
-      pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
-    };
-    pas.BVComponents.RegisterComponent("mobile-view-page",comp);
-  };
-});
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uProductView = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["modelTitle"] = "Product";
-      d["apiEndpoint"] = "products";
-      d["items"] = new Array();
-      d["searchQuery"] = "";
-      d["isModalOpen"] = false;
-      d["isEditing"] = false;
-      d["currentEditId"] = 0;
-      d["formError"] = "";
-      d["form"] = null;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["resetForm"] = function (_this) {
-      var F = undefined;
-      F = pas.BVPascalDX.NewObject();
-      pas.BVPascalDX.SetField(F,"name","");
-      pas.BVPascalDX.SetField(F,"price",0.0);
-      pas.BVPascalDX.SetField(F,"stock",0);
-      pas.BVPascalDX.SetField(F,"category","");
-      _this["form"] = F;
-      _this["formError"] = "";
-    };
-    m["openCreateModal"] = function (_this) {
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
-    };
-    m["openEditModal"] = function (_this, item) {
-      _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
-    };
-    m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
-    };
-    m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
-    };
-    m["saveItem"] = function (_this) {
-      if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
-    };
-    m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
-    };
-    m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      pas.BVPascalDX.CallMethod(_this,"resetForm");
-      pas.BVPascalDX.CallMethod(_this,"fetchItems");
-      pas.BVPascalDX.CallMethod(_this,"setupWebSocket");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("product-view-page",comp);
-  };
-});
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uProFeatures = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; }   .stat-badge { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }    /* Dark mode adjustments */   html[data-bs-theme="dark"] .wasm-box, body.theme-dark .wasm-box,   html[data-bs-theme="dark"] .wasm-bench-container, body.theme-dark .wasm-bench-container {     background: #1e2227;     border-color: #333842;   }   html[data-bs-theme="dark"] .wasm-result, body.theme-dark .wasm-result,   html[data-bs-theme="dark"] .stat-badge, body.theme-dark .stat-badge {     background: #282c34;     border-color: #3e4451;     color: #e0e0e0;   }   html[data-bs-theme="dark"] .wasm-bench-title, body.theme-dark .wasm-bench-title {     color: #abb2bf;   }';
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Teste de Slots -->" + '    <card titulo="Demonstração de Slot">' + '      <template slot="header">Título Customizado via Slot 🎨</template>' + "      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>" + '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' + '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Teste de Global Store -->" + '    <div class="section">' + "       <h3>🧠 Memória Central ($store)</h3>" + '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' + "       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' + "    </div>" + "" + "    <!-- 3. Teste de Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Elo Sagrado (Inject)</h3>" + "       <p>Dados injetados do App Root:</p>" + "       <ul>" + "          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Teste de Lifecycle Updated -->" + '    <div class="section">' + "       <h3>🔄 Batida do Motor (Updated)</h3>" + "       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' + "       <p><small>(Veja o log no console para o hook 'updated')</small></p>" + "    </div>" + "" + "    <!-- 5. Teste de Transições -->" + '    <div class="section">' + "       <h3>✨ Magia Visual (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Surpresa! Eu apareço com suavidade. 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "" + "    <!-- 7. Aceleração WebAssembly & Benchmarking (BlaiseVue 3.0 Engine) -->" + '    <div class="section wasm-card">' + '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '         <h3 style="color: #6366f1; margin: 0;">⚡ Aceleração WebAssembly ($wasm) - BlaiseVue 3.0</h3>' + '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "       </div>" + '       <p style="color: #64748b; margin-bottom: 16px;">' + "         O BlaiseVue 3.0 integra computação de alto desempenho via <strong>WebAssembly nativo</strong> diretamente do Pascal no navegador através do objeto injetado <code>$wasm</code>, executando com velocidade quase-nativa em relação ao JavaScript tradicional." + "       </p>" + "" + '       <div class="wasm-grid">' + "         <!-- Teste 1: Fibonacci Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Cálculo Fibonacci Acelerado</h4>' + '           <p style="font-size: 13px; color: #64748b;">Calcule o N-ésimo número de Fibonacci via Wasm:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' + '             <button class="btn-primary" @click="calcularWasmFib">Calcular Wasm ⚡</button>' + "           </div>" + '           <div class="wasm-result">' + "             Resultado: <strong>{{ wasmFibResult }}</strong>" + "             <br />" + "             <small>Tempo de execução: <strong>{{ wasmFibTime }} ms</strong></small>" + "           </div>" + "         </div>" + "" + "         <!-- Teste 2: Teste de Primalidade Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Teste de Primalidade Wasm</h4>' + '           <p style="font-size: 13px; color: #64748b;">Valide se um número grande é primo usando algoritmo compilado:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' + '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verificar Primo 🔍</button>' + "           </div>" + '           <div class="wasm-result">' + "             Status: <strong>{{ primeResult }}</strong>" + "           </div>" + "         </div>" + "       </div>" + "" + "       <!-- Teste 3: Benchmark em Tempo Real -->" + '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' + '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "           <div>" + '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Benchmark em Tempo Real: WebAssembly vs JavaScript</h4>' + '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executa 1.000 iterações em paralelo comparando Wasm com JS Vanilla.</p>' + "           </div>" + '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Executar Benchmark 🚀</button>' + "         </div>" + "" + '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '           <div class="stat-badge">' + '             <div class="stat-label">JavaScript Puro</div>' + '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">WebAssembly Nativo</div>' + '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Aceleração Relativa</div>' + '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "           </div>" + "         </div>" + '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' + "           Status do Benchmark: <em>{{ benchSummary }}</em>" + "         </p>" + "       </div>" + "" + "       <!-- Teste 4: SSG / Hydration Engine Demo -->" + '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' + '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 Motor SSG & Hidratação Reativa (BlaiseVue 3.0)</h4>' + '         <p style="font-size: 13px; color: #047857; margin: 0;">' + "           O BlaiseVue 3.0 detecta nós pré-renderizados estaticamente via <code>bv run ssg</code> e executa <strong>Rehydration</strong> reativa no cliente preservando a hierarquia DOM existente sem recriar os elementos do zero." + "         </p>" + "       </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["contador"] = 0;
-      d["showElement"] = true;
-      d["itens"] = "";
-      d["fibInput"] = 20;
-      d["wasmFibResult"] = 6765;
-      d["wasmFibTime"] = "0.04";
-      d["primeInput"] = 999983;
-      d["primeResult"] = "999983 é primo! 💎";
-      d["benchIters"] = 1000;
-      d["benchJsTime"] = "0.00";
-      d["benchWasmTime"] = "0.00";
-      d["benchSpeedup"] = "Calculando...";
-      d["benchSummary"] = "Pronto para execução";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["testarSlot"] = function (_this) {
-      pas.System.Writeln("[Slot Test] O pai está falando!");
-    };
-    m["mudarVersao"] = function (_this) {
-      var currentVer = "";
-      var newVer = "";
-      var newUser = "";
-      currentVer = "" + _this["$store"]["appVersion"];
-      if (currentVer === "2.1.0-ULTRA-PRO") {
-        newVer = "3.0.0-TURBO-HYPER";
-        newUser = "Blaise Visionary 🚀";
-      } else if (currentVer === "3.0.0-TURBO-HYPER") {
-        newVer = "1.0.0-PRO";
-        newUser = "DevMaster 🏆";
-      } else {
-        newVer = "2.1.0-ULTRA-PRO";
-        newUser = "Pascal King 👑";
-      };
-      _this["$store"]["appVersion"] = newVer;
-      _this["$store"]["user"] = newUser;
-      pas.System.Writeln("[Store] Memória Central Atualizada! Versão: " + newVer + " | Usuário: " + newUser);
-    };
-    m["incrementar"] = function (_this) {
-      _this["contador"] = rtl.trunc(_this["contador"]) + 1;
-    };
-    m["toggleShow"] = function (_this) {
-      _this["showElement"] = !!(_this["showElement"] == false);
-    };
-    m["embaralhar"] = function (_this) {
-      var Arr = null;
-      var i = 0;
-      var j = 0;
-      var Tmp = undefined;
-      Arr = _this["itens"];
-      if (Arr !== null) {
-        for (var $l = Arr.length - 1; $l >= 1; $l--) {
-          i = $l;
-          j = pas.System.Random(i + 1);
-          Tmp = Arr[i];
-          Arr[i] = Arr[j];
-          Arr[j] = Tmp;
-        };
-        _this["itens"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewArray(),Arr);
-      };
-    };
-    m["adicionarItem"] = function (_this) {
-      var Emojis = ["⚡ Lightning","🔥 Fire","🚀 Rocket","💎 Diamond","🔮 Crystal","🌟 Star","🛡️ Shield","🎯 Target"];
-      var Arr = null;
-      Arr = _this["itens"];
-      if (Arr !== null) Arr.push(Emojis[pas.System.Random(8)] + " #" + pas.SysUtils.IntToStr(Arr.length + 1));
-    };
-    m["removerItem"] = function (_this) {
-      var Arr = null;
-      Arr = _this["itens"];
-      if ((Arr !== null) && (Arr.length > 0)) Arr.shift();
-    };
-    m["resetarLista"] = function (_this) {
-      _this["itens"] = pas.BVPascalDX.NewArray();
-      _this["itens"].push("⚡ Pascal");
-      _this["itens"].push("🔥 BlaiseVue");
-      _this["itens"].push("🚀 WebAssembly");
-      _this["itens"].push("💎 HighPerf");
-    };
-    m["calcularWasmFib"] = function (_this) {
-      var n = 0;
-      var res = 0;
-      var t0 = 0.0;
-      var t1 = 0.0;
-      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],1);
-      t0 = pas.BVPascalDX.NowTimestampMs();
-      res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
-      t1 = pas.BVPascalDX.NowTimestampMs();
-      _this["wasmFibResult"] = res;
-      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
-    };
-    m["testarPrimoWasm"] = function (_this) {
-      var n = 0;
-      var isP = 0;
-      n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
-      isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
-      if (isP === 1) {
-        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " é um NÚMERO PRIMO! 💎"}
-       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " NÃO é primo ❌";
-    };
-    m["rodarBenchmark"] = function (_this) {
-      var n = 0;
-      var rep = undefined;
-      n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
-      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
-      if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
-        _this["benchSummary"] = "Executadas 1.000 iterações com sucesso no módulo math.";
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      var rep = undefined;
-      if (!_this) _this = this;
-      _this["itens"] = pas.BVPascalDX.NewArray();
-      _this["itens"].push("⚡ Pascal");
-      _this["itens"].push("🔥 BlaiseVue");
-      _this["itens"].push("🚀 WebAssembly");
-      _this["itens"].push("💎 HighPerf");
-      rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
-      if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Mais Rápido! 🚀";
-        _this["benchSummary"] = "Módulo WebAssembly math ativo e operacional.";
-      };
-    };
-    comp["updated"] = function (_this) {
-      if (!_this) _this = this;
-      pas.System.Writeln("[Lifecycle] Componente UPDATED! Pulso detectado.");
-    };
-    comp["inject"] = new Array();
-    comp["inject"].push("getAmbiente");
-    pas.BVComponents.RegisterComponent("pro-features-page",comp);
-  };
-});
-rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uReportsView = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 1</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Geração nativa de PDF Vetorial 1.4, Planilhas Excel (<code>.xlsx</code>), CSV (RFC 4180 + BOM) e Impressão A4 / Bobina Térmica POS (80mm/58mm) diretamente do <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Baixar PDF Vetorial</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Baixar Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Baixar CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Cenário de Relatório:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Faturamento Corporativo (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 Cupom Térmico PDV (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Auditoria de Estoque (Paisagem)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Adicionar Linha ao DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Registros Ativos: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report_v5"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Saída Bruta (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visualize o código vetorial PDF 1.4, XML SpreadsheetML ou CSV gerado em memória pelo motor Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">Ver Código PDF 1.4</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">Ver XML Excel</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">Ver CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["salesDS"] = null;
-      d["activeReport"] = null;
-      d["activePreset"] = "sales";
-      d["statusMessage"] = "Relatório Corporativo Q4 carregado e conectado ao TBVDataSet.";
-      d["rawOutputPreview"] = "";
-      d["nextInvoiceId"] = 1006;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["loadSalesPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "sales";
-      mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Pago","total":4850.00},' + '{"id":1002,"customer":"Globex Logística S.A.","segment":"ERP Industrial","status":"Pago","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Pago","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pendente","total":6120.75},' + '{"id":1005,"customer":"Initech Sistemas Ltda","segment":"Consultoria Pascal","status":"Pago","total":2180.25}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Relatório Executivo de Faturamento Q4","Consolidação Financeira Auditada — BlaiseVue 5.0");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Enterprise Cloud S.A.","BV-5.0");
-      pas.BVPascalDX.ReportSetHeader(rep,"Departamento Financeiro | Moeda: USD ($) | Emissão Automática via TBVDataSet","Documento Confidencial — BlaiseReports Native Vector PDF Engine");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"a4");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:Fatura #:integer:center:75","customer:Cliente Corporativo:string:left:190","segment:Unidade de Negócio:string:left:140","status:Status:string:center:85","total:Valor Total:currency:right:115"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Receita Bruta Total","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Ticket Médio","total","avg","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Maior Contrato","total","max","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Total de Faturas","id","count","integer");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Cenário "Faturamento Corporativo (A4)" carregado com sucesso!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["loadPosReceiptPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "pos";
-      mockJson = "[" + '{"id":1,"customer":"2x Café Espresso Duplo","segment":"Bebidas","status":"OK","total":18.00},' + '{"id":2,"customer":"1x Croissant Francês","segment":"Padaria","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Suco Natural Laranja","segment":"Bebidas","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Torta Holandesa Slice","segment":"Confeitaria","status":"OK","total":22.90}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"CUPOM FISCAL PDV #9042","Caixa 01 - Operador: Pascal POS");
-      pas.BVPascalDX.ReportSetCompany(rep,"BLAISE CAFÉ & BISTRÔ LTDA","POS");
-      pas.BVPascalDX.ReportSetHeader(rep,"CNPJ: 12.345.678/0001-99 | Bobina Térmica 80mm","Obrigado pela preferência! Volte sempre.");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"thermal-80mm");
-      pas.BVPascalDX.ReportSetColumns(rep,["customer:Item / Descrição:string:left:140","total:Subtotal:currency:right:70"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"TOTAL A PAGAR","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"QTD ITENS","id","count","integer");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Layout "Cupom Térmico PDV (80mm)" ativado para impressoras de recibo!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["loadInventoryPreset"] = function (_this) {
-      var mockJson = "";
-      var rep = undefined;
-      _this["activePreset"] = "inventory";
-      mockJson = "[" + '{"id":501,"customer":"Servidor Rack Dell PowerEdge R750","segment":"DataCenter","status":"Em Estoque","total":18500.00},' + '{"id":502,"customer":"Switch Cisco Catalyst 48 Portas 10G","segment":"Redes","status":"Em Estoque","total":6400.00},' + '{"id":503,"customer":"Storage NVMe Enterprise 64TB","segment":"Storage","status":"Crítico","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Segurança","status":"Em Estoque","total":4900.00}' + "]";
-      pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
-      rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
-      pas.BVPascalDX.ReportSetTitle(rep,"Auditoria Física de Ativos & Inventário","Relatório em Formato A4 Paisagem (Landscape)");
-      pas.BVPascalDX.ReportSetCompany(rep,"BlaiseVue Infraestrutura & DataCenter","INFRA");
-      pas.BVPascalDX.ReportSetHeader(rep,"Galpão Central SP | Auditoria Trimestral","Assinatura do Auditor Responsável");
-      pas.BVPascalDX.ReportSetPageLayout(rep,"a4-landscape");
-      pas.BVPascalDX.ReportSetColumns(rep,["id:Patrimônio:integer:center:80","customer:Equipamento / Ativo:string:left:220","segment:Setor:string:left:120","status:Situação:string:center:100","total:Valor Contábil:currency:right:120"]);
-      pas.BVPascalDX.ReportAddSummary(rep,"Patrimônio Total","total","sum","currency");
-      pas.BVPascalDX.ReportAddSummary(rep,"Média por Ativo","total","avg","currency");
-      _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Cenário "Auditoria de Estoque (A4 Paisagem)" carregado!';
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["addSampleInvoice"] = function (_this) {
-      var newId = 0;
-      newId = rtl.trunc(_this["nextInvoiceId"]);
-      _this["nextInvoiceId"] = newId + 1;
-      pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Novo Cliente Enterprise #" + pas.SysUtils.IntToStr(newId));
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"segment","Cloud Expansion");
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Pago");
-      pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
-      pas.BVPascalDX.DataSetPost(_this["salesDS"]);
-      _this["statusMessage"] = "Fatura #" + pas.SysUtils.IntToStr(newId) + " adicionada ao TBVDataSet! Totalizadores recalculados em tempo real.";
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["doExportPDF"] = function (_this) {
-      pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"relatorio_blaisevue_v5.pdf");
-      _this["statusMessage"] = "Download do PDF Vetorial 1.4 (relatorio_blaisevue_v5.pdf) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectPDF");
-    };
-    m["doExportExcel"] = function (_this) {
-      pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"relatorio_blaisevue_v5.xlsx");
-      _this["statusMessage"] = "Download da Planilha Excel (relatorio_blaisevue_v5.xlsx) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectExcel");
-    };
-    m["doExportCSV"] = function (_this) {
-      pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"relatorio_blaisevue_v5.csv");
-      _this["statusMessage"] = "Download do arquivo CSV UTF-8 com BOM (relatorio_blaisevue_v5.csv) iniciado!";
-      pas.BVPascalDX.CallMethod(_this,"inspectCSV");
-    };
-    m["inspectPDF"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
-    };
-    m["inspectExcel"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
-    };
-    m["inspectCSV"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["salesDS"] = pas.BVPascalDX.NewDataSet();
-      _this["nextInvoiceId"] = 1006;
-      pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["recordCount"] = function (_this) {
-      var Result = undefined;
-      Result = 0;
-      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
-        Result = this.salesDS.GetRecordCount();
-      };
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("reports-view-page",comp);
-  };
-});
 rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11586,42 +12068,6 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uUserProfile = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = "table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["id"] = "?";
-      d["tab"] = "(none)";
-      d["tema"] = "(none)";
-      d["nomeUsuario"] = "Standard User";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["userLevel"] = function (_this) {
-      var Result = undefined;
-      if (rtl.trunc(_this["id"]) > 50) {
-        Result = "Premium"}
-       else Result = "Basic";
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("user-profile-page",comp);
-  };
-});
 rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11657,14 +12103,14 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBVBubbleChart = function () {
+  this.Register_uBVPolarAreaChart = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <bv-chart type="bubble" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -11689,7 +12135,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
       this.$emit('chart-click', ev);
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
+    pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
 rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -11919,6 +12365,41 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVScatterChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+  };
+});
 rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11952,111 +12433,6 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
-  };
-});
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVLineChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-line-chart",comp);
-  };
-});
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPieChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
-  };
-});
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPolarAreaChart = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <bv-chart type="polarArea" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("data");
-    comp["defaultProps"]["data"] = null;
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "100%";
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "380px";
-    comp["props"].push("themeAware");
-    comp["defaultProps"]["themeAware"] = true;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('chart-click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
 rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12094,14 +12470,14 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
-  this.Register_uBVScatterChart = function () {
+  this.Register_uBVPieChart = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <bv-chart type="scatter" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["template"] = '  <bv-chart type="pie" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12126,7 +12502,1913 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
       this.$emit('chart-click', ev);
     };
     comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
+    pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
+  };
+});
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVLineChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="line" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-line-chart",comp);
+  };
+});
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBubbleChart = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <bv-chart type="bubble" :data="data" :options="options" :width="width" :height="height" :themeAware="themeAware" @chart-click="handleClick"></bv-chart>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("data");
+    comp["defaultProps"]["data"] = null;
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "380px";
+    comp["props"].push("themeAware");
+    comp["defaultProps"]["themeAware"] = true;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('chart-click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
+  };
+});
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bv-theme-select-wrapper d-inline-block">' + '    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">' + '      <option value="flatly">Flatly (Claro)</option>' + '      <option value="cosmo">Cosmo (Claro)</option>' + '      <option value="lux">Lux (Claro)</option>' + '      <option value="zephyr">Zephyr (Claro)</option>' + '      <option value="darkly">Darkly (Escuro)</option>' + '      <option value="cyborg">Cyborg (Escuro)</option>' + '      <option value="solar">Solar (Escuro)</option>' + '      <option value="vapor">Vapor (Neon)</option>' + '      <option value="pulse">Pulse (Roxo)</option>' + "    </select>" + "  </div>";
+    m = new Object();
+    m["onThemeChange"] = function (_this, e) {
+      var sel = "";
+      sel = "" + e["target"]["value"];
+      if (sel !== "") {
+        if (window.$theme) {
+          window.$theme.setTheme(sel);
+        };
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-select",comp);
+  };
+});
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVThemeToggle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    type="button"' + '    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"' + '    :title="$theme.isDark ? \'Tema Claro\' : \'Tema Escuro\'"' + '    @click="toggleTheme">' + '    <span v-if="$theme.isDark">☀️ Claro</span>' + '    <span v-if="!$theme.isDark">🌙 Escuro</span>' + "  </button>";
+    m = new Object();
+    m["toggleTheme"] = function (_this) {
+      if (window.$theme) {
+        window.$theme.toggleDarkLight();
+      };
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
+  };
+});
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVTabs = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["tabs"] = "";
+      d["activeTabId"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["selectTab"] = function (_this, id) {
+      this.activeTabId = id; 
+      this.$emit('change', id);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      this.tabs = [];
+    };
+    comp["provide"] = function (_this) {
+      var Result = null;
+      Result = new Object();
+      var self = this;
+      Result.registerTab = function(tab) {
+        if (!self.tabs) self.tabs = [];
+        var exists = false;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === tab.id) { exists = true; break; }
+        }
+        if (!exists) {
+          self.tabs.push(tab);
+          if (tab.active || !self.activeTabId || self.activeTabId === '') {
+            self.activeTabId = tab.id;
+          }
+        }
+      };
+      Result.unregisterTab = function(id) {
+        if (!self.tabs) return;
+        var idx = -1;
+        for (var i = 0; i < self.tabs.length; i++) {
+          if (self.tabs[i].id === id) { idx = i; break; }
+        }
+        if (idx !== -1) self.tabs.splice(idx, 1);
+      };
+      Result.isActive = function(id) {
+        return self.activeTabId === id;
+      };
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-tabs",comp);
+  };
+});
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVInput = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + "    <input " + '      :type="type || \'text\'" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder || \'\'"' + '      :value="value !== undefined && value !== null ? value : \'\'"' + '      :readonly="readonly && readonly !== \'false\'"' + '      @input="handleInput"' + "    />" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
+    comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("readonly");
+    comp["defaultProps"]["readonly"] = false;
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      let val = (ev && ev.target) ? ev.target.value : (ev || '');
+      this.value = val;
+      this.$emit('input', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-input",comp);
+  };
+});
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVProgress = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="barClass"' + '         :style="barStyle">' + '       <span v-if="showText">{{ value }}%</span>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = 0;
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = true;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["barClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      return 'bui-progress-bar bui-progress-' + v;
+      return Result;
+    };
+    comp["computed"]["barStyle"] = function (_this) {
+      var Result = undefined;
+      var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
+      return 'width: ' + pct + '%;';
+      return Result;
+    };
+    comp["computed"]["showText"] = function (_this) {
+      var Result = undefined;
+      return this.label !== false && this.label !== 'false';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-progress",comp);
+  };
+});
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDrawer = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-drawer-wrapper {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   z-index: 1050;   pointer-events: none;   visibility: hidden; } .bui-drawer-wrapper.is-open {   pointer-events: auto;   visibility: visible; } .bui-drawer-backdrop {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   background: rgba(0, 0, 0, 0.45);   backdrop-filter: blur(2px);   z-index: 1050;   opacity: 0;   transition: opacity 0.3s ease;   pointer-events: auto; } .bui-drawer-wrapper.is-open .bui-drawer-backdrop {   opacity: 1; } .bui-drawer {   position: fixed;   top: 0;   bottom: 0;   left: 0;   width: 280px;   max-width: 85vw;   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);   z-index: 1060;   display: flex;   flex-direction: column;   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);   box-sizing: border-box;   pointer-events: auto;   visibility: visible; } .bui-drawer-left {   left: 0;   right: auto;   transform: translateX(-100%); } .bui-drawer-left.is-open {   transform: translateX(0); } .bui-drawer-right {   left: auto;   right: 0;   transform: translateX(100%); } .bui-drawer-right.is-open {   transform: translateX(0); }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div :class="\'bui-drawer-wrapper\' + (isOpen ? \' is-open\' : \'\')">' + '    <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>' + '    <aside :class="\'bui-drawer bui-drawer-\' + (position || \'left\') + (isOpen ? \' is-open\' : \'\')" :style="\'width: \' + (width || \'280px\')">' + '      <div class="bui-drawer-header">' + '        <slot name="header">' + '          <strong class="bui-drawer-title">{{ title }}</strong>' + '          <button class="bui-drawer-close" type="button" @click="close">&times;</button>' + "        </slot>" + "      </div>" + '      <div class="bui-drawer-body">' + "        <slot></slot>" + "      </div>" + '      <div class="bui-drawer-footer" v-if="hasFooter">' + '        <slot name="footer"></slot>' + "      </div>" + "    </aside>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      d["position"] = "left";
+      d["width"] = "280px";
+      d["overlay"] = true;
+      d["hasFooter"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Menu";
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "280px";
+    comp["props"].push("position");
+    comp["defaultProps"]["position"] = "left";
+    comp["props"].push("overlay");
+    comp["defaultProps"]["overlay"] = true;
+    comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
+    m = new Object();
+    m["open"] = function (_this) {
+      _this["isOpen"] = true;
+      this.$emit('open');
+    };
+    m["close"] = function (_this) {
+      _this["isOpen"] = false;
+      this.$emit('close');
+    };
+    m["toggle"] = function (_this) {
+      _this["isOpen"] = !!(_this["isOpen"] == false);
+      if (!(_this["isOpen"] == false)) {
+        this.$emit('open');
+      } else {
+        this.$emit('close');
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if ((_this["show"] == true) || (_this["show"] == "true")) {
+        _this["isOpen"] = true}
+       else _this["isOpen"] = false;
+    };
+    pas.BVComponents.RegisterComponent("bv-drawer",comp);
+  };
+});
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBtn = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("outline");
+    comp["defaultProps"]["outline"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var isOut = Boolean(this.outline) || v.startsWith('outline-');
+      var cleanV = v.replace('outline-', '');
+      var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
+      var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
+      return 'bui-btn ' + variantClass + s;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-btn",comp);
+  };
+});
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVToast = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-toast {   position: fixed;   bottom: 20px;   right: 20px;   background: #1e293b;   color: #fff;   padding: 12px 20px;   border-radius: 6px;   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);   display: flex;   align-items: center;   gap: 10px;   z-index: 10000;   border-left: 4px solid var(--bui-primary, #42b883);   animation: bui-toast-slide 0.3s ease-out; } @media (max-width: 576px) {   .bui-toast {     bottom: 74px;     left: 16px;     right: 16px;     max-width: calc(100vw - 32px);     justify-content: space-between;   } } @keyframes bui-toast-slide {   from { transform: translateY(20px); opacity: 0; }   to { transform: translateY(0); opacity: 1; } }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="isVisible">' + '      <div class="bui-toast-content">' + '        <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "        <slot>{{ message }}</slot>" + "      </div>" + '      <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "    </div>" + "  </teleport>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("message");
+    comp["defaultProps"]["message"] = "";
+    comp["props"].push("duration");
+    comp["defaultProps"]["duration"] = 3000;
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "success";
+    m = new Object();
+    m["showToast"] = function (_this) {
+      _this["isOpen"] = true;
+      const dur = this.duration || 3000;
+      if (this._toastTimer) clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => {
+        this.isOpen = false;
+      }, dur);
+    };
+    m["show"] = function (_this) {
+      this.showToast();
+    };
+    m["dismiss"] = function (_this) {
+      _this["isOpen"] = false;
+      this.$emit('dismiss');
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isVisible"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.isOpen);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-toast",comp);
+  };
+});
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumb = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="bui-breadcrumb">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
+  };
+});
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVNavbar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("brand");
+    comp["defaultProps"]["brand"] = "BlaiseVue UI";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-navbar",comp);
+  };
+});
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVNavItem = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-nav-link {   cursor: pointer;   user-select: none; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <li class="bui-nav-item">' + '     <a class="bui-nav-link" :class="{ active: active }" :href="href || \'#\'" @click="handleClick">' + "        <slot>{{ label }}</slot>" + "     </a>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
+        if (ev && ev.preventDefault) ev.preventDefault();
+      }
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-nav-item",comp);
+  };
+});
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVListGroup = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <ul class="bui-list-group">' + "    <slot></slot>" + "  </ul>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-list-group",comp);
+  };
+});
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVFormSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <select class="bui-select" :value="value" @change="onChange">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    m = new Object();
+    m["onChange"] = function (_this, ev) {
+      var val = (ev && ev.target) ? ev.target.value : ev;
+      this.$emit('input', val); 
+      this.$emit('change', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-form-select",comp);
+  };
+});
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDataGrid = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["searchQuery"] = "";
+      d["sortKey"] = "";
+      d["sortAsc"] = true;
+      d["currentPage"] = 1;
+      d["pageSize"] = 5;
+      d["selectedRow"] = null;
+      d["virtualScrollTop"] = 0;
+      d["virtualViewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("dataset");
+    comp["defaultProps"]["dataset"] = null;
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("columns");
+    comp["defaultProps"]["columns"] = new Array();
+    comp["props"].push("virtualScroll");
+    comp["defaultProps"]["virtualScroll"] = false;
+    comp["props"].push("rowHeight");
+    comp["defaultProps"]["rowHeight"] = 40;
+    comp["props"].push("virtualHeight");
+    comp["defaultProps"]["virtualHeight"] = "400px";
+    comp["props"].push("virtualBuffer");
+    comp["defaultProps"]["virtualBuffer"] = 5;
+    m = new Object();
+    m["handleSearch"] = function (_this) {
+      _this["currentPage"] = 1;
+      _this["virtualScrollTop"] = 0;
+    };
+    m["handleTableScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.virtualScrollTop = e.target.scrollTop || 0;
+        this.virtualViewportHeight = e.target.clientHeight || 400;
+      };
+    };
+    m["sortBy"] = function (_this, key) {
+      if (_this["sortKey"] == key) {
+        _this["sortAsc"] = !!(_this["sortAsc"] == false)}
+       else {
+        _this["sortKey"] = key;
+        _this["sortAsc"] = true;
+      };
+    };
+    m["prevPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
+    };
+    m["nextPage"] = function (_this) {
+      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
+    };
+    m["selectRow"] = function (_this, row) {
+      var ds = this.dataset;
+      if (ds && row) {
+        if (row.id !== undefined && typeof ds.Locate === 'function') {
+          ds.Locate('id', row.id);
+        } else if (typeof ds.Locate === 'function') {
+          var keys = Object.keys(row);
+          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+        }
+        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
+      }
+      this.selectedRow = row;
+      if (typeof this.$emit === 'function') {
+        this.$emit('row-select', row);
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
+        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds) {
+        if (Array.isArray(ds.Data)) return ds.Data;
+        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+        if (Array.isArray(ds.FRecords)) return ds.FRecords;
+        if (Array.isArray(ds)) return ds;
+      }
+      return (this.items && Array.isArray(this.items)) ? this.items : [];
+      return Result;
+    };
+    comp["computed"]["resolvedColumns"] = function (_this) {
+      var Result = undefined;
+      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+        return this.columns;
+      }
+      var ds = this.dataset;
+      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+        return ds.Fields.ToArray();
+      }
+      var list = this.resolvedItems;
+      if (list && list.length > 0 && typeof list[0] === 'object') {
+        return Object.keys(list[0]).map(function(k) {
+          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+        });
+      }
+      return [];
+      return Result;
+    };
+    comp["computed"]["totalItems"] = function (_this) {
+      var Result = undefined;
+      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      return Result;
+    };
+    comp["computed"]["filteredItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
+      let q = (this.searchQuery || '').toLowerCase();
+      if (q) {
+        list = list.filter(function(item) {
+          return Object.values(item).some(function(v) {
+            return String(v).toLowerCase().indexOf(q) !== -1;
+          });
+        });
+      }
+      let sk = this.sortKey;
+      let asc = this.sortAsc;
+      if (sk) {
+        list.sort(function(a, b) {
+          let va = (a && a[sk] !== undefined) ? a[sk] : '';
+          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+          if (typeof va === 'number' && typeof vb === 'number') {
+            return asc ? (va - vb) : (vb - va);
+          }
+          let sa = String(va).toLowerCase();
+          let sb = String(vb).toLowerCase();
+          if (sa < sb) return asc ? -1 : 1;
+          if (sa > sb) return asc ? 1 : -1;
+          return 0;
+        });
+      }
+      return list;
+      return Result;
+    };
+    comp["computed"]["totalPages"] = function (_this) {
+      var Result = undefined;
+      let count = this.filteredItems.length;
+      Result = Math.max(1, Math.ceil(count / this.pageSize));
+      return Result;
+    };
+    comp["computed"]["pagedItems"] = function (_this) {
+      var Result = undefined;
+      var ds = this.dataset;
+      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+        var recNo = ds.RecNo;
+        if (this._lastRecNo === undefined) {
+          this._lastRecNo = recNo;
+        } else if (recNo !== this._lastRecNo) {
+          this._lastRecNo = recNo;
+          var targetPage = Math.ceil(recNo / this.pageSize);
+          if (targetPage > 0 && targetPage !== this.currentPage) {
+            this.currentPage = targetPage;
+          }
+        }
+      }
+      let list = this.filteredItems || [];
+      let start = (this.currentPage - 1) * this.pageSize;
+      return list.slice(start, start + this.pageSize);
+      return Result;
+    };
+    comp["computed"]["virtualStartIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["virtualEndIndex"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+      let vh = this.virtualViewportHeight || 400;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
+      Result = Math.min(count, idx);
+      return Result;
+    };
+    comp["computed"]["topSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      Result = this.virtualStartIndex * rh;
+      return Result;
+    };
+    comp["computed"]["bottomSpacerHeight"] = function (_this) {
+      var Result = undefined;
+      let rh = this.rowHeight || 40;
+      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+      let rendered = this.virtualEndIndex - this.virtualStartIndex;
+      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
+      Result = remaining * rh;
+      return Result;
+    };
+    comp["computed"]["displayRows"] = function (_this) {
+      var Result = undefined;
+      if (this.virtualScroll) {
+        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
+        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
+      }
+      return this.pagedItems;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-data-grid",comp);
+    pas.BVComponents.RegisterComponent("bv-datagrid",comp);
+  };
+});
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSpinner = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner\', \'bui-spinner-\' + (variant || \'primary\'), (small && small !== \'false\') ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("small");
+    comp["defaultProps"]["small"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-spinner",comp);
+  };
+});
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVContainer = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-container" :class="{ \'bui-container-fluid\': fluid }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("fluid");
+    comp["defaultProps"]["fluid"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-container",comp);
+  };
+});
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-badge" ' + '        :class="badgeClass">' + "    <slot></slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("pill");
+    comp["defaultProps"]["pill"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["badgeClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
+      return 'bui-badge bui-badge-' + v + p;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-badge",comp);
+  };
+});
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNav = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-bottom-nav">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
+  };
+});
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVListGroupItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <span><slot></slot></span>" + '    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>' + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("badge");
+    comp["defaultProps"]["badge"] = "";
+    comp["props"].push("badgeVariant");
+    comp["defaultProps"]["badgeVariant"] = "primary";
+    comp["props"].push("badgevariant");
+    comp["defaultProps"]["badgevariant"] = "primary";
+    m = new Object();
+    m["handleClick"] = function (_this) {
+      this.$emit('click');
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["resolvedBadgeVariant"] = function (_this) {
+      var Result = undefined;
+      return this.badgeVariant || this.badgevariant || 'primary';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
+  };
+});
+rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVVirtualScroll = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["scrollTop"] = 0;
+      d["viewportHeight"] = 400;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = new Array();
+    comp["props"].push("itemHeight");
+    comp["defaultProps"]["itemHeight"] = 40;
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "400px";
+    comp["props"].push("buffer");
+    comp["defaultProps"]["buffer"] = 5;
+    m = new Object();
+    m["handleScroll"] = function (_this, e) {
+      if (e && e.target) {
+        this.scrollTop = e.target.scrollTop || 0;
+        this.viewportHeight = e.target.clientHeight || 400;
+        if (typeof this.$emit === 'function') {
+          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
+        }
+      };
+    };
+    m["scrollToIndex"] = function (_this, idx) {
+      let ih = this.itemHeight || 40;
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = idx * ih;
+      };
+    };
+    m["scrollToTop"] = function (_this) {
+      if (this.$refs && this.$refs.viewport) {
+        this.$refs.viewport.scrollTop = 0;
+      };
+    };
+    comp["methods"] = m;
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.$refs && this.$refs.viewport) {
+        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["totalCount"] = function (_this) {
+      var Result = undefined;
+      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+      return Result;
+    };
+    comp["computed"]["totalHeight"] = function (_this) {
+      var Result = undefined;
+      Result = this.totalCount * (this.itemHeight || 40);
+      return Result;
+    };
+    comp["computed"]["startIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let idx = Math.floor(this.scrollTop / ih) - buf;
+      Result = Math.max(0, idx);
+      return Result;
+    };
+    comp["computed"]["endIndex"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      let buf = this.buffer !== undefined ? this.buffer : 5;
+      let vh = this.viewportHeight || 400;
+      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
+      Result = Math.min(this.totalCount, idx);
+      return Result;
+    };
+    comp["computed"]["offsetY"] = function (_this) {
+      var Result = undefined;
+      let ih = this.itemHeight || 40;
+      Result = this.startIndex * ih;
+      return Result;
+    };
+    comp["computed"]["visibleItems"] = function (_this) {
+      var Result = undefined;
+      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
+      return list.slice(this.startIndex, this.endIndex);
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
+    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
+  };
+});
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVPagination = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= total }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = 1;
+    comp["props"].push("total");
+    comp["defaultProps"]["total"] = 10;
+    m = new Object();
+    m["changePage"] = function (_this, p) {
+      if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
+        this.$emit('input', p); this.$emit('change', p);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["pages"] = function (_this) {
+      var Result = undefined;
+      var arr = [];
+      var tot = parseInt(this.total) || 1;
+      for (var i = 1; i <= tot; i++) arr.push(i);
+      return arr;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-pagination",comp);
+  };
+});
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-card">' + '    <div class="bui-card-header" b-if="title">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="bui-card-body">' + "      <slot></slot>" + "    </div>" + '    <div class="bui-card-footer" b-if="hasFooter">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("hasFooter");
+    comp["defaultProps"]["hasFooter"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-card",comp);
+  };
+});
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBottomNavItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <a :class="\'bui-bottom-nav-item\' + (active ? \' active\' : \'\')" :href="href" @click="handleClick">' + '    <span class="bui-bottom-nav-icon" v-if="icon">{{ icon }}</span>' + '    <span class="bui-bottom-nav-label">{{ label }}</span>' + "  </a>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["href"] = "#/";
+      d["label"] = "Item";
+      d["icon"] = "";
+      d["active"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#/";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "Item";
+    comp["props"].push("icon");
+    comp["defaultProps"]["icon"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, e) {
+      var target = (this && this.href) || (_this && _this.href);
+      if (!target && e && e.currentTarget) {
+        target = e.currentTarget.getAttribute('href');
+      }
+      if (target) {
+        if (target.indexOf('#') !== -1) {
+          if (e && e.preventDefault) e.preventDefault();
+          var hashPart = target.substring(target.indexOf('#'));
+          if (window.__BV_CORE__ && window.__BV_CORE__.router) {
+            window.__BV_CORE__.router.Push(hashPart.replace(/^#/, ''));
+          } else {
+            window.location.hash = hashPart;
+          }
+        } else {
+          window.location.href = target;
+        }
+      }
+      this.$emit('click', e);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      var self = this;
+      var updateActive = function() {
+        var curHash = window.location.hash || '#/';
+        if (self.href && self.href.indexOf('#') !== -1) {
+          var targetHash = self.href.substring(self.href.indexOf('#'));
+          self.active = (curHash === targetHash || (targetHash !== '#/' && curHash.indexOf(targetHash) === 0));
+        }
+      };
+      updateActive();
+      window.addEventListener('hashchange', updateActive);
+    };
+    pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
+  };
+});
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVRow = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-row" :class="rowClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("gutter");
+    comp["defaultProps"]["gutter"] = "md";
+    comp["props"].push("align");
+    comp["defaultProps"]["align"] = "";
+    comp["props"].push("justify");
+    comp["defaultProps"]["justify"] = "";
+    comp["props"].push("noGutters");
+    comp["defaultProps"]["noGutters"] = false;
+    comp["props"].push("nogutters");
+    comp["defaultProps"]["nogutters"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["rowClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      if (this.noGutters || this.nogutters || this.gutter === 'none') {
+        cls.push('bui-gutter-none');
+      } else if (this.gutter === 'sm') {
+        cls.push('bui-gutter-sm');
+      } else if (this.gutter === 'lg') {
+        cls.push('bui-gutter-lg');
+      } else {
+        cls.push('bui-gutter-md');
+      }
+      if (this.align) cls.push('bui-align-' + this.align);
+      if (this.justify) cls.push('bui-justify-' + this.justify);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-row",comp);
+  };
+});
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVInputGroup = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <slot>" + "         <input " + '           type="text" ' + '           class="bui-input-group-field" ' + '           :placeholder="placeholder || \'\'" ' + '           :value="value !== undefined && value !== null ? value : \'\'"' + '           @input="onInput"' + "         >" + "       </slot>" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("prepend");
+    comp["defaultProps"]["prepend"] = "";
+    comp["props"].push("append");
+    comp["defaultProps"]["append"] = "";
+    m = new Object();
+    m["onInput"] = function (_this, ev) {
+      var val = (ev && ev.target) ? ev.target.value : (ev || '');
+      this.$emit('input', val);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-input-group",comp);
+  };
+});
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCol = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-col" :class="colClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("cols");
+    comp["defaultProps"]["cols"] = "12";
+    comp["props"].push("sm");
+    comp["defaultProps"]["sm"] = "";
+    comp["props"].push("md");
+    comp["defaultProps"]["md"] = "";
+    comp["props"].push("lg");
+    comp["defaultProps"]["lg"] = "";
+    comp["props"].push("xl");
+    comp["defaultProps"]["xl"] = "";
+    comp["props"].push("offset");
+    comp["defaultProps"]["offset"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["colClass"] = function (_this) {
+      var Result = undefined;
+      var cls = [];
+      var c = this.cols || '12';
+      cls.push('bui-col-' + c);
+      if (this.sm) cls.push('bui-col-sm-' + this.sm);
+      if (this.md) cls.push('bui-col-md-' + this.md);
+      if (this.lg) cls.push('bui-col-lg-' + this.lg);
+      if (this.xl) cls.push('bui-col-xl-' + this.xl);
+      if (this.offset) cls.push('bui-offset-' + this.offset);
+      return cls.join(' ');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-col",comp);
+  };
+});
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVModal = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".bui-modal-backdrop {   position: fixed;   top: 0; left: 0; right: 0; bottom: 0;   background: rgba(0, 0, 0, 0.6);   display: flex;   align-items: center;   justify-content: center;   z-index: 9999;   backdrop-filter: blur(2px);   padding: 16px;   box-sizing: border-box; } .bui-modal-content {   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   border-radius: 8px;   width: 100%;   max-width: 520px;   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);   overflow: hidden;   animation: bui-scale-in 0.2s ease-out;   box-sizing: border-box; } @keyframes bui-scale-in {   from { transform: scale(0.95); opacity: 0; }   to { transform: scale(1); opacity: 1; } } .bui-modal-header {   padding: 14px 18px;   border-bottom: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: space-between;   align-items: center;   font-weight: 600;   font-size: 16px; } .bui-modal-close {   background: transparent;   border: none;   font-size: 22px;   line-height: 1;   cursor: pointer;   color: var(--bui-text-muted, #64748b);   padding: 0 4px; } .bui-modal-close:hover {   color: var(--bui-text, #1e293b); } .bui-modal-body {    padding: 18px;    max-height: 70vh;   overflow-y: auto; } .bui-modal-footer {   padding: 12px 18px;   border-top: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: flex-end;   gap: 10px;   background: var(--bui-card-footer-bg, #f8fafc); }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-show="isVisible" style="display: none;" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" type="button" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" type="button" @click="close">{{ computedCancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" type="button" @click="confirm">{{ computedOkLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Modal";
+    comp["props"].push("okLabel");
+    comp["defaultProps"]["okLabel"] = "Process";
+    comp["props"].push("oklabel");
+    comp["defaultProps"]["oklabel"] = "Process";
+    comp["props"].push("cancelLabel");
+    comp["defaultProps"]["cancelLabel"] = "Close";
+    comp["props"].push("cancellabel");
+    comp["defaultProps"]["cancellabel"] = "Close";
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = false;
+    m = new Object();
+    m["showModal"] = function (_this) {
+      this.isOpen = true;
+      this.show = true;
+    };
+    m["show"] = function (_this) {
+      this.isOpen = true;
+      this.show = true;
+    };
+    m["close"] = function (_this) {
+      this.isOpen = false;
+      this.show = false;
+      this.$emit('close');
+    };
+    m["confirm"] = function (_this) {
+      this.isOpen = false;
+      this.show = false;
+      this.$emit('ok');
+    };
+    m["handleBackdropClick"] = function (_this) {
+      this.close();
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.show === true || this.show === 'true') {
+        this.isOpen = true;
+      } else {
+        this.isOpen = false;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["isVisible"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.isOpen === true || this.show === true || this.show === 'true');
+      return Result;
+    };
+    comp["computed"]["computedOkLabel"] = function (_this) {
+      var Result = undefined;
+      return this.okLabel || this.oklabel || 'Process';
+      return Result;
+    };
+    comp["computed"]["computedCancelLabel"] = function (_this) {
+      var Result = undefined;
+      return this.cancelLabel || this.cancellabel || 'Close';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-modal",comp);
+  };
+});
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVBreadcrumbItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "#";
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
+  };
+});
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVTab = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "Tab";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+        this.registerTab(t);
+      };
+    };
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      if (typeof this.registerTab === 'function') {
+        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
+        this.registerTab(t);
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["active"] = function (_this) {
+      var Result = undefined;
+      if (typeof this.isActive === 'function') {
+        return Boolean(this.isActive(this.id));
+      }
+      return true;
+      return Result;
+    };
+    comp["inject"] = new Array();
+    comp["inject"].push("registerTab");
+    comp["inject"].push("isActive");
+    pas.BVComponents.RegisterComponent("bv-tab",comp);
+  };
+});
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAlert = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-alert" ' + '       :class="\'bui-alert-\' + variant" ' + '       role="alert"' + '       b-if="visible">' + '    <div class="bui-alert-content">' + "      <slot></slot>" + "    </div>" + '    <button type="button" ' + '            class="bui-alert-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close">' + "      ×" + "    </button>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["visible"] = true;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("dismissible");
+    comp["defaultProps"]["dismissible"] = false;
+    comp["props"].push("show");
+    comp["defaultProps"]["show"] = true;
+    m = new Object();
+    m["close"] = function (_this) {
+      _this["visible"] = false;
+      this.$emit('close');
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["visible"] = !(_this["show"] == false);
+    };
+    pas.BVComponents.RegisterComponent("bv-alert",comp);
+  };
+});
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVAccordion = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-accordion">' + '    <div class="bui-accordion-item" b-for="item in items">' + '      <h3 class="bui-accordion-header">' + '        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ active: activeId == item.id }">' + "          {{ item.title }}" + "        </button>" + "      </h3>" + '      <div class="bui-accordion-body" b-show="activeId == item.id">' + "        {{ item.content }}" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["activeId"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("items");
+    comp["defaultProps"]["items"] = null;
+    comp["props"].push("initialActiveId");
+    comp["defaultProps"]["initialActiveId"] = "";
+    comp["props"].push("initialactiveid");
+    comp["defaultProps"]["initialactiveid"] = "";
+    m = new Object();
+    m["toggle"] = function (_this, id) {
+      if (this.activeId === id) {
+        this.activeId = '';
+      } else {
+        this.activeId = id;
+      };
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      this.activeId = String(this.initialActiveId || this.initialactiveid || '');
+    };
+    pas.BVComponents.RegisterComponent("bv-accordion",comp);
+  };
+});
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIcon = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("name");
+    comp["defaultProps"]["name"] = "check-circle";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "16";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-icon",comp);
+  };
+});
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonBadge = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <span class="bui-ion-badge" :class="\'bui-ion-badge-\' + color">' + "    <slot>{{ value }}</slot>" + "  </span>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
+  };
+});
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonHeader = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <header class="bui-ion-header">' + "    <slot></slot>" + "  </header>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-header",comp);
+  };
+});
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonCard = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-card">' + '    <div class="bui-ion-card-header" b-if="title || subtitle">' + '      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>' + '      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>' + "    </div>" + '    <div class="bui-ion-card-content">' + "      <slot></slot>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-card",comp);
+  };
+});
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonToolbar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-toolbar">' + '    <div class="bui-ion-toolbar-start">' + '      <slot name="start"></slot>' + "    </div>" + "    <slot></slot>" + '    <div class="bui-ion-toolbar-end">' + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
+  };
+});
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div :class="wrapperClass">' + '    <div class="bui-ion-item" @click="handleClick">' + '      <div class="bui-ion-item-start" b-if="hasStart">' + '        <slot name="start"></slot>' + "      </div>" + '      <div class="bui-ion-item-content">' + '        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>' + '        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>' + "        <slot></slot>" + "      </div>" + '      <div class="bui-ion-item-end">' + '        <slot name="end"></slot>' + '        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>' + "      </div>" + "    </div>" + '    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">' + '      <slot name="expanded"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isExpanded"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    comp["props"].push("subtitle");
+    comp["defaultProps"]["subtitle"] = "";
+    comp["props"].push("detail");
+    comp["defaultProps"]["detail"] = false;
+    comp["props"].push("expandable");
+    comp["defaultProps"]["expandable"] = false;
+    comp["props"].push("expanded");
+    comp["defaultProps"]["expanded"] = false;
+    comp["props"].push("hasStart");
+    comp["defaultProps"]["hasStart"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (this.expandable === true || this.expandable === 'true') {
+        this.isExpanded = !this.isExpanded;
+        this.$emit('toggle', { expanded: this.isExpanded });
+      }
+      this.$emit('click', ev);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      if (this.expanded === true || this.expanded === 'true') {
+        this.isExpanded = true;
+      };
+    };
+    comp["computed"] = new Object();
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
+      var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
+      return 'bui-ion-item-wrapper' + exp + open;
+      return Result;
+    };
+    comp["computed"]["detailClass"] = function (_this) {
+      var Result = undefined;
+      var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
+      return 'bui-ion-item-detail' + rot;
+      return Result;
+    };
+    comp["computed"]["showDetail"] = function (_this) {
+      var Result = undefined;
+      var d = Boolean(this.detail === true || this.detail === 'true');
+      var e = Boolean(this.expandable === true || this.expandable === 'true');
+      return d || e;
+      return Result;
+    };
+    comp["computed"]["isContentVisible"] = function (_this) {
+      var Result = undefined;
+      var exp = Boolean(this.expandable === true || this.expandable === 'true');
+      var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
+      return exp && open;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-item",comp);
+  };
+});
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabBar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <nav class="bui-ion-tab-bar">' + "    <slot></slot>" + "  </nav>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
+  };
+});
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-tab-button"' + '    :class="{ \'is-active\': active }"' + '    @click="handleClick">' + '    <slot name="icon"></slot>' + '    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>' + '    <slot name="badge"></slot>' + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("tab");
+    comp["defaultProps"]["tab"] = "";
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
+  };
+});
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTitle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <h1 class="bui-ion-title">' + "    <slot>{{ title }}</slot>" + "  </h1>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("title");
+    comp["defaultProps"]["title"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-title",comp);
+  };
+});
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonTabs = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-tabs">' + '    <div class="bui-ion-tab-content">' + "      <slot></slot>" + "    </div>" + '    <slot name="bottom"></slot>' + "  </div>";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
+  };
+});
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonList = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-list" :class="{ \'bui-ion-list-inset\': inset }">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("inset");
+    comp["defaultProps"]["inset"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-list",comp);
+  };
+});
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonApp = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-app" :class="appClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("mode");
+    comp["defaultProps"]["mode"] = "";
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["appClass"] = function (_this) {
+      var Result = undefined;
+      var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
+      return 'ionic-mode-' + m;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-app",comp);
+  };
+});
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonContent = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <main class="bui-ion-content" :class="{ \'bui-ion-content-padding\': padding }">' + "    <slot></slot>" + "  </main>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("padding");
+    comp["defaultProps"]["padding"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("bv-ion-content",comp);
+  };
+});
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    class="bui-ion-btn"' + '    :class="btnClass"' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("fill");
+    comp["defaultProps"]["fill"] = "solid";
+    comp["props"].push("expand");
+    comp["defaultProps"]["expand"] = "";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+      if (!isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var f = this.fill || 'solid';
+      var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
+      return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
 rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -12437,1843 +14719,7 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVAccordion = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-accordion">' + '    <div class="bui-accordion-item" b-for="item in items">' + '      <h3 class="bui-accordion-header">' + '        <button class="bui-accordion-button" type="button" @click="toggle(item.id)" ' + '                :class="{ active: activeId == item.id }">' + "          {{ item.title }}" + "        </button>" + "      </h3>" + '      <div class="bui-accordion-body" b-show="activeId == item.id">' + "        {{ item.content }}" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["activeId"] = "";
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = null;
-    comp["props"].push("initialActiveId");
-    comp["defaultProps"]["initialActiveId"] = "";
-    comp["props"].push("initialactiveid");
-    comp["defaultProps"]["initialactiveid"] = "";
-    m = new Object();
-    m["toggle"] = function (_this, id) {
-      if (this.activeId === id) {
-        this.activeId = '';
-      } else {
-        this.activeId = id;
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      this.activeId = String(this.initialActiveId || this.initialactiveid || '');
-    };
-    pas.BVComponents.RegisterComponent("bv-accordion",comp);
-  };
-});
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVAlert = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-alert" ' + '       :class="\'bui-alert-\' + variant" ' + '       role="alert"' + '       b-if="visible">' + '    <div class="bui-alert-content">' + "      <slot></slot>" + "    </div>" + '    <button type="button" ' + '            class="bui-alert-close" ' + '            b-if="dismissible" ' + '            @click="close" ' + '            aria-label="Close">' + "      ×" + "    </button>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["visible"] = true;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("dismissible");
-    comp["defaultProps"]["dismissible"] = false;
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = true;
-    m = new Object();
-    m["close"] = function (_this) {
-      _this["visible"] = false;
-      this.$emit('close');
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      _this["visible"] = !(_this["show"] == false);
-    };
-    pas.BVComponents.RegisterComponent("bv-alert",comp);
-  };
-});
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBadge = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-badge" ' + '        :class="badgeClass">' + "    <slot></slot>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("pill");
-    comp["defaultProps"]["pill"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["badgeClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      var p = (this.pill && this.pill !== 'false') ? ' bui-badge-pill' : '';
-      return 'bui-badge bui-badge-' + v + p;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-badge",comp);
-  };
-});
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBottomNav = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-bottom-nav">' + "    <slot></slot>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
-  };
-});
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBottomNavItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <a :class="\'bui-bottom-nav-item\' + (active ? \' active\' : \'\')" :href="href" @click="handleClick">' + '    <span class="bui-bottom-nav-icon" v-if="icon">{{ icon }}</span>' + '    <span class="bui-bottom-nav-label">{{ label }}</span>' + "  </a>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["href"] = "#/";
-      d["label"] = "Item";
-      d["icon"] = "";
-      d["active"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "#/";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "Item";
-    comp["props"].push("icon");
-    comp["defaultProps"]["icon"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, e) {
-      var target = (this && this.href) || (_this && _this.href);
-      if (!target && e && e.currentTarget) {
-        target = e.currentTarget.getAttribute('href');
-      }
-      if (target) {
-        if (target.indexOf('#') !== -1) {
-          if (e && e.preventDefault) e.preventDefault();
-          var hashPart = target.substring(target.indexOf('#'));
-          if (window.__BV_CORE__ && window.__BV_CORE__.router) {
-            window.__BV_CORE__.router.Push(hashPart.replace(/^#/, ''));
-          } else {
-            window.location.hash = hashPart;
-          }
-        } else {
-          window.location.href = target;
-        }
-      }
-      this.$emit('click', e);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      var self = this;
-      var updateActive = function() {
-        var curHash = window.location.hash || '#/';
-        if (self.href && self.href.indexOf('#') !== -1) {
-          var targetHash = self.href.substring(self.href.indexOf('#'));
-          self.active = (curHash === targetHash || (targetHash !== '#/' && curHash.indexOf(targetHash) === 0));
-        }
-      };
-      updateActive();
-      window.addEventListener('hashchange', updateActive);
-    };
-    pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
-  };
-});
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBreadcrumb = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav aria-label="breadcrumb">' + '    <ol class="bui-breadcrumb">' + "      <slot></slot>" + "    </ol>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
-  };
-});
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBreadcrumbItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "#";
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
-  };
-});
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVBtn = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button " + '    class="bui-btn" ' + '    :class="btnClass" ' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("size");
-    comp["defaultProps"]["size"] = "md";
-    comp["props"].push("disabled");
-    comp["defaultProps"]["disabled"] = false;
-    comp["props"].push("outline");
-    comp["defaultProps"]["outline"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
-      if (!isDisabled) {
-        this.$emit('click', ev);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["btnClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      var isOut = Boolean(this.outline) || v.startsWith('outline-');
-      var cleanV = v.replace('outline-', '');
-      var s = this.size ? (' bui-btn-' + this.size) : ' bui-btn-md';
-      var variantClass = isOut ? ('bui-btn-outline-' + cleanV) : ('bui-btn-' + cleanV);
-      return 'bui-btn ' + variantClass + s;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-btn",comp);
-  };
-});
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVCard = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-card">' + '    <div class="bui-card-header" b-if="title">' + '      <slot name="header">{{ title }}</slot>' + "    </div>" + '    <div class="bui-card-body">' + "      <slot></slot>" + "    </div>" + '    <div class="bui-card-footer" b-if="hasFooter">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("hasFooter");
-    comp["defaultProps"]["hasFooter"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-card",comp);
-  };
-});
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVCol = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-col" :class="colClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("cols");
-    comp["defaultProps"]["cols"] = "12";
-    comp["props"].push("sm");
-    comp["defaultProps"]["sm"] = "";
-    comp["props"].push("md");
-    comp["defaultProps"]["md"] = "";
-    comp["props"].push("lg");
-    comp["defaultProps"]["lg"] = "";
-    comp["props"].push("xl");
-    comp["defaultProps"]["xl"] = "";
-    comp["props"].push("offset");
-    comp["defaultProps"]["offset"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["colClass"] = function (_this) {
-      var Result = undefined;
-      var cls = [];
-      var c = this.cols || '12';
-      cls.push('bui-col-' + c);
-      if (this.sm) cls.push('bui-col-sm-' + this.sm);
-      if (this.md) cls.push('bui-col-md-' + this.md);
-      if (this.lg) cls.push('bui-col-lg-' + this.lg);
-      if (this.xl) cls.push('bui-col-xl-' + this.xl);
-      if (this.offset) cls.push('bui-offset-' + this.offset);
-      return cls.join(' ');
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-col",comp);
-  };
-});
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVContainer = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-container" :class="{ \'bui-container-fluid\': fluid }">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("fluid");
-    comp["defaultProps"]["fluid"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-container",comp);
-  };
-});
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVDataGrid = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-datagrid-container">' + '    <div class="bui-datagrid-toolbar">' + "      <input " + '        type="text" ' + '        class="bui-datagrid-search" ' + '        placeholder="Buscar..." ' + '        b-model="searchQuery" ' + '        @input="handleSearch"' + "      />" + "      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>" + "    </div>" + "" + "    <div " + '      class="bui-datagrid-table-wrap" ' + '      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: \'auto\', position: \'relative\' } : {}"' + '      @scroll="handleTableScroll"' + '      b-ref="tableWrap"' + "    >" + '      <table class="bui-datagrid-table">' + "        <thead>" + "          <tr>" + '            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">' + "              {{ col.label }}" + "            </th>" + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "          <tr " + '            b-for="row in displayRows" ' + '            @click="selectRow(row)" ' + '            :class="{ \'bui-row-selected\': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"' + '            :style="virtualScroll ? { height: rowHeight + \'px\' } : {}"' + "          >" + '            <td b-for="col in resolvedColumns">' + '              <slot name="cell" :row="row" :column="col" :value="row[col.key]">' + "                {{ row[col.key] }}" + "              </slot>" + "            </td>" + "          </tr>" + '          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + \'px\' }">' + '            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>' + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + '    <div v-if="!virtualScroll" class="bui-datagrid-pagination">' + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>' + "      <span>Página {{ currentPage }} de {{ totalPages }}</span>" + '      <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["searchQuery"] = "";
-      d["sortKey"] = "";
-      d["sortAsc"] = true;
-      d["currentPage"] = 1;
-      d["pageSize"] = 5;
-      d["selectedRow"] = null;
-      d["virtualScrollTop"] = 0;
-      d["virtualViewportHeight"] = 400;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("dataset");
-    comp["defaultProps"]["dataset"] = null;
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = new Array();
-    comp["props"].push("columns");
-    comp["defaultProps"]["columns"] = new Array();
-    comp["props"].push("virtualScroll");
-    comp["defaultProps"]["virtualScroll"] = false;
-    comp["props"].push("rowHeight");
-    comp["defaultProps"]["rowHeight"] = 40;
-    comp["props"].push("virtualHeight");
-    comp["defaultProps"]["virtualHeight"] = "400px";
-    comp["props"].push("virtualBuffer");
-    comp["defaultProps"]["virtualBuffer"] = 5;
-    m = new Object();
-    m["handleSearch"] = function (_this) {
-      _this["currentPage"] = 1;
-      _this["virtualScrollTop"] = 0;
-    };
-    m["handleTableScroll"] = function (_this, e) {
-      if (e && e.target) {
-        this.virtualScrollTop = e.target.scrollTop || 0;
-        this.virtualViewportHeight = e.target.clientHeight || 400;
-      };
-    };
-    m["sortBy"] = function (_this, key) {
-      if (_this["sortKey"] == key) {
-        _this["sortAsc"] = !!(_this["sortAsc"] == false)}
-       else {
-        _this["sortKey"] = key;
-        _this["sortAsc"] = true;
-      };
-    };
-    m["prevPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) > 1) _this["currentPage"] = rtl.trunc(_this["currentPage"]) - 1;
-    };
-    m["nextPage"] = function (_this) {
-      if (rtl.trunc(_this["currentPage"]) < rtl.trunc(_this["totalPages"])) _this["currentPage"] = rtl.trunc(_this["currentPage"]) + 1;
-    };
-    m["selectRow"] = function (_this, row) {
-      var ds = this.dataset;
-      if (ds && row) {
-        if (row.id !== undefined && typeof ds.Locate === 'function') {
-          ds.Locate('id', row.id);
-        } else if (typeof ds.Locate === 'function') {
-          var keys = Object.keys(row);
-          if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
-        }
-        if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
-      }
-      this.selectedRow = row;
-      if (typeof this.$emit === 'function') {
-        this.$emit('row-select', row);
-      };
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
-        this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["resolvedItems"] = function (_this) {
-      var Result = undefined;
-      var ds = this.dataset;
-      if (ds) {
-        if (Array.isArray(ds.Data)) return ds.Data;
-        if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
-        if (Array.isArray(ds.FRecords)) return ds.FRecords;
-        if (Array.isArray(ds)) return ds;
-      }
-      return (this.items && Array.isArray(this.items)) ? this.items : [];
-      return Result;
-    };
-    comp["computed"]["resolvedColumns"] = function (_this) {
-      var Result = undefined;
-      if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
-        return this.columns;
-      }
-      var ds = this.dataset;
-      if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
-        return ds.Fields.ToArray();
-      }
-      var list = this.resolvedItems;
-      if (list && list.length > 0 && typeof list[0] === 'object') {
-        return Object.keys(list[0]).map(function(k) {
-          return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
-        });
-      }
-      return [];
-      return Result;
-    };
-    comp["computed"]["totalItems"] = function (_this) {
-      var Result = undefined;
-      Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      return Result;
-    };
-    comp["computed"]["filteredItems"] = function (_this) {
-      var Result = undefined;
-      let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
-      let q = (this.searchQuery || '').toLowerCase();
-      if (q) {
-        list = list.filter(function(item) {
-          return Object.values(item).some(function(v) {
-            return String(v).toLowerCase().indexOf(q) !== -1;
-          });
-        });
-      }
-      let sk = this.sortKey;
-      let asc = this.sortAsc;
-      if (sk) {
-        list.sort(function(a, b) {
-          let va = (a && a[sk] !== undefined) ? a[sk] : '';
-          let vb = (b && b[sk] !== undefined) ? b[sk] : '';
-          if (typeof va === 'number' && typeof vb === 'number') {
-            return asc ? (va - vb) : (vb - va);
-          }
-          let sa = String(va).toLowerCase();
-          let sb = String(vb).toLowerCase();
-          if (sa < sb) return asc ? -1 : 1;
-          if (sa > sb) return asc ? 1 : -1;
-          return 0;
-        });
-      }
-      return list;
-      return Result;
-    };
-    comp["computed"]["totalPages"] = function (_this) {
-      var Result = undefined;
-      let count = this.filteredItems.length;
-      Result = Math.max(1, Math.ceil(count / this.pageSize));
-      return Result;
-    };
-    comp["computed"]["pagedItems"] = function (_this) {
-      var Result = undefined;
-      var ds = this.dataset;
-      if (ds && ds.RecNo > 0 && this.pageSize > 0) {
-        var recNo = ds.RecNo;
-        if (this._lastRecNo === undefined) {
-          this._lastRecNo = recNo;
-        } else if (recNo !== this._lastRecNo) {
-          this._lastRecNo = recNo;
-          var targetPage = Math.ceil(recNo / this.pageSize);
-          if (targetPage > 0 && targetPage !== this.currentPage) {
-            this.currentPage = targetPage;
-          }
-        }
-      }
-      let list = this.filteredItems || [];
-      let start = (this.currentPage - 1) * this.pageSize;
-      return list.slice(start, start + this.pageSize);
-      return Result;
-    };
-    comp["computed"]["virtualStartIndex"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
-      let idx = Math.floor(this.virtualScrollTop / rh) - buf;
-      Result = Math.max(0, idx);
-      return Result;
-    };
-    comp["computed"]["virtualEndIndex"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
-      let vh = this.virtualViewportHeight || 400;
-      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
-      Result = Math.min(count, idx);
-      return Result;
-    };
-    comp["computed"]["topSpacerHeight"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      Result = this.virtualStartIndex * rh;
-      return Result;
-    };
-    comp["computed"]["bottomSpacerHeight"] = function (_this) {
-      var Result = undefined;
-      let rh = this.rowHeight || 40;
-      let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
-      let rendered = this.virtualEndIndex - this.virtualStartIndex;
-      let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
-      Result = remaining * rh;
-      return Result;
-    };
-    comp["computed"]["displayRows"] = function (_this) {
-      var Result = undefined;
-      if (this.virtualScroll) {
-        let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
-        return list.slice(this.virtualStartIndex, this.virtualEndIndex);
-      }
-      return this.pagedItems;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-data-grid",comp);
-    pas.BVComponents.RegisterComponent("bv-datagrid",comp);
-  };
-});
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVDrawer = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-drawer-wrapper {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   z-index: 1050;   pointer-events: none;   visibility: hidden; } .bui-drawer-wrapper.is-open {   pointer-events: auto;   visibility: visible; } .bui-drawer-backdrop {   position: fixed;   top: 0;   left: 0;   width: 100vw;   height: 100vh;   background: rgba(0, 0, 0, 0.45);   backdrop-filter: blur(2px);   z-index: 1050;   opacity: 0;   transition: opacity 0.3s ease;   pointer-events: auto; } .bui-drawer-wrapper.is-open .bui-drawer-backdrop {   opacity: 1; } .bui-drawer {   position: fixed;   top: 0;   bottom: 0;   left: 0;   width: 280px;   max-width: 85vw;   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);   z-index: 1060;   display: flex;   flex-direction: column;   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);   box-sizing: border-box;   pointer-events: auto;   visibility: visible; } .bui-drawer-left {   left: 0;   right: auto;   transform: translateX(-100%); } .bui-drawer-left.is-open {   transform: translateX(0); } .bui-drawer-right {   left: auto;   right: 0;   transform: translateX(100%); } .bui-drawer-right.is-open {   transform: translateX(0); }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div :class="\'bui-drawer-wrapper\' + (isOpen ? \' is-open\' : \'\')">' + '    <div class="bui-drawer-backdrop" v-if="isOpen && overlay" @click="close"></div>' + '    <aside :class="\'bui-drawer bui-drawer-\' + (position || \'left\') + (isOpen ? \' is-open\' : \'\')" :style="\'width: \' + (width || \'280px\')">' + '      <div class="bui-drawer-header">' + '        <slot name="header">' + '          <strong class="bui-drawer-title">{{ title }}</strong>' + '          <button class="bui-drawer-close" type="button" @click="close">&times;</button>' + "        </slot>" + "      </div>" + '      <div class="bui-drawer-body">' + "        <slot></slot>" + "      </div>" + '      <div class="bui-drawer-footer" v-if="hasFooter">' + '        <slot name="footer"></slot>' + "      </div>" + "    </aside>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      d["position"] = "left";
-      d["width"] = "280px";
-      d["overlay"] = true;
-      d["hasFooter"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Menu";
-    comp["props"].push("width");
-    comp["defaultProps"]["width"] = "280px";
-    comp["props"].push("position");
-    comp["defaultProps"]["position"] = "left";
-    comp["props"].push("overlay");
-    comp["defaultProps"]["overlay"] = true;
-    comp["props"].push("hasFooter");
-    comp["defaultProps"]["hasFooter"] = false;
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = false;
-    m = new Object();
-    m["open"] = function (_this) {
-      _this["isOpen"] = true;
-      this.$emit('open');
-    };
-    m["close"] = function (_this) {
-      _this["isOpen"] = false;
-      this.$emit('close');
-    };
-    m["toggle"] = function (_this) {
-      _this["isOpen"] = !!(_this["isOpen"] == false);
-      if (!(_this["isOpen"] == false)) {
-        this.$emit('open');
-      } else {
-        this.$emit('close');
-      };
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if ((_this["show"] == true) || (_this["show"] == "true")) {
-        _this["isOpen"] = true}
-       else _this["isOpen"] = false;
-    };
-    pas.BVComponents.RegisterComponent("bv-drawer",comp);
-  };
-});
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVFormSelect = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <select class="bui-select" :value="value" @change="onChange">' + '       <option b-for="opt in options" :value="opt.value">{{ opt.text }}</option>' + "    </select>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("options");
-    comp["defaultProps"]["options"] = null;
-    m = new Object();
-    m["onChange"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : ev;
-      this.$emit('input', val); 
-      this.$emit('change', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-form-select",comp);
-  };
-});
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIcon = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("name");
-    comp["defaultProps"]["name"] = "check-circle";
-    comp["props"].push("size");
-    comp["defaultProps"]["size"] = "16";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-icon",comp);
-  };
-});
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVInput = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + "    <input " + '      :type="type || \'text\'" ' + '      class="bui-input-field" ' + '      :placeholder="placeholder || \'\'"' + '      :value="value !== undefined && value !== null ? value : \'\'"' + '      :readonly="readonly && readonly !== \'false\'"' + '      @input="handleInput"' + "    />" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("placeholder");
-    comp["defaultProps"]["placeholder"] = "";
-    comp["props"].push("type");
-    comp["defaultProps"]["type"] = "text";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("readonly");
-    comp["defaultProps"]["readonly"] = false;
-    m = new Object();
-    m["handleInput"] = function (_this, ev) {
-      let val = (ev && ev.target) ? ev.target.value : (ev || '');
-      this.value = val;
-      this.$emit('input', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-input",comp);
-  };
-});
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVInputGroup = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-input-group">' + '    <label class="bui-input-label" v-if="label">{{ label }}</label>' + '    <div class="bui-input-group-row">' + '       <span class="bui-input-addon bui-input-addon-prepend" v-if="prepend">{{ prepend }}</span>' + "       <slot>" + "         <input " + '           type="text" ' + '           class="bui-input-group-field" ' + '           :placeholder="placeholder || \'\'" ' + '           :value="value !== undefined && value !== null ? value : \'\'"' + '           @input="onInput"' + "         >" + "       </slot>" + '       <span class="bui-input-addon bui-input-addon-append" v-if="append">{{ append }}</span>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("placeholder");
-    comp["defaultProps"]["placeholder"] = "";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    comp["props"].push("prepend");
-    comp["defaultProps"]["prepend"] = "";
-    comp["props"].push("append");
-    comp["defaultProps"]["append"] = "";
-    m = new Object();
-    m["onInput"] = function (_this, ev) {
-      var val = (ev && ev.target) ? ev.target.value : (ev || '');
-      this.$emit('input', val);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-input-group",comp);
-  };
-});
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVListGroup = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <ul class="bui-list-group">' + "    <slot></slot>" + "  </ul>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-list-group",comp);
-  };
-});
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVListGroupItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <li class="bui-list-group-item" ' + '      :class="{ active: active }"' + '      @click="handleClick">' + "    <span><slot></slot></span>" + '    <bv-badge v-if="badge" :variant="resolvedBadgeVariant">{{ badge }}</bv-badge>' + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("badge");
-    comp["defaultProps"]["badge"] = "";
-    comp["props"].push("badgeVariant");
-    comp["defaultProps"]["badgeVariant"] = "primary";
-    comp["props"].push("badgevariant");
-    comp["defaultProps"]["badgevariant"] = "primary";
-    m = new Object();
-    m["handleClick"] = function (_this) {
-      this.$emit('click');
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["resolvedBadgeVariant"] = function (_this) {
-      var Result = undefined;
-      return this.badgeVariant || this.badgevariant || 'primary';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
-  };
-});
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVModal = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-modal-backdrop {   position: fixed;   top: 0; left: 0; right: 0; bottom: 0;   background: rgba(0, 0, 0, 0.6);   display: flex;   align-items: center;   justify-content: center;   z-index: 9999;   backdrop-filter: blur(2px);   padding: 16px;   box-sizing: border-box; } .bui-modal-content {   background: var(--bui-card-bg, #fff);   color: var(--bui-text, #1e293b);   border-radius: 8px;   width: 100%;   max-width: 520px;   box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);   overflow: hidden;   animation: bui-scale-in 0.2s ease-out;   box-sizing: border-box; } @keyframes bui-scale-in {   from { transform: scale(0.95); opacity: 0; }   to { transform: scale(1); opacity: 1; } } .bui-modal-header {   padding: 14px 18px;   border-bottom: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: space-between;   align-items: center;   font-weight: 600;   font-size: 16px; } .bui-modal-close {   background: transparent;   border: none;   font-size: 22px;   line-height: 1;   cursor: pointer;   color: var(--bui-text-muted, #64748b);   padding: 0 4px; } .bui-modal-close:hover {   color: var(--bui-text, #1e293b); } .bui-modal-body {    padding: 18px;    max-height: 70vh;   overflow-y: auto; } .bui-modal-footer {   padding: 12px 18px;   border-top: 1px solid var(--bui-border, #e2e8f0);   display: flex;   justify-content: flex-end;   gap: 10px;   background: var(--bui-card-footer-bg, #f8fafc); }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-modal-backdrop" b-show="isVisible" style="display: none;" @click="handleBackdropClick">' + '      <div class="bui-modal-content" @click.stop="">' + '        <div class="bui-modal-header">' + "          <span>{{ title }}</span>" + '          <button class="bui-modal-close" type="button" @click="close">&times;</button>' + "        </div>" + '        <div class="bui-modal-body">' + "          <slot></slot>" + "        </div>" + '        <div class="bui-modal-footer">' + '          <slot name="footer">' + '            <button class="bui-btn bui-btn-secondary" type="button" @click="close">{{ computedCancelLabel }}</button>' + '            <button class="bui-btn bui-btn-primary" type="button" @click="confirm">{{ computedOkLabel }}</button>' + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </teleport>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Modal";
-    comp["props"].push("okLabel");
-    comp["defaultProps"]["okLabel"] = "Process";
-    comp["props"].push("oklabel");
-    comp["defaultProps"]["oklabel"] = "Process";
-    comp["props"].push("cancelLabel");
-    comp["defaultProps"]["cancelLabel"] = "Close";
-    comp["props"].push("cancellabel");
-    comp["defaultProps"]["cancellabel"] = "Close";
-    comp["props"].push("show");
-    comp["defaultProps"]["show"] = false;
-    m = new Object();
-    m["showModal"] = function (_this) {
-      this.isOpen = true;
-      this.show = true;
-    };
-    m["show"] = function (_this) {
-      this.isOpen = true;
-      this.show = true;
-    };
-    m["close"] = function (_this) {
-      this.isOpen = false;
-      this.show = false;
-      this.$emit('close');
-    };
-    m["confirm"] = function (_this) {
-      this.isOpen = false;
-      this.show = false;
-      this.$emit('ok');
-    };
-    m["handleBackdropClick"] = function (_this) {
-      this.close();
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.show === true || this.show === 'true') {
-        this.isOpen = true;
-      } else {
-        this.isOpen = false;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["isVisible"] = function (_this) {
-      var Result = undefined;
-      return Boolean(this.isOpen === true || this.show === true || this.show === 'true');
-      return Result;
-    };
-    comp["computed"]["computedOkLabel"] = function (_this) {
-      var Result = undefined;
-      return this.okLabel || this.oklabel || 'Process';
-      return Result;
-    };
-    comp["computed"]["computedCancelLabel"] = function (_this) {
-      var Result = undefined;
-      return this.cancelLabel || this.cancellabel || 'Close';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-modal",comp);
-  };
-});
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVNavbar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-navbar">' + '    <a class="bui-navbar-brand" href="#/">{{ brand }}</a>' + '    <ul class="bui-navbar-nav">' + "      <slot></slot>" + "    </ul>" + "  </nav>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("brand");
-    comp["defaultProps"]["brand"] = "BlaiseVue UI";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-navbar",comp);
-  };
-});
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVNavItem = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-nav-link {   cursor: pointer;   user-select: none; }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <li class="bui-nav-item">' + '     <a class="bui-nav-link" :class="{ active: active }" :href="href || \'#\'" @click="handleClick">' + "        <slot>{{ label }}</slot>" + "     </a>" + "  </li>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("href");
-    comp["defaultProps"]["href"] = "";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      if (!this.href || this.href === '#' || this.href === 'javascript:void(0)') {
-        if (ev && ev.preventDefault) ev.preventDefault();
-      }
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-nav-item",comp);
-  };
-});
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVPagination = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav aria-label="Page navigation">' + '    <ul class="bui-pagination">' + '       <li class="bui-page-item" :class="{ disabled: value <= 1 }">' + '         <button class="bui-page-link" @click="changePage(value - 1)">&laquo;</button>' + "       </li>" + "       " + '       <li class="bui-page-item" b-for="p in pages" :class="{ active: p == value }">' + '         <button class="bui-page-link" @click="changePage(p)">{{ p }}</button>' + "       </li>" + "" + '       <li class="bui-page-item" :class="{ disabled: value >= total }">' + '         <button class="bui-page-link" @click="changePage(value + 1)">&raquo;</button>' + "       </li>" + "    </ul>" + "  </nav>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = 1;
-    comp["props"].push("total");
-    comp["defaultProps"]["total"] = 10;
-    m = new Object();
-    m["changePage"] = function (_this, p) {
-      if ((p >= 1) && (p <= rtl.trunc(_this["total"]))) {
-        this.$emit('input', p); this.$emit('change', p);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["pages"] = function (_this) {
-      var Result = undefined;
-      var arr = [];
-      var tot = parseInt(this.total) || 1;
-      for (var i = 1; i <= tot; i++) arr.push(i);
-      return arr;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-pagination",comp);
-  };
-});
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVProgress = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-progress">' + '    <div class="bui-progress-bar" ' + '         :class="barClass"' + '         :style="barStyle">' + '       <span v-if="showText">{{ value }}%</span>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = 0;
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = true;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["barClass"] = function (_this) {
-      var Result = undefined;
-      var v = this.variant || 'primary';
-      return 'bui-progress-bar bui-progress-' + v;
-      return Result;
-    };
-    comp["computed"]["barStyle"] = function (_this) {
-      var Result = undefined;
-      var pct = Math.min(100, Math.max(0, parseInt(this.value) || 0));
-      return 'width: ' + pct + '%;';
-      return Result;
-    };
-    comp["computed"]["showText"] = function (_this) {
-      var Result = undefined;
-      return this.label !== false && this.label !== 'false';
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-progress",comp);
-  };
-});
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVRow = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-row" :class="rowClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("gutter");
-    comp["defaultProps"]["gutter"] = "md";
-    comp["props"].push("align");
-    comp["defaultProps"]["align"] = "";
-    comp["props"].push("justify");
-    comp["defaultProps"]["justify"] = "";
-    comp["props"].push("noGutters");
-    comp["defaultProps"]["noGutters"] = false;
-    comp["props"].push("nogutters");
-    comp["defaultProps"]["nogutters"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["rowClass"] = function (_this) {
-      var Result = undefined;
-      var cls = [];
-      if (this.noGutters || this.nogutters || this.gutter === 'none') {
-        cls.push('bui-gutter-none');
-      } else if (this.gutter === 'sm') {
-        cls.push('bui-gutter-sm');
-      } else if (this.gutter === 'lg') {
-        cls.push('bui-gutter-lg');
-      } else {
-        cls.push('bui-gutter-md');
-      }
-      if (this.align) cls.push('bui-align-' + this.align);
-      if (this.justify) cls.push('bui-justify-' + this.justify);
-      return cls.join(' ');
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-row",comp);
-  };
-});
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVSpinner = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-spinner" :class="[\'bui-spinner\', \'bui-spinner-\' + (variant || \'primary\'), (small && small !== \'false\') ? \'bui-spinner-sm\' : \'\']" role="status"></div>';
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "primary";
-    comp["props"].push("small");
-    comp["defaultProps"]["small"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-spinner",comp);
-  };
-});
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVTab = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("id");
-    comp["defaultProps"]["id"] = "";
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "Tab";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (typeof this.registerTab === 'function') {
-        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
-        this.registerTab(t);
-      };
-    };
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (typeof this.registerTab === 'function') {
-        var t = { id: this.id, title: this.title, active: Boolean(this.active && this.active !== 'false') };
-        this.registerTab(t);
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["active"] = function (_this) {
-      var Result = undefined;
-      if (typeof this.isActive === 'function') {
-        return Boolean(this.isActive(this.id));
-      }
-      return true;
-      return Result;
-    };
-    comp["inject"] = new Array();
-    comp["inject"].push("registerTab");
-    comp["inject"].push("isActive");
-    pas.BVComponents.RegisterComponent("bv-tab",comp);
-  };
-});
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVTabs = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-tabs-container">' + '    <ul class="bui-tabs-nav">' + '       <li class="bui-tab-item" b-for="tab in tabs" @click="selectTab(tab.id)">' + '         <a class="bui-tab-link" :class="{ active: activeTabId == tab.id }" href="javascript:void(0)">' + "            {{ tab.title }}" + "         </a>" + "       </li>" + "    </ul>" + "" + '    <div class="bui-tab-content">' + "       <slot></slot>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["tabs"] = "";
-      d["activeTabId"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["selectTab"] = function (_this, id) {
-      this.activeTabId = id; 
-      this.$emit('change', id);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      this.tabs = [];
-    };
-    comp["provide"] = function (_this) {
-      var Result = null;
-      Result = new Object();
-      var self = this;
-      Result.registerTab = function(tab) {
-        if (!self.tabs) self.tabs = [];
-        var exists = false;
-        for (var i = 0; i < self.tabs.length; i++) {
-          if (self.tabs[i].id === tab.id) { exists = true; break; }
-        }
-        if (!exists) {
-          self.tabs.push(tab);
-          if (tab.active || !self.activeTabId || self.activeTabId === '') {
-            self.activeTabId = tab.id;
-          }
-        }
-      };
-      Result.unregisterTab = function(id) {
-        if (!self.tabs) return;
-        var idx = -1;
-        for (var i = 0; i < self.tabs.length; i++) {
-          if (self.tabs[i].id === id) { idx = i; break; }
-        }
-        if (idx !== -1) self.tabs.splice(idx, 1);
-      };
-      Result.isActive = function(id) {
-        return self.activeTabId === id;
-      };
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-tabs",comp);
-  };
-});
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVToast = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-toast {   position: fixed;   bottom: 20px;   right: 20px;   background: #1e293b;   color: #fff;   padding: 12px 20px;   border-radius: 6px;   box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);   display: flex;   align-items: center;   gap: 10px;   z-index: 10000;   border-left: 4px solid var(--bui-primary, #42b883);   animation: bui-toast-slide 0.3s ease-out; } @media (max-width: 576px) {   .bui-toast {     bottom: 74px;     left: 16px;     right: 16px;     max-width: calc(100vw - 32px);     justify-content: space-between;   } } @keyframes bui-toast-slide {   from { transform: translateY(20px); opacity: 0; }   to { transform: translateY(0); opacity: 1; } }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <teleport to="body">' + '    <div class="bui-toast" :class="\'bui-toast-\' + (variant || \'success\')" b-if="isVisible">' + '      <div class="bui-toast-content">' + '        <strong v-if="title" style="display: block; margin-bottom: 2px;">{{ title }}</strong>' + "        <slot>{{ message }}</slot>" + "      </div>" + '      <button class="bui-btn bui-btn-sm bui-btn-secondary" style="margin-left: 10px;" @click="dismiss">✕</button>' + "    </div>" + "  </teleport>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isOpen"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("message");
-    comp["defaultProps"]["message"] = "";
-    comp["props"].push("duration");
-    comp["defaultProps"]["duration"] = 3000;
-    comp["props"].push("variant");
-    comp["defaultProps"]["variant"] = "success";
-    m = new Object();
-    m["showToast"] = function (_this) {
-      _this["isOpen"] = true;
-      const dur = this.duration || 3000;
-      if (this._toastTimer) clearTimeout(this._toastTimer);
-      this._toastTimer = setTimeout(() => {
-        this.isOpen = false;
-      }, dur);
-    };
-    m["show"] = function (_this) {
-      this.showToast();
-    };
-    m["dismiss"] = function (_this) {
-      _this["isOpen"] = false;
-      this.$emit('dismiss');
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["isVisible"] = function (_this) {
-      var Result = undefined;
-      return Boolean(this.isOpen);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-toast",comp);
-  };
-});
-rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVVirtualScroll = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bui-virtual-scroll {     position: relative;     overflow-y: auto;     overflow-x: hidden;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-runway {     position: relative;     width: 100%;     box-sizing: border-box;   }   .bui-virtual-content {     position: absolute;     top: 0;     left: 0;     width: 100%;     box-sizing: border-box;     will-change: transform;   }   .bui-virtual-item {     box-sizing: border-box;     overflow: hidden;   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="bui-virtual-scroll" :style="{ height: height, overflowY: \'auto\', position: \'relative\' }" @scroll="handleScroll" b-ref="viewport">' + '    <div class="bui-virtual-runway" :style="{ height: totalHeight + \'px\', width: \'100%\', position: \'relative\' }">' + '      <div class="bui-virtual-content" :style="{ transform: \'translateY(\' + offsetY + \'px)\', position: \'absolute\', top: 0, left: 0, width: \'100%\' }">' + "        <div " + '          b-for="(item, idx) in visibleItems" ' + '          :key="startIndex + idx" ' + '          class="bui-virtual-item"' + '          :style="{ height: itemHeight + \'px\' }"' + "        >" + '          <slot :item="item" :index="startIndex + idx">' + "            {{ item }}" + "          </slot>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["scrollTop"] = 0;
-      d["viewportHeight"] = 400;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("items");
-    comp["defaultProps"]["items"] = new Array();
-    comp["props"].push("itemHeight");
-    comp["defaultProps"]["itemHeight"] = 40;
-    comp["props"].push("height");
-    comp["defaultProps"]["height"] = "400px";
-    comp["props"].push("buffer");
-    comp["defaultProps"]["buffer"] = 5;
-    m = new Object();
-    m["handleScroll"] = function (_this, e) {
-      if (e && e.target) {
-        this.scrollTop = e.target.scrollTop || 0;
-        this.viewportHeight = e.target.clientHeight || 400;
-        if (typeof this.$emit === 'function') {
-          this.$emit('scroll', { scrollTop: this.scrollTop, startIndex: this.startIndex, endIndex: this.endIndex });
-        }
-      };
-    };
-    m["scrollToIndex"] = function (_this, idx) {
-      let ih = this.itemHeight || 40;
-      if (this.$refs && this.$refs.viewport) {
-        this.$refs.viewport.scrollTop = idx * ih;
-      };
-    };
-    m["scrollToTop"] = function (_this) {
-      if (this.$refs && this.$refs.viewport) {
-        this.$refs.viewport.scrollTop = 0;
-      };
-    };
-    comp["methods"] = m;
-    comp["mounted"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.$refs && this.$refs.viewport) {
-        this.viewportHeight = this.$refs.viewport.clientHeight || 400;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["totalCount"] = function (_this) {
-      var Result = undefined;
-      Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
-      return Result;
-    };
-    comp["computed"]["totalHeight"] = function (_this) {
-      var Result = undefined;
-      Result = this.totalCount * (this.itemHeight || 40);
-      return Result;
-    };
-    comp["computed"]["startIndex"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      let buf = this.buffer !== undefined ? this.buffer : 5;
-      let idx = Math.floor(this.scrollTop / ih) - buf;
-      Result = Math.max(0, idx);
-      return Result;
-    };
-    comp["computed"]["endIndex"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      let buf = this.buffer !== undefined ? this.buffer : 5;
-      let vh = this.viewportHeight || 400;
-      let idx = Math.ceil((this.scrollTop + vh) / ih) + buf;
-      Result = Math.min(this.totalCount, idx);
-      return Result;
-    };
-    comp["computed"]["offsetY"] = function (_this) {
-      var Result = undefined;
-      let ih = this.itemHeight || 40;
-      Result = this.startIndex * ih;
-      return Result;
-    };
-    comp["computed"]["visibleItems"] = function (_this) {
-      var Result = undefined;
-      let list = (this.items && Array.isArray(this.items)) ? this.items : [];
-      return list.slice(this.startIndex, this.endIndex);
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-virtual-scroll",comp);
-    pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
-  };
-});
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonApp = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-app" :class="appClass">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("mode");
-    comp["defaultProps"]["mode"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["appClass"] = function (_this) {
-      var Result = undefined;
-      var m = this.mode || (window.$ionic ? window.$ionic.getMode() : 'md');
-      return 'ionic-mode-' + m;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-app",comp);
-  };
-});
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonBadge = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <span class="bui-ion-badge" :class="\'bui-ion-badge-\' + color">' + "    <slot>{{ value }}</slot>" + "  </span>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("color");
-    comp["defaultProps"]["color"] = "primary";
-    comp["props"].push("value");
-    comp["defaultProps"]["value"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
-  };
-});
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonButton = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button" + '    class="bui-ion-btn"' + '    :class="btnClass"' + '    :disabled="disabled"' + '    @click="handleClick">' + "    <slot>{{ label }}</slot>" + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("color");
-    comp["defaultProps"]["color"] = "primary";
-    comp["props"].push("fill");
-    comp["defaultProps"]["fill"] = "solid";
-    comp["props"].push("expand");
-    comp["defaultProps"]["expand"] = "";
-    comp["props"].push("disabled");
-    comp["defaultProps"]["disabled"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
-      if (!isDisabled) {
-        this.$emit('click', ev);
-      };
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["btnClass"] = function (_this) {
-      var Result = undefined;
-      var c = this.color || 'primary';
-      var f = this.fill || 'solid';
-      var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
-      return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-button",comp);
-  };
-});
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonCard = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-card">' + '    <div class="bui-ion-card-header" b-if="title || subtitle">' + '      <div class="bui-ion-card-subtitle" b-if="subtitle">{{ subtitle }}</div>' + '      <h2 class="bui-ion-card-title" b-if="title">{{ title }}</h2>' + "    </div>" + '    <div class="bui-ion-card-content">' + "      <slot></slot>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-card",comp);
-  };
-});
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonContent = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <main class="bui-ion-content" :class="{ \'bui-ion-content-padding\': padding }">' + "    <slot></slot>" + "  </main>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("padding");
-    comp["defaultProps"]["padding"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-content",comp);
-  };
-});
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonHeader = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <header class="bui-ion-header">' + "    <slot></slot>" + "  </header>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-header",comp);
-  };
-});
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonItem = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div :class="wrapperClass">' + '    <div class="bui-ion-item" @click="handleClick">' + '      <div class="bui-ion-item-start" b-if="hasStart">' + '        <slot name="start"></slot>' + "      </div>" + '      <div class="bui-ion-item-content">' + '        <div class="bui-ion-item-title" b-if="title">{{ title }}</div>' + '        <div class="bui-ion-item-subtitle" b-if="subtitle">{{ subtitle }}</div>' + "        <slot></slot>" + "      </div>" + '      <div class="bui-ion-item-end">' + '        <slot name="end"></slot>' + '        <span :class="detailClass" b-if="showDetail">&rsaquo;</span>' + "      </div>" + "    </div>" + '    <div class="bui-ion-item-expandable-content" b-if="isContentVisible">' + '      <slot name="expanded"></slot>' + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["isExpanded"] = false;
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    comp["props"].push("subtitle");
-    comp["defaultProps"]["subtitle"] = "";
-    comp["props"].push("detail");
-    comp["defaultProps"]["detail"] = false;
-    comp["props"].push("expandable");
-    comp["defaultProps"]["expandable"] = false;
-    comp["props"].push("expanded");
-    comp["defaultProps"]["expanded"] = false;
-    comp["props"].push("hasStart");
-    comp["defaultProps"]["hasStart"] = false;
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      if (this.expandable === true || this.expandable === 'true') {
-        this.isExpanded = !this.isExpanded;
-        this.$emit('toggle', { expanded: this.isExpanded });
-      }
-      this.$emit('click', ev);
-    };
-    comp["methods"] = m;
-    comp["created"] = function (_this) {
-      if (!_this) _this = this;
-      if (this.expanded === true || this.expanded === 'true') {
-        this.isExpanded = true;
-      };
-    };
-    comp["computed"] = new Object();
-    comp["computed"]["wrapperClass"] = function (_this) {
-      var Result = undefined;
-      var exp = (this.expandable === true || this.expandable === 'true') ? ' is-expandable' : '';
-      var open = (this.isExpanded === true || this.isExpanded === 'true') ? ' is-expanded' : '';
-      return 'bui-ion-item-wrapper' + exp + open;
-      return Result;
-    };
-    comp["computed"]["detailClass"] = function (_this) {
-      var Result = undefined;
-      var rot = (this.isExpanded === true || this.isExpanded === 'true') ? ' rotated' : '';
-      return 'bui-ion-item-detail' + rot;
-      return Result;
-    };
-    comp["computed"]["showDetail"] = function (_this) {
-      var Result = undefined;
-      var d = Boolean(this.detail === true || this.detail === 'true');
-      var e = Boolean(this.expandable === true || this.expandable === 'true');
-      return d || e;
-      return Result;
-    };
-    comp["computed"]["isContentVisible"] = function (_this) {
-      var Result = undefined;
-      var exp = Boolean(this.expandable === true || this.expandable === 'true');
-      var open = Boolean(this.isExpanded === true || this.isExpanded === 'true');
-      return exp && open;
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("bv-ion-item",comp);
-  };
-});
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonList = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-list" :class="{ \'bui-ion-list-inset\': inset }">' + "    <slot></slot>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("inset");
-    comp["defaultProps"]["inset"] = false;
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-list",comp);
-  };
-});
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabBar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <nav class="bui-ion-tab-bar">' + "    <slot></slot>" + "  </nav>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
-  };
-});
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabButton = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button" + '    class="bui-ion-tab-button"' + '    :class="{ \'is-active\': active }"' + '    @click="handleClick">' + '    <slot name="icon"></slot>' + '    <span class="bui-ion-tab-label"><slot>{{ label }}</slot></span>' + '    <slot name="badge"></slot>' + "  </button>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("label");
-    comp["defaultProps"]["label"] = "";
-    comp["props"].push("active");
-    comp["defaultProps"]["active"] = false;
-    comp["props"].push("tab");
-    comp["defaultProps"]["tab"] = "";
-    m = new Object();
-    m["handleClick"] = function (_this, ev) {
-      this.$emit('tab-click', { tab: this.tab, originalEvent: ev });
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
-  };
-});
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTabs = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-tabs">' + '    <div class="bui-ion-tab-content">' + "      <slot></slot>" + "    </div>" + '    <slot name="bottom"></slot>' + "  </div>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
-  };
-});
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonTitle = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <h1 class="bui-ion-title">' + "    <slot>{{ title }}</slot>" + "  </h1>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      Result = d;
-      return Result;
-    };
-    comp["props"] = new Array();
-    comp["defaultProps"] = new Object();
-    comp["props"].push("title");
-    comp["defaultProps"]["title"] = "";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-title",comp);
-  };
-});
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVIonToolbar = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bui-ion-toolbar">' + '    <div class="bui-ion-toolbar-start">' + '      <slot name="start"></slot>' + "    </div>" + "    <slot></slot>" + '    <div class="bui-ion-toolbar-end">' + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
-  };
-});
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVThemeSelect = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="bv-theme-select-wrapper d-inline-block">' + '    <select class="form-select form-select-sm" :value="$theme.current" @change="onThemeChange($event)">' + '      <option value="flatly">Flatly (Claro)</option>' + '      <option value="cosmo">Cosmo (Claro)</option>' + '      <option value="lux">Lux (Claro)</option>' + '      <option value="zephyr">Zephyr (Claro)</option>' + '      <option value="darkly">Darkly (Escuro)</option>' + '      <option value="cyborg">Cyborg (Escuro)</option>' + '      <option value="solar">Solar (Escuro)</option>' + '      <option value="vapor">Vapor (Neon)</option>' + '      <option value="pulse">Pulse (Roxo)</option>' + "    </select>" + "  </div>";
-    m = new Object();
-    m["onThemeChange"] = function (_this, e) {
-      var sel = "";
-      sel = "" + e["target"]["value"];
-      if (sel !== "") {
-        if (window.$theme) {
-          window.$theme.setTheme(sel);
-        };
-      };
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-theme-select",comp);
-  };
-});
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uBVThemeToggle = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = "  <button " + '    type="button"' + '    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"' + '    :title="$theme.isDark ? \'Tema Claro\' : \'Tema Escuro\'"' + '    @click="toggleTheme">' + '    <span v-if="$theme.isDark">☀️ Claro</span>' + '    <span v-if="!$theme.isDark">🌙 Escuro</span>' + "  </button>";
-    m = new Object();
-    m["toggleTheme"] = function (_this) {
-      if (window.$theme) {
-        window.$theme.toggleDarkLight();
-      };
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
-  };
-});
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uCard","uCounter","uFormHeader","uInfoCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uFormHeader","uCard","uCounter","uInfoCard","uMobileView","uCustomerView","uProductView","uUserProfile","uLibBootstrap","uLoginView","uAbout","uHome","uFormulario","uProFeatures","uDatasetView","uReportsView","uCharts","uShowcase","uBVBarChart","uBVPolarAreaChart","uBVChart","uBVScatterChart","uBVDoughnutChart","uBVRadarChart","uBVPieChart","uBVLineChart","uBVBubbleChart","uBVThemeSelect","uBVThemeToggle","uBVTabs","uBVInput","uBVProgress","uBVDrawer","uBVBtn","uBVToast","uBVBreadcrumb","uBVNavbar","uBVNavItem","uBVListGroup","uBVFormSelect","uBVDataGrid","uBVSpinner","uBVContainer","uBVBadge","uBVBottomNav","uBVListGroupItem","uBVVirtualScroll","uBVPagination","uBVCard","uBVBottomNavItem","uBVRow","uBVInputGroup","uBVCol","uBVModal","uBVBreadcrumbItem","uBVTab","uBVAlert","uBVAccordion","uBVIcon","uBVIonBadge","uBVIonHeader","uBVIonCard","uBVIonToolbar","uBVIonItem","uBVIonTabBar","uBVIonTabButton","uBVIonTitle","uBVIonTabs","uBVIonList","uBVIonApp","uBVIonContent","uBVIonButton","uBVReportViewer"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -14300,152 +14746,152 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     _styleEl = document.createElement("style");
     _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: \'Segoe UI\', Arial, sans-serif; background: #f0f2f5; color: #2c3e50; }   .navbar { background: #2c3e50; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }   .brand { color: #42b883; font-size: 20px; font-weight: 700; }   .nav-links { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }   .nav-links a { color: #ecf0f1; text-decoration: none; font-size: 14px; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }   .nav-links a:hover { background: rgba(255,255,255,0.12); color: #42b883; }   .lang-switcher { display: flex; gap: 6px; margin-left: 10px; }   .lang-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }   .lang-btn:hover { background: rgba(255,255,255,0.2); }   .lang-btn.active-lang { background: #42b883; color: white; border-color: #42b883; font-weight: bold; }   .theme-switcher { display: flex; align-items: center; gap: 6px; margin-left: 6px; }   .theme-toggle-btn { background: rgba(255,255,255,0.08); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; font-size: 13px; border-radius: 4px; cursor: pointer; }   .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }   .theme-select { background: #1a252f; color: #ecf0f1; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; font-size: 12px; border-radius: 4px; outline: none; cursor: pointer; }   .drawer-btn { background: rgba(255,255,255,0.12); color: #ecf0f1; border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; padding: 5px 10px; font-size: 16px; cursor: pointer; transition: background 0.2s; }   .drawer-btn:hover { background: rgba(255,255,255,0.25); }   .drawer-nav { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }   .drawer-link { color: inherit; text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 15px; font-weight: 500; display: block; transition: all 0.2s; }   .drawer-link:hover { background: rgba(66, 184, 131, 0.15); color: #42b883; font-weight: 600; }   .mobile-bottom-bar { display: none; }   .main-content-container { max-width: 960px; margin: 24px auto; padding: 0 16px; }   @media (max-width: 768px) {     .nav-links { display: none; } /* Hide wide links on mobile; drawer & bottom nav take over! */     .mobile-bottom-bar { display: flex; }     .desktop-only-footer { display: none; }     .main-content-container { padding-bottom: 75px; }   }   .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }   .footer-status { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: #42b883; font-size: 11px; padding: 4px 10px; text-align: right; }   h1, h2, h3 { margin-bottom: 12px; }   .section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }   button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }   .btn-primary { background: #42b883; color: white; }   .btn-primary:hover { background: #38a373; }   .btn-danger { background: #e74c3c; color: white; }   .btn-outline { background: white; border: 2px solid #42b883; color: #42b883; }   .btn-outline:hover { background: #42b883; color: white; }   input[type="text"] { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; margin: 6px 0; }   input[type="text"]:focus { border-color: #42b883; outline: none; }   table { width: 100%; border-collapse: collapse; margin: 12px 0; }   th, td { padding: 10px 14px; border: 1px solid #eee; text-align: left; }   th { background: #f8f9fa; font-weight: 600; }   .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; color: white; font-weight: bold; font-size: 13px; }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #95a5a6; }   code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: var(--bs-body-bg, #1a1a1a);     color: var(--bs-body-color, #e0e0e0);   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: var(--bs-card-bg, #22252a);     color: var(--bs-body-color, #e0e0e0);     box-shadow: 0 2px 8px rgba(0,0,0,0.4);     border: 1px solid rgba(255,255,255,0.08);   }   html[data-bs-theme="dark"] input[type="text"], body.theme-dark input[type="text"] {     background: #2b3035;     color: #fff;     border-color: #444;   }   html[data-bs-theme="dark"] table, body.theme-dark table {     color: #e0e0e0;   }   html[data-bs-theme="dark"] th, body.theme-dark th {     background: #2b3035;     border-color: #3e444a;   }   html[data-bs-theme="dark"] td, body.theme-dark td {     border-color: #3e444a;   }   html[data-bs-theme="dark"] .footer-status, body.theme-dark .footer-status {     background: #181b1e;     color: #42b883;     border-top: 1px solid rgba(255,255,255,0.1);   }';
     document.head.appendChild(_styleEl);
+    console.log("[Init] Registering uFormHeader...");
+    pas.uFormHeader.Register_uFormHeader();
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
     console.log("[Init] Registering uCounter...");
     pas.uCounter.Register_uCounter();
-    console.log("[Init] Registering uFormHeader...");
-    pas.uFormHeader.Register_uFormHeader();
     console.log("[Init] Registering uInfoCard...");
     pas.uInfoCard.Register_uInfoCard();
-    console.log("[Init] Registering uAbout...");
-    pas.uAbout.Register_uAbout();
-    console.log("[Init] Registering uCharts...");
-    pas.uCharts.Register_uCharts();
+    console.log("[Init] Registering uMobileView...");
+    pas.uMobileView.Register_uMobileView();
     console.log("[Init] Registering uCustomerView...");
     pas.uCustomerView.Register_uCustomerView();
-    console.log("[Init] Registering uDatasetView...");
-    pas.uDatasetView.Register_uDatasetView();
-    console.log("[Init] Registering uFormulario...");
-    pas.uFormulario.Register_uFormulario();
-    console.log("[Init] Registering uHome...");
-    pas.uHome.Register_uHome();
+    console.log("[Init] Registering uProductView...");
+    pas.uProductView.Register_uProductView();
+    console.log("[Init] Registering uUserProfile...");
+    pas.uUserProfile.Register_uUserProfile();
     console.log("[Init] Registering uLibBootstrap...");
     pas.uLibBootstrap.Register_uLibBootstrap();
     console.log("[Init] Registering uLoginView...");
     pas.uLoginView.Register_uLoginView();
-    console.log("[Init] Registering uMobileView...");
-    pas.uMobileView.Register_uMobileView();
-    console.log("[Init] Registering uProductView...");
-    pas.uProductView.Register_uProductView();
+    console.log("[Init] Registering uAbout...");
+    pas.uAbout.Register_uAbout();
+    console.log("[Init] Registering uHome...");
+    pas.uHome.Register_uHome();
+    console.log("[Init] Registering uFormulario...");
+    pas.uFormulario.Register_uFormulario();
     console.log("[Init] Registering uProFeatures...");
     pas.uProFeatures.Register_uProFeatures();
+    console.log("[Init] Registering uDatasetView...");
+    pas.uDatasetView.Register_uDatasetView();
     console.log("[Init] Registering uReportsView...");
     pas.uReportsView.Register_uReportsView();
+    console.log("[Init] Registering uCharts...");
+    pas.uCharts.Register_uCharts();
     console.log("[Init] Registering uShowcase...");
     pas.uShowcase.Register_uShowcase();
-    console.log("[Init] Registering uUserProfile...");
-    pas.uUserProfile.Register_uUserProfile();
     console.log("[Init] Registering uBVBarChart...");
     pas.uBVBarChart.Register_uBVBarChart();
-    console.log("[Init] Registering uBVBubbleChart...");
-    pas.uBVBubbleChart.Register_uBVBubbleChart();
-    console.log("[Init] Registering uBVChart...");
-    pas.uBVChart.Register_uBVChart();
-    console.log("[Init] Registering uBVDoughnutChart...");
-    pas.uBVDoughnutChart.Register_uBVDoughnutChart();
-    console.log("[Init] Registering uBVLineChart...");
-    pas.uBVLineChart.Register_uBVLineChart();
-    console.log("[Init] Registering uBVPieChart...");
-    pas.uBVPieChart.Register_uBVPieChart();
     console.log("[Init] Registering uBVPolarAreaChart...");
     pas.uBVPolarAreaChart.Register_uBVPolarAreaChart();
-    console.log("[Init] Registering uBVRadarChart...");
-    pas.uBVRadarChart.Register_uBVRadarChart();
+    console.log("[Init] Registering uBVChart...");
+    pas.uBVChart.Register_uBVChart();
     console.log("[Init] Registering uBVScatterChart...");
     pas.uBVScatterChart.Register_uBVScatterChart();
-    console.log("[Init] Registering uBVReportViewer...");
-    pas.uBVReportViewer.Register_uBVReportViewer();
-    console.log("[Init] Registering uBVAccordion...");
-    pas.uBVAccordion.Register_uBVAccordion();
-    console.log("[Init] Registering uBVAlert...");
-    pas.uBVAlert.Register_uBVAlert();
-    console.log("[Init] Registering uBVBadge...");
-    pas.uBVBadge.Register_uBVBadge();
-    console.log("[Init] Registering uBVBottomNav...");
-    pas.uBVBottomNav.Register_uBVBottomNav();
-    console.log("[Init] Registering uBVBottomNavItem...");
-    pas.uBVBottomNavItem.Register_uBVBottomNavItem();
-    console.log("[Init] Registering uBVBreadcrumb...");
-    pas.uBVBreadcrumb.Register_uBVBreadcrumb();
-    console.log("[Init] Registering uBVBreadcrumbItem...");
-    pas.uBVBreadcrumbItem.Register_uBVBreadcrumbItem();
-    console.log("[Init] Registering uBVBtn...");
-    pas.uBVBtn.Register_uBVBtn();
-    console.log("[Init] Registering uBVCard...");
-    pas.uBVCard.Register_uBVCard();
-    console.log("[Init] Registering uBVCol...");
-    pas.uBVCol.Register_uBVCol();
-    console.log("[Init] Registering uBVContainer...");
-    pas.uBVContainer.Register_uBVContainer();
-    console.log("[Init] Registering uBVDataGrid...");
-    pas.uBVDataGrid.Register_uBVDataGrid();
-    console.log("[Init] Registering uBVDrawer...");
-    pas.uBVDrawer.Register_uBVDrawer();
-    console.log("[Init] Registering uBVFormSelect...");
-    pas.uBVFormSelect.Register_uBVFormSelect();
-    console.log("[Init] Registering uBVIcon...");
-    pas.uBVIcon.Register_uBVIcon();
-    console.log("[Init] Registering uBVInput...");
-    pas.uBVInput.Register_uBVInput();
-    console.log("[Init] Registering uBVInputGroup...");
-    pas.uBVInputGroup.Register_uBVInputGroup();
-    console.log("[Init] Registering uBVListGroup...");
-    pas.uBVListGroup.Register_uBVListGroup();
-    console.log("[Init] Registering uBVListGroupItem...");
-    pas.uBVListGroupItem.Register_uBVListGroupItem();
-    console.log("[Init] Registering uBVModal...");
-    pas.uBVModal.Register_uBVModal();
-    console.log("[Init] Registering uBVNavbar...");
-    pas.uBVNavbar.Register_uBVNavbar();
-    console.log("[Init] Registering uBVNavItem...");
-    pas.uBVNavItem.Register_uBVNavItem();
-    console.log("[Init] Registering uBVPagination...");
-    pas.uBVPagination.Register_uBVPagination();
-    console.log("[Init] Registering uBVProgress...");
-    pas.uBVProgress.Register_uBVProgress();
-    console.log("[Init] Registering uBVRow...");
-    pas.uBVRow.Register_uBVRow();
-    console.log("[Init] Registering uBVSpinner...");
-    pas.uBVSpinner.Register_uBVSpinner();
-    console.log("[Init] Registering uBVTab...");
-    pas.uBVTab.Register_uBVTab();
-    console.log("[Init] Registering uBVTabs...");
-    pas.uBVTabs.Register_uBVTabs();
-    console.log("[Init] Registering uBVToast...");
-    pas.uBVToast.Register_uBVToast();
-    console.log("[Init] Registering uBVVirtualScroll...");
-    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
-    console.log("[Init] Registering uBVIonApp...");
-    pas.uBVIonApp.Register_uBVIonApp();
-    console.log("[Init] Registering uBVIonBadge...");
-    pas.uBVIonBadge.Register_uBVIonBadge();
-    console.log("[Init] Registering uBVIonButton...");
-    pas.uBVIonButton.Register_uBVIonButton();
-    console.log("[Init] Registering uBVIonCard...");
-    pas.uBVIonCard.Register_uBVIonCard();
-    console.log("[Init] Registering uBVIonContent...");
-    pas.uBVIonContent.Register_uBVIonContent();
-    console.log("[Init] Registering uBVIonHeader...");
-    pas.uBVIonHeader.Register_uBVIonHeader();
-    console.log("[Init] Registering uBVIonItem...");
-    pas.uBVIonItem.Register_uBVIonItem();
-    console.log("[Init] Registering uBVIonList...");
-    pas.uBVIonList.Register_uBVIonList();
-    console.log("[Init] Registering uBVIonTabBar...");
-    pas.uBVIonTabBar.Register_uBVIonTabBar();
-    console.log("[Init] Registering uBVIonTabButton...");
-    pas.uBVIonTabButton.Register_uBVIonTabButton();
-    console.log("[Init] Registering uBVIonTabs...");
-    pas.uBVIonTabs.Register_uBVIonTabs();
-    console.log("[Init] Registering uBVIonTitle...");
-    pas.uBVIonTitle.Register_uBVIonTitle();
-    console.log("[Init] Registering uBVIonToolbar...");
-    pas.uBVIonToolbar.Register_uBVIonToolbar();
+    console.log("[Init] Registering uBVDoughnutChart...");
+    pas.uBVDoughnutChart.Register_uBVDoughnutChart();
+    console.log("[Init] Registering uBVRadarChart...");
+    pas.uBVRadarChart.Register_uBVRadarChart();
+    console.log("[Init] Registering uBVPieChart...");
+    pas.uBVPieChart.Register_uBVPieChart();
+    console.log("[Init] Registering uBVLineChart...");
+    pas.uBVLineChart.Register_uBVLineChart();
+    console.log("[Init] Registering uBVBubbleChart...");
+    pas.uBVBubbleChart.Register_uBVBubbleChart();
     console.log("[Init] Registering uBVThemeSelect...");
     pas.uBVThemeSelect.Register_uBVThemeSelect();
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
+    console.log("[Init] Registering uBVTabs...");
+    pas.uBVTabs.Register_uBVTabs();
+    console.log("[Init] Registering uBVInput...");
+    pas.uBVInput.Register_uBVInput();
+    console.log("[Init] Registering uBVProgress...");
+    pas.uBVProgress.Register_uBVProgress();
+    console.log("[Init] Registering uBVDrawer...");
+    pas.uBVDrawer.Register_uBVDrawer();
+    console.log("[Init] Registering uBVBtn...");
+    pas.uBVBtn.Register_uBVBtn();
+    console.log("[Init] Registering uBVToast...");
+    pas.uBVToast.Register_uBVToast();
+    console.log("[Init] Registering uBVBreadcrumb...");
+    pas.uBVBreadcrumb.Register_uBVBreadcrumb();
+    console.log("[Init] Registering uBVNavbar...");
+    pas.uBVNavbar.Register_uBVNavbar();
+    console.log("[Init] Registering uBVNavItem...");
+    pas.uBVNavItem.Register_uBVNavItem();
+    console.log("[Init] Registering uBVListGroup...");
+    pas.uBVListGroup.Register_uBVListGroup();
+    console.log("[Init] Registering uBVFormSelect...");
+    pas.uBVFormSelect.Register_uBVFormSelect();
+    console.log("[Init] Registering uBVDataGrid...");
+    pas.uBVDataGrid.Register_uBVDataGrid();
+    console.log("[Init] Registering uBVSpinner...");
+    pas.uBVSpinner.Register_uBVSpinner();
+    console.log("[Init] Registering uBVContainer...");
+    pas.uBVContainer.Register_uBVContainer();
+    console.log("[Init] Registering uBVBadge...");
+    pas.uBVBadge.Register_uBVBadge();
+    console.log("[Init] Registering uBVBottomNav...");
+    pas.uBVBottomNav.Register_uBVBottomNav();
+    console.log("[Init] Registering uBVListGroupItem...");
+    pas.uBVListGroupItem.Register_uBVListGroupItem();
+    console.log("[Init] Registering uBVVirtualScroll...");
+    pas.uBVVirtualScroll.Register_uBVVirtualScroll();
+    console.log("[Init] Registering uBVPagination...");
+    pas.uBVPagination.Register_uBVPagination();
+    console.log("[Init] Registering uBVCard...");
+    pas.uBVCard.Register_uBVCard();
+    console.log("[Init] Registering uBVBottomNavItem...");
+    pas.uBVBottomNavItem.Register_uBVBottomNavItem();
+    console.log("[Init] Registering uBVRow...");
+    pas.uBVRow.Register_uBVRow();
+    console.log("[Init] Registering uBVInputGroup...");
+    pas.uBVInputGroup.Register_uBVInputGroup();
+    console.log("[Init] Registering uBVCol...");
+    pas.uBVCol.Register_uBVCol();
+    console.log("[Init] Registering uBVModal...");
+    pas.uBVModal.Register_uBVModal();
+    console.log("[Init] Registering uBVBreadcrumbItem...");
+    pas.uBVBreadcrumbItem.Register_uBVBreadcrumbItem();
+    console.log("[Init] Registering uBVTab...");
+    pas.uBVTab.Register_uBVTab();
+    console.log("[Init] Registering uBVAlert...");
+    pas.uBVAlert.Register_uBVAlert();
+    console.log("[Init] Registering uBVAccordion...");
+    pas.uBVAccordion.Register_uBVAccordion();
+    console.log("[Init] Registering uBVIcon...");
+    pas.uBVIcon.Register_uBVIcon();
+    console.log("[Init] Registering uBVIonBadge...");
+    pas.uBVIonBadge.Register_uBVIonBadge();
+    console.log("[Init] Registering uBVIonHeader...");
+    pas.uBVIonHeader.Register_uBVIonHeader();
+    console.log("[Init] Registering uBVIonCard...");
+    pas.uBVIonCard.Register_uBVIonCard();
+    console.log("[Init] Registering uBVIonToolbar...");
+    pas.uBVIonToolbar.Register_uBVIonToolbar();
+    console.log("[Init] Registering uBVIonItem...");
+    pas.uBVIonItem.Register_uBVIonItem();
+    console.log("[Init] Registering uBVIonTabBar...");
+    pas.uBVIonTabBar.Register_uBVIonTabBar();
+    console.log("[Init] Registering uBVIonTabButton...");
+    pas.uBVIonTabButton.Register_uBVIonTabButton();
+    console.log("[Init] Registering uBVIonTitle...");
+    pas.uBVIonTitle.Register_uBVIonTitle();
+    console.log("[Init] Registering uBVIonTabs...");
+    pas.uBVIonTabs.Register_uBVIonTabs();
+    console.log("[Init] Registering uBVIonList...");
+    pas.uBVIonList.Register_uBVIonList();
+    console.log("[Init] Registering uBVIonApp...");
+    pas.uBVIonApp.Register_uBVIonApp();
+    console.log("[Init] Registering uBVIonContent...");
+    pas.uBVIonContent.Register_uBVIonContent();
+    console.log("[Init] Registering uBVIonButton...");
+    pas.uBVIonButton.Register_uBVIonButton();
+    console.log("[Init] Registering uBVReportViewer...");
+    pas.uBVReportViewer.Register_uBVReportViewer();
     console.log("[Init] Setting #app template...");
     document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue 4.4</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();

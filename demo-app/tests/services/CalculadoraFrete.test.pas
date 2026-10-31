@@ -5,7 +5,7 @@ program calculadorafrete_unit_test;
 uses JS, Web, BVTestUtils, uCalculadoraFrete;
 
 begin
-  Describe('Unit: CalculadoraFrete (Calculos de Negocio)', procedure
+  Describe('Service: CalculadoraFrete (Calculos de Negocio)', procedure
     begin
        It('deve aplicar frete gratis para pedidos acima de R$ 250,00', procedure
          begin

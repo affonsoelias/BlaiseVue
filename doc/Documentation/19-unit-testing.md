@@ -102,8 +102,8 @@ bv new t SimpleBadge
 The BlaiseVue CLI inspects your workspace automatically:
 1. **Found `SimpleBadge.bv` in `src/components/`?** Creates `tests/components/SimpleBadge.test.pas` configured with `<simple-badge>` and `Mount`.
 2. **Found in `src/views/`?** Creates `tests/views/SimpleBadge.test.pas` with `<simple-badge-page>` and `Mount`.
-3. **Found `uSimpleBadge.pas` in `src/services/`?** Creates `tests/unit/SimpleBadge.test.pas` importing `uSimpleBadge`.
-4. **No matching file found?** Creates `tests/unit/SimpleBadge.test.pas` for pure Pascal domain logic.
+3. **Found `uSimpleBadge.pas` in `src/services/`?** Creates `tests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
+4. **No matching file found?** Creates `tests/services/SimpleBadge.test.pas` for pure Pascal domain logic.
 
 ### ⚡ Scaffolding Business Services (`bv new service` / `bv new s`)
 To scaffold a pure Pascal domain service unit along with its pre-configured unit test in a single command:
@@ -115,12 +115,12 @@ bv new s PaymentProcessor
 bv g s PaymentProcessor
 ```
 - **Service Unit:** `src/services/uPaymentProcessor.pas` (pure Pascal class and business functions)
-- **Unit Test:** `tests/unit/PaymentProcessor.test.pas` (pre-wired with `BVTestUtils` and assertions)
+- **Unit Test:** `tests/services/PaymentProcessor.test.pas` (pre-wired with `BVTestUtils` and assertions)
 - Add `--no-test` (or `-nt`) to generate the service unit without a test file.
 
 You can also target a specific subfolder directly:
 ```bash
-bv new t unit/CalculadoraFrete
+bv new t services/CalculadoraFrete
 bv new t framework/CustomReactivity
 ```
 
@@ -219,7 +219,7 @@ end.
 
 ## 📝 Example 3: Pure Pascal Business Logic Unit Tests
 
-Service and domain unit tests reside in `tests/unit/` and import units from `src/services/` (configured in `app.cfg` via `-Fusrc/services`):
+Service and domain unit tests reside in `tests/services/` and import units from `src/services/` (configured in `app.cfg` via `-Fusrc/services`):
 
 ```pascal
 program calculadorafrete_unit_test;

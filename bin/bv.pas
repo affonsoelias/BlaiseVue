@@ -18,9 +18,10 @@ program bv;
 
     bv run dev                  - Real-time build with debug features
 
-    bv new c <ComponentName>    - Scaffolds a new .bv component
-    bv new v <ViewName>         - Scaffolds a new .bv view
-    bv new s <ServiceName>      - Scaffolds a new pure Pascal service unit
+    bv g c <ComponentName>      - Scaffolds a new .bv component (alias: bv new c)
+    bv g v <ViewName>           - Scaffolds a new .bv view (alias: bv new v)
+    bv g s <ServiceName>        - Scaffolds a new pure Pascal service unit (alias: bv new s)
+    bv g t <TestName>           - Scaffolds a test file (alias: bv new t)
 
     bv clean                     - Purges the dist/ and generated/ folders
 
@@ -41,6 +42,9 @@ program bv;
 uses
 {$IFDEF WINDOWS}
   windows,
+{$ENDIF}
+{$IFDEF UNIX}
+  BaseUnix, termio,
 {$ENDIF}
   SysUtils, Classes, StrUtils, DateUtils, Process, Sockets,
 
@@ -110,6 +114,31 @@ end;
 
 
 
+function GetOwnExecutablePath: string;
+var
+  {$IFDEF LINUX}
+  buf: string;
+  len: integer;
+  {$ENDIF}
+  cand: string;
+begin
+  {$IFDEF LINUX}
+  SetLength(buf, 1024);
+  len := fpReadLink('/proc/self/exe', PChar(buf), 1024);
+  if len > 0 then
+  begin
+    SetLength(buf, len);
+    Exit(buf);
+  end;
+  {$ENDIF}
+  cand := ExpandFileName(ParamStr(0));
+  {$IFDEF WINDOWS}
+  if (ExtractFileExt(cand) = '') and FileExists(cand + '.exe') then
+    cand := cand + '.exe';
+  {$ENDIF}
+  Result := cand;
+end;
+
 { Returns the absolute path to the BlaiseVue SDK root }
 
 function GetSDKPath: string;
@@ -120,7 +149,7 @@ var
 
 begin
 
-  ExePath := ExpandFileName(ParamStr(0));
+  ExePath := GetOwnExecutablePath;
 
   ExeDir := ExtractFilePath(ExePath);
 
@@ -791,6 +820,7 @@ procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
 procedure CmdSelfUpdate; forward;
 procedure CmdChannel; forward;
+function CockpitReadLine(out S: string): Boolean; forward;
 
 
 
@@ -3667,7 +3697,7 @@ begin
     ForceDir(Base + 'dist' + DirectorySeparator + 'js');
     ForceDir(Base + 'tests' + DirectorySeparator + 'components');
     ForceDir(Base + 'tests' + DirectorySeparator + 'views');
-    ForceDir(Base + 'tests' + DirectorySeparator + 'unit');
+    ForceDir(Base + 'tests' + DirectorySeparator + 'services');
     ForceDir(Base + 'tests' + DirectorySeparator + 'framework');
 
     // Minimal public/index.html
@@ -3740,13 +3770,13 @@ begin
       'end.' + #10
     );
 
-    // Minimal tests: unit/Formatters.test.pas
-    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + 'Formatters.test.pas',
+    // Minimal tests: services/Formatters.test.pas
+    WriteStringToFile(Base + 'tests' + DirectorySeparator + 'services' + DirectorySeparator + 'Formatters.test.pas',
       'program formatters_unit_test;' + #10#10 +
       '{$mode objfpc}' + #10#10 +
       'uses JS, Web, BVTestUtils, uFormatters;' + #10#10 +
       'begin' + #10 +
-      '  Describe(''Unit: Formatters'', procedure' + #10 +
+      '  Describe(''Service: Formatters'', procedure' + #10 +
       '    begin' + #10 +
       '       It(''deve formatar valor monetario'', procedure' + #10 +
       '         begin' + #10 +
@@ -3779,10 +3809,10 @@ begin
 
   // --- Ensure Standalone Infrastructure Files ---
 
-  // Ensure structured tests folders exist in all scaffolding modes: components, views, unit, framework
+  // Ensure structured tests folders exist in all scaffolding modes: components, views, services, framework
   ForceDir(Base + 'tests' + DirectorySeparator + 'components');
   ForceDir(Base + 'tests' + DirectorySeparator + 'views');
-  ForceDir(Base + 'tests' + DirectorySeparator + 'unit');
+  ForceDir(Base + 'tests' + DirectorySeparator + 'services');
   ForceDir(Base + 'tests' + DirectorySeparator + 'framework');
   ForceDir(Base + 'src' + DirectorySeparator + 'services');
 
@@ -3859,13 +3889,9 @@ begin
     WriteLn('Installing dependencies (npm install)...');
 
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
-
     {$ELSE}
-
-    ExecuteProcess('npm', 'install --prefix "' + Base + '"');
-
+    ExecuteProcess('/bin/sh', '-c "npm install --prefix ''' + Base + '''"');
     {$ENDIF}
 
   end
@@ -5338,17 +5364,16 @@ begin
 
 
 
-    Pas2jsCmd := '"' + GetPas2JSPath + '" -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" "@app.cfg" generated' + DirectorySeparator + 'main.pas -o' + DistPath + 'js' + DirectorySeparator + 'main.js';
-
+    Pas2jsCmd := '"' + GetPas2JSPath + '" @app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" generated' + DirectorySeparator + 'main.pas -o' + DistPath + 'js' + DirectorySeparator + 'main.js';
     WriteLn('  > ', Pas2jsCmd);
-
     WriteLn('');
 
-
-
-    i := ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" generated' + DirectorySeparator + 'main.pas -o' +
-
+    {$IFDEF WINDOWS}
+    i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" generated' + DirectorySeparator + 'main.pas -o' +
       DistPath + 'js' + DirectorySeparator + 'main.js');
+    {$ELSE}
+    i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' + GetPas2JSLibPath + ' generated/main.pas -o' + DistPath + 'js/main.js');
+    {$ENDIF}
 
 
 
@@ -6028,7 +6053,7 @@ begin
 
   ExecPath := LibPath + 'setup';
 
-  ExitCode := ExecuteProcess('fpc', '-o' + ExecPath + ' ' + ScriptPath);
+  ExitCode := ExecuteProcess('/bin/sh', '-c "fpc -o''' + ExecPath + ''' ''' + ScriptPath + '''"');
 
   {$ENDIF}
 
@@ -6572,9 +6597,9 @@ begin
     begin
       WriteLn('=== [Pre-flight] Running Automated Tests for ' + PkgName + ' ===');
       {$IFDEF WINDOWS}
-      ExitCode := ExecuteProcess('cmd', '/c cd /d "' + BaseDir + '" && "' + ParamStr(0) + '" test');
+      ExitCode := ExecuteProcess('cmd', '/c cd /d "' + BaseDir + '" && "' + GetOwnExecutablePath + '" test');
       {$ELSE}
-      ExitCode := ExecuteProcess(ParamStr(0), 'test');
+      ExitCode := ExecuteProcess('/bin/sh', ['-c', 'cd "' + BaseDir + '" && exec "' + GetOwnExecutablePath + '" test']);
       {$ENDIF}
       if ExitCode <> 0 then
       begin
@@ -7018,7 +7043,7 @@ begin
 
   if CreateTest then
   begin
-    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator;
     TestFile := TestPath + NormName + '.test.pas';
 
     if not FileExists(TestFile) then
@@ -7035,7 +7060,7 @@ begin
           'var' + #10 +
           '  Service: T' + NormName + ';' + #10#10 +
           'begin' + #10 +
-          '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+          '  Describe(''Service: ' + NormName + ' (Domain Service)'', procedure' + #10 +
           '    begin' + #10 +
           '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
           '         begin' + #10 +
@@ -7060,7 +7085,7 @@ begin
       end;
 
       WriteStringToFile(TestFile, TestContent);
-      WriteLn('Unit test created: tests/unit/', NormName, '.test.pas');
+      WriteLn('Service test created: tests/services/', NormName, '.test.pas');
     end;
   end;
 end;
@@ -7086,11 +7111,13 @@ begin
   else
     WriteLn('Service not found: src/services/u', NormName, '.pas');
 
-  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + NormName + '.test.pas';
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator + NormName + '.test.pas';
+  if not FileExists(TestPath) then
+    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + NormName + '.test.pas';
   if FileExists(TestPath) then
   begin
     DeleteFile(TestPath);
-    WriteLn('Removed associated test: tests/unit/', NormName, '.test.pas');
+    WriteLn('Removed associated test: ', ExtractRelativePath(GetCurrentDir + DirectorySeparator, TestPath));
   end;
 
   WriteLn('Service "', NormName, '" removed.');
@@ -7421,11 +7448,11 @@ begin
 
   if FileExists(ServicePas) then
   begin
-    TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator;
     TargetPath := TargetDir + NormName + '.test.pas';
     if FileExists(TargetPath) then
     begin
-      WriteLn('ERROR: Unit test "', NormName, '.test.pas" already exists in tests/unit/!');
+      WriteLn('ERROR: Service test "', NormName, '.test.pas" already exists in tests/services/!');
       Halt(1);
     end;
     ForceDir(TargetDir);
@@ -7440,7 +7467,7 @@ begin
         'var' + #10 +
         '  Service: T' + NormName + ';' + #10#10 +
         'begin' + #10 +
-        '  Describe(''Unit: ' + NormName + ' (Domain Service)'', procedure' + #10 +
+        '  Describe(''Service: ' + NormName + ' (Domain Service)'', procedure' + #10 +
         '    begin' + #10 +
         '       It(''deve instanciar o servico e executar com sucesso'', procedure' + #10 +
         '         begin' + #10 +
@@ -7466,79 +7493,45 @@ begin
 
     WriteStringToFile(TargetPath, Content);
     WriteLn('Smart Detection: Found service src/services/u', NormName, '.pas');
-    WriteLn('Test created: tests/unit/', NormName, '.test.pas');
+    WriteLn('Test created: tests/services/', NormName, '.test.pas');
     Exit;
   end;
 
-  // 4. Fallback: Pure Unit Test for business logic, services, or models
-
-  TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
-
+  // 4. Fallback: Pure Unit / Service Test for business logic, services, or models
+  TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator;
   TargetPath := TargetDir + NormName + '.test.pas';
-
   if FileExists(TargetPath) then
-
   begin
-
-    WriteLn('ERROR: Unit test "', NormName, '.test.pas" already exists in tests/unit/!');
-
+    WriteLn('ERROR: Test "', NormName, '.test.pas" already exists in tests/services/!');
     Halt(1);
-
   end;
-
   ForceDir(TargetDir);
 
-
-
   Content := GetTemplate('TPL_UNIT_TEST_PAS', 'unit_test.pas');
-
   if Content = '' then Content := GetTemplate('TPL_TEST_PAS', 'test.pas');
-
   if Content = '' then
-
   begin
-
     Content :=
-
       'program ' + LowerCase(NormName) + '_test;' + #10#10 +
-
       '{$mode objfpc}' + #10#10 +
-
       'uses JS, Web, BVTestUtils;' + #10#10 +
-
       'var' + #10 +
-
       '  Wrapper: TWrapper;' + #10#10 +
-
       'begin' + #10 +
-
-      '  Describe(''Unit: ' + NormName + ''', procedure' + #10 +
-
+      '  Describe(''Service: ' + NormName + ''', procedure' + #10 +
       '    begin' + #10 +
-
       '       It(''deve executar a regra de negocio com sucesso'', procedure' + #10 +
-
       '         begin' + #10 +
-
       '            Expect(True).ToBe(True);' + #10 +
-
       '         end);' + #10 +
-
       '    end);' + #10 +
-
       'end.' + #10;
-
   end
-
   else
-
     Content := StringReplace(Content, '{{TEST_NAME}}', NormName, [rfReplaceAll]);
 
-
-
   WriteStringToFile(TargetPath, Content);
-
-  WriteLn('Unit test created: tests/unit/', NormName, '.test.pas');
+  WriteLn('Test created: tests/services/', NormName, '.test.pas');
 
 end;
 
@@ -8522,12 +8515,10 @@ begin
       WriteLn('WARNING: --no-backup was specified. No backup will be made!');
     WriteLn('');
     Write('Are you sure you want to proceed? [y/N]: ');
+    Flush(Output);
     Answer := '';
-    try
-      ReadLn(Answer);
-    except
+    if not CockpitReadLine(Answer) then
       Answer := 'n';
-    end;
     if (LowerCase(Trim(Answer)) <> 'y') and (LowerCase(Trim(Answer)) <> 'yes') then
     begin
       WriteLn('Reset aborted by user.');
@@ -8559,6 +8550,11 @@ begin
     DeleteDir(BaseDir + 'src' + DirectorySeparator + 'components');
   ForceDir(BaseDir + 'src' + DirectorySeparator + 'components');
 
+  // 3b. CLEAN SERVICES
+  if DirectoryExists(BaseDir + 'src' + DirectorySeparator + 'services') then
+    DeleteDir(BaseDir + 'src' + DirectorySeparator + 'services');
+  ForceDir(BaseDir + 'src' + DirectorySeparator + 'services');
+
   // 4. CLEAN TESTS
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'components') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'components');
@@ -8567,6 +8563,13 @@ begin
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'views') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'views');
   ForceDir(BaseDir + 'tests' + DirectorySeparator + 'views');
+
+  if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'services') then
+    DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'services');
+  ForceDir(BaseDir + 'tests' + DirectorySeparator + 'services');
+
+  if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'unit') then
+    DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'unit');
 
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'framework') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'framework');
@@ -8802,7 +8805,11 @@ begin
 
   WriteLn('[2/3] Compiling for production (pas2js)...');
 
-  ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
+  {$IFDEF WINDOWS}
+  ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
+  {$ELSE}
+  ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' + GetPas2JSLibPath + ' -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
+  {$ENDIF}
 
 
 
@@ -8979,33 +8986,19 @@ begin
     WriteLn('');
 
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c node "' + GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js"');
-
     {$ELSE}
-
-    ExecuteProcess('node', '"' + GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js"');
-
+    ExecuteProcess('/bin/sh', ['-c', 'exec node "' + GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js"']);
     {$ENDIF}
-
   end
-
   else
-
   begin
-
     WriteLn('  Local: http://localhost:8080');
-
     WriteLn('');
-
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c npx http-server dist -p 8080 -c-1');
-
     {$ELSE}
-
-    ExecuteProcess('npx', 'http-server dist -p 8080 -c-1');
-
+    ExecuteProcess('/bin/sh', ['-c', 'npx http-server dist -p 8080 -c-1']);
     {$ENDIF}
 
   end;
@@ -9087,21 +9080,13 @@ begin
 
 
   {$IFDEF WINDOWS}
-
   if not NoOpen then
-
     ExecuteProcess('cmd', '/c start http://localhost:' + PortArg);
-
   ExecuteProcess('cmd', '/c node "' + StudioScript + '" --port ' + PortArg);
-
   {$ELSE}
-
   if not NoOpen then
-
-    ExecuteProcess('xdg-open', 'http://localhost:' + PortArg);
-
-  ExecuteProcess('node', '"' + StudioScript + '" --port ' + PortArg);
-
+    ExecuteProcess('/bin/sh', '-c "xdg-open http://localhost:' + PortArg + ' >/dev/null 2>&1 &"');
+  ExecuteProcess('/bin/sh', '-c "node ''' + StudioScript + ''' --port ' + PortArg + '"');
   {$ENDIF}
 
 end;
@@ -9141,13 +9126,9 @@ begin
   WriteLn('Serving /dist at http://localhost:5000...');
 
   {$IFDEF WINDOWS}
-
   ExecuteProcess('cmd', '/c npx http-server dist -p 5000');
-
   {$ELSE}
-
-  ExecuteProcess('npx', 'http-server dist -p 5000');
-
+  ExecuteProcess('/bin/sh', '-c "npx http-server dist -p 5000"');
   {$ENDIF}
 
 end;
@@ -9405,7 +9386,11 @@ begin
 
        WriteLn('  - ', RelPath);
 
-       ExecuteProcess(GetPas2JSPath, '"@app.cfg" -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services" -Fu"' + GetCurrentDir + DirectorySeparator + 'src" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + OutFile + '" -O-');
+       {$IFDEF WINDOWS}
+       ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + CorePath + '" -Fu"' + GetPas2JSLibPath + '" -Fu"' + GetCurrentDir + DirectorySeparator + 'generated" -Fu"' + GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services" -Fu"' + GetCurrentDir + DirectorySeparator + 'src" -Fu"' + ExtractFilePath(TestFiles[i]) + '" "' + TestFiles[i] + '" -o"' + OutFile + '" -O-');
+       {$ELSE}
+       ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + CorePath + ' -Fu' + GetPas2JSLibPath + ' -Fu' + GetCurrentDir + '/generated -Fu' + GetCurrentDir + '/src/services -Fu' + GetCurrentDir + '/src -Fu' + ExtractFilePath(TestFiles[i]) + ' ' + TestFiles[i] + ' -o' + OutFile + ' -O-');
+       {$ENDIF}
 
        // Add rtl.run() for Vitest to execute the program module code
 
@@ -9426,13 +9411,9 @@ begin
     
 
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c npx vitest run');
-
     {$ELSE}
-
-    ExecuteProcess('npx', 'vitest run');
-
+    ExecuteProcess('/bin/sh', '-c "npx vitest run"');
     {$ENDIF}
 
     
@@ -9876,13 +9857,9 @@ begin
       WriteLn('Serving documentation playground on http://localhost:8085...');
 
       {$IFDEF WINDOWS}
-
       ExecuteProcess('cmd', '/c npx http-server dist/docs -p 8085 -c-1');
-
       {$ELSE}
-
-      ExecuteProcess('npx', 'http-server dist/docs -p 8085 -c-1');
-
+      ExecuteProcess('/bin/sh', '-c "npx http-server dist/docs -p 8085 -c-1"');
       {$ENDIF}
 
     end;
@@ -10118,13 +10095,9 @@ begin
   WriteLn('Executing end-to-end user journeys (Routing, Forms, Themes, Hydration)...');
 
   {$IFDEF WINDOWS}
-
   ExecuteProcess('cmd', '/c npx vitest run --testNamePattern="E2E|Integration|Hydration"');
-
   {$ELSE}
-
-  ExecuteProcess('npx', 'vitest run --testNamePattern="E2E|Integration|Hydration"');
-
+  ExecuteProcess('/bin/sh', '-c "npx vitest run --testNamePattern=\"E2E|Integration|Hydration\""');
   {$ENDIF}
 
 end;
@@ -10169,7 +10142,7 @@ begin
 
     {$ELSE}
 
-    ExecuteProcess('sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ' + ExtDir + '/* ~/.vscode/extensions/blaisevue-vscode/"');
+    ExecuteProcess('/bin/sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ''' + ExtDir + '''/* ~/.vscode/extensions/blaisevue-vscode/"');
 
     {$ENDIF}
 
@@ -10197,7 +10170,7 @@ begin
 
     {$ELSE}
 
-    ExecuteProcess('sh', '-c "cd ' + ExtDir + ' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
+    ExecuteProcess('/bin/sh', '-c "cd ''' + ExtDir + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
 
     {$ENDIF}
 
@@ -10475,7 +10448,7 @@ var
 
     {$ELSE}
 
-    ExecuteProcess('sh', '-c "export PATH=\"' + ExtractFileDir(FindAndroidADB) + ':$PATH\" && ' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
+    ExecuteProcess('/bin/sh', '-c "export PATH=\"' + ExtractFileDir(FindAndroidADB) + ':$PATH\" && ' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
 
     {$ENDIF}
 
@@ -10630,12 +10603,9 @@ var
       {$ELSE}
 
       if ARelease then
-
-        ExecuteProcess('sh', '-c "cd ' + AndroidDir + ' && ./gradlew assembleRelease"')
-
+        ExecuteProcess('/bin/sh', '-c "cd ''' + AndroidDir + ''' && ./gradlew assembleRelease"')
       else
-
-        ExecuteProcess('sh', '-c "cd ' + AndroidDir + ' && ./gradlew assembleDebug"');
+        ExecuteProcess('/bin/sh', '-c "cd ''' + AndroidDir + ''' && ./gradlew assembleDebug"');
 
       {$ENDIF}
 
@@ -10715,7 +10685,7 @@ var
 
       WriteLn('  [+] Building iOS native package...');
 
-      ExecuteProcess('sh', '-c "npx cap build ios"');
+      ExecuteProcess('/bin/sh', '-c "npx cap build ios"');
 
       Result := True;
 
@@ -10807,7 +10777,7 @@ var
 
           {$ELSE}
 
-          ExecuteProcess('sh', '-c "' + AdbExe + ' -e wait-for-device"');
+          ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' -e wait-for-device"');
 
           {$ENDIF}
 
@@ -10857,38 +10827,22 @@ var
 
         {$ELSE}
 
-        ExecuteProcess('sh', '-c "' + AdbExe + ' ' + AdbTarget + 'install -r \"' + TargetApk + '\""');
-
-        ExecuteProcess('sh', '-c "' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity"');
-
+        ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' ' + AdbTarget + 'install -r \"' + TargetApk + '\""');
+        ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity"');
         {$ENDIF}
-
       end
-
       else
-
       begin
-
         if not HasCommand('node') then
-
         begin
-
           PrintNodeRequiredError('launch the mobile app via Capacitor CLI');
-
           Exit;
-
         end;
-
         WriteLn('Launching via Capacitor CLI runner...');
-
         {$IFDEF WINDOWS}
-
         ExecuteProcess('cmd', '/c npx cap run android');
-
         {$ELSE}
-
-        ExecuteProcess('npx', 'cap run android');
-
+        ExecuteProcess('/bin/sh', '-c "npx cap run android"');
         {$ENDIF}
 
       end;
@@ -10901,7 +10855,7 @@ var
 
       {$IFDEF DARWIN}
 
-      ExecuteProcess('sh', '-c "npx cap run ios"');
+      ExecuteProcess('/bin/sh', '-c "npx cap run ios"');
 
       {$ELSE}
 
@@ -10932,29 +10886,17 @@ var
       WriteLn('[INFO] Xcode is only available on macOS.');
 
       {$ELSE}
-
-      ExecuteProcess('sh', '-c "npx cap sync ios && npx cap open ios"');
-
+      ExecuteProcess('/bin/sh', '-c "npx cap sync ios && npx cap open ios"');
       {$ENDIF}
-
     end
-
     else
-
     begin
-
       WriteLn('Opening Android Studio for ' + AndroidDir + '...');
-
       CmdRunBuild;
-
       {$IFDEF WINDOWS}
-
       ExecuteProcess('cmd', '/c npx cap sync android && npx cap open android');
-
       {$ELSE}
-
-      ExecuteProcess('sh', '-c "npx cap sync android && npx cap open android"');
-
+      ExecuteProcess('/bin/sh', '-c "npx cap sync android && npx cap open android"');
       {$ENDIF}
 
     end;
@@ -11188,35 +11130,20 @@ begin
     WriteLn('  [+] Installing Capacitor dependencies (@capacitor/core, @capacitor/cli, @capacitor/android)...');
 
     {$IFDEF WINDOWS}
-
     ExecuteProcess('cmd', '/c npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
-
     {$ELSE}
-
-    ExecuteProcess('npm', 'install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
-
+    ExecuteProcess('/bin/sh', '-c "npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev"');
     {$ENDIF}
 
-
-
     // 3. Add Android platform if not present
-
     if not DirectoryExists(AndroidDir) then
-
     begin
-
       WriteLn('  [+] Adding Android native project (npx cap add android)...');
-
       CmdRunBuild;
-
       {$IFDEF WINDOWS}
-
       ExecuteProcess('cmd', '/c npx cap add android');
-
       {$ELSE}
-
-      ExecuteProcess('npx', 'cap add android');
-
+      ExecuteProcess('/bin/sh', '-c "npx cap add android"');
       {$ENDIF}
 
     end
@@ -11338,29 +11265,17 @@ begin
     begin
 
       {$IFDEF WINDOWS}
-
       ExecuteProcess('cmd', '/c npx cap sync');
-
       {$ELSE}
-
-      ExecuteProcess('npx', 'cap sync');
-
+      ExecuteProcess('/bin/sh', '-c "npx cap sync"');
       {$ENDIF}
-
     end
-
     else
-
     begin
-
       {$IFDEF WINDOWS}
-
       ExecuteProcess('cmd', '/c npx cap sync ' + TargetPlatform);
-
       {$ELSE}
-
-      ExecuteProcess('npx', 'cap sync ' + TargetPlatform);
-
+      ExecuteProcess('/bin/sh', '-c "npx cap sync ' + TargetPlatform + '"');
       {$ENDIF}
 
     end;
@@ -11683,7 +11598,7 @@ var
 
     FpcCmd := FpcCmd + '-FEbin/' + ATarget + ' -FUunits/' + ATarget + ' ' + FoundLpr;
 
-    ExecuteProcess('sh', '-c "cd ' + DesktopDir + ' && ' + FpcCmd + '"');
+    ExecuteProcess('/bin/sh', ['-c', 'cd "' + DesktopDir + '" && ' + FpcCmd]);
 
     {$ENDIF}
 
@@ -13439,7 +13354,7 @@ begin
 
         {$ELSE}
 
-        ExecuteProcess('sh', '-c "cd ' + ExeDir + ' && ./' + ExtractFileName(TargetExe) + '"');
+        ExecuteProcess('/bin/sh', '-c "cd ''' + ExeDir + ''' && ./' + ExtractFileName(TargetExe) + '"');
 
         {$ENDIF}
 
@@ -20214,7 +20129,7 @@ begin
 
       {$ELSE}
 
-      ExecuteProcess('sh', '-c "cd '' + ProjectRoot + '' && docker compose build"');
+      ExecuteProcess('/bin/sh', '-c "cd ''' + ProjectRoot + ''' && docker compose build"');
 
       {$ENDIF}
 
@@ -21765,8 +21680,13 @@ begin
     FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
     ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && ' + FpcCmd);
     {$ELSE}
+    if DirectoryExists(MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-linux') then
+    begin
+      FpcCmd := FpcCmd + '-Fl"' + MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-linux" ';
+      FpcCmd := FpcCmd + '-Fo"' + MormotPath + DirectorySeparator + 'static' + DirectorySeparator + 'x86_64-linux" ';
+    end;
     FpcCmd := FpcCmd + '-FEbin -FUlib server.lpr';
-    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ' + FpcCmd + '"');
+    ExecuteProcess('/bin/sh', ['-c', 'cd "' + ServerDir + '" && ' + FpcCmd]);
     {$ENDIF}
 
     if FileExists(TargetExe) then
@@ -21857,7 +21777,7 @@ begin
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c cd /d "' + ServerDir + '" && "bin' + DirectorySeparator + 'server.exe"' + ExtraArgs);
     {$ELSE}
-    ExecuteProcess('sh', '-c "cd ' + ServerDir + ' && ./bin/server' + ExtraArgs + '"');
+    ExecuteProcess('/bin/sh', ['-c', 'cd "' + ServerDir + '" && exec ./bin/server' + ExtraArgs]);
     {$ENDIF}
   end
 
@@ -21867,7 +21787,7 @@ begin
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
     {$ELSE}
-    ExecuteProcess('sh', '-c "killall -9 server > /dev/null 2>&1"');
+    ExecuteProcess('/bin/sh', ['-c', 'killall -9 server > /dev/null 2>&1']);
     {$ENDIF}
     WriteLn('  [+] All server.exe processes terminated. Ports released.');
   end
@@ -22184,7 +22104,7 @@ begin
 
       {$ELSE}
 
-      ExecuteProcess('sh', '-c "cd ''' + DeployDir + ''' && zip -r ''' + ZipFile + ''' ."');
+      ExecuteProcess('/bin/sh', '-c "cd ''' + DeployDir + ''' && zip -r ''' + ZipFile + ''' ."');
 
       {$ENDIF}
 
@@ -22300,9 +22220,16 @@ begin
   WriteLn('Service renamed: src/services/u', OldNorm, '.pas -> src/services/u', NewNorm, '.pas');
 
   // Associated Test
-  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+  TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator;
   OldTest := TestPath + OldNorm + '.test.pas';
   NewTest := TestPath + NewNorm + '.test.pas';
+  if not FileExists(OldTest) and FileExists(GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + OldNorm + '.test.pas') then
+  begin
+    TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator;
+    OldTest := TestPath + OldNorm + '.test.pas';
+    NewTest := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator + NewNorm + '.test.pas';
+    ForceDir(GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services');
+  end;
 
   if FileExists(OldTest) then
   begin
@@ -22310,16 +22237,19 @@ begin
     TestContent := StringReplace(TestContent, 'program ' + LowerCase(OldNorm) + '_unit_test;', 'program ' + LowerCase(NewNorm) + '_unit_test;', [rfIgnoreCase]);
     TestContent := StringReplace(TestContent, 'u' + OldNorm, 'u' + NewNorm, [rfReplaceAll]);
     TestContent := StringReplace(TestContent, 'T' + OldNorm, 'T' + NewNorm, [rfReplaceAll]);
-    TestContent := StringReplace(TestContent, 'Unit: ' + OldNorm, 'Unit: ' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Unit: ' + OldNorm, 'Service: ' + NewNorm, [rfReplaceAll]);
+    TestContent := StringReplace(TestContent, 'Service: ' + OldNorm, 'Service: ' + NewNorm, [rfReplaceAll]);
     TestContent := StringReplace(TestContent, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
     WriteStringToFile(NewTest, TestContent);
     DeleteFile(OldTest);
-    WriteLn('Unit test renamed: tests/unit/', OldNorm, '.test.pas -> tests/unit/', NewNorm, '.test.pas');
+    WriteLn('Test renamed: ', ExtractRelativePath(GetCurrentDir + DirectorySeparator, OldTest), ' -> tests/services/', NewNorm, '.test.pas');
   end;
 
   // Clean stale generated artifacts
   GenOldPas := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + OldNorm + '.pas';
   if FileExists(GenOldPas) then DeleteFile(GenOldPas);
+  GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator + OldNorm + '.test.js';
+  if FileExists(GenOldJs) then DeleteFile(GenOldJs);
   GenOldJs := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + 'unit' + DirectorySeparator + OldNorm + '.test.js';
   if FileExists(GenOldJs) then DeleteFile(GenOldJs);
 end;
@@ -23110,19 +23040,39 @@ begin
     Tokens.Add(Cur);
 end;
 
+procedure ClearInputBuffer;
+begin
+  try
+    {$IFDEF UNIX}
+    TCFlush(0, TCIFLUSH);
+    {$ENDIF}
+    {$IFDEF WINDOWS}
+    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+    {$ENDIF}
+    TextRec(Input).BufPos := 0;
+    TextRec(Input).BufEnd := 0;
+  except
+  end;
+end;
+
 procedure ExecInCockpit(const ExePath, WorkingDir, Args: string);
 begin
   try
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && "' + ExePath + '" ' + Args);
     {$ELSE}
-    ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && \"' + ExePath + '\" ' + Args + '"');
+    ExecuteProcess('/bin/sh', ['-c', 'cd "' + WorkingDir + '" && exec "' + ExePath + '" ' + Args]);
     {$ENDIF}
   except
     on E: Exception do
     begin
       // Catch Ctrl+C interruptions cleanly without terminating the Cockpit session
     end;
+  end;
+  try
+    TextRec(Input).BufPos := 0;
+    TextRec(Input).BufEnd := 0;
+  except
   end;
 end;
 
@@ -23132,13 +23082,18 @@ begin
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c cd /d "' + WorkingDir + '" && ' + CmdLine);
     {$ELSE}
-    ExecuteProcess('sh', '-c "cd ''' + WorkingDir + ''' && ' + CmdLine + '"');
+    ExecuteProcess('/bin/sh', ['-c', 'cd "' + WorkingDir + '" && ' + CmdLine]);
     {$ENDIF}
   except
     on E: Exception do
     begin
       // Catch Ctrl+C interruptions cleanly without terminating the Cockpit session
     end;
+  end;
+  try
+    TextRec(Input).BufPos := 0;
+    TextRec(Input).BufEnd := 0;
+  except
   end;
 end;
 
@@ -23152,6 +23107,7 @@ begin
       // Return TRUE so Windows DOES NOT terminate bv.exe (the Cockpit shell).
       // Child processes (dev-server, mormot, etc.) still receive the signal and exit cleanly.
       WriteLn('');
+      ClearInputBuffer;
       Result := True;
       Exit;
     end;
@@ -23165,6 +23121,73 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF UNIX}
+procedure CockpitSigIntHandler(Sig: LongInt); cdecl;
+begin
+  // Intercept SIGINT/SIGQUIT in Cockpit on Linux/Unix:
+  // Do NOT terminate bv (the Cockpit shell).
+  // Child processes (dev-server, mormot, etc.) still receive the signal and exit cleanly.
+  WriteLn('');
+  ClearInputBuffer;
+end;
+{$ENDIF}
+
+function CockpitReadLine(out S: string): Boolean;
+var
+  ch: char;
+  len, avail: integer;
+begin
+  S := '';
+  Result := False;
+  {$IFDEF WINDOWS}
+  try
+    ReadLn(S);
+    Result := True;
+  except
+    Result := False;
+  end;
+  {$ELSE}
+  while True do
+  begin
+    ch := #0;
+    len := fpRead(0, ch, 1);
+    if (len < 0) and (fpGetErrno = ESysEINTR) then
+      Continue;
+    if len <= 0 then
+    begin
+      if S <> '' then Result := True;
+      Exit;
+    end;
+    if ch = #10 then
+    begin
+      Result := True;
+      Exit;
+    end
+    else if ch = #13 then
+    begin
+      avail := 0;
+      if (fpIOCtl(0, FIONREAD, @avail) >= 0) and (avail > 0) then
+      begin
+        fpRead(0, ch, 1);
+        if ch <> #10 then
+          S := S + ch;
+      end;
+      Result := True;
+      Exit;
+    end
+    else if (ch = #8) or (ch = #127) then
+    begin
+      if Length(S) > 0 then
+        SetLength(S, Length(S) - 1);
+    end
+    else if (ch >= ' ') or (ch = #9) then
+    begin
+      S := S + ch;
+    end;
+  end;
+  {$ENDIF}
+end;
+
 procedure RunCockpitShell(const InitialName, InitialPath: string);
 var
   ActiveName, ActivePath, InputLine, CmdName, DummyName: string;
@@ -23172,17 +23195,21 @@ var
   FoundPath, FoundVer: string;
   i: Integer;
   BvExePath: string;
+  {$IFDEF UNIX}
+  OldSigIntHandler: signalhandler;
+  OldSigQuitHandler: signalhandler;
+  {$ENDIF}
 begin
   {$IFDEF WINDOWS}
   SetConsoleCtrlHandler(@CockpitConsoleCtrlHandler, True);
   {$ENDIF}
+  {$IFDEF UNIX}
+  OldSigIntHandler := fpSignal(SIGINT, @CockpitSigIntHandler);
+  OldSigQuitHandler := fpSignal(SIGQUIT, @CockpitSigIntHandler);
+  {$ENDIF}
   ActiveName := InitialName;
   ActivePath := InitialPath;
-  BvExePath := ExpandFileName(ParamStr(0));
-  {$IFDEF WINDOWS}
-  if (ExtractFileExt(BvExePath) = '') and FileExists(BvExePath + '.exe') then
-    BvExePath := BvExePath + '.exe';
-  {$ENDIF}
+  BvExePath := GetOwnExecutablePath;
 
   WriteLn('');
   WriteLn('========================================================================');
@@ -23193,29 +23220,35 @@ begin
   WriteLn('========================================================================');
   WriteLn('');
 
+  ClearInputBuffer;
   Tokens := TStringList.Create;
   try
     while True do
     begin
+      InputLine := '';
       Write('[bv: ' + ActiveName + '] > ');
-      try
-        ReadLn(InputLine);
-      except
-        on E: Exception do
-        begin
-          WriteLn('');
-          Continue;
-        end;
+      Flush(Output);
+      if not CockpitReadLine(InputLine) then
+      begin
+        WriteLn('');
+        Break;
       end;
       InputLine := Trim(InputLine);
       if InputLine = '' then Continue;
 
+      // Handle typing 'bv' alone in Cockpit: show Cockpit help!
+      if (LowerCase(InputLine) = 'bv') then
+        InputLine := 'help'
       // Strip leading 'bv ' if typed out of habit
-      if (Length(InputLine) >= 3) and (LowerCase(Copy(InputLine, 1, 3)) = 'bv ') then
+      else if (Length(InputLine) >= 3) and (LowerCase(Copy(InputLine, 1, 3)) = 'bv ') then
         InputLine := Trim(Copy(InputLine, 4, Length(InputLine)));
 
       SplitTokens(InputLine, Tokens);
       if Tokens.Count = 0 then Continue;
+
+      // Also strip 'bv' if it was tokenized: e.g. 'bv' 'dev' -> 'dev'
+      if (Tokens.Count > 1) and (LowerCase(Tokens[0]) = 'bv') then
+        Tokens.Delete(0);
 
       CmdName := LowerCase(Tokens[0]);
 
@@ -23272,11 +23305,11 @@ begin
         WriteLn('    check [file]               AST template type-checker & validator');
         WriteLn('    clean                      Purges generated/ and dist/ folders');
         WriteLn('');
-        WriteLn('  Code Scaffolding:');
-        WriteLn('    new s <Name> [--no-test]   Creates a new pure Pascal domain service');
-        WriteLn('    new c <Name> [--no-test]   Creates a new component (.bv)');
-        WriteLn('    new v <Name> [--no-test]   Creates a new view (.bv)');
-        WriteLn('    new t <Name>               Creates a new test file');
+        WriteLn('  Code Scaffolding (alias: g / generate):');
+        WriteLn('    g s <Name> [--no-test]     Creates a new pure Pascal domain service (alias: new s)');
+        WriteLn('    g c <Name> [--no-test]     Creates a new component (.bv) (alias: new c)');
+        WriteLn('    g v <Name> [--no-test]     Creates a new view (.bv) (alias: new v)');
+        WriteLn('    g t <Name>                 Creates a new test file (alias: new t)');
         WriteLn('    remove <c|v|s|t> <Name>    Deletes element and unit tests safely');
         WriteLn('    list <c|v|s|t|lib>         Lists components, views, services, or tests');
         WriteLn('    rename <c|v|s> <Old> <New> Renames service, component, or view across codebase');
@@ -23546,6 +23579,10 @@ begin
     Tokens.Free;
     {$IFDEF WINDOWS}
     SetConsoleCtrlHandler(@CockpitConsoleCtrlHandler, False);
+    {$ENDIF}
+    {$IFDEF UNIX}
+    fpSignal(SIGINT, OldSigIntHandler);
+    fpSignal(SIGQUIT, OldSigQuitHandler);
     {$ENDIF}
   end;
 end;
@@ -24518,7 +24555,7 @@ begin
     CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh bv.pas';
     ExecCmdCapture(CompCmd, CompOut);
     {$ELSE}
-    CompCmd := 'sh -c "cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv"';
+    CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv';
     ExecCmdCapture(CompCmd, CompOut);
     {$ENDIF}
 
@@ -24665,10 +24702,10 @@ begin
     WriteLn('');
     WriteLn('  # === Scaffolding & Generators ===');
     WriteLn('  bv create <name>           Scaffolds a new project with 4-tier testing hierarchy & domain services');
-    WriteLn('  bv new c <Name>            Scaffolds a component (.bv) & automatic test in tests/components/');
-    WriteLn('  bv new v <Name>            Scaffolds a route view (.bv) & automatic test in tests/views/');
-    WriteLn('  bv new s <Name>            Scaffolds a pure Pascal domain service in src/services/');
-    WriteLn('  bv new t <Name>            Scaffolds a Pascal test file (.test.pas)');
+    WriteLn('  bv g c <Name>              Scaffolds a component (.bv) & test in tests/components/ (alias: bv new c)');
+    WriteLn('  bv g v <Name>              Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)');
+    WriteLn('  bv g s <Name>              Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)');
+    WriteLn('  bv g t <Name>              Scaffolds a Pascal test file (.test.pas) (alias: bv new t)');
     WriteLn('  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test');
     WriteLn('  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs');
     WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
@@ -24819,9 +24856,15 @@ begin
 
     begin
 
-      WriteLn('Usage: bv new <c|v|s|t> <Name> [--no-test]');
-
+      WriteLn('Usage: bv <g|new|generate> <c|v|s|t> <Name> [--no-test]');
+      WriteLn('Aliases: bv g, bv new, bv generate');
       WriteLn('Types: component (c), view (v), service (s), test (t)');
+      WriteLn('');
+      WriteLn('Examples:');
+      WriteLn('  bv g c UserCard          # Scaffolds component and test in tests/components/');
+      WriteLn('  bv g v Dashboard         # Scaffolds route view and test in tests/views/');
+      WriteLn('  bv g s PaymentProcessor  # Scaffolds domain service and test in tests/services/');
+      WriteLn('  bv g t UserCard          # Scaffolds test file');
 
       Halt(1);
 
