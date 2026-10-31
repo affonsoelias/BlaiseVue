@@ -615,6 +615,13 @@ initialization
     // Safely removes an element while triggering lifecycle hooks
     bv.unmount = function(el) {
        if (!el) return;
+       // A component replaces its placeholder in the DOM, so unmount what is really there
+       if (el['__bv_replacement__']) {
+          let replacement = el['__bv_replacement__'];
+          el['__bv_replacement__'] = null;
+          bv.unmount(replacement);
+          return;
+       }
        if (el['bvUnmount']) el['bvUnmount']();
        if (el.nodeType === 1 && el.querySelectorAll) {
           let children = el.querySelectorAll('*');
@@ -1147,6 +1154,15 @@ initialization
                  Data.SetValue(vmodel, val);
                };
                el.oninput = sync; el.onchange = sync; 
+               if (tagName === 'select') {
+                 // Options can arrive after the value is set, and then the browser ignores the value
+                 el['__bvModelSync'] = function() {
+                   bv.nonReactive(function() {
+                     let v = Data.Evaluate(vmodel);
+                     el.value = (v === undefined || v === null) ? '' : v;
+                   });
+                 };
+               }
                bv.effect(function() {
                  let v = Data.Evaluate(vmodel);
                  if (isCheck) {
@@ -1287,6 +1303,8 @@ initialization
                     });
                   });
                 }
+                let host = (e.parentNode && e.parentNode.closest) ? e.parentNode.closest('select') : null;
+                if (host && host['__bvModelSync']) host['__bvModelSync']();
               });
             }
             return;
@@ -1300,9 +1318,13 @@ initialization
             let active = true;
             let firstRun = true;
             let tName = el.getAttribute('bv-transition');
+            // A component uses up its placeholder and slot content, so reopening needs a fresh copy
+            let componentCopy = opts ? el.cloneNode(true) : null;
+            if (componentCopy && vmodel) componentCopy.setAttribute('b-model', vmodel);
             bv.effect(function() {
               let res = !!Data.Evaluate(vif);
               if (res && !active) { 
+                 if (componentCopy) el = componentCopy.cloneNode(true);
                  m.parentNode.insertBefore(el, m.nextSibling); 
                  active = true; 
                  bv.nonReactive(function() {
@@ -1311,7 +1333,8 @@ initialization
                  if (tName) bv.applyTransition(el, 'enter', tName);
               }
               else if (!res && active) { 
-                 if (tName && !firstRun) bv.applyTransition(el, 'leave', tName, function() { bv.unmount(el); });
+                 let shown = el['__bv_replacement__'] || el;
+                 if (tName && !firstRun) bv.applyTransition(shown, 'leave', tName, function() { bv.unmount(el); });
                  else bv.unmount(el); 
                  active = false; 
               }
@@ -1823,6 +1846,7 @@ initialization
             let child = children[j];
             if (child && !child['bvManaged'] && !child['bvTraversed']) bv.traverse(child, Data, Methods);
           }
+          if (Node['__bvModelSync']) Node['__bvModelSync']();
           
           Node['bvTraversed'] = true;
       } catch (ex) { console.error("[Compiler] Fatal Error: ", ex); }
