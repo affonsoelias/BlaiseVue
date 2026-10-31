@@ -1658,6 +1658,94 @@ end;
 
 
 
+{ Finds the next routine header in a methods, computed or watch section. Only a keyword
+  outside every begin..end block counts, so the same word inside a body, an asm block,
+  a string or a comment does not start a new member. }
+function FindMemberStart(const S, Keyword1: string; const Keyword2: string = ''): Integer;
+var
+  i, j, n, Depth: Integer;
+  InAsm: Boolean;
+  Quote: Char;
+  Word: string;
+begin
+  Result := 0;
+  n := Length(S);
+  i := 1;
+  Depth := 0;
+  InAsm := False;
+  while i <= n do
+  begin
+    if (S[i] = '''') or (InAsm and (S[i] in ['"', '`'])) then
+    begin
+      Quote := S[i];
+      Inc(i);
+      while (i <= n) and (S[i] <> Quote) and ((Quote = '`') or not (S[i] in [#10, #13])) do
+      begin
+        if InAsm and (S[i] = '\') then Inc(i);
+        Inc(i);
+      end;
+      Inc(i);
+      Continue;
+    end;
+    if (S[i] = '/') and (i < n) and (S[i + 1] = '/') then
+    begin
+      while (i <= n) and not (S[i] in [#10, #13]) do Inc(i);
+      Continue;
+    end;
+    if InAsm and (S[i] = '/') and (i < n) and (S[i + 1] = '*') then
+    begin
+      j := PosEx('*/', S, i + 2);
+      if j = 0 then Exit;
+      i := j + 2;
+      Continue;
+    end;
+    if (not InAsm) and (S[i] = '{') then
+    begin
+      j := PosEx('}', S, i + 1);
+      if j = 0 then Exit;
+      i := j + 1;
+      Continue;
+    end;
+    if (not InAsm) and (S[i] = '(') and (i < n) and (S[i + 1] = '*') then
+    begin
+      j := PosEx('*)', S, i + 2);
+      if j = 0 then Exit;
+      i := j + 2;
+      Continue;
+    end;
+    if S[i] in ['a'..'z', 'A'..'Z', '_'] then
+    begin
+      j := i;
+      while (j <= n) and (S[j] in ['a'..'z', 'A'..'Z', '0'..'9', '_']) do Inc(j);
+      Word := LowerCase(Copy(S, i, j - i));
+      if InAsm then
+      begin
+        if (Word = 'end') and ((i = 1) or (S[i - 1] <> '.')) then
+        begin
+          InAsm := False;
+          Dec(Depth);
+        end;
+      end
+      else if (Word = 'begin') or (Word = 'case') or (Word = 'try') or (Word = 'record') then
+        Inc(Depth)
+      else if Word = 'asm' then
+      begin
+        Inc(Depth);
+        InAsm := True;
+      end
+      else if Word = 'end' then
+      begin
+        if Depth > 0 then Dec(Depth);
+      end
+      else if (Depth = 0) and ((Word = Keyword1) or (Word = Keyword2)) and (j <= n) and (S[j] in [' ', #9, #10, #13]) then
+        Exit(i);
+      i := j;
+      Continue;
+    end;
+    Inc(i);
+  end;
+end;
+
 function GenerateMethodsCode(const RawCode: string): string;
 
 var
@@ -1666,7 +1754,9 @@ var
 
   i, p, pParen, pClose: Integer;
 
-  Sig, Body, Name, Params, Block: string;
+  Sig, Body, Name, Params, Block, ReturnType: string;
+
+  IsFunction: Boolean;
 
 begin
 
@@ -1682,17 +1772,21 @@ begin
 
   try
 
-    // Split by 'procedure '
+    // Split by 'procedure ' and 'function '
 
     Block := RawCode;
 
-    p := Pos('procedure ', LowerCase(Block));
+    p := FindMemberStart(Block, 'procedure', 'function');
 
     while p > 0 do
 
     begin
 
-      Block := Copy(Block, p + 10, Length(Block)); // Depois de 'procedure '
+      IsFunction := LowerCase(Copy(Block, p, 8)) = 'function';
+
+      if IsFunction then Block := Copy(Block, p + 9, Length(Block))
+
+      else Block := Copy(Block, p + 10, Length(Block)); // Depois de 'procedure '
 
       
 
@@ -1738,11 +1832,33 @@ begin
 
       Body := Copy(Block, p + 1, Length(Block));
 
-      p := Pos('procedure ', LowerCase(Body));
+      p := FindMemberStart(Body, 'procedure', 'function');
 
       if p > 0 then Body := Copy(Body, 1, p - 1);
 
       
+
+      // Splits the return type off a function signature
+
+      ReturnType := 'JSValue';
+
+      if IsFunction then
+
+      begin
+
+        p := LastDelimiter(':)', Sig);
+
+        if (p > 0) and (Sig[p] = ':') then
+
+        begin
+
+          ReturnType := Trim(Copy(Sig, p + 1, Length(Sig)));
+
+          Sig := Trim(Copy(Sig, 1, p - 1));
+
+        end;
+
+      end;
 
       // Extracts name and parameters from the signature
 
@@ -1786,13 +1902,21 @@ begin
 
       
 
+      if IsFunction then
+
+        Result := Result + '  m[''' + Name + '''] := function' + Params + ': ' + ReturnType + #10 +
+
+                  CleanPascalProps(Body) + #10
+
+      else
+
       Result := Result + '  m[''' + Name + '''] := procedure' + Params + #10 +
 
                 CleanPascalProps(Body) + #10;
 
       
 
-      p := Pos('procedure ', LowerCase(Block));
+      p := FindMemberStart(Block, 'procedure', 'function');
 
     end;
 
@@ -1986,7 +2110,7 @@ begin
 
     Block := RawCode;
 
-    p := Pos('procedure ', LowerCase(Block));
+    p := FindMemberStart(Block, 'procedure');
 
     while p > 0 do
 
@@ -2004,7 +2128,7 @@ begin
 
       Body := Copy(Block, p + 1, Length(Block));
 
-      p2 := Pos('procedure ', LowerCase(Body));
+      p2 := FindMemberStart(Body, 'procedure');
 
       if p2 > 0 then Body := Copy(Body, 1, p2 - 1);
 
@@ -2048,7 +2172,7 @@ begin
 
       
 
-      p := Pos('procedure ', LowerCase(Block));
+      p := FindMemberStart(Block, 'procedure');
 
     end;
 
@@ -2082,7 +2206,7 @@ begin
 
   Block := RawCode;
 
-  p := Pos('function ', LowerCase(Block));
+  p := FindMemberStart(Block, 'function');
 
   while p > 0 do
 
@@ -2106,7 +2230,7 @@ begin
 
     Body := Copy(Block, p + 1, Length(Block));
 
-    p := Pos('function ', LowerCase(Body));
+    p := FindMemberStart(Body, 'function');
 
     if p > 0 then Body := Copy(Body, 1, p - 1);
 
@@ -2120,7 +2244,7 @@ begin
 
     
 
-    p := Pos('function ', LowerCase(Block));
+    p := FindMemberStart(Block, 'function');
 
   end;
 
@@ -8806,10 +8930,17 @@ begin
   WriteLn('[2/3] Compiling for production (pas2js)...');
 
   {$IFDEF WINDOWS}
-  ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
+  i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
   {$ELSE}
-  ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' + GetPas2JSLibPath + ' -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
+  i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' + GetPas2JSLibPath + ' -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
   {$ENDIF}
+
+  if (i <> 0) or not FileExists(DistPath + 'js/main.js') then
+  begin
+    WriteLn('');
+    WriteLn('ERROR: pas2js returned code ', i, '. The production build was not created.');
+    Halt(1);
+  end;
 
 
 
