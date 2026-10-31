@@ -8767,7 +8767,7 @@ var
 
   JSFiles, CSSFiles: TStringList;
 
-  JSTags, FileName: string;
+  JSTags, CSSTags, FileName: string;
 
   i: Integer;
 
@@ -8839,6 +8839,8 @@ begin
 
     IndexHTML := ReadFileToString(PublicPath + 'index.html');
 
+    IndexHTML := StringReplace(IndexHTML, '__CACHE_BUST__', Hash, [rfReplaceAll]);
+
     IndexHTML := StringReplace(IndexHTML, 'src="js/main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
 
     IndexHTML := StringReplace(IndexHTML, 'src="main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
@@ -8857,6 +8859,8 @@ begin
 
     begin
 
+      CSSTags := '';
+
       ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
 
       for i := 0 to CSSFiles.Count - 1 do
@@ -8867,9 +8871,15 @@ begin
 
          WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
 
+         CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '">' + #10;
+
       end;
 
       CSSFiles.Free;
+
+      if CSSTags <> '' then
+
+        IndexHTML := StringReplace(IndexHTML, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
 
     end;
 
@@ -13154,6 +13164,10 @@ begin
 
     CmdRunBuild;
 
+    if DirectoryExists(AssetsDir) then
+
+      DeleteDir(AssetsDir);
+
     ForceDir(AssetsDir);
 
     CopyDir(GetCurrentDir + DirectorySeparator + 'dist', AssetsDir, []);
@@ -13229,6 +13243,8 @@ begin
   else if (SubCmd = 'run') then
 
   begin
+
+    CmdDesktop('sync', Arg1, Arg2);
 
     FoundLpr := '';
 

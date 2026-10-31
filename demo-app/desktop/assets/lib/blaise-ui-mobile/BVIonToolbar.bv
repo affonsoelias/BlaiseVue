@@ -1,0 +1,18 @@
+<template>
+  <div class="bui-ion-toolbar">
+    <div class="bui-ion-toolbar-start">
+      <slot name="start"></slot>
+    </div>
+    <slot></slot>
+    <div class="bui-ion-toolbar-end">
+      <slot name="end"></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonToolbar - Mobile Toolbar Component
+    ---------------------------------------
+  }
+</script>

@@ -8,29 +8,47 @@
         b-model="searchQuery" 
         @input="handleSearch"
       />
-      <span>Total: {{ totalItems }}</span>
+      <span>Total: {{ totalItems }} {{ virtualScroll ? '(Virtual Scroll)' : '' }}</span>
     </div>
 
-    <table class="bui-datagrid-table">
-      <thead>
-        <tr>
-          <th b-for="col in columns" @click="sortBy(col.key)">
-            {{ col.label }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr b-for="row in pagedItems">
-          <td b-for="col in columns">
-            <slot name="cell" :row="row" :column="col" :value="row[col.key]">
-              {{ row[col.key] }}
-            </slot>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div 
+      class="bui-datagrid-table-wrap" 
+      :style="virtualScroll ? { maxHeight: virtualHeight, overflowY: 'auto', position: 'relative' } : {}"
+      @scroll="handleTableScroll"
+      b-ref="tableWrap"
+    >
+      <table class="bui-datagrid-table">
+        <thead>
+          <tr>
+            <th b-for="col in resolvedColumns" @click="sortBy(col.key)">
+              {{ col.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="virtualScroll && topSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: topSpacerHeight + 'px' }">
+            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>
+          </tr>
+          <tr 
+            b-for="row in displayRows" 
+            @click="selectRow(row)" 
+            :class="{ 'bui-row-selected': (selectedRow !== undefined && dataset && dataset.Current ? (row && dataset.Current.id !== undefined ? dataset.Current.id === row.id : dataset.Current === row) : selectedRow === row) }"
+            :style="virtualScroll ? { height: rowHeight + 'px' } : {}"
+          >
+            <td b-for="col in resolvedColumns">
+              <slot name="cell" :row="row" :column="col" :value="row[col.key]">
+                {{ row[col.key] }}
+              </slot>
+            </td>
+          </tr>
+          <tr v-if="virtualScroll && bottomSpacerHeight > 0" class="bui-virtual-spacer" :style="{ height: bottomSpacerHeight + 'px' }">
+            <td :colspan="resolvedColumns.length" style="padding:0; border:none; background:transparent;"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <div class="bui-datagrid-pagination">
+    <div v-if="!virtualScroll" class="bui-datagrid-pagination">
       <button class="bui-btn bui-btn-sm" :disabled="currentPage <= 1" @click="prevPage">Anterior</button>
       <span>Página {{ currentPage }} de {{ totalPages }}</span>
       <button class="bui-btn bui-btn-sm" :disabled="currentPage >= totalPages" @click="nextPage">Próxima</button>
@@ -39,34 +57,105 @@
 </template>
 
 <script>
-  data:
+  props:
+    dataset: JSValue = nil;
     items: JSValue = [];
     columns: JSValue = [];
+    virtualScroll: boolean = false;
+    rowHeight: integer = 40;
+    virtualHeight: string = '400px';
+    virtualBuffer: integer = 5;
+
+  data:
     searchQuery: string = '';
     sortKey: string = '';
     sortAsc: boolean = true;
     currentPage: integer = 1;
     pageSize: integer = 5;
+    selectedRow: JSValue = nil;
+    virtualScrollTop: integer = 0;
+    virtualViewportHeight: integer = 400;
+
+  mounted:
+    begin
+      asm
+        if (this.virtualScroll && this.$refs && this.$refs.tableWrap) {
+          this.virtualViewportHeight = this.$refs.tableWrap.clientHeight || 400;
+        }
+      end;
+    end;
 
   computed:
+    function resolvedItems: JSValue;
+    begin
+      asm
+        var ds = this.dataset;
+        if (ds) {
+          if (Array.isArray(ds.Data)) return ds.Data;
+          if (Array.isArray(ds.FActiveRecords)) return ds.FActiveRecords;
+          if (Array.isArray(ds.FRecords)) return ds.FRecords;
+          if (Array.isArray(ds)) return ds;
+        }
+        return (this.items && Array.isArray(this.items)) ? this.items : [];
+      end;
+    end;
+
+    function resolvedColumns: JSValue;
+    begin
+      asm
+        if (this.columns && Array.isArray(this.columns) && this.columns.length > 0) {
+          return this.columns;
+        }
+        var ds = this.dataset;
+        if (ds && ds.Fields && typeof ds.Fields.ToArray === 'function') {
+          return ds.Fields.ToArray();
+        }
+        var list = this.resolvedItems;
+        if (list && list.length > 0 && typeof list[0] === 'object') {
+          return Object.keys(list[0]).map(function(k) {
+            return { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) };
+          });
+        }
+        return [];
+      end;
+    end;
+
     function totalItems: integer;
     begin
       asm
-        Result = (this.items && Array.isArray(this.items)) ? this.items.length : 0;
+        Result = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
       end;
     end;
 
     function filteredItems: JSValue;
     begin
       asm
-        let list = this.items || [];
+        let list = (this.resolvedItems && Array.isArray(this.resolvedItems)) ? this.resolvedItems.slice() : [];
         let q = (this.searchQuery || '').toLowerCase();
-        if (!q) return list;
-        return list.filter(function(item) {
-          return Object.values(item).some(function(v) {
-            return String(v).toLowerCase().indexOf(q) !== -1;
+        if (q) {
+          list = list.filter(function(item) {
+            return Object.values(item).some(function(v) {
+              return String(v).toLowerCase().indexOf(q) !== -1;
+            });
           });
-        });
+        }
+        let sk = this.sortKey;
+        let asc = this.sortAsc;
+        if (sk) {
+          list.sort(function(a, b) {
+            let va = (a && a[sk] !== undefined) ? a[sk] : '';
+            let vb = (b && b[sk] !== undefined) ? b[sk] : '';
+            if (typeof va === 'number' && typeof vb === 'number') {
+              return asc ? (va - vb) : (vb - va);
+            }
+            let sa = String(va).toLowerCase();
+            let sb = String(vb).toLowerCase();
+            if (sa < sb) return asc ? -1 : 1;
+            if (sa > sb) return asc ? 1 : -1;
+            return 0;
+          });
+        }
+        return list;
       end;
     end;
 
@@ -81,9 +170,74 @@
     function pagedItems: JSValue;
     begin
       asm
+        var ds = this.dataset;
+        if (ds && ds.RecNo > 0 && this.pageSize > 0) {
+          var recNo = ds.RecNo;
+          if (this._lastRecNo === undefined) {
+            this._lastRecNo = recNo;
+          } else if (recNo !== this._lastRecNo) {
+            this._lastRecNo = recNo;
+            var targetPage = Math.ceil(recNo / this.pageSize);
+            if (targetPage > 0 && targetPage !== this.currentPage) {
+              this.currentPage = targetPage;
+            }
+          }
+        }
         let list = this.filteredItems || [];
         let start = (this.currentPage - 1) * this.pageSize;
         return list.slice(start, start + this.pageSize);
+      end;
+    end;
+
+    function virtualStartIndex: integer;
+    begin
+      asm
+        let rh = this.rowHeight || 40;
+        let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+        let idx = Math.floor(this.virtualScrollTop / rh) - buf;
+        Result = Math.max(0, idx);
+      end;
+    end;
+
+    function virtualEndIndex: integer;
+    begin
+      asm
+        let rh = this.rowHeight || 40;
+        let buf = this.virtualBuffer !== undefined ? this.virtualBuffer : 5;
+        let vh = this.virtualViewportHeight || 400;
+        let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+        let idx = Math.ceil((this.virtualScrollTop + vh) / rh) + buf;
+        Result = Math.min(count, idx);
+      end;
+    end;
+
+    function topSpacerHeight: integer;
+    begin
+      asm
+        let rh = this.rowHeight || 40;
+        Result = this.virtualStartIndex * rh;
+      end;
+    end;
+
+    function bottomSpacerHeight: integer;
+    begin
+      asm
+        let rh = this.rowHeight || 40;
+        let count = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems.length : 0;
+        let rendered = this.virtualEndIndex - this.virtualStartIndex;
+        let remaining = Math.max(0, count - this.virtualStartIndex - rendered);
+        Result = remaining * rh;
+      end;
+    end;
+
+    function displayRows: JSValue;
+    begin
+      asm
+        if (this.virtualScroll) {
+          let list = (this.filteredItems && Array.isArray(this.filteredItems)) ? this.filteredItems : [];
+          return list.slice(this.virtualStartIndex, this.virtualEndIndex);
+        }
+        return this.pagedItems;
       end;
     end;
 
@@ -91,6 +245,17 @@
     procedure handleSearch;
     begin
       this['currentPage'] := 1;
+      this['virtualScrollTop'] := 0;
+    end;
+
+    procedure handleTableScroll(e: JSValue);
+    begin
+      asm
+        if (e && e.target) {
+          this.virtualScrollTop = e.target.scrollTop || 0;
+          this.virtualViewportHeight = e.target.clientHeight || 400;
+        }
+      end;
     end;
 
     procedure sortBy(key: string);
@@ -114,5 +279,25 @@
     begin
       if Integer(this['currentPage']) < Integer(this['totalPages']) then
         this['currentPage'] := Integer(this['currentPage']) + 1;
+    end;
+
+    procedure selectRow(row: JSValue);
+    begin
+      asm
+        var ds = this.dataset;
+        if (ds && row) {
+          if (row.id !== undefined && typeof ds.Locate === 'function') {
+            ds.Locate('id', row.id);
+          } else if (typeof ds.Locate === 'function') {
+            var keys = Object.keys(row);
+            if (keys.length > 0) ds.Locate(keys[0], row[keys[0]]);
+          }
+          if (ds.RecNo > 0) this._lastRecNo = ds.RecNo;
+        }
+        this.selectedRow = row;
+        if (typeof this.$emit === 'function') {
+          this.$emit('row-select', row);
+        }
+      end;
     end;
 </script>

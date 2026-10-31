@@ -1,0 +1,82 @@
+/* BlaiseCharts - Modern Universal Charting Styles for BlaiseVue 4.0 */
+
+.bui-chart-wrapper {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: transparent;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.bui-chart-wrapper canvas {
+  display: block;
+  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.bui-chart-card {
+  background: var(--bs-card-bg, #ffffff);
+  border: 1px solid var(--bs-border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.bui-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.bui-chart-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--bs-heading-color, #1f2937);
+  margin: 0;
+}
+
+.bui-chart-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Dark mode overrides */
+[data-bs-theme="dark"] .bui-chart-card,
+.dark .bui-chart-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-bs-theme="dark"] .bui-chart-title,
+.dark .bui-chart-title {
+  color: #f9fafb;
+}
+
+[data-bs-theme="dark"] .bui-chart-subtitle,
+.dark .bui-chart-subtitle {
+  color: #9ca3af;
+}
+
+/* Skeleton Loading Shimmer */
+.bui-chart-skeleton {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: buiChartShimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes buiChartShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -1,0 +1,17 @@
+<template>
+  <main class="bui-ion-content" :class="{ 'bui-ion-content-padding': padding }">
+    <slot></slot>
+  </main>
+</template>
+
+<script>
+  {
+    BVIonContent - Scrollable Mobile Content Area
+    --------------------------------------------
+    Props:
+    - padding: boolean
+  }
+
+  props:
+    padding: boolean = false;
+</script>

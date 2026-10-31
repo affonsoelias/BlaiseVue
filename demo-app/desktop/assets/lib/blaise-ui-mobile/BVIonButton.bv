@@ -1,0 +1,51 @@
+<template>
+  <button
+    class="bui-ion-btn"
+    :class="btnClass"
+    :disabled="disabled"
+    @click="handleClick">
+    <slot>{{ label }}</slot>
+  </button>
+</template>
+
+<script>
+  {
+    BVIonButton - Touch Mobile Button Component
+    -------------------------------------------
+    Props:
+    - label: string
+    - color: string ('primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'dark')
+    - fill: string ('solid' | 'outline' | 'clear')
+    - expand: string ('block' | 'full' | '')
+    - disabled: boolean
+  }
+
+  props:
+    label: string = '';
+    color: string = 'primary';
+    fill: string = 'solid';
+    expand: string = '';
+    disabled: boolean = false;
+
+  computed:
+    function btnClass: string;
+    begin
+      asm
+        var c = this.color || 'primary';
+        var f = this.fill || 'solid';
+        var e = this.expand ? (' bui-ion-btn-' + this.expand) : '';
+        return 'bui-ion-btn-' + c + ' bui-ion-btn-' + f + e;
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        var isDisabled = (this.disabled === true || this.disabled === 'true' || this.disabled === '');
+        if (!isDisabled) {
+          this.$emit('click', ev);
+        }
+      end;
+    end;
+</script>
