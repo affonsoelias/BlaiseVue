@@ -836,6 +836,10 @@ procedure ScanDirForTests(const Path: string; List: TStringList); forward;
 
 function GetReposConfigPath: string; forward;
 function LoadReposRegistry(out RootObj: TJSONObject): Boolean; forward;
+procedure GetOrderedRepoNames(out RepoNames: TStringList); forward;
+function IsReservedCorePackageName(const Name: string): Boolean; forward;
+function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
+  out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean; forward;
 procedure CmdRepoSync; forward;
 procedure CmdLibList(IsGlobal: Boolean = False); forward;
 procedure CmdLibInstall(const TargetArg: string; IsGlobal: Boolean = False); forward;
@@ -3250,6 +3254,14 @@ var
   NormalizedLic: string;
   PkgJson, BvComp, PasUnit, CssStyle, DemoHtml, DemoApp, UnitTest, Readme: string;
 begin
+  if IsReservedCorePackageName(LibName) then
+  begin
+    WriteLn('ERROR: Cannot create library with reserved name "' + LibName + '".');
+    WriteLn('Names starting with "blaise-" and core names (ui, themes, icons, charts, reports, studio, mobile, core, sdk, tools) are reserved for official BlaiseVue framework components.');
+    WriteLn('Please choose another name (e.g. "my-' + LibName + '").');
+    Halt(1);
+  end;
+
   Base := GetCurrentDir + DirectorySeparator + LibName + DirectorySeparator;
 
   if DirectoryExists(Base) then
@@ -6492,6 +6504,17 @@ begin
             DirectoryExists(GetPackagesPath + L);
 end;
 
+function IsReservedCorePackageName(const Name: string): Boolean;
+var
+  L: string;
+begin
+  L := LowerCase(Trim(Name));
+  Result := IsOfficialCorePackage(L) or
+            StartsText('blaise-', L) or
+            (L = 'core') or (L = 'sdk') or (L = 'tools') or (L = 'pas2js') or
+            (L = 'framework') or (L = 'std') or (L = 'runtime');
+end;
+
 procedure InstallCorePackage(const Name: string);
 var
   L, LibPath, PkgSource: string;
@@ -6644,16 +6667,72 @@ begin
   WriteLn('Installation completed successfully!');
 end;
 
-function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
-  out FoundVersion, DownloadURL, Checksum, RepoName: string): Boolean;
+procedure GetOrderedRepoNames(out RepoNames: TStringList);
 var
-  CacheDir, CacheFile, RawJson, PkgKey, CandidateVer, DesiredVer: string;
-  SR: TSearchRec;
+  RootObj, RepoObj: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  RName, DefaultName: string;
+  IsDef: Boolean;
+begin
+  RepoNames := TStringList.Create;
+  DefaultName := '';
+  if LoadReposRegistry(RootObj) then
+  begin
+    try
+      ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+      if Assigned(ReposArr) then
+      begin
+        for i := 0 to ReposArr.Count - 1 do
+        begin
+          if ReposArr.Types[i] = jtObject then
+          begin
+            RepoObj := TJSONObject(ReposArr.Objects[i]);
+            IsDef := RepoObj.Get('default', False);
+            if IsDef then
+            begin
+              DefaultName := RepoObj.Get('name', '');
+              Break;
+            end;
+          end;
+        end;
+        if (DefaultName = '') and (ReposArr.Count > 0) and (ReposArr.Types[0] = jtObject) then
+          DefaultName := TJSONObject(ReposArr.Objects[0]).Get('name', '');
+
+        if DefaultName <> '' then
+          RepoNames.Add(DefaultName);
+
+        for i := 0 to ReposArr.Count - 1 do
+        begin
+          if ReposArr.Types[i] = jtObject then
+          begin
+            RepoObj := TJSONObject(ReposArr.Objects[i]);
+            RName := RepoObj.Get('name', '');
+            if (RName <> '') and (not SameText(RName, DefaultName)) then
+              RepoNames.Add(RName);
+          end;
+        end;
+      end;
+    finally
+      RootObj.Free;
+    end;
+  end;
+
+  if RepoNames.Count = 0 then
+    RepoNames.Add('official');
+end;
+
+function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
+  out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean;
+var
+  CacheDir, CacheFile, RawJson, PkgKey, CandidateVer, DesiredVer, CurrentRepo: string;
   Parser: TJSONParser;
   Data: TJSONData;
   RootObj, PackagesObj, PkgObj, VerObj: TJSONObject;
   VersionsArr: TJSONArray;
-  i, j: Integer;
+  i, j, rIdx: Integer;
+  RepoList, FoundInOtherRepos: TStringList;
+  MatchedInThisRepo: Boolean;
 begin
   Result := False;
   FoundVersion := '';
@@ -6665,58 +6744,94 @@ begin
   if not DirectoryExists(CacheDir) then
     CmdRepoSync;
 
-  if FindFirst(CacheDir + DirectorySeparator + '*-ecosystem.json', faAnyFile, SR) = 0 then
-  begin
-    repeat
-      if (SR.Name <> '.') and (SR.Name <> '..') then
-      begin
-        CacheFile := CacheDir + DirectorySeparator + SR.Name;
-        RawJson := ReadFileToString(CacheFile);
-        if Trim(RawJson) <> '' then
-        begin
-          Parser := TJSONParser.Create(RawJson, True);
-          try
-            try
-              Data := Parser.Parse;
-              if Assigned(Data) and (Data.JSONType = jtObject) then
-              begin
-                RootObj := TJSONObject(Data);
-                PackagesObj := RootObj.Get('packages', TJSONObject(nil));
-                if Assigned(PackagesObj) then
-                begin
-                  for i := 0 to PackagesObj.Count - 1 do
-                  begin
-                    PkgKey := PackagesObj.Names[i];
-                    if SameText(PkgKey, PkgName) then
-                    begin
-                      PkgObj := TJSONObject(PackagesObj.Items[i]);
-                      DesiredVer := ReqVersion;
-                      if (DesiredVer = '') or SameText(DesiredVer, 'latest') then
-                        DesiredVer := PkgObj.Get('latest', '');
+  RepoList := nil;
+  FoundInOtherRepos := TStringList.Create;
+  try
+    if TargetRepo <> '' then
+    begin
+      RepoList := TStringList.Create;
+      if FileExists(CacheDir + DirectorySeparator + TargetRepo + '-ecosystem.json') then
+        RepoList.Add(TargetRepo)
+      else if SameText(TargetRepo, 'official') or SameText(TargetRepo, 'blaisevue-ecosystem') then
+        RepoList.Add('official')
+      else
+        RepoList.Add(TargetRepo);
+    end
+    else
+      GetOrderedRepoNames(RepoList);
 
-                      VersionsArr := PkgObj.Get('versions', TJSONArray(nil));
-                      if Assigned(VersionsArr) then
+    for rIdx := 0 to RepoList.Count - 1 do
+    begin
+      CurrentRepo := RepoList[rIdx];
+      CacheFile := CacheDir + DirectorySeparator + CurrentRepo + '-ecosystem.json';
+      if not FileExists(CacheFile) then
+        Continue;
+
+      RawJson := ReadFileToString(CacheFile);
+      if Trim(RawJson) = '' then
+        Continue;
+
+      Parser := TJSONParser.Create(RawJson, True);
+      try
+        try
+          Data := Parser.Parse;
+          if Assigned(Data) and (Data.JSONType = jtObject) then
+          begin
+            RootObj := TJSONObject(Data);
+
+            if (not (SameText(CurrentRepo, 'official') or SameText(CurrentRepo, 'blaisevue-ecosystem'))) and IsReservedCorePackageName(PkgName) then
+            begin
+              // Skip hijacked core name from third-party repo
+            end
+            else
+            begin
+              PackagesObj := RootObj.Get('packages', TJSONObject(nil));
+              if Assigned(PackagesObj) then
+              begin
+                for i := 0 to PackagesObj.Count - 1 do
+                begin
+                  PkgKey := PackagesObj.Names[i];
+                  if SameText(PkgKey, PkgName) then
+                  begin
+                    MatchedInThisRepo := False;
+                    PkgObj := TJSONObject(PackagesObj.Items[i]);
+                    DesiredVer := ReqVersion;
+                    if (DesiredVer = '') or SameText(DesiredVer, 'latest') then
+                      DesiredVer := PkgObj.Get('latest', '');
+
+                    VersionsArr := PkgObj.Get('versions', TJSONArray(nil));
+                    if Assigned(VersionsArr) then
+                    begin
+                      for j := 0 to VersionsArr.Count - 1 do
                       begin
-                        for j := 0 to VersionsArr.Count - 1 do
+                        if VersionsArr.Types[j] = jtObject then
                         begin
-                          if VersionsArr.Types[j] = jtObject then
+                          VerObj := TJSONObject(VersionsArr.Objects[j]);
+                          CandidateVer := VerObj.Get('version', '');
+                          if (DesiredVer = '') or (CandidateVer = DesiredVer) then
                           begin
-                            VerObj := TJSONObject(VersionsArr.Objects[j]);
-                            CandidateVer := VerObj.Get('version', '');
-                            if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                            if not Result then
                             begin
                               FoundVersion := CandidateVer;
                               DownloadURL := VerObj.Get('download_url', '');
                               Checksum := VerObj.Get('checksum', '');
-                              RepoName := RootObj.Get('name', SR.Name);
+                              RepoName := RootObj.Get('name', CurrentRepo);
                               Result := True;
-                              Break;
+                              MatchedInThisRepo := True;
+                            end
+                            else
+                            begin
+                              MatchedInThisRepo := True;
                             end;
-                          end
-                          else if VersionsArr.Types[j] = jtString then
+                            Break;
+                          end;
+                        end
+                        else if VersionsArr.Types[j] = jtString then
+                        begin
+                          CandidateVer := VersionsArr.Strings[j];
+                          if (DesiredVer = '') or (CandidateVer = DesiredVer) then
                           begin
-                            CandidateVer := VersionsArr.Strings[j];
-                            if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                            if not Result then
                             begin
                               FoundVersion := CandidateVer;
                               DownloadURL := PkgObj.Get('download', '');
@@ -6724,29 +6839,50 @@ begin
                               DownloadURL := StringReplace(DownloadURL, '{package}', PkgKey, [rfReplaceAll]);
                               DownloadURL := StringReplace(DownloadURL, '{version}', CandidateVer, [rfReplaceAll]);
                               Checksum := '';
-                              RepoName := RootObj.Get('name', SR.Name);
+                              RepoName := RootObj.Get('name', CurrentRepo);
                               Result := True;
-                              Break;
+                              MatchedInThisRepo := True;
+                            end
+                            else
+                            begin
+                              MatchedInThisRepo := True;
                             end;
+                            Break;
                           end;
                         end;
                       end;
-                      if Result then Break;
                     end;
+
+                    if MatchedInThisRepo and Result and (not SameText(RepoName, CurrentRepo)) then
+                    begin
+                      if FoundInOtherRepos.IndexOf(CurrentRepo) < 0 then
+                        FoundInOtherRepos.Add(CurrentRepo);
+                    end;
+                    Break;
                   end;
                 end;
               end;
-              if Assigned(Data) then Data.Free;
-            except
             end;
-          finally
-            Parser.Free;
+            Data.Free;
           end;
+        except
         end;
-        if Result then Break;
+      finally
+        Parser.Free;
       end;
-    until FindNext(SR) <> 0;
-    FindClose(SR);
+
+      if (TargetRepo <> '') and Result then
+        Break;
+    end;
+
+    if (TargetRepo = '') and Result and (FoundInOtherRepos.Count > 0) then
+    begin
+      WriteLn('Notice: Package "' + PkgName + '" was also found in repository: ' + FoundInOtherRepos.CommaText + '.');
+      WriteLn('        Using [' + RepoName + '] (by priority). To specify repository, use: bv lib install <repo>:' + PkgName);
+    end;
+  finally
+    if Assigned(RepoList) then RepoList.Free;
+    FoundInOtherRepos.Free;
   end;
 end;
 
@@ -6872,8 +7008,8 @@ end;
 
 procedure CmdLibInstall(const TargetArg: string; IsGlobal: Boolean = False);
 var
-  RawArg, PkgName, ReqVersion: string;
-  AtPos: Integer;
+  RawArg, PkgName, ReqVersion, TargetRepo, RemainingArg: string;
+  AtPos, ColonPos: Integer;
   LibPath, GlobalPath, TempZip: string;
   FoundVer, DownloadURL, Checksum, RepoName, CachedVer: string;
   Client: TFPHTTPClient;
@@ -6881,7 +7017,8 @@ begin
   RawArg := Trim(TargetArg);
   if RawArg = '' then
   begin
-    WriteLn('Usage: bv lib install <package[@version]|url> [--global|-g]');
+    WriteLn('Usage: bv lib install [<repo>:]<package[@version]> [--global|-g]');
+    WriteLn('       bv lib install <url|archive.zip> [--global|-g]');
     Exit;
   end;
 
@@ -6892,39 +7029,71 @@ begin
     Exit;
   end;
 
-  AtPos := Pos('@', RawArg);
-  if AtPos > 0 then
+  // Check for <repo>:<package>[@version]
+  ColonPos := Pos(':', RawArg);
+  if ColonPos > 0 then
   begin
-    PkgName := Copy(RawArg, 1, AtPos - 1);
-    ReqVersion := Copy(RawArg, AtPos + 1, Length(RawArg) - AtPos);
+    TargetRepo := Trim(Copy(RawArg, 1, ColonPos - 1));
+    RemainingArg := Trim(Copy(RawArg, ColonPos + 1, Length(RawArg) - ColonPos));
   end
   else
   begin
-    PkgName := RawArg;
+    TargetRepo := '';
+    RemainingArg := RawArg;
+  end;
+
+  AtPos := Pos('@', RemainingArg);
+  if AtPos > 0 then
+  begin
+    PkgName := Trim(Copy(RemainingArg, 1, AtPos - 1));
+    ReqVersion := Trim(Copy(RemainingArg, AtPos + 1, Length(RemainingArg) - AtPos));
+  end
+  else
+  begin
+    PkgName := Trim(RemainingArg);
     ReqVersion := '';
   end;
 
-  PkgName := Trim(PkgName);
-  ReqVersion := Trim(ReqVersion);
-
-  if IsOfficialCorePackage(PkgName) then
+  if PkgName = '' then
   begin
-    if IsGlobal then
+    WriteLn('Error: Invalid package name in "' + RawArg + '".');
+    Exit;
+  end;
+
+  // Security Check: Core Reserved Names from third-party repositories
+  if (TargetRepo <> '') and (not (SameText(TargetRepo, 'official') or SameText(TargetRepo, 'blaisevue-ecosystem'))) and IsReservedCorePackageName(PkgName) then
+  begin
+    WriteLn('Error: Cannot install package "' + PkgName + '" from repository "' + TargetRepo + '".');
+    WriteLn('The package name "' + PkgName + '" is reserved for the official BlaiseVue Core framework.');
+    WriteLn('Third-party repositories are not permitted to publish packages with reserved core names.');
+    Halt(1);
+  end;
+
+  // If TargetRepo is empty or official, check if it is a local native core package:
+  if (TargetRepo = '') or SameText(TargetRepo, 'official') or SameText(TargetRepo, 'blaisevue-ecosystem') then
+  begin
+    if IsOfficialCorePackage(PkgName) then
     begin
-      WriteLn('Notice: Package "' + PkgName + '" is an official core framework package in packages/core/.');
-      WriteLn('It is already available natively across all BlaiseVue installations.');
+      if IsGlobal then
+      begin
+        WriteLn('Notice: Package "' + PkgName + '" is an official core framework package in packages/core/.');
+        WriteLn('It is already available natively across all BlaiseVue installations.');
+        Exit;
+      end;
+      InstallCorePackage(PkgName);
       Exit;
     end;
-    InstallCorePackage(PkgName);
-    Exit;
   end;
 
   GlobalPath := GetGlobalPackagesPath + PkgName;
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + PkgName;
 
-  WriteLn('Searching for package "' + PkgName + '" in ecosystem repositories...');
+  if TargetRepo <> '' then
+    WriteLn('Searching for package "' + PkgName + '" in repository [' + TargetRepo + ']...')
+  else
+    WriteLn('Searching for package "' + PkgName + '" in ecosystem repositories...');
 
-  if FindPackageInEcosystem(PkgName, ReqVersion, FoundVer, DownloadURL, Checksum, RepoName) then
+  if FindPackageInEcosystem(PkgName, ReqVersion, FoundVer, DownloadURL, Checksum, RepoName, TargetRepo) then
   begin
     if (not IsGlobal) and DirectoryExists(GlobalPath) then
     begin
@@ -6948,7 +7117,7 @@ begin
   end
   else
   begin
-    if (not IsGlobal) and DirectoryExists(GlobalPath) then
+    if (TargetRepo = '') and (not IsGlobal) and DirectoryExists(GlobalPath) then
     begin
       CachedVer := GetPackageVersionFromFolder(GlobalPath);
       if (ReqVersion = '') or (ReqVersion = CachedVer) then
@@ -6968,7 +7137,10 @@ begin
       WriteLn('  Requested version: ' + ReqVersion)
     else
       WriteLn('  (latest version)');
-    WriteLn('Was not found in any registered repositories.');
+    if TargetRepo <> '' then
+      WriteLn('Was not found in repository [' + TargetRepo + '].')
+    else
+      WriteLn('Was not found in any registered repositories.');
     WriteLn('Hint: Run "bv repo sync" to update catalog or "bv repo list" to view registered repositories.');
     Halt(1);
   end;
@@ -7022,6 +7194,8 @@ end;
 procedure CmdLibUpdate(const LibName: string = ''; IsGlobal: Boolean = False);
 var
   TargetBase, PkgDir, CurrentVer, FoundVer, DownloadURL, Checksum, RepoName: string;
+  RawArg, TargetRepo, PkgName: string;
+  ColonPos: Integer;
   SR: TSearchRec;
   UpdatedCount: Integer;
 begin
@@ -7030,33 +7204,54 @@ begin
   else
     TargetBase := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
 
-  if LibName <> '' then
+  RawArg := Trim(LibName);
+  if RawArg <> '' then
   begin
-    if (not IsGlobal) and IsOfficialCorePackage(LibName) then
+    ColonPos := Pos(':', RawArg);
+    if ColonPos > 0 then
     begin
-      WriteLn('Package "' + LibName + '" is an official core framework package. It updates automatically with BlaiseVue framework updates (bv self-update).');
+      TargetRepo := Trim(Copy(RawArg, 1, ColonPos - 1));
+      PkgName := Trim(Copy(RawArg, ColonPos + 1, Length(RawArg) - ColonPos));
+    end
+    else
+    begin
+      TargetRepo := '';
+      PkgName := RawArg;
+    end;
+
+    if (not IsGlobal) and (TargetRepo = '') and IsOfficialCorePackage(PkgName) then
+    begin
+      WriteLn('Package "' + PkgName + '" is an official core framework package. It updates automatically with BlaiseVue framework updates (bv self-update).');
       Exit;
     end;
 
-    PkgDir := TargetBase + LibName;
+    PkgDir := TargetBase + PkgName;
     if not DirectoryExists(PkgDir) then
     begin
-      WriteLn('Library "' + LibName + '" not found to update.');
+      WriteLn('Library "' + PkgName + '" not found in ' + TargetBase + ' to update.');
       Exit;
     end;
     CurrentVer := GetPackageVersionFromFolder(PkgDir);
-    if FindPackageInEcosystem(LibName, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
+    if FindPackageInEcosystem(PkgName, 'latest', FoundVer, DownloadURL, Checksum, RepoName, TargetRepo) then
     begin
       if (CurrentVer <> '') and (CurrentVer = FoundVer) then
-        WriteLn('Package "' + LibName + '" is already up to date (v' + CurrentVer + ').')
+        WriteLn('Package "' + PkgName + '" is already up to date (v' + CurrentVer + ') [' + RepoName + '].')
       else
       begin
-        WriteLn('Updating "' + LibName + '" from v' + CurrentVer + ' to v' + FoundVer + '...');
-        CmdLibInstall(LibName + '@' + FoundVer, IsGlobal);
+        WriteLn('Updating "' + PkgName + '" from v' + CurrentVer + ' to v' + FoundVer + ' [' + RepoName + ']...');
+        if TargetRepo <> '' then
+          CmdLibInstall(TargetRepo + ':' + PkgName + '@' + FoundVer, IsGlobal)
+        else
+          CmdLibInstall(PkgName + '@' + FoundVer, IsGlobal);
       end;
     end
     else
-      WriteLn('Package "' + LibName + '" not found in ecosystem repositories.');
+    begin
+      if TargetRepo <> '' then
+        WriteLn('Package "' + PkgName + '" not found in repository [' + TargetRepo + '].')
+      else
+        WriteLn('Package "' + PkgName + '" not found in ecosystem repositories.');
+    end;
     Exit;
   end;
 
@@ -7179,6 +7374,8 @@ end;
 procedure CmdLibSearch(const Query: string);
 var
   CacheDir, CacheFile, RawJson, PkgKey, PkgDesc, PkgLatest, PkgAuthor, QueryLower: string;
+  TargetRepo, SearchTerm, RepoName: string;
+  ColonPos: Integer;
   SR: TSearchRec;
   Parser: TJSONParser;
   Data: TJSONData;
@@ -7186,10 +7383,26 @@ var
   i, MatchCount: Integer;
 begin
   QueryLower := LowerCase(Trim(Query));
+  TargetRepo := '';
+  SearchTerm := QueryLower;
+  ColonPos := Pos(':', QueryLower);
+  if ColonPos > 0 then
+  begin
+    TargetRepo := Trim(Copy(QueryLower, 1, ColonPos - 1));
+    SearchTerm := Trim(Copy(QueryLower, ColonPos + 1, Length(QueryLower) - ColonPos));
+  end;
+
   WriteLn('');
   WriteLn('=== Package Search in BlaiseVue Ecosystem ===');
-  if QueryLower <> '' then
-    WriteLn('Filter: "', QueryLower, '"')
+  if TargetRepo <> '' then
+  begin
+    if SearchTerm <> '' then
+      WriteLn('Filter: repo="' + TargetRepo + '", term="' + SearchTerm + '"')
+    else
+      WriteLn('Filter: repository "' + TargetRepo + '"');
+  end
+  else if SearchTerm <> '' then
+    WriteLn('Filter: "' + SearchTerm + '"')
   else
     WriteLn('Listing all available ecosystem packages:');
   WriteLn(StringOfChar('-', 65));
@@ -7215,27 +7428,36 @@ begin
               if Assigned(Data) and (Data.JSONType = jtObject) then
               begin
                 RootObj := TJSONObject(Data);
-                PackagesObj := RootObj.Get('packages', TJSONObject(nil));
-                if Assigned(PackagesObj) then
-                begin
-                  for i := 0 to PackagesObj.Count - 1 do
-                  begin
-                    PkgKey := PackagesObj.Names[i];
-                    PkgObj := TJSONObject(PackagesObj.Items[i]);
-                    PkgDesc := PkgObj.Get('description', '');
-                    PkgLatest := PkgObj.Get('latest', '');
-                    PkgAuthor := PkgObj.Get('author', '');
+                RepoName := RootObj.Get('name', StringReplace(SR.Name, '-ecosystem.json', '', [rfReplaceAll]));
 
-                    if (QueryLower = '') or (Pos(QueryLower, LowerCase(PkgKey)) > 0) or
-                       (Pos(QueryLower, LowerCase(PkgDesc)) > 0) then
+                if (TargetRepo = '') or SameText(TargetRepo, RepoName) or SameText(TargetRepo, StringReplace(SR.Name, '-ecosystem.json', '', [rfReplaceAll])) then
+                begin
+                  PackagesObj := RootObj.Get('packages', TJSONObject(nil));
+                  if Assigned(PackagesObj) then
+                  begin
+                    for i := 0 to PackagesObj.Count - 1 do
                     begin
-                      Inc(MatchCount);
-                      WriteLn('  * ', PkgKey, ' (v', PkgLatest, ')');
-                      if PkgDesc <> '' then
-                        WriteLn('    Description: ', PkgDesc);
-                      if PkgAuthor <> '' then
-                        WriteLn('    Author:      ', PkgAuthor);
-                      WriteLn('');
+                      PkgKey := PackagesObj.Names[i];
+                      PkgObj := TJSONObject(PackagesObj.Items[i]);
+                      PkgDesc := PkgObj.Get('description', '');
+                      PkgLatest := PkgObj.Get('latest', '');
+                      PkgAuthor := PkgObj.Get('author', '');
+
+                      // Ignore third-party packages claiming reserved core names
+                      if (not SameText(RepoName, 'official')) and IsReservedCorePackageName(PkgKey) then
+                        Continue;
+
+                      if (SearchTerm = '') or (Pos(SearchTerm, LowerCase(PkgKey)) > 0) or
+                         (Pos(SearchTerm, LowerCase(PkgDesc)) > 0) then
+                      begin
+                        Inc(MatchCount);
+                        WriteLn('  * [' + RepoName + '] ' + PkgKey + ' (v' + PkgLatest + ')');
+                        if PkgDesc <> '' then
+                          WriteLn('    Description: ' + PkgDesc);
+                        if PkgAuthor <> '' then
+                          WriteLn('    Author:      ', PkgAuthor);
+                        WriteLn('');
+                      end;
                     end;
                   end;
                 end;
@@ -7255,7 +7477,7 @@ begin
   if MatchCount = 0 then
     WriteLn('  No packages found matching search criteria.')
   else
-    WriteLn(IntToStr(MatchCount), ' package(s) found. To install, run: bv lib install <name>');
+    WriteLn(IntToStr(MatchCount), ' package(s) found. To install, run: bv lib install [<repo>:]<name>');
   WriteLn(StringOfChar('-', 65));
 end;
 
@@ -7342,6 +7564,12 @@ begin
   end;
 
   PkgFolder := PkgName;
+
+  if IsReservedCorePackageName(PkgName) then
+  begin
+    WriteLn('WARNING: Package name "' + PkgName + '" matches a reserved BlaiseVue Core framework name.');
+    WriteLn('Third-party repositories will reject packages with reserved core names.');
+  end;
 
   if not SkipTests then
   begin
@@ -26210,12 +26438,12 @@ begin
     WriteLn('');
     WriteLn('  # === Package & Theme Management ===');
     WriteLn('  bv repo <list|add|remove|default|sync|search> Manages package repositories & ecosystem sources');
-    WriteLn('  bv lib install <pkg[@ver]|url> [--global|-g] Installs package in project /lib or user cache');
+    WriteLn('  bv lib install [<repo>:]<pkg[@ver]|url> [--global|-g] Installs package in project /lib or user cache');
     WriteLn('  bv lib remove <name> [--global|-g] Removes package from lib/ or global cache');
-    WriteLn('  bv lib update [name] [--global|-g] Updates package(s) to latest version');
+    WriteLn('  bv lib update [[<repo>:]name] [--global|-g] Updates package(s) to latest version');
     WriteLn('  bv lib outdated [--global|-g] Checks for available updates in installed packages');
     WriteLn('  bv lib list [--global|-g]  Lists installed libraries');
-    WriteLn('  bv lib search <term>       Searches packages in registered repositories');
+    WriteLn('  bv lib search [[<repo>:]term] Searches packages in registered repositories');
     WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
     WriteLn('  bv theme list              Lists all available installed themes');
     WriteLn('  bv theme use <name>        Sets default project theme in index.html (e.g. darkly, lux)');
@@ -26514,7 +26742,7 @@ begin
     end
     else if Cmd = 'install' then
     begin
-      if ParamCount < 3 then begin WriteLn('Usage: bv lib install <package[@version]|url> [--global|-g]'); Halt(1); end;
+      if ParamCount < 3 then begin WriteLn('Usage: bv lib install [<repo>:]<package[@version]|url> [--global|-g]'); Halt(1); end;
       IsGlobalArg := False;
       PkgNameArg := '';
       for i := 3 to ParamCount do
@@ -26523,7 +26751,7 @@ begin
         if (CurP = '--global') or (CurP = '-g') then IsGlobalArg := True
         else if PkgNameArg = '' then PkgNameArg := CurP;
       end;
-      if PkgNameArg = '' then begin WriteLn('Usage: bv lib install <package[@version]|url> [--global|-g]'); Halt(1); end;
+      if PkgNameArg = '' then begin WriteLn('Usage: bv lib install [<repo>:]<package[@version]|url> [--global|-g]'); Halt(1); end;
       CmdLibInstall(PkgNameArg, IsGlobalArg);
     end
     else if Cmd = 'remove' then

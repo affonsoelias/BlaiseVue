@@ -234,6 +234,10 @@ bv lib install test
 # Install a specific pinned version:
 bv lib install test@1.0.0
 
+# Install from a specific repository (<repo>:<package>[@version]):
+bv lib install official:test@1.1.0
+bv lib install myrepo:my-widget
+
 # Install directly into user global cache (~/.blaisevue/packages/):
 bv lib install test --global # (or alias: -g)
 

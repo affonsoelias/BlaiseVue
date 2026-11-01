@@ -93,11 +93,15 @@ Repository settings are stored centrally in `~/.blaisevue/repos.json`:
 The install command supports SemVer version constraints, global user caching, and core aliases:
 
 ```bash
-# 1. Install latest version into current project:
+# 1. Install latest version into current project (from default repository):
 bv lib install test
 
 # 2. Install a specific pinned version:
 bv lib install test@1.0.0
+
+# 3. Disambiguate source repository using <repo>:<package>[@version]:
+bv lib install official:test@1.1.0
+bv lib install internal-corp:my-pkg
 
 # 3. Install directly into user global cache (~/.blaisevue/packages/):
 bv lib install test --global  # (or alias: -g)
@@ -155,6 +159,45 @@ bv lib update test
 # Upgrade user global cache:
 bv lib update --global
 ```
+
+---
+
+## 🛡️ Core Reserved Names & Collision Prevention
+
+To ensure enterprise stability and eliminate typosquatting or namespace hijacking:
+
+### Reserved Names Policy
+- **Prefix `blaise-`**: Any package name beginning with `blaise-` (case-insensitive) is reserved strictly for official BlaiseVue framework components and ecosystem modules.
+- **Core Module Names**: The names `ui`, `themes`, `icons`, `charts`, `reports`, `studio`, `mobile`, `core`, `sdk`, `tools`, `pas2js`, `framework`, `std`, and `runtime` are protected.
+
+### Protection Enforcements:
+1. **Scaffold Protection (`bv create <name> --lib`)**:
+   The CLI rejects creating any library whose name uses a reserved core name or the `blaise-` prefix, instructing the author to select another identifier (e.g. `my-chart-lib`).
+2. **Packaging Warning (`bv lib pack`)**:
+   If an external library root matches a reserved core name, packaging generates an explicit warning alerting the author that third-party catalogs will reject the package.
+3. **Repository Namespace Shielding (`bv lib install`)**:
+   Third-party registries (`internal-corp`, etc.) are prohibited from publishing packages with reserved core names. Installing `internal-corp:ui` or `myrepo:blaise-charts` will immediately halt with a security exception.
+4. **Catalog Search Isolation (`bv lib search`)**:
+   Packages in third-party catalogs claiming reserved core names are automatically sanitized and hidden from search listings.
+
+---
+
+## 🔀 Repository Disambiguation Syntax (`<repo>:<package>`)
+
+When multiple registries are registered in `~/.blaisevue/repos.json` (e.g. `official` and `internal-corp`):
+
+1. **Default Repository Priority**: If no repository prefix is provided (e.g. `bv lib install test`), BlaiseVue queries the active default repository first (`"default": true`).
+2. **Duplicate Notification**: If a package with the same name exists in both repositories and the default was selected, the CLI outputs a notice:
+   ```text
+   Notice: Package "test" was also found in repository: internal-corp.
+           Using [official] (by priority). To specify repository, use: bv lib install <repo>:test
+   ```
+3. **Explicit Targeting**: Use `<repo>:<package>[@version]` with any package management command:
+   ```bash
+   bv lib install internal-corp:test@2.0.0
+   bv lib update internal-corp:test
+   bv lib search internal-corp:
+   ```
 
 ---
 
