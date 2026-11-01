@@ -4,7 +4,9 @@
 $ErrorActionPreference = "Stop"
 
 $SourceDir = $PSScriptRoot
-$ExtensionFolderName = "blaisevue.blaisevue-vscode-3.5.0"
+$PkgJson = Get-Content (Join-Path $SourceDir "package.json") -Raw | ConvertFrom-Json
+$Version = $PkgJson.version
+$ExtensionFolderName = "blaisevue.blaisevue-vscode-$Version"
 
 $TargetExtensionDirs = @(
     (Join-Path $env:USERPROFILE ".antigravity-ide\extensions"),
@@ -13,7 +15,7 @@ $TargetExtensionDirs = @(
 )
 
 Write-Host "=============================================" -ForegroundColor Cyan
-Write-Host "  BlaiseVue 3.5 Extension Installer (IDE)   " -ForegroundColor Cyan
+Write-Host "  BlaiseVue $Version Extension Installer     " -ForegroundColor Cyan
 Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -40,6 +42,9 @@ foreach ($extBase in $TargetExtensionDirs) {
         Copy-Item -Path (Join-Path $SourceDir "language-configuration.json") -Destination $target
         Copy-Item -Path (Join-Path $SourceDir "README.md") -Destination $target
         Copy-Item -Path (Join-Path $SourceDir "LICENSE") -Destination $target
+        if (Test-Path (Join-Path $SourceDir "icon.png")) {
+            Copy-Item -Path (Join-Path $SourceDir "icon.png") -Destination $target
+        }
 
         if (Test-Path (Join-Path $SourceDir "src")) {
             Copy-Item -Path (Join-Path $SourceDir "src") -Destination $target -Recurse
