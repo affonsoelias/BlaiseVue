@@ -95,6 +95,7 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 34. [34. VS Code Extension & Professional DX (.vsix)](34-vscode-extension.md) — Official IDE extension with syntax highlighting, IntelliSense, and snippets.
 40. [40. BlaiseVue Studio Dashboard (bv studio)](40-blaise-studio.md) — Web-based developer cockpit for real-time WebSocket monitoring and workflows.
 44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
+53. [53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md) — Linking official Pas2JS built-in packages (chartjs, fcl-base, jspdf) and importing legacy Lazarus/Delphi business logic without rewriting.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
@@ -136,6 +137,12 @@ bv mormot crud <Model> [f:t...] # Scaffolds ORM model, REST endpoints, and DataG
 bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from server interfaces
 bv mormot run              # Starts native mORMot 2 server on port 8090
 bv mormot docker           # Builds production multi-stage micro-container (<20 MB)
+
+# === Compiler Search Paths & Legacy Migration ===
+bv path                    # Lists all active search paths (-Fu) categorized by type
+bv path add <dir|pas2js:p> # Adds directory or built-in Pas2JS package to app.cfg
+bv path remove <target>    # Removes search path from app.cfg
+bv path available          # Catalogs 30+ official Pas2JS packages with active indicator
 
 # === Mobile & Desktop ===
 bv mobile init [name] [id] # Scaffolds Capacitor mobile project

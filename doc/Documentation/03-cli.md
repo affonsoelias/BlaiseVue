@@ -407,6 +407,24 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
 
+### 8. `bv path` (Compiler Search Paths & Legacy Migration)
+Manages Pas2JS compiler search paths (`-Fu`) in `app.cfg`, linking official built-in Pas2JS packages and mapping legacy Lazarus/Delphi codebases:
+- **`bv path [list]`**: Displays all active search paths grouped by category (Core Framework, Official Pas2JS Packages, and Custom/Legacy Search Paths).
+- **`bv path add <dir | pas2js:<package>>`**: Appends a new search path (`-Fu`) to `app.cfg` with automatic path normalization and duplicate prevention.
+  - E.g.: `bv path add pas2js:chartjs` (Links official Chart.js bindings)
+  - E.g.: `bv path add ../legacy/business_logic` (Imports legacy Lazarus/Delphi units)
+- **`bv path remove <target>`**: Safely removes a search path from `app.cfg`.
+- **`bv path available`**: Discovers and catalogs all 30+ pre-bundled Pas2JS packages (`vendor/pas2js/.../packages`) with real-time `[active]` status markers.
+
+| Path Command | Arguments | Action / Output |
+|---|---|---|
+| `bv path` | `[list]` | Lists active compiler search paths in `app.cfg` |
+| `bv path add` | `<dir | pas2js:p>` | Appends `-Fu<path>` with duplicate check & relative paths |
+| `bv path remove` | `<target>` | Deletes matching search path from `app.cfg` |
+| `bv path available`| - | Catalogs 30+ official Pas2JS packages with `[active]` tags |
+
+See detailed documentation in **[53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md)**.
+
 ---
 
 ## 🚀 Interactive Cockpit & Project Registry (`bv enter`, `bv use`, `bv project`)
@@ -488,6 +506,7 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
 * `self-update` — Synchronizes and recompiles BlaiseVue engine directly from GitHub.
 * `channel [use <name>]` — Inspects or switches framework branches (main / develop).
+* `path [list|add|remove|available]` — Manages compiler search paths (-Fu) and official Pas2JS packages.
 * `exit` / `quit` — Exits the cockpit and returns to regular shell.
 
 > [!TIP]

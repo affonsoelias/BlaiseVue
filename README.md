@@ -180,6 +180,12 @@ bv self-update --check     # Checks for remote updates without downloading
 bv channel                 # Inspects active channel (* main [stable] or develop [dev])
 bv channel use <name>      # Switches between stable release (main) and development (develop)
 
+# === Compiler Search Paths & Legacy Migration ===
+bv path                         # Lists all active search paths (-Fu) categorized by type
+bv path add <dir|pas2js:pkg>    # Adds directory or built-in Pas2JS package to app.cfg
+bv path remove <target>         # Removes search path from app.cfg
+bv path available               # Catalogs 30+ official Pas2JS packages with active indicator
+
 # === Cockpit & Multi-Project Management ===
 bv update                  # Surgically syncs project infrastructure with latest framework features
 bv update --dry-run        # Previews updates without modifying any files (non-destructive safety)
@@ -199,7 +205,7 @@ bv rename <s|c|v|p> <New>  # Smart rename for services, components, views, or pr
 For the complete architectural evolution specifications, delivered enterprise pillars, and future roadmap milestones (v2.0 to v5.0), see:
 
 - 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
-- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 52 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
+- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 53 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
 - 🏛️ **[Core Architecture & Internals (doc/Architecture/README.md)](doc/Architecture/README.md)**: Deep dive into the compiler pipeline, AST evaluation, and reactive proxy engine.
 
 ---
@@ -240,7 +246,7 @@ BlaiseVue/
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework
 ├── doc/
 │   ├── Architecture/          # Core compiler pipeline & framework internals
-│   ├── Documentation/         # 52 comprehensive technical manuals + API Reference
+│   ├── Documentation/         # 53 comprehensive technical manuals + API Reference
 │   └── Course/                # 13-module practical course from beginner to ninja
 └── demo-app/                  # Enterprise showcase application (v3.0)
 ```
