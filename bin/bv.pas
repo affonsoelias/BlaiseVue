@@ -974,6 +974,7 @@ procedure CmdStudio; forward;
 procedure CmdCheck(const TargetFile: string); forward;
 procedure CmdLicense; forward;
 procedure CmdMeta; forward;
+procedure CmdPath; forward;
 procedure CmdReset; forward;
 procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
@@ -9878,6 +9879,340 @@ begin
 
   WriteLn('Unknown meta subcommand: "' + SubCmd + '".');
   WriteLn('Usage: bv meta [show|init|get <field>|set <field> <val>|bump <patch|minor|major>|sync]');
+  Halt(1);
+end;
+
+procedure CmdPathList;
+var
+  AppCfgPath, Line, CleanLine, PathVal, PkgName: string;
+  Lines: TStringList;
+  CoreList, Pas2jsList, CustomList: TStringList;
+  i: Integer;
+begin
+  AppCfgPath := GetCurrentDir + DirectorySeparator + 'app.cfg';
+  if not FileExists(AppCfgPath) then
+  begin
+    WriteLn('ERROR: app.cfg not found in current directory.');
+    WriteLn('Ensure you are in the root of a BlaiseVue application.');
+    Halt(1);
+  end;
+
+  Lines := TStringList.Create;
+  CoreList := TStringList.Create;
+  Pas2jsList := TStringList.Create;
+  CustomList := TStringList.Create;
+  try
+    Lines.LoadFromFile(AppCfgPath);
+
+    for i := 0 to Lines.Count - 1 do
+    begin
+      Line := Trim(Lines[i]);
+      if StartsText('-Fu', Line) then
+      begin
+        CleanLine := Copy(Line, 4, Length(Line) - 3);
+        if (Length(CleanLine) >= 2) and (CleanLine[1] = '"') and (CleanLine[Length(CleanLine)] = '"') then
+          PathVal := Copy(CleanLine, 2, Length(CleanLine) - 2)
+        else
+          PathVal := CleanLine;
+
+        if (PathVal = 'generated') or (PathVal = 'core') or (PathVal = 'common') or
+           (PathVal = 'src/services') or (PathVal = 'src\services') or (PathVal = 'src') then
+          CoreList.Add(PathVal)
+        else if (Pos('pas2js', LowerCase(PathVal)) > 0) or (Pos('packages', LowerCase(PathVal)) > 0) then
+          Pas2jsList.Add(PathVal)
+        else
+          CustomList.Add(PathVal);
+      end;
+    end;
+
+    WriteLn('');
+    WriteLn('  BlaiseVue Compiler Search Paths (app.cfg)');
+    WriteLn('  =========================================');
+    WriteLn('');
+
+    WriteLn('  [Framework & Core Paths]');
+    if CoreList.Count = 0 then
+      WriteLn('    (none)')
+    else
+      for i := 0 to CoreList.Count - 1 do
+        WriteLn('    - ' + CoreList[i]);
+    WriteLn('');
+
+    WriteLn('  [Pas2JS Built-in Packages]');
+    if Pas2jsList.Count = 0 then
+      WriteLn('    (none - use "bv path add pas2js:<pkg>" to link official packages)')
+    else
+    begin
+      for i := 0 to Pas2jsList.Count - 1 do
+      begin
+        PkgName := ExtractFileName(ExcludeTrailingPathDelimiter(Pas2jsList[i]));
+        if PkgName = 'src' then
+          PkgName := ExtractFileName(ExcludeTrailingPathDelimiter(ExtractFilePath(ExcludeTrailingPathDelimiter(Pas2jsList[i]))));
+        WriteLn('    - pas2js:' + PadRight(PkgName, 16) + ' -> ' + Pas2jsList[i]);
+      end;
+    end;
+    WriteLn('');
+
+    WriteLn('  [Custom & Legacy Unit Paths]');
+    if CustomList.Count = 0 then
+      WriteLn('    (none - use "bv path add <folder>" to link legacy units)')
+    else
+      for i := 0 to CustomList.Count - 1 do
+        WriteLn('    - ' + CustomList[i]);
+    WriteLn('');
+
+  finally
+    Lines.Free;
+    CoreList.Free;
+    Pas2jsList.Free;
+    CustomList.Free;
+  end;
+end;
+
+procedure CmdPathAdd(const Target: string);
+var
+  AppCfgPath, CleanTarget, ResolvedPath, FinalPath, FormattedLine, PkgNameOnly: string;
+  Lines: TStringList;
+  IsPas2jsPkg: Boolean;
+  i: Integer;
+begin
+  if Target = '' then
+  begin
+    WriteLn('Usage: bv path add <folder|pas2js:package>');
+    Halt(1);
+  end;
+
+  AppCfgPath := GetCurrentDir + DirectorySeparator + 'app.cfg';
+  if not FileExists(AppCfgPath) then
+  begin
+    WriteLn('ERROR: app.cfg not found in current directory.');
+    Halt(1);
+  end;
+
+  CleanTarget := Trim(Target);
+  IsPas2jsPkg := False;
+  ResolvedPath := '';
+
+  if StartsText('pas2js:', CleanTarget) or ResolvePas2JSPackagePath(CleanTarget, ResolvedPath) then
+  begin
+    if not ResolvePas2JSPackagePath(CleanTarget, ResolvedPath) then
+    begin
+      WriteLn('ERROR: Pas2JS package "' + CleanTarget + '" not found in distribution.');
+      WriteLn('Run "bv path available" to view all installable packages.');
+      Halt(1);
+    end;
+    IsPas2jsPkg := True;
+  end;
+
+  if IsPas2jsPkg then
+  begin
+    FinalPath := ExtractRelativePath(GetCurrentDir + DirectorySeparator, ResolvedPath);
+    if FinalPath = '' then FinalPath := ResolvedPath;
+  end
+  else
+  begin
+    if DirectoryExists(CleanTarget) then
+      FinalPath := CleanTarget
+    else if DirectoryExists(GetCurrentDir + DirectorySeparator + CleanTarget) then
+      FinalPath := CleanTarget
+    else
+    begin
+      WriteLn('ERROR: Directory does not exist: "' + CleanTarget + '"');
+      Halt(1);
+    end;
+  end;
+
+  FinalPath := StringReplace(FinalPath, '\', '/', [rfReplaceAll]);
+  if Pos(' ', FinalPath) > 0 then
+    FormattedLine := '-Fu"' + FinalPath + '"'
+  else
+    FormattedLine := '-Fu' + FinalPath;
+
+  Lines := TStringList.Create;
+  try
+    Lines.LoadFromFile(AppCfgPath);
+    for i := 0 to Lines.Count - 1 do
+    begin
+      if (Lines[i] = FormattedLine) or (Lines[i] = '-Fu' + FinalPath) or (Lines[i] = '-Fu"' + FinalPath + '"') then
+      begin
+        WriteLn('  Search path already present in app.cfg: ' + FinalPath);
+        Exit;
+      end;
+    end;
+
+    Lines.Add(FormattedLine);
+    Lines.SaveToFile(AppCfgPath);
+
+    WriteLn('');
+    WriteLn('  [+] Search path added to app.cfg:');
+    WriteLn('      ' + FormattedLine);
+    if IsPas2jsPkg then
+    begin
+      PkgNameOnly := CleanTarget;
+      if StartsText('pas2js:', PkgNameOnly) then
+        PkgNameOnly := Copy(PkgNameOnly, 8, Length(PkgNameOnly) - 7);
+      WriteLn('      Package:     pas2js:' + PkgNameOnly);
+      WriteLn('      Description: ' + GetPas2JSPackageDescription(PkgNameOnly));
+    end;
+    WriteLn('  Units located in this path are now accessible in uses clauses.');
+    WriteLn('');
+  finally
+    Lines.Free;
+  end;
+end;
+
+procedure CmdPathRemove(const Target: string);
+var
+  AppCfgPath, CleanTarget, NormTarget, Line, CleanLine, PathVal: string;
+  Lines: TStringList;
+  i: Integer;
+  RemovedCount: Integer;
+begin
+  if Target = '' then
+  begin
+    WriteLn('Usage: bv path remove <folder|pas2js:package>');
+    Halt(1);
+  end;
+
+  AppCfgPath := GetCurrentDir + DirectorySeparator + 'app.cfg';
+  if not FileExists(AppCfgPath) then
+  begin
+    WriteLn('ERROR: app.cfg not found in current directory.');
+    Halt(1);
+  end;
+
+  CleanTarget := Trim(Target);
+  if StartsText('pas2js:', CleanTarget) then
+    CleanTarget := Copy(CleanTarget, 8, Length(CleanTarget) - 7);
+  NormTarget := StringReplace(CleanTarget, '\', '/', [rfReplaceAll]);
+
+  Lines := TStringList.Create;
+  RemovedCount := 0;
+  try
+    Lines.LoadFromFile(AppCfgPath);
+    for i := Lines.Count - 1 downto 0 do
+    begin
+      Line := Trim(Lines[i]);
+      if StartsText('-Fu', Line) then
+      begin
+        CleanLine := Copy(Line, 4, Length(Line) - 3);
+        if (Length(CleanLine) >= 2) and (CleanLine[1] = '"') and (CleanLine[Length(CleanLine)] = '"') then
+          PathVal := Copy(CleanLine, 2, Length(CleanLine) - 2)
+        else
+          PathVal := CleanLine;
+
+        PathVal := StringReplace(PathVal, '\', '/', [rfReplaceAll]);
+
+        if (PathVal = NormTarget) or (Pos('/' + NormTarget + '/', PathVal) > 0) or
+           (EndsText('/' + NormTarget, PathVal)) or (EndsText('/' + NormTarget + '/src', PathVal)) then
+        begin
+          Lines.Delete(i);
+          Inc(RemovedCount);
+          WriteLn('  [-] Removed from app.cfg: ' + Line);
+        end;
+      end;
+    end;
+
+    if RemovedCount > 0 then
+    begin
+      Lines.SaveToFile(AppCfgPath);
+      WriteLn('');
+      WriteLn('  [SUCCESS] Successfully removed ' + IntToStr(RemovedCount) + ' search path(s) from app.cfg.');
+      WriteLn('');
+    end
+    else
+    begin
+      WriteLn('Notice: No matching search path found in app.cfg for "' + Target + '".');
+      WriteLn('Run "bv path list" to see all currently active search paths.');
+    end;
+  finally
+    Lines.Free;
+  end;
+end;
+
+procedure CmdPathAvailable;
+var
+  Packages: TStringList;
+  AppCfgContent, AppCfgPath, PkgName, Status, Desc: string;
+  i: Integer;
+begin
+  Packages := ListAvailablePas2JSPackages;
+  AppCfgPath := GetCurrentDir + DirectorySeparator + 'app.cfg';
+  if FileExists(AppCfgPath) then
+    AppCfgContent := LowerCase(ReadFileToString(AppCfgPath))
+  else
+    AppCfgContent := '';
+
+  try
+    WriteLn('');
+    WriteLn('  Available Pas2JS Built-in Packages & Libraries');
+    WriteLn('  ==============================================');
+    WriteLn('  Use "bv path add pas2js:<package>" to link into your project.');
+    WriteLn('');
+
+    for i := 0 to Packages.Count - 1 do
+    begin
+      PkgName := Packages[i];
+      Desc := GetPas2JSPackageDescription(PkgName);
+      if (AppCfgContent <> '') and (Pos('/' + LowerCase(PkgName), AppCfgContent) > 0) then
+        Status := ' [active]'
+      else
+        Status := '';
+
+      WriteLn('  * pas2js:' + PadRight(PkgName, 16) + Status);
+      WriteLn('    ' + Desc);
+      WriteLn('');
+    end;
+  finally
+    Packages.Free;
+  end;
+end;
+
+procedure CmdPath;
+var
+  SubCmd, TargetArg: string;
+begin
+  SubCmd := '';
+  TargetArg := '';
+  if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
+  if ParamCount >= 3 then TargetArg := ParamStr(3);
+
+  if (SubCmd = '') or (SubCmd = 'list') or (SubCmd = 'ls') or (SubCmd = 'show') then
+  begin
+    CmdPathList;
+    Exit;
+  end;
+
+  if (SubCmd = 'add') or (SubCmd = 'link') or (SubCmd = 'use') then
+  begin
+    if TargetArg = '' then
+    begin
+      WriteLn('Usage: bv path add <folder|pas2js:package>');
+      Halt(1);
+    end;
+    CmdPathAdd(TargetArg);
+    Exit;
+  end;
+
+  if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') or (SubCmd = 'unlink') then
+  begin
+    if TargetArg = '' then
+    begin
+      WriteLn('Usage: bv path remove <folder|pas2js:package>');
+      Halt(1);
+    end;
+    CmdPathRemove(TargetArg);
+    Exit;
+  end;
+
+  if (SubCmd = 'available') or (SubCmd = 'pas2js') or (SubCmd = 'browse') or (SubCmd = 'catalog') then
+  begin
+    CmdPathAvailable;
+    Exit;
+  end;
+
+  WriteLn('Unknown path subcommand: "' + SubCmd + '".');
+  WriteLn('Usage: bv path [list|add <folder|pas2js:pkg>|remove <target>|available]');
   Halt(1);
 end;
 
@@ -26787,6 +27122,12 @@ begin
     WriteLn('  bv meta [show|get|set|bump|sync] Manages project metadata and syncs SemVer across monorepo');
     WriteLn('  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)');
     WriteLn('');
+    WriteLn('  # === Compiler Search Paths & Legacy Migration ===');
+    WriteLn('  bv path [list]             Lists all active unit search paths (-Fu) in app.cfg');
+    WriteLn('  bv path add <dir|pas2js:p> Adds a folder or official Pas2JS package to app.cfg');
+    WriteLn('  bv path remove <target>    Removes a search path or Pas2JS package from app.cfg');
+    WriteLn('  bv path available          Lists all built-in Pas2JS packages available to link');
+    WriteLn('');
     WriteLn('  # === Framework Diagnostics & Git Auto-Updater ===');
     WriteLn('  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
     WriteLn('  bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git');
@@ -27398,6 +27739,10 @@ begin
 
   end
 
+  else if (Cmd = 'path') or (Cmd = 'paths') or (Cmd = 'unit-path') then
+  begin
+    CmdPath;
+  end
   else if Cmd = 'reset' then
   begin
     CmdReset;
