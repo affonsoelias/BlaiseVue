@@ -10,8 +10,7 @@ uses
   SynHighlighterMulti,
   SynHighlighterHTML,
   SynHighlighterPas,
-  SynHighlighterCSS,
-  SrcEditorIntf;
+  SynHighlighterCSS;
 
 type
   { TBVSynMultiSyn }
@@ -25,29 +24,9 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     class function GetLanguageName: string; override;
-    procedure RefreshHighlighterSettings;
   end;
 
-function GetBVSharedHighlighter: TBVSynMultiSyn;
-procedure FreeBVSharedHighlighter;
-
 implementation
-
-var
-  gBVSharedHighlighter: TBVSynMultiSyn = nil;
-
-function GetBVSharedHighlighter: TBVSynMultiSyn;
-begin
-  if gBVSharedHighlighter = nil then
-    gBVSharedHighlighter := TBVSynMultiSyn.Create(nil);
-  Result := gBVSharedHighlighter;
-end;
-
-procedure FreeBVSharedHighlighter;
-begin
-  if Assigned(gBVSharedHighlighter) then
-    FreeAndNil(gBVSharedHighlighter);
-end;
 
 { TBVSynMultiSyn }
 
@@ -68,16 +47,6 @@ begin
   Result := 'BlaiseVue Component (*.bv)';
 end;
 
-procedure TBVSynMultiSyn.RefreshHighlighterSettings;
-begin
-  if SourceEditorManagerIntf <> nil then
-  begin
-    SourceEditorManagerIntf.GetHighlighterSettings(FHtmlSyn);
-    SourceEditorManagerIntf.GetHighlighterSettings(FPasSyn);
-    SourceEditorManagerIntf.GetHighlighterSettings(FCssSyn);
-  end;
-end;
-
 procedure TBVSynMultiSyn.InitSubHighlighters;
 var
   SchemePas, SchemeCss: TSynHighlighterMultiScheme;
@@ -89,7 +58,7 @@ begin
   // 2. Pascal script highlighter: active inside <script>...</script>
   FPasSyn := TSynPasSyn.Create(Self);
 
-  // Set vibrant Pascal syntax colors as base fallback
+  // Set vibrant Pascal syntax colors
   FPasSyn.KeyAttri.Foreground := clNavy;
   FPasSyn.KeyAttri.Style := [fsBold];
   FPasSyn.StringAttri.Foreground := clBlue;
@@ -115,7 +84,7 @@ begin
   // 3. CSS style highlighter: active inside <style>...</style>
   FCssSyn := TSynCssSyn.Create(Self);
 
-  // Set vibrant CSS syntax colors as base fallback
+  // Set vibrant CSS syntax colors
   FCssSyn.SelectorAttri.Foreground := clNavy;
   FCssSyn.SelectorAttri.Style := [fsBold];
   FCssSyn.KeyAttri.Foreground := clNavy;       // Property names (padding, background, border)
@@ -138,14 +107,6 @@ begin
   SchemeCss.MarkerAttri.Background := clNone;
   SchemeCss.MarkerAttri.Foreground := clNavy;
   SchemeCss.MarkerAttri.Style := [fsBold];
-
-  // 4. Try loading active Lazarus IDE theme colors if editor manager is alive
-  RefreshHighlighterSettings;
 end;
-
-initialization
-
-finalization
-  FreeBVSharedHighlighter;
 
 end.

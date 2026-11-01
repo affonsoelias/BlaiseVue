@@ -66,17 +66,23 @@ end;
 procedure TBVIDEHook.ApplyBVHighlighter(AEditor: TSourceEditorInterface);
 var
   Ext: string;
+  SynEd: TCustomSynEdit;
 begin
   if AEditor = nil then Exit;
   Ext := LowerCase(ExtractFileExt(AEditor.FileName));
 
   if Ext = '.bv' then
   begin
-    GetBVSharedHighlighter.RefreshHighlighterSettings;
     if (AEditor.EditorControl is TCustomSynEdit) then
     begin
-      if TCustomSynEdit(AEditor.EditorControl).Highlighter <> GetBVSharedHighlighter then
-        TCustomSynEdit(AEditor.EditorControl).Highlighter := GetBVSharedHighlighter;
+      SynEd := TCustomSynEdit(AEditor.EditorControl);
+      // Only assign if this editor tab does not already have a dedicated TBVSynMultiSyn instance.
+      // Having each tab own its own TBVSynMultiSyn completely isolates virtual line buffers and
+      // prevents cross-tab range collisions / Access Violations during tab switches.
+      if not (SynEd.Highlighter is TBVSynMultiSyn) then
+      begin
+        SynEd.Highlighter := TBVSynMultiSyn.Create(SynEd);
+      end;
     end;
   end;
 end;
