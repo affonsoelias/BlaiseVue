@@ -77,7 +77,18 @@ Typing `<bv-` triggers a complete list of official components with typed propert
 </bv-row>
 ```
 
-### 4. Productivity Snippets
+### 4. Code Formatting (`Format Document` & Format on Save)
+
+A extensão registra um provedor nativo de formatação para arquivos `.bv`:
+- **Atalho padrão do VS Code**: `Shift + Alt + F` (ou `Cmd + Shift + I` no macOS).
+- **Format on Save**: Suporta formatação automática ao salvar (`"editor.formatOnSave": true`).
+- **Paleta de Comandos**: `Ctrl + Shift + P` $\rightarrow$ `BlaiseVue: Format Component (.bv)`.
+- **Regras de Indentação**:
+  - Bloco `<template>`: Indentação de 2 espaços com cálculo automático de balanço de tags HTML abertas/fechadas.
+  - Bloco `<script>`: Indentação Pascal (2 espaços para seções `props:`, `data:`, `methods:`; 4 espaços para `procedure`, `begin`, `end;`; 6 espaços para comandos no corpo dos métodos).
+  - Bloco `<style>`: Indentação CSS (2 espaços para seletores, 4 espaços para propriedades).
+
+### 5. Productivity Snippets
 
 The extension includes code snippets to speed up development:
 

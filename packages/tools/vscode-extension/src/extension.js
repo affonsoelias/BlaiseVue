@@ -3,12 +3,13 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Directives documentation database for Hover and Autocomplete.
+ * Directives & Events documentation database for Hover and Autocomplete.
  */
 const DIRECTIVES_DOCS = {
   'b-model': {
     label: 'b-model',
     detail: 'BlaiseVue Two-Way Reactive Binding',
+    snippet: 'b-model="${1:fieldName}"',
     documentation: new vscode.MarkdownString(
       '**`b-model="fieldName"`**\n\n' +
       'Creates a two-way reactive data binding between a form control (`<input>`, `<select>`, `<textarea>`) ' +
@@ -21,6 +22,7 @@ const DIRECTIVES_DOCS = {
   'b-validate': {
     label: 'b-validate',
     detail: 'BlaiseVue Form Validation Engine (v2.5+)',
+    snippet: 'b-validate="${1:required|min:3}"',
     documentation: new vscode.MarkdownString(
       '**`b-validate="rules"`**\n\n' +
       'Declarative form validation engine. Automatically registers validation rules on the field ' +
@@ -40,6 +42,7 @@ const DIRECTIVES_DOCS = {
   'b-for': {
     label: 'b-for',
     detail: 'BlaiseVue List Iteration Directive',
+    snippet: 'b-for="${1:item} in ${2:collection}"',
     documentation: new vscode.MarkdownString(
       '**`b-for="item in collection"`** or **`b-for="(item, index) in collection"`**\n\n' +
       'Renders the element repeatedly based on an array from `data:` or `computed:`.\n\n' +
@@ -51,6 +54,7 @@ const DIRECTIVES_DOCS = {
   'b-if': {
     label: 'b-if',
     detail: 'BlaiseVue Conditional Rendering',
+    snippet: 'b-if="${1:condition}"',
     documentation: new vscode.MarkdownString(
       '**`b-if="condition"`**\n\n' +
       'Conditionally adds or removes the DOM element based on the truthiness of the expression.\n\n' +
@@ -62,6 +66,7 @@ const DIRECTIVES_DOCS = {
   'b-else-if': {
     label: 'b-else-if',
     detail: 'BlaiseVue Conditional Branch',
+    snippet: 'b-else-if="${1:condition}"',
     documentation: new vscode.MarkdownString(
       '**`b-else-if="condition"`**\n\n' +
       'Must immediately follow a `b-if` or another `b-else-if` element.'
@@ -70,6 +75,7 @@ const DIRECTIVES_DOCS = {
   'b-else': {
     label: 'b-else',
     detail: 'BlaiseVue Conditional Fallback',
+    snippet: 'b-else',
     documentation: new vscode.MarkdownString(
       '**`b-else`**\n\n' +
       'Fallback branch that renders when the preceding `b-if` or `b-else-if` expression evaluates to false.'
@@ -78,10 +84,251 @@ const DIRECTIVES_DOCS = {
   'b-show': {
     label: 'b-show',
     detail: 'BlaiseVue Conditional Display Toggle',
+    snippet: 'b-show="${1:condition}"',
     documentation: new vscode.MarkdownString(
       '**`b-show="condition"`**\n\n' +
       'Toggles the element\'s CSS `display: none` property without unmounting it from the DOM.'
     )
+  },
+  'b-bind': {
+    label: 'b-bind',
+    detail: 'BlaiseVue Attribute Binding',
+    snippet: 'b-bind:${1:attr}="${2:value}"',
+    documentation: new vscode.MarkdownString('Dynamically binds an HTML attribute or prop to an expression.')
+  },
+  'b-on': {
+    label: 'b-on',
+    detail: 'BlaiseVue Event Listener',
+    snippet: 'b-on:${1:event}="${2:method}"',
+    documentation: new vscode.MarkdownString('Attaches an event listener to the element.')
+  },
+  '@click': {
+    label: '@click',
+    detail: 'Click Event Handler',
+    snippet: '@click="${1:handleClick}"',
+    documentation: new vscode.MarkdownString('Shorthand for `b-on:click`. Invokes the specified method when clicked.')
+  },
+  '@input': {
+    label: '@input',
+    detail: 'Input Event Handler',
+    snippet: '@input="${1:handleInput}"',
+    documentation: new vscode.MarkdownString('Triggers on each keystroke or value change in an input field.')
+  },
+  '@change': {
+    label: '@change',
+    detail: 'Change Event Handler',
+    snippet: '@change="${1:handleChange}"',
+    documentation: new vscode.MarkdownString('Triggers when an input loses focus after its value has changed.')
+  },
+  '@submit': {
+    label: '@submit',
+    detail: 'Form Submit Event Handler',
+    snippet: '@submit.prevent="${1:handleSubmit}"',
+    documentation: new vscode.MarkdownString('Intercepts form submission, typically with `.prevent` to avoid page reload.')
+  },
+  '@keydown': {
+    label: '@keydown',
+    detail: 'Keydown Event Handler',
+    snippet: '@keydown="${1:handleKeydown}"',
+    documentation: new vscode.MarkdownString('Triggers when a keyboard key is pressed down.')
+  },
+  '@keyup': {
+    label: '@keyup',
+    detail: 'Keyup Event Handler',
+    snippet: '@keyup.enter="${1:handleEnter}"',
+    documentation: new vscode.MarkdownString('Triggers when a keyboard key is released.')
+  },
+  ':class': {
+    label: ':class',
+    detail: 'Dynamic Class Binding',
+    snippet: ':class="{ \'${1:active}\': ${2:isActive} }"',
+    documentation: new vscode.MarkdownString('Dynamically toggles CSS class names based on truthy object properties.')
+  },
+  ':style': {
+    label: ':style',
+    detail: 'Dynamic Style Binding',
+    snippet: ':style="{ ${1:color}: ${2:textColor} }"',
+    documentation: new vscode.MarkdownString('Dynamically applies inline CSS styles from data properties.')
+  },
+  ':key': {
+    label: ':key',
+    detail: 'List Virtual DOM Key',
+    snippet: ':key="${1:item.id}"',
+    documentation: new vscode.MarkdownString('Provides a unique identifier for list items in `b-for` loops.')
+  },
+  ':disabled': {
+    label: ':disabled',
+    detail: 'Disabled State Binding',
+    snippet: ':disabled="${1:isLoading}"',
+    documentation: new vscode.MarkdownString('Binds the disabled HTML attribute to a boolean expression.')
+  }
+};
+
+/**
+ * BlaiseUI Components documentation and snippet database.
+ */
+const COMPONENTS_DOCS = {
+  'bv-btn': {
+    label: '<bv-btn>',
+    detail: 'BlaiseUI Button Component',
+    snippet: '<bv-btn variant="${1|primary,secondary,success,danger,warning,info,dark,outline-primary|}" @click="${2:handleClick}">\n  ${3:Button Text}\n</bv-btn>',
+    documentation: new vscode.MarkdownString('Renders a styled action button with theme variants, sizes, and icon support.')
+  },
+  'bv-card': {
+    label: '<bv-card>',
+    detail: 'BlaiseUI Container Card',
+    snippet: '<bv-card title="${1:Card Title}" subtitle="${2:Subtitle}">\n  <p>${3:Card Content}</p>\n</bv-card>',
+    documentation: new vscode.MarkdownString('Card container component with header, body, subtitle, and footer slots.')
+  },
+  'bv-modal': {
+    label: '<bv-modal>',
+    detail: 'BlaiseUI Modal Dialog',
+    snippet: '<bv-modal v-model="${1:showModal}" title="${2:Modal Title}">\n  <p>${3:Modal Body}</p>\n  <template #footer>\n    <bv-btn variant="secondary" @click="${1:showModal} = false">Fechar</bv-btn>\n  </template>\n</bv-modal>',
+    documentation: new vscode.MarkdownString('Accessible overlay dialog with animations, backdrop, and reactive toggle.')
+  },
+  'bv-input': {
+    label: '<bv-input>',
+    detail: 'BlaiseUI Input Field',
+    snippet: '<bv-input label="${1:Label}" b-model="${2:value}" placeholder="${3:Placeholder}" />',
+    documentation: new vscode.MarkdownString('Input field with floating label, validation errors, and reactive two-way binding.')
+  },
+  'bv-checkbox': {
+    label: '<bv-checkbox>',
+    detail: 'BlaiseUI Checkbox',
+    snippet: '<bv-checkbox b-model="${1:checked}" label="${2:Check me}" />',
+    documentation: new vscode.MarkdownString('Reactive checkbox control with custom theme styling.')
+  },
+  'bv-switch': {
+    label: '<bv-switch>',
+    detail: 'BlaiseUI Toggle Switch',
+    snippet: '<bv-switch b-model="${1:isEnabled}" label="${2:Enable Feature}" />',
+    documentation: new vscode.MarkdownString('Smooth iOS/Bootstrap style toggle switch for boolean settings.')
+  },
+  'bv-select': {
+    label: '<bv-select>',
+    detail: 'BlaiseUI Select Dropdown',
+    snippet: '<bv-select label="${1:Choose}" b-model="${2:selected}">\n  <option value="${3:val1}">${4:Option 1}</option>\n</bv-select>',
+    documentation: new vscode.MarkdownString('Form select dropdown with reactive binding and validation support.')
+  },
+  'bv-badge': {
+    label: '<bv-badge>',
+    detail: 'BlaiseUI Badge / Pill',
+    snippet: '<bv-badge variant="${1|primary,secondary,success,danger,warning,info|}">${2:Badge}</bv-badge>',
+    documentation: new vscode.MarkdownString('Small status badge or count pill.')
+  },
+  'bv-alert': {
+    label: '<bv-alert>',
+    detail: 'BlaiseUI Contextual Alert',
+    snippet: '<bv-alert variant="${1|info,success,warning,danger|}" dismissible>\n  ${2:Alert Message}\n</bv-alert>',
+    documentation: new vscode.MarkdownString('Contextual feedback banner with optional dismiss button.')
+  },
+  'bv-toast': {
+    label: '<bv-toast>',
+    detail: 'BlaiseUI Toast Notification',
+    snippet: '<bv-toast title="${1:Notification}">\n  ${2:Message}\n</bv-toast>',
+    documentation: new vscode.MarkdownString('Corner toast notification with auto-dismiss timer.')
+  },
+  'bv-container': {
+    label: '<bv-container>',
+    detail: 'BlaiseUI Responsive Container',
+    snippet: '<bv-container>\n  <bv-row>\n    <bv-col col="12" md="6">\n      ${1}\n    </bv-col>\n  </bv-row>\n</bv-container>',
+    documentation: new vscode.MarkdownString('Grid system container with responsive breakpoints.')
+  },
+  'bv-row': {
+    label: '<bv-row>',
+    detail: 'BlaiseUI Grid Row',
+    snippet: '<bv-row>\n  ${1}\n</bv-row>',
+    documentation: new vscode.MarkdownString('Grid flexbox row container for columns.')
+  },
+  'bv-col': {
+    label: '<bv-col>',
+    detail: 'BlaiseUI Grid Column',
+    snippet: '<bv-col col="${1:12}" md="${2:6}">\n  ${3}\n</bv-col>',
+    documentation: new vscode.MarkdownString('Responsive column inside a grid row.')
+  },
+  'bv-datagrid': {
+    label: '<bv-datagrid>',
+    detail: 'BlaiseUI High-Performance DataGrid',
+    snippet: '<bv-datagrid :items="${1:dataList}" :columns="${2:gridCols}" :paginate="true" />',
+    documentation: new vscode.MarkdownString('Sortable, paginated, searchable grid for tabular datasets.')
+  },
+  'bv-spinner': {
+    label: '<bv-spinner>',
+    detail: 'BlaiseUI Loading Spinner',
+    snippet: '<bv-spinner variant="${1|primary,secondary,light,dark|}" size="${2|sm,md,lg|}" />',
+    documentation: new vscode.MarkdownString('Animated loading spinner indicator.')
+  },
+  'bv-chart': {
+    label: '<bv-chart>',
+    detail: 'BlaiseCharts Chart Component',
+    snippet: '<bv-chart type="${1|line,bar,pie,doughnut,radar|}" :data="${2:chartData}" :options="${3:chartOptions}" height="${4:300px}" />',
+    documentation: new vscode.MarkdownString('Reactive Chart.js data visualization component.')
+  }
+};
+
+/**
+ * Pascal script sections and helpers documentation.
+ */
+const PASCAL_DOCS = {
+  'props:': {
+    label: 'props:',
+    detail: 'Component Props Section',
+    snippet: 'props:\n  ${1:title}: string = \'${2:Default}\';\n',
+    documentation: new vscode.MarkdownString('Defines reactive component inputs passed down from parent elements.')
+  },
+  'data:': {
+    label: 'data:',
+    detail: 'Component Reactive State Section',
+    snippet: 'data:\n  ${1:counter}: integer = 0;\n  ${2:isActive}: boolean = false;\n',
+    documentation: new vscode.MarkdownString('Declares reactive variables local to this component instance.')
+  },
+  'computed:': {
+    label: 'computed:',
+    detail: 'Component Computed Properties Section',
+    snippet: 'computed:\n  function ${1:doubleCounter}: integer;\n  begin\n    Result := integer(this[\'${2:counter}\']) * 2;\n  end;\n',
+    documentation: new vscode.MarkdownString('Defines cached getter functions automatically updated when reactive dependencies change.')
+  },
+  'watch:': {
+    label: 'watch:',
+    detail: 'Component Watchers Section',
+    snippet: 'watch:\n  procedure ${1:onStateChange}(newVal, oldVal: JSValue);\n  begin\n    console.log(\'Value changed: \', newVal);\n  end;\n',
+    documentation: new vscode.MarkdownString('Defines side-effect callbacks triggered whenever a watched state variable mutates.')
+  },
+  'methods:': {
+    label: 'methods:',
+    detail: 'Component Methods Section',
+    snippet: 'methods:\n  procedure ${1:handleClick}(ev: JSValue);\n  begin\n    ${2}\n  end;\n',
+    documentation: new vscode.MarkdownString('Declares methods callable from template event handlers or other methods.')
+  },
+  'created:': {
+    label: 'created:',
+    detail: 'Lifecycle Hook: created',
+    snippet: 'created:\n  begin\n    ${1}\n  end;\n',
+    documentation: new vscode.MarkdownString('Runs immediately after component instance and reactive data have been initialized.')
+  },
+  'mounted:': {
+    label: 'mounted:',
+    detail: 'Lifecycle Hook: mounted',
+    snippet: 'mounted:\n  begin\n    ${1}\n  end;\n',
+    documentation: new vscode.MarkdownString('Runs once the component DOM elements have been attached to the page.')
+  },
+  'CallMethod': {
+    label: 'CallMethod',
+    detail: 'Invoke Component Method Helper',
+    snippet: 'CallMethod(this, \'${1:methodName}\'${2:, [arg1]});',
+    documentation: new vscode.MarkdownString('Safely dispatches a named component method with optional arguments.')
+  },
+  'GetFieldStr': {
+    label: 'GetFieldStr',
+    detail: 'Read String Field from JSValue',
+    snippet: 'GetFieldStr(${1:obj}, \'${2:field}\')',
+    documentation: new vscode.MarkdownString('Extracts a string property from a `JSValue` object safely.')
+  },
+  'GetFieldInt': {
+    label: 'GetFieldInt',
+    detail: 'Read Integer Field from JSValue',
+    snippet: 'GetFieldInt(${1:obj}, \'${2:field}\', ${3:0})',
+    documentation: new vscode.MarkdownString('Extracts an integer property from a `JSValue` object with fallback default.')
   }
 };
 
@@ -96,9 +343,7 @@ const GLOBALS_DOCS = {
       '**`$store`**\n\n' +
       'Global reactive state shared across all components and pages in the application.\n\n' +
       '```pascal\n' +
-      '// Read\n' +
       'user := string(this[\'$store\'][\'user\']);\n' +
-      '// Mutate\n' +
       'this[\'$store\'][\'theme\'] := \'dark\';\n' +
       '```'
     )
@@ -133,7 +378,6 @@ const GLOBALS_DOCS = {
       '**`$i18n`**\n\n' +
       'Global localization manager for multi-language apps.\n\n' +
       '```pascal\n' +
-      '// Switch language dynamically\n' +
       'window[\'$i18n\'].setLocale(\'pt\');\n' +
       '```'
     )
@@ -214,6 +458,169 @@ const GLOBALS_DOCS = {
 };
 
 /**
+ * Counts net unclosed HTML tags in a template line.
+ */
+function countUnclosedTags(s) {
+  let balance = 0;
+  let p = 0;
+  while (p < s.length) {
+    if (s[p] === '<' && p < s.length - 1) {
+      if (s.substr(p, 4) === '<!--') {
+        const endPos = s.indexOf('-->', p);
+        if (endPos === -1) break;
+        p = endPos + 3;
+        continue;
+      }
+
+      const tagStart = p;
+      let inQuotes = false;
+      let quoteChar = '';
+      p++;
+      while (p < s.length) {
+        if (s[p] === '"' || s[p] === "'") {
+          if (!inQuotes) { inQuotes = true; quoteChar = s[p]; }
+          else if (s[p] === quoteChar) { inQuotes = false; }
+        } else if (s[p] === '>' && !inQuotes) {
+          break;
+        }
+        p++;
+      }
+      const tag = s.substring(tagStart, p + 1);
+      const lowTag = tag.toLowerCase();
+
+      if (tag.startsWith('</')) {
+        balance--;
+      } else if (
+        tag.endsWith('/>') ||
+        lowTag.startsWith('<br') ||
+        lowTag.startsWith('<hr') ||
+        lowTag.startsWith('<img') ||
+        lowTag.startsWith('<input') ||
+        (lowTag.startsWith('<slot') && !s.toLowerCase().includes('</slot>'))
+      ) {
+        // self-closing / void
+      } else {
+        balance++;
+      }
+    }
+    p++;
+  }
+  return balance;
+}
+
+/**
+ * Formats a BlaiseVue Single File Component (.bv) string cleanly.
+ */
+function formatBVContent(content) {
+  const inLines = content.split(/\r?\n/);
+  const outLines = [];
+  let section = 0; // 0=none, 1=template, 2=script, 3=style
+  let tmplIndent = 1;
+  let inMethodBody = false;
+  let styleIndent = 1;
+  let lastEmpty = false;
+
+  for (let i = 0; i < inLines.length; i++) {
+    const raw = inLines[i];
+    const trimmed = raw.trim();
+    const lowTrim = trimmed.toLowerCase();
+
+    if (trimmed === '') {
+      if (!lastEmpty && outLines.length > 0) {
+        outLines.push('');
+        lastEmpty = true;
+      }
+      continue;
+    }
+    lastEmpty = false;
+
+    if (lowTrim.startsWith('<template')) {
+      section = 1;
+      tmplIndent = 1;
+      outLines.push(trimmed);
+    } else if (lowTrim.startsWith('</template>')) {
+      section = 0;
+      outLines.push('</template>');
+      outLines.push('');
+      lastEmpty = true;
+    } else if (lowTrim.startsWith('<script')) {
+      section = 2;
+      inMethodBody = false;
+      outLines.push(trimmed);
+    } else if (lowTrim.startsWith('</script>')) {
+      section = 0;
+      outLines.push('</script>');
+      outLines.push('');
+      lastEmpty = true;
+    } else if (lowTrim.startsWith('<style')) {
+      section = 3;
+      styleIndent = 1;
+      outLines.push(trimmed);
+    } else if (lowTrim.startsWith('</style>')) {
+      section = 0;
+      outLines.push('</style>');
+    } else {
+      switch (section) {
+        case 1: { // Template
+          if (trimmed.startsWith('</')) {
+            if (tmplIndent > 1) tmplIndent--;
+            outLines.push('  '.repeat(tmplIndent) + trimmed);
+          } else {
+            outLines.push('  '.repeat(tmplIndent) + trimmed);
+            tmplIndent += countUnclosedTags(trimmed);
+            if (tmplIndent < 1) tmplIndent = 1;
+          }
+          break;
+        }
+        case 2: { // Script
+          if (
+            ['props:', 'data:', 'computed:', 'watch:', 'methods:', 'created:', 'mounted:', 'updated:', 'unmounted:', 'provide:', 'inject:', 'routes:'].includes(lowTrim)
+          ) {
+            inMethodBody = false;
+            outLines.push('  ' + trimmed);
+          } else if (lowTrim.startsWith('procedure ') || lowTrim.startsWith('function ')) {
+            inMethodBody = false;
+            outLines.push('    ' + trimmed);
+          } else if (lowTrim === 'var' || lowTrim === 'const') {
+            inMethodBody = false;
+            outLines.push('    ' + trimmed);
+          } else if (lowTrim === 'begin') {
+            outLines.push('    begin');
+            inMethodBody = true;
+          } else if (lowTrim === 'end;' || lowTrim === 'end') {
+            inMethodBody = false;
+            outLines.push('    ' + trimmed);
+          } else if (inMethodBody) {
+            outLines.push('      ' + trimmed);
+          } else {
+            outLines.push('    ' + trimmed);
+          }
+          break;
+        }
+        case 3: { // Style
+          if (trimmed.includes('{') && trimmed.includes('}')) {
+            outLines.push('  ' + trimmed);
+          } else if (trimmed.includes('{')) {
+            outLines.push('  ' + trimmed);
+            styleIndent = 2;
+          } else if (trimmed.startsWith('}')) {
+            outLines.push('  }');
+            styleIndent = 1;
+          } else {
+            outLines.push('  '.repeat(styleIndent) + trimmed);
+          }
+          break;
+        }
+        default:
+          outLines.push(trimmed);
+      }
+    }
+  }
+
+  return outLines.join('\n') + '\n';
+}
+
+/**
  * Activates the BlaiseVue VS Code extension.
  * @param {vscode.ExtensionContext} context
  */
@@ -223,14 +630,25 @@ function activate(context) {
   // 1. Hover Provider for .bv files
   const hoverProvider = vscode.languages.registerHoverProvider('blaisevue', {
     provideHover(document, position) {
-      const range = document.getWordRangeAtPosition(position, /[\$a-zA-Z0-9_-]+/);
+      const range = document.getWordRangeAtPosition(position, /[\$@:a-zA-Z0-9_-]+/);
       if (!range) return null;
 
       const word = document.getText(range);
 
-      // Check Directives
+      // Check Directives & Events
       if (DIRECTIVES_DOCS[word]) {
         return new vscode.Hover(DIRECTIVES_DOCS[word].documentation, range);
+      }
+
+      // Check BlaiseUI Components
+      const tagMatch = word.replace(/^[<>/]+|[>]+$/g, '');
+      if (COMPONENTS_DOCS[tagMatch]) {
+        return new vscode.Hover(COMPONENTS_DOCS[tagMatch].documentation, range);
+      }
+
+      // Check Pascal docs
+      if (PASCAL_DOCS[word]) {
+        return new vscode.Hover(PASCAL_DOCS[word].documentation, range);
       }
 
       // Check Injected Globals
@@ -242,7 +660,7 @@ function activate(context) {
     }
   });
 
-  // 2. Completion Provider for Directives & Globals
+  // 2. Comprehensive Completion Provider for .bv Single File Components
   const completionProvider = vscode.languages.registerCompletionItemProvider(
     'blaisevue',
     {
@@ -250,25 +668,55 @@ function activate(context) {
         const linePrefix = document.lineAt(position).text.substr(0, position.character);
         const completions = [];
 
-        // Directives completions
-        if (linePrefix.match(/(<[a-zA-Z0-9_-]+\s+[^>]*?)b-?$/) || linePrefix.endsWith('b-')) {
-          for (const [key, item] of Object.entries(DIRECTIVES_DOCS)) {
-            const c = new vscode.CompletionItem(key, vscode.CompletionItemKind.Keyword);
+        // A. BlaiseUI Components (<bv-)
+        if (linePrefix.match(/<bv-?[a-zA-Z0-9_-]*$/) || linePrefix.endsWith('<')) {
+          for (const [tag, item] of Object.entries(COMPONENTS_DOCS)) {
+            const c = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Class);
             c.detail = item.detail;
             c.documentation = item.documentation;
-            c.insertText = new vscode.SnippetString(`${key}="$1"`);
+            c.insertText = new vscode.SnippetString(item.snippet);
             completions.push(c);
           }
         }
 
-        // Globals ($store, $wasm, etc.)
-        if (linePrefix.endsWith('$')) {
-          for (const [key, item] of Object.entries(GLOBALS_DOCS)) {
-            const nameWithoutDollar = key.substring(1);
-            const c = new vscode.CompletionItem(nameWithoutDollar, vscode.CompletionItemKind.Variable);
+        // B. Directives & Events (b-, @, :, v-)
+        if (
+          linePrefix.match(/(<[a-zA-Z0-9_-]+\s+[^>]*?)(b-?|@|:|v-?)[a-zA-Z0-9_-]*$/) ||
+          linePrefix.endsWith('b-') || linePrefix.endsWith('@') || linePrefix.endsWith(':')
+        ) {
+          for (const [key, item] of Object.entries(DIRECTIVES_DOCS)) {
+            const c = new vscode.CompletionItem(key, vscode.CompletionItemKind.Keyword);
             c.detail = item.detail;
             c.documentation = item.documentation;
-            c.insertText = nameWithoutDollar;
+            c.insertText = new vscode.SnippetString(item.snippet);
+            completions.push(c);
+          }
+        }
+
+        // C. Globals ($store, $router, $v, etc.)
+        if (linePrefix.match(/\$[a-zA-Z0-9_]*$/)) {
+          for (const [key, item] of Object.entries(GLOBALS_DOCS)) {
+            const c = new vscode.CompletionItem(key, vscode.CompletionItemKind.Variable);
+            c.detail = item.detail;
+            c.documentation = item.documentation;
+            c.insertText = key;
+            completions.push(c);
+          }
+        }
+
+        // D. Pascal Script sections & helpers
+        const fullDoc = document.getText();
+        const cursorOffset = document.offsetAt(position);
+        const scriptStart = fullDoc.indexOf('<script');
+        const scriptEnd = fullDoc.indexOf('</script>');
+        const isInScript = (scriptStart !== -1 && cursorOffset > scriptStart && (scriptEnd === -1 || cursorOffset < scriptEnd));
+
+        if (isInScript) {
+          for (const [key, item] of Object.entries(PASCAL_DOCS)) {
+            const c = new vscode.CompletionItem(key, vscode.CompletionItemKind.Snippet);
+            c.detail = item.detail;
+            c.documentation = item.documentation;
+            c.insertText = new vscode.SnippetString(item.snippet);
             completions.push(c);
           }
         }
@@ -276,30 +724,56 @@ function activate(context) {
         return completions;
       }
     },
-    'b', '-', '$'
+    '<', 'b', '-', '@', ':', '$', 'p', 'd', 'm', 'c', 'w'
   );
 
-  // 3. Register Command: bv run dev
+  // 3. Document Formatting Provider (Shift+Alt+F & Format on Save)
+  const formattingProvider = vscode.languages.registerDocumentFormattingEditProvider('blaisevue', {
+    provideDocumentFormattingEdits(document) {
+      const fullText = document.getText();
+      const formatted = formatBVContent(fullText);
+      if (formatted === fullText) return [];
+
+      const fullRange = new vscode.Range(
+        document.positionAt(0),
+        document.positionAt(fullText.length)
+      );
+      return [vscode.TextEdit.replace(fullRange, formatted)];
+    }
+  });
+
+  // 4. Command: blaisevue.format
+  const cmdFormat = vscode.commands.registerCommand('blaisevue.format', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || !editor.document.fileName.endsWith('.bv')) {
+      vscode.window.showInformationMessage('No active .bv component to format.');
+      return;
+    }
+    await vscode.commands.executeCommand('editor.action.formatDocument');
+    vscode.window.showInformationMessage('✅ BlaiseVue Component formatted successfully!');
+  });
+
+  // 5. Register Command: bv run dev
   const cmdDev = vscode.commands.registerCommand('blaisevue.dev', () => {
     runTerminalCommand('bv run dev');
   });
 
-  // 4. Register Command: bv build
+  // 6. Register Command: bv build
   const cmdBuild = vscode.commands.registerCommand('blaisevue.build', () => {
     runTerminalCommand('bv build');
   });
 
-  // 5. Register Command: bv test
+  // 7. Register Command: bv test
   const cmdTest = vscode.commands.registerCommand('blaisevue.test', () => {
     runTerminalCommand('bv test');
   });
 
-  // 6. Register Command: bv doc
+  // 8. Register Command: bv doc
   const cmdDoc = vscode.commands.registerCommand('blaisevue.doc', () => {
     runTerminalCommand('bv doc');
   });
 
-  // 7. Register Command: Create New Component
+  // 9. Register Command: Create New Component
   const cmdNewComp = vscode.commands.registerCommand('blaisevue.newComponent', async (uri) => {
     const compName = await vscode.window.showInputBox({
       prompt: 'Enter component name (e.g. UserCard or MyWidget):',
@@ -361,12 +835,12 @@ function activate(context) {
     vscode.window.showInformationMessage(`✅ Component ${cleanName}.bv created successfully!`);
   });
 
-  // 8. Register Command: bv mobile sync
+  // 10. Register Command: bv mobile sync
   const cmdMobileSync = vscode.commands.registerCommand('blaisevue.mobileSync', () => {
     runTerminalCommand('bv mobile sync');
   });
 
-  // 9. Register Command: bv mobile open
+  // 11. Register Command: bv mobile open
   const cmdMobileOpen = vscode.commands.registerCommand('blaisevue.mobileOpen', () => {
     runTerminalCommand('bv mobile open');
   });
@@ -374,6 +848,8 @@ function activate(context) {
   context.subscriptions.push(
     hoverProvider,
     completionProvider,
+    formattingProvider,
+    cmdFormat,
     cmdDev,
     cmdBuild,
     cmdTest,
@@ -401,5 +877,6 @@ function deactivate() {}
 
 module.exports = {
   activate,
-  deactivate
+  deactivate,
+  formatBVContent
 };

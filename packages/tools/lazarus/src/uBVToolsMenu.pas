@@ -6,13 +6,17 @@ interface
 
 uses
   Classes, SysUtils, Forms, Dialogs, Process,
-  MenuIntf, SrcEditorIntf, IDEMsgIntf, IDEExternToolIntf, LazIDEIntf;
+  MenuIntf, SrcEditorIntf, IDEMsgIntf, IDEExternToolIntf, LazIDEIntf,
+  SynEdit, SynCompletion,
+  uBVFormatter, uBVAutoComplete;
 
 type
   { TBVToolsManager }
   TBVToolsManager = class(TComponent)
   public
     procedure DoCheckActiveComponent(Sender: TObject);
+    procedure DoFormatActiveComponent(Sender: TObject);
+    procedure DoTriggerAutoComplete(Sender: TObject);
     procedure DoListSearchPaths(Sender: TObject);
     procedure DoRunTestSuite(Sender: TObject);
     procedure DoSyncLazarusProject(Sender: TObject);
@@ -174,6 +178,64 @@ begin
     IDEMessagesWindow.AddCustomMessage(mluError, '✘ Falha: Encontrados erros de validação no componente.', FileName, 0, 0);
 end;
 
+procedure TBVToolsManager.DoFormatActiveComponent({%H-}Sender: TObject);
+var
+  ActiveEd: TSourceEditorInterface;
+  FileName: string;
+  OldText, NewText: string;
+begin
+  if SourceEditorManagerIntf = nil then Exit;
+  ActiveEd := SourceEditorManagerIntf.ActiveEditor;
+  if ActiveEd = nil then
+  begin
+    ShowMessage('Nenhum arquivo ativo no editor do Lazarus.');
+    Exit;
+  end;
+
+  FileName := ActiveEd.FileName;
+  if LowerCase(ExtractFileExt(FileName)) <> '.bv' then
+  begin
+    ShowMessage('O arquivo ativo (' + ExtractFileName(FileName) + ') não é um componente BlaiseVue (.bv).');
+    Exit;
+  end;
+
+  OldText := ActiveEd.SourceText;
+  NewText := FormatBVContent(OldText);
+  if OldText <> NewText then
+  begin
+    ActiveEd.BeginUndoBlock;
+    try
+      ActiveEd.ReplaceLines(1, ActiveEd.Lines.Count, NewText);
+    finally
+      ActiveEd.EndUndoBlock;
+    end;
+    IDEMessagesWindow.AddCustomMessage(mluImportant, '✔ Componente formatado com sucesso: ' + ExtractFileName(FileName), FileName, 0, 0);
+  end
+  else
+  begin
+    IDEMessagesWindow.AddCustomMessage(mluNone, 'Componente já está devidamente formatado: ' + ExtractFileName(FileName), FileName, 0, 0);
+  end;
+end;
+
+procedure TBVToolsManager.DoTriggerAutoComplete({%H-}Sender: TObject);
+var
+  ActiveEd: TSourceEditorInterface;
+  SynEd: TCustomSynEdit;
+  Comp: TSynCompletion;
+begin
+  if SourceEditorManagerIntf = nil then Exit;
+  ActiveEd := SourceEditorManagerIntf.ActiveEditor;
+  if ActiveEd = nil then Exit;
+
+  if ActiveEd.EditorControl is TCustomSynEdit then
+  begin
+    SynEd := TCustomSynEdit(ActiveEd.EditorControl);
+    Comp := AttachBVCompletion(SynEd);
+    if Comp <> nil then
+      Comp.Execute('', SynEd.CaretX, SynEd.CaretY);
+  end;
+end;
+
 procedure TBVToolsManager.DoListSearchPaths({%H-}Sender: TObject);
 var
   ProjectDir: string;
@@ -278,6 +340,8 @@ begin
   BVSubMenu := RegisterIDESubMenu(itmSecondaryTools, 'BlaiseVueSubMenu', 'BlaiseVue');
 
   RegisterIDEMenuCommand(BVSubMenu, 'BVCheckComponent', 'Verificar Componente Ativo (.bv)', @Mgr.DoCheckActiveComponent);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVFormatComponent', 'Formatar Componente Ativo (.bv) (Ctrl+Shift+F)', @Mgr.DoFormatActiveComponent);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVAutoComplete', 'Autocomplete BlaiseVue (Ctrl+Espaço)', @Mgr.DoTriggerAutoComplete);
   RegisterIDEMenuCommand(BVSubMenu, 'BVLazarusSync', 'Sincronizar Projeto Lazarus (.lpi)', @Mgr.DoSyncLazarusProject);
   RegisterIDEMenuCommand(BVSubMenu, 'BVListPaths', 'Listar Search Paths do Compilador (bv path)', @Mgr.DoListSearchPaths);
   RegisterIDEMenuCommand(BVSubMenu, 'BVRunTests', 'Executar Suíte de Testes (bv test)', @Mgr.DoRunTestSuite);

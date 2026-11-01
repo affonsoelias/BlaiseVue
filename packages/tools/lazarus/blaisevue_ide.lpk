@@ -31,7 +31,7 @@
     <Description Value="BlaiseVue IDE Integration for Lazarus: Multi-Syntax Highlighting for .bv Single File Components (HTML + Pascal + CSS), File -> New Component Wizard, and IDE Tools menu."/>
     <License Value="MIT"/>
     <Version Major="4" Minor="4" Release="0"/>
-    <Files Count="4">
+    <Files Count="6">
       <Item1>
         <Filename Value="src\uBVSynMultiSyn.pas"/>
         <UnitName Value="uBVSynMultiSyn"/>
@@ -41,14 +41,22 @@
         <UnitName Value="uBVFileDescriptor"/>
       </Item2>
       <Item3>
-        <Filename Value="src\uBVToolsMenu.pas"/>
-        <UnitName Value="uBVToolsMenu"/>
+        <Filename Value="src\uBVFormatter.pas"/>
+        <UnitName Value="uBVFormatter"/>
       </Item3>
       <Item4>
+        <Filename Value="src\uBVAutoComplete.pas"/>
+        <UnitName Value="uBVAutoComplete"/>
+      </Item4>
+      <Item5>
+        <Filename Value="src\uBVToolsMenu.pas"/>
+        <UnitName Value="uBVToolsMenu"/>
+      </Item5>
+      <Item6>
         <Filename Value="src\uBlaiseVueIDEReg.pas"/>
         <HasRegisterProc Value="True"/>
         <UnitName Value="uBlaiseVueIDEReg"/>
-      </Item4>
+      </Item6>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="4">

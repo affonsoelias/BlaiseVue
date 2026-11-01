@@ -972,6 +972,8 @@ procedure CmdTestE2E; forward;
 procedure CmdStudio; forward;
 
 procedure CmdCheck(const TargetFile: string); forward;
+function FormatBVContent(const AContent: string): string; forward;
+procedure CmdFormat(const TargetFile: string; CheckOnly: Boolean = False); forward;
 procedure CmdLicense; forward;
 procedure CmdMeta; forward;
 procedure CmdPath; forward;
@@ -5175,15 +5177,322 @@ begin
       WriteLn('Result: All ', BVFiles.Count, ' component(s) passed AST type-verification with 0 errors.')
 
     else
-
       WriteLn('Result: Verification completed with ', TotalWarnings, ' template warning(s).');
-
   finally
-
     BVFiles.Free;
+  end;
+end;
 
+function FormatBVContent(const AContent: string): string;
+var
+  InLines, OutLines: TStringList;
+  i: Integer;
+  Line, Trimmed, LowTrim: string;
+  Section: Integer; // 0=none, 1=template, 2=script, 3=style
+  TmplIndent: Integer;
+  InMethodBody: Boolean;
+  StyleIndent: Integer;
+  LastEmpty: Boolean;
+
+  function CountUnclosedTags(const S: string): Integer;
+  var
+    P, TagStart, TagEnd: Integer;
+    Tag: string;
+    Balance: Integer;
+    InQuotes: Boolean;
+    QuoteChar: Char;
+  begin
+    Balance := 0;
+    P := 1;
+    while P <= Length(S) do
+    begin
+      if (S[P] = '<') and (P < Length(S)) then
+      begin
+        if Copy(S, P, 4) = '<!--' then
+        begin
+          P := Pos('-->', S);
+          if P = 0 then P := Length(S) + 1 else Inc(P, 3);
+          Continue;
+        end;
+
+        TagStart := P;
+        InQuotes := False;
+        QuoteChar := #0;
+        Inc(P);
+        while (P <= Length(S)) do
+        begin
+          if S[P] in ['"', ''''] then
+          begin
+            if not InQuotes then begin InQuotes := True; QuoteChar := S[P]; end
+            else if S[P] = QuoteChar then InQuotes := False;
+          end
+          else if (S[P] = '>') and not InQuotes then Break;
+          Inc(P);
+        end;
+        TagEnd := P;
+        Tag := Copy(S, TagStart, TagEnd - TagStart + 1);
+
+        if (Length(Tag) >= 2) then
+        begin
+          if Copy(Tag, 1, 2) = '</' then
+            Dec(Balance)
+          else if (Copy(Tag, Length(Tag) - 1, 2) = '/>') or
+                  (Copy(LowerCase(Tag), 1, 3) = '<br') or
+                  (Copy(LowerCase(Tag), 1, 3) = '<hr') or
+                  (Copy(LowerCase(Tag), 1, 4) = '<img') or
+                  (Copy(LowerCase(Tag), 1, 6) = '<input') or
+                  ((Copy(LowerCase(Tag), 1, 5) = '<slot') and (Pos('</slot>', LowerCase(S)) = 0)) then
+            // self closing or void
+          else
+            Inc(Balance);
+        end;
+      end;
+      Inc(P);
+    end;
+    Result := Balance;
   end;
 
+begin
+  InLines := TStringList.Create;
+  OutLines := TStringList.Create;
+  try
+    InLines.Text := AContent;
+    Section := 0;
+    TmplIndent := 1;
+    InMethodBody := False;
+    StyleIndent := 1;
+    LastEmpty := False;
+
+    for i := 0 to InLines.Count - 1 do
+    begin
+      Line := InLines[i];
+      Trimmed := Trim(Line);
+      LowTrim := LowerCase(Trimmed);
+
+      if Trimmed = '' then
+      begin
+        if not LastEmpty and (OutLines.Count > 0) then
+        begin
+          OutLines.Add('');
+          LastEmpty := True;
+        end;
+        Continue;
+      end;
+      LastEmpty := False;
+
+      if Pos('<template', LowTrim) = 1 then
+      begin
+        Section := 1;
+        TmplIndent := 1;
+        OutLines.Add(Trimmed);
+      end
+      else if Pos('</template>', LowTrim) = 1 then
+      begin
+        Section := 0;
+        OutLines.Add('</template>');
+        OutLines.Add('');
+        LastEmpty := True;
+      end
+      else if Pos('<script', LowTrim) = 1 then
+      begin
+        Section := 2;
+        InMethodBody := False;
+        OutLines.Add(Trimmed);
+      end
+      else if Pos('</script>', LowTrim) = 1 then
+      begin
+        Section := 0;
+        OutLines.Add('</script>');
+        OutLines.Add('');
+        LastEmpty := True;
+      end
+      else if Pos('<style', LowTrim) = 1 then
+      begin
+        Section := 3;
+        StyleIndent := 1;
+        OutLines.Add(Trimmed);
+      end
+      else if Pos('</style>', LowTrim) = 1 then
+      begin
+        Section := 0;
+        OutLines.Add('</style>');
+      end
+      else
+      begin
+        case Section of
+          1: // Template
+          begin
+            if Copy(Trimmed, 1, 2) = '</' then
+            begin
+              if TmplIndent > 1 then Dec(TmplIndent);
+              OutLines.Add(StringOfChar(' ', TmplIndent * 2) + Trimmed);
+            end
+            else
+            begin
+              OutLines.Add(StringOfChar(' ', TmplIndent * 2) + Trimmed);
+              Inc(TmplIndent, CountUnclosedTags(Trimmed));
+              if TmplIndent < 1 then TmplIndent := 1;
+            end;
+          end;
+
+          2: // Script
+          begin
+            if (LowTrim = 'props:') or (LowTrim = 'data:') or (LowTrim = 'computed:') or
+               (LowTrim = 'watch:') or (LowTrim = 'methods:') or (LowTrim = 'created:') or
+               (LowTrim = 'mounted:') or (LowTrim = 'updated:') or (LowTrim = 'unmounted:') or
+               (LowTrim = 'provide:') or (LowTrim = 'inject:') or (LowTrim = 'routes:') then
+            begin
+              InMethodBody := False;
+              OutLines.Add('  ' + Trimmed);
+            end
+            else if (Pos('procedure ', LowTrim) = 1) or (Pos('function ', LowTrim) = 1) then
+            begin
+              InMethodBody := False;
+              OutLines.Add('    ' + Trimmed);
+            end
+            else if (LowTrim = 'var') or (LowTrim = 'const') then
+            begin
+              InMethodBody := False;
+              OutLines.Add('    ' + Trimmed);
+            end
+            else if (LowTrim = 'begin') then
+            begin
+              OutLines.Add('    begin');
+              InMethodBody := True;
+            end
+            else if (LowTrim = 'end;') or (LowTrim = 'end') then
+            begin
+              InMethodBody := False;
+              OutLines.Add('    ' + Trimmed);
+            end
+            else if InMethodBody then
+            begin
+              OutLines.Add('      ' + Trimmed);
+            end
+            else
+            begin
+              OutLines.Add('    ' + Trimmed);
+            end;
+          end;
+
+          3: // Style
+          begin
+            if (Pos('{', Trimmed) > 0) and (Pos('}', Trimmed) > 0) then
+            begin
+              OutLines.Add('  ' + Trimmed);
+            end
+            else if Pos('{', Trimmed) > 0 then
+            begin
+              OutLines.Add('  ' + Trimmed);
+              StyleIndent := 2;
+            end
+            else if Pos('}', Trimmed) = 1 then
+            begin
+              OutLines.Add('  }');
+              StyleIndent := 1;
+            end
+            else
+            begin
+              OutLines.Add(StringOfChar(' ', StyleIndent * 2) + Trimmed);
+            end;
+          end;
+
+          else
+            OutLines.Add(Trimmed);
+        end;
+      end;
+    end;
+
+    Result := OutLines.Text;
+  finally
+    InLines.Free;
+    OutLines.Free;
+  end;
+end;
+
+procedure CmdFormat(const TargetFile: string; CheckOnly: Boolean = False);
+var
+  BVFiles: TStringList;
+  i, FormattedCount: Integer;
+  FilePath, OrigContent, FormattedContent: string;
+begin
+  if (LowerCase(TargetFile) = '--help') or (LowerCase(TargetFile) = '-h') or (LowerCase(TargetFile) = 'help') then
+  begin
+    WriteLn('Usage: bv format [file_or_dir] [--check]');
+    WriteLn('');
+    WriteLn('Options:');
+    WriteLn('  [file_or_dir]   Target .bv component file or directory (defaults to src/ and lib/)');
+    WriteLn('  --check         Verify if files are formatted without modifying them');
+    WriteLn('  -h, --help      Show this help message');
+    Exit;
+  end;
+
+  BVFiles := TStringList.Create;
+  try
+    if (TargetFile <> '') and (TargetFile <> '--check') then
+    begin
+      if FileExists(TargetFile) then
+        BVFiles.Add(TargetFile)
+      else if DirectoryExists(TargetFile) then
+        ScanDirForBV(TargetFile, BVFiles)
+      else
+      begin
+        WriteLn('  [ERROR] File or directory not found: ' + TargetFile);
+        Halt(1);
+      end;
+    end
+    else
+    begin
+      if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
+        BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
+      ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
+    end;
+
+    if BVFiles.Count = 0 then
+    begin
+      WriteLn('  [INFO] No .bv components found to format.');
+      Exit;
+    end;
+
+    FormattedCount := 0;
+    WriteLn('  [FORMAT] Processing ' + IntToStr(BVFiles.Count) + ' component(s)...');
+    for i := 0 to BVFiles.Count - 1 do
+    begin
+      FilePath := BVFiles[i];
+      OrigContent := ReadFileToString(FilePath);
+      FormattedContent := FormatBVContent(OrigContent);
+      if OrigContent <> FormattedContent then
+      begin
+        Inc(FormattedCount);
+        if CheckOnly then
+          WriteLn('    [!] Needs formatting: ' + FilePath)
+        else
+        begin
+          WriteStringToFile(FilePath, FormattedContent);
+          WriteLn('    [*] Formatted: ' + FilePath);
+        end;
+      end;
+    end;
+
+    if CheckOnly then
+    begin
+      if FormattedCount > 0 then
+      begin
+        WriteLn('  [FAIL] ' + IntToStr(FormattedCount) + ' file(s) need formatting.');
+        Halt(1);
+      end
+      else
+        WriteLn('  [OK] All files are properly formatted.');
+    end
+    else
+    begin
+      WriteLn('  [SUCCESS] Formatted ' + IntToStr(FormattedCount) + ' of ' + IntToStr(BVFiles.Count) + ' file(s).');
+    end;
+  finally
+    BVFiles.Free;
+  end;
 end;
 
 
@@ -27962,6 +28271,11 @@ begin
 
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
 
+  end
+
+  else if (Cmd = 'format') or (Cmd = 'fmt') then
+  begin
+    CmdFormat(ParamStr(2), (LowerCase(ParamStr(2)) = '--check') or (LowerCase(ParamStr(3)) = '--check'));
   end
 
   else if Cmd = 'license' then

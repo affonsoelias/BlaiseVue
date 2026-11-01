@@ -20,10 +20,12 @@ BlaiseVue delivers official design-time integration for the **Lazarus IDE**, bri
    - **BlaiseVue View (.bv)**: Scaffolds a full routed page view with standard layout.
 
 3. **Integrated Tools Menu (`Tools -> BlaiseVue`)**:
-   - **Verificar Componente Ativo (`bv check`)**: Parses the AST of the open `.bv` file and displays any template syntax errors in the Lazarus Messages window.
-   - **Listar Search Paths (`bv path`)**: Displays active Pascal search units and Pas2JS libraries configured in `app.cfg`.
-   - **Executar Suíte de Testes (`bv test`)**: Triggers the test suite with instant results in the IDE.
-   - **Sincronizar Projeto (`bv lazarus init`)**: Scans for newly added `.bv` components and synchronizes the Project Inspector.
+   - **Formatar Componente Ativo (`Ctrl+Shift+F`)**: Formata instantaneamente o componente `.bv` ativo com indentação padronizada de 2 espaços no template HTML, 2/4/6 espaços no script Pascal e 2/4 espaços no CSS, com suporte total a desfazer (`Ctrl+Z`).
+   - **Autocomplete BlaiseVue (`Ctrl+Espaço`)**: Popup de autocompletar contextual para diretivas reativas (`b-model`, `b-for`, `b-if`, `@click`), componentes BlaiseUI (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, etc.) e blocos Pascal (`props:`, `data:`, `methods:`, `computed:`, etc.).
+   - **Verificar Componente Ativo (`bv check`)**: Analisa a árvore sintática (AST) do componente `.bv` aberto e exibe erros de validação na janela de Mensagens do Lazarus.
+   - **Listar Search Paths (`bv path`)**: Exibe as unidades de busca do compilador e bibliotecas Pas2JS mapeadas no `app.cfg`.
+   - **Executar Suíte de Testes (`bv test`)**: Dispara a suíte de testes com resultados exibidos diretamente na IDE.
+   - **Sincronizar Projeto (`bv lazarus init`)**: Sincroniza a árvore do Projeto (.lpi) com todos os arquivos do projeto.
 
 4. **Project Generation & Full Architecture Sync (`bv lazarus init`)**:
    - Automatically generates a complete Lazarus Project (`.lpi` and `.lpr`) from any existing BlaiseVue project.
@@ -45,6 +47,8 @@ packages/tools/lazarus/
 └── src/
     ├── uBVSynMultiSyn.pas      # Tri-language highlighter (HTML + Pascal + CSS)
     ├── uBVFileDescriptor.pas   # File -> New... descriptors and category registration
+    ├── uBVFormatter.pas        # 3-section code formatting engine (FormatBVContent)
+    ├── uBVAutoComplete.pas     # TSynCompletion provider (Ctrl+Space autocomplete)
     ├── uBVToolsMenu.pas        # Tools -> BlaiseVue action handlers
     └── uBlaiseVueIDEReg.pas    # IDE registration and SourceEditorManager hooks
 ```

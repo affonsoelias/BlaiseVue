@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, Controls,
   SynEdit, SynEditHighlighter,
   SrcEditorIntf, LazIDEIntf,
-  uBVSynMultiSyn, uBVFileDescriptor, uBVToolsMenu;
+  uBVSynMultiSyn, uBVFileDescriptor, uBVToolsMenu, uBVAutoComplete;
 
 type
   { TBVIDEHook }
@@ -83,6 +83,7 @@ begin
       begin
         SynEd.Highlighter := TBVSynMultiSyn.Create(SynEd);
       end;
+      AttachBVCompletion(SynEd);
     end;
   end;
 end;
