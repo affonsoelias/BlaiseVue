@@ -300,8 +300,12 @@ Manages WebAssembly modules in the project and executes performance benchmarks c
 ### 3. `bv run ssg` (Static Site Generation & Pre-rendering)
 Pre-renders all registered application routes into static, SEO-friendly HTML files with zero-flicker reactive client-side hydration.
 
-### 4. `bv vsix` / `bv extension [install|package]` (VS Code Official Extension)
-Packages the official BlaiseVue extension into a standalone `.vsix` bundle for Visual Studio Code and VSCodium, featuring triple syntax highlighting, intelligent auto-completion, and an extensive snippet library. The `bv extension install` command installs the extension directly into the local editor.
+### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
+Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
+- `bv extension list`: Inspects available extensions (`vscode`, `devtools`, and custom tools) and their installation status.
+- `bv extension install [vscode|devtools|<tool>]`: Deploys the official VS Code / Antigravity IDE extension (`~/.vscode/extensions/`) or displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
+- `bv extension remove [vscode|<tool>]`: Uninstalls the extension cleanly from the environment.
+- `bv extension pack [vscode]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
 
 ### 5. `bv mobile` (Hybrid Mobile Platform Android / iOS & Capacitor)
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:

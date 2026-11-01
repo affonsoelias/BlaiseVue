@@ -25,10 +25,10 @@ The native `bv` CLI manages extension packaging and installation:
 
 ```bash
 # Packages the official extension into a distributable .vsix bundle
-bv vsix
+bv extension pack
 
 # Or via the extension subcommand:
-bv extension package
+bv extension pack
 
 # Installs the extension directly into local VS Code
 bv extension install
@@ -93,10 +93,10 @@ The extension includes code snippets to speed up development:
 
 ## 🛠️ Extension Source Layout
 
-The extension lives in [`vscode-extension/`](file:///c:/Users/Pichau/Documents/BlaiseVue/vscode-extension/):
+The extension lives in [`packages/tools/vscode-extension/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/tools/vscode-extension/):
 
 ```text
-vscode-extension/
+packages/tools/vscode-extension/
 ├── package.json               # Extension manifest, activation events, and commands
 ├── language-configuration.json # Tag auto-closing rules and comment syntax
 ├── syntaxes/

@@ -253,6 +253,24 @@ begin
 
 end;
 
+{ Returns the user-level global tools directory (~/.blaisevue/tools/) }
+function GetGlobalToolsPath: string;
+begin
+  Result := GetUserBlaiseVueDir + DirectorySeparator + 'tools' + DirectorySeparator;
+  ForceDirectories(Result);
+end;
+
+{ Returns the framework built-in tools directory (packages/tools/) }
+function GetBuiltinToolsPath: string;
+begin
+  if DirectoryExists(GetSDKPath + 'packages' + DirectorySeparator + 'tools') then
+    Result := GetSDKPath + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator
+  else if DirectoryExists(GetSDKPath + 'tools') then
+    Result := GetSDKPath + 'tools' + DirectorySeparator
+  else
+    Result := GetSDKPath;
+end;
+
 
 
 { Returns the base directory for pas2js, checking vendor/pas2js first then legacy pas2js/ }
@@ -10970,86 +10988,235 @@ end;
 
 
 
-procedure CmdExtension(const Action: string);
-
+procedure CmdExtension(const Action: string = ''; const Target: string = '');
 var
-
-  ExtDir, ScriptPath: string;
-
+  ExtDir, DevtoolsDir, ScriptPath, SubCmd, TargetLower: string;
+  GlobalToolsDir, CustomToolPath, HomeDir: string;
+  VSCodeInstalled: Boolean;
+  SR: TSearchRec;
+  Count: Integer;
 begin
+  SubCmd := LowerCase(Trim(Action));
+  TargetLower := LowerCase(Trim(Target));
+  if SubCmd = '' then SubCmd := 'list';
 
-  WriteLn('=== BlaiseVue 3.5 VS Code Extension Tool ===');
-
-  ExtDir := GetSDKPath + 'vscode-extension';
-
-  if not DirectoryExists(ExtDir) then
-
+  if (SubCmd = 'list') or (SubCmd = 'ls') then
   begin
-
-    WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
-
-    Exit;
-
-  end;
-
-
-
-  if (Action = 'install') or (Action = '') then
-
-  begin
-
-    WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
-
-    ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
+    WriteLn('');
+    WriteLn('=== BlaiseVue Development Extensions & Tools ===');
+    WriteLn(StringOfChar('-', 74));
+    WriteLn(PadRight('Extension', 22), PadRight('Category / Target', 26), PadRight('Status', 26));
+    WriteLn(StringOfChar('-', 74));
 
     {$IFDEF WINDOWS}
-
-    ExecuteProcess('powershell', '-File "' + ScriptPath + '"');
-
+    HomeDir := GetEnvironmentVariable('USERPROFILE');
+    if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
+    VSCodeInstalled := DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') or
+                       DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode') or
+                       DirectoryExists(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') or
+                       DirectoryExists(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
     {$ELSE}
-
-    ExecuteProcess('/bin/sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ''' + ExtDir + '''/* ~/.vscode/extensions/blaisevue-vscode/"');
-
+    HomeDir := GetEnvironmentVariable('HOME');
+    VSCodeInstalled := DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue-vscode') or
+                       DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0');
     {$ENDIF}
 
-  end
+    if VSCodeInstalled then
+      WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (IDE)')
+    else
+      WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Available (Run: bv extension install)');
 
-  else if (Action = 'package') or (Action = 'vsix') then
+    DevtoolsDir := GetBuiltinToolsPath + 'devtools-extension';
+    if DirectoryExists(DevtoolsDir) then
+      WriteLn(PadRight('devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Available (Firefox / Chrome)')
+    else
+      WriteLn(PadRight('devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Not found');
 
-  begin
-
-    if not HasCommand('node') then
-
+    GlobalToolsDir := GetGlobalToolsPath;
+    Count := 0;
+    if DirectoryExists(GlobalToolsDir) and (FindFirst(GlobalToolsDir + '*', faDirectory, SR) = 0) then
     begin
-
-      PrintNodeRequiredError('package the VS Code extension (@vscode/vsce)');
-
-      Exit;
-
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+        begin
+          Inc(Count);
+          WriteLn(PadRight(SR.Name, 22), PadRight('User Custom Tool', 26), 'Custom (~/.blaisevue/tools)');
+        end;
+      until FindNext(SR) <> 0;
+      FindClose(SR);
     end;
 
-    WriteLn('Packaging BlaiseVue VS Code extension into .vsix...');
-
-    {$IFDEF WINDOWS}
-
-    ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
-
-    {$ELSE}
-
-    ExecuteProcess('/bin/sh', '-c "cd ''' + ExtDir + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
-
-    {$ENDIF}
-
+    WriteLn(StringOfChar('-', 74));
+    WriteLn('Commands:');
+    WriteLn('  bv extension install [vscode|devtools|<tool>]');
+    WriteLn('  bv extension remove [vscode|<tool>]');
+    WriteLn('  bv extension pack [vscode]');
+    WriteLn('');
   end
-
-  else
-
+  else if (SubCmd = 'install') or (SubCmd = 'i') or (SubCmd = 'add') then
   begin
+    if (TargetLower = '') or (TargetLower = 'vscode') then
+    begin
+      ExtDir := GetBuiltinToolsPath + 'vscode-extension';
+      if not DirectoryExists(ExtDir) then
+        ExtDir := GetSDKPath + 'vscode-extension';
+      if not DirectoryExists(ExtDir) then
+      begin
+        WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
+        Exit;
+      end;
 
-    WriteLn('Usage: bv extension <install|package>');
-
+      WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
+      ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
+      {$IFDEF WINDOWS}
+      ExecuteProcess('powershell', '-File "' + ScriptPath + '"');
+      {$ELSE}
+      ExecuteProcess('/bin/sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ''' + ExtDir + '''/* ~/.vscode/extensions/blaisevue-vscode/"');
+      {$ENDIF}
+    end
+    else if TargetLower = 'devtools' then
+    begin
+      DevtoolsDir := GetBuiltinToolsPath + 'devtools-extension';
+      WriteLn('');
+      WriteLn('=== BlaiseVue Browser DevTools Extension ===');
+      WriteLn('Directory: ' + DevtoolsDir);
+      WriteLn('');
+      WriteLn('To install in Mozilla Firefox:');
+      WriteLn('  1. Open Firefox and navigate to: about:debugging#/runtime/this-firefox');
+      WriteLn('  2. Click "Load Temporary Add-on..."');
+      WriteLn('  3. Select the file: ' + DevtoolsDir + DirectorySeparator + 'manifest.json');
+      WriteLn('');
+      WriteLn('To install in Google Chrome / Brave / Edge:');
+      WriteLn('  1. Open your browser and navigate to: chrome://extensions');
+      WriteLn('  2. Toggle on "Developer mode" (top-right corner)');
+      WriteLn('  3. Click "Load unpacked" (top-left button)');
+      WriteLn('  4. Select the folder: ' + DevtoolsDir);
+      WriteLn('');
+      WriteLn('Once loaded, open your BlaiseVue app, press F12, and click the "BlaiseVue" tab!');
+      WriteLn('');
+    end
+    else
+    begin
+      CustomToolPath := GetGlobalToolsPath + TargetLower;
+      if DirectoryExists(CustomToolPath) then
+      begin
+        WriteLn('Custom tool "' + TargetLower + '" found in ' + CustomToolPath);
+        if FileExists(CustomToolPath + DirectorySeparator + 'install.ps1') then
+        begin
+          WriteLn('Executing installation script: install.ps1...');
+          {$IFDEF WINDOWS}
+          ExecuteProcess('powershell', '-File "' + CustomToolPath + DirectorySeparator + 'install.ps1"');
+          {$ELSE}
+          if FileExists(CustomToolPath + DirectorySeparator + 'install.sh') then
+            ExecuteProcess('/bin/sh', '"' + CustomToolPath + DirectorySeparator + 'install.sh"');
+          {$ENDIF}
+        end
+        else
+          WriteLn('Tool is ready at: ' + CustomToolPath);
+      end
+      else
+      begin
+        WriteLn('Error: Extension or tool "' + TargetLower + '" not found.');
+        WriteLn('Available built-in tools: vscode, devtools');
+        WriteLn('User tools directory: ' + GetGlobalToolsPath);
+      end;
+    end;
+  end
+  else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
+  begin
+    if (TargetLower = '') or (TargetLower = 'vscode') then
+    begin
+      WriteLn('Removing BlaiseVue VS Code extension...');
+      {$IFDEF WINDOWS}
+      HomeDir := GetEnvironmentVariable('USERPROFILE');
+      if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
+      if DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
+        DeleteDir(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
+      if DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode') then
+        DeleteDir(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode');
+      if DirectoryExists(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
+        DeleteDir(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
+      if DirectoryExists(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
+        DeleteDir(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
+      {$ELSE}
+      HomeDir := GetEnvironmentVariable('HOME');
+      if DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue-vscode') then
+        DeleteDir(HomeDir + '/.vscode/extensions/blaisevue-vscode');
+      if DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0') then
+        DeleteDir(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0');
+      {$ENDIF}
+      WriteLn('BlaiseVue VS Code extension removed successfully.');
+    end
+    else if TargetLower = 'devtools' then
+    begin
+      WriteLn('The browser DevTools extension is a temporary/unpacked extension.');
+      WriteLn('To remove it, simply click "Remove" in your browser:');
+      WriteLn('  - Firefox: about:debugging#/runtime/this-firefox -> Remove');
+      WriteLn('  - Chrome / Edge: chrome://extensions -> Remove');
+    end
+    else
+    begin
+      CustomToolPath := GetGlobalToolsPath + TargetLower;
+      if DirectoryExists(CustomToolPath) then
+      begin
+        DeleteDir(CustomToolPath);
+        WriteLn('Custom tool "' + TargetLower + '" removed successfully from ~/.blaisevue/tools/.');
+      end
+      else
+        WriteLn('Error: Extension or tool "' + TargetLower + '" not found to remove.');
+    end;
+  end
+  else if (SubCmd = 'pack') or (SubCmd = 'package') or (SubCmd = 'pkg') or (SubCmd = 'vsix') then
+  begin
+    if (TargetLower = '') or (TargetLower = 'vscode') then
+    begin
+      ExtDir := GetBuiltinToolsPath + 'vscode-extension';
+      if not DirectoryExists(ExtDir) then
+        ExtDir := GetSDKPath + 'vscode-extension';
+      if not DirectoryExists(ExtDir) then
+      begin
+        WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
+        Exit;
+      end;
+      if not HasCommand('node') then
+      begin
+        PrintNodeRequiredError('package the VS Code extension (@vscode/vsce)');
+        Exit;
+      end;
+      WriteLn('Packaging BlaiseVue VS Code extension into .vsix bundle...');
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
+      {$ELSE}
+      ExecuteProcess('/bin/sh', '-c "cd ''' + ExtDir + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
+      {$ENDIF}
+      WriteLn('Packaging completed successfully!');
+    end
+    else
+    begin
+      CustomToolPath := GetGlobalToolsPath + TargetLower;
+      if DirectoryExists(CustomToolPath) then
+      begin
+        if not HasCommand('node') then
+        begin
+          PrintNodeRequiredError('package the extension (@vscode/vsce)');
+          Exit;
+        end;
+        WriteLn('Packaging custom extension at ' + CustomToolPath + '...');
+        {$IFDEF WINDOWS}
+        ExecuteProcess('cmd', '/c cd /d "' + CustomToolPath + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
+        {$ELSE}
+        ExecuteProcess('/bin/sh', '-c "cd ''' + CustomToolPath + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
+        {$ENDIF}
+      end
+      else
+        WriteLn('Error: Directory for extension "' + TargetLower + '" not found.');
+    end;
+  end
+  else
+  begin
+    WriteLn('Unknown subcommand: bv extension ' + SubCmd);
+    WriteLn('Available subcommands: list, install, remove, pack');
   end;
-
 end;
 
 
@@ -26052,8 +26219,7 @@ begin
     WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
     WriteLn('  bv theme list              Lists all available installed themes');
     WriteLn('  bv theme use <name>        Sets default project theme in index.html (e.g. darkly, lux)');
-    WriteLn('  bv extension [install|pkg] Installs or packages official VS Code extension');
-    WriteLn('  bv vsix                    Packages standalone VS Code extension (.vsix)');
+    WriteLn('  bv extension <list|install|remove|pack> [target] Manages development extensions & tools');
     WriteLn('');
     WriteLn('  # === Project Metadata & Licensing ===');
     WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
@@ -26573,7 +26739,11 @@ begin
 
     if Cmd = 'vsix' then
 
-      CmdExtension('package')
+      CmdExtension('pack', 'vscode')
+
+    else if ParamCount >= 3 then
+
+      CmdExtension(LowerCase(ParamStr(2)), ParamStr(3))
 
     else if ParamCount >= 2 then
 
@@ -26581,7 +26751,7 @@ begin
 
     else
 
-      CmdExtension('install');
+      CmdExtension('list');
 
   end
 

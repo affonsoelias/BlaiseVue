@@ -75,10 +75,10 @@ The runtime bridge in [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/
 
 ## 🕵️ Part 2: Official Browser DevTools Extension
 
-BlaiseVue includes a dedicated DevTools browser extension located in the [`devtools/`](file:///c:/Users/Pichau/Documents/BlaiseVue/devtools/) directory.
+BlaiseVue includes a dedicated DevTools browser extension located in the [`packages/tools/devtools-extension/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/tools/devtools-extension/) directory.
 
 ```
-devtools/
+packages/tools/devtools-extension/
 ├── manifest.json       # Manifest V3 configuration
 ├── background.js       # Service worker background bridge
 ├── devtools.html       # Entry point for Chrome DevTools
@@ -110,14 +110,20 @@ devtools/
 
 ### Installing the DevTools Extension (Developer Mode)
 
-To install the extension in **Google Chrome**, **Microsoft Edge**, or **Brave**:
+### Installing the DevTools Extension in Mozilla Firefox
+1. Open Firefox and navigate to: `about:debugging#/runtime/this-firefox`
+2. Click **"Load Temporary Add-on..."**
+3. Browse to and select `packages/tools/devtools-extension/manifest.json`.
+4. Open your BlaiseVue app (`http://localhost:8080`), press `F12` to open Web Developer Tools, and navigate to the **🛡️ BlaiseVue** tab!
+
+### Installing the DevTools Extension in Google Chrome / Brave / Edge
 
 1. Open your browser and navigate to:
    - Chrome: `chrome://extensions/`
    - Edge: `edge://extensions/`
 2. Enable **Developer mode** (toggle switch in the top-right corner).
 3. Click the **Load unpacked** button.
-4. Browse to and select the `devtools/` folder in your BlaiseVue directory:
+4. Browse to and select the `packages/tools/devtools-extension/` folder in your BlaiseVue directory:
    ```text
    C:\Users\Pichau\Documents\BlaiseVue\devtools\
    ```
