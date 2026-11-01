@@ -204,3 +204,10 @@ This produces `dist/my-chart-lib-1.0.0.zip` and `dist/my-chart-lib-1.0.0.zip.sha
      }
    }
    ```
+
+### 5. Providing Documentation & Runnable Examples
+Package authors are strongly encouraged to provide documentation and runnable examples when submitting their libraries to the ecosystem:
+- **In-Package Documentation & Sandbox**: The library's `README.md` and live development sandbox in `demo/` (featuring `App.bv` and `index.html`) are bundled directly into the release `.zip` and extracted to the consumer's `lib/<package>/` folder.
+- **Ecosystem Examples Directory (`examples/<package>/`)**: Authors can contribute complete, runnable BlaiseVue demo projects showcasing their package inside the `examples/<package>/` directory of the `blaisevue-ecosystem` repository.
+- **Dedicated Ecosystem Guides (`doc/packages/<package>.md`)**: Detailed API specifications, Pascal unit references, and architectural walk-throughs can be submitted directly into the `doc/packages/` folder of the ecosystem repository.
+

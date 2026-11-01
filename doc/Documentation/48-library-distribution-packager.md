@@ -194,3 +194,9 @@ Automated tests validating library scaffolding, metadata integrity, file filteri
 ```bash
 bv test
 ```
+
+---
+
+## 🌐 Ecosystem Publishing & Documentation
+
+To learn how to submit your packaged library to the decentralized BlaiseVue Ecosystem, contribute runnable examples, and publish documentation, see **[50. Package Ecosystem & Registries](50-package-ecosystem-and-registries.md)**.
