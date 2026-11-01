@@ -9,7 +9,7 @@ const
   APP_VERSION = '4.4.0';
   APP_AUTHOR = 'BlaiseVue Core Team';
   APP_LICENSE = 'MIT';
-  APP_BUILD_DATE = '2026-10-24';
+  APP_BUILD_DATE = '2026-11-01';
 
 implementation
 

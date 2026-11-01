@@ -157,6 +157,21 @@ Output:
   [+] Synchronized Pascal unit: src/uAppVersion.pas (v1.1.0)
 ```
 
+### Monorepo & Single Source of Truth Synchronization (`bv meta sync`)
+
+To synchronize all monorepo packages, units, and extensions to the version defined in `package.json` at any time without incrementing:
+
+```bash
+bv meta sync
+```
+
+This ensures zero version drift across:
+- `core/uAppVersion.pas`
+- `demo-app/package.json` and `demo-app/src/uAppVersion.pas`
+- `packages/tools/vscode-extension/package.json`
+- `packages/tools/devtools-extension/manifest.json`
+- All sub-packages in `packages/core/*/package.json`
+
 ---
 
 ## 📦 3. Synchronized Pascal Unit (`src/uAppVersion.pas`)

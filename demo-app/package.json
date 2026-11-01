@@ -1,24 +1,24 @@
 {
-  "name": "blaisevue-demo-app",
-  "version": "4.4.0",
-  "description": "BlaiseVue Enterprise Universal Showcase Application",
-  "private": true,
-  "scripts": {
-    "build": "bv run build",
-    "server": "bv server",
-    "mormot": "bv mormot",
-    "dev": "bv run dev"
+  "name" : "blaisevue-demo-app",
+  "version" : "4.4.0",
+  "description" : "BlaiseVue Enterprise Universal Showcase Application",
+  "private" : true,
+  "scripts" : {
+    "build" : "bv run build",
+    "server" : "bv server",
+    "mormot" : "bv mormot",
+    "dev" : "bv run dev"
   },
-  "devDependencies": {
-    "@capacitor/android": "^8.5.3",
-    "@capacitor/cli": "^8.5.3",
-    "@capacitor/core": "^8.5.3"
+  "devDependencies" : {
+    "@capacitor/android" : "^8.5.3",
+    "@capacitor/cli" : "^8.5.3",
+    "@capacitor/core" : "^8.5.3"
   },
-  "license": "MIT",
-  "author": "BlaiseVue Core Team",
-  "dependencies": {
-    "@capacitor/file-viewer": "^2.0.4",
-    "@capacitor/filesystem": "^8.1.5",
-    "@capacitor/share": "^8.0.3"
+  "license" : "MIT",
+  "author" : "BlaiseVue Core Team",
+  "dependencies" : {
+    "@capacitor/file-viewer" : "^2.0.4",
+    "@capacitor/filesystem" : "^8.1.5",
+    "@capacitor/share" : "^8.0.3"
   }
 }

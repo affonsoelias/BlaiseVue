@@ -4,7 +4,7 @@ unit uAbout;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet, uAppVersion;
 
 procedure Register_uAbout;
 
@@ -137,7 +137,7 @@ begin
   var d: TJSObject;
   begin
     d := TJSObject.new;
-    d['versao'] := '2.1.0-PRO';
+    d['versao'] := APP_VERSION;
     d['showDemos'] := false;
     d['logado'] := false;
     d['tecnologias'] := TJSArray.new;

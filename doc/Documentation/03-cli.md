@@ -4,6 +4,19 @@ The `bv.exe` is the native command-line orchestrator of BlaiseVue, responsible f
 
 ---
 
+### 🏷️ Version Inspection (`bv --version` / `bv -v`)
+
+Outputs the dynamic framework version derived from the Single Source of Truth (`package.json`):
+
+```bash
+bv --version
+# Output: BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+
+bv -v
+```
+
+---
+
 ## 🏗️ Development and Serving Commands
 
 ### 1. `bv dev` / `bv serve` (Development Server with Instant HMR)

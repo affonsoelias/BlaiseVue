@@ -55,6 +55,9 @@ uses
 // =====================================================================
 
 function ReadFileToString(const FileName: string): string; forward;
+function GetCliVersion: string; forward;
+function GetCliMajorMinor: string; forward;
+procedure SyncMonorepoVersions(const TargetVer: string); forward;
 
 
 
@@ -8941,6 +8944,194 @@ begin
   end;
 end;
 
+var
+  CachedCliVersion: string = '';
+
+function GetCliVersion: string;
+var
+  CurP, SdkDir, PkgPath, Content: string;
+  PObj: TJSONObject;
+begin
+  if CachedCliVersion <> '' then
+  begin
+    Result := CachedCliVersion;
+    Exit;
+  end;
+
+  Result := '4.4.0';
+
+  PkgPath := GetCurrentDir + DirectorySeparator + 'package.json';
+  if FileExists(PkgPath) then
+  begin
+    try
+      Content := ReadFileToString(PkgPath);
+      PObj := TJSONObject(TJSONParser.Create(Content).Parse);
+      try
+        if GetJsonString(PObj, 'name', '') = 'blaisevue' then
+        begin
+          Result := GetJsonString(PObj, 'version', Result);
+          CachedCliVersion := Result;
+          Exit;
+        end;
+      finally
+        PObj.Free;
+      end;
+    except
+    end;
+  end;
+
+  SdkDir := ExtractFilePath(ParamStr(0));
+  CurP := ExcludeTrailingPathDelimiter(SdkDir);
+  PkgPath := ExtractFilePath(CurP) + 'package.json';
+  if FileExists(PkgPath) then
+  begin
+    try
+      Content := ReadFileToString(PkgPath);
+      PObj := TJSONObject(TJSONParser.Create(Content).Parse);
+      try
+        Result := GetJsonString(PObj, 'version', Result);
+        CachedCliVersion := Result;
+        Exit;
+      finally
+        PObj.Free;
+      end;
+    except
+    end;
+  end;
+
+  CachedCliVersion := Result;
+end;
+
+function GetCliMajorMinor: string;
+var
+  FullVer: string;
+  Dot1, Dot2: Integer;
+begin
+  FullVer := GetCliVersion;
+  Dot1 := Pos('.', FullVer);
+  if Dot1 > 0 then
+  begin
+    Dot2 := PosEx('.', FullVer, Dot1 + 1);
+    if Dot2 > 0 then
+      Result := Copy(FullVer, 1, Dot2 - 1)
+    else
+      Result := FullVer;
+  end
+  else
+    Result := FullVer;
+end;
+
+procedure UpdateJsonFileVersion(const FilePath, NewVer: string);
+var
+  Content: string;
+  Obj: TJSONObject;
+begin
+  if not FileExists(FilePath) then Exit;
+  try
+    Content := ReadFileToString(FilePath);
+    Obj := TJSONObject(TJSONParser.Create(Content).Parse);
+    try
+      SetJsonString(Obj, 'version', NewVer);
+      WriteStringToFile(FilePath, Obj.FormatJSON([], 2));
+      WriteLn('  [+] Synchronized: ' + FilePath + ' (v' + NewVer + ')');
+    finally
+      Obj.Free;
+    end;
+  except
+    on E: Exception do
+      WriteLn('  [!] Notice: could not update ' + FilePath + ': ' + E.Message);
+  end;
+end;
+
+procedure SyncMonorepoVersions(const TargetVer: string);
+var
+  RootDir, TargetFile, CoreDir: string;
+  SR: TSearchRec;
+  BuildDate: string;
+begin
+  RootDir := GetCurrentDir;
+  if not (DirectoryExists(RootDir + DirectorySeparator + 'core') and DirectoryExists(RootDir + DirectorySeparator + 'packages')) then
+  begin
+    if DirectoryExists(ExtractFilePath(RootDir) + 'core') and DirectoryExists(ExtractFilePath(RootDir) + 'packages') then
+      RootDir := ExcludeTrailingPathDelimiter(ExtractFilePath(RootDir))
+    else
+    begin
+      RootDir := ExtractFilePath(ParamStr(0));
+      RootDir := ExcludeTrailingPathDelimiter(RootDir);
+      RootDir := ExcludeTrailingPathDelimiter(ExtractFilePath(RootDir));
+    end;
+  end;
+
+  if not (DirectoryExists(RootDir + DirectorySeparator + 'core') and DirectoryExists(RootDir + DirectorySeparator + 'packages')) then
+    Exit;
+
+  BuildDate := FormatDateTime('yyyy-mm-dd', Now);
+
+  TargetFile := RootDir + DirectorySeparator + 'package.json';
+  UpdateJsonFileVersion(TargetFile, TargetVer);
+
+  TargetFile := RootDir + DirectorySeparator + 'core' + DirectorySeparator + 'uAppVersion.pas';
+  if FileExists(TargetFile) or DirectoryExists(RootDir + DirectorySeparator + 'core') then
+  begin
+    WriteStringToFile(TargetFile,
+      'unit uAppVersion;' + #10#10 +
+      '{$mode objfpc}{$H+}' + #10#10 +
+      'interface' + #10#10 +
+      'const' + #10 +
+      '  APP_NAME = ''blaisevue'';' + #10 +
+      '  APP_VERSION = ''' + TargetVer + ''';' + #10 +
+      '  APP_AUTHOR = ''BlaiseVue Core Team'';' + #10 +
+      '  APP_LICENSE = ''GPL-2.0-only AND LGPL-2.1-only WITH Static-linking-exception'';' + #10 +
+      '  APP_BUILD_DATE = ''' + BuildDate + ''';' + #10#10 +
+      'implementation' + #10#10 +
+      'end.' + #10);
+    WriteLn('  [+] Synchronized: ' + TargetFile + ' (v' + TargetVer + ')');
+  end;
+
+  TargetFile := RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'package.json';
+  UpdateJsonFileVersion(TargetFile, TargetVer);
+
+  TargetFile := RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
+  if FileExists(TargetFile) or DirectoryExists(RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'src') then
+  begin
+    WriteStringToFile(TargetFile,
+      'unit uAppVersion;' + #10#10 +
+      '{$mode objfpc}{$H+}' + #10#10 +
+      'interface' + #10#10 +
+      'const' + #10 +
+      '  APP_NAME = ''blaisevue-demo-app'';' + #10 +
+      '  APP_VERSION = ''' + TargetVer + ''';' + #10 +
+      '  APP_AUTHOR = ''BlaiseVue Core Team'';' + #10 +
+      '  APP_LICENSE = ''MIT'';' + #10 +
+      '  APP_BUILD_DATE = ''' + BuildDate + ''';' + #10#10 +
+      'implementation' + #10#10 +
+      'end.' + #10);
+    WriteLn('  [+] Synchronized: ' + TargetFile + ' (v' + TargetVer + ')');
+  end;
+
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'vscode-extension' + DirectorySeparator + 'package.json';
+  UpdateJsonFileVersion(TargetFile, TargetVer);
+
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'devtools-extension' + DirectorySeparator + 'manifest.json';
+  UpdateJsonFileVersion(TargetFile, TargetVer);
+
+  CoreDir := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'core' + DirectorySeparator;
+  if DirectoryExists(CoreDir) and (FindFirst(CoreDir + '*', faDirectory, SR) = 0) then
+  begin
+    repeat
+      if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+      begin
+        TargetFile := CoreDir + SR.Name + DirectorySeparator + 'package.json';
+        if FileExists(TargetFile) then
+          UpdateJsonFileVersion(TargetFile, TargetVer);
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+
+  CachedCliVersion := TargetVer;
+end;
+
 function BumpSemVer(const CurrentVer, BumpType: string): string;
 var
   Parts: TStringList;
@@ -9449,6 +9640,37 @@ begin
     Exit;
   end;
 
+  if SubCmd = 'sync' then
+  begin
+    if not LoadPackageJson(PkgJson) then
+    begin
+      WriteLn('ERROR: package.json not found in current directory.');
+      Halt(1);
+    end;
+    try
+      VerVal := GetJsonString(PkgJson, 'version', '4.4.0');
+      NameVal := GetJsonString(PkgJson, 'name', 'blaisevue');
+      AuthVal := GetJsonString(PkgJson, 'author', 'BlaiseVue Core Team');
+      LicVal := GetJsonString(PkgJson, 'license', 'MIT');
+
+      WriteLn('');
+      WriteLn('  BlaiseVue Monorepo & Project Version Synchronization');
+      WriteLn('  ====================================================');
+      WriteLn('  Source of Truth (package.json): v' + VerVal);
+      WriteLn('');
+
+      SyncAppVersionUnit(NameVal, VerVal, AuthVal, LicVal);
+      SyncMonorepoVersions(VerVal);
+
+      WriteLn('');
+      WriteLn('  [SUCCESS] Single Source of Truth synchronization completed (v' + VerVal + ').');
+      WriteLn('');
+    finally
+      PkgJson.Free;
+    end;
+    Exit;
+  end;
+
   if SubCmd = 'init' then
   begin
     if not LoadPackageJson(PkgJson) then
@@ -9543,6 +9765,7 @@ begin
       AuthVal := GetJsonString(PkgJson, 'author', '');
       LicVal := GetJsonString(PkgJson, 'license', 'MIT');
       SyncAppVersionUnit(NameVal, NewVer, AuthVal, LicVal);
+      SyncMonorepoVersions(NewVer);
     finally
       PkgJson.Free;
     end;
@@ -9550,7 +9773,7 @@ begin
   end;
 
   WriteLn('Unknown meta subcommand: "' + SubCmd + '".');
-  WriteLn('Usage: bv meta [show|init|get <field>|set <field> <val>|bump <patch|minor|major>]');
+  WriteLn('Usage: bv meta [show|init|get <field>|set <field> <val>|bump <patch|minor|major>|sync]');
   Halt(1);
 end;
 
@@ -10073,7 +10296,7 @@ procedure CmdServe;
 
 begin
 
-  WriteLn('=== BlaiseVue 2.0 Dev Server (HMR Enabled) ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Dev Server (HMR Enabled) ===');
 
   if not HasCommand('node') then
 
@@ -10562,7 +10785,7 @@ var
 
 begin
 
-  WriteLn('=== BlaiseVue 3.0 Documentation & Component Playground Generator ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Documentation & Component Playground Generator ===');
 
   CurDir := GetCurrentDir;
 
@@ -10732,7 +10955,7 @@ begin
 
       '  <meta name="viewport" content="width=device-width, initial-scale=1.0">'#10 +
 
-      '  <title>BlaiseVue 3.0 Documentation & Component Playground</title>'#10 +
+      '  <title>BlaiseVue ' + GetCliMajorMinor + ' Documentation & Component Playground</title>'#10 +
 
       '  <style>'#10 +
 
@@ -11002,7 +11225,7 @@ var
 
 begin
 
-  WriteLn('=== BlaiseVue 3.0 Static Site Generator (SSG & Pre-rendering) ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Static Site Generator (SSG & Pre-rendering) ===');
 
   AppFile := 'src' + DirectorySeparator + 'app.bv';
 
@@ -11140,7 +11363,7 @@ procedure CmdWasm(const SubCmd: string);
 
 begin
 
-  WriteLn('=== BlaiseVue 3.0 WebAssembly Engine ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' WebAssembly Engine ===');
 
   if SubCmd = 'info' then
 
@@ -11192,7 +11415,7 @@ procedure CmdTestE2E;
 
 begin
 
-  WriteLn('=== BlaiseVue 3.0 Headless E2E Test Suite ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Headless E2E Test Suite ===');
 
   if not HasCommand('node') then
 
@@ -12168,7 +12391,7 @@ var
 
 begin
 
-  WriteLn('=== BlaiseVue 3.5 Mobile (Capacitor Engine) ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Mobile (Capacitor Engine) ===');
 
 
 
@@ -12916,7 +13139,7 @@ var
 
 begin
 
-  WriteLn('=== BlaiseVue 3.5 Desktop (WebUI & Lazarus IDE) ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Desktop (WebUI & Lazarus IDE) ===');
 
 
 
@@ -26382,10 +26605,16 @@ var
 
 begin
 
+  if (ParamCount = 1) and ((ParamStr(1) = '--version') or (ParamStr(1) = '-v') or (ParamStr(1) = 'version')) then
+  begin
+    WriteLn('BlaiseVue CLI v' + GetCliVersion + ' (Universal Pascal Full-Stack Platform)');
+    Halt(0);
+  end;
+
   if (ParamCount < 1) or (ParamStr(1) = 'help') or (ParamStr(1) = '--help') or (ParamStr(1) = '-h') then
   begin
     WriteLn('');
-    WriteLn('  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)');
+    WriteLn('  BlaiseVue CLI v' + GetCliVersion + ' (Universal Pascal Full-Stack Platform)');
     WriteLn('  ============================================================');
     WriteLn('  Usage: bv <command> [options]');
     WriteLn('');
@@ -26451,7 +26680,7 @@ begin
     WriteLn('');
     WriteLn('  # === Project Metadata & Licensing ===');
     WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
-    WriteLn('  bv meta [show|get|set|bump] Manages project metadata and syncs SemVer with src/uAppVersion.pas');
+    WriteLn('  bv meta [show|get|set|bump|sync] Manages project metadata and syncs SemVer across monorepo');
     WriteLn('  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)');
     WriteLn('');
     WriteLn('  # === Framework Diagnostics & Git Auto-Updater ===');

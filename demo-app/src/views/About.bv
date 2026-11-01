@@ -112,7 +112,7 @@
   </div>
 </template>
 
-<script>
+<script uses="uAppVersion">
   {
     About.bv - Complex Feature Laboratory
     -------------------------------------
@@ -120,7 +120,7 @@
   }
 
   data:
-    versao: string = '2.1.0-PRO';
+    versao: string = APP_VERSION;
     showDemos: boolean = false;
     logado: boolean = false;
     tecnologias: TJSArray = TJSArray.new;

@@ -26,7 +26,7 @@
       <div style="display: flex; align-items: center; gap: 8px;">
         <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>
         <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">
-        <strong class="brand">BlaiseVue 4.4</strong>
+        <strong class="brand">BlaiseVue {{ $store.appVersion }}</strong>
       </div>
       <div class="nav-links">
         <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>
@@ -91,7 +91,7 @@
   </div>
 </template>
 
-<script>
+<script uses="uAppVersion">
   {
     App.bv - The Root Application Component
     --------------------------------------
@@ -99,7 +99,7 @@
   }
 
   data:
-    mensagem: string = 'BlaiseVue SPA v4.0 Enterprise';
+    mensagem: string = 'BlaiseVue Universal SPA';
 
   { Dependency Injection: Provides a context object to all descendants }
   provide:
@@ -116,7 +116,7 @@
   { Lifecycle: Initialize global state in the centralized store }
   created:
     begin
-      TJSObject(this['$store'])['appVersion'] := '4.0.0-ENTERPRISE';
+      TJSObject(this['$store'])['appVersion'] := APP_VERSION;
       TJSObject(this['$store'])['user'] := 'Pascal Master 🚀';
 
       I18nAddMessages('pt', '{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue 4.0","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue 4.0 Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');

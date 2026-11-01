@@ -1,23 +1,23 @@
 {
-  "name": "blaisevue-vscode",
-  "displayName": "BlaiseVue Official Support",
-  "description": "Professional DX for BlaiseVue: syntax highlighting, snippets, BlaiseUI IntelliSense, and CLI tools for Single File Components (.bv).",
-  "icon": "icon.png",
-  "version": "3.5.0",
-  "publisher": "blaisevue",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/affonsoelias/BlaiseVue.git"
+  "name" : "blaisevue-vscode",
+  "displayName" : "BlaiseVue Official Support",
+  "description" : "Professional DX for BlaiseVue: syntax highlighting, snippets, BlaiseUI IntelliSense, and CLI tools for Single File Components (.bv).",
+  "icon" : "icon.png",
+  "version" : "4.4.0",
+  "publisher" : "blaisevue",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/affonsoelias/BlaiseVue.git"
   },
-  "engines": {
-    "vscode": "^1.75.0"
+  "engines" : {
+    "vscode" : "^1.75.0"
   },
-  "categories": [
+  "categories" : [
     "Programming Languages",
     "Snippets",
     "Linters"
   ],
-  "keywords": [
+  "keywords" : [
     "pascal",
     "blaisevue",
     "object-pascal",
@@ -26,92 +26,92 @@
     "fpc",
     "pas2js"
   ],
-  "main": "./src/extension.js",
-  "activationEvents": [
+  "main" : "./src/extension.js",
+  "activationEvents" : [
     "onLanguage:blaisevue",
     "workspaceContains:**/*.bv"
   ],
-  "contributes": {
-    "languages": [
+  "contributes" : {
+    "languages" : [
       {
-        "id": "blaisevue",
-        "aliases": [
+        "id" : "blaisevue",
+        "aliases" : [
           "BlaiseVue",
           "blaisevue"
         ],
-        "extensions": [
+        "extensions" : [
           ".bv"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration" : "./language-configuration.json"
       }
     ],
-    "grammars": [
+    "grammars" : [
       {
-        "language": "blaisevue",
-        "scopeName": "text.html.blaisevue",
-        "path": "./syntaxes/blaisevue.tmLanguage.json",
-        "embeddedLanguages": {
-          "text.html.basic": "html",
-          "source.pascal": "pascal",
-          "source.css": "css",
-          "source.js": "javascript"
+        "language" : "blaisevue",
+        "scopeName" : "text.html.blaisevue",
+        "path" : "./syntaxes/blaisevue.tmLanguage.json",
+        "embeddedLanguages" : {
+          "text.html.basic" : "html",
+          "source.pascal" : "pascal",
+          "source.css" : "css",
+          "source.js" : "javascript"
         }
       }
     ],
-    "snippets": [
+    "snippets" : [
       {
-        "language": "blaisevue",
-        "path": "./snippets/snippets.json"
+        "language" : "blaisevue",
+        "path" : "./snippets/snippets.json"
       }
     ],
-    "html": {
-      "customData": [
+    "html" : {
+      "customData" : [
         "./data/blaisevue.html-data.json"
       ]
     },
-    "commands": [
+    "commands" : [
       {
-        "command": "blaisevue.dev",
-        "title": "BlaiseVue: Start Dev Server (HMR)",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.dev",
+        "title" : "BlaiseVue: Start Dev Server (HMR)",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.build",
-        "title": "BlaiseVue: Build Production Bundle",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.build",
+        "title" : "BlaiseVue: Build Production Bundle",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.test",
-        "title": "BlaiseVue: Run Unit Tests",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.test",
+        "title" : "BlaiseVue: Run Unit Tests",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.doc",
-        "title": "BlaiseVue: Generate Documentation Catalog",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.doc",
+        "title" : "BlaiseVue: Generate Documentation Catalog",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.newComponent",
-        "title": "BlaiseVue: Create New Component (.bv)",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.newComponent",
+        "title" : "BlaiseVue: Create New Component (.bv)",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.mobileSync",
-        "title": "BlaiseVue: Sync Mobile Assets (Capacitor)",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.mobileSync",
+        "title" : "BlaiseVue: Sync Mobile Assets (Capacitor)",
+        "category" : "BlaiseVue"
       },
       {
-        "command": "blaisevue.mobileOpen",
-        "title": "BlaiseVue: Open in Android Studio",
-        "category": "BlaiseVue"
+        "command" : "blaisevue.mobileOpen",
+        "title" : "BlaiseVue: Open in Android Studio",
+        "category" : "BlaiseVue"
       }
     ],
-    "menus": {
-      "explorer/context": [
+    "menus" : {
+      "explorer/context" : [
         {
-          "command": "blaisevue.newComponent",
-          "group": "7_modification",
-          "when": "explorerResourceIsFolder"
+          "command" : "blaisevue.newComponent",
+          "group" : "7_modification",
+          "when" : "explorerResourceIsFolder"
         }
       ]
     }

@@ -1,9 +1,9 @@
 {
-  "name": "blaise-reports",
-  "version": "5.0.0",
-  "description": "Native Vector PDF, Excel (.xlsx), CSV & Thermal/A4 Print Engine in pure Object Pascal for BlaiseVue 5.0",
-  "main": "BlaiseReports.pas",
-  "keywords": [
+  "name" : "blaise-reports",
+  "version" : "4.4.0",
+  "description" : "Native Vector PDF, Excel (.xlsx), CSV & Thermal/A4 Print Engine in pure Object Pascal for BlaiseVue 5.0",
+  "main" : "BlaiseReports.pas",
+  "keywords" : [
     "blaisevue",
     "pascal",
     "reports",
@@ -15,6 +15,6 @@
     "pos",
     "dataset"
   ],
-  "author": "BlaiseVue Core Team",
-  "license": "Modified GNU LGPL v2.1 with Static Linking Exception"
+  "author" : "BlaiseVue Core Team",
+  "license" : "Modified GNU LGPL v2.1 with Static Linking Exception"
 }
