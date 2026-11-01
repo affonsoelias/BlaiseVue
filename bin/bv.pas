@@ -58,6 +58,10 @@ function ReadFileToString(const FileName: string): string; forward;
 function GetCliVersion: string; forward;
 function GetCliMajorMinor: string; forward;
 procedure SyncMonorepoVersions(const TargetVer: string); forward;
+function GetPas2JSPackagesRoot: string; forward;
+function GetPas2JSPackageDescription(const PkgName: string): string; forward;
+function ResolvePas2JSPackagePath(const PkgName: string; out ResolvedPath: string): Boolean; forward;
+function ListAvailablePas2JSPackages: TStringList; forward;
 
 
 
@@ -365,6 +369,106 @@ begin
 end;
 
 
+
+{ Returns the packages root directory for pas2js packages }
+function GetPas2JSPackagesRoot: string;
+var
+  OSFolder: string;
+begin
+  {$IFDEF WINDOWS}
+    OSFolder := 'pas2js-win64-x86_64-3.2.0';
+  {$ELSE}
+    {$IFDEF LINUX}
+      OSFolder := 'pas2js-linux-x86_64-3.2.0';
+    {$ELSE}
+      OSFolder := 'pas2js-darwin-x86_64-3.2.0';
+    {$ENDIF}
+  {$ENDIF}
+  Result := GetPas2JSRoot + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator;
+end;
+
+{ Returns human-readable description for known Pas2JS built-in packages }
+function GetPas2JSPackageDescription(const PkgName: string): string;
+var
+  Key: string;
+begin
+  Key := LowerCase(Trim(PkgName));
+  if Key = 'rtl' then Result := 'Core Runtime Library (System, Classes, JS, Web)'
+  else if Key = 'fcl-base' then Result := 'Base FCL utilities (Contnrs, IniFiles, CustApp, EventLog)'
+  else if Key = 'fcl-db' then Result := 'Legacy database architecture (DB, MemDataset, BufDataset)'
+  else if Key = 'fcl-json' then Result := 'Classic FPC JSON parsing & formatting (fpjson, jsonparser)'
+  else if Key = 'fcl-rpc' then Result := 'Remote Procedure Call & JSON-RPC primitives'
+  else if Key = 'chartjs' then Result := 'Official Pas2JS Chart.js HTML5 canvas visualizer bindings'
+  else if Key = 'jspdf' then Result := 'Client-side PDF document generation library'
+  else if Key = 'pdfjs' then Result := 'Mozilla PDF.js client-side document rendering library'
+  else if Key = 'fpcunit' then Result := 'Standard Pascal xUnit unit-testing framework'
+  else if Key = 'datatables' then Result := 'JQuery DataTables interactive grid integration'
+  else if Key = 'bootstrap' then Result := 'Twitter Bootstrap JS component bindings'
+  else if Key = 'bulma' then Result := 'Bulma CSS interactive component bindings'
+  else if Key = 'flatpickr' then Result := 'Lightweight and powerful datetime picker wrapper'
+  else if Key = 'fullcalendar' then Result := 'FullCalendar interactive event calendar wrapper'
+  else if Key = 'tinyeditor' then Result := 'WYSIWYG rich text editor integration'
+  else if Key = 'wasi' then Result := 'WebAssembly System Interface (WASI) runtime bindings'
+  else if Key = 'wasm-utils' then Result := 'Low-level WebAssembly memory & module helpers'
+  else if Key = 'wasm-oi' then Result := 'WebAssembly Object Interface helpers'
+  else if Key = 'xterm' then Result := 'Full-featured Xterm.js terminal emulator component'
+  else if Key = 'zenfs' then Result := 'ZenFS in-memory & browser-backed virtual file system'
+  else if Key = 'webwidget' then Result := 'Pas2JS WebWidget visual component framework'
+  else if Key = 'electron' then Result := 'Electron desktop shell API bindings'
+  else if Key = 'nodejs' then Result := 'Node.js core runtime & system API bindings'
+  else if Key = 'vscode' then Result := 'Visual Studio Code Extension API bindings'
+  else if Key = 'atom' then Result := 'GitHub Atom text editor integration'
+  else if Key = 'firebase' then Result := 'Google Firebase real-time database SDK bindings'
+  else if Key = 'pushjs' then Result := 'Desktop push notification wrapper'
+  else if Key = 'opentok' then Result := 'Vonage OpenTok WebRTC video streaming SDK'
+  else if Key = 'kurento' then Result := 'Kurento WebRTC media server client bindings'
+  else if Key = 'jitsimeet' then Result := 'Jitsi Meet video conferencing embed wrapper'
+  else Result := 'Pas2JS official package';
+end;
+
+{ Resolves a pas2js:<pkg> or <pkg> name to its compiled unit source directory }
+function ResolvePas2JSPackagePath(const PkgName: string; out ResolvedPath: string): Boolean;
+var
+  CleanName, BaseDir, Cand: string;
+begin
+  Result := False;
+  ResolvedPath := '';
+  CleanName := Trim(PkgName);
+  if StartsText('pas2js:', CleanName) then
+    CleanName := Copy(CleanName, 8, Length(CleanName) - 7);
+
+  BaseDir := GetPas2JSPackagesRoot + CleanName;
+  if DirectoryExists(BaseDir) then
+  begin
+    Cand := BaseDir + DirectorySeparator + 'src';
+    if DirectoryExists(Cand) then
+      ResolvedPath := Cand
+    else
+      ResolvedPath := BaseDir;
+    Result := True;
+  end;
+end;
+
+{ Scans packages/ and returns a sorted stringlist of all available Pas2JS packages }
+function ListAvailablePas2JSPackages: TStringList;
+var
+  SR: TSearchRec;
+  PkgRoot: string;
+begin
+  Result := TStringList.Create;
+  PkgRoot := GetPas2JSPackagesRoot;
+  if DirectoryExists(PkgRoot) and (FindFirst(PkgRoot + '*', faDirectory, SR) = 0) then
+  begin
+    repeat
+      if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+      begin
+        Result.Add(SR.Name);
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+  Result.Sort;
+end;
 
 function GetRTLPath: string;
 
