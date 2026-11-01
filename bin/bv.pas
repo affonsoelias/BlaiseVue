@@ -820,6 +820,8 @@ procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
 procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
+procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
+procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 function CockpitReadLine(out S: string): Boolean; forward;
 
 
@@ -7719,6 +7721,120 @@ begin
 end;
 
 // =====================================================================
+//  COMANDO: REMOVE MOBILE & DESKTOP PLATFORMS
+// =====================================================================
+
+procedure CmdRemoveMobile(ForceFlag: Boolean);
+var
+  MobileDir, CapConfigFile, BinMobileDir: string;
+  Ans: string;
+  DeletedAny: Boolean;
+begin
+  MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
+  CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
+  BinMobileDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'mobile';
+
+  if not DirectoryExists(MobileDir) and not FileExists(CapConfigFile) and not DirectoryExists(BinMobileDir) then
+  begin
+    WriteLn('Plataforma Mobile nao encontrada no projeto atual (pasta mobile/ nao existe).');
+    Exit;
+  end;
+
+  if not ForceFlag then
+  begin
+    Write('Tem certeza que deseja remover a plataforma Mobile (pasta mobile/ e capacitor.config.json)? [s/N]: ');
+    ReadLn(Ans);
+    Ans := LowerCase(Trim(Ans));
+    if (Ans <> 's') and (Ans <> 'y') and (Ans <> 'sim') and (Ans <> 'yes') then
+    begin
+      WriteLn('Operacao cancelada.');
+      Exit;
+    end;
+  end;
+
+  DeletedAny := False;
+
+  if DirectoryExists(MobileDir) then
+  begin
+    WriteLn('  [-] Excluindo pasta mobile/ ...');
+    DeleteDir(MobileDir);
+    DeletedAny := True;
+  end;
+
+  if FileExists(CapConfigFile) then
+  begin
+    WriteLn('  [-] Excluindo capacitor.config.json ...');
+    DeleteFile(CapConfigFile);
+    DeletedAny := True;
+  end;
+
+  if DirectoryExists(BinMobileDir) then
+  begin
+    WriteLn('  [-] Excluindo binarios em bin/mobile/ ...');
+    DeleteDir(BinMobileDir);
+    DeletedAny := True;
+  end;
+
+  if DeletedAny then
+  begin
+    WriteLn('  [SUCCESS] Plataforma Mobile removida com sucesso!');
+    WriteLn('  [INFO] Para reativa-la no futuro, basta executar:');
+    WriteLn('         bv mobile init');
+  end;
+end;
+
+procedure CmdRemoveDesktop(ForceFlag: Boolean);
+var
+  DesktopDir, BinDesktopDir: string;
+  Ans: string;
+  DeletedAny: Boolean;
+begin
+  DesktopDir := GetCurrentDir + DirectorySeparator + 'desktop';
+  BinDesktopDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'desktop';
+
+  if not DirectoryExists(DesktopDir) and not DirectoryExists(BinDesktopDir) then
+  begin
+    WriteLn('Plataforma Desktop nao encontrada no projeto atual (pasta desktop/ nao existe).');
+    Exit;
+  end;
+
+  if not ForceFlag then
+  begin
+    Write('Tem certeza que deseja remover a plataforma Desktop (pasta desktop/)? [s/N]: ');
+    ReadLn(Ans);
+    Ans := LowerCase(Trim(Ans));
+    if (Ans <> 's') and (Ans <> 'y') and (Ans <> 'sim') and (Ans <> 'yes') then
+    begin
+      WriteLn('Operacao cancelada.');
+      Exit;
+    end;
+  end;
+
+  DeletedAny := False;
+
+  if DirectoryExists(DesktopDir) then
+  begin
+    WriteLn('  [-] Excluindo pasta desktop/ ...');
+    DeleteDir(DesktopDir);
+    DeletedAny := True;
+  end;
+
+  if DirectoryExists(BinDesktopDir) then
+  begin
+    WriteLn('  [-] Excluindo binarios em bin/desktop/ ...');
+    DeleteDir(BinDesktopDir);
+    DeletedAny := True;
+  end;
+
+  if DeletedAny then
+  begin
+    WriteLn('  [SUCCESS] Plataforma Desktop removida com sucesso!');
+    WriteLn('  [INFO] Para reativa-la no futuro, basta executar:');
+    WriteLn('         bv desktop init');
+  end;
+end;
+
+// =====================================================================
 
 //  COMANDO: LIST
 
@@ -11208,7 +11324,12 @@ begin
 
 
 
-  if (SubCmd = 'init') then
+  if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
+  begin
+    CmdRemoveMobile(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
+    Exit;
+  end
+  else if (SubCmd = 'init') then
 
   begin
 
@@ -11895,7 +12016,12 @@ begin
 
 
 
-  if (SubCmd = 'init') then
+  if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
+  begin
+    CmdRemoveDesktop(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
+    Exit;
+  end
+  else if (SubCmd = 'init') then
 
   begin
 
@@ -24889,7 +25015,7 @@ begin
     WriteLn('  bv g v <Name>              Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)');
     WriteLn('  bv g s <Name>              Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)');
     WriteLn('  bv g t <Name>              Scaffolds a Pascal test file (.test.pas) (alias: bv new t)');
-    WriteLn('  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test');
+    WriteLn('  bv remove <c|v|s|t|m|d> [Name] Safely deletes a component, view, service, test, or platform (m/d)');
     WriteLn('  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs');
     WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
     WriteLn('');
@@ -24908,6 +25034,8 @@ begin
     WriteLn('');
     WriteLn('  # === Multiplatform (Mobile & Desktop) ===');
     WriteLn('  bv mobile init [name] [id] Configures Capacitor and scaffolds Android/iOS project');
+    WriteLn('  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json');
+    WriteLn('  bv desktop remove [-y]     Safely deletes desktop/ native wrapper project');
     WriteLn('  bv mobile sync             Syncs dist/ with native Android assets');
     WriteLn('  bv mobile open             Syncs and opens Android Studio');
     WriteLn('  bv mobile build            Builds native Android Debug APK via Gradle');
@@ -25099,50 +25227,47 @@ begin
 
   end
 
-  else if Cmd = 'remove' then
-
+  else if (Cmd = 'remove') or (Cmd = 'rm') or (Cmd = 'del') then
   begin
-
-    if (ParamCount < 3) then
-
+    if (ParamCount < 2) then
     begin
-
-      WriteLn('Usage: bv remove <c|v|s|t> <Name>');
-
-      WriteLn('Types: component (c), view (v), service (s), test (t)');
-
+      WriteLn('Usage: bv remove <c|v|s|t|m|d> [Name]');
+      WriteLn('Types: component (c), view (v), service (s), test (t), mobile (m), desktop (d)');
       Halt(1);
-
     end;
 
     TypeArg := LowerCase(ParamStr(2));
-
-    NameArg := ParamStr(3);
-
-    if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
-
-      CmdRemoveComponent(NameArg)
-
-    else if (TypeArg = 'v') or (TypeArg = 'view') then
-
-      CmdRemoveView(NameArg)
-    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
-      CmdRemoveService(NameArg)
-
-    else if (TypeArg = 't') or (TypeArg = 'test') then
-
-      CmdRemoveTest(NameArg)
-
-    else
-
+    if (TypeArg = 'mobile') or (TypeArg = 'm') then
     begin
-
-      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
-
-      Halt(1);
-
+      CmdRemoveMobile((ParamCount >= 3) and ((ParamStr(3) = '-y') or (ParamStr(3) = '--yes') or (ParamStr(3) = '-f') or (ParamStr(3) = '--force')));
+    end
+    else if (TypeArg = 'desktop') or (TypeArg = 'd') then
+    begin
+      CmdRemoveDesktop((ParamCount >= 3) and ((ParamStr(3) = '-y') or (ParamStr(3) = '--yes') or (ParamStr(3) = '-f') or (ParamStr(3) = '--force')));
+    end
+    else
+    begin
+      if (ParamCount < 3) then
+      begin
+        WriteLn('Usage: bv remove <c|v|s|t> <Name>');
+        WriteLn('Types: component (c), view (v), service (s), test (t), mobile (m), desktop (d)');
+        Halt(1);
+      end;
+      NameArg := ParamStr(3);
+      if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
+        CmdRemoveComponent(NameArg)
+      else if (TypeArg = 'v') or (TypeArg = 'view') then
+        CmdRemoveView(NameArg)
+      else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+        CmdRemoveService(NameArg)
+      else if (TypeArg = 't') or (TypeArg = 'test') then
+        CmdRemoveTest(NameArg)
+      else
+      begin
+        WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s), "test" (t), "mobile" (m) or "desktop" (d).');
+        Halt(1);
+      end;
     end;
-
   end
 
   else if Cmd = 'list' then
