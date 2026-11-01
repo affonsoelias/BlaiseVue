@@ -25639,6 +25639,12 @@ begin
         WriteLn('    studio                     Launches BlaiseVue Studio developer cockpit');
         WriteLn('    theme <list|use <name>>    Inspects or changes project UI theme');
         WriteLn('');
+        WriteLn('  Compiler Paths & Legacy Units:');
+        WriteLn('    path [list]                Lists active search paths in app.cfg');
+        WriteLn('    path add <dir|pas2js:p>    Links a folder or official Pas2JS package');
+        WriteLn('    path remove <target>       Removes a search path from app.cfg');
+        WriteLn('    path available             Lists all available built-in Pas2JS packages');
+        WriteLn('');
         WriteLn('  Shell Passthrough:');
         WriteLn('    cls / clear                Clears terminal screen');
         WriteLn('    exit / quit / q            Exits the cockpit shell');
