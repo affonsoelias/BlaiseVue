@@ -1,4 +1,4 @@
-# 49 - BlaiseReports: Native Vector PDF, Excel & Print Engine
+# 51 - BlaiseReports: Native Vector PDF, Excel & Print Engine
 
 **BlaiseReports** (`packages/blaise-reports`) is the official enterprise reporting and multi-format document export engine introduced in **BlaiseVue 5.0 (Pillar 1)**. Written in 100% pure Object Pascal, it enables seamless generation of native **Vector PDF 1.4** documents, **Excel (`.xlsx` / SpreadsheetML)** spreadsheets, **RFC 4180 CSV** streams with UTF-8 BOM, and **Print-Optimized HTML** layouts (including A4, Letter, and 80mm/58mm Thermal POS receipts) directly from `TBVDataSet` instances or JSON record arrays.
 

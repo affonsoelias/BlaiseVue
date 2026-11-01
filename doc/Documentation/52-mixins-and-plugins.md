@@ -1,4 +1,4 @@
-# Global Mixins and Global Plugins in BlaiseVue 🛡️🔌
+# 52 - Global Mixins and Global Plugins in BlaiseVue 🛡️🔌
 
 BlaiseVue supports Global Mixins and Global Plugins, allowing you to extend the framework's functionality and share logic across all components.
 

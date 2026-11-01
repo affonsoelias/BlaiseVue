@@ -65,8 +65,10 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 39. [39. Reactive Chart.js Suite (blaise-charts)](39-blaise-charts.md) — High-performance canvas charts (Bar, Line, Pie, Radar, Bubble) with typed datasets.
 41. [41. Package Components Catalog & Manual](41-package-components-catalog.md) — Comprehensive reference manual covering props, events, slots, and copy-pasteable snippets for all 53+ components.
 48. [48. External Library Scaffolding & Release Packager](48-library-distribution-packager.md) — Scaffolding dedicated standalone component libraries with interactive licensing (`bv create --lib`) and automated release distribution (`bv lib pack`) with SHA-256 integrity verification.
-68. [49. Project Metadata, Licensing Suite & Clean Slate Reset](49-project-metadata-licensing-reset.md) — Automated license generation (`bv license`), SemVer & metadata sync (`bv meta`), synchronized Pascal unit (`src/uAppVersion.pas`), and clean slate reset (`bv reset`) with framework safety guards.
+49. [49. Project Metadata, Licensing Suite & Clean Slate Reset](49-project-metadata-licensing-reset.md) — Automated license generation (`bv license`), SemVer & metadata sync (`bv meta`), synchronized Pascal unit (`src/uAppVersion.pas`), and clean slate reset (`bv reset`) with framework safety guards.
 50. [50. Package Ecosystem & Registries](50-package-ecosystem-and-registries.md) — Multi-tier package manager architecture, registry sources (`bv repo`), 4-layer resolution (`lib/`, global cache, core, remote), SemVer versioning (`@version`), updates (`bv lib outdated` / `bv lib update`), and community ecosystem distribution.
+51. [51. BlaiseReports: Native Vector PDF, Excel & Print Engine](51-blaise-reports.md) — Declarative enterprise reporting and multi-format document export engine in pure Object Pascal with `TBVReport` and print optimization.
+52. [52. Global Mixins and Global Plugins in BlaiseVue](52-mixins-and-plugins.md) — Extending framework functionality, global option injection, and cross-cutting plugin architecture.
 
 ### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
 37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.

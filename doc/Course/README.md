@@ -31,6 +31,14 @@ Welcome to the official BlaiseVue course! Here you will learn how to build ultra
     Named Slots, B-Store, Transitions, and Provide/Inject.
 12. **[Module 12: Martial Quality (Unit Testing)](12-tests.md)**  
     Validating your code with Pascal, Vitest, and JSDOM.
+13. **[Module 13: The Final Challenge](13-final-challenge.md)**  
+    Building a complete, production-grade application consolidating all skills.
+
+---
+
+### 🏛️ Core Architecture & Compiler Internals:
+For developers who wish to explore the internal compiler pipeline, reactive proxy engine, and contribute to the core framework, see:
+- 🏗️ [**Core Architecture & Internals**](../Architecture/README.md)
 
 ---
 

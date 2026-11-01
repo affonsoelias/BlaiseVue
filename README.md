@@ -199,7 +199,8 @@ bv rename <s|c|v|p> <New>  # Smart rename for services, components, views, or pr
 For the complete architectural evolution specifications, delivered enterprise pillars, and future roadmap milestones (v2.0 to v5.0), see:
 
 - 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
-- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 50+ comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
+- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 52 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
+- 🏛️ **[Core Architecture & Internals (doc/Architecture/README.md)](doc/Architecture/README.md)**: Deep dive into the compiler pipeline, AST evaluation, and reactive proxy engine.
 
 ---
 
@@ -238,8 +239,9 @@ BlaiseVue/
 │   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework
 ├── doc/
-│   ├── Documentation/         # 50 comprehensive technical manuals + API Reference
-│   └── Course/                # 15-lesson practical course and architecture deep-dive
+│   ├── Architecture/          # Core compiler pipeline & framework internals
+│   ├── Documentation/         # 52 comprehensive technical manuals + API Reference
+│   └── Course/                # 13-module practical course from beginner to ninja
 └── demo-app/                  # Enterprise showcase application (v3.0)
 ```
 

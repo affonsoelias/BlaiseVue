@@ -13,7 +13,7 @@
 | **v3.0** | ✅ Delivered | **Framework Maturation** | Form engine (`b-validate`), FLIP `<transition-group>`, i18n (`$t`), `bv doc`, WebAssembly (`$wasm`), SSG pre-rendering, E2E test driver. |
 | **v3.5** | ✅ Delivered | **Universal Multiplatform** | Desktop WebUI (Lazarus), Mobile Capacitor (Android APK), mORMot 2 backend foundation, VS Code official extension. |
 | **v4.0** | ✅ Delivered | **Enterprise Cloud Ecosystem** | Full-Stack CRUD generator (`bv mormot crud`), JWT Auth (`$auth`), Swagger/OpenAPI 3.0, Docker micro-containers, `blaise-charts`, `blaise-studio`, Zero-ASM DX. |
-| **v4.1** | ✅ Delivered | **Component Catalog & Documentation** | 50 technical manuals, full props/events/slots specification tables, zero-ASM application patterns. |
+| **v4.1** | ✅ Delivered | **Component Catalog & Documentation** | 52 technical manuals, full props/events/slots specification tables, zero-ASM application patterns. |
 | **v4.2** | ✅ Delivered | **LiveBindings & Reactive `TBVDataSet`** | Delphi/Lazarus data-aware state machine, cursor navigation (`First`, `Next`), transactional buffering, `b-field` directive. |
 | **v4.3** | ✅ Delivered | **Type-Safe Pascal RPC with mORMot 2** | JSON-RPC 2.0, dual HTTP/WebSocket transport, shared `ICustomerService` interfaces, compile-time API validation. |
 | **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, unified extensions (`bv extension`). |
@@ -73,7 +73,7 @@
   - Events specification tables with parameter signatures.
   - Default and named Slots tables.
   - Full copy-pasteable pure Pascal code snippets (`<template>`, `<script>`, `<style>`).
-- **50 Technical Manuals**: Comprehensive guides located in `doc/Documentation/` spanning all framework subsystems.
+- **52 Technical Manuals**: Comprehensive guides located in `doc/Documentation/` spanning all framework subsystems.
 
 ---
 
@@ -108,7 +108,8 @@
 - **Zero-`with()` Native Expression Evaluator (`core/BVCompiler.pas`)**: Replaced deprecated `new Function('with(data)...')` with a pure recursive-descent token parser and AST evaluator (`bv.fastEval`).
 - **Microsecond LRU Cache (`bv.evalCache`)**: Caches parsed expression trees for 3x–5x faster reactive DOM updates.
 - **Strict CSP Compliance**: 100% compliant with strict Content Security Policies without requiring `unsafe-eval`.
-- **Compile-Time Template AST Verifier (`bv check [file]`)**: Audits template bindings against declared symbols (`data:`, `props:`, `computed:`, `methods:`) with automated Levenshtein typo suggestions (e.g. `cuont` $ightarrow$ *"Did you mean 'count'?"*).
+- **Compile-Time Template AST Verifier (`bv check [file]`)**: Audits template bindings against declared symbols (`data:`, `props:`, `computed:`, `methods:`) with automated Levenshtein typo suggestions (e.g. `cuont` $
+ightarrow$ *"Did you mean 'count'?"*).
 
 #### 💾 Pillar 2: Offline-First `TBVDataSet` & Automated Delta Sync (`ApplyUpdates`)
 - **IndexedDB Structured Storage (`TBVIndexedDBAdapter`)**: High-capacity client-side persistence with automatic fallback to `localStorage`.
@@ -117,7 +118,8 @@
 - **Configurable Conflict Policies**: `crServerWins` (default), `crClientWins`, or procedural `OnConflict` events.
 
 #### 🔗 Pillar 3: Multi-Database ORM & Relational Master-Detail CRUD (`bv mormot crud`)
-- **Relational Code Generation**: Automated scaffolding for parent-child relationships (e.g. `Order` $ightarrow$ `OrderItems`) with foreign key constraints.
+- **Relational Code Generation**: Automated scaffolding for parent-child relationships (e.g. `Order` $
+ightarrow$ `OrderItems`) with foreign key constraints.
 - **Pluggable Database Engines**: One-command support for SQLite, PostgreSQL, MySQL, and Firebird via `--db <engine>` or `.env` configuration.
 - **Synchronized Reactive Selection**: Selecting a master record automatically filters and binds child tables.
 
