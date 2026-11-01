@@ -193,14 +193,93 @@ bv lib dist
 
 ---
 
-## 📦 Library & Package Management (`/lib`)
+## 📦 Package Management, Ecosystem & Registries
 
-BlaiseVue includes an integrated package manager and library system:
-- **Official Package Aliases (`bv lib install <name>`)**:
-  - `bv lib install themes`: Installs the 9 official Bootswatch themes and theme switcher components into `lib/themes/`.
-  - `bv lib install icons`: Installs the Bootstrap Icons suite (styles + woff2 fonts) into `lib/icons/`.
-  - `bv lib install ui`: Installs the official BlaiseUI component suite into `lib/blaise-ui/`.
-  - `bv lib install <url>`: Downloads, extracts, and configures third-party libraries from any `.zip` URL.
+BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories.
+
+### 1. Package Repositories (`bv repo`)
+Manages upstream catalog sources and multi-package ecosystem repositories configured in `~/.blaisevue/repos.json`:
+
+```bash
+# List all registered repositories (* denotes default active catalog):
+bv repo list
+
+# Register an external community or private repository:
+bv repo add community https://github.com/my-org/my-blaise-packages
+
+# Set default primary repository for package resolution:
+bv repo default community
+
+# Remove a registered repository:
+bv repo remove community
+
+# Synchronize and cache ecosystem catalog metadata locally:
+bv repo sync
+
+# Search packages across all registered repositories:
+bv repo search chart
+```
+
+### 2. Package Installation & Resolution (`bv lib install`)
+Installs packages using a 4-tier resolution strategy:
+1. **Local Project (`/lib/<pkg>`)**: Reuses project-installed libraries if the requested version matches.
+2. **User Global Cache (`~/.blaisevue/packages/<pkg>`)**: Instant offline installation in milliseconds when cached.
+3. **Core Framework (`packages/core/<pkg>`)**: Shielded built-in libraries (`blaise-ui`, `blaise-themes`, `blaise-icons`, `blaise-charts`, `blaise-reports`, `blaise-studio`).
+4. **Remote Ecosystem (GitHub Releases)**: Automatically downloads versioned `.zip` release assets, updates global cache, and installs into the project.
+
+```bash
+# Install latest version of an ecosystem package into project /lib:
+bv lib install test
+
+# Install a specific pinned version:
+bv lib install test@1.0.0
+
+# Install directly into user global cache (~/.blaisevue/packages/):
+bv lib install test --global # (or alias: -g)
+
+# Install official core packages:
+bv lib install ui        # Installs complete BlaiseUI suite into lib/blaise-ui/
+bv lib install themes    # Installs Bootswatch themes into lib/themes/
+bv lib install icons     # Installs Bootstrap Icons fonts & CSS into lib/icons/
+bv lib install charts    # Installs Chart.js suite into lib/blaise-charts/
+bv lib install reports   # Installs BlaiseReports PDF generator into lib/blaise-reports/
+
+# Install from arbitrary URL or local .zip archive:
+bv lib install https://example.com/vendor-package.zip
+```
+
+### 3. Inspection & Updates (`bv lib outdated` & `bv lib update`)
+Inspects SemVer discrepancies and upgrades packages seamlessly:
+
+```bash
+# Inspect outdated packages comparing local versions against remote ecosystem:
+bv lib outdated
+
+# Inspect user global cache for outdated packages:
+bv lib outdated --global
+
+# Upgrade all installed packages to latest versions:
+bv lib update
+
+# Upgrade a specific package:
+bv lib update test
+```
+
+### 4. Removal & Listing (`bv lib remove` & `bv lib list`)
+```bash
+# List installed libraries in current project /lib:
+bv lib list
+
+# List packages in user global cache:
+bv lib list --global
+
+# Safely remove a package from project /lib (runs setup.pas cleanup if present):
+bv lib remove test
+
+# Remove a package from user global cache:
+bv lib remove test --global
+```
+
 - **Theme Switcher CLI (`bv theme`)**:
   - `bv theme list`: Lists all installed Bootswatch themes in `lib/themes/`.
   - `bv theme use <name>`: Updates the active project stylesheet link in `public/index.html` (e.g. `bv theme use darkly`).

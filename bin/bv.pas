@@ -823,6 +823,7 @@ procedure CmdLibList(IsGlobal: Boolean = False); forward;
 procedure CmdLibInstall(const TargetArg: string; IsGlobal: Boolean = False); forward;
 procedure CmdLibRemove(const LibName: string; IsGlobal: Boolean = False); forward;
 procedure CmdLibUpdate(const LibName: string = ''; IsGlobal: Boolean = False); forward;
+procedure CmdLibOutdated(IsGlobal: Boolean = False); forward;
 procedure CmdLibSearch(const Query: string); forward;
 procedure CmdCreateLib(const LibName: string; const SelectedLicense: string); forward;
 procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean); forward;
@@ -7009,6 +7010,77 @@ begin
     WriteLn('Todas as bibliotecas estao atualizadas!')
   else
     WriteLn(IntToStr(UpdatedCount) + ' biblioteca(s) atualizada(s) com sucesso!');
+end;
+
+procedure CmdLibOutdated(IsGlobal: Boolean = False);
+var
+  TargetBase, InstalledVer, FoundVer, DownloadURL, Checksum, RepoName, RowStatus: string;
+  SR: TSearchRec;
+  TotalCount, OutdatedCount: Integer;
+begin
+  if IsGlobal then
+    TargetBase := GetGlobalPackagesPath
+  else
+    TargetBase := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
+
+  WriteLn('');
+  WriteLn('=== Verificacao de Versoes de Pacotes (bv lib outdated) ===');
+  if IsGlobal then
+    WriteLn('Escopo: Global do Usuario (~/.blaisevue/packages)')
+  else
+    WriteLn('Escopo: Local do Projeto (/lib)');
+  WriteLn(StringOfChar('-', 78));
+  WriteLn(PadRight('Pacote', 22), PadRight('Instalada', 14), PadRight('Mais Recente', 16), PadRight('Status', 26));
+  WriteLn(StringOfChar('-', 78));
+
+  TotalCount := 0;
+  OutdatedCount := 0;
+
+  if DirectoryExists(TargetBase) and (FindFirst(TargetBase + '*', faDirectory, SR) = 0) then
+  begin
+    repeat
+      if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+      begin
+        Inc(TotalCount);
+        InstalledVer := GetPackageVersionFromFolder(TargetBase + SR.Name);
+        if InstalledVer = '' then InstalledVer := 'desconhecida';
+
+        if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
+        begin
+          if (InstalledVer <> 'desconhecida') and (InstalledVer <> FoundVer) then
+          begin
+            Inc(OutdatedCount);
+            RowStatus := 'Desatualizado -> v' + FoundVer;
+            WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), RowStatus);
+          end
+          else
+          begin
+            WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), 'Atualizado');
+          end;
+        end
+        else
+        begin
+          WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('-', 16), 'Nao catalogado');
+        end;
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+
+  WriteLn(StringOfChar('-', 78));
+  if TotalCount = 0 then
+    WriteLn('Nenhum pacote instalado no escopo atual.')
+  else if OutdatedCount = 0 then
+    WriteLn('Todos os ' + IntToStr(TotalCount) + ' pacote(s) estao atualizados!')
+  else
+  begin
+    WriteLn(IntToStr(OutdatedCount) + ' de ' + IntToStr(TotalCount) + ' pacote(s) desatualizado(s).');
+    if IsGlobal then
+      WriteLn('Para atualizar, execute: bv lib update --global')
+    else
+      WriteLn('Para atualizar, execute: bv lib update');
+  end;
+  WriteLn('');
 end;
 
 procedure CmdLibSearch(const Query: string);
@@ -25899,6 +25971,7 @@ begin
     WriteLn('  bv lib install <pkg[@ver]|url> [--global|-g] Installs package in project /lib or user cache');
     WriteLn('  bv lib remove <name> [--global|-g] Removes package from lib/ or global cache');
     WriteLn('  bv lib update [name] [--global|-g] Updates package(s) to latest version');
+    WriteLn('  bv lib outdated [--global|-g] Checks for available updates in installed packages');
     WriteLn('  bv lib list [--global|-g]  Lists installed libraries');
     WriteLn('  bv lib search <term>       Searches packages in registered repositories');
     WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
@@ -26237,6 +26310,13 @@ begin
         else if PkgNameArg = '' then PkgNameArg := CurP;
       end;
       CmdLibUpdate(PkgNameArg, IsGlobalArg);
+    end
+    else if (Cmd = 'outdated') or (Cmd = 'check-updates') then
+    begin
+      IsGlobalArg := False;
+      for i := 3 to ParamCount do
+        if (ParamStr(i) = '--global') or (ParamStr(i) = '-g') then IsGlobalArg := True;
+      CmdLibOutdated(IsGlobalArg);
     end
     else if (Cmd = 'search') or (Cmd = 'find') then
     begin
