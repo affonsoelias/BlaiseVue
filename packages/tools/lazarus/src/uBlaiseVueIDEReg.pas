@@ -72,6 +72,7 @@ begin
 
   if Ext = '.bv' then
   begin
+    GetBVSharedHighlighter.RefreshHighlighterSettings;
     if (AEditor.EditorControl is TCustomSynEdit) then
     begin
       if TCustomSynEdit(AEditor.EditorControl).Highlighter <> GetBVSharedHighlighter then

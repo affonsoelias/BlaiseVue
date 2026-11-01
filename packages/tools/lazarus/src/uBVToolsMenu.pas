@@ -15,6 +15,7 @@ type
     procedure DoCheckActiveComponent(Sender: TObject);
     procedure DoListSearchPaths(Sender: TObject);
     procedure DoRunTestSuite(Sender: TObject);
+    procedure DoSyncLazarusProject(Sender: TObject);
   end;
 
 procedure RegisterToolsMenu;
@@ -237,6 +238,35 @@ begin
   end;
 end;
 
+procedure TBVToolsManager.DoSyncLazarusProject({%H-}Sender: TObject);
+var
+  ProjectDir: string;
+  BVExe: string;
+  OutputStr: string;
+  Lines: TStringList;
+  i: Integer;
+begin
+  ProjectDir := GetCurrentDir;
+  if (SourceEditorManagerIntf <> nil) and (SourceEditorManagerIntf.ActiveEditor <> nil) then
+    ProjectDir := ExtractFileDir(SourceEditorManagerIntf.ActiveEditor.FileName);
+
+  BVExe := FindBVExecutable(ProjectDir);
+
+  IDEMessagesWindow.Clear;
+  IDEMessagesWindow.AddCustomMessage(mluImportant, '=== [BlaiseVue Lazarus] Sincronizando Projeto (.lpi) ===', '', 0, 0);
+
+  RunProcessCapture(BVExe, ['lazarus', 'init'], ProjectDir, OutputStr);
+
+  Lines := TStringList.Create;
+  try
+    Lines.Text := OutputStr;
+    for i := 0 to Lines.Count - 1 do
+      IDEMessagesWindow.AddCustomMessage(mluNone, Lines[i], '', 0, 0);
+  finally
+    Lines.Free;
+  end;
+end;
+
 procedure RegisterToolsMenu;
 var
   BVSubMenu: TIDEMenuSection;
@@ -248,6 +278,7 @@ begin
   BVSubMenu := RegisterIDESubMenu(itmSecondaryTools, 'BlaiseVueSubMenu', 'BlaiseVue');
 
   RegisterIDEMenuCommand(BVSubMenu, 'BVCheckComponent', 'Verificar Componente Ativo (.bv)', @Mgr.DoCheckActiveComponent);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVLazarusSync', 'Sincronizar Projeto Lazarus (.lpi)', @Mgr.DoSyncLazarusProject);
   RegisterIDEMenuCommand(BVSubMenu, 'BVListPaths', 'Listar Search Paths do Compilador (bv path)', @Mgr.DoListSearchPaths);
   RegisterIDEMenuCommand(BVSubMenu, 'BVRunTests', 'Executar Suíte de Testes (bv test)', @Mgr.DoRunTestSuite);
 end;

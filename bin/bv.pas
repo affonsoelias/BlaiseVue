@@ -975,6 +975,7 @@ procedure CmdCheck(const TargetFile: string); forward;
 procedure CmdLicense; forward;
 procedure CmdMeta; forward;
 procedure CmdPath; forward;
+procedure CmdLazarus; forward;
 procedure CmdReset; forward;
 procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
@@ -10214,6 +10215,195 @@ begin
   WriteLn('Unknown path subcommand: "' + SubCmd + '".');
   WriteLn('Usage: bv path [list|add <folder|pas2js:pkg>|remove <target>|available]');
   Halt(1);
+end;
+
+procedure CollectProjectUnits(const Dir, RelPrefix: string; List: TStringList);
+var
+  SR: TSearchRec;
+  RelPath, Ext: string;
+begin
+  if FindFirst(IncludeTrailingPathDelimiter(Dir) + '*', faAnyFile, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') then
+        begin
+          if (SR.Attr and faDirectory) <> 0 then
+          begin
+            if (SR.Name <> 'node_modules') and (SR.Name <> 'dist') and 
+               (SR.Name <> '.git') and (SR.Name <> 'lib') and (SR.Name <> 'units') and
+               (SR.Name <> 'generated') and (SR.Name <> '.bv_backup') then
+              CollectProjectUnits(IncludeTrailingPathDelimiter(Dir) + SR.Name, 
+                                  RelPrefix + SR.Name + DirectorySeparator, List);
+          end
+          else
+          begin
+            Ext := LowerCase(ExtractFileExt(SR.Name));
+            if (Ext = '.bv') or (Ext = '.pas') or (Ext = '.pp') then
+            begin
+              RelPath := RelPrefix + SR.Name;
+              List.Add(RelPath);
+            end;
+          end;
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+end;
+
+procedure CmdLazarus;
+var
+  SubCmd: string;
+  CurDir, ProjName, CleanName, LprFile, LpiFile: string;
+  LprContent, LpiContent, RelFile: string;
+  UnitsList: TStringList;
+  i: Integer;
+begin
+  SubCmd := 'init';
+  if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
+  if (SubCmd <> 'init') and (SubCmd <> 'sync') and (SubCmd <> 'update') then
+  begin
+    WriteLn('Usage: bv lazarus [init|sync]');
+    Exit;
+  end;
+
+  CurDir := GetCurrentDir;
+  if not FileExists(CurDir + DirectorySeparator + 'app.cfg') and
+     not FileExists(CurDir + DirectorySeparator + 'package.json') then
+  begin
+    WriteLn('  [ERROR] No BlaiseVue project detected in current directory.');
+    WriteLn('          Run "bv lazarus init" inside a project containing app.cfg.');
+    Halt(1);
+  end;
+
+  ProjName := ExtractFileName(ExcludeTrailingPathDelimiter(CurDir));
+  CleanName := StringReplace(ProjName, '-', '_', [rfReplaceAll]);
+  CleanName := StringReplace(CleanName, ' ', '_', [rfReplaceAll]);
+  if CleanName = '' then CleanName := 'BlaiseVueApp';
+
+  LprFile := CurDir + DirectorySeparator + CleanName + '.lpr';
+  LpiFile := CurDir + DirectorySeparator + CleanName + '.lpi';
+
+  // 1. Create <CleanName>.lpr if missing
+  if not FileExists(LprFile) then
+  begin
+    LprContent :=
+      'program ' + CleanName + ';' + #10 +
+      #10 +
+      '{$mode objfpc}{$H+}' + #10 +
+      #10 +
+      'uses' + #10 +
+      '  {$IFDEF UNIX}' + #10 +
+      '  cthreads,' + #10 +
+      '  {$ENDIF}' + #10 +
+      '  Classes, SysUtils;' + #10 +
+      #10 +
+      '// BlaiseVue Reactive Single File Components (.bv)' + #10 +
+      '// Press F9 in Lazarus IDE to launch the live dev server!' + #10 +
+      'begin' + #10 +
+      '  WriteLn(''BlaiseVue Project: ' + CleanName + ''');' + #10 +
+      'end.' + #10;
+    WriteStringToFile(LprFile, LprContent);
+    WriteLn('  [+] Created ' + CleanName + '.lpr');
+  end;
+
+  // 2. Collect all project units (*.bv, *.pas)
+  UnitsList := TStringList.Create;
+  try
+    if DirectoryExists(CurDir + DirectorySeparator + 'src') then
+      CollectProjectUnits(CurDir + DirectorySeparator + 'src', 'src' + DirectorySeparator, UnitsList);
+
+    // 3. Assemble <CleanName>.lpi
+    LpiContent :=
+      '<?xml version="1.0" encoding="UTF-8"?>' + #10 +
+      '<CONFIG>' + #10 +
+      '  <ProjectOptions>' + #10 +
+      '    <Version Value="12"/>' + #10 +
+      '    <General>' + #10 +
+      '      <Flags>' + #10 +
+      '        <MainUnitHasCreateFormStatements Value="False"/>' + #10 +
+      '        <MainUnitHasTitleStatement Value="False"/>' + #10 +
+      '        <Scaled Value="True"/>' + #10 +
+      '      </Flags>' + #10 +
+      '      <SessionStorage Value="InProjectDir"/>' + #10 +
+      '      <Title Value="' + CleanName + '"/>' + #10 +
+      '      <ResourceType Value="res"/>' + #10 +
+      '      <UseXPManifest Value="True"/>' + #10 +
+      '    </General>' + #10 +
+      '    <BuildModes Count="1">' + #10 +
+      '      <Item1 Name="Default" Default="True"/>' + #10 +
+      '    </BuildModes>' + #10 +
+      '    <PublishOptions>' + #10 +
+      '      <Version Value="2"/>' + #10 +
+      '      <UseFileFilters Value="True"/>' + #10 +
+      '    </PublishOptions>' + #10 +
+      '    <RunParams>' + #10 +
+      '      <FormatVersion Value="2"/>' + #10 +
+      '      <Modes ActiveMode="default">' + #10 +
+      '        <Mode Name="default">' + #10 +
+      '          <local>' + #10 +
+      '            <HostApplicationFilename Value="bv.exe"/>' + #10 +
+      '            <CommandLineParams Value="dev"/>' + #10 +
+      '          </local>' + #10 +
+      '        </Mode>' + #10 +
+      '      </Modes>' + #10 +
+      '    </RunParams>' + #10 +
+      '    <Units Count="' + IntToStr(UnitsList.Count + 1) + '">' + #10 +
+      '      <Unit0>' + #10 +
+      '        <Filename Value="' + CleanName + '.lpr"/>' + #10 +
+      '        <IsPartOfProject Value="True"/>' + #10 +
+      '      </Unit0>' + #10;
+
+    for i := 0 to UnitsList.Count - 1 do
+    begin
+      RelFile := UnitsList[i];
+      LpiContent := LpiContent +
+        '      <Unit' + IntToStr(i + 1) + '>' + #10 +
+        '        <Filename Value="' + RelFile + '"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '      </Unit' + IntToStr(i + 1) + '>' + #10;
+    end;
+
+    LpiContent := LpiContent +
+      '    </Units>' + #10 +
+      '  </ProjectOptions>' + #10 +
+      '  <CompilerOptions>' + #10 +
+      '    <Version Value="11"/>' + #10 +
+      '    <Target>' + #10 +
+      '      <Filename Value="bin/' + CleanName + '"/>' + #10 +
+      '    </Target>' + #10 +
+      '    <SearchPaths>' + #10 +
+      '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
+      '      <OtherUnitFiles Value="src;src/services;generated;lib"/>' + #10 +
+      '      <UnitOutputDirectory Value="generated/units"/>' + #10 +
+      '    </SearchPaths>' + #10 +
+      '    <Other>' + #10 +
+      '      <CustomOptions Value="-dBLAISEVUE"/>' + #10 +
+      '      <ExecuteBefore>' + #10 +
+      '        <Command Value="bv build"/>' + #10 +
+      '        <CompileReasons Compile="True" Build="True" Run="False"/>' + #10 +
+      '      </ExecuteBefore>' + #10 +
+      '    </Other>' + #10 +
+      '  </CompilerOptions>' + #10 +
+      '</CONFIG>' + #10;
+
+    WriteStringToFile(LpiFile, LpiContent);
+    WriteLn('  [+] Created ' + CleanName + '.lpi (' + IntToStr(UnitsList.Count) + ' units indexed)');
+    WriteLn;
+    WriteLn('  ========================================================================');
+    WriteLn('    [SUCCESS] Lazarus IDE project synchronized!');
+    WriteLn('    Project:   ' + CleanName + '.lpi');
+    WriteLn('    Inspector: ' + IntToStr(UnitsList.Count) + ' components (.bv) & units indexed in tree');
+    WriteLn('    F9 (Run):  Launches live dev server with instant HMR');
+    WriteLn('    Ctrl+F9:   Runs bv build & AST verification');
+    WriteLn('  ========================================================================');
+    WriteLn('  To open in Lazarus: Project -> Open Project -> ' + CleanName + '.lpi');
+    WriteLn;
+  finally
+    UnitsList.Free;
+  end;
 end;
 
 procedure CmdReset;
@@ -27748,6 +27938,10 @@ begin
   else if (Cmd = 'path') or (Cmd = 'paths') or (Cmd = 'unit-path') then
   begin
     CmdPath;
+  end
+  else if (Cmd = 'lazarus') or (Cmd = 'laz') or (Cmd = 'lpi') then
+  begin
+    CmdLazarus;
   end
   else if Cmd = 'reset' then
   begin
