@@ -8,6 +8,13 @@ uses
   Classes, SysUtils, ProjectIntf, NewItemIntf;
 
 type
+  { TNewIDEItemCategoryBlaiseVue }
+  TNewIDEItemCategoryBlaiseVue = class(TNewIDEItemCategory)
+  public
+    function LocalizedName: string; override;
+    function Description: string; override;
+  end;
+
   { TBVComponentFileDescriptor }
   TBVComponentFileDescriptor = class(TProjectFileDescriptor)
   public
@@ -30,8 +37,25 @@ procedure RegisterFileDescriptors;
 
 implementation
 
+{ TNewIDEItemCategoryBlaiseVue }
+
+function TNewIDEItemCategoryBlaiseVue.LocalizedName: string;
+begin
+  Result := 'BlaiseVue';
+end;
+
+function TNewIDEItemCategoryBlaiseVue.Description: string;
+begin
+  Result := 'Componentes Reativos (.bv) e Páginas SPA para BlaiseVue';
+end;
+
 procedure RegisterFileDescriptors;
 begin
+  // 1. Registra a categoria no assistente File -> New... se ainda não existir
+  if (NewIDEItems <> nil) and (NewIDEItems.FindByName('BlaiseVue') = nil) then
+    RegisterNewItemCategory(TNewIDEItemCategoryBlaiseVue.Create('BlaiseVue'));
+
+  // 2. Registra os descritores de arquivo associados à categoria BlaiseVue
   RegisterProjectFileDescriptor(TBVComponentFileDescriptor.Create, 'BlaiseVue');
   RegisterProjectFileDescriptor(TBVViewFileDescriptor.Create, 'BlaiseVue');
 end;
