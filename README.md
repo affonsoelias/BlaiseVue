@@ -102,9 +102,21 @@ bv remove <c|v|s|t|m|d> [Name] # Safely deletes a component, view, service, test
 bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
 bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 
+# === Package Repositories & Ecosystem ===
+bv repo list               # Lists registered package repositories (default: official ecosystem)
+bv repo add <name> <url>   # Registers an external ecosystem or repository
+bv repo remove <name>      # Removes a registered repository
+bv repo default <name>     # Sets the default repository
+bv repo sync               # Synchronizes and caches ecosystem package catalog
+bv repo search <term>      # Searches packages across registered ecosystems
+
 # === Package & Theme Management ===
-bv lib install <pkg|url>   # Installs official package (themes, icons, ui) or from URL
-bv lib remove <name>       # Removes an installed component or package from lib/
+bv lib install <pkg[@ver]> # Installs package locally in project /lib (e.g. bv lib install test@1.0.0)
+bv lib install <pkg> -g    # Installs package in global user cache (~/.blaisevue/packages/)
+bv lib remove <name>       # Removes installed package from lib/
+bv lib update [name]       # Updates library/libraries to latest version
+bv lib list [--global]     # Lists installed libraries (project /lib or user global cache)
+bv lib search <term>       # Searches packages in registered repositories
 bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
 bv theme list              # Lists all available installed themes
 bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
