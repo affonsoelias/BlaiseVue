@@ -132,16 +132,16 @@ bv lib outdated --global
 
 **Terminal Output Example:**
 ```text
-=== Verificacao de Versoes de Pacotes (bv lib outdated) ===
-Escopo: Local do Projeto (/lib)
+=== Package Version Inspection (bv lib outdated) ===
+Scope: Local Project (/lib)
 ------------------------------------------------------------------------------
-Pacote                Instalada     Mais Recente    Status                    
+Package               Installed     Latest          Status                    
 ------------------------------------------------------------------------------
-test                  v1.0.0        v1.1.0          Desatualizado -> v1.1.0
-blaise-ui             v4.4.0        v4.4.0          Atualizado
+test                  v1.0.0        v1.1.0          Outdated -> v1.1.0
+blaise-ui             v4.4.0        v4.4.0          Official Core (Up to date)
 ------------------------------------------------------------------------------
-1 de 2 pacote(s) desatualizado(s).
-Para atualizar, execute: bv lib update
+1 of 2 package(s) are outdated.
+To update, run: bv lib update
 ```
 
 ### Upgrading Packages
