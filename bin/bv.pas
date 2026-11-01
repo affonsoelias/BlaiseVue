@@ -6342,9 +6342,25 @@ end;
 
 
 
+function GetCorePackageFolder(const Name: string): string;
+var
+  L: string;
+begin
+  L := LowerCase(Trim(Name));
+  if (L = 'themes') or (L = 'blaise-themes') then Result := GetPackagesPath + 'blaise-themes'
+  else if (L = 'icons') or (L = 'blaise-icons') then Result := GetPackagesPath + 'blaise-icons'
+  else if (L = 'ui') or (L = 'blaise-ui') then Result := GetPackagesPath + 'blaise-ui'
+  else if (L = 'mobile') or (L = 'blaise-ui-mobile') then Result := GetPackagesPath + 'blaise-ui-mobile'
+  else if (L = 'charts') or (L = 'blaise-charts') then Result := GetPackagesPath + 'blaise-charts'
+  else if (L = 'reports') or (L = 'blaise-reports') then Result := GetPackagesPath + 'blaise-reports'
+  else if (L = 'studio') or (L = 'blaise-studio') then Result := GetPackagesPath + 'blaise-studio'
+  else if DirectoryExists(GetPackagesPath + L) then Result := GetPackagesPath + L
+  else Result := '';
+end;
+
 function GetPackageVersionFromFolder(const FolderPath: string): string;
 var
-  JsonFile, Raw: string;
+  JsonFile, Raw, BaseName, CoreDir: string;
   Parser: TJSONParser;
   Data: TJSONData;
 begin
@@ -6367,6 +6383,37 @@ begin
         end;
       except
       end;
+    end;
+  end;
+
+  if Result = '' then
+  begin
+    BaseName := ExtractFileName(ExcludeTrailingPathDelimiter(FolderPath));
+    CoreDir := GetCorePackageFolder(BaseName);
+    if (CoreDir <> '') and DirectoryExists(CoreDir) then
+    begin
+      JsonFile := IncludeTrailingPathDelimiter(CoreDir) + 'package.json';
+      if FileExists(JsonFile) then
+      begin
+        Raw := ReadFileToString(JsonFile);
+        if Trim(Raw) <> '' then
+        begin
+          try
+            Parser := TJSONParser.Create(Raw, True);
+            try
+              Data := Parser.Parse;
+              if Assigned(Data) and (Data.JSONType = jtObject) then
+                Result := TJSONObject(Data).Get('version', '');
+              if Assigned(Data) then Data.Free;
+            finally
+              Parser.Free;
+            end;
+          except
+          end;
+        end;
+      end;
+      if Result = '' then
+        Result := '4.4.0';
     end;
   end;
 end;
@@ -6437,7 +6484,7 @@ begin
 
   if (L = 'themes') or (L = 'blaise-themes') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-themes ...');
+    WriteLn('Installing official core package: blaise-themes ...');
     PkgSource := GetPackagesPath + 'blaise-themes';
     if DirectoryExists(PkgSource) then
     begin
@@ -6446,67 +6493,71 @@ begin
         WriteStringToFile(LibPath + 'themes' + DirectorySeparator + 'BVThemeSelect.bv', ReadFileToString(PkgSource + DirectorySeparator + 'BVThemeSelect.bv'));
       if FileExists(PkgSource + DirectorySeparator + 'BVThemeToggle.bv') then
         WriteStringToFile(LibPath + 'themes' + DirectorySeparator + 'BVThemeToggle.bv', ReadFileToString(PkgSource + DirectorySeparator + 'BVThemeToggle.bv'));
-      WriteLn('Pacote "blaise-themes" instalado com sucesso em lib/themes/.');
+      if FileExists(PkgSource + DirectorySeparator + 'package.json') then
+        WriteStringToFile(LibPath + 'themes' + DirectorySeparator + 'package.json', ReadFileToString(PkgSource + DirectorySeparator + 'package.json'));
+      WriteLn('Package "blaise-themes" installed successfully in lib/themes/.');
     end;
   end
   else if (L = 'icons') or (L = 'blaise-icons') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-icons ...');
+    WriteLn('Installing official core package: blaise-icons ...');
     PkgSource := GetPackagesPath + 'blaise-icons';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource + DirectorySeparator + 'css', LibPath + 'icons', []);
-      WriteLn('Pacote "blaise-icons" instalado com sucesso em lib/icons/.');
+      if FileExists(PkgSource + DirectorySeparator + 'package.json') then
+        WriteStringToFile(LibPath + 'icons' + DirectorySeparator + 'package.json', ReadFileToString(PkgSource + DirectorySeparator + 'package.json'));
+      WriteLn('Package "blaise-icons" installed successfully in lib/icons/.');
     end;
   end
   else if (L = 'ui') or (L = 'blaise-ui') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-ui ...');
+    WriteLn('Installing official core package: blaise-ui ...');
     PkgSource := GetPackagesPath + 'blaise-ui';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + 'blaise-ui', []);
-      WriteLn('Pacote "blaise-ui" instalado com sucesso em lib/blaise-ui/.');
+      WriteLn('Package "blaise-ui" installed successfully in lib/blaise-ui/.');
     end;
   end
   else if (L = 'mobile') or (L = 'blaise-ui-mobile') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-ui-mobile ...');
+    WriteLn('Installing official core package: blaise-ui-mobile ...');
     PkgSource := GetPackagesPath + 'blaise-ui-mobile';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + 'blaise-ui-mobile', []);
-      WriteLn('Pacote "blaise-ui-mobile" instalado com sucesso em lib/blaise-ui-mobile/.');
+      WriteLn('Package "blaise-ui-mobile" installed successfully in lib/blaise-ui-mobile/.');
     end;
   end
   else if (L = 'charts') or (L = 'blaise-charts') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-charts ...');
+    WriteLn('Installing official core package: blaise-charts ...');
     PkgSource := GetPackagesPath + 'blaise-charts';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + 'blaise-charts', []);
-      WriteLn('Pacote "blaise-charts" instalado com sucesso em lib/blaise-charts/.');
+      WriteLn('Package "blaise-charts" installed successfully in lib/blaise-charts/.');
     end;
   end
   else if (L = 'reports') or (L = 'blaise-reports') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-reports ...');
+    WriteLn('Installing official core package: blaise-reports ...');
     PkgSource := GetPackagesPath + 'blaise-reports';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + 'blaise-reports', []);
-      WriteLn('Pacote "blaise-reports" instalado com sucesso em lib/blaise-reports/.');
+      WriteLn('Package "blaise-reports" installed successfully in lib/blaise-reports/.');
     end;
   end
   else if (L = 'studio') or (L = 'blaise-studio') then
   begin
-    WriteLn('Instalando pacote oficial do core: blaise-studio ...');
+    WriteLn('Installing official core package: blaise-studio ...');
     PkgSource := GetPackagesPath + 'blaise-studio';
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + 'blaise-studio', []);
-      WriteLn('Pacote "blaise-studio" instalado com sucesso em lib/blaise-studio/.');
+      WriteLn('Package "blaise-studio" installed successfully in lib/blaise-studio/.');
     end;
   end
   else
@@ -6515,10 +6566,10 @@ begin
     if DirectoryExists(PkgSource) then
     begin
       CopyDir(PkgSource, LibPath + L, []);
-      WriteLn('Pacote "' + L + '" instalado com sucesso em lib/' + L + '/.');
+      WriteLn('Package "' + L + '" installed successfully in lib/' + L + '/.');
     end
     else
-      WriteLn('Erro: Pacote oficial "' + L + '" nao encontrado em ' + GetPackagesPath);
+      WriteLn('Error: Official package "' + L + '" not found in ' + GetPackagesPath);
   end;
 end;
 
@@ -6538,13 +6589,13 @@ begin
   begin
     ZipName := URL;
     if not FileExists(ZipName) then ZipName := ExpandFileName(URL);
-    WriteLn('Instalando a partir do arquivo local: ', ZipName);
+    WriteLn('Installing from local archive: ', ZipName);
   end
   else
   begin
     DownloadURL := URL;
     ZipName := TargetBase + 'temp_download.zip';
-    WriteLn('Baixando de: ', DownloadURL);
+    WriteLn('Downloading from: ', DownloadURL);
     Client := TFPHTTPClient.Create(nil);
     try
       try
@@ -6558,7 +6609,7 @@ begin
     end;
   end;
 
-  WriteLn('Extraindo para ' + TargetBase + '...');
+  WriteLn('Extracting to ' + TargetBase + '...');
   UnZipper := TUnZipper.Create;
   try
     UnZipper.FileName := ZipName;
@@ -6572,7 +6623,7 @@ begin
   if (ZipName = TargetBase + 'temp_download.zip') and FileExists(ZipName) then
     DeleteFile(ZipName);
 
-  WriteLn('Instalacao concluida com sucesso!');
+  WriteLn('Installation completed successfully!');
 end;
 
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
@@ -6691,7 +6742,7 @@ begin
   if IsGlobal then
   begin
     Path := GetGlobalPackagesPath;
-    WriteLn('=== Pacotes Globais do Usuario (~/.blaisevue/packages) ===');
+    WriteLn('=== User Global Packages (~/.blaisevue/packages) ===');
     WriteLn(StringOfChar('-', 55));
     Count := 0;
     if FindFirst(Path + '*', faDirectory, SR) = 0 then
@@ -6708,13 +6759,13 @@ begin
       FindClose(SR);
     end;
     if Count = 0 then
-      WriteLn('  (Nenhum pacote global instalado)');
+      WriteLn('  (No global packages installed)');
     WriteLn(StringOfChar('-', 55));
   end
   else
   begin
     Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
-    WriteLn('=== Bibliotecas Instaladas no Projeto (/lib) ===');
+    WriteLn('=== Installed Libraries in Project (/lib) ===');
     WriteLn(StringOfChar('-', 55));
     Count := 0;
     if DirectoryExists(Path) and (FindFirst(Path + '*', faDirectory, SR) = 0) then
@@ -6726,6 +6777,8 @@ begin
           Extra := '';
           Ver := GetPackageVersionFromFolder(Path + SR.Name);
           if Ver <> '' then Extra := ' (v' + Ver + ')';
+          if IsOfficialCorePackage(SR.Name) then
+            Extra := Extra + ' [Official Core]';
           if FileExists(Path + SR.Name + DirectorySeparator + 'setup.pas') then
             Extra := Extra + ' [Scripted]';
           WriteLn('  - ', SR.Name, Extra);
@@ -6734,13 +6787,13 @@ begin
       FindClose(SR);
     end;
     if Count = 0 then
-      WriteLn('  (Nenhuma biblioteca instalada em /lib)');
+      WriteLn('  (No libraries installed in /lib)');
     WriteLn(StringOfChar('-', 55));
 
-    WriteLn('Pacotes Oficiais do Core (packages/core):');
+    WriteLn('Official Core Packages (packages/core):');
     WriteLn('  - blaise-themes, blaise-icons, blaise-ui, blaise-ui-mobile,');
     WriteLn('    blaise-charts, blaise-reports, blaise-studio');
-    WriteLn('Use "bv lib list --global" para ver pacotes instalados no cache global.');
+    WriteLn('Use "bv lib list --global" to view packages in global cache.');
     WriteLn(StringOfChar('-', 55));
   end;
 end;
@@ -6759,7 +6812,7 @@ begin
   begin
     if IsGlobal then
     begin
-      WriteLn('Acao bloqueada: "' + LibName + '" e um pacote oficial do core (packages/core/) e nao pode ser removido do framework.');
+      WriteLn('Action blocked: "' + LibName + '" is an official core framework package (packages/core/) and cannot be removed from framework.');
       Exit;
     end;
   end;
@@ -6770,10 +6823,10 @@ begin
     if DirectoryExists(Path) then
     begin
       DeleteDir(Path);
-      WriteLn('Pacote global "' + LibName + '" removido com sucesso de ~/.blaisevue/packages/.');
+      WriteLn('Global package "' + LibName + '" removed successfully from ~/.blaisevue/packages/.');
     end
     else
-      WriteLn('Erro: Pacote global "' + LibName + '" nao encontrado em ~/.blaisevue/packages/.');
+      WriteLn('Error: Global package "' + LibName + '" not found in ~/.blaisevue/packages/.');
   end
   else
   begin
@@ -6788,14 +6841,14 @@ begin
     begin
       if FileExists(Path + DirectorySeparator + 'setup.pas') then
       begin
-        WriteLn('Detectado script setup. Executando limpeza...');
+        WriteLn('Detected setup script. Running cleanup...');
         RunSetupScript(LibName, 'remove');
       end;
       DeleteDir(Path);
-      WriteLn('Biblioteca "' + LibName + '" removida de /lib com sucesso.');
+      WriteLn('Library "' + LibName + '" removed from /lib successfully.');
     end
     else
-      WriteLn('Erro: Biblioteca "' + LibName + '" nao encontrada em /lib.');
+      WriteLn('Error: Library "' + LibName + '" not found in /lib.');
   end;
 end;
 
@@ -6810,7 +6863,7 @@ begin
   RawArg := Trim(TargetArg);
   if RawArg = '' then
   begin
-    WriteLn('Uso: bv lib install <pacote[@versao]|url> [--global|-g]');
+    WriteLn('Usage: bv lib install <package[@version]|url> [--global|-g]');
     Exit;
   end;
 
@@ -6840,8 +6893,8 @@ begin
   begin
     if IsGlobal then
     begin
-      WriteLn('Aviso: O pacote "' + PkgName + '" ja faz parte do core oficial do framework em packages/core/.');
-      WriteLn('Ele ja esta disponivel nativamente em todas as instalacoes do BlaiseVue.');
+      WriteLn('Notice: Package "' + PkgName + '" is an official core framework package in packages/core/.');
+      WriteLn('It is already available natively across all BlaiseVue installations.');
       Exit;
     end;
     InstallCorePackage(PkgName);
@@ -6851,7 +6904,7 @@ begin
   GlobalPath := GetGlobalPackagesPath + PkgName;
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + PkgName;
 
-  WriteLn('Buscando pacote "' + PkgName + '" nos repositorios do ecossistema...');
+  WriteLn('Searching for package "' + PkgName + '" in ecosystem repositories...');
 
   if FindPackageInEcosystem(PkgName, ReqVersion, FoundVer, DownloadURL, Checksum, RepoName) then
   begin
@@ -6860,15 +6913,15 @@ begin
       CachedVer := GetPackageVersionFromFolder(GlobalPath);
       if (CachedVer <> '') and (CachedVer = FoundVer) then
       begin
-        WriteLn('Instalando pacote "' + PkgName + '" (v' + CachedVer + ') a partir do cache global (~/.blaisevue/packages)...');
+        WriteLn('Installing package "' + PkgName + '" (v' + CachedVer + ') from user global cache (~/.blaisevue/packages)...');
         ForceDir(GetCurrentDir + DirectorySeparator + 'lib');
         if DirectoryExists(LibPath) then DeleteDir(LibPath);
         ForceDir(LibPath);
         CopyDir(GlobalPath, LibPath, []);
-        WriteLn('Pacote "' + PkgName + '" instalado com sucesso em lib/' + PkgName + '/.');
+        WriteLn('Package "' + PkgName + '" installed successfully in lib/' + PkgName + '/.');
         if FileExists(LibPath + DirectorySeparator + 'setup.pas') then
         begin
-          WriteLn('Executando script de setup do pacote...');
+          WriteLn('Executing package setup script...');
           RunSetupScript(PkgName, 'install');
         end;
         Exit;
@@ -6882,28 +6935,28 @@ begin
       CachedVer := GetPackageVersionFromFolder(GlobalPath);
       if (ReqVersion = '') or (ReqVersion = CachedVer) then
       begin
-        WriteLn('Aviso: Pacote nao alcancado no catalogo remoto. Usando versao em cache global (v' + CachedVer + ')...');
+        WriteLn('Notice: Remote catalog unreachable. Using cached version (v' + CachedVer + ')...');
         ForceDir(GetCurrentDir + DirectorySeparator + 'lib');
         if DirectoryExists(LibPath) then DeleteDir(LibPath);
         ForceDir(LibPath);
         CopyDir(GlobalPath, LibPath, []);
-        WriteLn('Pacote "' + PkgName + '" instalado com sucesso em lib/' + PkgName + '/.');
+        WriteLn('Package "' + PkgName + '" installed successfully in lib/' + PkgName + '/.');
         Exit;
       end;
     end;
 
-    WriteLn('Erro: Pacote "' + PkgName + '"');
+    WriteLn('Error: Package "' + PkgName + '"');
     if ReqVersion <> '' then
-      WriteLn('  Versao solicitada: ' + ReqVersion)
+      WriteLn('  Requested version: ' + ReqVersion)
     else
-      WriteLn('  (versao mais recente)');
-    WriteLn('Nao foi encontrado em nenhum dos repositorios cadastrados.');
-    WriteLn('Dica: Execute "bv repo sync" para atualizar o catalogo ou "bv repo list" para ver os repositorios.');
+      WriteLn('  (latest version)');
+    WriteLn('Was not found in any registered repositories.');
+    WriteLn('Hint: Run "bv repo sync" to update catalog or "bv repo list" to view registered repositories.');
     Halt(1);
   end;
 
-  WriteLn('Encontrado em [' + RepoName + ']: ' + PkgName + ' v' + FoundVer);
-  WriteLn('Baixando pacote: ' + DownloadURL);
+  WriteLn('Found in [' + RepoName + ']: ' + PkgName + ' v' + FoundVer);
+  WriteLn('Downloading package: ' + DownloadURL);
 
   TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + PkgName + '-' + FoundVer + '.zip';
   ForceDir(ExtractFileDir(TempZip));
@@ -6916,7 +6969,7 @@ begin
     except
       on E: Exception do
       begin
-        WriteLn('Erro no download do pacote: ' + E.Message);
+        WriteLn('Error downloading package: ' + E.Message);
         Halt(1);
       end;
     end;
@@ -6924,7 +6977,7 @@ begin
     Client.Free;
   end;
 
-  WriteLn('Extraindo para o cache global do usuario (~/.blaisevue/packages/' + PkgName + ')...');
+  WriteLn('Extracting to user global cache (~/.blaisevue/packages/' + PkgName + ')...');
   if DirectoryExists(GlobalPath) then DeleteDir(GlobalPath);
   ForceDir(GlobalPath);
   ExtractZipSmart(TempZip, GetGlobalPackagesPath, PkgName);
@@ -6935,16 +6988,16 @@ begin
     if DirectoryExists(LibPath) then DeleteDir(LibPath);
     ForceDir(LibPath);
     CopyDir(GlobalPath, LibPath, []);
-    WriteLn('Pacote "' + PkgName + '" (v' + FoundVer + ') instalado com sucesso em lib/' + PkgName + '/.');
+    WriteLn('Package "' + PkgName + '" (v' + FoundVer + ') installed successfully in lib/' + PkgName + '/.');
     if FileExists(LibPath + DirectorySeparator + 'setup.pas') then
     begin
-      WriteLn('Executando script de setup do pacote...');
+      WriteLn('Executing package setup script...');
       RunSetupScript(PkgName, 'install');
     end;
   end
   else
   begin
-    WriteLn('Pacote global "' + PkgName + '" (v' + FoundVer + ') instalado com sucesso!');
+    WriteLn('Global package "' + PkgName + '" (v' + FoundVer + ') installed successfully!');
   end;
 end;
 
@@ -6961,29 +7014,35 @@ begin
 
   if LibName <> '' then
   begin
+    if (not IsGlobal) and IsOfficialCorePackage(LibName) then
+    begin
+      WriteLn('Package "' + LibName + '" is an official core framework package. It updates automatically with BlaiseVue framework updates (bv self-update).');
+      Exit;
+    end;
+
     PkgDir := TargetBase + LibName;
     if not DirectoryExists(PkgDir) then
     begin
-      WriteLn('Biblioteca "' + LibName + '" nao encontrada para atualizar.');
+      WriteLn('Library "' + LibName + '" not found to update.');
       Exit;
     end;
     CurrentVer := GetPackageVersionFromFolder(PkgDir);
     if FindPackageInEcosystem(LibName, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
     begin
       if (CurrentVer <> '') and (CurrentVer = FoundVer) then
-        WriteLn('Pacote "' + LibName + '" ja esta na versao mais recente (v' + CurrentVer + ').')
+        WriteLn('Package "' + LibName + '" is already up to date (v' + CurrentVer + ').')
       else
       begin
-        WriteLn('Atualizando "' + LibName + '" de v' + CurrentVer + ' para v' + FoundVer + '...');
+        WriteLn('Updating "' + LibName + '" from v' + CurrentVer + ' to v' + FoundVer + '...');
         CmdLibInstall(LibName + '@' + FoundVer, IsGlobal);
       end;
     end
     else
-      WriteLn('Pacote "' + LibName + '" nao encontrado nos repositorios do ecossistema.');
+      WriteLn('Package "' + LibName + '" not found in ecosystem repositories.');
     Exit;
   end;
 
-  WriteLn('Verificando atualizacoes para todas as bibliotecas em ' + TargetBase + '...');
+  WriteLn('Checking for library updates in ' + TargetBase + '...');
   UpdatedCount := 0;
   if DirectoryExists(TargetBase) and (FindFirst(TargetBase + '*', faDirectory, SR) = 0) then
   begin
@@ -6991,25 +7050,29 @@ begin
       if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
       begin
         CurrentVer := GetPackageVersionFromFolder(TargetBase + SR.Name);
-        if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
+        if (not IsGlobal) and IsOfficialCorePackage(SR.Name) then
+        begin
+          WriteLn('  [OK] ' + SR.Name + ' (v' + CurrentVer + ') is an official core package.');
+        end
+        else if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
         begin
           if (CurrentVer <> '') and (CurrentVer <> FoundVer) then
           begin
-            WriteLn('  [Atualizando] ' + SR.Name + ': v' + CurrentVer + ' -> v' + FoundVer);
+            WriteLn('  [Updating] ' + SR.Name + ': v' + CurrentVer + ' -> v' + FoundVer);
             CmdLibInstall(SR.Name + '@' + FoundVer, IsGlobal);
             Inc(UpdatedCount);
           end
           else
-            WriteLn('  [OK] ' + SR.Name + ' (v' + CurrentVer + ') ja atualizado.');
+            WriteLn('  [OK] ' + SR.Name + ' (v' + CurrentVer + ') is up to date.');
         end;
       end;
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;
   if UpdatedCount = 0 then
-    WriteLn('Todas as bibliotecas estao atualizadas!')
+    WriteLn('All libraries are up to date!')
   else
-    WriteLn(IntToStr(UpdatedCount) + ' biblioteca(s) atualizada(s) com sucesso!');
+    WriteLn(IntToStr(UpdatedCount) + ' library(ies) updated successfully!');
 end;
 
 procedure CmdLibOutdated(IsGlobal: Boolean = False);
@@ -7017,6 +7080,7 @@ var
   TargetBase, InstalledVer, FoundVer, DownloadURL, Checksum, RepoName, RowStatus: string;
   SR: TSearchRec;
   TotalCount, OutdatedCount: Integer;
+  IsCore: Boolean;
 begin
   if IsGlobal then
     TargetBase := GetGlobalPackagesPath
@@ -7024,13 +7088,13 @@ begin
     TargetBase := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
 
   WriteLn('');
-  WriteLn('=== Verificacao de Versoes de Pacotes (bv lib outdated) ===');
+  WriteLn('=== Package Version Inspection (bv lib outdated) ===');
   if IsGlobal then
-    WriteLn('Escopo: Global do Usuario (~/.blaisevue/packages)')
+    WriteLn('Scope: User Global Cache (~/.blaisevue/packages)')
   else
-    WriteLn('Escopo: Local do Projeto (/lib)');
+    WriteLn('Scope: Local Project (/lib)');
   WriteLn(StringOfChar('-', 78));
-  WriteLn(PadRight('Pacote', 22), PadRight('Instalada', 14), PadRight('Mais Recente', 16), PadRight('Status', 26));
+  WriteLn(PadRight('Package', 22), PadRight('Installed', 14), PadRight('Latest', 16), PadRight('Status', 26));
   WriteLn(StringOfChar('-', 78));
 
   TotalCount := 0;
@@ -7043,24 +7107,35 @@ begin
       begin
         Inc(TotalCount);
         InstalledVer := GetPackageVersionFromFolder(TargetBase + SR.Name);
-        if InstalledVer = '' then InstalledVer := 'desconhecida';
+        IsCore := (not IsGlobal) and IsOfficialCorePackage(SR.Name);
 
-        if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
+        if IsCore then
         begin
-          if (InstalledVer <> 'desconhecida') and (InstalledVer <> FoundVer) then
-          begin
-            Inc(OutdatedCount);
-            RowStatus := 'Desatualizado -> v' + FoundVer;
-            WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), RowStatus);
-          end
-          else
-          begin
-            WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), 'Atualizado');
-          end;
+          if InstalledVer = '' then InstalledVer := '4.4.0';
+          FoundVer := InstalledVer;
+          WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), 'Official Core (Up to date)');
         end
         else
         begin
-          WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('-', 16), 'Nao catalogado');
+          if InstalledVer = '' then InstalledVer := 'unknown';
+
+          if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
+          begin
+            if (InstalledVer <> 'unknown') and (InstalledVer <> FoundVer) then
+            begin
+              Inc(OutdatedCount);
+              RowStatus := 'Outdated -> v' + FoundVer;
+              WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), RowStatus);
+            end
+            else
+            begin
+              WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('v' + FoundVer, 16), 'Up to date');
+            end;
+          end
+          else
+          begin
+            WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14), PadRight('-', 16), 'Not registered in catalog');
+          end;
         end;
       end;
     until FindNext(SR) <> 0;
@@ -7069,16 +7144,16 @@ begin
 
   WriteLn(StringOfChar('-', 78));
   if TotalCount = 0 then
-    WriteLn('Nenhum pacote instalado no escopo atual.')
+    WriteLn('No packages installed in current scope.')
   else if OutdatedCount = 0 then
-    WriteLn('Todos os ' + IntToStr(TotalCount) + ' pacote(s) estao atualizados!')
+    WriteLn('All ' + IntToStr(TotalCount) + ' package(s) are up to date!')
   else
   begin
-    WriteLn(IntToStr(OutdatedCount) + ' de ' + IntToStr(TotalCount) + ' pacote(s) desatualizado(s).');
+    WriteLn(IntToStr(OutdatedCount) + ' of ' + IntToStr(TotalCount) + ' package(s) are outdated.');
     if IsGlobal then
-      WriteLn('Para atualizar, execute: bv lib update --global')
+      WriteLn('To update, run: bv lib update --global')
     else
-      WriteLn('Para atualizar, execute: bv lib update');
+      WriteLn('To update, run: bv lib update');
   end;
   WriteLn('');
 end;
@@ -7094,11 +7169,11 @@ var
 begin
   QueryLower := LowerCase(Trim(Query));
   WriteLn('');
-  WriteLn('=== Busca de Pacotes no Ecossistema BlaiseVue ===');
+  WriteLn('=== Package Search in BlaiseVue Ecosystem ===');
   if QueryLower <> '' then
-    WriteLn('Filtro: "', QueryLower, '"')
+    WriteLn('Filter: "', QueryLower, '"')
   else
-    WriteLn('Listando todos os pacotes disponiveis no ecossistema:');
+    WriteLn('Listing all available ecosystem packages:');
   WriteLn(StringOfChar('-', 65));
 
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
@@ -7139,9 +7214,9 @@ begin
                       Inc(MatchCount);
                       WriteLn('  * ', PkgKey, ' (v', PkgLatest, ')');
                       if PkgDesc <> '' then
-                        WriteLn('    Descricao: ', PkgDesc);
+                        WriteLn('    Description: ', PkgDesc);
                       if PkgAuthor <> '' then
-                        WriteLn('    Autor:     ', PkgAuthor);
+                        WriteLn('    Author:      ', PkgAuthor);
                       WriteLn('');
                     end;
                   end;
@@ -7160,9 +7235,9 @@ begin
   end;
 
   if MatchCount = 0 then
-    WriteLn('  Nenhum pacote encontrado para o termo especificado.')
+    WriteLn('  No packages found matching search criteria.')
   else
-    WriteLn(IntToStr(MatchCount), ' pacote(s) encontrado(s). Para instalar, use: bv lib install <nome>');
+    WriteLn(IntToStr(MatchCount), ' package(s) found. To install, run: bv lib install <name>');
   WriteLn(StringOfChar('-', 65));
 end;
 
@@ -23873,7 +23948,7 @@ var
 begin
   if not LoadReposRegistry(RootObj) then
   begin
-    WriteLn('Erro ao carregar registro de repositorios em: ', GetReposConfigPath);
+    WriteLn('Error loading repositories registry at: ', GetReposConfigPath);
     Exit;
   end;
   try
@@ -23883,7 +23958,7 @@ begin
     ReposArr := RootObj.Get('repositories', TJSONArray(nil));
     if (not Assigned(ReposArr)) or (ReposArr.Count = 0) then
     begin
-      WriteLn('  Nenhum repositorio cadastrado.');
+      WriteLn('  No repositories registered.');
       Exit;
     end;
 
@@ -23906,7 +23981,7 @@ begin
         WriteLn('');
       end;
     end;
-    WriteLn('Total: ' + IntToStr(ReposArr.Count) + ' repositorio(s) configurado(s).');
+    WriteLn('Total: ' + IntToStr(ReposArr.Count) + ' configured repository(ies).');
   finally
     RootObj.Free;
   end;
@@ -23923,8 +23998,8 @@ begin
   CleanURL := Trim(URL);
   if (CleanName = '') or (CleanURL = '') then
   begin
-    WriteLn('Uso: bv repo add <nome> <url>');
-    WriteLn('Exemplo: bv repo add community https://github.com/usuario/blaise-packages');
+    WriteLn('Usage: bv repo add <name> <url>');
+    WriteLn('Example: bv repo add community https://github.com/user/blaise-packages');
     Exit;
   end;
 
@@ -23946,11 +24021,11 @@ begin
         Existing := TJSONObject(ReposArr.Objects[i]);
         if LowerCase(Existing.Get('name', '')) = CleanName then
         begin
-          WriteLn('Aviso: O repositorio "' + CleanName + '" ja existe com a URL: ' + Existing.Get('url', ''));
+          WriteLn('Notice: Repository "' + CleanName + '" already exists with URL: ' + Existing.Get('url', ''));
           Existing.Delete('url');
           Existing.Add('url', CleanURL);
           SaveReposRegistry(RootObj);
-          WriteLn('[SUCCESS] Repositorio "' + CleanName + '" atualizado com nova URL: ' + CleanURL);
+          WriteLn('[SUCCESS] Repository "' + CleanName + '" updated with new URL: ' + CleanURL);
           Exit;
         end;
       end;
@@ -23964,7 +24039,7 @@ begin
     ReposArr.Add(NewRepo);
 
     SaveReposRegistry(RootObj);
-    WriteLn('[SUCCESS] Repositorio "' + CleanName + '" adicionado com sucesso!');
+    WriteLn('[SUCCESS] Repository "' + CleanName + '" added successfully!');
     WriteLn('          URL: ' + CleanURL);
   finally
     RootObj.Free;
@@ -23982,13 +24057,13 @@ begin
   CleanName := LowerCase(Trim(Name));
   if CleanName = '' then
   begin
-    WriteLn('Uso: bv repo remove <nome>');
+    WriteLn('Usage: bv repo remove <name>');
     Exit;
   end;
 
   if not LoadReposRegistry(RootObj) then
   begin
-    WriteLn('Erro ao carregar registro de repositorios.');
+    WriteLn('Error loading repositories registry.');
     Exit;
   end;
 
@@ -24013,10 +24088,10 @@ begin
     if Found then
     begin
       SaveReposRegistry(RootObj);
-      WriteLn('[SUCCESS] Repositorio "' + CleanName + '" removido com sucesso!');
+      WriteLn('[SUCCESS] Repository "' + CleanName + '" removed successfully!');
     end
     else
-      WriteLn('Repositorio "' + CleanName + '" nao encontrado.');
+      WriteLn('Repository "' + CleanName + '" not found.');
   finally
     RootObj.Free;
   end;
@@ -24033,7 +24108,7 @@ begin
   CleanName := LowerCase(Trim(Name));
   if CleanName = '' then
   begin
-    WriteLn('Uso: bv repo default <nome>');
+    WriteLn('Usage: bv repo default <name>');
     Exit;
   end;
 
@@ -24066,10 +24141,10 @@ begin
     if Found then
     begin
       SaveReposRegistry(RootObj);
-      WriteLn('[SUCCESS] Repositorio "' + CleanName + '" definido como padrao!');
+      WriteLn('[SUCCESS] Repository "' + CleanName + '" set as default!');
     end
     else
-      WriteLn('Repositorio "' + CleanName + '" nao encontrado.');
+      WriteLn('Repository "' + CleanName + '" not found.');
   finally
     RootObj.Free;
   end;
@@ -24093,7 +24168,7 @@ begin
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
   ForceDir(CacheDir);
 
-  WriteLn('=== Sincronizando Catalogo de Repositorios BlaiseVue ===');
+  WriteLn('=== Synchronizing BlaiseVue Repositories Catalog ===');
   try
     ReposArr := RootObj.Get('repositories', TJSONArray(nil));
     if not Assigned(ReposArr) then Exit;
@@ -24115,7 +24190,7 @@ begin
           RawUrl := RawUrl + '/main/ecosystem.json';
         end;
 
-        Write('  [+] Sincronizando "' + RName + '" ... ');
+        Write('  [+] Synchronizing "' + RName + '" ... ');
         Client := TFPHTTPClient.Create(nil);
         try
           try
@@ -24138,17 +24213,17 @@ begin
               CatParser.Free;
             end;
 
-            WriteLn('OK (' + IntToStr(PkgCount) + ' pacote(s) disponivel(eis))');
+            WriteLn('OK (' + IntToStr(PkgCount) + ' package(s) available)');
           except
             on E: Exception do
-              WriteLn('FALHA (' + E.Message + ')');
+              WriteLn('FAILED (' + E.Message + ')');
           end;
         finally
           Client.Free;
         end;
       end;
     end;
-    WriteLn('Sincronizacao concluida com sucesso!');
+    WriteLn('Synchronization completed successfully!');
   finally
     RootObj.Free;
   end;
@@ -24185,14 +24260,14 @@ begin
     CmdLibSearch(ParamStr(Idx + 1))
   else
   begin
-    WriteLn('Comando desconhecido: bv repo ' + SubCmd);
-    WriteLn('Subcomandos disponiveis:');
-    WriteLn('  bv repo list               Lista repositorios cadastrados');
-    WriteLn('  bv repo add <nome> <url>   Cadastra um novo repositorio');
-    WriteLn('  bv repo remove <nome>      Remove um repositorio');
-    WriteLn('  bv repo default <nome>     Define o repositorio padrao');
-    WriteLn('  bv repo sync               Atualiza o catalogo de pacotes');
-    WriteLn('  bv repo search <termo>     Pesquisa pacotes no catalogo');
+    WriteLn('Unknown command: bv repo ' + SubCmd);
+    WriteLn('Available subcommands:');
+    WriteLn('  bv repo list               List registered repositories');
+    WriteLn('  bv repo add <name> <url>   Register a new repository');
+    WriteLn('  bv repo remove <name>      Remove a repository');
+    WriteLn('  bv repo default <name>     Set the default repository');
+    WriteLn('  bv repo sync               Update package catalog');
+    WriteLn('  bv repo search <term>      Search packages across repositories');
     Halt(1);
   end;
 end;
@@ -26246,7 +26321,7 @@ begin
 
     begin
 
-       WriteLn('Usage: bv s <nome-do-componente>');
+       WriteLn('Usage: bv s <component-name>');
 
        Halt(1);
 
@@ -26343,8 +26418,8 @@ begin
     end
     else
     begin
-      WriteLn('Comando desconhecido: bv lib ', Cmd);
-      WriteLn('Subcomandos disponiveis: list, install, remove, update, search, repo, pack');
+      WriteLn('Unknown command: bv lib ', Cmd);
+      WriteLn('Available subcommands: list, install, remove, update, outdated, search, repo, pack');
       Halt(1);
     end;
   end
