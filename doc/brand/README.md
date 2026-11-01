@@ -26,13 +26,14 @@ All official visual assets are stored in this directory:
 |---|---|---|---|
 | [`logo.png`](logo.png) | PNG | 354x340 | Master raster logo with pure white background for light themes and documents. |
 | [`logo-transparent.png`](logo-transparent.png) | PNG | 354x340 | Transparent background asset with white hand contour and black quill outline. |
-| [`logo-transparent.svg`](logo-transparent.svg) | SVG | Vector 512x512 | Transparent vector with white hand contour and black quill outline (universal mode). |
-| [`banner.png`](banner.png) | PNG | 1024x210 | Official horizontal black banner for READMEs and repository headers. |
-| [`banner.svg`](banner.svg) | SVG | Vector 1024x210 | Scalable vector banner. |
 | [`logo.svg`](logo.svg) | SVG | Vector 512x512 | Scalable vector graphic for web headers, icons, and print media. |
 | [`logo.jpg`](logo.jpg) | JPG | 354x340 | Compressed graphic version. |
+| [`quill-shadow-hand-white.jpg`](quill-shadow-hand-white.jpg) | JPG | 354x340 | Alternative high-contrast shadow-hand graphic on white background. |
+| [`banner.png`](banner.png) | PNG | 1024x210 | Official horizontal black banner for READMEs and repository headers. |
+| [`banner-2x.png`](banner-2x.png) | PNG | 2048x420 | High-DPI horizontal banner for 4K / retina displays. |
+| [`banner.svg`](banner.svg) | SVG | Vector 1024x210 | Scalable vector banner. |
 | [`preview.html`](preview.html) | HTML | Interactive | Brand showcase gallery with scaling simulations and banner previews. |
-| [`../../vscode-extension/icon.png`](../../vscode-extension/icon.png) | PNG | 128x128 | Official Visual Studio Code extension marketplace icon. |
+| [`../../packages/tools/vscode-extension/icon.png`](../../packages/tools/vscode-extension/icon.png) | PNG | 128x128 | Official Visual Studio Code extension marketplace icon. |
 | [`../../demo-app/public/favicon.ico`](../../demo-app/public/favicon.ico) | ICO | 16, 32, 48, 64 | Multi-resolution favicon for BlaiseVue web applications. |
 
 ---
