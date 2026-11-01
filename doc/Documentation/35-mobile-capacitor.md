@@ -89,6 +89,9 @@ bv mobile init [AppName] [com.yourcompany.app]
 # 2. Synchronize build directory (dist/) with Android/iOS native assets
 bv mobile sync [android|ios|all]
 
+# 3. Safely remove mobile platform (alias: bv remove mobile / bv remove m)
+bv mobile remove [-y]
+
 # 3. DEBUG Build Mode (active symbols and verbose logging):
 bv mobile build android             # Builds Debug APK to mobile/bin/android/<App>-debug.apk
 bv mobile build ios                 # Prepares and synchronizes native iOS project

@@ -98,7 +98,7 @@ bv new c <Name>            # Scaffolds a component (.bv) & test in tests/compone
 bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv g v)
 bv new s <Name>            # Scaffolds a domain service & test in tests/services/ (alias: bv g s)
 bv new t <Name>            # Scaffolds a Pascal test file (smart detection: c, v, services) (alias: bv g t)
-bv remove <c|v|s|t> <Name> # Safely deletes a component, view, service, or test
+bv remove <c|v|s|t|m|d> [Name] # Safely deletes a component, view, service, test, or platform (m/d)
 bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
 bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 
@@ -115,8 +115,9 @@ bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAp
 bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
 # === Mobile (Android & iOS via Capacitor) ===
-bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project
+bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project (name & id optional)
 bv mobile sync             # Syncs dist/ with native mobile assets
+bv mobile remove [-y]      # Safely deletes mobile/ and capacitor.config.json (alias: bv remove mobile)
 bv mobile build android    # Builds native Android Debug APK in mobile/bin/android/
 bv mobile build android --release # Builds optimized Release APK (R8/ProGuard)
 bv mobile emulator list    # Lists installed Android Virtual Devices (AVD)
@@ -128,6 +129,7 @@ bv mobile open android     # Opens project in Android Studio
 # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
 bv desktop init [name]     # Scaffolds Lazarus (.lpi, .lpr) & WebUI project
 bv desktop sync            # Syncs dist/ to desktop/assets/
+bv desktop remove [-y]     # Safely deletes desktop/ native project (alias: bv remove desktop)
 bv desktop build [target]  # Compiles Debug native binary (live console logging)
 bv desktop build [target] --release # Compiles Release native binary (pure GUI - NO console)
 bv desktop run [target]    # Launches desktop app in Debug mode (with console)

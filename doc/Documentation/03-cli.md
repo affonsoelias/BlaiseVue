@@ -228,6 +228,7 @@ Packages the official BlaiseVue extension into a standalone `.vsix` bundle for V
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
 - **`bv mobile init [name] [id]`**: Scaffolds the mobile directory structure inside `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
 - **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
+- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries (alias: `bv remove mobile` / `bv remove m`).
 - **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
   - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
   - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
@@ -257,6 +258,7 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 Manages the native desktop development lifecycle with Free Pascal and WebUI:
 - **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
 - **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
+- **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries (alias: `bv remove desktop` / `bv remove d`).
 - **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
   - E.g.: `bv desktop build windows` (Debug mode on Windows with active logging console)
   - E.g.: `bv desktop build linux --release` (Release mode for Linux in `desktop/bin/linux/`)

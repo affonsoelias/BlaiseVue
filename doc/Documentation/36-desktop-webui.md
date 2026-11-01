@@ -42,6 +42,9 @@ bv desktop init [AppName]
 # 2. Synchronize production build (dist/) into desktop/assets/
 bv desktop sync
 
+# 3. Safely remove desktop platform (alias: bv remove desktop / bv remove d)
+bv desktop remove [-y]
+
 # 3. DEBUG Build Mode (with active console window for diagnostics and logging):
 bv desktop build               # Compiles for current host OS (e.g.: Windows -> desktop/bin/windows/)
 bv desktop build windows       # Specifically targets Windows
