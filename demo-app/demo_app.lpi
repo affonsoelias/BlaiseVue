@@ -31,103 +31,1091 @@
         </Mode>
       </Modes>
     </RunParams>
-    <Units Count="24">
+    <Units Count="271">
       <Unit0>
         <Filename Value="demo_app.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="src\app.bv"/>
+        <Filename Value="app.cfg"/>
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="src\components\Card.bv"/>
+        <Filename Value="common\ClientProxies.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="src\components\Counter.bv"/>
+        <Filename Value="common\Services.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
       <Unit4>
-        <Filename Value="src\components\FormHeader.bv"/>
+        <Filename Value="desktop\BlaiseVue_Desktop.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit4>
       <Unit5>
-        <Filename Value="src\components\InfoCard.bv"/>
+        <Filename Value="desktop\uDesktopBridge.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit5>
       <Unit6>
-        <Filename Value="src\components\MemberBodies.bv"/>
+        <Filename Value="desktop\webui.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit6>
       <Unit7>
-        <Filename Value="src\services\uCalculadoraFrete.pas"/>
+        <Filename Value="generated\ClientProxies.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit7>
       <Unit8>
-        <Filename Value="src\services\uFormatters.pas"/>
+        <Filename Value="generated\main.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit8>
       <Unit9>
-        <Filename Value="src\uAppVersion.pas"/>
+        <Filename Value="generated\uAbout.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit9>
       <Unit10>
-        <Filename Value="src\views\About.bv"/>
+        <Filename Value="generated\uApp.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit10>
       <Unit11>
-        <Filename Value="src\views\Charts.bv"/>
+        <Filename Value="generated\uBAccordion.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit11>
       <Unit12>
-        <Filename Value="src\views\CustomerView.bv"/>
+        <Filename Value="generated\uBAlert.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit12>
       <Unit13>
-        <Filename Value="src\views\DatasetView.bv"/>
+        <Filename Value="generated\uBBadge.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit13>
       <Unit14>
-        <Filename Value="src\views\Formulario.bv"/>
+        <Filename Value="generated\uBBreadcrumb.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit14>
       <Unit15>
-        <Filename Value="src\views\Home.bv"/>
+        <Filename Value="generated\uBBreadcrumbItem.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit15>
       <Unit16>
-        <Filename Value="src\views\LibBootstrap.bv"/>
+        <Filename Value="generated\uBBtn.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit16>
       <Unit17>
-        <Filename Value="src\views\LoginView.bv"/>
+        <Filename Value="generated\uBCard.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit17>
       <Unit18>
-        <Filename Value="src\views\MobileView.bv"/>
+        <Filename Value="generated\uBFormSelect.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit18>
       <Unit19>
-        <Filename Value="src\views\ProductView.bv"/>
+        <Filename Value="generated\uBIcon.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit19>
       <Unit20>
-        <Filename Value="src\views\ProFeatures.bv"/>
+        <Filename Value="generated\uBInput.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit20>
       <Unit21>
-        <Filename Value="src\views\ReportsView.bv"/>
+        <Filename Value="generated\uBInputGroup.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit21>
       <Unit22>
-        <Filename Value="src\views\Showcase.bv"/>
+        <Filename Value="generated\uBListGroup.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit22>
       <Unit23>
-        <Filename Value="src\views\UserProfile.bv"/>
+        <Filename Value="generated\uBListGroupItem.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit23>
+      <Unit24>
+        <Filename Value="generated\uBModal.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="generated\uBNavbar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="generated\uBNavItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="generated\uBPagination.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="generated\uBProgress.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="generated\uBSpinner.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="generated\uBTab.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="generated\uBTabs.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="generated\uBToast.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="generated\uBVAccordion.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="generated\uBVAlert.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="generated\uBVBadge.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="generated\uBVBar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit36>
+      <Unit37>
+        <Filename Value="generated\uBVBarChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit37>
+      <Unit38>
+        <Filename Value="generated\uBVBottomNav.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit38>
+      <Unit39>
+        <Filename Value="generated\uBVBottomNavItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="generated\uBVBreadcrumb.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit40>
+      <Unit41>
+        <Filename Value="generated\uBVBreadcrumbItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit41>
+      <Unit42>
+        <Filename Value="generated\uBVBtn.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit42>
+      <Unit43>
+        <Filename Value="generated\uBVBubbleChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit43>
+      <Unit44>
+        <Filename Value="generated\uBVCard.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="generated\uBVChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="generated\uBVCol.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit46>
+      <Unit47>
+        <Filename Value="generated\uBVContainer.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit47>
+      <Unit48>
+        <Filename Value="generated\uBVDataGrid.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit48>
+      <Unit49>
+        <Filename Value="generated\uBVDoughnut.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit49>
+      <Unit50>
+        <Filename Value="generated\uBVDoughnutChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit50>
+      <Unit51>
+        <Filename Value="generated\uBVDrawer.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit51>
+      <Unit52>
+        <Filename Value="generated\uBVFormSelect.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit52>
+      <Unit53>
+        <Filename Value="generated\uBVIcon.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit53>
+      <Unit54>
+        <Filename Value="generated\uBVInput.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit54>
+      <Unit55>
+        <Filename Value="generated\uBVInputGroup.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit55>
+      <Unit56>
+        <Filename Value="generated\uBVIonApp.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit56>
+      <Unit57>
+        <Filename Value="generated\uBVIonBadge.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit57>
+      <Unit58>
+        <Filename Value="generated\uBVIonButton.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit58>
+      <Unit59>
+        <Filename Value="generated\uBVIonCard.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit59>
+      <Unit60>
+        <Filename Value="generated\uBVIonContent.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit60>
+      <Unit61>
+        <Filename Value="generated\uBVIonHeader.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit61>
+      <Unit62>
+        <Filename Value="generated\uBVIonItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit62>
+      <Unit63>
+        <Filename Value="generated\uBVIonList.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit63>
+      <Unit64>
+        <Filename Value="generated\uBVIonTabBar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit64>
+      <Unit65>
+        <Filename Value="generated\uBVIonTabButton.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit65>
+      <Unit66>
+        <Filename Value="generated\uBVIonTabs.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit66>
+      <Unit67>
+        <Filename Value="generated\uBVIonTitle.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit67>
+      <Unit68>
+        <Filename Value="generated\uBVIonToolbar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit68>
+      <Unit69>
+        <Filename Value="generated\uBVLine.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit69>
+      <Unit70>
+        <Filename Value="generated\uBVLineChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit70>
+      <Unit71>
+        <Filename Value="generated\uBVListGroup.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit71>
+      <Unit72>
+        <Filename Value="generated\uBVListGroupItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit72>
+      <Unit73>
+        <Filename Value="generated\uBVModal.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit73>
+      <Unit74>
+        <Filename Value="generated\uBVNavbar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit74>
+      <Unit75>
+        <Filename Value="generated\uBVNavItem.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit75>
+      <Unit76>
+        <Filename Value="generated\uBVPagination.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit76>
+      <Unit77>
+        <Filename Value="generated\uBVPie.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit77>
+      <Unit78>
+        <Filename Value="generated\uBVPieChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit78>
+      <Unit79>
+        <Filename Value="generated\uBVPolarArea.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit79>
+      <Unit80>
+        <Filename Value="generated\uBVPolarAreaChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit80>
+      <Unit81>
+        <Filename Value="generated\uBVProgress.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit81>
+      <Unit82>
+        <Filename Value="generated\uBVRadar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit82>
+      <Unit83>
+        <Filename Value="generated\uBVRadarChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit83>
+      <Unit84>
+        <Filename Value="generated\uBVReportViewer.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit84>
+      <Unit85>
+        <Filename Value="generated\uBVRow.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit85>
+      <Unit86>
+        <Filename Value="generated\uBVScatterChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit86>
+      <Unit87>
+        <Filename Value="generated\uBVSpinner.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit87>
+      <Unit88>
+        <Filename Value="generated\uBVTab.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit88>
+      <Unit89>
+        <Filename Value="generated\uBVTabs.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit89>
+      <Unit90>
+        <Filename Value="generated\uBVThemeSelect.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit90>
+      <Unit91>
+        <Filename Value="generated\uBVThemeToggle.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit91>
+      <Unit92>
+        <Filename Value="generated\uBVToast.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit92>
+      <Unit93>
+        <Filename Value="generated\uBVVirtualScroll.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit93>
+      <Unit94>
+        <Filename Value="generated\uCard.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit94>
+      <Unit95>
+        <Filename Value="generated\uCArea.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit95>
+      <Unit96>
+        <Filename Value="generated\uCBar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit96>
+      <Unit97>
+        <Filename Value="generated\uCBaseChart.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit97>
+      <Unit98>
+        <Filename Value="generated\uCBubble.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit98>
+      <Unit99>
+        <Filename Value="generated\uCDoughnut.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit99>
+      <Unit100>
+        <Filename Value="generated\uCharts.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit100>
+      <Unit101>
+        <Filename Value="generated\uCLine.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit101>
+      <Unit102>
+        <Filename Value="generated\uCMixed.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit102>
+      <Unit103>
+        <Filename Value="generated\uCounter.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit103>
+      <Unit104>
+        <Filename Value="generated\uCPie.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit104>
+      <Unit105>
+        <Filename Value="generated\uCPolarArea.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit105>
+      <Unit106>
+        <Filename Value="generated\uCRadar.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit106>
+      <Unit107>
+        <Filename Value="generated\uCScatter.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit107>
+      <Unit108>
+        <Filename Value="generated\uCStacked.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit108>
+      <Unit109>
+        <Filename Value="generated\uCustomerView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit109>
+      <Unit110>
+        <Filename Value="generated\uDataSetView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit110>
+      <Unit111>
+        <Filename Value="generated\uFormHeader.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit111>
+      <Unit112>
+        <Filename Value="generated\uFormulario.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit112>
+      <Unit113>
+        <Filename Value="generated\uHome.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit113>
+      <Unit114>
+        <Filename Value="generated\uInfoCard.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit114>
+      <Unit115>
+        <Filename Value="generated\uLibBootstrap.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit115>
+      <Unit116>
+        <Filename Value="generated\uLoginView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit116>
+      <Unit117>
+        <Filename Value="generated\uMemberBodies.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit117>
+      <Unit118>
+        <Filename Value="generated\uMobileView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit118>
+      <Unit119>
+        <Filename Value="generated\uProductView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit119>
+      <Unit120>
+        <Filename Value="generated\uProFeatures.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit120>
+      <Unit121>
+        <Filename Value="generated\uReportsView.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit121>
+      <Unit122>
+        <Filename Value="generated\uShowcase.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit122>
+      <Unit123>
+        <Filename Value="generated\uUserProfile.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit123>
+      <Unit124>
+        <Filename Value="lib\blaise-charts\BlaiseCharts.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit124>
+      <Unit125>
+        <Filename Value="lib\blaise-charts\BVBarChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit125>
+      <Unit126>
+        <Filename Value="lib\blaise-charts\BVBubbleChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit126>
+      <Unit127>
+        <Filename Value="lib\blaise-charts\BVChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit127>
+      <Unit128>
+        <Filename Value="lib\blaise-charts\BVDoughnutChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit128>
+      <Unit129>
+        <Filename Value="lib\blaise-charts\BVLineChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit129>
+      <Unit130>
+        <Filename Value="lib\blaise-charts\BVPieChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit130>
+      <Unit131>
+        <Filename Value="lib\blaise-charts\BVPolarAreaChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit131>
+      <Unit132>
+        <Filename Value="lib\blaise-charts\BVRadarChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit132>
+      <Unit133>
+        <Filename Value="lib\blaise-charts\BVScatterChart.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit133>
+      <Unit134>
+        <Filename Value="lib\blaise-reports\BlaiseReports.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit134>
+      <Unit135>
+        <Filename Value="lib\blaise-reports\BlaiseReportsFonts.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit135>
+      <Unit136>
+        <Filename Value="lib\blaise-reports\BVReportViewer.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit136>
+      <Unit137>
+        <Filename Value="lib\blaise-reports\uAppVersion.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit137>
+      <Unit138>
+        <Filename Value="lib\blaise-ui\BVAccordion.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit138>
+      <Unit139>
+        <Filename Value="lib\blaise-ui\BVAlert.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit139>
+      <Unit140>
+        <Filename Value="lib\blaise-ui\BVBadge.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit140>
+      <Unit141>
+        <Filename Value="lib\blaise-ui\BVBottomNav.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit141>
+      <Unit142>
+        <Filename Value="lib\blaise-ui\BVBottomNavItem.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit142>
+      <Unit143>
+        <Filename Value="lib\blaise-ui\BVBreadcrumb.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit143>
+      <Unit144>
+        <Filename Value="lib\blaise-ui\BVBreadcrumbItem.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit144>
+      <Unit145>
+        <Filename Value="lib\blaise-ui\BVBtn.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit145>
+      <Unit146>
+        <Filename Value="lib\blaise-ui\BVCard.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit146>
+      <Unit147>
+        <Filename Value="lib\blaise-ui\BVCol.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit147>
+      <Unit148>
+        <Filename Value="lib\blaise-ui\BVContainer.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit148>
+      <Unit149>
+        <Filename Value="lib\blaise-ui\BVDataGrid.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit149>
+      <Unit150>
+        <Filename Value="lib\blaise-ui\BVDrawer.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit150>
+      <Unit151>
+        <Filename Value="lib\blaise-ui\BVFormSelect.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit151>
+      <Unit152>
+        <Filename Value="lib\blaise-ui\BVIcon.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit152>
+      <Unit153>
+        <Filename Value="lib\blaise-ui\BVInput.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit153>
+      <Unit154>
+        <Filename Value="lib\blaise-ui\BVInputGroup.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit154>
+      <Unit155>
+        <Filename Value="lib\blaise-ui\BVListGroup.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit155>
+      <Unit156>
+        <Filename Value="lib\blaise-ui\BVListGroupItem.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit156>
+      <Unit157>
+        <Filename Value="lib\blaise-ui\BVModal.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit157>
+      <Unit158>
+        <Filename Value="lib\blaise-ui\BVNavbar.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit158>
+      <Unit159>
+        <Filename Value="lib\blaise-ui\BVNavItem.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit159>
+      <Unit160>
+        <Filename Value="lib\blaise-ui\BVPagination.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit160>
+      <Unit161>
+        <Filename Value="lib\blaise-ui\BVProgress.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit161>
+      <Unit162>
+        <Filename Value="lib\blaise-ui\BVRow.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit162>
+      <Unit163>
+        <Filename Value="lib\blaise-ui\BVSpinner.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit163>
+      <Unit164>
+        <Filename Value="lib\blaise-ui\BVTab.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit164>
+      <Unit165>
+        <Filename Value="lib\blaise-ui\BVTabs.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit165>
+      <Unit166>
+        <Filename Value="lib\blaise-ui\BVToast.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit166>
+      <Unit167>
+        <Filename Value="lib\blaise-ui\BVVirtualScroll.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit167>
+      <Unit168>
+        <Filename Value="lib\blaise-ui-mobile\BlaiseIonic.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit168>
+      <Unit169>
+        <Filename Value="lib\blaise-ui-mobile\BVIonApp.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit169>
+      <Unit170>
+        <Filename Value="lib\blaise-ui-mobile\BVIonBadge.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit170>
+      <Unit171>
+        <Filename Value="lib\blaise-ui-mobile\BVIonButton.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit171>
+      <Unit172>
+        <Filename Value="lib\blaise-ui-mobile\BVIonCard.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit172>
+      <Unit173>
+        <Filename Value="lib\blaise-ui-mobile\BVIonContent.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit173>
+      <Unit174>
+        <Filename Value="lib\blaise-ui-mobile\BVIonHeader.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit174>
+      <Unit175>
+        <Filename Value="lib\blaise-ui-mobile\BVIonItem.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit175>
+      <Unit176>
+        <Filename Value="lib\blaise-ui-mobile\BVIonList.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit176>
+      <Unit177>
+        <Filename Value="lib\blaise-ui-mobile\BVIonTabBar.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit177>
+      <Unit178>
+        <Filename Value="lib\blaise-ui-mobile\BVIonTabButton.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit178>
+      <Unit179>
+        <Filename Value="lib\blaise-ui-mobile\BVIonTabs.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit179>
+      <Unit180>
+        <Filename Value="lib\blaise-ui-mobile\BVIonTitle.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit180>
+      <Unit181>
+        <Filename Value="lib\blaise-ui-mobile\BVIonToolbar.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit181>
+      <Unit182>
+        <Filename Value="lib\themes\BVThemeSelect.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit182>
+      <Unit183>
+        <Filename Value="lib\themes\BVThemeToggle.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit183>
+      <Unit184>
+        <Filename Value="package.json"/>
+        <IsPartOfProject Value="True"/>
+      </Unit184>
+      <Unit185>
+        <Filename Value="server\AuthService.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit185>
+      <Unit186>
+        <Filename Value="server\CrudCustomer.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit186>
+      <Unit187>
+        <Filename Value="server\CrudProduct.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit187>
+      <Unit188>
+        <Filename Value="server\DatabaseConfig.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit188>
+      <Unit189>
+        <Filename Value="server\RpcService.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit189>
+      <Unit190>
+        <Filename Value="server\server.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit190>
+      <Unit191>
+        <Filename Value="server\ServerApp.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit191>
+      <Unit192>
+        <Filename Value="server\ServerModels.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit192>
+      <Unit193>
+        <Filename Value="server\Services.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit193>
+      <Unit194>
+        <Filename Value="server\SwaggerService.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit194>
+      <Unit195>
+        <Filename Value="src\app.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit195>
+      <Unit196>
+        <Filename Value="src\components\Card.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit196>
+      <Unit197>
+        <Filename Value="src\components\Counter.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit197>
+      <Unit198>
+        <Filename Value="src\components\FormHeader.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit198>
+      <Unit199>
+        <Filename Value="src\components\InfoCard.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit199>
+      <Unit200>
+        <Filename Value="src\components\MemberBodies.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit200>
+      <Unit201>
+        <Filename Value="src\services\uCalculadoraFrete.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit201>
+      <Unit202>
+        <Filename Value="src\services\uFormatters.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit202>
+      <Unit203>
+        <Filename Value="src\uAppVersion.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit203>
+      <Unit204>
+        <Filename Value="src\views\About.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit204>
+      <Unit205>
+        <Filename Value="src\views\Charts.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit205>
+      <Unit206>
+        <Filename Value="src\views\CustomerView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit206>
+      <Unit207>
+        <Filename Value="src\views\DatasetView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit207>
+      <Unit208>
+        <Filename Value="src\views\Formulario.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit208>
+      <Unit209>
+        <Filename Value="src\views\Home.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit209>
+      <Unit210>
+        <Filename Value="src\views\LibBootstrap.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit210>
+      <Unit211>
+        <Filename Value="src\views\LoginView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit211>
+      <Unit212>
+        <Filename Value="src\views\MobileView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit212>
+      <Unit213>
+        <Filename Value="src\views\ProductView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit213>
+      <Unit214>
+        <Filename Value="src\views\ProFeatures.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit214>
+      <Unit215>
+        <Filename Value="src\views\ReportsView.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit215>
+      <Unit216>
+        <Filename Value="src\views\Showcase.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit216>
+      <Unit217>
+        <Filename Value="src\views\UserProfile.bv"/>
+        <IsPartOfProject Value="True"/>
+      </Unit217>
+      <Unit218>
+        <Filename Value="tests\components\Card.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit218>
+      <Unit219>
+        <Filename Value="tests\components\FormHeader.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit219>
+      <Unit220>
+        <Filename Value="tests\components\InfoCard.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit220>
+      <Unit221>
+        <Filename Value="tests\framework\auth.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit221>
+      <Unit222>
+        <Filename Value="tests\framework\blaise_ui.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit222>
+      <Unit223>
+        <Filename Value="tests\framework\charts.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit223>
+      <Unit224>
+        <Filename Value="tests\framework\component.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit224>
+      <Unit225>
+        <Filename Value="tests\framework\conditional_directives.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit225>
+      <Unit226>
+        <Filename Value="tests\framework\dataset.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit226>
+      <Unit227>
+        <Filename Value="tests\framework\dataset_offline.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit227>
+      <Unit228>
+        <Filename Value="tests\framework\desktop.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit228>
+      <Unit229>
+        <Filename Value="tests\framework\directive_lifecycle.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit229>
+      <Unit230>
+        <Filename Value="tests\framework\docker.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit230>
+      <Unit231>
+        <Filename Value="tests\framework\hoisting.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit231>
+      <Unit232>
+        <Filename Value="tests\framework\i18n.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit232>
+      <Unit233>
+        <Filename Value="tests\framework\ionic.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit233>
+      <Unit234>
+        <Filename Value="tests\framework\lib_packager.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit234>
+      <Unit235>
+        <Filename Value="tests\framework\member_bodies.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit235>
+      <Unit236>
+        <Filename Value="tests\framework\mobile.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit236>
+      <Unit237>
+        <Filename Value="tests\framework\mormot_client.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit237>
+      <Unit238>
+        <Filename Value="tests\framework\mormot_relational.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit238>
+      <Unit239>
+        <Filename Value="tests\framework\pascal_dx.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit239>
+      <Unit240>
+        <Filename Value="tests\framework\reactivity.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit240>
+      <Unit241>
+        <Filename Value="tests\framework\reports.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit241>
+      <Unit242>
+        <Filename Value="tests\framework\responsive_layout.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit242>
+      <Unit243>
+        <Filename Value="tests\framework\routing_v2.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit243>
+      <Unit244>
+        <Filename Value="tests\framework\rpc.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit244>
+      <Unit245>
+        <Filename Value="tests\framework\scoped_slots.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit245>
+      <Unit246>
+        <Filename Value="tests\framework\studio.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit246>
+      <Unit247>
+        <Filename Value="tests\framework\swagger.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit247>
+      <Unit248>
+        <Filename Value="tests\framework\teleport_suspense.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit248>
+      <Unit249>
+        <Filename Value="tests\framework\template_checker.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit249>
+      <Unit250>
+        <Filename Value="tests\framework\theme.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit250>
+      <Unit251>
+        <Filename Value="tests\framework\transition_group.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit251>
+      <Unit252>
+        <Filename Value="tests\framework\validation.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit252>
+      <Unit253>
+        <Filename Value="tests\framework\virtual_scroll.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit253>
+      <Unit254>
+        <Filename Value="tests\framework\wasm_ssg.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit254>
+      <Unit255>
+        <Filename Value="tests\services\CalculadoraFrete.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit255>
+      <Unit256>
+        <Filename Value="tests\services\Formatters.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit256>
+      <Unit257>
+        <Filename Value="tests\views\About.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit257>
+      <Unit258>
+        <Filename Value="tests\views\Charts.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit258>
+      <Unit259>
+        <Filename Value="tests\views\CustomerView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit259>
+      <Unit260>
+        <Filename Value="tests\views\DatasetView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit260>
+      <Unit261>
+        <Filename Value="tests\views\Formulario.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit261>
+      <Unit262>
+        <Filename Value="tests\views\Home.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit262>
+      <Unit263>
+        <Filename Value="tests\views\LibBootstrap.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit263>
+      <Unit264>
+        <Filename Value="tests\views\LoginView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit264>
+      <Unit265>
+        <Filename Value="tests\views\MobileView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit265>
+      <Unit266>
+        <Filename Value="tests\views\ProductView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit266>
+      <Unit267>
+        <Filename Value="tests\views\ProFeatures.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit267>
+      <Unit268>
+        <Filename Value="tests\views\ReportsView.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit268>
+      <Unit269>
+        <Filename Value="tests\views\Showcase.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit269>
+      <Unit270>
+        <Filename Value="tests\views\UserProfile.test.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit270>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -137,7 +1125,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="src;src/services;generated;lib"/>
+      <OtherUnitFiles Value="src;src/services;src/components;src/views;server;tests;desktop;generated;lib"/>
       <UnitOutputDirectory Value="generated/units"/>
     </SearchPaths>
     <Other>

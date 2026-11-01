@@ -25,9 +25,10 @@ BlaiseVue delivers official design-time integration for the **Lazarus IDE**, bri
    - **Executar Suíte de Testes (`bv test`)**: Triggers the test suite with instant results in the IDE.
    - **Sincronizar Projeto (`bv lazarus init`)**: Scans for newly added `.bv` components and synchronizes the Project Inspector.
 
-4. **Project Generation (`bv lazarus init`)**:
+4. **Project Generation & Full Architecture Sync (`bv lazarus init`)**:
    - Automatically generates a complete Lazarus Project (`.lpi` and `.lpr`) from any existing BlaiseVue project.
-   - Indexes all `.bv` components and views into the **Project Inspector** tree.
+   - Comprehensive multi-tier indexer scanning `src/` (components and views), `tests/` (unit and integration suites), `server/` (mORMot 2 backend), `desktop/` (WebUI desktop wrapper), `generated/` (compiler intermediate units), and root configurations (`app.cfg`).
+   - Automatically utilizes the native **Directory Hierarchy View** in the Project Inspector so all project directories appear organized in their respective tree folders.
    - Configures build macros so pressing **F9** executes `bv dev` and **Ctrl+F9** executes `bv build`.
 
 ---

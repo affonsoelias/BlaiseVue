@@ -22,6 +22,7 @@ Permite executar tarefas do CLI diretamente do Lazarus, enviando os resultados p
 * **Verificar Componente Ativo (.bv)**: Executa `bv check` no arquivo aberto, validando a integridade da árvore AST e diretivas com destaque de erros na janela de mensagens.
 * **Listar Search Paths do Compilador (bv path)**: Exibe os caminhos de unidades ativas e pacotes Pas2JS mapeados no `app.cfg`.
 * **Executar Suíte de Testes (bv test)**: Dispara a suíte de testes de componentes e serviços com relatório instantâneo.
+* **Sincronizar Projeto (bv lazarus init)**: Escaneia todas as camadas (`src/`, `tests/`, `server/`, `desktop/`, `generated/`) e organiza a árvore hierárquica no Inspetor de Projetos.
 
 ---
 

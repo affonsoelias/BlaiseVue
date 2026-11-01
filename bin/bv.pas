@@ -10217,12 +10217,56 @@ begin
   Halt(1);
 end;
 
-procedure CollectProjectUnits(const Dir, RelPrefix: string; List: TStringList);
+function IsIgnoredProjectDir(const DirName: string): Boolean;
+var
+  LName: string;
+begin
+  LName := LowerCase(DirName);
+  Result := (LName = 'node_modules') or
+            (LName = '.git') or
+            (LName = 'dist') or
+            (LName = 'units') or
+            (LName = '.bv_backup') or
+            (LName = 'backup') or
+            (LName = 'lib_cache') or
+            (LName = 'tmp') or
+            (LName = 'temp') or
+            (LName = '.vscode') or
+            (LName = 'android') or
+            (LName = 'assets') or
+            (LName = 'bin') or
+            (LName = '.gradle');
+end;
+
+function IsRelevantProjectFile(const FileName: string; IsRootDir: Boolean): Boolean;
+var
+  Ext, LName: string;
+begin
+  LName := LowerCase(FileName);
+  Ext := LowerCase(ExtractFileExt(FileName));
+
+  // 1. Core Pascal and BlaiseVue components in any project folder
+  if (Ext = '.bv') or (Ext = '.pas') or (Ext = '.pp') or (Ext = '.inc') or (Ext = '.lpr') then
+    Exit(True);
+
+  // 2. Project configuration & manifests (in root directory only)
+  if IsRootDir then
+  begin
+    if (LName = 'app.cfg') or (LName = 'app.json') or (LName = 'index.html') or
+       (LName = 'package.json') or (Ext = '.cfg') then
+      Exit(True);
+  end;
+
+  Result := False;
+end;
+
+procedure CollectProjectUnits(const Dir, RelPrefix: string; List: TStringList; IsRootDir: Boolean = False);
 var
   SR: TSearchRec;
-  RelPath, Ext: string;
+  RelPath, FullPath: string;
 begin
-  if FindFirst(IncludeTrailingPathDelimiter(Dir) + '*', faAnyFile, SR) = 0 then
+  FullPath := IncludeTrailingPathDelimiter(Dir);
+  if FindFirst(FullPath + '*', faAnyFile, SR) = 0 then
   begin
     try
       repeat
@@ -10230,19 +10274,20 @@ begin
         begin
           if (SR.Attr and faDirectory) <> 0 then
           begin
-            if (SR.Name <> 'node_modules') and (SR.Name <> 'dist') and 
-               (SR.Name <> '.git') and (SR.Name <> 'lib') and (SR.Name <> 'units') and
-               (SR.Name <> 'generated') and (SR.Name <> '.bv_backup') then
-              CollectProjectUnits(IncludeTrailingPathDelimiter(Dir) + SR.Name, 
-                                  RelPrefix + SR.Name + DirectorySeparator, List);
+            if not IsIgnoredProjectDir(SR.Name) then
+              CollectProjectUnits(FullPath + SR.Name, 
+                                  RelPrefix + SR.Name + DirectorySeparator, List, False);
           end
           else
           begin
-            Ext := LowerCase(ExtractFileExt(SR.Name));
-            if (Ext = '.bv') or (Ext = '.pas') or (Ext = '.pp') then
+            if IsRelevantProjectFile(SR.Name, IsRootDir) then
             begin
-              RelPath := RelPrefix + SR.Name;
-              List.Add(RelPath);
+              // Skip the main project .lpr in root since it is already registered as Unit0
+              if not (IsRootDir and (ExtractFileExt(SR.Name) = '.lpr')) then
+              begin
+                RelPath := RelPrefix + SR.Name;
+                List.Add(RelPath);
+              end;
             end;
           end;
         end;
@@ -10309,11 +10354,11 @@ begin
     WriteLn('  [+] Created ' + CleanName + '.lpr');
   end;
 
-  // 2. Collect all project units (*.bv, *.pas)
+  // 2. Collect all project files across the whole project (*.bv, *.pas, configs)
   UnitsList := TStringList.Create;
   try
-    if DirectoryExists(CurDir + DirectorySeparator + 'src') then
-      CollectProjectUnits(CurDir + DirectorySeparator + 'src', 'src' + DirectorySeparator, UnitsList);
+    CollectProjectUnits(CurDir, '', UnitsList, True);
+    UnitsList.Sort;
 
     // 3. Assemble <CleanName>.lpi
     LpiContent :=
@@ -10376,7 +10421,7 @@ begin
       '    </Target>' + #10 +
       '    <SearchPaths>' + #10 +
       '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
-      '      <OtherUnitFiles Value="src;src/services;generated;lib"/>' + #10 +
+      '      <OtherUnitFiles Value="src;src/services;src/components;src/views;server;tests;desktop;generated;lib"/>' + #10 +
       '      <UnitOutputDirectory Value="generated/units"/>' + #10 +
       '    </SearchPaths>' + #10 +
       '    <Other>' + #10 +
