@@ -48,7 +48,7 @@ uses
 {$ENDIF}
   SysUtils, Classes, StrUtils, DateUtils, Process, Sockets,
 
-  fphttpclient, openssl, zipper, fpjson, jsonparser;
+  fphttpclient, openssl, opensslsockets, zipper, fpjson, jsonparser;
 
 
 
@@ -822,6 +822,7 @@ procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
 procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
+procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
 
 
@@ -23276,6 +23277,408 @@ begin
   end;
 end;
 
+// =====================================================================
+//  PACKAGE REPOSITORIES & ECOSYSTEM REGISTRY (bv repo)
+// =====================================================================
+
+function GetReposConfigPath: string;
+var
+  HomeDir, BaseDir: string;
+begin
+  {$IFDEF MSWINDOWS}
+  HomeDir := GetEnvironmentVariable('USERPROFILE');
+  if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
+  {$ELSE}
+  HomeDir := GetEnvironmentVariable('HOME');
+  {$ENDIF}
+  if HomeDir = '' then HomeDir := GetCurrentDir;
+  BaseDir := IncludeTrailingPathDelimiter(HomeDir) + '.blaisevue';
+  ForceDir(BaseDir);
+  Result := BaseDir + DirectorySeparator + 'repos.json';
+end;
+
+function LoadReposRegistry(out RootObj: TJSONObject): Boolean;
+var
+  ConfigFile, Raw: string;
+  Parser: TJSONParser;
+  Data: TJSONData;
+  DefaultRepo: TJSONObject;
+  ReposArr: TJSONArray;
+begin
+  Result := False;
+  RootObj := nil;
+  ConfigFile := GetReposConfigPath;
+  if (not FileExists(ConfigFile)) or (Trim(ReadFileToString(ConfigFile)) = '') then
+  begin
+    RootObj := TJSONObject.Create;
+    ReposArr := TJSONArray.Create;
+    DefaultRepo := TJSONObject.Create;
+    DefaultRepo.Add('name', 'official');
+    DefaultRepo.Add('url', 'https://github.com/affonsoelias/blaisevue-ecosystem');
+    DefaultRepo.Add('type', 'ecosystem');
+    DefaultRepo.Add('default', True);
+    ReposArr.Add(DefaultRepo);
+    RootObj.Add('repositories', ReposArr);
+    WriteStringToFile(ConfigFile, RootObj.FormatJSON);
+    Exit(True);
+  end;
+
+  Raw := ReadFileToString(ConfigFile);
+  Parser := TJSONParser.Create(Raw, True);
+  try
+    try
+      Data := Parser.Parse;
+      if Assigned(Data) and (Data.JSONType = jtObject) then
+      begin
+        RootObj := TJSONObject(Data);
+        Result := True;
+      end
+      else if Assigned(Data) then
+        Data.Free;
+    except
+      RootObj := nil;
+      Result := False;
+    end;
+  finally
+    Parser.Free;
+  end;
+end;
+
+procedure SaveReposRegistry(RootObj: TJSONObject);
+var
+  ConfigFile: string;
+begin
+  if not Assigned(RootObj) then Exit;
+  ConfigFile := GetReposConfigPath;
+  WriteStringToFile(ConfigFile, RootObj.FormatJSON);
+end;
+
+procedure CmdRepoList;
+var
+  RootObj, RepoObj: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  RName, RUrl, RType: string;
+  IsDef: Boolean;
+begin
+  if not LoadReposRegistry(RootObj) then
+  begin
+    WriteLn('Erro ao carregar registro de repositorios em: ', GetReposConfigPath);
+    Exit;
+  end;
+  try
+    WriteLn('=== BlaiseVue Package Repositories ===');
+    WriteLn('Config: ' + GetReposConfigPath);
+    WriteLn('');
+    ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+    if (not Assigned(ReposArr)) or (ReposArr.Count = 0) then
+    begin
+      WriteLn('  Nenhum repositorio cadastrado.');
+      Exit;
+    end;
+
+    for i := 0 to ReposArr.Count - 1 do
+    begin
+      if ReposArr.Types[i] = jtObject then
+      begin
+        RepoObj := TJSONObject(ReposArr.Objects[i]);
+        RName := RepoObj.Get('name', '');
+        RUrl := RepoObj.Get('url', '');
+        RType := RepoObj.Get('type', 'ecosystem');
+        IsDef := RepoObj.Get('default', False);
+
+        if IsDef then
+          WriteLn('  * ' + RName + ' (default)')
+        else
+          WriteLn('    ' + RName);
+        WriteLn('      URL:  ' + RUrl);
+        WriteLn('      Type: ' + RType);
+        WriteLn('');
+      end;
+    end;
+    WriteLn('Total: ' + IntToStr(ReposArr.Count) + ' repositorio(s) configurado(s).');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRepoAdd(const Name, URL: string);
+var
+  RootObj, NewRepo, Existing: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  CleanName, CleanURL: string;
+begin
+  CleanName := LowerCase(Trim(Name));
+  CleanURL := Trim(URL);
+  if (CleanName = '') or (CleanURL = '') then
+  begin
+    WriteLn('Uso: bv repo add <nome> <url>');
+    WriteLn('Exemplo: bv repo add community https://github.com/usuario/blaise-packages');
+    Exit;
+  end;
+
+  if not LoadReposRegistry(RootObj) then
+    RootObj := TJSONObject.Create;
+
+  try
+    ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+    if not Assigned(ReposArr) then
+    begin
+      ReposArr := TJSONArray.Create;
+      RootObj.Add('repositories', ReposArr);
+    end;
+
+    for i := 0 to ReposArr.Count - 1 do
+    begin
+      if ReposArr.Types[i] = jtObject then
+      begin
+        Existing := TJSONObject(ReposArr.Objects[i]);
+        if LowerCase(Existing.Get('name', '')) = CleanName then
+        begin
+          WriteLn('Aviso: O repositorio "' + CleanName + '" ja existe com a URL: ' + Existing.Get('url', ''));
+          Existing.Delete('url');
+          Existing.Add('url', CleanURL);
+          SaveReposRegistry(RootObj);
+          WriteLn('[SUCCESS] Repositorio "' + CleanName + '" atualizado com nova URL: ' + CleanURL);
+          Exit;
+        end;
+      end;
+    end;
+
+    NewRepo := TJSONObject.Create;
+    NewRepo.Add('name', CleanName);
+    NewRepo.Add('url', CleanURL);
+    NewRepo.Add('type', 'ecosystem');
+    NewRepo.Add('default', False);
+    ReposArr.Add(NewRepo);
+
+    SaveReposRegistry(RootObj);
+    WriteLn('[SUCCESS] Repositorio "' + CleanName + '" adicionado com sucesso!');
+    WriteLn('          URL: ' + CleanURL);
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRepoRemove(const Name: string);
+var
+  RootObj, RepoObj: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  CleanName: string;
+  Found: Boolean;
+begin
+  CleanName := LowerCase(Trim(Name));
+  if CleanName = '' then
+  begin
+    WriteLn('Uso: bv repo remove <nome>');
+    Exit;
+  end;
+
+  if not LoadReposRegistry(RootObj) then
+  begin
+    WriteLn('Erro ao carregar registro de repositorios.');
+    Exit;
+  end;
+
+  try
+    ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+    if not Assigned(ReposArr) then Exit;
+
+    Found := False;
+    for i := ReposArr.Count - 1 downto 0 do
+    begin
+      if ReposArr.Types[i] = jtObject then
+      begin
+        RepoObj := TJSONObject(ReposArr.Objects[i]);
+        if LowerCase(RepoObj.Get('name', '')) = CleanName then
+        begin
+          ReposArr.Delete(i);
+          Found := True;
+        end;
+      end;
+    end;
+
+    if Found then
+    begin
+      SaveReposRegistry(RootObj);
+      WriteLn('[SUCCESS] Repositorio "' + CleanName + '" removido com sucesso!');
+    end
+    else
+      WriteLn('Repositorio "' + CleanName + '" nao encontrado.');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRepoDefault(const Name: string);
+var
+  RootObj, RepoObj: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  CleanName: string;
+  Found: Boolean;
+begin
+  CleanName := LowerCase(Trim(Name));
+  if CleanName = '' then
+  begin
+    WriteLn('Uso: bv repo default <nome>');
+    Exit;
+  end;
+
+  if not LoadReposRegistry(RootObj) then Exit;
+
+  try
+    ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+    if not Assigned(ReposArr) then Exit;
+
+    Found := False;
+    for i := 0 to ReposArr.Count - 1 do
+    begin
+      if ReposArr.Types[i] = jtObject then
+      begin
+        RepoObj := TJSONObject(ReposArr.Objects[i]);
+        if LowerCase(RepoObj.Get('name', '')) = CleanName then
+        begin
+          RepoObj.Delete('default');
+          RepoObj.Add('default', True);
+          Found := True;
+        end
+        else
+        begin
+          RepoObj.Delete('default');
+          RepoObj.Add('default', False);
+        end;
+      end;
+    end;
+
+    if Found then
+    begin
+      SaveReposRegistry(RootObj);
+      WriteLn('[SUCCESS] Repositorio "' + CleanName + '" definido como padrao!');
+    end
+    else
+      WriteLn('Repositorio "' + CleanName + '" nao encontrado.');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRepoSync;
+var
+  RootObj, RepoObj: TJSONObject;
+  ReposArr: TJSONArray;
+  i: Integer;
+  RName, RUrl, RawUrl, CacheDir, CacheFile: string;
+  Client: TFPHTTPClient;
+  Resp: string;
+  CatParser: TJSONParser;
+  CatData: TJSONData;
+  PkgObj: TJSONObject;
+  PkgCount: Integer;
+begin
+  if not LoadReposRegistry(RootObj) then Exit;
+
+  CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
+  ForceDir(CacheDir);
+
+  WriteLn('=== Sincronizando Catalogo de Repositorios BlaiseVue ===');
+  try
+    ReposArr := RootObj.Get('repositories', TJSONArray(nil));
+    if not Assigned(ReposArr) then Exit;
+
+    for i := 0 to ReposArr.Count - 1 do
+    begin
+      if ReposArr.Types[i] = jtObject then
+      begin
+        RepoObj := TJSONObject(ReposArr.Objects[i]);
+        RName := RepoObj.Get('name', '');
+        RUrl := RepoObj.Get('url', '');
+
+        RawUrl := RUrl;
+        if Pos('github.com/', RawUrl) > 0 then
+        begin
+          RawUrl := StringReplace(RawUrl, 'github.com/', 'raw.githubusercontent.com/', []);
+          if Copy(RawUrl, Length(RawUrl) - 3, 4) = '.git' then
+            Delete(RawUrl, Length(RawUrl) - 3, 4);
+          RawUrl := RawUrl + '/main/ecosystem.json';
+        end;
+
+        Write('  [+] Sincronizando "' + RName + '" ... ');
+        Client := TFPHTTPClient.Create(nil);
+        try
+          try
+            Client.AllowRedirect := True;
+            Resp := Client.Get(RawUrl);
+            CacheFile := CacheDir + DirectorySeparator + RName + '-ecosystem.json';
+            WriteStringToFile(CacheFile, Resp);
+
+            PkgCount := 0;
+            CatParser := TJSONParser.Create(Resp, True);
+            try
+              CatData := CatParser.Parse;
+              if Assigned(CatData) and (CatData.JSONType = jtObject) then
+              begin
+                PkgObj := TJSONObject(CatData).Get('packages', TJSONObject(nil));
+                if Assigned(PkgObj) then PkgCount := PkgObj.Count;
+              end;
+              if Assigned(CatData) then CatData.Free;
+            finally
+              CatParser.Free;
+            end;
+
+            WriteLn('OK (' + IntToStr(PkgCount) + ' pacote(s) disponivel(eis))');
+          except
+            on E: Exception do
+              WriteLn('FALHA (' + E.Message + ')');
+          end;
+        finally
+          Client.Free;
+        end;
+      end;
+    end;
+    WriteLn('Sincronizacao concluida com sucesso!');
+  finally
+    RootObj.Free;
+  end;
+end;
+
+procedure CmdRepo;
+var
+  SubCmd: string;
+begin
+  if ParamCount < 2 then
+  begin
+    CmdRepoList;
+    Exit;
+  end;
+
+  SubCmd := LowerCase(ParamStr(2));
+  if (SubCmd = 'list') or (SubCmd = 'ls') then
+    CmdRepoList
+  else if SubCmd = 'add' then
+    CmdRepoAdd(ParamStr(3), ParamStr(4))
+  else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
+    CmdRepoRemove(ParamStr(3))
+  else if (SubCmd = 'default') or (SubCmd = 'use') then
+    CmdRepoDefault(ParamStr(3))
+  else if (SubCmd = 'sync') or (SubCmd = 'update') then
+    CmdRepoSync
+  else
+  begin
+    WriteLn('Comando desconhecido: bv repo ' + SubCmd);
+    WriteLn('Subcomandos disponiveis:');
+    WriteLn('  bv repo list               Lista repositorios cadastrados');
+    WriteLn('  bv repo add <nome> <url>   Cadastra um novo repositorio');
+    WriteLn('  bv repo remove <nome>      Remove um repositorio');
+    WriteLn('  bv repo default <nome>     Define o repositorio padrao');
+    WriteLn('  bv repo sync               Atualiza o catalogo de pacotes');
+    Halt(1);
+  end;
+end;
+
+
 procedure SplitTokens(const S: string; Tokens: TStringList);
 var
   i: Integer;
@@ -25045,6 +25448,7 @@ begin
     WriteLn('  bv desktop run [target]    Builds and launches desktop app for target');
     WriteLn('');
     WriteLn('  # === Package & Theme Management ===');
+    WriteLn('  bv repo <list|add|remove|default|sync> Manages package repositories & ecosystem sources');
     WriteLn('  bv lib install <pkg|url>   Installs official package (themes, icons, ui, mobile) or from URL');
     WriteLn('  bv lib remove <name>       Removes an installed component or package from lib/');
     WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
@@ -25349,6 +25753,10 @@ begin
        CmdLibRemove(ParamStr(3));
 
     end
+    else if (Cmd = 'repo') or (Cmd = 'repositories') then
+    begin
+       CmdRepo;
+    end
 
     else if (Cmd = 'pack') or (Cmd = 'dist') then
 
@@ -25636,6 +26044,10 @@ begin
   else if (Cmd = 'project') or (Cmd = 'p') then
   begin
     CmdProject;
+  end
+  else if (Cmd = 'repo') or (Cmd = 'repository') then
+  begin
+    CmdRepo;
   end
   else if (Cmd = 'rename') or (Cmd = 'ren') or (Cmd = 'mv') then
   begin
