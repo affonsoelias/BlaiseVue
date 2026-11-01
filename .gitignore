@@ -44,6 +44,7 @@ obj/
 *.running
 *.old
 scratch/
+packagefiles.xml
 
 # Ensure essential tools in pas2js/ and vendor/ are tracked!
 !pas2js/

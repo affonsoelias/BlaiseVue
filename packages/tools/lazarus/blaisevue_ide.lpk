@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="5">
+    <PathDelim Value="\"/>
+    <Name Value="blaisevue_ide"/>
+    <Type Value="RunAndDesignTime"/>
+    <Author Value="BlaiseVue Team"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <PathDelim Value="\"/>
+      <SearchPaths>
+        <OtherUnitFiles Value="src"/>
+        <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <SyntaxMode Value="ObjFPC"/>
+        </SyntaxOptions>
+      </Parsing>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="2"/>
+        </Optimizations>
+      </CodeGeneration>
+      <Linking>
+        <Debugging>
+          <DebugInfoType Value="dsDwarf3"/>
+        </Debugging>
+      </Linking>
+    </CompilerOptions>
+    <Description Value="BlaiseVue IDE Integration for Lazarus: Multi-Syntax Highlighting for .bv Single File Components (HTML + Pascal + CSS), File -> New Component Wizard, and IDE Tools menu."/>
+    <License Value="MIT"/>
+    <Version Major="4" Minor="4" Release="0"/>
+    <Files Count="4">
+      <Item1>
+        <Filename Value="src\uBVSynMultiSyn.pas"/>
+        <UnitName Value="uBVSynMultiSyn"/>
+      </Item1>
+      <Item2>
+        <Filename Value="src\uBVFileDescriptor.pas"/>
+        <UnitName Value="uBVFileDescriptor"/>
+      </Item2>
+      <Item3>
+        <Filename Value="src\uBVToolsMenu.pas"/>
+        <UnitName Value="uBVToolsMenu"/>
+      </Item3>
+      <Item4>
+        <Filename Value="src\uBlaiseVueIDEReg.pas"/>
+        <HasRegisterProc Value="True"/>
+        <UnitName Value="uBlaiseVueIDEReg"/>
+      </Item4>
+    </Files>
+    <CompatibilityMode Value="True"/>
+    <RequiredPkgs Count="4">
+      <Item1>
+        <PackageName Value="IDEIntf"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="SynEdit"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="LCL"/>
+      </Item3>
+      <Item4>
+        <PackageName Value="FCL"/>
+      </Item4>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+      <UseFileFilters Value="True"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>
