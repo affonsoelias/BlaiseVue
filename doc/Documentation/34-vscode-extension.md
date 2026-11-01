@@ -104,7 +104,7 @@ The extension includes code snippets to speed up development:
 
 ## 🛠️ Extension Source Layout
 
-The extension lives in [`packages/tools/vscode-extension/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/tools/vscode-extension/):
+The extension lives in [`packages/tools/vscode-extension/`](/BlaiseVue/packages/tools/vscode-extension/):
 
 ```text
 packages/tools/vscode-extension/

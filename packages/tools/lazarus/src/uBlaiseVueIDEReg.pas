@@ -83,7 +83,6 @@ begin
       begin
         SynEd.Highlighter := TBVSynMultiSyn.Create(SynEd);
       end;
-      AttachBVCompletion(SynEd);
     end;
   end;
 end;
@@ -99,7 +98,10 @@ begin
   // 3. Register BlaiseVue IDE Tools menu items
   RegisterToolsMenu;
 
-  // 4. Initialize global IDE editor change hook for automatic .bv highlighter assignment
+  // 4. Register official BlaiseVue code completion plugin for .bv files
+  RegisterBVCompletionPlugin;
+
+  // 5. Initialize global IDE editor change hook for automatic .bv highlighter assignment
   if gBVHook = nil then
     gBVHook := TBVIDEHook.Create(nil);
 end;

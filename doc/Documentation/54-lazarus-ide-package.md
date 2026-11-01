@@ -37,7 +37,7 @@ BlaiseVue delivers official design-time integration for the **Lazarus IDE**, bri
 
 ## 📦 Package Architecture
 
-The Lazarus package lives in [`packages/tools/lazarus/`](file:///c:/Users/Pichau/Documents/BlaiseVue/packages/tools/lazarus/):
+The Lazarus package lives in [`packages/tools/lazarus/`](/BlaiseVue/packages/tools/lazarus/):
 
 ```text
 packages/tools/lazarus/
