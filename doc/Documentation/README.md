@@ -31,6 +31,9 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 
 ## 📚 Complete Documentation Index
 
+> 💡 **New to Pascal or Web Development?** Check out our practical step-by-step **[Complete Course: From Zero to Ninja](../Course/README.md)** (13 beginner-friendly modules with runnable code, analogies, and exercises).
+
+
 ### 🏁 1. Getting Started & Core Fundamentals
 1. [01. Architecture and Mission](01-introduction.md) — The philosophy and vision behind BlaiseVue.
 2. [02. Installation & SDK Setup](02-installation.md) — System requirements, FPC setup, and pre-bundled Pas2JS compiler.
