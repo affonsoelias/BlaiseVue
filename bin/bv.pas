@@ -12433,6 +12433,270 @@ end;
 
 
 
+// =====================================================================
+//  ENVIRONMENT UTILITIES & FRAMEWORK DIAGNOSTICS (bv doctor)
+// =====================================================================
+
+function ExecCmdCapture(const CmdLine: string; out OutText: string): Boolean;
+var
+  OutStr: string;
+begin
+  OutStr := '';
+  {$IFDEF WINDOWS}
+  Result := RunCommand('cmd.exe', ['/c', CmdLine], OutStr);
+  {$ELSE}
+  Result := RunCommand('sh', ['-c', CmdLine], OutStr);
+  {$ENDIF}
+  OutText := Trim(OutStr);
+end;
+
+function FindFPCExecutable(out FpcExe, FpcVer, SourceDesc: string): Boolean;
+var
+  OutStr, Cand: string;
+begin
+  FpcExe := '';
+  FpcVer := '';
+  SourceDesc := '';
+  Result := False;
+
+  // 1. Try system PATH
+  if ExecCmdCapture('fpc -iV', OutStr) and (OutStr <> '') and (Pos('Error', OutStr) = 0) and (Pos('not found', OutStr) = 0) and (Pos('reconhecido', OutStr) = 0) then
+  begin
+    FpcExe := 'fpc';
+    FpcVer := Trim(OutStr);
+    SourceDesc := 'system PATH';
+    Result := True;
+    Exit;
+  end;
+
+  // 2. Check Lazarus installation on Windows
+  {$IFDEF WINDOWS}
+  Cand := 'C:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'C:\lazarus\fpc\3.2.0\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.0)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'D:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Lazarus IDE (D:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'C:\FPC\3.2.2\bin\i386-win32\fpc.exe';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'FPC Standalone (C:\FPC\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+  {$ELSE}
+  Cand := '/usr/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := '/usr/bin/fpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/usr/local/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := '/usr/local/bin/fpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/opt/homebrew/bin/fpc';
+  if FileExists(Cand) then
+  begin
+    FpcExe := Cand;
+    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
+    SourceDesc := 'Homebrew (/opt/homebrew/bin/fpc)';
+    Result := True;
+    Exit;
+  end;
+  {$ENDIF}
+end;
+
+function FindInstantFPCExecutable(out IfpcExe, IfpcVer, SourceDesc: string): Boolean;
+var
+  OutStr, Cand, FirstLine: string;
+  FpcExe, FpcVer, FpcSrc: string;
+begin
+  IfpcExe := '';
+  IfpcVer := '';
+  SourceDesc := '';
+  Result := False;
+
+  // 1. Try system PATH (instantfpc -h returns exit code 0)
+  if ExecCmdCapture('instantfpc -h', OutStr) and (Pos('instantfpc', LowerCase(OutStr)) > 0) then
+  begin
+    IfpcExe := 'instantfpc';
+    FirstLine := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
+    if Pos('instantfpc ', FirstLine) > 0 then
+      IfpcVer := Trim(Copy(FirstLine, Pos('instantfpc ', FirstLine) + 11, Length(FirstLine)))
+    else
+      IfpcVer := '1.3';
+    SourceDesc := 'system PATH';
+    Result := True;
+    Exit;
+  end;
+
+  // 2. Check in same folder as FPC executable (e.g. in Lazarus FPC bin dir)
+  if FindFPCExecutable(FpcExe, FpcVer, FpcSrc) and (FpcExe <> '') and (FpcExe <> 'fpc') then
+  begin
+    Cand := ExtractFilePath(FpcExe) + 'instantfpc' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+    if FileExists(Cand) then
+    begin
+      IfpcExe := Cand;
+      if ExecCmdCapture('"' + Cand + '" -h', OutStr) and (Pos('instantfpc', LowerCase(OutStr)) > 0) then
+      begin
+        FirstLine := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
+        if Pos('instantfpc ', FirstLine) > 0 then
+          IfpcVer := Trim(Copy(FirstLine, Pos('instantfpc ', FirstLine) + 11, Length(FirstLine)))
+        else
+          IfpcVer := '1.3';
+      end
+      else
+        IfpcVer := '1.3';
+      SourceDesc := 'Lazarus FPC folder (' + ExtractFilePath(Cand) + ')';
+      Result := True;
+      Exit;
+    end;
+  end;
+
+  // 3. Fallback standard Lazarus locations
+  {$IFDEF WINDOWS}
+  Cand := 'C:\lazarus\fpc\3.2.2\bin\x86_64-win64\instantfpc.exe';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'C:\lazarus\fpc\3.2.0\bin\x86_64-win64\instantfpc.exe';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.0)';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := 'D:\lazarus\fpc\3.2.2\bin\x86_64-win64\instantfpc.exe';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := 'Lazarus IDE (D:\lazarus\fpc\3.2.2)';
+    Result := True;
+    Exit;
+  end;
+  {$ELSE}
+  Cand := '/usr/bin/instantfpc';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := '/usr/bin/instantfpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/usr/local/bin/instantfpc';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := '/usr/local/bin/instantfpc';
+    Result := True;
+    Exit;
+  end;
+
+  Cand := '/opt/homebrew/bin/instantfpc';
+  if FileExists(Cand) then
+  begin
+    IfpcExe := Cand;
+    IfpcVer := '1.3';
+    SourceDesc := 'Homebrew (/opt/homebrew/bin/instantfpc)';
+    Result := True;
+    Exit;
+  end;
+  {$ENDIF}
+end;
+
+function FindPythonExecutable(out PyExe, PyVer, SourceDesc: string): Boolean;
+var
+  OutStr: string;
+begin
+  PyExe := '';
+  PyVer := '';
+  SourceDesc := '';
+  Result := False;
+
+  // 1. Try python in system PATH
+  if ExecCmdCapture('python --version', OutStr) and (Pos('Python ', OutStr) > 0) then
+  begin
+    PyExe := 'python';
+    PyVer := Trim(Copy(OutStr, Pos('Python ', OutStr) + 7, Length(OutStr)));
+    SourceDesc := 'system PATH';
+    Result := True;
+    Exit;
+  end;
+
+  // 2. Try python3 in system PATH
+  if ExecCmdCapture('python3 --version', OutStr) and (Pos('Python ', OutStr) > 0) then
+  begin
+    PyExe := 'python3';
+    PyVer := Trim(Copy(OutStr, Pos('Python ', OutStr) + 7, Length(OutStr)));
+    SourceDesc := 'system PATH (python3)';
+    Result := True;
+    Exit;
+  end;
+
+  // 3. Try Windows py launcher
+  {$IFDEF WINDOWS}
+  if ExecCmdCapture('py -3 --version', OutStr) and (Pos('Python ', OutStr) > 0) then
+  begin
+    PyExe := 'py';
+    PyVer := Trim(Copy(OutStr, Pos('Python ', OutStr) + 7, Length(OutStr)));
+    SourceDesc := 'Windows py launcher';
+    Result := True;
+    Exit;
+  end;
+  {$ENDIF}
+end;
+
+
 type
   TBVTool = record
     Name: string;
@@ -12450,7 +12714,7 @@ type
 
 function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
-  Ext, ScriptPath, RunnerCmd, CmdLine: string;
+  Ext, ScriptPath, RunnerCmd, CmdLine, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
   Proc: TProcess;
   OutputStream: TStringStream;
   BytesRead: LongInt;
@@ -12469,9 +12733,19 @@ begin
 
   Ext := LowerCase(ExtractFileExt(ScriptName));
   if Ext = '.py' then
-    RunnerCmd := 'python'
+  begin
+    if FindPythonExecutable(PyExe, PyVer, DummyDesc) then
+      RunnerCmd := PyExe
+    else
+      RunnerCmd := 'python';
+  end
   else if Ext = '.pas' then
-    RunnerCmd := 'instantfpc'
+  begin
+    if FindInstantFPCExecutable(IfpcExe, IfpcVer, DummyDesc) then
+      RunnerCmd := IfpcExe
+    else
+      RunnerCmd := 'instantfpc';
+  end
   else
     RunnerCmd := '';
 
@@ -27095,117 +27369,12 @@ end;
 //  ENVIRONMENT UTILITIES & FRAMEWORK DIAGNOSTICS (bv doctor)
 // =====================================================================
 
-function ExecCmdCapture(const CmdLine: string; out OutText: string): Boolean;
-var
-  OutStr: string;
-begin
-  OutStr := '';
-  {$IFDEF WINDOWS}
-  Result := RunCommand('cmd.exe', ['/c', CmdLine], OutStr);
-  {$ELSE}
-  Result := RunCommand('sh', ['-c', CmdLine], OutStr);
-  {$ENDIF}
-  OutText := Trim(OutStr);
-end;
-
-function FindFPCExecutable(out FpcExe, FpcVer, SourceDesc: string): Boolean;
-var
-  OutStr, Cand: string;
-begin
-  FpcExe := '';
-  FpcVer := '';
-  SourceDesc := '';
-  Result := False;
-
-  // 1. Try system PATH
-  if ExecCmdCapture('fpc -iV', OutStr) and (OutStr <> '') and (Pos('Error', OutStr) = 0) and (Pos('not found', OutStr) = 0) and (Pos('reconhecido', OutStr) = 0) then
-  begin
-    FpcExe := 'fpc';
-    FpcVer := Trim(OutStr);
-    SourceDesc := 'system PATH';
-    Result := True;
-    Exit;
-  end;
-
-  // 2. Check Lazarus installation on Windows
-  {$IFDEF WINDOWS}
-  Cand := 'C:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.2)';
-    Result := True;
-    Exit;
-  end;
-
-  Cand := 'C:\lazarus\fpc\3.2.0\bin\x86_64-win64\fpc.exe';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := 'Lazarus IDE (C:\lazarus\fpc\3.2.0)';
-    Result := True;
-    Exit;
-  end;
-
-  Cand := 'D:\lazarus\fpc\3.2.2\bin\x86_64-win64\fpc.exe';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := 'Lazarus IDE (D:\lazarus\fpc\3.2.2)';
-    Result := True;
-    Exit;
-  end;
-
-  Cand := 'C:\FPC\3.2.2\bin\i386-win32\fpc.exe';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := 'FPC Standalone (C:\FPC\3.2.2)';
-    Result := True;
-    Exit;
-  end;
-  {$ELSE}
-  Cand := '/usr/bin/fpc';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := '/usr/bin/fpc';
-    Result := True;
-    Exit;
-  end;
-
-  Cand := '/usr/local/bin/fpc';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := '/usr/local/bin/fpc';
-    Result := True;
-    Exit;
-  end;
-
-  Cand := '/opt/homebrew/bin/fpc';
-  if FileExists(Cand) then
-  begin
-    FpcExe := Cand;
-    if ExecCmdCapture('"' + Cand + '" -iV', OutStr) then FpcVer := Trim(OutStr);
-    SourceDesc := 'Homebrew (/opt/homebrew/bin/fpc)';
-    Result := True;
-    Exit;
-  end;
-  {$ENDIF}
-end;
-
 procedure CmdDoctor;
 var
   SDKDir, OSName, GitVer, FpcExe, FpcVer, FpcSource, Pas2Path, Pas2Ver: string;
   NodeVer, NpmVer, MormotPath, BranchName, ShortHash, RemoteUrl, DockerVer: string;
-  HasGit, HasFpc, HasPas2, HasMormot, HasNode, HasLazarus: Boolean;
+  PyExe, PyVer, PySource, IfpcExe, IfpcVer, IfpcSource: string;
+  HasGit, HasFpc, HasPas2, HasMormot, HasNode, HasLazarus, HasPython, HasIfpc: Boolean;
   AllHealthy: Boolean;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -27273,6 +27442,13 @@ begin
     WriteLn('      -> Install Lazarus IDE (which bundles FPC): https://www.lazarus-ide.org/');
   end;
 
+  // InstantFPC (Pascal Scripting Engine)
+  HasIfpc := FindInstantFPCExecutable(IfpcExe, IfpcVer, IfpcSource);
+  if HasIfpc then
+    WriteLn('  [v] InstantFPC:           v', IfpcVer, ' (', IfpcSource, ')')
+  else
+    WriteLn('  [!] InstantFPC:           Not detected (Optional: Pascal script runner for tools)');
+
   // Lazarus IDE
   HasLazarus := False;
   {$IFDEF WINDOWS}
@@ -27314,6 +27490,16 @@ begin
 
   WriteLn('');
   WriteLn('[2] Ecosystem & Testing Tools:');
+
+  // Python 3
+  HasPython := FindPythonExecutable(PyExe, PyVer, PySource);
+  if HasPython then
+    WriteLn('  [v] Python 3:             v', PyVer, ' (', PySource, ', recommended for tool packages)')
+  else
+  begin
+    WriteLn('  [!] Python 3:             Not detected in PATH (Recommended for tool packages & extensions)');
+    WriteLn('      -> Download from: https://www.python.org/');
+  end;
 
   // Node & npm
   HasNode := ExecCmdCapture('node -v', NodeVer) and (Pos('v', NodeVer) = 1);

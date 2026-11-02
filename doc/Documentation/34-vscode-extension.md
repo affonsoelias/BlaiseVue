@@ -37,9 +37,10 @@ bv extension install blaise-vscode
 ```
 
 **O que este comando faz nos bastidores:**
-1. Localiza os fontes e bundles da extensão em `packages/tools/blaise-vscode/`.
-2. Detecta automaticamente os diretórios de extensões ativos no seu perfil de usuário (`~/.vscode/extensions`, `~/.antigravity-ide/extensions`, `~/.antigravity/extensions`).
-3. Faz o deploy limpo dos grammars de sintaxe, schemas de autocompletion, catálogo de componentes e provedor de formatação.
+1. Localiza o pacote da extensão em `packages/tools/blaise-vscode/` e seu manifesto `tool.json`.
+2. Executa o script multiplataforma de instalação (`install.py`, ou `install.pas` via InstantFPC) com o Python detectado pelo CLI (`bv doctor`).
+3. Detecta automaticamente os diretórios de extensões ativos no seu perfil de usuário (`~/.vscode/extensions`, `~/.antigravity-ide/extensions`, `~/.antigravity/extensions`).
+4. Faz o deploy limpo dos grammars de sintaxe, schemas de autocompletion, catálogo de componentes e provedor de formatação.
 
 > [!IMPORTANT]
 > **Passo Obrigatório de Ativação**: Após executar a instalação, você **DEVE recarregar a janela da IDE** para que o editor carregue a nova versão da extensão:

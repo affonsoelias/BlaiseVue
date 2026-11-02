@@ -563,10 +563,12 @@ bv doctor
 **What it verifies:**
 1. **Git CLI**: Required for framework updates and channel switching.
 2. **Free Pascal (FPC) & Lazarus IDE**: Automatically detects FPC either in the system PATH or bundled within standard Lazarus paths (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
-3. **Pas2JS (Bundled)**: Verifies the built-in Object Pascal to JavaScript transpiler in `vendor/pas2js/`.
-4. **Synopse mORMot 2 (Bundled)**: Confirms presence of the embedded mORMot 2 full-stack framework in `vendor/mormot2/`.
-5. **Node.js & npm**: Checks for Vitest testing suite and live development HMR support.
-6. **Docker & Optional Tools**: Checks micro-container tools and Android SDK for cross-platform workflows.
+3. **InstantFPC**: Automatically detects InstantFPC in system PATH or inside the Lazarus FPC directory (`instantfpc.exe`), enabling direct Pascal script execution for developer tools.
+4. **Python 3**: Verifies Python in PATH, recommended for dynamic extension lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`).
+5. **Pas2JS (Bundled)**: Verifies the built-in Object Pascal to JavaScript transpiler in `vendor/pas2js/`.
+6. **Synopse mORMot 2 (Bundled)**: Confirms presence of the embedded mORMot 2 full-stack framework in `vendor/mormot2/`.
+7. **Node.js & npm**: Checks for Vitest testing suite and live development HMR support.
+8. **Docker & Optional Tools**: Checks micro-container tools and Android SDK for cross-platform workflows.
 
 ---
 

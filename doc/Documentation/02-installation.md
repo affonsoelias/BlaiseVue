@@ -24,12 +24,18 @@ Before installing BlaiseVue, ensure the following core tools are installed on yo
    - Manages mobile dependencies and synchronization (`bv mobile init`, `bv mobile sync`).
    - Download: [https://nodejs.org](https://nodejs.org) (LTS version recommended; must be on your system `PATH`).
 
-4. **Android Studio** *(Recommended for Mobile App Development)*:
+4. **Python (v3.8+)** *(Recommended for Tool Packages & Extensions)*:
+   - Recommended for executing cross-platform lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`) for built-in and user-created development tools (`bv extension`).
+   - Powers extensions like `blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and third-party tools in `~/.blaisevue/tools/`.
+   - Download: [https://www.python.org](https://www.python.org).
+   - *Note*: InstantFPC (bundled with Lazarus / Free Pascal) is also supported as a pure Pascal scripting alternative.
+
+5. **Android Studio** *(Recommended for Mobile App Development)*:
    - Required for building native Android packages (`.apk` / `.aab`), configuring Android emulators (AVD), and running `bv mobile open android`.
    - Bundles the Android SDK, Build-Tools, Platform-Tools (`adb`), and Java JDK.
    - Download: [https://developer.android.com/studio](https://developer.android.com/studio).
 
-5. **Docker CLI** *(Optional for Micro-Containers)*:
+6. **Docker CLI** *(Optional for Micro-Containers)*:
    - Used for scaffolding and building lightweight sub-20MB Alpine Linux production micro-containers (`bv mormot docker`).
    - Download: [https://www.docker.com](https://www.docker.com).
 
@@ -109,6 +115,8 @@ bv doctor
 `bv doctor` automatically inspects your environment and verifies all core framework dependencies:
 * **Git CLI**: Verifies installation in PATH and reports the active channel.
 * **Free Pascal (FPC) & Lazarus IDE**: Detects FPC in PATH or bundled inside standard Lazarus installations (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
+* **InstantFPC**: Verifies the Pascal scripting engine in PATH or inside the Lazarus FPC directory.
+* **Python 3**: Verifies Python in PATH, recommended for dynamic extension lifecycle scripts (`bv extension`).
 * **Pas2JS (Bundled)**: Confirms the presence and integrity of the built-in transpiler in `vendor/pas2js/`.
 * **Synopse mORMot 2 (Bundled)**: Verifies the full-stack Pascal framework in `vendor/mormot2/`.
 * **Node.js & npm**: Checks runtime versions for Vitest and HMR dev server.
@@ -127,11 +135,13 @@ bv doctor
 [1] Core Framework Tooling:
   [v] Git CLI:              git version 2.50.1 detected in PATH
   [v] Free Pascal (FPC):    v3.2.2 (system PATH)
+  [v] InstantFPC:           v1.3 (system PATH)
   [v] Lazarus IDE:          Detected (Full F9 and Desktop app support)
   [v] Pas2JS (Bundled):     v3.2.0 verified at vendor\pas2js\...
   [v] Synopse mORMot 2:     Verified at vendor\mormot2
 
 [2] Ecosystem & Testing Tools:
+  [v] Python 3:             v3.13.12 (system PATH, recommended for tool packages)
   [v] Node.js & npm:        Node v24.12.0 and npm v11.11.0 detected in PATH
   [!] Docker CLI:           Not detected (Optional: production micro-containers)
 
