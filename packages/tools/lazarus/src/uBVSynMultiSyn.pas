@@ -13,6 +13,9 @@ uses
   SynHighlighterCSS;
 
 type
+  { Friend class to access protected GetDefaultAttribute on sub-highlighters without unsafe casts }
+  TSynCustomHighlighterFriend = class(TSynCustomHighlighter);
+
   { TBVSynMultiSyn }
   TBVSynMultiSyn = class(TSynMultiSyn)
   private
@@ -20,6 +23,8 @@ type
     FPasSyn: TSynPasSyn;
     FCssSyn: TSynCssSyn;
     procedure InitSubHighlighters;
+  protected
+    function GetDefaultAttribute(Index: integer): TSynHighlighterAttributes; override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -29,6 +34,24 @@ type
 implementation
 
 { TBVSynMultiSyn }
+
+function TBVSynMultiSyn.GetDefaultAttribute(Index: integer): TSynHighlighterAttributes;
+var
+  iHL: TSynCustomHighlighter;
+begin
+  // TSynMultiSyn has a bug where it performs an invalid cast TSynMultiSyn(iHL)
+  // on sub-highlighters, raising EInvalidCast under FPC runtime checks (-CR).
+  // Overriding it here intercepts IdentifierAttribute calls safely inside BlaiseVue.
+  if FHtmlSyn <> nil then
+    iHL := FHtmlSyn
+  else
+    iHL := DefaultHighlighter;
+
+  if iHL <> nil then
+    Result := TSynCustomHighlighterFriend(iHL).GetDefaultAttribute(Index)
+  else
+    Result := nil;
+end;
 
 constructor TBVSynMultiSyn.Create(AOwner: TComponent);
 begin
