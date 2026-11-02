@@ -1137,13 +1137,17 @@ initialization
                // Component v-model (handled logic in step 9)
             } else {
                const isCheck = (el.type === 'checkbox');
+               const isRadio = (el.type === 'radio');
+               // A radio keeps its own value, and :value is applied only in step 9
+               const radioBind = isRadio ? binds.find(function(b) { return b.name === 'value'; }) : null;
+               const radioValue = function() { return radioBind ? Data.Evaluate(radioBind.expr) : el.value; };
                if (isCheck) {
                  el.checked = Boolean(Data.Evaluate(vmodel));
-               } else {
+               } else if (!isRadio) {
                  el.value = Data.Evaluate(vmodel) || '';
                }
                const sync = function() {
-                 const val = isCheck ? this.checked : this.value;
+                 const val = isCheck ? this.checked : (isRadio ? radioValue() : this.value);
                  Data.SetValue(vmodel, val);
                };
                el.oninput = sync; el.onchange = sync; 
@@ -1151,8 +1155,11 @@ initialization
                  let v = Data.Evaluate(vmodel);
                  if (isCheck) {
                    if (el.checked !== Boolean(v)) el.checked = Boolean(v);
+                 } else if (isRadio) {
+                   el.checked = (v !== undefined && v !== null) && String(v) === String(radioValue());
                  } else {
-                   if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   // The focus guard protects typing, and a select keeps the focus after a choice
+                   if ((tagName === 'select' || document.activeElement !== el) && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
                  }
                });
             }
