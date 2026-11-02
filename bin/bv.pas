@@ -12494,7 +12494,7 @@ end;
 
 procedure CmdExtension(const Action: string = ''; const Target: string = '');
 var
-  ExtDir, DevtoolsDir, ScriptPath, SubCmd, TargetLower: string;
+  ExtDir, DevtoolsDir, LazarusDir, LazarusPkg, LazbuildPath, ScriptPath, SubCmd, TargetLower: string;
   GlobalToolsDir, CustomToolPath, HomeDir, InstalledVer: string;
   VSCodeInstalled: Boolean;
   SR: TSearchRec;
@@ -12529,11 +12529,18 @@ begin
         WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (IDE)');
     end
     else
-      WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Available (Run: bv extension install)');
+      WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Available (Run: bv extension install vscode)');
+
+    LazarusDir := GetBuiltinToolsPath + 'lazarus';
+    LazarusPkg := LazarusDir + DirectorySeparator + 'blaisevue_ide.lpk';
+    if DirectoryExists(LazarusDir) and FileExists(LazarusPkg) then
+      WriteLn(PadRight('lazarus', 22), PadRight('Lazarus IDE Package', 26), 'Available (Run: bv extension install lazarus)')
+    else
+      WriteLn(PadRight('lazarus', 22), PadRight('Lazarus IDE Package', 26), 'Not found');
 
     DevtoolsDir := GetBuiltinToolsPath + 'devtools-extension';
     if DirectoryExists(DevtoolsDir) then
-      WriteLn(PadRight('devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Available (Firefox / Chrome)')
+      WriteLn(PadRight('devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Available (Run: bv extension install devtools)')
     else
       WriteLn(PadRight('devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Not found');
 
@@ -12553,14 +12560,27 @@ begin
 
     WriteLn(StringOfChar('-', 74));
     WriteLn('Commands:');
-    WriteLn('  bv extension install [vscode|devtools|<tool>]');
-    WriteLn('  bv extension remove [vscode|<tool>]');
-    WriteLn('  bv extension pack [vscode]');
+    WriteLn('  bv extension install <target>   Installs a tool (e.g. vscode, lazarus, devtools, <custom>)');
+    WriteLn('  bv extension remove <target>    Uninstalls a tool (e.g. vscode, <custom>)');
+    WriteLn('  bv extension pack [vscode]      Packages extension into a standalone .vsix bundle');
     WriteLn('');
   end
   else if (SubCmd = 'install') or (SubCmd = 'i') or (SubCmd = 'add') then
   begin
-    if (TargetLower = '') or (TargetLower = 'vscode') then
+    if TargetLower = '' then
+    begin
+      WriteLn('Error: Target extension or tool name required.');
+      WriteLn('Usage: bv extension install <target>');
+      WriteLn('');
+      WriteLn('Available targets:');
+      WriteLn('  vscode    - Installs the official VS Code / Antigravity IDE / Cursor extension');
+      WriteLn('  lazarus   - Compiles and registers the official Lazarus IDE package (blaisevue_ide.lpk)');
+      WriteLn('  devtools  - Displays instructions to load the browser DevTools extension');
+      WriteLn('  <custom>  - Installs a custom tool from ~/.blaisevue/tools/<name>');
+      Exit;
+    end;
+
+    if TargetLower = 'vscode' then
     begin
       ExtDir := GetBuiltinToolsPath + 'vscode-extension';
       if not DirectoryExists(ExtDir) then
@@ -12578,6 +12598,54 @@ begin
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ''' + ExtDir + '''/* ~/.vscode/extensions/blaisevue-vscode/"');
       {$ENDIF}
+    end
+    else if TargetLower = 'lazarus' then
+    begin
+      LazarusDir := GetBuiltinToolsPath + 'lazarus';
+      LazarusPkg := LazarusDir + DirectorySeparator + 'blaisevue_ide.lpk';
+      if not FileExists(LazarusPkg) then
+      begin
+        WriteLn('Error: Lazarus package not found at: ' + LazarusPkg);
+        Exit;
+      end;
+
+      WriteLn('=== BlaiseVue Lazarus IDE Package ===');
+      WriteLn('Package: ' + LazarusPkg);
+      WriteLn('');
+
+      LazbuildPath := '';
+      {$IFDEF WINDOWS}
+      if FileExists('C:\lazarus\lazbuild.exe') then
+        LazbuildPath := 'C:\lazarus\lazbuild.exe'
+      else if FileExists('lazbuild.exe') then
+        LazbuildPath := 'lazbuild.exe';
+      {$ELSE}
+      if FileExists('/usr/bin/lazbuild') then
+        LazbuildPath := '/usr/bin/lazbuild'
+      else if FileExists('/usr/local/bin/lazbuild') then
+        LazbuildPath := '/usr/local/bin/lazbuild';
+      {$ENDIF}
+
+      if LazbuildPath <> '' then
+      begin
+        WriteLn('Compiling package with lazbuild (' + LazbuildPath + ')...');
+        ExecuteProcess(LazbuildPath, LazarusPkg);
+        WriteLn('');
+        WriteLn('Package compiled successfully!');
+        WriteLn('To complete installation in Lazarus:');
+        WriteLn('  1. Open Lazarus IDE');
+        WriteLn('  2. Go to: Package -> Open Package File (.lpk)');
+        WriteLn('  3. Select: ' + LazarusPkg);
+        WriteLn('  4. Click "Use" -> "Install" and restart Lazarus');
+      end
+      else
+      begin
+        WriteLn('To install into Lazarus IDE:');
+        WriteLn('  1. Open Lazarus IDE');
+        WriteLn('  2. Go to: Package -> Open Package File (.lpk)');
+        WriteLn('  3. Select: ' + LazarusPkg);
+        WriteLn('  4. Click "Use" -> "Install"');
+      end;
     end
     else if TargetLower = 'devtools' then
     begin
@@ -12622,14 +12690,25 @@ begin
       else
       begin
         WriteLn('Error: Extension or tool "' + TargetLower + '" not found.');
-        WriteLn('Available built-in tools: vscode, devtools');
+        WriteLn('Available built-in tools: vscode, lazarus, devtools');
         WriteLn('User tools directory: ' + GetGlobalToolsPath);
       end;
     end;
   end
   else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
   begin
-    if (TargetLower = '') or (TargetLower = 'vscode') then
+    if TargetLower = '' then
+    begin
+      WriteLn('Error: Target extension or tool name required to remove.');
+      WriteLn('Usage: bv extension remove <target>');
+      WriteLn('');
+      WriteLn('Available targets:');
+      WriteLn('  vscode    - Uninstalls the BlaiseVue VS Code / Antigravity IDE extension');
+      WriteLn('  <custom>  - Uninstalls a custom tool from ~/.blaisevue/tools/<name>');
+      Exit;
+    end;
+
+    if TargetLower = 'vscode' then
     begin
       WriteLn('Removing BlaiseVue VS Code extension...');
       {$IFDEF WINDOWS}

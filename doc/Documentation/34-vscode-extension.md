@@ -30,10 +30,7 @@ A extensão oficial do BlaiseVue é compatível com **Visual Studio Code**, **Go
 A forma mais rápida e recomendada de instalar ou atualizar a extensão em todas as suas IDEs compatíveis:
 
 ```bash
-# Instala a extensão automaticamente no VS Code, Antigravity IDE e Cursor
-bv extension install
-
-# Ou especificando explicitamente o alvo:
+# Instala a extensão oficial do VS Code / Antigravity IDE / Cursor:
 bv extension install vscode
 ```
 
