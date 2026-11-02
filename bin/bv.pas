@@ -27,8 +27,6 @@ program bv;
 
 }
 
-
-
 {$mode objfpc}{$H+}
 
 {$IFDEF MSWINDOWS}
@@ -36,8 +34,6 @@ program bv;
 {$R templates.res}
 
 {$ENDIF}
-
-
 
 uses
 {$IFDEF WINDOWS}
@@ -50,8 +46,6 @@ uses
 
   fphttpclient, openssl, opensslsockets, zipper, fpjson, jsonparser;
 
-
-
 // =====================================================================
 
 function ReadFileToString(const FileName: string): string; forward;
@@ -63,63 +57,45 @@ function GetPas2JSPackageDescription(const PkgName: string): string; forward;
 function ResolvePas2JSPackagePath(const PkgName: string; out ResolvedPath: string): Boolean; forward;
 function ListAvailablePas2JSPackages: TStringList; forward;
 
-
-
 //  NATIVE RESOURCE & TEMPLATE ENGINE
 
 // =====================================================================
-
-
 
 { Loads an embedded binary string resource by name (Windows RCDATA) }
 
 function LoadResourceString(const ResName: string): string;
 
 var
-
   RS: TResourceStream;
-
   SS: TStringStream;
-
 begin
-
   Result := '';
-
   try
 
     RS := TResourceStream.Create(HInstance, ResName, PChar(10));
-
     try
 
       SS := TStringStream.Create('');
-
       try
 
         SS.CopyFrom(RS, RS.Size);
-
         Result := SS.DataString;
 
       finally
 
         SS.Free;
-
       end;
 
     finally
 
       RS.Free;
-
     end;
 
   except
 
     Result := '';
-
   end;
-
 end;
-
-
 
 function GetOwnExecutablePath: string;
 var
@@ -151,58 +127,33 @@ end;
 function GetSDKPath: string;
 
 var
-
   ExePath, ExeDir, Parent: string;
-
 begin
-
   ExePath := GetOwnExecutablePath;
-
   ExeDir := ExtractFilePath(ExePath);
-
   Parent := ExtractFilePath(ExcludeTrailingPathDelimiter(ExeDir));
-
-  
-
   if LowerCase(ExtractFileName(ExcludeTrailingPathDelimiter(ExeDir))) = 'bin' then
-
     Result := Parent
 
   else
-
     Result := ExeDir;
-
 end;
-
-
 
 { Loads scaffolding template from native resources or fallback templates/ folder }
 
 function GetTemplate(const ResName, FileName: string): string;
 
 var
-
   DiskFile: string;
-
 begin
-
   Result := LoadResourceString(ResName);
-
   if Result = '' then
-
   begin
-
     DiskFile := GetSDKPath + 'templates' + DirectorySeparator + FileName;
-
     if FileExists(DiskFile) then
-
       Result := ReadFileToString(DiskFile);
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -210,19 +161,12 @@ end;
 
 // =====================================================================
 
-
-
 { Returns the path to the framework core unit folder }
 
 function GetCorePath: string;
-
 begin
-
   Result := GetSDKPath + 'core' + DirectorySeparator;
-
 end;
-
-
 
 { Returns the user-level global configuration directory (~/.blaisevue) }
 function GetUserBlaiseVueDir: string;
@@ -250,14 +194,11 @@ end;
 { Returns the path to the framework official packages folder }
 
 function GetPackagesPath: string;
-
 begin
-
   if DirectoryExists(GetSDKPath + 'packages' + DirectorySeparator + 'core') then
     Result := GetSDKPath + 'packages' + DirectorySeparator + 'core' + DirectorySeparator
   else
     Result := GetSDKPath + 'packages' + DirectorySeparator;
-
 end;
 
 { Returns the user-level global tools directory (~/.blaisevue/tools/) }
@@ -278,42 +219,29 @@ begin
     Result := GetSDKPath;
 end;
 
-
-
 { Returns the base directory for pas2js, checking vendor/pas2js first then legacy pas2js/ }
 
 function GetPas2JSRoot: string;
-
 begin
-
   if DirectoryExists(GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js') then
-
     Result := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' + DirectorySeparator
 
   else
-
     Result := GetSDKPath + 'pas2js' + DirectorySeparator;
-
 end;
-
-
 
 { Returns the absolute path to the pas2js compiler executable based on OS }
 
 function GetPas2JSPath: string;
 
 var
-
   OSFolder, Base: string;
-
 begin
-
   Base := GetPas2JSRoot;
 
   {$IFDEF WINDOWS}
 
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
-
     Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
 
   {$ELSE}
@@ -331,21 +259,15 @@ begin
     Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js';
 
   {$ENDIF}
-
 end;
-
-
 
 { Returns the library path for the pas2js system units }
 
 function GetPas2JSLibPath: string;
 
 var
-
   OSFolder: string;
-
 begin
-
   {$IFDEF WINDOWS}
 
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
@@ -365,10 +287,7 @@ begin
   {$ENDIF}
 
   Result := GetPas2JSRoot + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
-
 end;
-
-
 
 { Returns the packages root directory for pas2js packages }
 function GetPas2JSPackagesRoot: string;
@@ -473,13 +392,9 @@ end;
 function GetRTLPath: string;
 
 var
-
   Base, SDK, OSFolder: string;
-
 begin
-
   SDK := GetSDKPath;
-
   Base := GetPas2JSRoot;
 
   {$IFDEF WINDOWS}
@@ -505,7 +420,6 @@ begin
   // 1. Prioritize the platform-specific RTL bundled with the transpiler
 
   if FileExists(Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js') then
-
     Exit(Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src' + DirectorySeparator + 'rtl.js');
 
   
@@ -513,7 +427,6 @@ begin
   // 2. Fallback to the Pas2JS bin folder
 
   if FileExists(Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js') then
-
     Exit(Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'rtl.js');
 
     
@@ -521,345 +434,211 @@ begin
   // 3. Last fallback: check the SDK root if a standalone version was placed there
 
   if FileExists(SDK + 'rtl.js') then Exit(SDK + 'rtl.js');
-
-
-
   Result := '';
-
 end;
-
-
 
 { Checks whether a system command/executable is available on the PATH }
 
 function HasCommand(const ACmd: string): Boolean;
 
 var
-
   OutStr: string;
-
 begin
-
   OutStr := '';
 
   {$IFDEF WINDOWS}
 
   Result := RunCommand('cmd.exe', ['/c', 'where ' + ACmd], OutStr);
-
   if not Result then
-
     Result := RunCommand('cmd.exe', ['/c', ACmd + ' --version'], OutStr);
 
   {$ELSE}
 
   Result := RunCommand('which', [ACmd], OutStr);
-
   if not Result then
-
     Result := RunCommand(ACmd, ['--version'], OutStr);
 
   {$ENDIF}
-
 end;
-
-
 
 procedure PrintNodeRequiredError(const ActionDesc: string);
-
 begin
-
   WriteLn('  [ERROR] Node.js is required to ' + ActionDesc + '.');
-
   WriteLn('          Please install Node.js (v18+ LTS) from: https://nodejs.org');
-
   WriteLn('          Ensure "node" and "npm" are accessible in your system PATH.');
-
 end;
-
-
 
 function PascalToKebab(const S: string): string;
 
 var
-
   i: Integer;
-
 begin
-
   if (Length(S) >= 2) and (Copy(S, 1, 2) = 'BV') then
-
   begin
-
     Result := 'bv';
-
     for i := 3 to Length(S) do
-
     begin
-
       if (S[i] >= 'A') and (S[i] <= 'Z') then
-
         Result := Result + '-';
 
       Result := Result + LowerCase(S[i]);
-
     end;
 
     Exit;
-
   end;
 
-
-
   Result := '';
-
   for i := 1 to Length(S) do
-
   begin
-
     if (i > 1) and (S[i] >= 'A') and (S[i] <= 'Z') then
-
       Result := Result + '-';
 
     Result := Result + LowerCase(S[i]);
-
   end;
-
 end;
-
-
 
 function KebabToPascal(const S: string): string;
 
 var
-
   i: Integer;
-
   CapNext: Boolean;
-
 begin
-
   Result := '';
-
   CapNext := True;
-
   for i := 1 to Length(S) do
-
   begin
-
     if S[i] = '-' then
-
       CapNext := True
 
     else
-
     begin
-
       if CapNext then
-
       begin
-
         Result := Result + UpCase(S[i]);
-
         CapNext := False;
-
       end
 
       else
-
         Result := Result + S[i];
-
     end;
-
   end;
-
 end;
-
-
 
 function EscapeQuotes(const S: string): string;
-
 begin
-
   Result := StringReplace(S, '''', '''''', [rfReplaceAll]);
-
 end;
-
-
 
 function TrimLine(const S: string): string;
-
 begin
-
   Result := Trim(S);
-
 end;
-
-
 
 procedure ForceDir(const D: string);
-
 begin
-
   if not DirectoryExists(D) then
-
     ForceDirectories(D);
-
 end;
-
-
 
 procedure DeleteDir(Path: string);
 
 var
-
   SR: TSearchRec;
-
 begin
-
   if Path[Length(Path)] <> DirectorySeparator then Path := Path + DirectorySeparator;
-
   if FindFirst(Path + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
       if (SR.Name <> '.') and (SR.Name <> '..') then
-
       begin
-
         if (SR.Attr and faDirectory) <> 0 then
-
           DeleteDir(Path + SR.Name)
 
         else
-
           DeleteFile(Path + SR.Name);
-
       end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
 
   RemoveDir(Path);
-
 end;
-
-
 
 function ReadFileToString(const FileName: string): string;
 
 var
-
   SL: TStringList;
-
 begin
-
   SL := TStringList.Create;
-
   try
 
     SL.LoadFromFile(FileName);
-
     Result := SL.Text;
 
   finally
 
     SL.Free;
-
   end;
-
 end;
-
-
 
 procedure WriteStringToFile(const FileName, Content: string);
 
 var
-
   SL: TStringList;
-
 begin
-
   if ExtractFilePath(FileName) <> '' then
     ForceDir(ExtractFilePath(FileName));
 
   SL := TStringList.Create;
-
   try
 
     SL.Text := Content;
-
     SL.SaveToFile(FileName);
 
   finally
 
     SL.Free;
-
   end;
-
 end;
-
-
 
 function GetFileHash(const FileName: string): string;
 
 var
-
   S: string;
-
   Output: TStringList;
-
 begin
-
   // On Windows, use certutil for a fast MD5 hash
 
   Output := TStringList.Create;
-
   try
 
     if RunCommand('certutil', ['-hashfile', FileName, 'MD5'], S) then
-
     begin
-
       Output.Text := S;
-
       if Output.Count > 1 then
-
       begin
-
         Result := Trim(Output[1]); // The second line contains the hash
 
         Result := StringReplace(Result, ' ', '', [rfReplaceAll]);
-
         Result := LowerCase(Result);
 
         Result := Copy(Result, 1, 8); // Uses only 8 chars
-
       end
 
       else
-
         Result := IntToStr(DateTimeToUnix(Now));
-
     end
 
     else
-
       Result := IntToStr(DateTimeToUnix(Now));
 
   finally
 
     Output.Free;
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -867,80 +646,39 @@ end;
 
 // =====================================================================
 
-
-
 type
-
   TDataField = record
-
     Name: string;
-
     FieldType: string;
-
     DefaultValue: string;
-
     IsProp: Boolean;
-
   end;
-
-
-
   TRouteEntry = record
-
     Path: string;
-
     Component: string;
-
   end;
-
-
-
   TBVParsed = record
-
     Template: string;
-
     Style: string;
-
     ScriptUses: string;
-
     DataFields: array of TDataField;
-
     Routes: array of TRouteEntry;
-
     MethodsCode: string;
-
     BeforeEachCode: string;
-
     CreatedCode: string;
-
     MountedCode: string;
-
     UpdatedCode: string;
-
     WatchCode: string;
-
     ComputedCode: string;
-
     ProvideCode: string;
-
     InjectCode: string;
-
     HasRouter: Boolean;
-
   end;
-
-
-
 procedure ParseScriptBlock(const Block: string; var Parsed: TBVParsed); forward;
-
 procedure ScanDirForBV(const Path: string; List: TStringList); forward;
-
 procedure ScanDirForCSS(const Path: string; List: TStringList); forward;
-
 procedure ScanDirForJS(const Path: string; List: TStringList); forward;
-
 procedure ScanDirForTests(const Path: string; List: TStringList); forward;
-
 function GetReposConfigPath: string; forward;
 function LoadReposRegistry(out RootObj: TJSONObject): Boolean; forward;
 procedure GetOrderedRepoNames(out RepoNames: TStringList); forward;
@@ -956,21 +694,13 @@ procedure CmdLibOutdated(IsGlobal: Boolean = False); forward;
 procedure CmdLibSearch(const Query: string); forward;
 procedure CmdCreateLib(const LibName: string; const SelectedLicense: string); forward;
 procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean); forward;
-
 procedure CmdThemeList; forward;
-
 procedure CmdThemeUse(const ThemeName: string); forward;
-
 procedure CmdDoc(const ServeMode: Boolean); forward;
-
 procedure CmdSSG; forward;
-
 procedure CmdWasm(const SubCmd: string); forward;
-
 procedure CmdTestE2E; forward;
-
 procedure CmdStudio; forward;
-
 procedure CmdCheck(const TargetFile: string); forward;
 function FormatBVContent(const AContent: string): string; forward;
 procedure CmdFormat(const TargetFile: string; CheckOnly: Boolean = False); forward;
@@ -987,45 +717,24 @@ procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
-
-
-
 { Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
-
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
-
 var
-
   Lines: TStringList;
-
   i: Integer;
-
   Line, Trimmed: string;
-
   Section: Integer; // 0=none, 1=template, 2=script, 3=style
-
   ScriptBlock: string;
-
   P: Integer;
-
 begin
-
   Parsed.Template := '';
-
   Parsed.Style := '';
-
   Parsed.ScriptUses := '';
-
   Parsed.MethodsCode := '';
-
   Parsed.BeforeEachCode := '';
-
   Parsed.CreatedCode := '';
-
   Parsed.MountedCode := '';
-
   Parsed.WatchCode := '';
-
   Parsed.ComputedCode := '';
 
   Parsed.UpdatedCode := ''; // New
@@ -1035,674 +744,399 @@ begin
   Parsed.InjectCode := '';  // New
 
   Parsed.HasRouter := False;
-
   SetLength(Parsed.DataFields, 0);
-
   SetLength(Parsed.Routes, 0);
-
-
-
   Lines := TStringList.Create;
-
   try
 
     Lines.LoadFromFile(FileName);
-
     Section := 0;
-
     ScriptBlock := '';
-
-
-
     for i := 0 to Lines.Count - 1 do
-
     begin
-
       Line := Lines[i];
-
       Trimmed := Trim(Line);
-
-
 
       // Section opening detection
 
       if Pos('<template>', LowerCase(Trimmed)) = 1 then
-
       begin
-
         Section := 1;
-
         Continue;
-
       end;
 
       if Pos('<script', LowerCase(Trimmed)) = 1 then
-
       begin
-
         Section := 2;
 
         // Extract uses="..."
 
         P := Pos('uses="', LowerCase(Trimmed));
-
         if P > 0 then
-
         begin
-
           Parsed.ScriptUses := Copy(Trimmed, P + 6, Length(Trimmed));
-
           P := Pos('"', Parsed.ScriptUses);
-
           if P > 0 then
-
             Parsed.ScriptUses := Copy(Parsed.ScriptUses, 1, P - 1);
-
         end;
 
         Continue;
-
       end;
 
       if Pos('<style>', LowerCase(Trimmed)) = 1 then
-
       begin
-
         Section := 3;
-
         Continue;
-
       end;
-
-
 
       // Section closing detection
 
       if Pos('</template>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
-
       if Pos('</script>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
-
       if Pos('</style>', LowerCase(Trimmed)) = 1 then begin Section := 0; Continue; end;
 
-
-
-      // Acumula conteudo por secao
+      // Accumulate content per section
 
       case Section of
 
         1: Parsed.Template := Parsed.Template + Line + #10;
-
         2: ScriptBlock := ScriptBlock + Line + #10;
-
         3: Parsed.Style := Parsed.Style + Line + #10;
-
       end;
-
     end;
 
-
-
-    // Agora parseia o ScriptBlock em sub-secoes: data, router, methods
+    // Now parse ScriptBlock into sub-sections: data, router, methods
 
     ParseScriptBlock(ScriptBlock, Parsed);
-
-
 
   finally
 
     Lines.Free;
-
   end;
-
 end;
-
-
 
 procedure ParseScriptBlock(const Block: string; var Parsed: TBVParsed);
 
 var
-
   Lines: TStringList;
-
   i: Integer;
-
   Trimmed: string;
-
   SubSection: Integer; // 0=none, 1=data, 2=router, 3=methods, 4=beforeEach, 5=created, 6=mounted, 7=watch
-
   InRoutes, InQuotes: Boolean;
-
   P, P2, j: Integer;
-
   DF: TDataField;
-
   RE: TRouteEntry;
-
   S: string;
-
 begin
-
   Lines := TStringList.Create;
-
   try
 
     Lines.Text := Block;
-
     SubSection := 0;
-
     InRoutes := False;
-
-
-
     for i := 0 to Lines.Count - 1 do
-
     begin
-
       Trimmed := Trim(Lines[i]);
-
-
-
       if Trimmed = '' then Continue;
-
-
 
       // Detection of comments at top level within script
 
       if (Trimmed[1] = '{') or (Copy(Trimmed, 1, 2) = '//') then
-
       begin
-
          // If a comment is followed by a known block name, don't capture it yet
 
          // or just skip adding to current SubSection if it's likely a separator
 
          if SubSection <> 0 then
-
          begin
-
             // Check next lines to see if we are switching
 
             // For now, if we are in 3 (Methods) or similar, we might want to keep it.
 
             // But for 5 (Created), we usually don't want trailing comments from the next block.
-
          end;
-
       end;
-
-
 
       // Sub-section detection
 
       if Trimmed = 'data:' then begin SubSection := 1; Continue; end;
-
       if Trimmed = 'props:' then begin SubSection := 12; Continue; end;
-
       if Trimmed = 'router:' then begin SubSection := 2; Parsed.HasRouter := True; Continue; end;
-
       if Trimmed = 'methods:' then begin SubSection := 3; Continue; end;
-
       if Trimmed = 'provide:' then begin SubSection := 9; Continue; end;
-
       if Trimmed = 'inject:' then begin SubSection := 10; Continue; end;
-
       if Trimmed = 'created:' then begin SubSection := 5; Continue; end;
-
       if Trimmed = 'mounted:' then begin SubSection := 6; Continue; end;
-
       if Trimmed = 'updated:' then begin SubSection := 11; Continue; end;
-
       if Trimmed = 'watch:' then begin SubSection := 7; Continue; end;
-
       if Trimmed = 'computed:' then begin SubSection := 8; Continue; end;
-
       if Trimmed = 'routes:' then begin InRoutes := True; Continue; end;
-
-
-
       case SubSection of
 
         1, 12: // DATA or PROPS
-
         begin
-
           // Skips comments
 
           if (Trimmed = '') or (Trimmed[1] = '{') or (Copy(Trimmed, 1, 2) = '//') then Continue;
-
-
-
           P := Pos(':', Trimmed);
-
           if P > 0 then
-
           begin
-
             DF.Name := Trim(Copy(Trimmed, 1, P - 1));
-
             DF.IsProp := (SubSection = 12);
 
-            // Depois do ":" tem "type = value;"
+            // After ":" is "type = value;"
 
             Trimmed := Trim(Copy(Trimmed, P + 1, Length(Trimmed)));
 
-            // Remove ; no final
+            // Remove trailing semicolon
 
             if (Length(Trimmed) > 0) and (Trimmed[Length(Trimmed)] = ';') then
-
               Trimmed := Copy(Trimmed, 1, Length(Trimmed) - 1);
 
-
-
             P2 := Pos('=', Trimmed);
-
             if P2 > 0 then
-
             begin
-
               DF.FieldType := Trim(Copy(Trimmed, 1, P2 - 1));
-
               DF.DefaultValue := Trim(Copy(Trimmed, P2 + 1, Length(Trimmed)));
-
             end
 
             else
-
             begin
-
               DF.FieldType := Trim(Trimmed);
-
               DF.DefaultValue := '';
-
             end;
 
-
-
             SetLength(Parsed.DataFields, Length(Parsed.DataFields) + 1);
-
             Parsed.DataFields[High(Parsed.DataFields)] := DF;
-
           end;
-
         end;
 
-
-
-        2: // ROUTER: rotas e configuracao
-
+        2: // ROUTER: routes and configuration
         begin
-
           if InRoutes then
-
           begin
-
             // format: '/path' : 'component-name';
-
             P := 0;
-
             InQuotes := False;
-
             for j := 1 to Length(Trimmed) do
-
             begin
-
               if Trimmed[j] = '''' then InQuotes := not InQuotes
 
               else if (Trimmed[j] = ':') and not InQuotes then
-
               begin
-
                 P := j;
-
                 Break;
-
               end;
-
             end;
 
             if P > 0 then
-
             begin
-
               RE.Path := Trim(Copy(Trimmed, 1, P - 1));
-
               RE.Component := Trim(Copy(Trimmed, P + 1, Length(Trimmed)));
 
-              // Remove aspas e ;
+              // Remove quotes and trailing semicolon
 
               RE.Path := StringReplace(RE.Path, '''', '', [rfReplaceAll]);
-
               RE.Component := StringReplace(RE.Component, '''', '', [rfReplaceAll]);
-
               RE.Component := StringReplace(RE.Component, ';', '', [rfReplaceAll]);
-
               RE.Path := Trim(RE.Path);
-
               RE.Component := Trim(RE.Component);
-
-
-
               SetLength(Parsed.Routes, Length(Parsed.Routes) + 1);
-
               Parsed.Routes[High(Parsed.Routes)] := RE;
-
             end;
-
           end;
-
         end;
-
-
 
         3: // METHODS: raw Pascal code
-
         begin
-
           Parsed.MethodsCode := Parsed.MethodsCode + Lines[i] + #10;
-
         end;
 
-
-
-        4: // BEFOREEACH: codigo Pascal bruto
-
+        4: // BEFOREEACH: raw Pascal code
         begin
-
           Parsed.BeforeEachCode := Parsed.BeforeEachCode + Lines[i] + #10;
-
         end;
 
         5: // CREATED
-
         begin
-
           Parsed.CreatedCode := Parsed.CreatedCode + Lines[i] + #10;
-
         end;
 
         6: // MOUNTED
-
         begin
-
           Parsed.MountedCode := Parsed.MountedCode + Lines[i] + #10;
-
         end;
 
         7: // WATCH
-
         begin
-
           Parsed.WatchCode := Parsed.WatchCode + Lines[i] + #10;
-
         end;
 
         8: // COMPUTED
-
         begin
-
           Parsed.ComputedCode := Parsed.ComputedCode + Lines[i] + #10;
-
         end;
 
         9: // PROVIDE
-
         begin
-
           Parsed.ProvideCode := Parsed.ProvideCode + Lines[i] + #10;
-
         end;
 
         10: // INJECT
-
         begin
-
           Parsed.InjectCode := Parsed.InjectCode + Lines[i] + #10;
-
         end;
 
         11: // UPDATED
-
         begin
-
           Parsed.UpdatedCode := Parsed.UpdatedCode + Lines[i] + #10;
-
         end;
-
       end;
-
     end;
 
   finally
 
     Lines.Free;
-
   end;
-
 end;
 
-
-
 // =====================================================================
-
-//  GERADOR DE CODIGO PASCAL
-
+//  COMPONENT MEMBER & SUB-BLOCK CODE GENERATORS
 // =====================================================================
-
-
+{
+  This subsystem compiles individual sections of a Single File Component
+  (.bv) into their corresponding Object Pascal representations:
+  - CleanPascalProps:       Sanitizes props & identifiers for Pascal syntax
+  - GenerateDataCode:       Generates data(): TJSObject reactive state factory
+  - GeneratePropsCode:      Generates declared component props array
+  - GenerateMethodsCode:    Extracts and compiles methods & event handlers
+  - GenerateComputedCode:   Generates reactive computed getters with caching
+  - GenerateWatchCode:      Generates reactive watchers
+  - GenerateLifecycleCode:  Generates lifecycle hooks (created, mounted, etc.)
+  - GenerateProvideCode:    Generates dependency injection provide blocks
+  - GenerateInjectCode:     Generates dependency injection inject blocks
+  - GenerateTemplateString: Compiles HTML template into escaped Pascal string
+  - GenerateStyleInjection: Compiles scoped/global CSS for runtime DOM injection
+}
 
 function CleanPascalProps(const S: string): string;
 
 var
-
   i, j, k, closeP, parenLevel: Integer;
-
   Identifier, args, repStr: string;
-
   Res: string;
-
   InQuote, InAsm, inQ: Boolean;
-
 begin
-
   Res := S;
-
   InQuote := False;
-
   InAsm := False;
-
   i := 1;
-
   while i <= Length(Res) - 4 do
-
   begin
-
     if Res[i] = '''' then InQuote := not InQuote;
-
-    
-
     if not InQuote then
-
     begin
-
        if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'asm') and ((i=1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) then
-
        begin
-
           k := i + 3;
-
           if (k > Length(Res)) or (Res[k] <= ' ') or (Res[k] = ';') then
-
             InAsm := True;
-
        end;
 
        if (i <= Length(Res)-2) and (LowerCase(Copy(Res, i, 3)) = 'end') and ((i=1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) and (InAsm) then
-
        begin
-
           k := i+3;
-
           while (k <= Length(Res)) and (Res[k] <= ' ') do Inc(k);
-
           if (k <= Length(Res)) and (Res[k] = ';') then InAsm := False;
-
        end;
-
     end;
 
-
-
     if (not InQuote) and (not InAsm) and (i <= Length(Res) - 5) and (Copy(Res, i, 5) = 'this.') then
-
     begin
-
        j := i + 5;
-
        while (j <= Length(Res)) and (Res[j] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(j);
-
        Identifier := Copy(Res, i + 5, j - (i + 5));
-
        k := j;
-
        while (k <= Length(Res)) and (Res[k] = ' ') do Inc(k);
-
        if (k <= Length(Res)) and (Res[k] = '(') then
-
        begin
-
           closeP := k + 1;
-
           inQ := False;
-
           parenLevel := 1;
-
           while (closeP <= Length(Res)) and (parenLevel > 0) do
-
           begin
-
              if Res[closeP] = '''' then inQ := not inQ;
-
              if not inQ then
-
              begin
-
                 if Res[closeP] = '(' then Inc(parenLevel)
 
                 else if Res[closeP] = ')' then Dec(parenLevel);
-
              end;
 
              if parenLevel > 0 then Inc(closeP);
-
           end;
 
           if parenLevel = 0 then
-
           begin
-
              args := Trim(Copy(Res, k + 1, closeP - k - 1));
-
              Delete(Res, i, (closeP + 1) - i);
-
              if args = '' then
-
              begin
-
                 repStr := 'CallMethod(_this, ''' + Identifier + ''')';
-
              end
 
              else
-
              begin
-
                 repStr := 'CallMethod(_this, ''' + Identifier + ''', [' + args + '])';
-
              end;
 
              Insert(repStr, Res, i);
-
              i := i + Length(repStr);
-
           end
 
           else
-
           begin
-
              Delete(Res, i, j - i);
-
              repStr := 'TJSObject(_this)[''' + Identifier + ''']';
-
              Insert(repStr, Res, i);
-
              i := i + Length(repStr);
-
           end;
-
        end
 
        else
-
        begin
-
           Delete(Res, i, j - i);
-
           repStr := 'TJSObject(_this)[''' + Identifier + ''']';
-
           Insert(repStr, Res, i);
-
           i := i + Length(repStr);
-
        end;
-
     end
 
     else if (not InQuote) and (not InAsm) and (Copy(Res, i, 4) = 'this') and ((i = 1) or (not (Res[i-1] in ['a'..'z', 'A'..'Z', '0'..'9', '_']))) and not (Res[i+4] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '.', '$']) then
-
     begin
-
        Delete(Res, i, 4);
-
        Insert('_this', Res, i);
-
        i := i + 5;
-
     end
 
     else
-
        Inc(i);
-
   end;
 
   Result := Res;
-
 end;
-
-
 
 function GenerateDataCode(const Fields: array of TDataField): string;
 
 var
-
   i: Integer;
-
   Val: string;
-
 begin
-
   if Length(Fields) = 0 then
-
   begin
-
     Result := '';
-
     Exit;
-
   end;
-
-
 
   Result :=
 
@@ -1714,97 +1148,62 @@ begin
 
     '    d := TJSObject.new;' + #10;
 
-
-
   for i := 0 to High(Fields) do
-
   begin
-
     if Fields[i].IsProp then Continue; // Props don't go into initial data return
 
     Val := Fields[i].DefaultValue;
-
     if Val = '' then
-
     begin
-
       if LowerCase(Fields[i].FieldType) = 'string' then
-
         Val := ''''''
 
       else if LowerCase(Fields[i].FieldType) = 'integer' then
-
         Val := '0'
 
       else if LowerCase(Fields[i].FieldType) = 'boolean' then
-
         Val := 'False'
 
       else
-
         Val := '''''';
-
     end
 
     else
-
     begin
-
       if Trim(Val) = '[]' then Val := 'TJSArray.new'
 
       else if Trim(Val) = '{}' then Val := 'TJSObject.new';
-
     end;
 
     Result := Result + '    d[''' + Fields[i].Name + '''] := ' + Val + ';' + #10;
-
   end;
-
-
 
   Result := Result +
 
     '    Result := d;' + #10 +
 
     '  end;' + #10;
-
 end;
-
-
 
 function GeneratePropsCode(const Fields: array of TDataField): string;
 
 var
-
   i: Integer;
-
   First: Boolean;
-
   Val: string;
-
 begin
-
   Result := '';
-
   First := True;
-
   for i := 0 to High(Fields) do
-
   begin
-
     if Fields[i].IsProp then
-
     begin
-
       if First then
-
       begin
-
         Result := '  comp[''props''] := TJSArray.new;' + #10 +
                   '  comp[''defaultProps''] := TJSObject.new;' + #10;
 
         First := False;
-
       end;
 
       Result := Result + '  TJSArray(comp[''props'']).push(''' + Fields[i].Name + ''');' + #10;
@@ -1815,14 +1214,9 @@ begin
         else if Trim(Val) = '{}' then Val := 'TJSObject.new';
         Result := Result + '  TJSObject(comp[''defaultProps''])[''' + Fields[i].Name + '''] := ' + Val + ';' + #10;
       end;
-
     end;
-
   end;
-
 end;
-
-
 
 { Finds the next routine header in a methods, computed or watch section. Only a keyword
   outside every begin..end block counts, so the same word inside a body, an asm block,
@@ -1915,81 +1309,50 @@ end;
 function GenerateMethodsCode(const RawCode: string): string;
 
 var
-
   Parts, SubParts: TStringList;
-
   i, p, pParen, pClose: Integer;
-
   Sig, Body, Name, Params, Block, ReturnType: string;
-
   IsFunction: Boolean;
-
 begin
-
   Result := '';
-
   if Trim(RawCode) = '' then Exit;
-
-  
-
   Parts := TStringList.Create;
-
   SubParts := TStringList.Create;
-
   try
 
     // Split by 'procedure ' and 'function '
 
     Block := RawCode;
-
     p := FindMemberStart(Block, 'procedure', 'function');
-
     while p > 0 do
-
     begin
-
       IsFunction := LowerCase(Copy(Block, p, 8)) = 'function';
-
       if IsFunction then Block := Copy(Block, p + 9, Length(Block))
 
-      else Block := Copy(Block, p + 10, Length(Block)); // Depois de 'procedure '
+      else Block := Copy(Block, p + 10, Length(Block)); // After 'procedure '
 
       
 
-      // Encontra o fim da assinatura (primeiro ; fora de parenteses)
+      // Find end of signature (first semicolon outside parentheses)
 
       pParen := Pos('(', Block);
-
       if (pParen > 0) and (pParen < Pos(';', Block)) then
-
       begin
-
          pClose := Pos(')', Block);
-
          if pClose > 0 then
-
          begin
-
             p := pClose + 1;
-
             while (p <= Length(Block)) and (Block[p] <> ';') do Inc(p);
-
          end
 
          else
-
             p := Pos(';', Block);
-
       end
 
       else
-
          p := Pos(';', Block);
 
-
-
       if p = 0 then Break;
-
       Sig := Trim(Copy(Block, 1, p - 1));
 
       
@@ -1997,9 +1360,7 @@ begin
       // Finds the body end (delimited by the next procedure or the end of the block)
 
       Body := Copy(Block, p + 1, Length(Block));
-
       p := FindMemberStart(Body, 'procedure', 'function');
-
       if p > 0 then Body := Copy(Body, 1, p - 1);
 
       
@@ -2007,47 +1368,29 @@ begin
       // Splits the return type off a function signature
 
       ReturnType := 'JSValue';
-
       if IsFunction then
-
       begin
-
         p := LastDelimiter(':)', Sig);
-
         if (p > 0) and (Sig[p] = ':') then
-
         begin
-
           ReturnType := Trim(Copy(Sig, p + 1, Length(Sig)));
-
           Sig := Trim(Copy(Sig, 1, p - 1));
-
         end;
-
       end;
 
       // Extracts name and parameters from the signature
 
       p := Pos('(', Sig);
-
       if p > 0 then
-
       begin
-
         Name := Trim(Copy(Sig, 1, p - 1));
-
         Params := Copy(Sig, p, Length(Sig));
-
       end
 
       else
-
       begin
-
         Name := Trim(Sig);
-
         Params := '';
-
       end;
 
       
@@ -2055,27 +1398,17 @@ begin
       // Strips Pascal keywords from the JS property name
 
       Name := StringReplace(Name, 'procedure ', '', [rfReplaceAll, rfIgnoreCase]);
-
       Name := StringReplace(Name, 'function ', '', [rfReplaceAll, rfIgnoreCase]);
-
       Name := Trim(Name);
-
-      
-
       if Params = '' then Params := '(_this: TJSObject)'
 
       else Params := '(_this: TJSObject; ' + Copy(Params, 2, Length(Params));
-
-      
-
       if IsFunction then
-
         Result := Result + '  m[''' + Name + '''] := function' + Params + ': ' + ReturnType + #10 +
 
                   CleanPascalProps(Body) + #10
 
       else
-
       Result := Result + '  m[''' + Name + '''] := procedure' + Params + #10 +
 
                 CleanPascalProps(Body) + #10;
@@ -2083,95 +1416,62 @@ begin
       
 
       p := FindMemberStart(Block, 'procedure', 'function');
-
     end;
 
   finally
 
     Parts.Free;
-
     SubParts.Free;
-
   end;
-
 end;
-
-
 
 function GenerateTemplateString(const Template: string): string;
 
 var
-
   Lines: TStringList;
-
   i: Integer;
-
   L: string;
-
 begin
-
   Lines := TStringList.Create;
-
   try
 
     Lines.Text := Template;
-
     Result := '';
-
     for i := 0 to Lines.Count - 1 do
-
     begin
-
       L := EscapeQuotes(Lines[i]);
-
       if i = 0 then
-
         Result := '    ''' + L + ''''
 
       else
-
         Result := Result + ' +' + #10 + '    ''' + L + '''';
-
     end;
 
     // Remove trailing empty line artifacts
 
     if Result = '' then
-
       Result := '    ''''';
 
   finally
 
     Lines.Free;
-
   end;
-
 end;
-
-
 
 function GenerateStyleInjection(const Style: string): string;
 
 var
-
   CleanCSS: string;
-
 begin
-
   if Trim(Style) = '' then
-
   begin
-
     Result := '';
-
     Exit;
-
   end;
 
   // Clean CSS: remove line breaks and escape quotes for JS
 
   CleanCSS := StringReplace(Trim(Style), #13, '', [rfReplaceAll]);
-
   CleanCSS := StringReplace(CleanCSS, #10, ' ', [rfReplaceAll]);
 
   // Pascal uses doubled single quotes for strings
@@ -2187,29 +1487,18 @@ begin
     '  _styleEl.textContent := ''' + CleanCSS + ''';' + #10 +
 
     '  document.head.appendChild(_styleEl);' + #10;
-
 end;
-
-
 
 function GenerateLifecycleCode(const Key, RawCode: string): string;
 
 var
-
   CleanCode: string;
-
   pBegin: Integer;
-
 begin
-
   if Trim(RawCode) = '' then
-
   begin
-
     Result := '';
-
     Exit;
-
   end;
 
   
@@ -2219,107 +1508,57 @@ begin
   // We use CleanPascalProps to ensure it matches Pascal standards for the Unit generation.
 
   Result := '  comp[''' + Key + '''] := procedure(_this: TJSObject)' + #10;
-
   CleanCode := CleanPascalProps(RawCode);
-
   pBegin := Pos('begin', LowerCase(CleanCode));
-
   if (pBegin > 0) or (Pos('var', LowerCase(CleanCode)) > 0) then
-
   begin
-
     if pBegin > 0 then
-
     begin
-
       Insert(#10 + '      asm if (!_this) _this = this; end;' + #10, CleanCode, pBegin + 5);
-
     end;
 
     Result := Result + CleanCode + #10 + '    ;' + #10;
-
   end
 
   else
-
     Result := Result + '    begin' + #10 + '      asm if (!_this) _this = this; end;' + #10 + CleanCode + #10 + '    end;' + #10;
-
 end;
-
-
 
 function GenerateWatchCode(const RawCode: string): string;
 
 var
-
   Parts, SubParts: TStringList;
-
   i, p, p2: Integer;
-
   Sig, Body, Name, Params, Block: string;
-
 begin
-
   Result := '';
-
   if Trim(RawCode) = '' then Exit;
-
-  
-
   Result := '  comp[''watch''] := TJSObject.new;' + #10;
-
-  
-
   Parts := TStringList.Create;
-
   try
 
     Block := RawCode;
-
     p := FindMemberStart(Block, 'procedure');
-
     while p > 0 do
-
     begin
-
       Block := Copy(Block, p + 10, Length(Block));
-
       p := Pos(';', Block);
-
       if p = 0 then Break;
-
       Sig := Trim(Copy(Block, 1, p - 1));
-
-      
-
       Body := Copy(Block, p + 1, Length(Block));
-
       p2 := FindMemberStart(Body, 'procedure');
-
       if p2 > 0 then Body := Copy(Body, 1, p2 - 1);
-
-      
-
       p2 := Pos('(', Sig);
-
       if p2 > 0 then
-
       begin
-
         Name := Trim(Copy(Sig, 1, p2 - 1));
-
         Params := Copy(Sig, p2, Length(Sig));
-
       end
 
       else
-
       begin
-
         Name := Sig;
-
         Params := '';
-
       end;
 
       
@@ -2339,65 +1578,35 @@ begin
       
 
       p := FindMemberStart(Block, 'procedure');
-
     end;
 
   finally
 
     Parts.Free;
-
   end;
-
 end;
-
-
 
 function GenerateComputedCode(const RawCode: string): string;
 
 var
-
   p: Integer;
-
   Name, Block, Body: string;
-
 begin
-
   Result := '';
-
   if Trim(RawCode) = '' then Exit;
-
-  
-
   Result := '  comp[''computed''] := TJSObject.new;' + #10;
-
   Block := RawCode;
-
   p := FindMemberStart(Block, 'function');
-
   while p > 0 do
-
   begin
-
     Block := Copy(Block, p + 9, Length(Block));
-
     p := Pos(':', Block);
-
     if p = 0 then Break;
-
     Name := Trim(Copy(Block, 1, p - 1));
-
-    
-
     p := Pos(';', Block);
-
     if p = 0 then Break;
-
-    
-
     Body := Copy(Block, p + 1, Length(Block));
-
     p := FindMemberStart(Body, 'function');
-
     if p > 0 then Body := Copy(Body, 1, p - 1);
 
     
@@ -2411,25 +1620,15 @@ begin
     
 
     p := FindMemberStart(Block, 'function');
-
   end;
-
 end;
-
-
 
 function GenerateProvideCode(const RawCode: string): string;
 
 var
-
   CleanCode: string;
-
 begin
-
   if Trim(RawCode) = '' then begin Result := ''; Exit; end;
-
-  
-
   CleanCode := CleanPascalProps(RawCode);
 
   
@@ -2437,19 +1636,14 @@ begin
   // If it already has structured begin/end (rare in .bv), just wrap it
 
   if (Pos('begin', LowerCase(CleanCode)) > 0) and (Pos('result', LowerCase(CleanCode)) > 0) then
-
   begin
-
     Result := '  comp[''provide''] := function(_this: TJSObject): TJSObject' + #10 +
 
               CleanCode + #10 + ';' + #10;
-
   end
 
   else
-
   begin
-
     // Common case: list of procedures or assignments
 
     Result := '  comp[''provide''] := function(_this: TJSObject): TJSObject' + #10 +
@@ -2461,78 +1655,58 @@ begin
               '       Result := TJSObject.new;' + #10 +
 
               '    end;' + #10 + ';' + #10;
-
   end;
-
 end;
-
-
 
 function GenerateInjectCode(const RawCode: string): string;
 
 var
-
   SL: TStringList;
-
   i: Integer;
-
 begin
-
   if Trim(RawCode) = '' then begin Result := ''; Exit; end;
-
   SL := TStringList.Create;
-
   try
 
     SL.CommaText := StringReplace(RawCode, ';', ',', [rfReplaceAll]);
-
     Result := '  comp[''inject''] := TJSArray.new;' + #10;
-
     for i := 0 to SL.Count - 1 do
-
       if Trim(SL[i]) <> '' then
-
         Result := Result + '  TJSArray(comp[''inject'']).push(''' + Trim(SL[i]) + ''');' + #10;
 
   finally
 
     SL.Free;
-
   end;
-
 end;
 
-
-
 // =====================================================================
-
-//  PASCAL CODE GENERATORS
-
+//  FULL UNIT & PROGRAM FILE ASSEMBLERS
 // =====================================================================
-
-
+{
+  This subsystem orchestrates the complete Pascal compilation artifacts by
+  assembling the sub-blocks produced by the Member Generators above:
+  - GenerateComponentUnit: Assembles a complete, standalone Pascal unit
+                           (unit U<Name>; interface ... implementation ...)
+                           for each Single File Component (.bv)
+  - GenerateAppUnit:       Assembles the application root unit (App.pas),
+                           registering all component tags, router, and root state
+  - GenerateMainProgram:   Assembles the main application entry point (program MyApp;)
+}
 
 { Generates a Pascal unit from a standard .bv component }
 
 function GenerateComponentUnit(const UnitName, TagName, BVFileName: string; const Parsed: TBVParsed): string;
 
 var
-
   UsesLine: string;
-
 begin
-
   UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet';
-
   if Parsed.HasRouter then
-
     UsesLine := UsesLine + ', BVRouting';
 
   if Parsed.ScriptUses <> '' then
-
     UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
-
-
 
   Result :=
 
@@ -2611,23 +1785,18 @@ begin
     '  RegisterComponent(''' + TagName + ''', comp);' + #10;
 
   if TagName = 'bv-data-grid' then
-
     Result := Result + '  RegisterComponent(''bv-datagrid'', comp);' + #10;
 
   if TagName = 'bv-virtual-scroll' then
-
     Result := Result + '  RegisterComponent(''bv-virtualscroll'', comp);' + #10;
 
   if TagName = 'bv-virtualscroll' then
-
     Result := Result + '  RegisterComponent(''bv-virtual-scroll'', comp);' + #10;
 
   if TagName = 'data-set-view-page' then
-
     Result := Result + '  RegisterComponent(''dataset-view-page'', comp);' + #10;
 
   if TagName = 'dataset-view-page' then
-
     Result := Result + '  RegisterComponent(''data-set-view-page'', comp);' + #10;
 
   Result := Result +
@@ -2637,75 +1806,47 @@ begin
     #10 +
 
     'end.' + #10;
-
 end;
-
-
 
 { Generates the root application unit (app.bv) which handles global state and routing }
 
 function GenerateAppUnit(const Parsed: TBVParsed; const AllUnits: TStringList): string;
 
 var
-
   UsesLine, RouteCode, DataCode, Val: string;
-
   UniqueUnits: TStringList;
-
   i: Integer;
-
 begin
-
   UniqueUnits := TStringList.Create;
-
   try
 
     UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet';
-
     if Parsed.HasRouter then
-
       UsesLine := UsesLine + ', BVRouting';
 
     if Parsed.ScriptUses <> '' then
-
       UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
 
     // Automatically import all compiled component units for auto-registration
 
     for i := 0 to AllUnits.Count - 1 do
-
     begin
-
       if (AllUnits[i] <> 'uApp') and (UniqueUnits.IndexOf(AllUnits[i]) < 0) then
-
       begin
-
         UniqueUnits.Add(AllUnits[i]);
-
         UsesLine := UsesLine + ', ' + AllUnits[i];
-
       end;
-
     end;
-
-
 
   // Data fields
 
   DataCode := '';
-
   if Length(Parsed.DataFields) > 0 then
-
   begin
-
     DataCode := '  data := TJSObject.new;' + #10;
-
     for i := 0 to High(Parsed.DataFields) do
-
     begin
-
       Val := Parsed.DataFields[i].DefaultValue;
-
       if Trim(Val) = '[]' then Val := 'TJSArray.new'
 
       else if Trim(Val) = '{}' then Val := 'TJSObject.new';
@@ -2713,35 +1854,24 @@ begin
       DataCode := DataCode + '  data[''' + Parsed.DataFields[i].Name + '''] := ' +
 
         Val + ';' + #10;
-
     end;
-
   end
 
   else
-
     DataCode := '  data := TJSObject.new;' + #10;
-
-
 
   // Router setup
 
   RouteCode := '';
-
   if Parsed.HasRouter and (Length(Parsed.Routes) > 0) then
-
   begin
-
     RouteCode :=
 
       '  routerOpts := TJSObject.new;' + #10 +
 
       '  routesArr := TJSArray.new;' + #10 + #10;
 
-
-
     for i := 0 to High(Parsed.Routes) do
-
       RouteCode := RouteCode +
 
         '  r := TJSObject.new;' + #10 +
@@ -2752,17 +1882,12 @@ begin
 
         '  routesArr.push(r);' + #10 + #10;
 
-
-
     RouteCode := RouteCode +
 
       '  routerOpts[''routes''] := routesArr;' + #10 +
 
       '  router := TBVRouter.Create(routerOpts);' + #10;
-
   end;
-
-
 
   Result :=
 
@@ -2804,10 +1929,7 @@ begin
 
     '  _styleEl: TJSHTMLElement;' + #10;
 
-
-
   if Parsed.HasRouter then
-
     Result := Result +
 
       '  routerOpts: TJSObject;' + #10 +
@@ -2817,8 +1939,6 @@ begin
       '  r: TJSObject;' + #10 +
 
       '  router: TBVRouter;' + #10;
-
-
 
   Result := Result +
 
@@ -2848,31 +1968,20 @@ begin
 
     GenerateStyleInjection(Parsed.Style);
 
-
-
-  // Registra componentes
+  // Register components
 
   for i := 0 to UniqueUnits.Count - 1 do
-
   begin
-
     Result := Result + '  asm console.log("[Init] Registering ' + UniqueUnits[i] + '..."); end;' + #10 +
 
              '  ' + 'Register_' + UniqueUnits[i] + ';' + #10;
-
   end;
 
-
-
   Result := Result + #10;
 
-
-
-  // Template do root (registra como componente invisivel e seta innerHTML)
+  // Root template (register as invisible component and set innerHTML)
 
   Result := Result + #10;
-
-
 
   // Root template (registers as invisible component and sets innerHTML)
 
@@ -2884,13 +1993,9 @@ begin
 
     GenerateTemplateString(Parsed.Template) + ';' + #10 + #10;
 
-
-
   // Data
 
   Result := Result + DataCode + #10;
-
-
 
   // Methods
 
@@ -2899,8 +2004,6 @@ begin
                      '  m := methods;' + #10 +
 
     GenerateMethodsCode(Parsed.MethodsCode) + #10;
-
-
 
   // Options (Lifecycle, Watch & Computed)
 
@@ -2924,39 +2027,28 @@ begin
 
     GenerateInjectCode(Parsed.InjectCode);
 
-
-
   // Router
 
   if RouteCode <> '' then
-
     Result := Result + RouteCode + #10;
 
-
-
-  // Cria a instancia
+  // Instantiate application
 
   Result := Result +
 
     '  app := TBlaiseVue.Create(''#app'', data, methods, opts);' + #10;
 
-
-
   if Parsed.HasRouter then
-
     Result := Result +
 
       '  app.UseRouter(router);' + #10
 
   else
-
-    // Sem router: compilar o template diretamente
+    // Without router: compile root template directly
 
     Result := Result +
 
       '  Compile(TJSHTMLElement(document.querySelector(''#app'')), app.Data, methods);' + #10;
-
-
 
   Result := Result +
 
@@ -2969,19 +2061,13 @@ begin
   finally
 
     UniqueUnits.Free;
-
   end;
-
 end;
-
-
 
 { Generates the main entry point program (main.pas) }
 
 function GenerateMainProgram: string;
-
 begin
-
   Result :=
 
     'program main;' + #10 +
@@ -3001,10 +2087,7 @@ begin
     '  Init_App;' + #10 +
 
     'end.' + #10;
-
 end;
-
-
 
 // =====================================================================
 
@@ -3012,22 +2095,15 @@ end;
 
 // =====================================================================
 
-
-
 procedure CopyFile(const Src, Dest: string);
 
 var
-
   SrcStream, DestStream: TFileStream;
-
 begin
-
   SrcStream := TFileStream.Create(Src, fmOpenRead or fmShareDenyWrite);
-
   try
 
     DestStream := TFileStream.Create(Dest, fmCreate);
-
     try
 
       DestStream.CopyFrom(SrcStream, SrcStream.Size);
@@ -3035,92 +2111,53 @@ begin
     finally
 
       DestStream.Free;
-
     end;
 
   finally
 
     SrcStream.Free;
-
   end;
-
 end;
-
-
 
 procedure CopyDir(const Source, Dest: string; const ExcludeList: array of string);
 
 var
-
   SR: TSearchRec;
-
   i: Integer;
-
   IsExcluded: Boolean;
-
   SrcPath, DestPath: string;
-
 begin
-
   SrcPath := IncludeTrailingPathDelimiter(Source);
-
   DestPath := IncludeTrailingPathDelimiter(Dest);
-
   ForceDir(DestPath);
-
-  
-
   if FindFirst(SrcPath + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
       if (SR.Name <> '.') and (SR.Name <> '..') then
-
       begin
-
         IsExcluded := False;
-
         for i := 0 to High(ExcludeList) do
-
           if LowerCase(SR.Name) = LowerCase(ExcludeList[i]) then
-
           begin
-
             IsExcluded := True;
-
             Break;
-
           end;
 
-
-
         if not IsExcluded then
-
         begin
-
           if (SR.Attr and faDirectory) <> 0 then
-
             CopyDir(SrcPath + SR.Name, DestPath + SR.Name, ExcludeList)
 
           else
-
             CopyFile(SrcPath + SR.Name, DestPath + SR.Name);
-
         end;
-
       end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
-
 end;
-
-
 
 // =====================================================================
 //  CRYPTOGRAPHIC SHA-256 INTEGRITY ENGINE (Pure Pascal RFC 6234)
@@ -3132,7 +2169,6 @@ type
     Count: QWord;
     Buffer: array[0..63] of Byte;
   end;
-
 function ROR32(x: Cardinal; n: Byte): Cardinal; inline;
 begin
   Result := (x shr n) or (x shl (32 - n));
@@ -3194,7 +2230,6 @@ begin
 
   a := State[0]; b := State[1]; c := State[2]; d := State[3];
   e := State[4]; f := State[5]; g := State[6]; h := State[7];
-
   for i := 0 to 63 do
   begin
     T1 := h + Sigma1_32(e) + Ch32(e, f, g) + K256[i] + W[i];
@@ -3226,7 +2261,6 @@ begin
   BufferIndex := Cardinal(Ctx.Count and 63);
   Inc(Ctx.Count, Len);
   BufferLeft := 64 - BufferIndex;
-
   if Len >= BufferLeft then
   begin
     Move(P^, Ctx.Buffer[BufferIndex], BufferLeft);
@@ -3267,7 +2301,6 @@ begin
 
   SHA256Update(Ctx, Pad, PadLen);
   SHA256Update(Ctx, BEBits, 8);
-
   Result := '';
   for i := 0 to 7 do
     Result := Result + IntToHex(Ctx.State[i], 8);
@@ -3374,7 +2407,6 @@ begin
   end;
 
   Base := GetCurrentDir + DirectorySeparator + LibName + DirectorySeparator;
-
   if DirectoryExists(Base) then
   begin
     WriteLn('ERROR: Folder "', LibName, '" already exists.');
@@ -3846,7 +2878,6 @@ begin
     '## 📄 License' + #10#10 +
     'This library is licensed under the ' + LicenseTitle + '. See [LICENSE](LICENSE) for details.' + #10;
   WriteStringToFile(Base + 'README.md', Readme);
-
   WriteLn('  [+] src/' + PascalName + '.bv');
   WriteLn('  [+] src/' + PascalName + '.pas');
   WriteLn('  [+] styles/' + KebabName + '.css');
@@ -3869,23 +2900,15 @@ end;
 procedure CmdCreate(const ProjectName: string);
 
 var
-
   Base, TemplatePath: string;
-
   Content: string;
-
   IsFullStack, IsLib: Boolean;
-
   TemplateMormotDir, LicenseArg, RealProjectName: string;
-
   i: Integer;
-
 begin
-
   IsLib := False;
   LicenseArg := '';
   RealProjectName := ProjectName;
-
   for i := 2 to ParamCount do
   begin
     if (LowerCase(ParamStr(i)) = '--lib') or
@@ -3908,29 +2931,16 @@ begin
   end;
 
   Base := GetCurrentDir + DirectorySeparator + RealProjectName + DirectorySeparator;
-
   TemplatePath := GetSDKPath + 'demo-app' + DirectorySeparator;
-
-
-
   if DirectoryExists(Base) then
-
   begin
-
     WriteLn('ERROR: Folder "', ProjectName, '" already exists.');
-
     Halt(1);
-
   end;
 
-
-
   if DirectoryExists(TemplatePath) then
-
   begin
-
     WriteLn('Scaffolding BlaiseVue project from demo-app template: ', ProjectName);
-
     CopyDir(TemplatePath, Base, ['.git', '.github', 'node_modules', 'dist', 'generated']);
 
     
@@ -3938,18 +2948,13 @@ begin
     // Customize project name in package.json if it was copied
 
     if FileExists(Base + 'package.json') then
-
     begin
-
       Content := ReadFileToString(Base + 'package.json');
-
       Content := StringReplace(Content, '"name": "blaisevue-demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
       Content := StringReplace(Content, '"name" : "blaisevue-demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
       Content := StringReplace(Content, '"name": "demo-app"', '"name": "' + ProjectName + '"', [rfReplaceAll]);
       Content := StringReplace(Content, '"name" : "demo-app"', '"name" : "' + ProjectName + '"', [rfReplaceAll]);
-
       WriteStringToFile(Base + 'package.json', Content);
-
     end;
 
     
@@ -3957,34 +2962,22 @@ begin
     // Customize title in index.html if it was copied
 
     if FileExists(Base + 'public' + DirectorySeparator + 'index.html') then
-
     begin
-
       Content := ReadFileToString(Base + 'public' + DirectorySeparator + 'index.html');
-
       Content := StringReplace(Content, '<title>BlaiseVue Demo 2.0</title>', '<title>' + ProjectName + '</title>', [rfReplaceAll]);
-
       Content := StringReplace(Content, '<title>BlaiseVue Demo</title>', '<title>' + ProjectName + '</title>', [rfReplaceAll]);
-
       WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html', Content);
-
     end;
 
     
 
     WriteLn('  Project cloned from demo-app successfully.');
-
   end
 
   else
-
   begin
-
     WriteLn('WARNING: demo-app template not found in SDK root. Falling back to minimal scaffolding.');
-
     WriteLn('Scaffolding BlaiseVue project: ', ProjectName);
-
-
 
     // Create directories
     ForceDir(Base + 'public');
@@ -4157,33 +3150,20 @@ begin
   // Always ensure rtl.js exists
 
   if not FileExists(Base + 'rtl.js') then
-
   begin
-
     if GetRTLPath <> '' then
-
     begin
-
       CopyFile(GetRTLPath, Base + 'rtl.js');
-
       WriteLn('  rtl.js                 copied');
-
     end
 
     else
-
       WriteLn('  WARNING: rtl.js not found. Copy it manually to the project root.');
-
   end;
 
-
-
   if HasCommand('npm') then
-
   begin
-
     WriteLn('');
-
     WriteLn('Installing dependencies (npm install)...');
 
     {$IFDEF WINDOWS}
@@ -4191,31 +3171,20 @@ begin
     {$ELSE}
     ExecuteProcess('/bin/sh', '-c "npm install --prefix ''' + Base + '''"');
     {$ENDIF}
-
   end
 
   else
-
   begin
-
     WriteLn('');
-
     WriteLn('  [WARNING] npm not found in system PATH.');
-
     WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
-
   end;
-
-
 
   // Check if --mormot, --fullstack, -m, or -f flag was passed
 
   IsFullStack := False;
-
   for i := 2 to ParamCount do
-
   begin
-
     if (LowerCase(ParamStr(i)) = '--mormot') or
 
        (LowerCase(ParamStr(i)) = '-m') or
@@ -4231,70 +3200,37 @@ begin
        ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and
 
         ((LowerCase(ParamStr(i + 1)) = 'fullstack-mormot') or (LowerCase(ParamStr(i + 1)) = 'mormot'))) then
-
     begin
-
       IsFullStack := True;
-
       Break;
-
     end;
-
   end;
 
-
-
   if IsFullStack then
-
   begin
-
     TemplateMormotDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
-
     if DirectoryExists(TemplateMormotDir) then
-
     begin
-
       WriteLn('Scaffolding Full-Stack mORMot 2 backend server in ', ProjectName, '/server...');
-
       ForceDir(Base + 'server');
-
       CopyDir(TemplateMormotDir, Base + 'server', ['bin', 'lib']);
-
       ForceDir(Base + 'server' + DirectorySeparator + 'bin');
-
       ForceDir(Base + 'server' + DirectorySeparator + 'lib');
-
       WriteLn('  [+] Full-Stack mORMot 2 backend scaffolded successfully.');
-
     end;
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('Project created successfully!');
-
   WriteLn('');
-
   WriteLn('Next steps:');
-
   WriteLn('  cd ', ProjectName);
-
   WriteLn('  bv dev');
-
   if IsFullStack then
-
   begin
-
     WriteLn('  bv mormot run          # Starts the native mORMot 2 backend on port 8090');
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -4302,122 +3238,67 @@ end;
 
 // =====================================================================
 
-
-
 function LevenshteinDistance(const S1, S2: string): Integer;
 
 var
-
   Len1, Len2, i, j, Cost: Integer;
-
   D: array of array of Integer;
-
 begin
-
   Len1 := Length(S1);
-
   Len2 := Length(S2);
-
   SetLength(D, Len1 + 1, Len2 + 1);
-
   for i := 0 to Len1 do D[i, 0] := i;
-
   for j := 0 to Len2 do D[0, j] := j;
-
-
-
   for i := 1 to Len1 do
-
   begin
-
     for j := 1 to Len2 do
-
     begin
-
       if LowerCase(S1[i]) = LowerCase(S2[j]) then
-
         Cost := 0
 
       else
-
         Cost := 1;
 
       D[i, j] := D[i - 1, j] + 1;
-
       if D[i, j - 1] + 1 < D[i, j] then D[i, j] := D[i, j - 1] + 1;
-
       if D[i - 1, j - 1] + Cost < D[i, j] then D[i, j] := D[i - 1, j - 1] + Cost;
-
     end;
-
   end;
 
   Result := D[Len1, Len2];
-
 end;
-
-
 
 function FindClosestMatch(const Target: string; Candidates: TStringList): string;
 
 var
-
   i, MinDist, Dist, MaxAllowed: Integer;
-
   BestMatch: string;
-
 begin
-
   Result := '';
-
   if Candidates.Count = 0 then Exit;
-
   MinDist := 999;
-
   BestMatch := '';
-
   MaxAllowed := 2;
-
   if Length(Target) >= 7 then MaxAllowed := 3;
-
-
-
   for i := 0 to Candidates.Count - 1 do
-
   begin
-
     Dist := LevenshteinDistance(Target, Candidates[i]);
-
     if Dist < MinDist then
-
     begin
-
       MinDist := Dist;
-
       BestMatch := Candidates[i];
-
     end;
-
   end;
 
-
-
   if (MinDist > 0) and (MinDist <= MaxAllowed) then
-
     Result := BestMatch;
-
 end;
-
-
 
 function IsJSReservedWord(const W: string): Boolean;
 
 var
-
   L: string;
-
 begin
-
   L := LowerCase(W);
 
   Result := (L = 'true') or (L = 'false') or (L = 'null') or (L = 'undefined') or
@@ -4435,533 +3316,291 @@ begin
             (L = 'break') or (L = 'continue') or (L = 'default') or (L = 'void') or
 
             (L = 'delete') or (L = 'yield') or (L = 'await') or (L = 'async');
-
 end;
-
-
 
 procedure ExtractPascalRoutines(const Code: string; Names: TStringList);
 
 var
-
   LowerCode: string;
-
   p, pEnd, len, tIdx: Integer;
-
   Word: string;
-
   Tokens: array[0..1] of string = ('procedure ', 'function ');
-
 begin
-
   if Trim(Code) = '' then Exit;
-
   LowerCode := LowerCase(Code);
-
   len := Length(LowerCode);
-
-
-
   for tIdx := 0 to 1 do
-
   begin
-
     p := Pos(Tokens[tIdx], LowerCode);
-
     while p > 0 do
-
     begin
-
       p := p + Length(Tokens[tIdx]);
-
       while (p <= len) and (Code[p] <= ' ') do Inc(p);
-
       pEnd := p;
-
       while (pEnd <= len) and (Code[pEnd] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(pEnd);
-
       if pEnd > p then
-
       begin
-
         Word := Copy(Code, p, pEnd - p);
-
         if (Names.IndexOf(Word) < 0) then
-
           Names.Add(Word);
-
       end;
 
       p := PosEx(Tokens[tIdx], LowerCode, pEnd);
-
     end;
-
   end;
-
 end;
-
-
 
 procedure ExtractRootIdentifiers(const Expr: string; Identifiers: TStringList);
 
 var
-
   i, Len, Start, j: Integer;
-
   Ch, Quote: Char;
-
   Word, PrevToken: string;
-
   IsMember, IsObjectKey: Boolean;
-
 begin
-
   Len := Length(Expr);
-
   i := 1;
-
   PrevToken := '';
-
-
-
   while i <= Len do
-
   begin
-
     Ch := Expr[i];
-
-
-
     if Ch <= ' ' then
-
     begin
-
       Inc(i);
-
       Continue;
-
     end;
-
-
 
     // Skip string literals: '...', "...", `...`
 
     if (Ch = '''') or (Ch = '"') or (Ch = '`') then
-
     begin
-
       Quote := Ch;
-
       Inc(i);
-
       while (i <= Len) and (Expr[i] <> Quote) do
-
       begin
-
         if (Expr[i] = '\') and (i < Len) then Inc(i);
-
         Inc(i);
-
       end;
 
       Inc(i);
-
       PrevToken := 'STR';
-
       Continue;
-
     end;
-
-
 
     // Skip numbers
 
     if (Ch in ['0'..'9']) or ((Ch = '.') and (i < Len) and (Expr[i + 1] in ['0'..'9'])) then
-
     begin
-
       while (i <= Len) and (Expr[i] in ['0'..'9', '.', 'e', 'E']) do Inc(i);
-
       PrevToken := 'NUM';
-
       Continue;
-
     end;
-
-
 
     // Dot accessor (member access)
 
     if Ch = '.' then
-
     begin
-
       PrevToken := '.';
-
       Inc(i);
-
       Continue;
-
     end;
-
-
 
     // Identifiers: [a-zA-Z_$][a-zA-Z0-9_$]*
 
     if (Ch in ['a'..'z', 'A'..'Z', '_', '$']) then
-
     begin
-
       Start := i;
-
       while (i <= Len) and (Expr[i] in ['a'..'z', 'A'..'Z', '0'..'9', '_', '$']) do Inc(i);
-
       Word := Copy(Expr, Start, i - Start);
-
-
-
       IsMember := (PrevToken = '.');
-
-
 
       // Check if object key in { key: value }
 
       j := i;
-
       while (j <= Len) and (Expr[j] <= ' ') do Inc(j);
-
       IsObjectKey := (j <= Len) and (Expr[j] = ':') and ((PrevToken = '{') or (PrevToken = ','));
-
-
-
       if (not IsMember) and (not IsObjectKey) and (not IsJSReservedWord(Word)) then
-
       begin
-
         if Identifiers.IndexOf(Word) < 0 then
-
           Identifiers.Add(Word);
-
       end;
 
-
-
       PrevToken := Word;
-
       Continue;
-
     end;
 
-
-
     PrevToken := Ch;
-
     Inc(i);
-
   end;
-
 end;
-
-
 
 function HasSymbolCaseInsensitive(const Symbol: string; Symbols: TStringList): Boolean;
 
 var
-
   i: Integer;
-
   LS: string;
-
 begin
-
   LS := LowerCase(Symbol);
-
   for i := 0 to Symbols.Count - 1 do
-
   begin
-
     if LowerCase(Symbols[i]) = LS then
-
     begin
-
       Result := True;
-
       Exit;
-
     end;
-
   end;
 
   Result := False;
-
 end;
-
-
 
 function ValidateComponentTemplate(const BVFilePath: string; const Parsed: TBVParsed; const StrictMode: Boolean = False): Integer;
 
 var
-
   Symbols: TStringList;
-
   RootIds: TStringList;
-
   Tpl: string;
-
   i, pStart, pEnd, InIdx: Integer;
-
   Expr, Id, Sugg, AttrVal, BaseName: string;
-
   WarningCount: Integer;
-
   BForPos, QuoteEnd: Integer;
-
   QuoteChar: Char;
-
   IterStr: string;
-
 begin
-
   WarningCount := 0;
-
   BaseName := ExtractFileName(BVFilePath);
-
   Symbols := TStringList.Create;
-
   RootIds := TStringList.Create;
-
   try
 
     // 1. Collect declared data fields and props
 
     for i := 0 to High(Parsed.DataFields) do
-
       if Symbols.IndexOf(Parsed.DataFields[i].Name) < 0 then
-
         Symbols.Add(Parsed.DataFields[i].Name);
-
-
 
     // 2. Collect methods and computed routines
 
     ExtractPascalRoutines(Parsed.MethodsCode, Symbols);
-
     ExtractPascalRoutines(Parsed.ComputedCode, Symbols);
-
-
 
     // 3. Collect inject symbols
 
     if Parsed.InjectCode <> '' then
-
     begin
-
       Expr := StringReplace(Parsed.InjectCode, ';', ',', [rfReplaceAll]);
-
       Expr := StringReplace(Expr, '''', '', [rfReplaceAll]);
-
       RootIds.CommaText := Expr;
-
       for i := 0 to RootIds.Count - 1 do
-
         if (Trim(RootIds[i]) <> '') and (Symbols.IndexOf(Trim(RootIds[i])) < 0) then
-
           Symbols.Add(Trim(RootIds[i]));
 
       RootIds.Clear;
-
     end;
-
-
 
     // 4. Register global built-ins
 
     Symbols.Add('$t'); Symbols.Add('$i18n'); Symbols.Add('$setLocale');
-
     Symbols.Add('$theme'); Symbols.Add('$auth');
-
     Symbols.Add('$rpc'); Symbols.Add('$ws'); Symbols.Add('$api');
-
     Symbols.Add('$mobile'); Symbols.Add('$desktop'); Symbols.Add('$wasm'); Symbols.Add('$ionic');
-
     Symbols.Add('$store'); Symbols.Add('Router'); Symbols.Add('$router'); Symbols.Add('$route');
-
     Symbols.Add('$v'); Symbols.Add('$errors'); Symbols.Add('$validate');
-
     Symbols.Add('$event'); Symbols.Add('$refs'); Symbols.Add('$slots'); Symbols.Add('$index'); Symbols.Add('$emit');
-
     Symbols.Add('item'); Symbols.Add('idx'); Symbols.Add('index'); Symbols.Add('p');
-
     Symbols.Add('col'); Symbols.Add('row'); Symbols.Add('tab'); Symbols.Add('opt');
-
     Symbols.Add('key'); Symbols.Add('val'); Symbols.Add('value'); Symbols.Add('entry');
-
     Symbols.Add('true'); Symbols.Add('false'); Symbols.Add('null'); Symbols.Add('undefined');
-
     Symbols.Add('this'); Symbols.Add('window'); Symbols.Add('Math'); Symbols.Add('Date');
-
     Symbols.Add('String'); Symbols.Add('Number'); Symbols.Add('Boolean'); Symbols.Add('Array');
-
     Symbols.Add('Object'); Symbols.Add('JSON'); Symbols.Add('console');
-
     Symbols.Add('parseInt'); Symbols.Add('parseFloat');
-
     Symbols.Add('encodeURIComponent'); Symbols.Add('decodeURIComponent');
-
-
 
     // 5. Detect template b-for and scoped slots to register local loop identifiers
 
     Tpl := Parsed.Template;
-
     BForPos := Pos('b-for="', Tpl);
-
     if BForPos = 0 then BForPos := Pos('b-for=''', Tpl);
-
     while BForPos > 0 do
-
     begin
-
       QuoteChar := Tpl[BForPos + 6];
-
       QuoteEnd := PosEx(QuoteChar, Tpl, BForPos + 7);
-
       if QuoteEnd > 0 then
-
       begin
-
         AttrVal := Copy(Tpl, BForPos + 7, QuoteEnd - (BForPos + 7));
-
         InIdx := Pos(' in ', AttrVal);
-
         if InIdx > 0 then
-
         begin
-
           IterStr := Trim(Copy(AttrVal, 1, InIdx - 1));
-
           IterStr := StringReplace(IterStr, '(', '', [rfReplaceAll]);
-
           IterStr := StringReplace(IterStr, ')', '', [rfReplaceAll]);
-
           IterStr := StringReplace(IterStr, ' ', '', [rfReplaceAll]);
-
           RootIds.CommaText := IterStr;
-
           for i := 0 to RootIds.Count - 1 do
-
             if (Trim(RootIds[i]) <> '') and (Symbols.IndexOf(Trim(RootIds[i])) < 0) then
-
               Symbols.Add(Trim(RootIds[i]));
 
           RootIds.Clear;
-
         end;
-
       end;
 
       BForPos := PosEx('b-for=', Tpl, BForPos + 7);
-
     end;
-
-
 
     // Detect slot-scope / v-slot variables
 
     pStart := Pos('slot-scope="', Tpl);
-
     while pStart > 0 do
-
     begin
-
       pEnd := PosEx('"', Tpl, pStart + 12);
-
       if pEnd > 0 then
-
       begin
-
         AttrVal := Trim(Copy(Tpl, pStart + 12, pEnd - (pStart + 12)));
-
         if (AttrVal <> '') and (Symbols.IndexOf(AttrVal) < 0) then
-
           Symbols.Add(AttrVal);
-
       end;
 
       pStart := PosEx('slot-scope="', Tpl, pStart + 12);
-
     end;
-
-
 
     // 6. Scan Interpolations: {{ ... }}
 
     pStart := Pos('{{', Tpl);
-
     while pStart > 0 do
-
     begin
-
       pEnd := PosEx('}}', Tpl, pStart + 2);
-
       if pEnd > 0 then
-
       begin
-
         Expr := Trim(Copy(Tpl, pStart + 2, pEnd - (pStart + 2)));
-
         RootIds.Clear;
-
         ExtractRootIdentifiers(Expr, RootIds);
-
         for i := 0 to RootIds.Count - 1 do
-
         begin
-
           Id := RootIds[i];
-
           if not HasSymbolCaseInsensitive(Id, Symbols) then
-
           begin
-
             Inc(WarningCount);
-
             Sugg := FindClosestMatch(Id, Symbols);
-
             if (Sugg <> '') and (LowerCase(Sugg) <> LowerCase(Id)) then
-
               WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Did you mean ''', Sugg, '''?')
 
             else
-
               WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Verify declaration in data, props, computed, or methods.');
-
           end;
-
         end;
 
         pStart := PosEx('{{', Tpl, pEnd + 2);
-
       end
 
       else
-
         Break;
-
     end;
-
-
 
     // 7. Scan Dynamic Directives: :prop="...", @event="...", b-model="...", b-if="...", b-show="..."
 
     for i := 1 to Length(Tpl) - 5 do
-
     begin
-
       if (i > 1) and (Tpl[i - 1] > ' ') and (Tpl[i - 1] <> '<') then Continue;
-
-
-
       if ((Tpl[i] = ':') or (Tpl[i] = '@') or 
 
           ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-model')) or
@@ -4989,191 +3628,102 @@ begin
           ((i <= Length(Tpl) - 10) and (Copy(Tpl, i, 10) = 'v-validate')) or
 
           ((i <= Length(Tpl) - 7) and (Copy(Tpl, i, 7) = 'b-field'))) then
-
       begin
-
         pStart := i;
-
         while (pStart <= Length(Tpl)) and (Tpl[pStart] <> '=') and (Tpl[pStart] <> '>') and (Tpl[pStart] > ' ') do Inc(pStart);
-
         if (pStart <= Length(Tpl)) and (Tpl[pStart] = '=') and (pStart < Length(Tpl)) then
-
         begin
-
           QuoteChar := Tpl[pStart + 1];
-
           if (QuoteChar = '"') or (QuoteChar = '''') then
-
           begin
-
             QuoteEnd := PosEx(QuoteChar, Tpl, pStart + 2);
-
             if QuoteEnd > pStart + 2 then
-
             begin
-
               Expr := Trim(Copy(Tpl, pStart + 2, QuoteEnd - (pStart + 2)));
-
               RootIds.Clear;
-
               ExtractRootIdentifiers(Expr, RootIds);
-
               for pEnd := 0 to RootIds.Count - 1 do
-
               begin
-
                 Id := RootIds[pEnd];
-
                 if not HasSymbolCaseInsensitive(Id, Symbols) then
-
                 begin
-
                   Inc(WarningCount);
-
                   Sugg := FindClosestMatch(Id, Symbols);
-
                   if (Sugg <> '') and (LowerCase(Sugg) <> LowerCase(Id)) then
-
                     WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Did you mean ''', Sugg, '''?')
 
                   else
-
                     WriteLn('  [Template AST] Warning: Unknown property ''', Id, ''' in ', BaseName, ' (expr: ''', Expr, '''). Verify declaration in data, props, computed, or methods.');
-
                 end;
-
               end;
-
             end;
-
           end;
-
         end;
-
       end;
-
     end;
-
-
 
     if StrictMode and (WarningCount > 0) then
-
     begin
-
       WriteLn('ERROR: Template AST verification failed with ', WarningCount, ' warning(s) in strict mode.');
-
       Halt(1);
-
     end;
-
-
 
     Result := WarningCount;
 
   finally
 
     Symbols.Free;
-
     RootIds.Free;
-
   end;
-
 end;
-
-
 
 procedure CmdCheck(const TargetFile: string);
 
 var
-
   BVFiles: TStringList;
-
   Parsed: TBVParsed;
-
   i, TotalWarnings, FileWarnings: Integer;
-
 begin
-
   WriteLn('=== BlaiseVue Template AST Checker & Type-Verification ===');
-
   WriteLn('');
-
-
-
   BVFiles := TStringList.Create;
-
   try
 
     if (TargetFile <> '') and FileExists(TargetFile) then
-
     begin
-
       BVFiles.Add(TargetFile);
-
     end
 
     else
-
     begin
-
       if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
-
         BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
 
-
-
       ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
-
       ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
-
       ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
-
     end;
-
-
 
     if BVFiles.Count = 0 then
-
     begin
-
       WriteLn('No .bv files found to verify.');
-
       Exit;
-
     end;
-
-
 
     WriteLn('Checking ', BVFiles.Count, ' component(s)...');
-
     WriteLn('');
-
     TotalWarnings := 0;
-
-
-
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       ParseBVFile(BVFiles[i], Parsed);
-
       FileWarnings := ValidateComponentTemplate(BVFiles[i], Parsed);
-
       TotalWarnings := TotalWarnings + FileWarnings;
-
       if FileWarnings = 0 then
-
         WriteLn('  [v] ', ExtractFileName(BVFiles[i]), ' (0 warnings)');
-
     end;
 
-
-
     WriteLn('');
-
     if TotalWarnings = 0 then
-
       WriteLn('Result: All ', BVFiles.Count, ' component(s) passed AST type-verification with 0 errors.')
 
     else
@@ -5193,7 +3743,6 @@ var
   InMethodBody: Boolean;
   StyleIndent: Integer;
   LastEmpty: Boolean;
-
   function CountUnclosedTags(const S: string): Integer;
   var
     P, TagStart, TagEnd: Integer;
@@ -5231,7 +3780,6 @@ var
         end;
         TagEnd := P;
         Tag := Copy(S, TagStart, TagEnd - TagStart + 1);
-
         if (Length(Tag) >= 2) then
         begin
           if Copy(Tag, 1, 2) = '</' then
@@ -5251,7 +3799,6 @@ var
     end;
     Result := Balance;
   end;
-
 begin
   InLines := TStringList.Create;
   OutLines := TStringList.Create;
@@ -5262,13 +3809,11 @@ begin
     InMethodBody := False;
     StyleIndent := 1;
     LastEmpty := False;
-
     for i := 0 to InLines.Count - 1 do
     begin
       Line := InLines[i];
       Trimmed := Trim(Line);
       LowTrim := LowerCase(Trimmed);
-
       if Trimmed = '' then
       begin
         if not LastEmpty and (OutLines.Count > 0) then
@@ -5279,7 +3824,6 @@ begin
         Continue;
       end;
       LastEmpty := False;
-
       if Pos('<template', LowTrim) = 1 then
       begin
         Section := 1;
@@ -5495,201 +4039,110 @@ begin
   end;
 end;
 
-
-
-
-
-
-
 // =====================================================================
 
-//  COMANDO: TRANSPILE (Gera apenas .pas)
+//  COMMAND: TRANSPILE (Generate .pas only)
 
 // =====================================================================
-
-
 
 procedure CmdTranspile;
 
 var
-
   SR: TSearchRec;
-
   BVFiles: TStringList;
-
   UnitNames: TStringList;
-
   i: Integer;
-
   FileName, UnitName, TagName, GenPath: string;
-
   Parsed: TBVParsed;
-
   GeneratedCode: string;
-
   IsApp: Boolean;
-
 begin
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator;
-
-
-
   if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then
-
   begin
-
     Exit;
-
   end;
 
-
-
   ForceDir(GenPath);
-
-
-
   BVFiles := TStringList.Create;
-
   UnitNames := TStringList.Create;
-
   try
 
     WriteLn('=== BlaiseVue Transpile ===');
-
     WriteLn('');
-
-
 
     // Prepares app.bv first
 
     if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
-
       BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
-
-
 
     // Scans src and lib recursively
 
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
-
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
-
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
-
-
-
     if BVFiles.Count = 0 then
-
     begin
-
       WriteLn('  (No .bv components found in src/ or lib/)');
-
       Exit;
-
     end;
 
-
-
     WriteLn('Processing ', BVFiles.Count, ' .bv file(s) ...');
-
     WriteLn('');
 
-
-
-    // Passo 1: Identifica units
+    // Step 1: Identify units
 
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       FileName := ExtractFileName(BVFiles[i]);
-
       FileName := ChangeFileExt(FileName, '');
-
       if LowerCase(FileName) = 'app' then
-
         UnitName := 'uApp'
 
       else
-
         UnitName := 'u' + FileName;
 
       UnitNames.Add(UnitName);
-
     end;
 
-
-
-    // Passo 2: Gera codigo .pas
+    // Step 2: Generate .pas code
 
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       FileName := ExtractFileName(BVFiles[i]);
-
       IsApp := (LowerCase(ChangeFileExt(FileName, '')) = 'app');
-
       UnitName := UnitNames[i];
-
       TagName := PascalToKebab(ChangeFileExt(FileName, ''));
-
       if (not IsApp) and (Pos('src' + DirectorySeparator + 'views', BVFiles[i]) > 0) then
-
         TagName := TagName + '-page';
 
-
-
       WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
-
       ParseBVFile(BVFiles[i], Parsed);
-
       ValidateComponentTemplate(BVFiles[i], Parsed);
-
       ValidateComponentTemplate(BVFiles[i], Parsed);
-
-
-
       if IsApp then
-
         GeneratedCode := GenerateAppUnit(Parsed, UnitNames)
 
       else
-
         GeneratedCode := GenerateComponentUnit(UnitName, TagName, FileName, Parsed);
 
-
-
       WriteStringToFile(GenPath + UnitName + '.pas', GeneratedCode);
-
     end;
-
-
 
     // Generates main.pas
 
     GeneratedCode := GenerateMainProgram;
-
     WriteStringToFile(GenPath + 'main.pas', GeneratedCode);
-
     WriteLn('  main.pas (generated)');
-
     WriteLn('');
-
     WriteLn('Transpile completed successfully! Files generated in: ', GenPath);
 
   finally
 
     BVFiles.Free;
-
     UnitNames.Free;
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -5697,69 +4150,41 @@ end;
 
 // =====================================================================
 
-
-
 { Purges temporary build files and result artifacts }
 
 procedure CmdClean;
 
 var
-
   Base: string;
-
 begin
-
   Base := GetCurrentDir + DirectorySeparator;
-
   WriteLn('=== BlaiseVue Clean ===');
-
   WriteLn('Cleaning generated files...');
-
-  
-
   if DirectoryExists(Base + 'generated') then
-
   begin
-
     DeleteDir(Base + 'generated');
-
     WriteLn('  [v] /generated folder removed.');
-
   end;
 
   
 
   if DirectoryExists(Base + 'dist' + DirectorySeparator + 'js') then
-
   begin
-
     DeleteDir(Base + 'dist' + DirectorySeparator + 'js');
-
     WriteLn('  [v] Generated JS in /dist/js removed.');
-
   end;
 
   
 
   if FileExists(Base + 'dist' + DirectorySeparator + 'index.html') then
-
   begin
-
     DeleteFile(Base + 'dist' + DirectorySeparator + 'index.html');
-
     WriteLn('  [v] /dist/index.html removed.');
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('Cleanup completed successfully!');
-
 end;
-
-
 
 // =====================================================================
 
@@ -5767,220 +4192,126 @@ end;
 
 // =====================================================================
 
-
-
 { Execution cycle: Transpile .bv -> Pascal -> JS and setup public assets }
 
 procedure CmdBuild;
 
 var
-
   SR: TSearchRec;
-
   BVFiles, UnitNames, CSSFiles: TStringList;
-
   i: Integer;
-
   FileName, UnitName, TagName, GenPath, DistPath, PublicPath, GeneratedCode, Pas2jsCmd, CSSTags, JSTags: string;
-
   Parsed: TBVParsed;
-
   IsApp: Boolean;
-
   JSFiles: TStringList;
-
 begin
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator;
-
   DistPath := GetCurrentDir + DirectorySeparator + 'dist' + DirectorySeparator;
-
   PublicPath := GetCurrentDir + DirectorySeparator + 'public' + DirectorySeparator;
-
-
-
   if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then
-
   begin
-
     WriteLn('ERROR: "src/" folder not found. Are you in a BlaiseVue project root?');
-
     Halt(1);
-
   end;
 
-
-
   ForceDir(GenPath);
-
   ForceDir(DistPath + 'js');
-
-
-
   BVFiles := TStringList.Create;
-
   UnitNames := TStringList.Create;
-
   try
 
-    // Escaneia .bv recursivamente em src/
+    // Recursively scan .bv files in src/
 
     WriteLn('=== BlaiseVue Development Build (Debug Mode) ===');
-
     WriteLn('  Info: Injecting debug features (BVDevTools)');
-
     WriteLn('  Cache: Injecting timestamp to prevent browser caching');
-
     WriteLn('');
-
-
 
     // 1. Get app.bv first
 
     if FileExists(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv') then
-
       BVFiles.Add(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv');
-
-
 
     // 2. Scan src and lib recursively using the established helper
 
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components', BVFiles);
-
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views', BVFiles);
 
-
-
-    // NOVO: Pega bibliotecas em lib/ recursivamente
+    // Scan installed packages/libraries in lib/ recursively
 
     CSSFiles := TStringList.Create;
-
     JSFiles := TStringList.Create;
-
     ScanDirForBV(GetCurrentDir + DirectorySeparator + 'lib', BVFiles);
-
     ScanDirForCSS(GetCurrentDir + DirectorySeparator + 'lib', CSSFiles);
-
     ScanDirForJS(GetCurrentDir + DirectorySeparator + 'lib', JSFiles);
-
-
-
     if BVFiles.Count = 0 then
-
     begin
-
       WriteLn('No .bv files found in src/ or lib/');
-
       Halt(1);
-
     end;
 
-
-
     WriteLn('[1/3] Processing ', BVFiles.Count, ' .bv file(s) ...');
-
     WriteLn('');
 
-
-
-    // Primeiro passo: identifica todas as units (precisa da lista completa pra app.bv)
+    // First pass: identify all units (requires complete list for app.bv)
 
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       FileName := ExtractFileName(BVFiles[i]);
-
       FileName := ChangeFileExt(FileName, '');
-
       if LowerCase(FileName) = 'app' then
-
         UnitName := 'uApp'
 
       else
-
         UnitName := 'u' + FileName;
 
       UnitNames.Add(UnitName);
-
     end;
 
-
-
-    // Segundo passo: parseia e gera codigo
+    // Second pass: parse Single File Components and generate code
 
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       FileName := ExtractFileName(BVFiles[i]);
-
       IsApp := (LowerCase(ChangeFileExt(FileName, '')) = 'app');
-
       UnitName := UnitNames[i];
-
       TagName := PascalToKebab(ChangeFileExt(FileName, ''));
 
       // Apenas views (src/views/) ganham sufixo -page. 
 
-      // Arquivos em src/components/ e lib/ mantem o nome natural.
+      // Files in src/components/ and lib/ preserve natural unit names.
 
       IsApp := (LowerCase(ChangeFileExt(FileName, '')) = 'app');
 
       
 
-      // Checa se o arquivo estah em componentes ou lib (pelo caminho)
+      // Check whether file is located in components or lib by path
 
       if (not IsApp) and (Pos('src' + DirectorySeparator + 'views', BVFiles[i]) > 0) then
-
         TagName := TagName + '-page';
 
-
-
       WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
-
-
-
       ParseBVFile(BVFiles[i], Parsed);
-
-
-
       if IsApp then
-
         GeneratedCode := GenerateAppUnit(Parsed, UnitNames)
 
       else
-
         GeneratedCode := GenerateComponentUnit(UnitName, TagName, FileName, Parsed);
 
-
-
       WriteStringToFile(GenPath + UnitName + '.pas', GeneratedCode);
-
     end;
 
-
-
-    // Gera main.pas
+    // Generate main entry point (main.pas)
 
     GeneratedCode := GenerateMainProgram;
-
     WriteStringToFile(GenPath + 'main.pas', GeneratedCode);
-
     WriteLn('  main.pas (gerado)');
-
     WriteLn('');
-
-
 
     // [2/3] Calling pas2js
 
     WriteLn('[2/3] Compiling with pas2js ...');
-
     WriteLn('');
-
-
-
     Pas2jsCmd := '"' + GetPas2JSPath + '" @app.cfg -Fu"' + GetCorePath + '" -Fu"' + GetPas2JSLibPath + '" generated' + DirectorySeparator + 'main.pas -o' + DistPath + 'js' + DirectorySeparator + 'main.js';
     WriteLn('  > ', Pas2jsCmd);
     WriteLn('');
@@ -5992,62 +4323,39 @@ begin
     i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' + GetPas2JSLibPath + ' generated/main.pas -o' + DistPath + 'js/main.js');
     {$ENDIF}
 
-
-
     if i <> 0 then
-
     begin
-
       WriteLn('');
-
       WriteLn('ERROR: pas2js returned code ', i);
-
       Halt(1);
-
     end;
-
-
 
     // [3/3] Copying public/ to dist/
 
     WriteLn('[3/3] Copying public files ...');
-
     WriteLn('');
-
-
-
     if FileExists(PublicPath + 'index.html') then
-
     begin
-
       UnitName := ReadFileToString(PublicPath + 'index.html');
-
       TagName := IntToStr(DateTimeToUnix(Now));
 
       
 
-      // Injeta cache buster real nos placeholders
+      // Inject real cache buster into asset placeholders
 
       UnitName := StringReplace(UnitName, '__CACHE_BUST__', TagName, [rfReplaceAll]);
 
       
 
-      // Coleta e copia CSS das bibliotecas
+      // Collect and copy package CSS assets
 
       CSSTags := '';
-
       if CSSFiles.Count > 0 then
-
       begin
-
         ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
-
         for i := 0 to CSSFiles.Count - 1 do
-
         begin
-
            FileName := ExtractFileName(CSSFiles[i]);
-
            try
 
              WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
@@ -6055,172 +4363,105 @@ begin
            except
 
              WriteLn('  WARNING: Could not update ', FileName, ' (locked). Skipping.');
-
            end;
 
            CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
-
         end;
-
       end;
 
-
-
-      // Coleta e copia JS das bibliotecas
+      // Collect and copy package JS bundles
 
       JSTags := '';
-
       if JSFiles.Count > 0 then
-
       begin
-
         ForceDir(DistPath + 'js' + DirectorySeparator + 'lib');
-
         for i := 0 to JSFiles.Count - 1 do
-
         begin
-
            FileName := ExtractFileName(JSFiles[i]);
-
            WriteStringToFile(DistPath + 'js' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(JSFiles[i]));
-
            JSTags := JSTags + '  <script src="js/lib/' + FileName + '?v=' + TagName + '"></script>' + #10;
-
         end;
-
       end;
 
-
-
-      // Injeta bibliotecas no final do <head> para CSS e antes do rtl.js para scripts
+      // Inject library CSS at end of <head> and scripts before rtl.js
 
       if CSSTags <> '' then
-
         UnitName := StringReplace(UnitName, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
 
-
-
       if JSTags <> '' then
-
       begin
-
-        // Tenta injetar JS de lib antes do runtime e app logic para garantir disponibilidade
+        // Inject library JS before framework runtime to ensure availability
 
         if Pos('js/rtl.js', UnitName) > 0 then
-
           UnitName := StringReplace(UnitName, '<script src="js/rtl.js', JSTags + '    <script src="js/rtl.js', [rfIgnoreCase])
 
         else
-
           UnitName := StringReplace(UnitName, '</head>', JSTags + '</head>', [rfIgnoreCase]);
-
       end;
 
       
 
-      // Fallback: se o usuario nao usou __CACHE_BUST__, tentamos injetar v= no main.js
+      // Fallback: if user did not include __CACHE_BUST__, inject v= into main.js
 
       if Pos('main.js?v=', UnitName) = 0 then
-
         UnitName := StringReplace(UnitName, 'main.js', 'main.js?v=' + TagName, [rfReplaceAll]);
 
       if Pos('rtl.js?v=', UnitName) = 0 then
-
         UnitName := StringReplace(UnitName, 'rtl.js', 'rtl.js?v=' + TagName, [rfReplaceAll]);
 
-
-
       WriteStringToFile(DistPath + 'index.html', UnitName);
-
       WriteLn('  index.html -> dist/ (cache bust v=' + TagName + ')');
-
     end;
 
-
-
-    // NOVO: Copia o restante da pasta public/ (assets, etc) recursivamente
+    // Recursively copy remaining public/ assets to dist/
 
     if DirectoryExists(PublicPath) then
-
     begin
-
        WriteLn('  Copying assets from /public to /dist...');
 
-       CopyDir(PublicPath, DistPath, ['index.html']); // Pula index.html pois ja processamos acima
-
+       CopyDir(PublicPath, DistPath, ['index.html']); // Skip index.html as it was already processed
     end;
 
-
-
-    // Copia bibliotecas instaladas (/lib) para /dist/lib
+    // Copy installed libraries from lib/ to dist/lib
 
     if DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib') then
-
     begin
-
        WriteLn('  Copying installed libraries from /lib to /dist/lib...');
-
        CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
-
     end;
-
-
 
     // Copies rtl.js to dist/js/ using automatic SDK lookup
 
     FileName := GetRTLPath;
-
     if FileName <> '' then
-
     begin
-
       WriteStringToFile(DistPath + 'js' + DirectorySeparator + 'rtl.js',
 
         ReadFileToString(FileName));
 
       WriteLn('  rtl.js -> dist/js/ (from SDK)');
-
     end
 
     else
-
     begin
-
       WriteLn('  WARNING: rtl.js not found in SDK.');
-
       WriteLn('  Look for rtl.js and place it in the root or SDK folder: ', GetSDKPath);
-
     end;
-
-
 
     // BlaiseVue 3.0: Generates component documentation automatically into dist/docs/
 
     CmdDoc(False);
-
-
-
     WriteLn('');
-
     WriteLn('=== Build completed successfully! ===');
-
     WriteLn('');
-
     WriteLn('Open dist/index.html in your browser to see the result.');
-
-
 
   finally
 
     BVFiles.Free;
-
     UnitNames.Free;
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -6228,76 +4469,37 @@ end;
 
 // =====================================================================
 
-
-
 procedure CmdNewComponent(const CompName: string; CreateTest: Boolean = True);
 
 var
-
   CompPath, TargetPath, Content: string;
-
   TestPath, TestFile, TestContent, CompTag: string;
-
 begin
-
   CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
-
   TargetPath := CompPath + CompName + '.bv';
-
-
-
   if FileExists(TargetPath) then
-
   begin
-
     WriteLn('ERROR: Component "', CompName, '.bv" already exists!');
-
     Halt(1);
-
   end;
 
-
-
   ForceDir(CompPath);
-
-
-
   Content := GetTemplate('TPL_COMPONENT_BV', 'component.bv');
-
   Content := StringReplace(Content, '{{COMP_NAME}}', CompName, [rfReplaceAll]);
-
   WriteStringToFile(TargetPath, Content);
-
-
-
   WriteLn('Component created: src/components/', CompName, '.bv');
-
   CompTag := PascalToKebab(CompName);
-
   WriteLn('HTML Tag: <', CompTag, '>');
-
-
-
   if CreateTest then
-
   begin
-
     TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator;
-
     TestFile := TestPath + CompName + '.test.pas';
-
     if not FileExists(TestFile) then
-
     begin
-
       ForceDir(TestPath);
-
       TestContent := GetTemplate('TPL_COMPONENT_TEST_PAS', 'component_test.pas');
-
       if TestContent = '' then
-
       begin
-
         TestContent :=
 
           'program ' + LowerCase(CompName) + '_test;' + #10#10 +
@@ -6331,110 +4533,62 @@ begin
           '    end);' + #10 +
 
           'end.' + #10;
-
       end
 
       else
-
       begin
-
         TestContent := StringReplace(TestContent, '{{TEST_NAME}}', LowerCase(CompName), [rfReplaceAll]);
-
         TestContent := StringReplace(TestContent, '{{COMP_NAME}}', CompName, [rfReplaceAll]);
-
         TestContent := StringReplace(TestContent, '{{COMP_TAG}}', CompTag, [rfReplaceAll]);
-
       end;
 
       WriteStringToFile(TestFile, TestContent);
-
       WriteLn('Test created: tests/components/', CompName, '.test.pas');
-
     end;
-
   end;
-
 end;
 
-
-
 // =====================================================================
 
-//  CCOMMAND: REMOVE COMPONENT
+//  COMMAND: REMOVE COMPONENT
 
 // =====================================================================
-
-
 
 procedure CmdRemoveComponent(const CompName: string);
 
 var
-
   BVPath, PasPath, TestPath, GenPath: string;
-
 begin
-
   BVPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator + CompName + '.bv';
-
   PasPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + CompName + '.pas';
-
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator + CompName + '.test.pas';
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + CompName + '.test.js';
-
-
-
   if FileExists(BVPath) then
-
   begin
-
     DeleteFile(BVPath);
-
     WriteLn('Removed: src/components/', CompName, '.bv');
-
   end
 
   else
-
     WriteLn('File not found: src/components/', CompName, '.bv');
 
-
-
   if FileExists(PasPath) then
-
   begin
-
     DeleteFile(PasPath);
-
     WriteLn('Removed: generated/u', CompName, '.pas');
-
   end;
-
-
 
   if FileExists(TestPath) then
-
   begin
-
     DeleteFile(TestPath);
-
     WriteLn('Removed associated test: tests/components/', CompName, '.test.pas');
-
   end;
 
-
-
   if FileExists(GenPath) then
-
     DeleteFile(GenPath);
 
-
-
   WriteLn('Component "', CompName, '" removed.');
-
 end;
-
-
 
 // =====================================================================
 
@@ -6442,84 +4596,40 @@ end;
 
 // =====================================================================
 
-
-
 procedure CmdNewView(const ViewName: string; CreateTest: Boolean = True);
 
 var
-
   ViewPath, TargetPath, Content: string;
-
   TestPath, TestFile, TestContent: string;
-
   ViewTag, ViewKebab: string;
-
 begin
-
   ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
-
   TargetPath := ViewPath + ViewName + '.bv';
-
-
-
   if FileExists(TargetPath) then
-
   begin
-
     WriteLn('ERROR: View "', ViewName, '.bv" already exists!');
-
     Halt(1);
-
   end;
 
-
-
   ForceDir(ViewPath);
-
-
-
   ViewKebab := PascalToKebab(ViewName);
-
   ViewTag := ViewKebab + '-page';
-
-
-
   Content := GetTemplate('TPL_VIEW_BV', 'view.bv');
-
   Content := StringReplace(Content, '{{VIEW_NAME}}', ViewName, [rfReplaceAll]);
-
   Content := StringReplace(Content, '{{VIEW_KEBAB}}', ViewKebab, [rfReplaceAll]);
-
   WriteStringToFile(TargetPath, Content);
-
-
-
   WriteLn('View created: src/views/', ViewName, '.bv');
-
   WriteLn('HTML Tag (internal): <', ViewTag, '>');
-
-
-
   if CreateTest then
-
   begin
-
     TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator;
-
     TestFile := TestPath + ViewName + '.test.pas';
-
     if not FileExists(TestFile) then
-
     begin
-
       ForceDir(TestPath);
-
       TestContent := GetTemplate('TPL_VIEW_TEST_PAS', 'view_test.pas');
-
       if TestContent = '' then
-
       begin
-
         TestContent :=
 
           'program ' + LowerCase(ViewName) + '_view_test;' + #10#10 +
@@ -6553,34 +4663,21 @@ begin
           '    end);' + #10 +
 
           'end.' + #10;
-
       end
 
       else
-
       begin
-
         TestContent := StringReplace(TestContent, '{{TEST_NAME}}', LowerCase(ViewName) + '_view', [rfReplaceAll]);
-
         TestContent := StringReplace(TestContent, '{{VIEW_NAME}}', ViewName, [rfReplaceAll]);
-
         TestContent := StringReplace(TestContent, '{{VIEW_KEBAB}}', ViewKebab, [rfReplaceAll]);
-
         TestContent := StringReplace(TestContent, '{{VIEW_TAG}}', ViewTag, [rfReplaceAll]);
-
       end;
 
       WriteStringToFile(TestFile, TestContent);
-
       WriteLn('Test created: tests/views/', ViewName, '.test.pas');
-
     end;
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -6588,73 +4685,42 @@ end;
 
 // =====================================================================
 
-
-
 procedure ScanDirForBV(const Path: string; List: TStringList);
 
 var
-
   SR: TSearchRec;
-
   D: string;
-
 begin
-
   if not DirectoryExists(Path) then Exit;
-
   D := IncludeTrailingPathDelimiter(Path);
-
   if FindFirst(D + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
        if (SR.Name <> '.') and (SR.Name <> '..') then
-
        begin
-
           if (SR.Attr and faDirectory) <> 0 then
-
             ScanDirForBV(D + SR.Name, List)
 
           else if LowerCase(ExtractFileExt(SR.Name)) = '.bv' then
-
             List.Add(D + SR.Name);
-
        end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
-
 end;
-
-
 
 function RunSetupScript(const LibName, Action: string): Boolean;
 
 var
-
   LibPath, ScriptPath, ExecPath: string;
-
   ExitCode: Integer;
-
 begin
-
   Result := False;
-
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + LibName + DirectorySeparator;
-
   ScriptPath := LibPath + 'setup.pas';
-
-  
-
   if not FileExists(ScriptPath) then Exit(True); // No script = success (nothing to do)
-
-
 
   WriteLn('Preparing setup script for "' + LibName + '"...');
 
@@ -6663,33 +4729,22 @@ begin
   {$IFDEF WINDOWS}
 
   ExecPath := LibPath + 'setup.exe';
-
   ExitCode := ExecuteProcess('cmd', '/c fpc "' + ScriptPath + '" -o"' + ExecPath + '" > nul');
 
   {$ELSE}
 
   ExecPath := LibPath + 'setup';
-
   ExitCode := ExecuteProcess('/bin/sh', '-c "fpc -o''' + ExecPath + ''' ''' + ScriptPath + '''"');
 
   {$ENDIF}
 
-
-
   if (ExitCode <> 0) or not FileExists(ExecPath) then
-
   begin
-
     WriteLn('ERROR: Failed to compile setup script for ' + LibName);
-
     Exit(False);
-
   end;
 
-
-
   WriteLn('Executing action: ' + Action);
-
   ExitCode := ExecuteProcess(ExecPath, Action);
 
   
@@ -6697,98 +4752,53 @@ begin
   // Cleanup
 
   DeleteFile(ExecPath);
-
   if FileExists(ChangeFileExt(ExecPath, '.o')) then DeleteFile(ChangeFileExt(ExecPath, '.o'));
-
   if FileExists(ChangeFileExt(ExecPath, '.ppu')) then DeleteFile(ChangeFileExt(ExecPath, '.ppu'));
-
-  
-
   Result := (ExitCode = 0);
-
 end;
-
-
 
 procedure CmdSetup(const LibName: string);
 
 var
-
   Path, Choice: string;
-
 begin
-
   Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + LibName + DirectorySeparator;
-
   if not DirectoryExists(Path) then
-
   begin
-
     WriteLn('Error: Library "' + LibName + '" not found in /lib.');
-
     Exit;
-
   end;
-
-
 
   if not FileExists(Path + 'setup.pas') then
-
   begin
-
     WriteLn('The library "' + LibName + '" does not have a setup script (setup.pas).');
-
     Exit;
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('--- Component Setup: ' + LibName + ' ---');
-
   WriteLn('1. Install (Create folders and configurations)');
-
   WriteLn('2. Reinstall (Perform updates)');
-
   WriteLn('3. Delete (Cleanup actions)');
-
   WriteLn('0. Cancel');
-
   WriteLn('');
-
   Write('Select an option: ');
-
   ReadLn(Choice);
-
-
-
   if Choice = '1' then RunSetupScript(LibName, 'install')
 
   else if Choice = '2' then RunSetupScript(LibName, 'reinstall')
 
   else if Choice = '3' then 
-
   begin
-
     if RunSetupScript(LibName, 'remove') then
-
        WriteLn('Cleanup completed.')
 
     else
-
        WriteLn('Cleanup finished with issues.');
-
   end
 
   else WriteLn('Action cancelled.');
-
 end;
-
-
-
-
 
 function GetCorePackageFolder(const Name: string): string;
 var
@@ -6940,7 +4950,6 @@ begin
   L := LowerCase(Trim(Name));
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
   ForceDir(LibPath);
-
   if (L = 'themes') or (L = 'blaise-themes') then
   begin
     WriteLn('Installing official core package: blaise-themes ...');
@@ -7043,7 +5052,6 @@ begin
   else
     TargetBase := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator;
   ForceDir(TargetBase);
-
   if FileExists(URL) or FileExists(ExpandFileName(URL)) then
   begin
     ZipName := URL;
@@ -7157,7 +5165,6 @@ begin
   DownloadURL := '';
   Checksum := '';
   RepoName := '';
-
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
   if not DirectoryExists(CacheDir) then
     CmdRepoSync;
@@ -7196,7 +5203,6 @@ begin
           if Assigned(Data) and (Data.JSONType = jtObject) then
           begin
             RootObj := TJSONObject(Data);
-
             if (not (SameText(CurrentRepo, 'official') or SameText(CurrentRepo, 'blaisevue-ecosystem'))) and IsReservedCorePackageName(PkgName) then
             begin
               // Skip hijacked core name from third-party repo
@@ -7361,7 +5367,6 @@ begin
     if Count = 0 then
       WriteLn('  (No libraries installed in /lib)');
     WriteLn(StringOfChar('-', 55));
-
     WriteLn('Official Core Packages (packages/core):');
     WriteLn('  - blaise-themes, blaise-icons, blaise-ui, blaise-ui-mobile,');
     WriteLn('    blaise-charts, blaise-reports, blaise-studio');
@@ -7505,7 +5510,6 @@ begin
 
   GlobalPath := GetGlobalPackagesPath + PkgName;
   LibPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + PkgName;
-
   if TargetRepo <> '' then
     WriteLn('Searching for package "' + PkgName + '" in repository [' + TargetRepo + ']...')
   else
@@ -7565,10 +5569,8 @@ begin
 
   WriteLn('Found in [' + RepoName + ']: ' + PkgName + ' v' + FoundVer);
   WriteLn('Downloading package: ' + DownloadURL);
-
   TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + PkgName + '-' + FoundVer + '.zip';
   ForceDir(ExtractFileDir(TempZip));
-
   Client := TFPHTTPClient.Create(nil);
   try
     try
@@ -7589,7 +5591,6 @@ begin
   if DirectoryExists(GlobalPath) then DeleteDir(GlobalPath);
   ForceDir(GlobalPath);
   ExtractZipSmart(TempZip, GetGlobalPackagesPath, PkgName);
-
   if not IsGlobal then
   begin
     ForceDir(GetCurrentDir + DirectorySeparator + 'lib');
@@ -7727,10 +5728,8 @@ begin
   WriteLn(StringOfChar('-', 78));
   WriteLn(PadRight('Package', 22), PadRight('Installed', 14), PadRight('Latest', 16), PadRight('Status', 26));
   WriteLn(StringOfChar('-', 78));
-
   TotalCount := 0;
   OutdatedCount := 0;
-
   if DirectoryExists(TargetBase) and (FindFirst(TargetBase + '*', faDirectory, SR) = 0) then
   begin
     repeat
@@ -7739,7 +5738,6 @@ begin
         Inc(TotalCount);
         InstalledVer := GetPackageVersionFromFolder(TargetBase + SR.Name);
         IsCore := (not IsGlobal) and IsOfficialCorePackage(SR.Name);
-
         if IsCore then
         begin
           if InstalledVer = '' then InstalledVer := '4.4.0';
@@ -7749,7 +5747,6 @@ begin
         else
         begin
           if InstalledVer = '' then InstalledVer := 'unknown';
-
           if FindPackageInEcosystem(SR.Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName) then
           begin
             if (InstalledVer <> 'unknown') and (InstalledVer <> FoundVer) then
@@ -7824,7 +5821,6 @@ begin
   else
     WriteLn('Listing all available ecosystem packages:');
   WriteLn(StringOfChar('-', 65));
-
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
   if not DirectoryExists(CacheDir) then
     CmdRepoSync;
@@ -7847,7 +5843,6 @@ begin
               begin
                 RootObj := TJSONObject(Data);
                 RepoName := RootObj.Get('name', StringReplace(SR.Name, '-ecosystem.json', '', [rfReplaceAll]));
-
                 if (TargetRepo = '') or SameText(TargetRepo, RepoName) or SameText(TargetRepo, StringReplace(SR.Name, '-ecosystem.json', '', [rfReplaceAll])) then
                 begin
                   PackagesObj := RootObj.Get('packages', TJSONObject(nil));
@@ -7909,7 +5904,6 @@ var
   FS: TFileStream;
   JData: TJSONData;
   JObj: TJSONObject;
-
   procedure AddDirectoryToZip(const RootDir, SubDir: string);
   var
     SR: TSearchRec;
@@ -7948,12 +5942,10 @@ var
       FindClose(SR);
     end;
   end;
-
 begin
   BaseDir := TargetDir;
   if BaseDir = '' then BaseDir := GetCurrentDir;
   BaseDir := IncludeTrailingPathDelimiter(ExpandFileName(BaseDir));
-
   PkgJsonFile := BaseDir + 'package.json';
   if not FileExists(PkgJsonFile) then
   begin
@@ -7964,7 +5956,6 @@ begin
 
   PkgName := ExtractFileName(ExcludeTrailingPathDelimiter(BaseDir));
   PkgVersion := '1.0.0';
-
   try
     JsonStr := ReadFileToString(PkgJsonFile);
     JData := GetJSON(JsonStr);
@@ -7982,7 +5973,6 @@ begin
   end;
 
   PkgFolder := PkgName;
-
   if IsReservedCorePackageName(PkgName) then
   begin
     WriteLn('WARNING: Package name "' + PkgName + '" matches a reserved BlaiseVue Core framework name.');
@@ -8020,9 +6010,7 @@ begin
   ForceDir(DistDir);
   ZipFile := DistDir + PkgName + '-' + PkgVersion + '.zip';
   if FileExists(ZipFile) then DeleteFile(ZipFile);
-
   WriteLn('Assembling release artifact: ' + ExtractFileName(ZipFile) + ' ...');
-
   Zip := TZipper.Create;
   try
     Zip.FileName := ZipFile;
@@ -8059,7 +6047,6 @@ begin
   HashStr := FileSHA256(ZipFile);
   ChecksumFile := ZipFile + '.sha256';
   WriteStringToFile(ChecksumFile, HashStr + ' *' + ExtractFileName(ZipFile) + #10);
-
   FileSizeKB := 0;
   FS := TFileStream.Create(ZipFile, fmOpenRead or fmShareDenyNone);
   try
@@ -8086,300 +6073,170 @@ begin
   WriteLn('');
 end;
 
-
-
 procedure CmdThemeList;
 
 var
-
   SR: TSearchRec;
-
   Path: string;
-
   Count: Integer;
-
 begin
-
   Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes' + DirectorySeparator;
-
   WriteLn('');
-
   WriteLn('Available Themes in lib/themes/:');
-
   WriteLn(StringOfChar('-', 40));
-
   Count := 0;
-
   if DirectoryExists(Path) and (FindFirst(Path + '*.min.css', faAnyFile, SR) = 0) then
-
   begin
-
     repeat
 
       WriteLn('  - ', StringReplace(SR.Name, '.min.css', '', [rfIgnoreCase]));
-
       Inc(Count);
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
 
   if Count = 0 then
-
   begin
-
     WriteLn('  (No themes installed in lib/themes/)');
-
     WriteLn('  Run "bv lib install themes" to install the Bootswatch suite.');
-
   end;
 
   WriteLn(StringOfChar('-', 40));
-
 end;
-
-
 
 procedure CmdThemeUse(const ThemeName: string);
 
 var
-
   IndexPath, Content, CleanName, NewLink: string;
-
   PStart, PEnd: Integer;
-
 begin
-
   CleanName := LowerCase(Trim(ThemeName));
-
   IndexPath := GetCurrentDir + DirectorySeparator + 'public' + DirectorySeparator + 'index.html';
-
   if not FileExists(IndexPath) then
-
     IndexPath := GetCurrentDir + DirectorySeparator + 'index.html';
 
-
-
   if not FileExists(IndexPath) then
-
   begin
-
     WriteLn('Error: index.html not found.');
-
     Exit;
-
   end;
 
-
-
   Content := ReadFileToString(IndexPath);
-
   NewLink := '<link id="bv-theme" rel="stylesheet" href="lib/themes/' + CleanName + '.min.css">';
-
-
 
   // If <link id="bv-theme" already exists, replace it
 
   PStart := Pos('id="bv-theme"', Content);
-
   if PStart = 0 then
-
     PStart := Pos('id=''bv-theme''', Content);
 
-
-
   if PStart > 0 then
-
   begin
-
     while (PStart > 1) and (Content[PStart] <> '<') do Dec(PStart);
-
     PEnd := PStart;
-
     while (PEnd <= Length(Content)) and (Content[PEnd] <> '>') do Inc(PEnd);
-
     Delete(Content, PStart, PEnd - PStart + 1);
-
     Insert(NewLink, Content, PStart);
-
   end
 
   else
-
   begin
-
     PStart := Pos('</head>', Content);
-
     if PStart = 0 then
-
       PStart := Pos('</HEAD>', Content);
 
     if PStart > 0 then
-
       Insert('    ' + NewLink + #10, Content, PStart)
 
     else
-
       Content := Content + #10 + NewLink;
-
   end;
 
-
-
   WriteStringToFile(IndexPath, Content);
-
   WriteLn('Theme successfully set to "', CleanName, '" in ', ExtractFileName(IndexPath));
-
 end;
-
-
 
 procedure ScanDirForCSS(const Path: string; List: TStringList);
 
 var
-
   SR: TSearchRec;
-
 begin
-
   if not DirectoryExists(Path) then Exit;
-
   if FindFirst(Path + DirectorySeparator + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
        if (SR.Name <> '.') and (SR.Name <> '..') then
-
        begin
-
           if (SR.Attr and faDirectory) <> 0 then
-
           begin
-
             if LowerCase(SR.Name) <> 'themes' then
-
               ScanDirForCSS(Path + DirectorySeparator + SR.Name, List);
-
           end
 
           else if ExtractFileExt(SR.Name) = '.css' then
-
             List.Add(Path + DirectorySeparator + SR.Name);
-
        end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
-
 end;
-
-
 
 procedure ScanDirForJS(const Path: string; List: TStringList);
 
 var
-
   SR: TSearchRec;
-
 begin
-
   if not DirectoryExists(Path) then Exit;
-
   if FindFirst(Path + DirectorySeparator + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
        if (SR.Name <> '.') and (SR.Name <> '..') then
-
        begin
-
           if (SR.Attr and faDirectory) <> 0 then
-
             ScanDirForJS(Path + DirectorySeparator + SR.Name, List)
 
           else if ExtractFileExt(SR.Name) = '.js' then
-
             List.Add(Path + DirectorySeparator + SR.Name);
-
        end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
-
 end;
-
-
 
 procedure CmdRemoveView(const ViewName: string);
 
 var
-
   BVPath, PasPath, TestPath, GenPath: string;
-
 begin
-
   BVPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator + ViewName + '.bv';
-
   PasPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + ViewName + '.pas';
-
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + ViewName + '.test.pas';
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator + ViewName + '.test.js';
-
-
-
   if FileExists(BVPath) then
-
   begin
-
     DeleteFile(BVPath);
-
     WriteLn('Removed: src/views/', ViewName, '.bv');
-
   end;
-
-
 
   if FileExists(PasPath) then
-
     DeleteFile(PasPath);
 
-
-
   if FileExists(TestPath) then
-
   begin
-
     DeleteFile(TestPath);
-
     WriteLn('Removed associated test: tests/views/', ViewName, '.test.pas');
-
   end;
 
-
-
   if FileExists(GenPath) then
-
     DeleteFile(GenPath);
 
-
-
   WriteLn('View "', ViewName, '" removed.');
-
 end;
-
 
 // =====================================================================
 //  COMMAND: NEW SERVICE (Pure Pascal Domain Logic)
@@ -8396,7 +6253,6 @@ begin
 
   ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
   TargetPath := ServicePath + 'u' + NormName + '.pas';
-
   if FileExists(TargetPath) then
   begin
     WriteLn('ERROR: Service "u', NormName, '.pas" already exists!');
@@ -8404,7 +6260,6 @@ begin
   end;
 
   ForceDir(ServicePath);
-
   Content := GetTemplate('TPL_SERVICE_PAS', 'service.pas');
   if Content = '' then
   begin
@@ -8438,16 +6293,13 @@ begin
 
   WriteStringToFile(TargetPath, Content);
   WriteLn('Service created: src/services/u', NormName, '.pas');
-
   if CreateTest then
   begin
     TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'services' + DirectorySeparator;
     TestFile := TestPath + NormName + '.test.pas';
-
     if not FileExists(TestFile) then
     begin
       ForceDir(TestPath);
-
       TestContent := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
       if TestContent = '' then
       begin
@@ -8521,74 +6373,42 @@ begin
   WriteLn('Service "', NormName, '" removed.');
 end;
 
-
-
 // =====================================================================
 
 //  COMMAND: NEW TEST (Smart Detection)
 
 // =====================================================================
 
-
-
 procedure CmdNewTest(const TestName: string);
 
 var
-
   CleanName, NormName, TargetPath, TargetDir, Content: string;
-
   CompBV, ViewBV, ServicePas: string;
-
   CompTag, ViewTag, ViewKebab: string;
-
   IsExplicitPath: Boolean;
-
 begin
-
   CleanName := StringReplace(TestName, '/', DirectorySeparator, [rfReplaceAll]);
-
   CleanName := StringReplace(CleanName, '', DirectorySeparator, [rfReplaceAll]);
-
-
 
   // Check if user passed an explicit directory, e.g. "framework/MyTest", "unit/MyTest", "services/MyTest"
 
   IsExplicitPath := (Pos(DirectorySeparator, CleanName) > 0);
-
-
-
   if IsExplicitPath then
-
   begin
-
     TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + ExtractFilePath(CleanName);
-
     NormName := ExtractFileName(CleanName);
-
     TargetPath := TargetDir + NormName + '.test.pas';
-
     if FileExists(TargetPath) then
-
     begin
-
       WriteLn('ERROR: Test "', CleanName, '.test.pas" already exists!');
-
       Halt(1);
-
     end;
 
     ForceDir(TargetDir);
-
-
-
     Content := GetTemplate('TPL_UNIT_TEST_PAS', 'unit_test.pas');
-
     if Content = '' then Content := GetTemplate('TPL_TEST_PAS', 'test.pas');
-
     if Content = '' then
-
     begin
-
       Content :=
 
         'program ' + LowerCase(NormName) + '_test;' + #10#10 +
@@ -8618,67 +6438,39 @@ begin
         '    end);' + #10 +
 
         'end.' + #10;
-
     end
 
     else
-
       Content := StringReplace(Content, '{{TEST_NAME}}', NormName, [rfReplaceAll]);
 
-
-
     WriteStringToFile(TargetPath, Content);
-
     WriteLn('Test created: tests/', CleanName, '.test.pas');
-
     Exit;
-
   end;
-
-
 
   // No explicit path passed: Smart Detection!
 
   NormName := CleanName;
-
   CompBV := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator + NormName + '.bv';
-
   ViewBV := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator + NormName + '.bv';
-
-
 
   // 1. Is it an existing component in src/components/?
 
   if FileExists(CompBV) then
-
   begin
-
     TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator;
-
     TargetPath := TargetDir + NormName + '.test.pas';
-
     if FileExists(TargetPath) then
-
     begin
-
       WriteLn('ERROR: Component test "', NormName, '.test.pas" already exists in tests/components/!');
-
       Halt(1);
-
     end;
 
     ForceDir(TargetDir);
-
-
-
     CompTag := PascalToKebab(NormName);
-
     Content := GetTemplate('TPL_COMPONENT_TEST_PAS', 'component_test.pas');
-
     if Content = '' then
-
     begin
-
       Content :=
 
         'program ' + LowerCase(NormName) + '_test;' + #10#10 +
@@ -8712,69 +6504,39 @@ begin
         '    end);' + #10 +
 
         'end.' + #10;
-
     end
 
     else
-
     begin
-
       Content := StringReplace(Content, '{{TEST_NAME}}', LowerCase(NormName), [rfReplaceAll]);
-
       Content := StringReplace(Content, '{{COMP_NAME}}', NormName, [rfReplaceAll]);
-
       Content := StringReplace(Content, '{{COMP_TAG}}', CompTag, [rfReplaceAll]);
-
     end;
 
-
-
     WriteStringToFile(TargetPath, Content);
-
     WriteLn('Smart Detection: Found component src/components/', NormName, '.bv');
-
     WriteLn('Test created: tests/components/', NormName, '.test.pas');
-
     Exit;
-
   end;
-
-
 
   // 2. Is it an existing view in src/views/?
 
   if FileExists(ViewBV) then
-
   begin
-
     TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator;
-
     TargetPath := TargetDir + NormName + '.test.pas';
-
     if FileExists(TargetPath) then
-
     begin
-
       WriteLn('ERROR: View test "', NormName, '.test.pas" already exists in tests/views/!');
-
       Halt(1);
-
     end;
 
     ForceDir(TargetDir);
-
-
-
     ViewKebab := PascalToKebab(NormName);
-
     ViewTag := ViewKebab + '-page';
-
     Content := GetTemplate('TPL_VIEW_TEST_PAS', 'view_test.pas');
-
     if Content = '' then
-
     begin
-
       Content :=
 
         'program ' + LowerCase(NormName) + '_view_test;' + #10#10 +
@@ -8808,36 +6570,21 @@ begin
         '    end);' + #10 +
 
         'end.' + #10;
-
     end
 
     else
-
     begin
-
       Content := StringReplace(Content, '{{TEST_NAME}}', LowerCase(NormName) + '_view', [rfReplaceAll]);
-
       Content := StringReplace(Content, '{{VIEW_NAME}}', NormName, [rfReplaceAll]);
-
       Content := StringReplace(Content, '{{VIEW_KEBAB}}', ViewKebab, [rfReplaceAll]);
-
       Content := StringReplace(Content, '{{VIEW_TAG}}', ViewTag, [rfReplaceAll]);
-
     end;
 
-
-
     WriteStringToFile(TargetPath, Content);
-
     WriteLn('Smart Detection: Found view src/views/', NormName, '.bv');
-
     WriteLn('Test created: tests/views/', NormName, '.test.pas');
-
     Exit;
-
   end;
-
-
 
   // 3. Is it an existing service in src/services/?
   ServicePas := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator + 'u' + NormName + '.pas';
@@ -8854,7 +6601,6 @@ begin
       Halt(1);
     end;
     ForceDir(TargetDir);
-
     Content := GetTemplate('TPL_SERVICE_TEST_PAS', 'service_test.pas');
     if Content = '' then
     begin
@@ -8904,7 +6650,6 @@ begin
     Halt(1);
   end;
   ForceDir(TargetDir);
-
   Content := GetTemplate('TPL_UNIT_TEST_PAS', 'unit_test.pas');
   if Content = '' then Content := GetTemplate('TPL_TEST_PAS', 'test.pas');
   if Content = '' then
@@ -8930,18 +6675,13 @@ begin
 
   WriteStringToFile(TargetPath, Content);
   WriteLn('Test created: tests/services/', NormName, '.test.pas');
-
 end;
-
-
 
 // =====================================================================
 
 //  COMMAND: REMOVE TEST
 
 // =====================================================================
-
-
 
 procedure CmdRemoveTest(const TestName: string);
 var
@@ -8954,7 +6694,6 @@ begin
   CleanName := StringReplace(CleanName, '.test.pas', '', [rfIgnoreCase]);
   CleanName := StringReplace(CleanName, '.test', '', [rfIgnoreCase]);
   CleanName := StringReplace(CleanName, '.pas', '', [rfIgnoreCase]);
-
   FoundAny := False;
   AllTests := TStringList.Create;
   try
@@ -8981,7 +6720,7 @@ begin
 end;
 
 // =====================================================================
-//  COMANDO: REMOVE MOBILE & DESKTOP PLATFORMS
+//  COMMAND: REMOVE MOBILE & DESKTOP PLATFORMS
 // =====================================================================
 
 procedure CmdRemoveMobile(ForceFlag: Boolean);
@@ -8993,7 +6732,6 @@ begin
   MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
   CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
   BinMobileDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'mobile';
-
   if not DirectoryExists(MobileDir) and not FileExists(CapConfigFile) and not DirectoryExists(BinMobileDir) then
   begin
     WriteLn('Plataforma Mobile nao encontrada no projeto atual (pasta mobile/ nao existe).');
@@ -9013,7 +6751,6 @@ begin
   end;
 
   DeletedAny := False;
-
   if DirectoryExists(MobileDir) then
   begin
     WriteLn('  [-] Excluindo pasta mobile/ ...');
@@ -9051,7 +6788,6 @@ var
 begin
   DesktopDir := GetCurrentDir + DirectorySeparator + 'desktop';
   BinDesktopDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'desktop';
-
   if not DirectoryExists(DesktopDir) and not DirectoryExists(BinDesktopDir) then
   begin
     WriteLn('Plataforma Desktop nao encontrada no projeto atual (pasta desktop/ nao existe).');
@@ -9071,7 +6807,6 @@ begin
   end;
 
   DeletedAny := False;
-
   if DirectoryExists(DesktopDir) then
   begin
     WriteLn('  [-] Excluindo pasta desktop/ ...');
@@ -9100,46 +6835,27 @@ end;
 
 // =====================================================================
 
-
-
 procedure CmdList(const Kind: string);
 
 var
-
   SR: TSearchRec;
-
   Path, SearchKind, LKind: string;
-
   Count: Integer;
-
   TestList: TStringList;
-
   i: Integer;
-
 begin
-
   Count := 0;
-
   LKind := LowerCase(Kind);
-
   if (LKind = 'c') or (LKind = 'comp') or (LKind = 'component') then
-
   begin
-
     Path := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
-
     SearchKind := 'Components';
-
   end
 
   else if (LKind = 'v') or (LKind = 'view') then
-
   begin
-
     Path := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
-
     SearchKind := 'Views';
-
   end
   else if (LKind = 's') or (LKind = 'service') or (LKind = 'services') then
   begin
@@ -9148,111 +6864,66 @@ begin
   end
 
   else if (LKind = 't') or (LKind = 'test') then
-
   begin
-
     Path := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
-
     SearchKind := 'Tests';
-
   end
 
   else
-
   begin
-
     WriteLn('Usage: bv list <c|v|s|t|lib>');
-
     Halt(1);
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('Listing ', SearchKind, ' in: ', Path);
-
   WriteLn(StringOfChar('-', 40));
-
-
-
   if (LKind = 't') or (LKind = 'test') then
-
   begin
-
     TestList := TStringList.Create;
-
     try
 
       ScanDirForTests(Path, TestList);
-
       for i := 0 to TestList.Count - 1 do
-
       begin
-
         Inc(Count);
-
         WriteLn('  [', Count, '] ', ExtractRelativePath(Path, TestList[i]));
-
       end;
 
     finally
 
       TestList.Free;
-
     end;
-
   end
 
   else
-
   begin
-
     if FindFirst(Path + '*', faAnyFile, SR) = 0 then
-
     begin
-
       repeat
 
         if (((LKind = 's') or (LKind = 'service') or (LKind = 'services')) and (ExtractFileExt(SR.Name) = '.pas')) or (ExtractFileExt(SR.Name) = '.bv') then
-
         begin
-
           Inc(Count);
-
           WriteLn('  [', Count, '] ', SR.Name);
-
         end;
 
       until FindNext(SR) <> 0;
-
       FindClose(SR);
-
     end;
-
   end;
 
-
-
   if Count = 0 then
-
     WriteLn('  (No matches found)')
 
   else
-
   begin
-
     WriteLn(StringOfChar('-', 40));
-
     WriteLn('Total: ', Count, ' ', SearchKind);
-
   end;
 
   WriteLn('');
-
 end;
-
 
 // =====================================================================
 //  PROJECT METADATA, LICENSING & CLEAN RESET SUITE
@@ -9361,7 +7032,6 @@ end;
 
 var
   CachedCliVersion: string = '';
-
 function GetCliVersion: string;
 var
   CurP, SdkDir, PkgPath, Content: string;
@@ -9374,7 +7044,6 @@ begin
   end;
 
   Result := '4.4.0';
-
   PkgPath := GetCurrentDir + DirectorySeparator + 'package.json';
   if FileExists(PkgPath) then
   begin
@@ -9481,10 +7150,8 @@ begin
     Exit;
 
   BuildDate := FormatDateTime('yyyy-mm-dd', Now);
-
   TargetFile := RootDir + DirectorySeparator + 'package.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
-
   TargetFile := RootDir + DirectorySeparator + 'core' + DirectorySeparator + 'uAppVersion.pas';
   if FileExists(TargetFile) or DirectoryExists(RootDir + DirectorySeparator + 'core') then
   begin
@@ -9505,7 +7172,6 @@ begin
 
   TargetFile := RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'package.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
-
   TargetFile := RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
   if FileExists(TargetFile) or DirectoryExists(RootDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'src') then
   begin
@@ -9528,19 +7194,16 @@ begin
   if not FileExists(TargetFile) then
     TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'vscode-extension' + DirectorySeparator + 'package.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
-
   TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-devtools' + DirectorySeparator + 'manifest.json';
   if not FileExists(TargetFile) then
     TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'devtools-extension' + DirectorySeparator + 'manifest.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
-
   TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-vscode' + DirectorySeparator + 'tool.json';
   if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
   TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-lazarus' + DirectorySeparator + 'tool.json';
   if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
   TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-devtools' + DirectorySeparator + 'tool.json';
   if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
-
   CoreDir := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'core' + DirectorySeparator;
   if DirectoryExists(CoreDir) and (FindFirst(CoreDir + '*', faDirectory, SR) = 0) then
   begin
@@ -9617,7 +7280,6 @@ begin
   NormKey := LowerCase(Trim(Key));
   if Year <> '' then YearStr := Year else YearStr := FormatDateTime('yyyy', Now);
   if Author <> '' then AuthorStr := Author else AuthorStr := 'BlaiseVue Developer';
-
   if (NormKey = 'mit') then
   begin
     CanonId := 'MIT';
@@ -9842,7 +7504,6 @@ begin
   LicType := '';
   AuthorArg := '';
   YearArg := '';
-
   if ParamCount >= 2 then
     SubCmd := LowerCase(Trim(ParamStr(2)));
 
@@ -9965,7 +7626,6 @@ begin
   AppName := ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir));
   AppVer := '1.0.0';
   AppAuth := AuthorArg;
-
   if LoadPackageJson(PkgJson) then
   begin
     AppName := GetJsonString(PkgJson, 'name', AppName);
@@ -9991,7 +7651,6 @@ begin
 
   WriteStringToFile(GetCurrentDir + DirectorySeparator + 'LICENSE', LicBody);
   WriteLn('  [+] Created LICENSE file (' + LicTitle + ')');
-
   if PkgJson = nil then
     PkgJson := TJSONObject.Create;
 
@@ -10004,7 +7663,6 @@ begin
   SavePackageJson(PkgJson);
   WriteLn('  [+] Updated package.json (license: "' + CanonId + '", author: "' + AppAuth + '")');
   PkgJson.Free;
-
   SyncAppVersionUnit(AppName, AppVer, AppAuth, CanonId);
   WriteLn('  [+] License applied successfully: ' + CanonId);
 end;
@@ -10019,7 +7677,6 @@ begin
   SubCmd := '';
   FieldArg := '';
   ValueArg := '';
-
   if ParamCount >= 2 then
     SubCmd := LowerCase(Trim(ParamStr(2)));
   if ParamCount >= 3 then
@@ -10045,7 +7702,6 @@ begin
       AuthVal := GetJsonString(PkgJson, 'author', 'Not specified');
       LicVal := GetJsonString(PkgJson, 'license', 'UNLICENSED');
       DescVal := GetJsonString(PkgJson, 'description', '');
-
       WriteLn('');
       WriteLn('  BlaiseVue Project Metadata');
       WriteLn('  ==========================');
@@ -10078,16 +7734,13 @@ begin
       NameVal := GetJsonString(PkgJson, 'name', 'blaisevue');
       AuthVal := GetJsonString(PkgJson, 'author', 'BlaiseVue Core Team');
       LicVal := GetJsonString(PkgJson, 'license', 'MIT');
-
       WriteLn('');
       WriteLn('  BlaiseVue Monorepo & Project Version Synchronization');
       WriteLn('  ====================================================');
       WriteLn('  Source of Truth (package.json): v' + VerVal);
       WriteLn('');
-
       SyncAppVersionUnit(NameVal, VerVal, AuthVal, LicVal);
       SyncMonorepoVersions(VerVal);
-
       WriteLn('');
       WriteLn('  [SUCCESS] Single Source of Truth synchronization completed (v' + VerVal + ').');
       WriteLn('');
@@ -10107,13 +7760,11 @@ begin
       AuthVal := GetJsonString(PkgJson, 'author', 'BlaiseVue Developer');
       LicVal := GetJsonString(PkgJson, 'license', 'MIT');
       DescVal := GetJsonString(PkgJson, 'description', 'BlaiseVue Application');
-
       SetJsonString(PkgJson, 'name', NameVal);
       SetJsonString(PkgJson, 'version', VerVal);
       SetJsonString(PkgJson, 'author', AuthVal);
       SetJsonString(PkgJson, 'license', LicVal);
       SetJsonString(PkgJson, 'description', DescVal);
-
       SavePackageJson(PkgJson);
       WriteLn('  [+] Initialized package.json metadata');
       SyncAppVersionUnit(NameVal, VerVal, AuthVal, LicVal);
@@ -10156,7 +7807,6 @@ begin
       SetJsonString(PkgJson, FieldArg, ValueArg);
       SavePackageJson(PkgJson);
       WriteLn('  [+] Updated "' + FieldArg + '" to "' + ValueArg + '" in package.json');
-
       NameVal := GetJsonString(PkgJson, 'name', ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir)));
       VerVal := GetJsonString(PkgJson, 'version', '1.0.0');
       AuthVal := GetJsonString(PkgJson, 'author', '');
@@ -10186,7 +7836,6 @@ begin
       SetJsonString(PkgJson, 'version', NewVer);
       SavePackageJson(PkgJson);
       WriteLn('  [+] Version bumped: ' + OldVer + ' -> ' + NewVer + ' (' + FieldArg + ')');
-
       NameVal := GetJsonString(PkgJson, 'name', ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir)));
       AuthVal := GetJsonString(PkgJson, 'author', '');
       LicVal := GetJsonString(PkgJson, 'license', 'MIT');
@@ -10224,7 +7873,6 @@ begin
   CustomList := TStringList.Create;
   try
     Lines.LoadFromFile(AppCfgPath);
-
     for i := 0 to Lines.Count - 1 do
     begin
       Line := Trim(Lines[i]);
@@ -10250,7 +7898,6 @@ begin
     WriteLn('  BlaiseVue Compiler Search Paths (app.cfg)');
     WriteLn('  =========================================');
     WriteLn('');
-
     WriteLn('  [Framework & Core Paths]');
     if CoreList.Count = 0 then
       WriteLn('    (none)')
@@ -10258,7 +7905,6 @@ begin
       for i := 0 to CoreList.Count - 1 do
         WriteLn('    - ' + CoreList[i]);
     WriteLn('');
-
     WriteLn('  [Pas2JS Built-in Packages]');
     if Pas2jsList.Count = 0 then
       WriteLn('    (none - use "bv path add pas2js:<pkg>" to link official packages)')
@@ -10273,7 +7919,6 @@ begin
       end;
     end;
     WriteLn('');
-
     WriteLn('  [Custom & Legacy Unit Paths]');
     if CustomList.Count = 0 then
       WriteLn('    (none - use "bv path add <folder>" to link legacy units)')
@@ -10313,7 +7958,6 @@ begin
   CleanTarget := Trim(Target);
   IsPas2jsPkg := False;
   ResolvedPath := '';
-
   if StartsText('pas2js:', CleanTarget) or ResolvePas2JSPackagePath(CleanTarget, ResolvedPath) then
   begin
     if not ResolvePas2JSPackagePath(CleanTarget, ResolvedPath) then
@@ -10363,7 +8007,6 @@ begin
 
     Lines.Add(FormattedLine);
     Lines.SaveToFile(AppCfgPath);
-
     WriteLn('');
     WriteLn('  [+] Search path added to app.cfg:');
     WriteLn('      ' + FormattedLine);
@@ -10406,7 +8049,6 @@ begin
   if StartsText('pas2js:', CleanTarget) then
     CleanTarget := Copy(CleanTarget, 8, Length(CleanTarget) - 7);
   NormTarget := StringReplace(CleanTarget, '\', '/', [rfReplaceAll]);
-
   Lines := TStringList.Create;
   RemovedCount := 0;
   try
@@ -10423,7 +8065,6 @@ begin
           PathVal := CleanLine;
 
         PathVal := StringReplace(PathVal, '\', '/', [rfReplaceAll]);
-
         if (PathVal = NormTarget) or (Pos('/' + NormTarget + '/', PathVal) > 0) or
            (EndsText('/' + NormTarget, PathVal)) or (EndsText('/' + NormTarget + '/src', PathVal)) then
         begin
@@ -10470,7 +8111,6 @@ begin
     WriteLn('  ==============================================');
     WriteLn('  Use "bv path add pas2js:<package>" to link into your project.');
     WriteLn('');
-
     for i := 0 to Packages.Count - 1 do
     begin
       PkgName := Packages[i];
@@ -10497,7 +8137,6 @@ begin
   TargetArg := '';
   if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
   if ParamCount >= 3 then TargetArg := ParamStr(3);
-
   if (SubCmd = '') or (SubCmd = 'list') or (SubCmd = 'ls') or (SubCmd = 'show') then
   begin
     CmdPathList;
@@ -10647,7 +8286,6 @@ begin
   CleanName := StringReplace(ProjName, '-', '_', [rfReplaceAll]);
   CleanName := StringReplace(CleanName, ' ', '_', [rfReplaceAll]);
   if CleanName = '' then CleanName := 'BlaiseVueApp';
-
   LprFile := CurDir + DirectorySeparator + CleanName + '.lpr';
   LpiFile := CurDir + DirectorySeparator + CleanName + '.lpi';
 
@@ -10782,7 +8420,6 @@ begin
   BareFlag := False;
   ForceFlag := False;
   NoBackupFlag := False;
-
   for i := 2 to ParamCount do
   begin
     if (LowerCase(ParamStr(i)) = '--bare') or (LowerCase(ParamStr(i)) = '-b') then
@@ -10871,15 +8508,12 @@ begin
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'components') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'components');
   ForceDir(BaseDir + 'tests' + DirectorySeparator + 'components');
-
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'views') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'views');
   ForceDir(BaseDir + 'tests' + DirectorySeparator + 'views');
-
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'services') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'services');
   ForceDir(BaseDir + 'tests' + DirectorySeparator + 'services');
-
   if DirectoryExists(BaseDir + 'tests' + DirectorySeparator + 'unit') then
     DeleteDir(BaseDir + 'tests' + DirectorySeparator + 'unit');
 
@@ -10891,7 +8525,6 @@ begin
   AppVer := '1.0.0';
   AppAuth := 'BlaiseVue Developer';
   AppLic := 'MIT';
-
   if LoadPackageJson(PkgJson) then
   begin
     ProjName := GetJsonString(PkgJson, 'name', ProjName);
@@ -10948,7 +8581,6 @@ begin
     '    end);' + #10 +
     'end.' + #10;
   WriteStringToFile(BaseDir + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + 'Home.test.pas', HomeTestContent);
-
   if not BareFlag then
   begin
     // About.bv
@@ -11043,7 +8675,6 @@ begin
 
   // 6. SYNC src/uAppVersion.pas
   SyncAppVersionUnit(ProjName, AppVer, AppAuth, AppLic);
-
   WriteLn('');
   WriteLn('============================================================');
   WriteLn('  BlaiseVue Project Reset Complete!');
@@ -11060,31 +8691,21 @@ begin
   WriteLn('');
 end;
 
-
 // =====================================================================
 
 //  COMANDO: SERVE (antigo run dev)
 
 // =====================================================================
 
-
-
 procedure CmdRunBuild;
 
 var
-
   GenPath, DistPath, PublicPath: string;
-
   Hash, IndexHTML: string;
-
   JSFiles, CSSFiles: TStringList;
-
   JSTags, CSSTags, FileName: string;
-
   i: Integer;
-
 begin
-
   WriteLn('=== BlaiseVue Professional Build (ProductionMode) ===');
 
   
@@ -11092,26 +8713,16 @@ begin
   // 1. Transpile
 
   CmdTranspile;
-
-
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator;
-
   DistPath := GetCurrentDir + DirectorySeparator + 'dist' + DirectorySeparator;
-
   PublicPath := GetCurrentDir + DirectorySeparator + 'public' + DirectorySeparator;
 
-
-
-  // 2. Limpa dist/
+  // 2. Clean dist/ directory
 
   if DirectoryExists(DistPath) then
-
     DeleteDir(DistPath);
 
   ForceDir(DistPath + 'js');
-
-
 
   // 3. Compiles with pas2js (Production mode: -PRODUCTION defines)
 
@@ -11130,188 +8741,102 @@ begin
     Halt(1);
   end;
 
-
-
   // 4. Hashing
 
   Hash := GetFileHash(DistPath + 'js/main.js');
-
   RenameFile(DistPath + 'js/main.js', DistPath + 'js/main.' + Hash + '.js');
-
   CopyFile(DistPath + 'js/main.' + Hash + '.js', DistPath + 'js/main.js');
-
-  
-
   FileName := GetRTLPath;
-
   if FileName <> '' then
-
     WriteStringToFile(DistPath + 'js/rtl.js', ReadFileToString(FileName));
-
-
 
   // 5. Index.html com Hash
 
   if FileExists(PublicPath + 'index.html') then
-
   begin
-
     IndexHTML := ReadFileToString(PublicPath + 'index.html');
-
     IndexHTML := StringReplace(IndexHTML, '__CACHE_BUST__', Hash, [rfReplaceAll]);
-
     IndexHTML := StringReplace(IndexHTML, 'src="js/main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
-
     IndexHTML := StringReplace(IndexHTML, 'src="main.js', 'src="js/main.' + Hash + '.js', [rfReplaceAll]);
-
     IndexHTML := StringReplace(IndexHTML, 'js/rtl.js', 'js/rtl.js', [rfReplaceAll]);
 
-
-
-    // Injeta CSS das bibliotecas (Produção)
+    // Inject package CSS stylesheets (Production mode)
 
     CSSFiles := TStringList.Create;
-
     ScanDirForCSS(GetCurrentDir + DirectorySeparator + 'lib', CSSFiles);
-
     if CSSFiles.Count > 0 then
-
     begin
-
       CSSTags := '';
-
       ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
-
       for i := 0 to CSSFiles.Count - 1 do
-
       begin
-
          FileName := ExtractFileName(CSSFiles[i]);
-
          WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
-
          CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '">' + #10;
-
       end;
 
       CSSFiles.Free;
-
       if CSSTags <> '' then
-
         IndexHTML := StringReplace(IndexHTML, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
-
     end;
 
-
-
-    // Injeta JS das bibliotecas (Produção)
+    // Inject package JS scripts (Production mode)
 
     JSFiles := TStringList.Create;
-
     ScanDirForJS(GetCurrentDir + DirectorySeparator + 'lib', JSFiles);
-
     if JSFiles.Count > 0 then
-
     begin
-
       JSTags := '';
-
       ForceDir(DistPath + 'js/lib');
-
       for i := 0 to JSFiles.Count - 1 do
-
       begin
-
          FileName := ExtractFileName(JSFiles[i]);
-
          WriteStringToFile(DistPath + 'js/lib/' + FileName, ReadFileToString(JSFiles[i]));
-
          JSTags := JSTags + '  <script src="js/lib/' + FileName + '"></script>' + #10;
-
       end;
 
       IndexHTML := StringReplace(IndexHTML, '</head>', JSTags + '</head>', [rfIgnoreCase]);
-
     end;
 
-
-
     WriteStringToFile(DistPath + 'index.html', IndexHTML);
-
   end;
 
-
-
-  // NOVO: Copia ativos em producao
+  // Copy static assets to production dist/
 
   if DirectoryExists(PublicPath) then
-
   begin
-
      WriteLn('[3/3] Copying production assets (public/assets/)...');
-
      CopyDir(PublicPath, DistPath, ['index.html']);
-
   end;
-
-
 
   if DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib') then
-
   begin
-
      WriteLn('  Copying installed libraries (/lib) to /dist/lib...');
-
      CopyDir(GetCurrentDir + DirectorySeparator + 'lib', DistPath + 'lib', []);
-
   end;
-
-
 
   // Generates component documentation automatically into dist/docs/
 
   CmdDoc(False);
-
-
-
   WriteLn('');
-
   WriteLn('Production build generated in /dist');
-
   WriteLn('Main file: main.' + Hash + '.js');
-
   WriteLn('DevTools disabled via -dPRODUCTION');
-
 end;
 
-
-
 procedure CmdServe;
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Dev Server (HMR Enabled) ===');
-
   if not HasCommand('node') then
-
   begin
-
     PrintNodeRequiredError('run the development server with HMR');
-
     Exit;
-
   end;
 
-
-
   if FileExists(GetSDKPath + 'bin' + DirectorySeparator + 'dev-server.js') then
-
   begin
-
     WriteLn('  HMR WebSocket: ws://localhost:8081');
-
     WriteLn('  Local HTTP:    http://localhost:8080');
-
     WriteLn('');
 
     {$IFDEF WINDOWS}
@@ -11329,84 +8854,45 @@ begin
     {$ELSE}
     ExecuteProcess('/bin/sh', ['-c', 'npx http-server dist -p 8080 -c-1']);
     {$ENDIF}
-
   end;
-
 end;
-
-
 
 procedure CmdStudio;
 
 var
-
   PortArg: string;
-
   StudioScript: string;
-
   NoOpen: Boolean;
-
   i: Integer;
-
 begin
-
   WriteLn('=== BlaiseVue Studio 4.0 Developer Cockpit ===');
-
   if not HasCommand('node') then
-
   begin
-
     PrintNodeRequiredError('launch BlaiseVue Studio');
-
     Exit;
-
   end;
 
-
-
   PortArg := '9000';
-
   NoOpen := False;
-
-
-
   for i := 2 to ParamCount do
-
   begin
-
     if (LowerCase(ParamStr(i)) = '--port') and (i < ParamCount) then
-
       PortArg := ParamStr(i + 1)
 
     else if LowerCase(ParamStr(i)) = '--no-open' then
-
       NoOpen := True;
-
   end;
-
-
 
   StudioScript := GetSDKPath + 'bin' + DirectorySeparator + 'studio-server.js';
-
   if not FileExists(StudioScript) then
-
   begin
-
     WriteLn('Error: studio-server.js not found at: ' + StudioScript);
-
     Exit;
-
   end;
 
-
-
   WriteLn('  Dashboard: http://localhost:' + PortArg);
-
   WriteLn('  WebSocket: ws://localhost:' + PortArg + '/ws');
-
   WriteLn('');
-
-
 
   {$IFDEF WINDOWS}
   if not NoOpen then
@@ -11417,40 +8903,22 @@ begin
     ExecuteProcess('/bin/sh', '-c "xdg-open http://localhost:' + PortArg + ' >/dev/null 2>&1 &"');
   ExecuteProcess('/bin/sh', '-c "node ''' + StudioScript + ''' --port ' + PortArg + '"');
   {$ENDIF}
-
 end;
 
-
-
 procedure CmdRunPreview;
-
 begin
-
   WriteLn('=== BlaiseVue Production Preview ===');
-
   if not DirectoryExists('dist') then
-
   begin
-
     WriteLn('ERROR: /dist folder not found. Run "bv run build" first.');
-
     Exit;
-
   end;
-
-
 
   if not HasCommand('node') then
-
   begin
-
     PrintNodeRequiredError('run the preview server (npx http-server)');
-
     Exit;
-
   end;
-
-
 
   WriteLn('Serving /dist at http://localhost:5000...');
 
@@ -11459,46 +8927,26 @@ begin
   {$ELSE}
   ExecuteProcess('/bin/sh', '-c "npx http-server dist -p 5000"');
   {$ENDIF}
-
 end;
-
-
 
 function GenerateComponentJS(const UnitName, TagName: string; const Parsed: TBVParsed): string;
 
 var
-
   Tpl, Style, DataCode: string;
-
   i: Integer;
-
 begin
-
   Tpl := StringReplace(Parsed.Template, #10, ' ', [rfReplaceAll]);
-
   Tpl := StringReplace(Tpl, '''', '''''', [rfReplaceAll]);
-
   Style := StringReplace(Parsed.Style, #10, ' ', [rfReplaceAll]);
-
   Style := StringReplace(Style, '''', '''''', [rfReplaceAll]);
-
-
-
   DataCode := 'function() { return { ';
-
   for i := 0 to High(Parsed.DataFields) do
-
   begin
-
     if i > 0 then DataCode := DataCode + ', ';
-
     DataCode := DataCode + Parsed.DataFields[i].Name + ': ' + Parsed.DataFields[i].DefaultValue;
-
   end;
 
   DataCode := DataCode + ' }; }';
-
-
 
   Result := '/* Generated by BlaiseVue CLI */' + #10 +
 
@@ -11513,129 +8961,75 @@ begin
             '  tagName: ''' + TagName + '''' + #10 +
 
             '};';
-
 end;
-
-
 
 procedure CmdCompileSFC(const FileName: string);
 
 var
-
   Parsed: TBVParsed;
-
 begin
-
   if not FileExists(FileName) then Halt(1);
-
   ParseBVFile(FileName, Parsed);
-
   Write(GenerateComponentJS(ChangeFileExt(ExtractFileName(FileName), ''), PascalToKebab(ChangeFileExt(ExtractFileName(FileName), '')), Parsed));
-
 end;
-
-
 
 procedure ScanDirForTests(const Path: string; List: TStringList);
 
 var
-
   SR: TSearchRec;
-
   D, LName: string;
-
 begin
-
   if not DirectoryExists(Path) then Exit;
-
   D := IncludeTrailingPathDelimiter(Path);
-
   if FindFirst(D + '*', faAnyFile, SR) = 0 then
-
   begin
-
     repeat
 
       if (SR.Name <> '.') and (SR.Name <> '..') then
-
       begin
-
         if (SR.Attr and faDirectory) <> 0 then
-
           ScanDirForTests(D + SR.Name, List)
 
         else
-
         begin
-
           LName := LowerCase(SR.Name);
-
           if (Pos('.test.pas', LName) > 0) or 
 
              ((ExtractFileExt(LName) = '.pas') and (Pos('.test', LName) > 0)) then
-
             List.Add(D + SR.Name);
-
         end;
-
       end;
 
     until FindNext(SR) <> 0;
-
     FindClose(SR);
-
   end;
-
 end;
-
-
 
 procedure CmdTest;
 
 var
-
   TestFiles: TStringList;
-
   i: Integer;
-
   GenPath, TestPath, UnitName, CorePath, RTLFile, RelPath, OutFile: string;
-
 begin
-
   WriteLn('=== BlaiseVue Unit Testing ===');
-
   if not HasCommand('node') then
-
   begin
-
     PrintNodeRequiredError('run the Vitest test runner');
-
     Exit;
-
   end;
 
-
-
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'tests' + DirectorySeparator;
-
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator;
-
   CorePath := GetCorePath;
-
-  
-
   if DirectoryExists(GenPath) then
     DeleteDir(GenPath);
   ForceDir(GenPath);
 
-
-
   // Ensure rtl.js is accessible in project root for test runner
 
   RTLFile := GetRTLPath;
-
   if (RTLFile <> '') and not FileExists(GetCurrentDir + DirectorySeparator + 'rtl.js') then
-
     WriteStringToFile(GetCurrentDir + DirectorySeparator + 'rtl.js', ReadFileToString(RTLFile));
 
   // Ensure app.cfg is accessible in project root for test compilation
@@ -11650,35 +9044,24 @@ begin
   
 
   TestFiles := TStringList.Create;
-
   try
 
     ScanDirForTests(TestPath, TestFiles);
 
-
-
     // Also look into demo-app/tests if we are at root level
 
     if (TestFiles.Count = 0) and DirectoryExists(GetCurrentDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'tests') then
-
     begin
-
       TestPath := GetCurrentDir + DirectorySeparator + 'demo-app' + DirectorySeparator + 'tests' + DirectorySeparator;
-
       ScanDirForTests(TestPath, TestFiles);
-
     end;
 
     
 
     if TestFiles.Count = 0 then
-
     begin
-
       WriteLn('No .test.pas files found in /tests');
-
       Exit;
-
     end;
 
     
@@ -11686,33 +9069,21 @@ begin
     // Transpile all .bv to .pas first so tests can use them
 
     WriteLn('[1/3] Preparing components...');
-
     CmdTranspile;
-
-    
-
     WriteLn('[2/3] Compiling ', TestFiles.Count, ' test file(s)...');
-
     for i := 0 to TestFiles.Count - 1 do
-
     begin
-
        RelPath := TestFiles[i];
-
        if Pos(TestPath, RelPath) = 1 then
-
          RelPath := Copy(RelPath, Length(TestPath) + 1, Length(RelPath))
 
        else
-
          RelPath := ExtractFileName(RelPath);
 
        
 
        OutFile := GenPath + ChangeFileExt(RelPath, '.js');
-
        ForceDir(ExtractFilePath(OutFile));
-
        WriteLn('  - ', RelPath);
 
        {$IFDEF WINDOWS}
@@ -11724,17 +9095,13 @@ begin
        // Add rtl.run() for Vitest to execute the program module code
 
        if FileExists(OutFile) then
-
          WriteStringToFile(OutFile, ReadFileToString(OutFile) + #10 + 'rtl.run();' + #10);
-
     end;
 
     
 
     WriteLn('');
-
     WriteLn('[3/3] Running Vitest...');
-
     WriteLn('');
 
     
@@ -11750,158 +9117,88 @@ begin
   finally
 
     TestFiles.Free;
-
   end;
-
 end;
-
-
 
 procedure CmdDoc(const ServeMode: Boolean);
 
 var
-
   DocPath, TemplateHtml, ComponentsJson, CurDir: string;
-
   BVFiles: TStringList;
-
   i, j: Integer;
-
   Parsed: TBVParsed;
-
   CompName, TagName, DocDesc, PropsStr, EventsStr, SlotsStr: string;
-
   ItemJson: string;
-
   Content: string;
-
   pStart, pEnd: Integer;
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Documentation & Component Playground Generator ===');
-
   CurDir := GetCurrentDir;
-
   DocPath := CurDir + DirectorySeparator + 'dist' + DirectorySeparator + 'docs' + DirectorySeparator;
-
   ForceDir(DocPath);
-
-
-
   BVFiles := TStringList.Create;
-
   try
 
     if DirectoryExists('src' + DirectorySeparator + 'components') then
-
       ScanDirForBV('src' + DirectorySeparator + 'components', BVFiles);
 
     if DirectoryExists('src' + DirectorySeparator + 'views') then
-
       ScanDirForBV('src' + DirectorySeparator + 'views', BVFiles);
 
     if DirectoryExists('lib') then
-
       ScanDirForBV('lib', BVFiles);
 
     if DirectoryExists('packages') then
-
       ScanDirForBV('packages', BVFiles);
 
-
-
     WriteLn('  Found ', BVFiles.Count, ' .bv component(s). Parsing AST metadata...');
-
-
-
     ComponentsJson := '[';
-
-
-
     for i := 0 to BVFiles.Count - 1 do
-
     begin
-
       CompName := ChangeFileExt(ExtractFileName(BVFiles[i]), '');
-
       TagName := PascalToKebab(CompName);
-
       if LowerCase(CompName) = 'app' then Continue;
-
-
-
       ParseBVFile(BVFiles[i], Parsed);
-
-
 
       // Extract description from file header comment if present
 
       DocDesc := '';
-
       Content := ReadFileToString(BVFiles[i]);
-
       pStart := Pos('{', Content);
-
       if pStart > 0 then
-
       begin
-
         pEnd := Pos('}', Content);
-
         if (pEnd > pStart) and (pEnd - pStart < 500) then
-
           DocDesc := Trim(Copy(Content, pStart + 1, pEnd - pStart - 1));
-
       end;
 
       DocDesc := StringReplace(DocDesc, #10, ' ', [rfReplaceAll]);
-
       DocDesc := StringReplace(DocDesc, #13, '', [rfReplaceAll]);
-
       DocDesc := StringReplace(DocDesc, '"', '\"', [rfReplaceAll]);
-
       if DocDesc = '' then DocDesc := 'Native BlaiseVue component <' + TagName + '>';
-
-
 
       // Extract Props
 
       PropsStr := '[';
-
       for j := 0 to High(Parsed.DataFields) do
-
       begin
-
         if j > 0 then PropsStr := PropsStr + ',';
-
         PropsStr := PropsStr + '{"name":"' + Parsed.DataFields[j].Name + '","type":"' + Parsed.DataFields[j].FieldType + '","default":"' + StringReplace(Parsed.DataFields[j].DefaultValue, '"', '\"', [rfReplaceAll]) + '"}';
-
       end;
 
       PropsStr := PropsStr + ']';
 
-
-
       // Extract Events
 
       EventsStr := '[]';
-
       if Pos('$emit(', Parsed.MethodsCode) > 0 then
-
         EventsStr := '["change","input","click"]';
-
-
 
       // Extract Slots
 
       SlotsStr := '["default"]';
-
       if Pos('name="', Parsed.Template) > 0 then
-
         SlotsStr := '["default","header","footer"]';
-
-
 
       ItemJson := '{' +
 
@@ -11922,20 +9219,11 @@ begin
         '"template":"' + StringReplace(StringReplace(StringReplace(Parsed.Template, #13, '', [rfReplaceAll]), #10, '\n', [rfReplaceAll]), '"', '\"', [rfReplaceAll]) + '"' +
 
       '}';
-
-
-
       if ComponentsJson <> '[' then ComponentsJson := ComponentsJson + ',';
-
       ComponentsJson := ComponentsJson + ItemJson;
-
     end;
 
-
-
     ComponentsJson := ComponentsJson + ']';
-
-
 
     TemplateHtml :=
 
@@ -12159,28 +9447,15 @@ begin
 
       '</html>';
 
-
-
     WriteStringToFile(DocPath + 'index.html', TemplateHtml);
-
     WriteLn('  [SUCCESS] Documentation generated at dist/docs/index.html (' + IntToStr(BVFiles.Count) + ' components analyzed)');
-
     WriteLn('');
-
-
-
     if ServeMode then
-
     begin
-
       if not HasCommand('node') then
-
       begin
-
         PrintNodeRequiredError('serve the interactive documentation playground (npx http-server)');
-
         Exit;
-
       end;
 
       WriteLn('Serving documentation playground on http://localhost:8085...');
@@ -12190,122 +9465,63 @@ begin
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "npx http-server dist/docs -p 8085 -c-1"');
       {$ENDIF}
-
     end;
-
-
 
   finally
 
     BVFiles.Free;
-
   end;
-
 end;
-
-
 
 procedure CmdSSG;
 
 var
-
   AppFile, IndexHtml, DistIndex, OutHtml, RoutePath, CompTag, CompFile: string;
-
   ParsedApp, ParsedComp: TBVParsed;
-
   i: Integer;
-
   SsgFragment: string;
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Static Site Generator (SSG & Pre-rendering) ===');
-
   AppFile := 'src' + DirectorySeparator + 'app.bv';
-
   if not FileExists(AppFile) then
-
   begin
-
     WriteLn('Error: src/app.bv not found.');
-
     Exit;
-
   end;
-
-
 
   ParseBVFile(AppFile, ParsedApp);
-
   WriteLn('  Parsed app routes: ', Length(ParsedApp.Routes), ' route(s) registered.');
-
-
-
   WriteLn('  [1/2] Running production compilation...');
-
   CmdRunBuild;
-
-
-
   DistIndex := 'dist' + DirectorySeparator + 'index.html';
-
   if not FileExists(DistIndex) then
-
   begin
-
     WriteLn('Error: dist/index.html not found after build.');
-
     Exit;
-
   end;
 
-
-
   IndexHtml := ReadFileToString(DistIndex);
-
-
-
   WriteLn('  [2/2] Pre-rendering route views into static HTML...');
-
-
-
   for i := 0 to High(ParsedApp.Routes) do
-
   begin
-
     RoutePath := ParsedApp.Routes[i].Path;
-
     CompTag := ParsedApp.Routes[i].Component;
-
-
 
     // Locate component file
 
     CompFile := 'src' + DirectorySeparator + 'views' + DirectorySeparator + KebabToPascal(CompTag) + '.bv';
-
     if not FileExists(CompFile) then
-
       CompFile := 'src' + DirectorySeparator + 'components' + DirectorySeparator + KebabToPascal(CompTag) + '.bv';
 
-
-
     SsgFragment := '';
-
     if FileExists(CompFile) then
-
     begin
-
       ParseBVFile(CompFile, ParsedComp);
-
       SsgFragment := '<div class="bv-ssg-view" data-route="' + RoutePath + '">' + ParsedComp.Template + '</div>';
-
     end
 
     else
-
       SsgFragment := '<div class="bv-ssg-view" data-route="' + RoutePath + '"><h1>' + CompTag + '</h1></div>';
-
-
 
     // Inject SSG pre-rendered block into root #app
 
@@ -12313,112 +9529,61 @@ begin
 
       '<div id="app" data-bv-ssg="true">' + SsgFragment + '</div>', [rfReplaceAll]);
 
-
-
     if RoutePath = '/' then
-
     begin
-
       WriteStringToFile(DistIndex, OutHtml);
-
       WriteLn('    - Pre-rendered route: / -> dist/index.html');
-
     end
 
     else
-
     begin
-
       RoutePath := StringReplace(RoutePath, '/', '', [rfReplaceAll]);
-
       RoutePath := StringReplace(RoutePath, ':', '_', [rfReplaceAll]);
-
       WriteStringToFile('dist' + DirectorySeparator + RoutePath + '.html', OutHtml);
-
       WriteLn('    - Pre-rendered route: /' + RoutePath + ' -> dist/' + RoutePath + '.html');
-
     end;
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('=== SSG Pre-rendering completed successfully! ===');
-
   WriteLn('All routes are pre-rendered for instant First Contentful Paint (<50ms).');
-
 end;
 
-
-
 procedure CmdWasm(const SubCmd: string);
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' WebAssembly Engine ===');
-
   if SubCmd = 'info' then
-
   begin
-
     WriteLn('  Target Architecture: wasm32-wasi / wasm32-unknown');
-
     WriteLn('  Bridge Status: Active (core/BVWasm.pas)');
-
     WriteLn('  Available Modules: math (fib, isPrime, add, square)');
-
     WriteLn('  Acceleration Factor: 2x - 10x compute throughput over pure JS');
-
   end
 
   else if SubCmd = 'benchmark' then
-
   begin
-
     WriteLn('Running WebAssembly vs JavaScript benchmark...');
-
     WriteLn('  Module: math.fib(18)');
-
     WriteLn('  Iterations: 10,000');
-
     WriteLn('  Results:');
-
     WriteLn('    - JS Duration:   ~18.2 ms');
-
     WriteLn('    - Wasm Duration: ~3.8 ms');
-
     WriteLn('    - Speedup:       4.8x faster!');
-
   end
 
   else
-
   begin
-
     WriteLn('Usage: bv wasm <info|benchmark>');
-
   end;
-
 end;
 
-
-
 procedure CmdTestE2E;
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Headless E2E Test Suite ===');
-
   if not HasCommand('node') then
-
   begin
-
     PrintNodeRequiredError('run headless E2E tests with Vitest');
-
     Exit;
-
   end;
 
   WriteLn('Executing end-to-end user journeys (Routing, Forms, Themes, Hydration)...');
@@ -12428,10 +9593,7 @@ begin
   {$ELSE}
   ExecuteProcess('/bin/sh', '-c "npx vitest run --testNamePattern=\"E2E|Integration|Hydration\""');
   {$ENDIF}
-
 end;
-
-
 
 // =====================================================================
 //  ENVIRONMENT UTILITIES & FRAMEWORK DIAGNOSTICS (bv doctor)
@@ -12696,7 +9858,6 @@ begin
   {$ENDIF}
 end;
 
-
 type
   TBVTool = record
     Name: string;
@@ -12711,7 +9872,6 @@ type
     IsCustom: Boolean;
   end;
   TBVToolArray = array of TBVTool;
-
 function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
   Ext, ScriptPath, RunnerCmd, CmdLine, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
@@ -12723,7 +9883,6 @@ begin
   Result := -1;
   ScriptOutput := '';
   if ScriptName = '' then Exit;
-
   ScriptPath := IncludeTrailingPathDelimiter(ToolDir) + ScriptName;
   if not FileExists(ScriptPath) then
   begin
@@ -12832,13 +9991,10 @@ begin
   Tool.RemoveScript := '';
   Tool.PackScript := '';
   Tool.IsCustom := IsCustom;
-
   ManifestFile := IncludeTrailingPathDelimiter(DirPath) + 'tool.json';
   if not FileExists(ManifestFile) then Exit;
-
   Content := ReadFileToString(ManifestFile);
   if Content = '' then Exit;
-
   try
     Parser := TJSONParser.Create(Content);
     try
@@ -12850,7 +10006,6 @@ begin
         Tool.Category := Obj.Get('category', 'Tool');
         Tool.Description := Obj.Get('description', '');
         Tool.Version := Obj.Get('version', '');
-
         if Obj.Find('scripts') is TJSONObject then
         begin
           ScriptsObj := TJSONObject(Obj.Find('scripts'));
@@ -12876,7 +10031,6 @@ var
   BuiltinPath, UserPath, SubDir: string;
   SR: TSearchRec;
   Tool: TBVTool;
-
   procedure ScanDir(const BasePath: string; IsCustom: Boolean);
   begin
     if (BasePath <> '') and DirectoryExists(BasePath) then
@@ -12919,7 +10073,6 @@ var
       end;
     end;
   end;
-
 begin
   SetLength(ToolsList, 0);
   BuiltinPath := GetBuiltinToolsPath;
@@ -12938,9 +10091,7 @@ begin
   SubCmd := LowerCase(Trim(Action));
   TargetLower := LowerCase(Trim(Target));
   if SubCmd = '' then SubCmd := 'list';
-
   AllTools := DiscoverAllTools;
-
   if (SubCmd = 'list') or (SubCmd = 'ls') then
   begin
     WriteLn('');
@@ -12948,7 +10099,6 @@ begin
     WriteLn(StringOfChar('-', 74));
     WriteLn(PadRight('Extension', 22), PadRight('Category / Target', 26), PadRight('Status', 26));
     WriteLn(StringOfChar('-', 74));
-
     if Length(AllTools) = 0 then
       WriteLn('No tools or extensions found.')
     else
@@ -13054,7 +10204,6 @@ begin
   else if (SubCmd = 'pack') or (SubCmd = 'package') or (SubCmd = 'pkg') or (SubCmd = 'vsix') then
   begin
     if TargetLower = '' then TargetLower := 'blaise-vscode';
-
     FoundIndex := -1;
     for I := 0 to High(AllTools) do
     begin
@@ -13088,257 +10237,143 @@ end;
 procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
-
   MobileDir, BinDir, AndroidDir, IOSDir: string;
-
   CapConfigFile, MobileCapConfigFile: string;
-
   ActualAppName, ActualAppId, ConfigContent, ReadmeFile, ReadmeContent: string;
-
   ExistingConfig, CleanName, TargetPlatform, SelectedAVD, EmulatorAction: string;
-
   IsRelease, IsAllTargets, UseEmulator: Boolean;
-
   AvdList: TStringList;
-
   i: Integer;
-
-
-
   function FindAndroidEmulator: string;
-
   var
-
     AndroidHome, LocalAppData, P: string;
-
   begin
-
     Result := '';
-
     {$IFDEF WINDOWS}
 
     AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-
     if (AndroidHome <> '') and FileExists(AndroidHome + '\emulator\emulator.exe') then
-
       Exit(AndroidHome + '\emulator\emulator.exe');
 
-
-
     LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
-
     if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\emulator\emulator.exe') then
-
       Exit(LocalAppData + '\Android\Sdk\emulator\emulator.exe');
 
-
-
     P := GetEnvironmentVariable('ProgramFiles');
-
     if (P <> '') and FileExists(P + '\Android\Android Studio\jbr\bin\emulator.exe') then
-
       Exit(P + '\Android\Android Studio\jbr\bin\emulator.exe');
 
-
-
     Result := 'emulator.exe';
-
     {$ELSE}
 
     AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-
     if (AndroidHome <> '') and FileExists(AndroidHome + '/emulator/emulator') then
-
       Exit(AndroidHome + '/emulator/emulator');
 
-
-
     LocalAppData := GetEnvironmentVariable('HOME');
-
     if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/emulator/emulator') then
-
       Exit(LocalAppData + '/Android/Sdk/emulator/emulator');
 
-
-
     Result := 'emulator';
-
     {$ENDIF}
-
   end;
 
-
-
   function FindAndroidADB: string;
-
   var
-
     AndroidHome, LocalAppData: string;
-
   begin
-
     Result := 'adb';
-
     {$IFDEF WINDOWS}
 
     AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-
     if (AndroidHome <> '') and FileExists(AndroidHome + '\platform-tools\adb.exe') then
-
       Exit(AndroidHome + '\platform-tools\adb.exe');
 
-
-
     LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
-
     if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\platform-tools\adb.exe') then
-
       Exit(LocalAppData + '\Android\Sdk\platform-tools\adb.exe');
 
-
-
     Result := 'adb.exe';
-
     {$ELSE}
 
     AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-
     if (AndroidHome <> '') and FileExists(AndroidHome + '/platform-tools/adb') then
-
       Exit(AndroidHome + '/platform-tools/adb');
 
-
-
     LocalAppData := GetEnvironmentVariable('HOME');
-
     if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/platform-tools/adb') then
-
       Exit(LocalAppData + '/Android/Sdk/platform-tools/adb');
 
     {$ENDIF}
-
   end;
 
-
-
   function GetInstalledAVDs: TStringList;
-
   var
-
     EmulatorExe, CmdOutput, Line: string;
-
     RawList: TStringList;
-
     j: Integer;
-
     RunSuccess: Boolean;
-
   begin
-
     Result := TStringList.Create;
-
     EmulatorExe := FindAndroidEmulator;
-
     CmdOutput := '';
-
     {$IFDEF WINDOWS}
 
     RunSuccess := RunCommand('cmd.exe', ['/c', '"' + EmulatorExe + '" -list-avds'], CmdOutput);
-
     {$ELSE}
 
     RunSuccess := RunCommand(EmulatorExe, ['-list-avds'], CmdOutput);
-
     {$ENDIF}
 
     if RunSuccess then
-
     begin
-
       RawList := TStringList.Create;
-
       try
 
         RawList.Text := CmdOutput;
-
         for j := 0 to RawList.Count - 1 do
-
         begin
-
           Line := Trim(RawList[j]);
-
           if (Line <> '') and (Pos('INFO', Line) <> 1) and (Pos('WARNING', Line) <> 1) and (Pos('ERROR', Line) <> 1) then
-
             Result.Add(Line);
-
         end;
 
       finally
 
         RawList.Free;
-
       end;
-
     end;
-
   end;
 
-
-
   function StartEmulator(const SpecificAVD: string = ''): Boolean;
-
   var
-
     EmulatorExe, TargetAVD: string;
-
     List: TStringList;
-
   begin
-
     Result := False;
-
     EmulatorExe := FindAndroidEmulator;
-
     TargetAVD := SpecificAVD;
-
-
-
     if TargetAVD = '' then
-
     begin
-
       List := GetInstalledAVDs;
-
       try
 
         if List.Count > 0 then
-
           TargetAVD := List[0]
-
         else
-
         begin
-
           WriteLn('  [ERROR] No Android Virtual Device (AVD) found.');
-
           WriteLn('          Open Android Studio > Virtual Device Manager to create an emulator.');
-
           Exit(False);
-
         end;
 
       finally
 
         List.Free;
-
       end;
-
     end;
 
-
-
     WriteLn('  [+] Starting Android Emulator: ' + TargetAVD + ' ...');
-
     {$IFDEF WINDOWS}
 
     ExecuteProcess('cmd', '/c set "PATH=' + ExtractFileDir(FindAndroidADB) + ';%PATH%" && start "" "' + EmulatorExe + '" -avd ' + TargetAVD);
@@ -13346,155 +10381,83 @@ var
     {$ELSE}
 
     ExecuteProcess('/bin/sh', '-c "export PATH=\"' + ExtractFileDir(FindAndroidADB) + ':$PATH\" && ' + EmulatorExe + ' -avd ' + TargetAVD + ' >/dev/null 2>&1 &"');
-
     {$ENDIF}
 
     Result := True;
-
   end;
-
-
 
   procedure ParseArg(const A: string);
-
   var
-
     S: string;
-
   begin
-
     S := LowerCase(A);
-
     if S = '' then Exit;
-
     if (S = '--release') or (S = '-r') or (S = 'release') then
-
       IsRelease := True
-
     else if (S = '--debug') or (S = '-d') or (S = 'debug') then
-
       IsRelease := False
-
     else if (S = 'android') or (S = '--android') or (S = '--target=android') then
-
       TargetPlatform := 'android'
-
     else if (S = 'ios') or (S = '--ios') or (S = '--target=ios') then
-
       TargetPlatform := 'ios'
-
     else if (S = 'all') or (S = '--all') or (S = '--target=all') then
-
       IsAllTargets := True
-
     else if (S = '--emulator') or (S = '-e') or (S = 'emulator') then
-
       UseEmulator := True
-
     else if (SubCmd = 'emulator') and (EmulatorAction = '') then
-
       EmulatorAction := S
-
     else if (UseEmulator or (SubCmd = 'emulator')) and (SelectedAVD = '') and (Copy(S, 1, 1) <> '-') then
-
       SelectedAVD := A
-
     else if (ActualAppName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
-
       ActualAppName := A
-
     else if (ActualAppId = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
-
       ActualAppId := A;
-
   end;
-
-
 
   function ExtractJsonField(const Content, Prop: string): string;
-
   var
-
     P, Q, StartVal, EndVal: Integer;
-
   begin
-
     Result := '';
-
     P := Pos('"' + Prop + '"', Content);
-
     if P <= 0 then Exit;
-
     Q := PosEx(':', Content, P);
-
     if Q <= 0 then Exit;
-
     StartVal := PosEx('"', Content, Q);
-
     if StartVal <= 0 then Exit;
-
     EndVal := PosEx('"', Content, StartVal + 1);
-
     if EndVal <= 0 then Exit;
-
     Result := Copy(Content, StartVal + 1, EndVal - StartVal - 1);
-
   end;
 
-
-
   function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
-
   var
-
     TBinDir, SourceApk, TargetApk, AltApk: string;
-
   begin
-
     Result := False;
-
     TBinDir := BinDir + DirectorySeparator + ATarget;
-
     ForceDir(TBinDir);
-
-
-
     if ATarget = 'android' then
-
     begin
-
       if not DirectoryExists(AndroidDir) then
-
       begin
-
         WriteLn('  [ERROR] Android native project not found at: ' + AndroidDir);
-
         WriteLn('          Run "bv mobile init" first.');
-
         Exit(False);
-
       end;
 
-
-
       if ARelease then
-
         WriteLn('  [+] Compiling Android APK in RELEASE mode (Gradle assembleRelease)...')
 
       else
-
         WriteLn('  [+] Compiling Android APK in DEBUG mode (Gradle assembleDebug)...');
-
-
 
       {$IFDEF WINDOWS}
 
       if ARelease then
-
         ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleRelease')
 
       else
-
         ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleDebug');
 
       {$ELSE}
@@ -13506,166 +10469,88 @@ var
 
       {$ENDIF}
 
-
-
       if ARelease then
-
       begin
-
         SourceApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release.apk';
-
         AltApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release-unsigned.apk';
-
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-release.apk';
-
       end
 
       else
-
       begin
-
         SourceApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'debug' + DirectorySeparator + 'app-debug.apk';
-
         AltApk := '';
-
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-debug.apk';
-
       end;
-
-
 
       if not FileExists(SourceApk) and (AltApk <> '') and FileExists(AltApk) then
-
         SourceApk := AltApk;
-
-
-
       if FileExists(SourceApk) then
-
       begin
-
         CopyFile(SourceApk, TargetApk);
-
         Result := True;
-
         if ARelease then
-
           WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk))
-
         else
-
         begin
-
           WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk));
-
           WriteLn('  [TIP] To install on your connected device: adb install -r "mobile/bin/android/' + ExtractFileName(TargetApk) + '"');
-
         end;
-
       end
 
       else
-
       begin
-
         WriteLn('  [WARNING] Expected APK was not found at: ' + SourceApk);
-
       end;
-
     end
 
     else if ATarget = 'ios' then
-
     begin
-
       {$IFDEF DARWIN}
 
       WriteLn('  [+] Building iOS native package...');
-
       ExecuteProcess('/bin/sh', '-c "npx cap build ios"');
-
       Result := True;
-
       WriteLn('  [SUCCESS] iOS project built successfully in mobile/ios.');
 
       {$ELSE}
 
       WriteLn('  [i] Target platform is iOS.');
-
       WriteLn('  [INFO] iOS native compilation requires macOS with Xcode installed.');
-
       WriteLn('         Assets are synchronized and ready. On macOS, run "bv mobile open ios" or "bv mobile build ios".');
-
       Result := True;
-
       {$ENDIF}
-
     end;
-
   end;
 
-
-
   procedure RunTarget(const ATarget: string);
-
   var
-
     TargetApk, TBinDir, AdbExe, AdbOutput, AdbTarget: string;
-
   begin
-
     if ATarget = 'android' then
-
     begin
-
       TBinDir := BinDir + DirectorySeparator + 'android';
-
       if IsRelease then
-
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-release.apk'
-
       else
-
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-debug.apk';
-
-
-
       if not FileExists(TargetApk) then
-
       begin
-
         WriteLn('Target binary not found. Compiling first...');
-
         BuildSingleTarget('android', IsRelease);
-
       end;
 
-
-
       AdbExe := FindAndroidADB;
-
       AdbTarget := '';
-
-
-
       if UseEmulator then
-
       begin
-
         AdbTarget := '-e ';
-
         AdbOutput := '';
-
         RunCommand(AdbExe, ['devices'], AdbOutput);
-
         if Pos('emulator-', AdbOutput) = 0 then
-
         begin
-
           WriteLn('  [+] No active emulator detected in ADB. Launching emulator...');
-
           StartEmulator(SelectedAVD);
-
           WriteLn('  [+] Waiting for emulator to boot (adb -e wait-for-device)...');
 
           {$IFDEF WINDOWS}
@@ -13679,47 +10564,27 @@ var
           {$ENDIF}
 
           WriteLn('  [+] Waiting for emulator system to finalize boot...');
-
           Sleep(4000);
-
         end;
-
       end
 
       else
-
       begin
-
         AdbOutput := '';
-
         RunCommand(AdbExe, ['devices'], AdbOutput);
-
         if (Pos('emulator-', AdbOutput) > 0) and (Pos(#10, Trim(AdbOutput)) > 0) then
-
           AdbTarget := '-d ';
-
       end;
 
-
-
       if FileExists(TargetApk) then
-
       begin
-
         if UseEmulator then
-
           WriteLn('Installing and running APK on Android Emulator via ADB: ' + TargetApk)
-
         else
-
           WriteLn('Installing and running APK on Android device via ADB: ' + TargetApk);
-
-
-
         {$IFDEF WINDOWS}
 
         ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'install -r "' + TargetApk + '"');
-
         ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity');
 
         {$ELSE}
@@ -13741,15 +10606,11 @@ var
         {$ELSE}
         ExecuteProcess('/bin/sh', '-c "npx cap run android"');
         {$ENDIF}
-
       end;
-
     end
 
     else if ATarget = 'ios' then
-
     begin
-
       {$IFDEF DARWIN}
 
       ExecuteProcess('/bin/sh', '-c "npx cap run ios"');
@@ -13759,23 +10620,14 @@ var
       WriteLn('[INFO] Running on iOS simulator or device requires macOS with Xcode.');
 
       {$ENDIF}
-
     end;
-
   end;
 
-
-
   procedure OpenTarget(const ATarget: string);
-
   begin
-
     if ATarget = 'ios' then
-
     begin
-
       WriteLn('Opening Xcode for ' + IOSDir + '...');
-
       CmdRunBuild;
 
       {$IFDEF WINDOWS}
@@ -13795,162 +10647,85 @@ var
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "npx cap sync android && npx cap open android"');
       {$ENDIF}
-
     end;
-
   end;
-
-
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Mobile (Capacitor Engine) ===');
-
-
-
   IsRelease := False;
-
   IsAllTargets := False;
-
   UseEmulator := False;
-
   TargetPlatform := '';
-
   SelectedAVD := '';
-
   EmulatorAction := '';
-
   ActualAppName := '';
-
   ActualAppId := '';
-
-
-
   ParseArg(Arg1);
-
   ParseArg(Arg2);
-
   for i := 5 to ParamCount do
-
     ParseArg(ParamStr(i));
 
-
-
   MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
-
   BinDir := MobileDir + DirectorySeparator + 'bin';
-
   CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
-
   MobileCapConfigFile := MobileDir + DirectorySeparator + 'capacitor.config.json';
-
-
-
   if DirectoryExists(MobileDir + DirectorySeparator + 'android') then
-
     AndroidDir := MobileDir + DirectorySeparator + 'android'
 
   else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'android') then
-
     AndroidDir := GetCurrentDir + DirectorySeparator + 'android'
 
   else
-
     AndroidDir := MobileDir + DirectorySeparator + 'android';
 
-
-
   if DirectoryExists(MobileDir + DirectorySeparator + 'ios') then
-
     IOSDir := MobileDir + DirectorySeparator + 'ios'
 
   else if DirectoryExists(GetCurrentDir + DirectorySeparator + 'ios') then
-
     IOSDir := GetCurrentDir + DirectorySeparator + 'ios'
 
   else
-
     IOSDir := MobileDir + DirectorySeparator + 'ios';
 
-
-
   if FileExists(CapConfigFile) then
-
     ExistingConfig := ReadFileToString(CapConfigFile)
 
   else if FileExists(MobileCapConfigFile) then
-
     ExistingConfig := ReadFileToString(MobileCapConfigFile)
 
   else
-
     ExistingConfig := '';
 
-
-
   if ExistingConfig <> '' then
-
   begin
-
     if ActualAppName = '' then ActualAppName := ExtractJsonField(ExistingConfig, 'appName');
-
     if ActualAppId = '' then ActualAppId := ExtractJsonField(ExistingConfig, 'appId');
-
   end;
 
-
-
   if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
-
   if ActualAppId = '' then ActualAppId := 'com.blaisevue.app';
-
-
-
   CleanName := '';
-
   for i := 1 to Length(ActualAppName) do
-
   begin
-
     if (ActualAppName[i] in ['a'..'z', 'A'..'Z', '0'..'9']) then
-
       CleanName := CleanName + ActualAppName[i]
 
     else if CleanName <> '' then
-
       CleanName := CleanName + '_';
-
   end;
 
   if CleanName = '' then CleanName := 'MobileApp';
-
   if CleanName[1] in ['0'..'9'] then CleanName := 'App' + CleanName;
-
-
-
   if TargetPlatform = '' then
-
     TargetPlatform := 'android';
 
-
-
   if (SubCmd = 'init') or (SubCmd = 'sync') or (SubCmd = 'open') or (SubCmd = 'build') then
-
   begin
-
     if not HasCommand('node') then
-
     begin
-
       PrintNodeRequiredError('manage mobile projects with Capacitor');
-
       Exit;
-
     end;
-
   end;
-
-
 
   if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
   begin
@@ -13958,24 +10733,13 @@ begin
     Exit;
   end
   else if (SubCmd = 'init') then
-
   begin
-
     WriteLn('Initializing Capacitor Mobile platform in mobile/ ...');
-
     ReadmeFile := MobileDir + DirectorySeparator + 'README.md';
-
-
-
     ForceDir(MobileDir);
-
     ForceDir(BinDir);
-
     ForceDir(BinDir + DirectorySeparator + 'android');
-
     ForceDir(BinDir + DirectorySeparator + 'ios');
-
-
 
     // 1. Generate capacitor.config.json
 
@@ -14003,29 +10767,17 @@ begin
 
       '}';
 
-
-
     if not FileExists(CapConfigFile) then
-
     begin
-
       WriteStringToFile(CapConfigFile, ConfigContent);
-
       WriteLn('  [+] Generated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
-
     end
 
     else
-
       WriteLn('  [i] capacitor.config.json already exists.');
 
-
-
     if not FileExists(MobileCapConfigFile) then
-
       WriteStringToFile(MobileCapConfigFile, ConfigContent);
-
-
 
     // 2. Ensure @capacitor/core and @capacitor/cli are installed
 
@@ -14047,21 +10799,15 @@ begin
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "npx cap add android"');
       {$ENDIF}
-
     end
 
     else
-
       WriteLn('  [i] Native android/ directory already initialized at: ' + AndroidDir);
-
-
 
     // 4. Generate README.md
 
     if not FileExists(ReadmeFile) then
-
     begin
-
       ReadmeContent :=
 
         '# ' + ActualAppName + ' (BlaiseVue 3.5 Mobile)' + #10 +
@@ -14137,35 +10883,21 @@ begin
         '```' + #10;
 
       WriteStringToFile(ReadmeFile, ReadmeContent);
-
       WriteLn('  [+] Created mobile/README.md');
-
     end;
 
-
-
     WriteLn('');
-
     WriteLn('Mobile initialization complete in mobile/ !');
-
     WriteLn('Run "bv mobile open android" to launch Android Studio.');
-
     WriteLn('Run "bv mobile build android" to compile APK to mobile/bin/android/.');
-
   end
 
   else if (SubCmd = 'sync') then
-
   begin
-
     WriteLn('Synchronizing BlaiseVue dist/ with native Mobile platform...');
-
     CmdRunBuild;
-
     if IsAllTargets or (TargetPlatform = 'all') then
-
     begin
-
       {$IFDEF WINDOWS}
       ExecuteProcess('cmd', '/c npx cap sync');
       {$ELSE}
@@ -14179,387 +10911,214 @@ begin
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "npx cap sync ' + TargetPlatform + '"');
       {$ENDIF}
-
     end;
 
     WriteLn('Mobile assets synchronized successfully!');
-
   end
 
   else if (SubCmd = 'build') then
-
   begin
-
     WriteLn('Building native Mobile application with Capacitor...');
-
     CmdMobile('sync', TargetPlatform);
-
-
-
     if IsAllTargets or (TargetPlatform = 'all') then
-
     begin
-
       WriteLn('Building native Mobile application for ALL platforms (android, ios)...');
-
       BuildSingleTarget('android', IsRelease);
-
       BuildSingleTarget('ios', IsRelease);
-
     end
 
     else
-
     begin
-
       BuildSingleTarget(TargetPlatform, IsRelease);
-
     end;
-
   end
 
   else if (SubCmd = 'run') then
-
   begin
-
     RunTarget(TargetPlatform);
-
   end
 
   else if (SubCmd = 'open') then
-
   begin
-
     OpenTarget(TargetPlatform);
-
   end
 
   else if (SubCmd = 'emulator') then
-
   begin
-
     if (EmulatorAction = 'list') or (EmulatorAction = 'ls') or (EmulatorAction = '') then
-
     begin
-
       WriteLn('Installed Android Virtual Devices (AVD):');
-
       AvdList := GetInstalledAVDs;
-
       try
 
         if AvdList.Count = 0 then
-
         begin
-
           WriteLn('  [!] No AVD emulators found.');
-
           WriteLn('      Create one in Android Studio: Tools > Device Manager > Create Virtual Device');
-
         end
 
         else
-
         begin
-
           for i := 0 to AvdList.Count - 1 do
-
             WriteLn('  [' + IntToStr(i + 1) + '] ' + AvdList[i]);
 
           WriteLn('');
-
           WriteLn('To start an emulator: bv mobile emulator start ' + AvdList[0]);
-
           WriteLn('To build and run:     bv mobile run android --emulator');
-
         end;
 
       finally
 
         AvdList.Free;
-
       end;
-
     end
 
     else if (EmulatorAction = 'start') or (EmulatorAction = 'open') then
-
     begin
-
       StartEmulator(SelectedAVD);
-
     end
 
     else if (EmulatorAction = 'run') then
-
     begin
-
       UseEmulator := True;
-
       RunTarget('android');
-
     end
 
     else
-
     begin
-
       WriteLn('Usage: bv mobile emulator <list|start [name]|run [name]>');
-
     end;
-
   end
 
   else
-
   begin
-
     WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
-
     WriteLn('       Targets: android | ios | all (default: android)');
-
   end;
-
 end;
-
-
 
 procedure CmdDesktop(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
-
   DesktopDir, AssetsDir, BinDir, UnitsDir: string;
-
   HostPlatform, TargetPlatform, AltPlatformName, ExeDir: string;
-
   CleanName, DisplayName: string;
-
   LprFile, LpiFile, WebUIFile, BridgeFile, ReadmeFile: string;
-
   LprContent, LpiContent, WebUIContent, BridgeContent, ReadmeContent: string;
-
   i: Integer;
-
   SearchRec: TSearchRec;
-
   FoundLpr: string;
-
   TargetExe, TargetBin, TargetExt: string;
-
   IsRelease, IsAllTargets: Boolean;
-
-
-
   procedure ParseArg(const A: string);
-
   var
-
     S: string;
-
   begin
-
     S := LowerCase(A);
-
     if S = '' then Exit;
-
     if (S = '--release') or (S = '-r') or (S = 'release') then
-
       IsRelease := True
-
     else if (S = '--debug') or (S = '-d') or (S = 'debug') then
-
       IsRelease := False
-
     else if (S = 'windows') or (S = 'win') or (S = 'win64') or (S = '--windows') or (S = '--target=windows') then
-
       TargetPlatform := 'windows'
-
     else if (S = 'linux') or (S = 'linux64') or (S = '--linux') or (S = '--target=linux') then
-
       TargetPlatform := 'linux'
-
     else if (S = 'macos') or (S = 'mac') or (S = 'darwin') or (S = '--macos') or (S = '--target=macos') or (S = '--target=darwin') then
-
       TargetPlatform := 'macos'
-
     else if (S = 'all') or (S = '--all') or (S = '--target=all') then
-
       IsAllTargets := True
-
     else if (DisplayName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
-
       DisplayName := A;
-
   end;
 
-
-
   function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
-
   var
-
     TBin, TUnits: string;
-
     TExt, TExe: string;
-
     FpcCmd: string;
-
     IsNative: Boolean;
-
   begin
-
     Result := False;
-
     TBin := BinDir + DirectorySeparator + ATarget;
-
     TUnits := UnitsDir + DirectorySeparator + ATarget;
-
     ForceDir(TBin);
-
     ForceDir(TUnits);
-
-
-
     if ATarget = 'windows' then
-
       TExt := '.exe'
-
     else
-
       TExt := '';
-
-
-
     TExe := TBin + DirectorySeparator + CleanName + TExt;
-
     IsNative := (ATarget = HostPlatform);
-
-
-
     if ARelease then
-
       WriteLn('  [+] Compiling ' + FoundLpr + ' in RELEASE mode for ' + ATarget + ' (GUI Application - No Console Window)...')
 
     else
-
       WriteLn('  [+] Compiling ' + FoundLpr + ' in DEBUG mode for ' + ATarget + ' (Console Window Active for Diagnostics)...');
 
-
-
     FpcCmd := 'fpc ';
-
     if ARelease then
-
     begin
-
       FpcCmd := FpcCmd + '-O3 -Xs -dRELEASE ';
-
       if ATarget = 'windows' then
-
         FpcCmd := FpcCmd + '-WG ';
-
     end
 
     else
-
     begin
-
       FpcCmd := FpcCmd + '-O2 -g -gl -dDEBUG ';
-
     end;
-
-
 
     if not IsNative then
-
     begin
-
       if ATarget = 'windows' then
-
         FpcCmd := FpcCmd + '-Twin64 -Px86_64 '
-
       else if ATarget = 'linux' then
-
         FpcCmd := FpcCmd + '-Tlinux -Px86_64 '
-
       else if ATarget = 'macos' then
-
         FpcCmd := FpcCmd + '-Tdarwin -Px86_64 ';
-
     end;
-
-
 
     {$IFDEF WINDOWS}
 
     FpcCmd := FpcCmd + '-FEbin\' + ATarget + ' -FUunits\' + ATarget + ' ' + FoundLpr;
-
     ExecuteProcess('cmd', '/c cd /d "' + DesktopDir + '" && ' + FpcCmd);
 
     {$ELSE}
 
     FpcCmd := FpcCmd + '-FEbin/' + ATarget + ' -FUunits/' + ATarget + ' ' + FoundLpr;
-
     ExecuteProcess('/bin/sh', ['-c', 'cd "' + DesktopDir + '" && ' + FpcCmd]);
 
     {$ENDIF}
 
-
-
     if FileExists(TExe) then
-
     begin
-
       Result := True;
-
       if ARelease then
-
         WriteLn('  [SUCCESS] Release native GUI binary built (no console): desktop/bin/' + ATarget + '/' + CleanName + TExt)
-
       else
-
       begin
-
         WriteLn('  [SUCCESS] Debug native binary built: desktop/bin/' + ATarget + '/' + CleanName + TExt);
-
         WriteLn('  [TIP] For end users, run "bv desktop build ' + ATarget + ' --release" to compile a clean GUI application without console.');
-
       end;
-
     end
 
     else
-
     begin
-
       WriteLn('  [WARNING] Binary not generated at expected location: ' + TExe);
-
       if not IsNative then
-
       begin
-
         WriteLn('  [INFO] Note: Cross-compiling for ' + ATarget + ' from ' + HostPlatform + ' requires FPC target units.');
-
         WriteLn('         You can compile natively on ' + ATarget + ' (or WSL/Docker for Linux) using "bv desktop build".');
-
       end;
-
     end;
-
   end;
-
-
-
 begin
-
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Desktop (WebUI & Lazarus IDE) ===');
-
-
 
   {$IFDEF MSWINDOWS}
 
   HostPlatform := 'windows';
-
   AltPlatformName := 'win64';
 
   {$ELSE}
@@ -14567,134 +11126,74 @@ begin
     {$IFDEF DARWIN}
 
     HostPlatform := 'macos';
-
     AltPlatformName := 'darwin';
 
     {$ELSE}
 
     HostPlatform := 'linux';
-
     AltPlatformName := 'linux64';
 
     {$ENDIF}
 
   {$ENDIF}
 
-
-
   IsRelease := False;
-
   IsAllTargets := False;
-
   TargetPlatform := '';
-
   DisplayName := '';
-
-
-
   ParseArg(Arg1);
-
   ParseArg(Arg2);
-
   for i := 3 to ParamCount do
-
     ParseArg(ParamStr(i));
 
-
-
   if TargetPlatform = '' then
-
     TargetPlatform := HostPlatform;
 
-
-
   if DisplayName = '' then DisplayName := 'BlaiseVue Desktop';
-
-
-
   CleanName := '';
-
   for i := 1 to Length(DisplayName) do
-
   begin
-
     if (DisplayName[i] in ['a'..'z', 'A'..'Z', '0'..'9']) then
-
       CleanName := CleanName + DisplayName[i]
 
     else if CleanName <> '' then
-
       CleanName := CleanName + '_';
-
   end;
 
   if CleanName = '' then CleanName := 'DesktopApp';
-
   if CleanName[1] in ['0'..'9'] then CleanName := 'App' + CleanName;
-
-
-
   DesktopDir := GetCurrentDir + DirectorySeparator + 'desktop';
-
   AssetsDir := DesktopDir + DirectorySeparator + 'assets';
-
   BinDir := DesktopDir + DirectorySeparator + 'bin';
-
   UnitsDir := DesktopDir + DirectorySeparator + 'units';
-
-
-
   if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'del') then
   begin
     CmdRemoveDesktop(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
     Exit;
   end
   else if (SubCmd = 'init') then
-
   begin
-
     WriteLn('Initializing native Desktop project in desktop/ ...');
-
     ForceDir(DesktopDir);
-
     ForceDir(AssetsDir);
-
     ForceDir(BinDir);
-
     ForceDir(UnitsDir);
-
     ForceDir(BinDir + DirectorySeparator + 'windows');
-
     ForceDir(BinDir + DirectorySeparator + 'linux');
-
     ForceDir(BinDir + DirectorySeparator + 'macos');
-
     ForceDir(UnitsDir + DirectorySeparator + 'windows');
-
     ForceDir(UnitsDir + DirectorySeparator + 'linux');
-
     ForceDir(UnitsDir + DirectorySeparator + 'macos');
-
-
-
     LprFile := DesktopDir + DirectorySeparator + CleanName + '.lpr';
-
     LpiFile := DesktopDir + DirectorySeparator + CleanName + '.lpi';
-
     WebUIFile := DesktopDir + DirectorySeparator + 'webui.pas';
-
     BridgeFile := DesktopDir + DirectorySeparator + 'uDesktopBridge.pas';
-
     ReadmeFile := DesktopDir + DirectorySeparator + 'README.md';
-
-
 
     // 1. webui.pas
 
     if not FileExists(WebUIFile) then
-
     begin
-
       WebUIContent :=
 
         'unit webui;' + #10 +
@@ -15008,23 +11507,16 @@ begin
         'end.' + #10;
 
       WriteStringToFile(WebUIFile, WebUIContent);
-
       WriteLn('  [+] Created desktop/webui.pas (Dynamic WebUI C Loader)');
-
     end
 
     else
-
       WriteLn('  [i] desktop/webui.pas already exists.');
-
-
 
     // 2. uDesktopBridge.pas
 
     if not FileExists(BridgeFile) then
-
     begin
-
       BridgeContent :=
 
         'unit uDesktopBridge;' + #10 +
@@ -15368,23 +11860,16 @@ begin
         'end.' + #10;
 
       WriteStringToFile(BridgeFile, BridgeContent);
-
       WriteLn('  [+] Created desktop/uDesktopBridge.pas (Native Desktop Bridge)');
-
     end
 
     else
-
       WriteLn('  [i] desktop/uDesktopBridge.pas already exists.');
-
-
 
     // 3. <CleanName>.lpr
 
     if not FileExists(LprFile) then
-
     begin
-
       LprContent :=
 
         'program ' + CleanName + ';' + #10 +
@@ -15717,23 +12202,16 @@ begin
         'end.' + #10;
 
       WriteStringToFile(LprFile, LprContent);
-
       WriteLn('  [+] Created desktop/' + CleanName + '.lpr (Free Pascal Main Entry)');
-
     end
 
     else
-
       WriteLn('  [i] desktop/' + CleanName + '.lpr already exists.');
-
-
 
     // 4. <CleanName>.lpi
 
     if not FileExists(LpiFile) then
-
     begin
-
       LpiContent :=
 
         '<?xml version="1.0" encoding="UTF-8"?>' + #10 +
@@ -15915,23 +12393,16 @@ begin
         '</CONFIG>' + #10;
 
       WriteStringToFile(LpiFile, LpiContent);
-
       WriteLn('  [+] Created desktop/' + CleanName + '.lpi (Lazarus IDE Project)');
-
     end
 
     else
-
       WriteLn('  [i] desktop/' + CleanName + '.lpi already exists.');
-
-
 
     // 5. README.md
 
     if not FileExists(ReadmeFile) then
-
     begin
-
       ReadmeContent :=
 
         '# ' + DisplayName + ' (BlaiseVue 3.5 Desktop)' + #10 +
@@ -16011,236 +12482,127 @@ begin
         'Open `' + CleanName + '.lpi` in Lazarus IDE and switch between **Debug** and **Release** build modes in the top toolbar.' + #10;
 
       WriteStringToFile(ReadmeFile, ReadmeContent);
-
       WriteLn('  [+] Created desktop/README.md');
-
     end;
 
-
-
     WriteLn('');
-
     WriteLn('Desktop project scaffolded successfully!');
-
     WriteLn('Next steps:');
-
     WriteLn('  1. Run "bv desktop sync"  to compile frontend and copy dist/ to desktop/assets/');
-
     WriteLn('  2. Run "bv desktop build" to compile native binary with Free Pascal');
-
     WriteLn('  3. Run "bv desktop run"   to start your native desktop app');
-
     WriteLn('  Or open desktop/' + CleanName + '.lpi in Lazarus IDE and press F9!');
-
   end
 
   else if (SubCmd = 'sync') then
-
   begin
-
     WriteLn('Synchronizing BlaiseVue dist/ with native Desktop assets...');
-
     CmdRunBuild;
-
     if DirectoryExists(AssetsDir) then
-
       DeleteDir(AssetsDir);
 
     ForceDir(AssetsDir);
-
     CopyDir(GetCurrentDir + DirectorySeparator + 'dist', AssetsDir, []);
-
     WriteLn('  [+] Desktop assets synchronized successfully in desktop/assets/ !');
-
   end
 
   else if (SubCmd = 'build') then
-
   begin
-
     WriteLn('Building native Desktop application with Free Pascal...');
-
     CmdDesktop('sync', Arg1, Arg2);
-
-
-
     FoundLpr := '';
-
     if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
-
     begin
-
       FoundLpr := SearchRec.Name;
-
       FindClose(SearchRec);
-
     end;
-
-
 
     if FoundLpr = '' then
-
     begin
-
       WriteLn('Error: No .lpr project file found in desktop/ directory. Run "bv desktop init" first.');
-
       Halt(1);
-
     end;
 
-
-
     CleanName := ChangeFileExt(FoundLpr, '');
-
-
-
     if IsAllTargets then
-
     begin
-
       WriteLn('Building native Desktop application for ALL platforms (windows, linux, macos)...');
-
       BuildSingleTarget('windows', IsRelease);
-
       BuildSingleTarget('linux', IsRelease);
-
       BuildSingleTarget('macos', IsRelease);
-
     end
 
     else
-
     begin
-
       BuildSingleTarget(TargetPlatform, IsRelease);
-
     end;
-
   end
 
   else if (SubCmd = 'run') then
-
   begin
-
     CmdDesktop('sync', Arg1, Arg2);
-
     FoundLpr := '';
-
     if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
-
     begin
-
       FoundLpr := SearchRec.Name;
-
       FindClose(SearchRec);
-
     end;
-
-
 
     if FoundLpr = '' then
-
     begin
-
       WriteLn('No desktop project found. Initializing first...');
-
       CmdDesktop('init', Arg1, Arg2);
-
       if FindFirst(DesktopDir + DirectorySeparator + '*.lpr', faAnyFile, SearchRec) = 0 then
-
       begin
-
         FoundLpr := SearchRec.Name;
-
         FindClose(SearchRec);
-
       end;
-
     end;
 
-
-
     CleanName := ChangeFileExt(FoundLpr, '');
-
     if TargetPlatform = 'all' then TargetPlatform := HostPlatform;
-
-
-
     if TargetPlatform = 'windows' then TargetExt := '.exe' else TargetExt := '';
-
     TargetBin := BinDir + DirectorySeparator + TargetPlatform;
-
     TargetExe := TargetBin + DirectorySeparator + CleanName + TargetExt;
-
-
-
     if not FileExists(TargetExe) and (AltPlatformName <> '') then
-
       TargetExe := BinDir + DirectorySeparator + AltPlatformName + DirectorySeparator + CleanName + TargetExt;
 
     if not FileExists(TargetExe) then
-
       TargetExe := BinDir + DirectorySeparator + CleanName + TargetExt;
 
-
-
     if not FileExists(TargetExe) or IsRelease then
-
     begin
-
       if IsRelease then
-
         WriteLn('Building desktop app in RELEASE mode for ' + TargetPlatform + '...')
 
       else
-
         WriteLn('Target binary not found. Building desktop app in DEBUG mode for ' + TargetPlatform + '...');
 
       BuildSingleTarget(TargetPlatform, IsRelease);
-
       TargetExe := TargetBin + DirectorySeparator + CleanName + TargetExt;
-
     end;
 
-
-
     if FileExists(TargetExe) then
-
     begin
-
       if TargetPlatform <> HostPlatform then
-
       begin
-
         WriteLn('[i] Target platform is ' + TargetPlatform + ', but current host machine is ' + HostPlatform + '.');
-
         WriteLn('[i] Binary ready at: ' + TargetExe);
-
         if (HostPlatform = 'windows') and (TargetPlatform = 'linux') then
-
           WriteLn('[TIP] To test on Windows via WSL, run: wsl ./desktop/bin/linux/' + CleanName)
 
         else
-
           WriteLn('[TIP] To run this binary, execute it natively on a ' + TargetPlatform + ' system.');
-
       end
 
       else
-
       begin
-
         ExeDir := ExtractFilePath(TargetExe);
-
         if IsRelease then
-
           WriteLn('Launching native desktop app in RELEASE mode (No Console): ' + TargetExe)
 
         else
-
           WriteLn('Launching native desktop app in DEBUG mode (Live Console): ' + TargetExe);
-
-
 
         {$IFDEF WINDOWS}
 
@@ -16249,36 +12611,22 @@ begin
         {$ELSE}
         ExecuteProcess('/bin/sh', ['-c', 'cd "' + ExeDir + '" && ./' + ExtractFileName(TargetExe)]);
         {$ENDIF}
-
       end;
-
     end
 
     else
-
     begin
-
       WriteLn('Error: Failed to launch desktop app. Binary could not be found: ' + TargetExe);
-
       Halt(1);
-
     end;
-
   end
 
   else
-
   begin
-
     WriteLn('Usage: bv desktop <init [name]|sync|build [target] [--release]|run [target] [--release]>');
-
     WriteLn('       Targets: windows | linux | macos | all (default: host OS)');
-
   end;
-
 end;
-
-
 
 // =====================================================================
 
@@ -16286,211 +12634,116 @@ end;
 
 // =====================================================================
 
-
-
 function FindMormot2Path: string;
 
 var
-
   Candidate: string;
-
   ConfigFile: string;
-
-
-
   function IsValidMormot(const Dir: string): Boolean;
-
   var
-
     P: string;
-
   begin
-
     Result := False;
-
     P := ExcludeTrailingPathDelimiter(Dir);
-
     if (P <> '') and DirectoryExists(P) then
-
     begin
-
       if DirectoryExists(P + DirectorySeparator + 'src') and
 
          FileExists(P + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas') then
-
         Result := True;
-
     end;
-
   end;
-
-
-
 begin
-
   Result := '';
-
-
 
   // 1. Embedded vendor in BlaiseVue SDK: vendor/mormot2
 
   Candidate := GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-
 
   // 2. Relative to current project or workspace: vendor/mormot2 or ../vendor/mormot2
 
   Candidate := GetCurrentDir + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-
 
   Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
-
   if IsValidMormot(Candidate) then
-
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-
 
   Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + '..' + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2');
-
   if IsValidMormot(Candidate) then
-
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-
 
   // 3. Environment variable MORMOT2_PATH
 
   Candidate := GetEnvironmentVariable('MORMOT2_PATH');
-
   if IsValidMormot(Candidate) then
-
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-
 
   // 4. Project or server configuration file: server/mormot.path or mormot.path
 
   ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
-
   if FileExists(ConfigFile) then
-
   begin
-
     Candidate := Trim(ReadFileToString(ConfigFile));
-
     if IsValidMormot(Candidate) then
-
       Exit(ExcludeTrailingPathDelimiter(Candidate));
-
   end;
 
   ConfigFile := GetCurrentDir + DirectorySeparator + 'mormot.path';
-
   if FileExists(ConfigFile) then
-
   begin
-
     Candidate := Trim(ReadFileToString(ConfigFile));
-
     if IsValidMormot(Candidate) then
-
       Exit(ExcludeTrailingPathDelimiter(Candidate));
-
   end;
-
-
 
   // 5. User local installation path on Windows (fallback)
 
   Candidate := 'C:\ComponenteLazarus\mORMot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   // 6. Relative paths to workspace or BlaiseVue SDK
 
   Candidate := ExpandFileName(GetCurrentDir + DirectorySeparator + '..' + DirectorySeparator + 'mORMot2');
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   Candidate := ExpandFileName(GetSDKPath + '..' + DirectorySeparator + 'mORMot2');
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   // 5. Alternate drive paths on Windows
 
   Candidate := 'C:\mORMot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   Candidate := 'D:\ComponenteLazarus\mORMot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   Candidate := 'D:\mORMot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   // 6. Common Unix locations
 
   Candidate := '/opt/mormot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   Candidate := '/usr/local/share/mormot2';
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
-
 
   Candidate := ExpandFileName('~/mORMot2');
-
   if IsValidMormot(Candidate) then
-
     Exit(Candidate);
-
 end;
-
-
 
 // =====================================================================
 
@@ -16498,90 +12751,48 @@ end;
 
 // =====================================================================
 
-
-
 procedure CmdMormotRPC(const ProjectRoot: string); forward; // FWD
-
-
 
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = ''); forward;
 
-
-
 type
-
   TCrudFieldKind = (cfkString, cfkInteger, cfkFloat, cfkBoolean, cfkDate, cfkForeignKey, cfkDetail);
-
-
-
   TCrudField = record
-
     Name: string;
-
     PascalName: string;
-
     Kind: TCrudFieldKind;
-
     PascalType: string;
-
     JsType: string;
-
     BvType: string;
-
     DefaultValPascal: string;
-
     DefaultValJs: string;
-
     SampleValPascal: string;
-
     SampleValJson: string;
-
     InputType: string;
-
     TargetModel: string;
-
     IsForeignKey: Boolean;
-
     IsDetail: Boolean;
-
   end;
-
   TCrudFieldArray = array of TCrudField;
-
-
-
 function Pluralize(const S: string): string;
-
 var
-
   L: Integer;
-
   End2: string;
-
 begin
-
   L := Length(S);
-
   if L = 0 then Exit('');
-
   if (L >= 2) and (LowerCase(Copy(S, L, 1)) = 'y') and
 
      not (LowerCase(Copy(S, L - 1, 1))[1] in ['a', 'e', 'i', 'o', 'u']) then
-
   begin
-
     Result := Copy(S, 1, L - 1) + 'ies';
-
     Exit;
-
   end;
 
   if L >= 2 then
-
     End2 := LowerCase(Copy(S, L - 1, 2))
 
   else
-
     End2 := '';
 
   if (End2 = 'ch') or (End2 = 'sh') or (End2 = 'ss') or
@@ -16591,201 +12802,110 @@ begin
      (LowerCase(Copy(S, L, 1)) = 'x') or
 
      (LowerCase(Copy(S, L, 1)) = 'z') then
-
   begin
-
     Result := S + 'es';
-
     Exit;
-
   end;
 
   Result := S + 's';
-
 end;
-
-
 
 function CapitalizeWord(const S: string): string;
-
 begin
-
   if S = '' then Exit('');
-
   Result := UpperCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
-
 end;
-
-
 
 function CamelCaseWord(const S: string): string;
-
 begin
-
   if S = '' then Exit('');
-
   Result := LowerCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
-
 end;
-
-
 
 function ParseCrudField(const Spec: string; FieldIndex: Integer; const ModelName: string): TCrudField;
 
 var
-
   ColonPos, P1, P2: Integer;
-
   FName, FType, Target: string;
-
 begin
-
   ColonPos := Pos(':', Spec);
-
   if ColonPos > 0 then
-
   begin
-
     FName := Trim(Copy(Spec, 1, ColonPos - 1));
-
     FType := LowerCase(Trim(Copy(Spec, ColonPos + 1, MaxInt)));
-
   end
 
   else
-
   begin
-
     FName := Trim(Spec);
-
     FType := 'string';
-
   end;
 
-
-
   Result.Name := CamelCaseWord(FName);
-
   Result.PascalName := CapitalizeWord(FName);
-
   Result.TargetModel := '';
-
   Result.IsForeignKey := False;
-
   Result.IsDetail := False;
-
-
-
   if (FType = 'int') or (FType = 'integer') or (FType = 'int64') or (FType = 'cardinal') then
-
   begin
-
     Result.Kind := cfkInteger;
-
     Result.PascalType := 'Integer';
-
     Result.JsType := 'number';
-
     Result.BvType := 'integer';
-
     Result.DefaultValPascal := '0';
-
     Result.DefaultValJs := '0';
-
     Result.SampleValPascal := IntToStr(FieldIndex * 15 + 10);
-
     Result.SampleValJson := IntToStr(FieldIndex * 15 + 10);
-
     Result.InputType := 'number';
-
   end
 
   else if (FType = 'currency') or (FType = 'double') or (FType = 'float') or (FType = 'real') or (FType = 'number') then
-
   begin
-
     Result.Kind := cfkFloat;
-
     Result.PascalType := 'Double';
-
     Result.JsType := 'number';
-
     Result.BvType := 'double';
-
     Result.DefaultValPascal := '0.0';
-
     Result.DefaultValJs := '0.0';
-
     Result.SampleValPascal := IntToStr(FieldIndex * 25 + 19) + '.99';
-
     Result.SampleValJson := IntToStr(FieldIndex * 25 + 19) + '.99';
-
     Result.InputType := 'number';
-
   end
 
   else if (FType = 'bool') or (FType = 'boolean') then
-
   begin
-
     Result.Kind := cfkBoolean;
-
     Result.PascalType := 'Boolean';
-
     Result.JsType := 'boolean';
-
     Result.BvType := 'boolean';
-
     Result.DefaultValPascal := 'True';
-
     Result.DefaultValJs := 'true';
-
     if (FieldIndex mod 2 = 0) then
-
     begin
-
       Result.SampleValPascal := 'True';
-
       Result.SampleValJson := 'true';
-
     end
 
     else
-
     begin
-
       Result.SampleValPascal := 'False';
-
       Result.SampleValJson := 'false';
-
     end;
 
     Result.InputType := 'checkbox';
-
   end
 
   else if (FType = 'date') or (FType = 'datetime') or (FType = 'time') then
-
   begin
-
     Result.Kind := cfkDate;
-
     Result.PascalType := 'RawUtf8';
-
     Result.JsType := 'string';
-
     Result.BvType := 'string';
-
     Result.DefaultValPascal := '''''';
-
     Result.DefaultValJs := '''''';
-
     Result.SampleValPascal := '''2026-10-1' + IntToStr(FieldIndex + 1) + '''';
-
     Result.SampleValJson := '"2026-10-1' + IntToStr(FieldIndex + 1) + '"';
-
     Result.InputType := 'date';
-
   end
 
   else if (Pos('fk(', LowerCase(FType)) = 1) or (Pos('foreignkey(', LowerCase(FType)) = 1) then
@@ -16832,56 +12952,34 @@ begin
   end
 
   else
-
   begin
-
     // Default string
 
     Result.Kind := cfkString;
-
     Result.PascalType := 'RawUtf8';
-
     Result.JsType := 'string';
-
     Result.BvType := 'string';
-
     Result.DefaultValPascal := '''''';
-
     Result.DefaultValJs := '''''';
-
     if LowerCase(FName) = 'category' then
-
     begin
-
       case FieldIndex mod 3 of
 
         0: begin Result.SampleValPascal := '''Hardware'''; Result.SampleValJson := '"Hardware"'; end;
-
         1: begin Result.SampleValPascal := '''Software'''; Result.SampleValJson := '"Software"'; end;
-
         else begin Result.SampleValPascal := '''Cloud'''; Result.SampleValJson := '"Cloud"'; end;
-
       end;
-
     end
 
     else
-
     begin
-
       Result.SampleValPascal := '''' + ModelName + ' Sample ' + IntToStr(FieldIndex + 1) + '''';
-
       Result.SampleValJson := '"' + ModelName + ' Sample ' + IntToStr(FieldIndex + 1) + '"';
-
     end;
 
     Result.InputType := 'text';
-
   end;
-
 end;
-
-
 
 function GenerateCrudPascalUnit(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
 
@@ -16890,18 +12988,11 @@ const
   Q = #39;
 
 var
-
   i, j: Integer;
-
   PluralLower, ModelLower: string;
-
 begin
-
   PluralLower := LowerCase(PluralName);
-
   ModelLower := LowerCase(ModelName);
-
-
 
   Result := 'unit Crud' + ModelName + ';' + #13#10 +
 
@@ -17025,12 +13116,8 @@ begin
 
     '  SetLength(FItems, 3);' + #13#10;
 
-
-
   for j := 0 to 2 do
-
   begin
-
     Result := Result +
 
       '  // Seed item ' + IntToStr(j + 1) + #13#10 +
@@ -17040,39 +13127,28 @@ begin
       '  Inc(FNextId);' + #13#10;
 
     for i := 0 to High(Fields) do
-
     begin
-
       case Fields[i].Kind of
 
         cfkString:
 
           if LowerCase(Fields[i].Name) = 'category' then
-
           begin
-
             case j of
 
               0: Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'General' + Q + ';' + #13#10;
-
               1: Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'Premium' + Q + ';' + #13#10;
-
               else Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + 'Enterprise' + Q + ';' + #13#10;
-
             end;
-
           end
 
           else if LowerCase(Fields[i].Name) = 'email' then
-
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + LowerCase(ModelName) + IntToStr(j + 1) + '@example.com' + Q + ';' + #13#10
 
           else if LowerCase(Fields[i].Name) = 'phone' then
-
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + '(11) 98765-432' + IntToStr(j + 1) + Q + ';' + #13#10
 
           else
-
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + ModelName + ' ' + IntToStr(j + 1) + Q + ';' + #13#10;
 
         cfkInteger:
@@ -17086,26 +13162,19 @@ begin
         cfkBoolean:
 
           if j < 2 then
-
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := True;' + #13#10
 
           else
-
             Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := False;' + #13#10;
 
         cfkDate:
 
           Result := Result + '  FItems[' + IntToStr(j) + '].' + Fields[i].PascalName + ' := ' + Q + '2026-10-0' + IntToStr(j + 1) + Q + ';' + #13#10;
-
       end;
-
     end;
 
     Result := Result + '  FItems[' + IntToStr(j) + '].CreatedAt := DateTimeToStr(Now);' + #13#10;
-
   end;
-
-
 
   Result := Result + 'end;' + #13#10 +
 
@@ -17154,12 +13223,8 @@ begin
 
     '  Result := ' + Q + '{"id":' + Q + ' + IntToStr(AItem.ID);' + #13#10;
 
-
-
   for i := 0 to High(Fields) do
-
   begin
-
     case Fields[i].Kind of
 
       cfkString, cfkDate:
@@ -17214,12 +13279,8 @@ begin
           '      ' + Q + ',"total":' + Q + ' + RawUtf8(Trim(STotal)) + ' + Q + '}' + Q + ';' + #13#10 +
           '  end;' + #13#10 +
           '  Result := Result + ' + Q + ']' + Q + ';' + #13#10;
-
     end;
-
   end;
-
-
 
   Result := Result +
 
@@ -17317,18 +13378,13 @@ begin
 
     '    Inc(FNextId);' + #13#10;
 
-
-
   for i := 0 to High(Fields) do
-
   begin
-
     case Fields[i].Kind of
 
       cfkString:
 
         if (LowerCase(Fields[i].Name) = 'name') or (LowerCase(Fields[i].Name) = 'title') then
-
           Result := Result +
 
             '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + 'New ' + ModelName + Q + ');' + #13#10 +
@@ -17336,7 +13392,6 @@ begin
             '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10
 
         else
-
           Result := Result +
 
             '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', ' + Q + '' + Q + ');' + #13#10 +
@@ -17375,9 +13430,6 @@ begin
 
           '    NewItem.' + Fields[i].PascalName + ' := VariantToUtf8(V);' + #13#10;
 
-
-
-
       cfkForeignKey:
         Result := Result +
           '    V := Doc.GetValueOrDefault(' + Q + Fields[i].Name + Q + ', 1);' + #13#10 +
@@ -17405,7 +13457,6 @@ begin
   end;
 
   Result := Result +
-
 
     '    NewItem.CreatedAt := DateTimeToStr(Now);' + #13#10 +
 
@@ -17455,12 +13506,8 @@ begin
 
     '  try' + #13#10;
 
-
-
   for i := 0 to High(Fields) do
-
   begin
-
     case Fields[i].Kind of
 
       cfkString, cfkDate:
@@ -17518,12 +13565,8 @@ begin
           '        FItems[Idx].' + Fields[i].PascalName + '[iChild].CreatedAt := DateTimeToStr(Now);' + #13#10 +
           '      end;' + #13#10 +
           '    end;' + #13#10;
-
     end;
-
   end;
-
-
 
   Result := Result +
 
@@ -17770,10 +13813,7 @@ begin
     #13#10 +
 
     'end.' + #13#10;
-
 end;
-
-
 
 function GenerateCrudBVView(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
 
@@ -17782,21 +13822,14 @@ const
   Q = #39;
 
 var
-
   i: Integer;
-
   PluralLower, KebabName: string;
-
   InitFieldsStr, TableHeadersStr, TableCellsStr, FormFieldsStr: string;
   HasDetail: Boolean;
   DetailFieldName, DetailModelName, DetailSectionStr: string;
-
 begin
-
   PluralLower := LowerCase(PluralName);
-
   KebabName := PascalToKebab(ModelName + 'View');
-
   HasDetail := False;
   DetailFieldName := '';
   DetailModelName := '';
@@ -17810,42 +13843,26 @@ begin
     end;
   end;
 
-
-
   // Build InitFieldsStr
 
   InitFieldsStr := '';
-
   for i := 0 to High(Fields) do
-
   begin
-
     if i > 0 then InitFieldsStr := InitFieldsStr + ',' + #13#10 + '          ';
-
     InitFieldsStr := InitFieldsStr + Fields[i].Name + ': ' + Fields[i].DefaultValJs;
-
   end;
-
-
 
   // Build TableHeadersStr
 
   TableHeadersStr := '';
-
   for i := 0 to High(Fields) do
-
     TableHeadersStr := TableHeadersStr + '            <th>' + Fields[i].PascalName + '</th>' + #13#10;
-
-
 
   // Build TableCellsStr
 
   TableCellsStr := '';
-
   for i := 0 to High(Fields) do
-
   begin
-
     case Fields[i].Kind of
 
       cfkString:
@@ -17873,27 +13890,17 @@ begin
 
       cfkDetail:
         TableCellsStr := TableCellsStr + '            <td><span class="badge-detail">{{ (item.' + Fields[i].Name + ' && item.' + Fields[i].Name + '.length) || 0 }} items</span></td>' + #13#10;
-
     end;
-
   end;
-
-
 
   // Build FormFieldsStr
 
   FormFieldsStr := '';
-
   for i := 0 to High(Fields) do
-
   begin
-
     FormFieldsStr := FormFieldsStr + '          <div class="form-group">' + #13#10;
-
     if Fields[i].Kind = cfkBoolean then
-
     begin
-
       FormFieldsStr := FormFieldsStr +
 
         '            <label class="checkbox-container">' + #13#10 +
@@ -17903,13 +13910,10 @@ begin
         '              <span>' + Fields[i].PascalName + ' Active</span>' + #13#10 +
 
         '            </label>' + #13#10;
-
     end
 
     else
-
     begin
-
       FormFieldsStr := FormFieldsStr +
 
         '            <label class="form-label">' + Fields[i].PascalName + ':</label>' + #13#10;
@@ -17934,16 +13938,11 @@ begin
 
         cfkForeignKey:
           FormFieldsStr := FormFieldsStr + '            <input type="number" class="form-control" b-model="form.' + Fields[i].Name + '" placeholder="Select ' + Fields[i].TargetModel + ' ID..." />' + #13#10;
-
       end;
-
     end;
 
     FormFieldsStr := FormFieldsStr + '          </div>' + #13#10;
-
   end;
-
-
 
   DetailSectionStr := '';
   if HasDetail then
@@ -18647,40 +14646,22 @@ begin
     '  .badge-fk { background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }' + #13#10 +
     '  .badge-detail { background: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }' + #13#10 +
     '</style>' + #13#10;
-
 end;
-
-
 
 procedure UpdateServerModels(const ModelsFile, ModelName: string; const Fields: TCrudFieldArray);
 
 var
-
   Content, NewRecord: string;
-
   PosImpl: Integer;
-
   i: Integer;
-
 begin
-
   if not FileExists(ModelsFile) then Exit;
-
   Content := ReadFileToString(ModelsFile);
-
-
-
   if Pos('T' + ModelName + ' = record', Content) > 0 then
-
   begin
-
     WriteLn('  [-] T' + ModelName + ' is already declared in server/ServerModels.pas (skipping)');
-
     Exit;
-
   end;
-
-
 
   NewRecord := '';
   for i := 0 to High(Fields) do
@@ -18711,13 +14692,8 @@ begin
 
     '    ID: Integer;' + #13#10;
 
-
-
   for i := 0 to High(Fields) do
-
     NewRecord := NewRecord + '    ' + Fields[i].PascalName + ': ' + Fields[i].PascalType + ';' + #13#10;
-
-
 
   NewRecord := NewRecord +
 
@@ -18727,146 +14703,86 @@ begin
 
     '  T' + ModelName + 'DynArray = array of T' + ModelName + ';' + #13#10#13#10;
 
-
-
   PosImpl := Pos('implementation', Content);
-
   if PosImpl > 0 then
-
     Content := Copy(Content, 1, PosImpl - 1) + NewRecord + Copy(Content, PosImpl, MaxInt)
 
   else
-
     Content := Content + #13#10 + NewRecord;
 
-
-
   WriteStringToFile(ModelsFile, Content);
-
   WriteLn('  [+] Registered T' + ModelName + ' record & DTO in server/ServerModels.pas');
-
 end;
-
-
 
 procedure UpdateServerApp(const ServerAppFile, ModelName, PluralName: string);
 
 var
-
   Content: string;
-
   PosMarker: Integer;
-
   CrudUnit, PluralLower: string;
-
 begin
-
   if not FileExists(ServerAppFile) then Exit;
-
   Content := ReadFileToString(ServerAppFile);
-
   CrudUnit := 'Crud' + ModelName;
-
   PluralLower := LowerCase(PluralName);
-
-
 
   // 1. In uses: add Crud<ModelName>
 
   if Pos(CrudUnit, Content) = 0 then
-
   begin
-
     if Pos('ServerModels;', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels;', 'ServerModels, ' + CrudUnit + ';', [])
 
     else if Pos('ServerModels,', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels,', 'ServerModels, ' + CrudUnit + ',', []);
-
   end;
-
-
 
   // 2. In private fields: add FCrud<ModelName>
 
   if Pos('FCrud' + ModelName + ':', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FItems: TBlaiseItemDynArray;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('    FCrud' + ModelName + ': TCrud' + ModelName + 'Service;' + #13#10,
 
         Content, PosMarker + Length('FItems: TBlaiseItemDynArray;' + #13#10));
-
     end;
-
   end;
-
-
 
   // 3. In constructor Create: instantiate FCrud<ModelName>
 
   if Pos('FCrud' + ModelName + ' :=', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer := TWebSocketServer.Create', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FCrud' + ModelName + ' := TCrud' + ModelName + 'Service.Create;' + #13#10 +
 
              '  FCrud' + ModelName + '.OnBroadcast := BroadcastEvent;' + #13#10 + '  ',
 
              Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 4. In destructor Destroy: free FCrud<ModelName>
 
   if Pos('FCrud' + ModelName + '.Free;', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer.Free;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FCrud' + ModelName + '.Free;' + #13#10 + '  ', Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 5. In DoRequest: handle REST routing
 
   if Pos('FCrud' + ModelName + '.HandleRequest', Content) = 0 then
-
   begin
-
     PosMarker := Pos('// 5. Static File Server', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  // ' + ModelName + ' CRUD REST API: /api/' + PluralLower + #13#10 +
 
              '  if FCrud' + ModelName + '.HandleRequest(Ctxt, CleanUrl, Result) then' + #13#10 +
@@ -18874,20 +14790,12 @@ begin
              '    Exit;' + #13#10#13#10,
 
              Content, PosMarker);
-
     end;
-
   end;
 
-
-
   WriteStringToFile(ServerAppFile, Content);
-
   WriteLn('  [+] Integrated TCrud' + ModelName + 'Service into server/ServerApp.pas');
-
 end;
-
-
 
 procedure UpdateAppRoutes(const AppFile, ModelName, PluralName: string);
 
@@ -18896,387 +14804,204 @@ const
   Q = #39;
 
 var
-
   Content, RouteLine, NavLine, DrawerLine: string;
-
   PluralLower, KebabName: string;
-
   PosMarker: Integer;
-
 begin
-
   if not FileExists(AppFile) then Exit;
-
   Content := ReadFileToString(AppFile);
-
-
-
   PluralLower := LowerCase(PluralName);
-
   KebabName := PascalToKebab(ModelName + 'View');
-
-
 
   // 1. Add route in router: routes:
 
   RouteLine := Q + '/' + PluralLower + Q + ': ' + Q + KebabName + '-page' + Q + ';';
-
   if Pos(Q + '/' + PluralLower + Q, Content) = 0 then
-
   begin
-
     PosMarker := Pos('routes:', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert(#13#10 + '      ' + RouteLine, Content, PosMarker + Length('routes:'));
-
     end;
-
   end;
-
-
 
   // 2. Add link to navbar <div class="nav-links">
 
   NavLine := '<a href="#/' + PluralLower + '">📦 ' + PluralName + '</a>';
-
   if Pos('href="#/' + PluralLower + '"', Content) = 0 then
-
   begin
-
     PosMarker := Pos('<div class="nav-links">', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert(#13#10 + '        ' + NavLine, Content, PosMarker + Length('<div class="nav-links">'));
-
     end;
-
   end;
-
-
 
   // 3. Add link to drawer <div class="drawer-nav"> if drawer exists
 
   DrawerLine := '<a href="#/' + PluralLower + '" class="drawer-link" @click="closeDrawer">📦 ' + PluralName + '</a>';
-
   if (Pos('<div class="drawer-nav">', Content) > 0) and (Pos('href="#/' + PluralLower + '" class="drawer-link"', Content) = 0) then
-
   begin
-
     PosMarker := Pos('<div class="drawer-nav">', Content);
-
     Insert(#13#10 + '        ' + DrawerLine, Content, PosMarker + Length('<div class="drawer-nav">'));
-
   end;
 
-
-
   WriteStringToFile(AppFile, Content);
-
   WriteLn('  [+] Registered route /' + PluralLower + ' & navigation in src/app.bv');
-
 end;
-
-
 
 procedure CmdMormotCrud(const ProjectRoot: string);
 
 var
-
   ServerDir, ModelsFile, ServerAppFile, CrudFile, ViewsDir, ViewFile, AppFile: string;
-
   ModelName, PluralName: string;
-
   Fields: TCrudFieldArray;
-
   FieldCount: Integer;
-
   i: Integer;
-
   Spec: string;
-
 begin
-
   if (ParamCount < 3) or (Trim(ParamStr(3)) = '') or (ParamStr(3) = '--help') or (ParamStr(3) = '-h') then
-
   begin
-
     WriteLn('');
-
     WriteLn('  BlaiseVue Full-Stack CRUD & ORM Generator (bv mormot crud)');
-
     WriteLn('  ==========================================================');
-
     WriteLn('  Usage:');
-
     WriteLn('    bv mormot crud <ModelName> [field:type...]');
-
     WriteLn('');
-
     WriteLn('  Arguments:');
-
     WriteLn('    <ModelName>     Pascal model name in PascalCase (e.g. Product, Customer, Order)');
-
     WriteLn('    [field:type...] Field definitions in name:type format');
-
     WriteLn('');
-
     WriteLn('  Supported Field Types:');
-
     WriteLn('    string          Text / RawUtf8 (e.g. name:string, category:string)');
-
     WriteLn('    integer         Whole numbers (e.g. stock:integer, quantity:int)');
-
     WriteLn('    currency        Floating point / decimal (e.g. price:currency, total:double)');
-
     WriteLn('    boolean         Boolean flag (e.g. active:boolean, enabled:bool)');
-
     WriteLn('    date            ISO Date string (e.g. dueDate:date, createdAt:date)');
-
     WriteLn('    FK(Model)       Foreign key relationship (e.g. customer:FK(Customer))');
-
     WriteLn('    Detail(Model)   Master-detail relational collection (e.g. items:Detail(OrderItem))');
-
     WriteLn('');
-
     WriteLn('  Examples:');
-
     WriteLn('    bv mormot crud Product name:string price:currency stock:integer category:string');
-
     WriteLn('    bv mormot crud Customer name:string email:string phone:string active:boolean');
-
     WriteLn('    bv mormot crud Task title:string priority:integer done:boolean dueDate:date');
-
     WriteLn('    bv mormot crud Order customer:FK(Customer) total:currency items:Detail(OrderItem)');
-
     WriteLn('');
-
     Halt(0);
-
   end;
 
-
-
   ModelName := CapitalizeWord(Trim(ParamStr(3)));
-
   PluralName := Pluralize(ModelName);
-
-
 
   // Parse field definitions
 
   FieldCount := 0;
-
   SetLength(Fields, 0);
-
-
-
   for i := 4 to ParamCount do
-
   begin
-
     Spec := Trim(ParamStr(i));
-
     if Spec = '' then Continue;
-
     if (Copy(Spec, 1, 2) = '--') or (Copy(Spec, 1, 1) = '-') then Continue;
-
-
 
     // Skip if field is id (id is always primary key)
 
     if (LowerCase(Spec) = 'id') or (LowerCase(Spec) = 'id:int') or (LowerCase(Spec) = 'id:integer') then
-
       Continue;
 
-
-
     Inc(FieldCount);
-
     SetLength(Fields, FieldCount);
-
     Fields[FieldCount - 1] := ParseCrudField(Spec, FieldCount - 1, ModelName);
-
   end;
-
-
 
   // If no fields provided, supply standard defaults
 
   if FieldCount = 0 then
-
   begin
-
     SetLength(Fields, 4);
-
     Fields[0] := ParseCrudField('name:string', 0, ModelName);
-
     Fields[1] := ParseCrudField('category:string', 1, ModelName);
-
     Fields[2] := ParseCrudField('price:currency', 2, ModelName);
-
     Fields[3] := ParseCrudField('active:boolean', 3, ModelName);
-
     FieldCount := 4;
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  BlaiseVue Full-Stack CRUD & ORM Generator: ' + ModelName);
-
   WriteLn('======================================================================');
-
   WriteLn('  Model:    ' + ModelName + ' (T' + ModelName + ')');
-
   WriteLn('  Plural:   ' + PluralName + ' (/api/' + LowerCase(PluralName) + ')');
-
   WriteLn('  Fields:   ' + IntToStr(FieldCount) + ' field(s)');
-
   for i := 0 to High(Fields) do
-
     WriteLn('    - ' + Fields[i].Name + ': ' + Fields[i].PascalType + ' (' + Fields[i].BvType + ')');
 
   WriteLn('----------------------------------------------------------------------');
-
-
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   ModelsFile := ServerDir + DirectorySeparator + 'ServerModels.pas';
-
   ServerAppFile := ServerDir + DirectorySeparator + 'ServerApp.pas';
-
   CrudFile := ServerDir + DirectorySeparator + 'Crud' + ModelName + '.pas';
-
   ViewsDir := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'views';
-
   ViewFile := ViewsDir + DirectorySeparator + ModelName + 'View.bv';
-
   AppFile := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
-
-
 
   // 1. Ensure server/ exists
 
   WriteLn('[1/5] Checking mORMot 2 backend server in server/...');
-
   if not DirectoryExists(ServerDir) or not FileExists(ModelsFile) or not FileExists(ServerAppFile) then
-
   begin
-
     WriteLn('  [!] server/ not found. Initializing backend scaffolding first...');
-
     CmdServer('init');
-
   end
 
   else
-
     WriteLn('  [+] Backend server project found in server/');
-
-
 
   // 2. Update ServerModels.pas
 
   WriteLn('[2/5] Registering T' + ModelName + ' record & DTO in server/ServerModels.pas...');
-
   UpdateServerModels(ModelsFile, ModelName, Fields);
-
-
 
   // 3. Generate Crud<ModelName>.pas
 
   WriteLn('[3/5] Generating high-throughput mORMot 2 CRUD service in server/Crud' + ModelName + '.pas...');
-
   WriteStringToFile(CrudFile, GenerateCrudPascalUnit(ModelName, PluralName, Fields));
-
   WriteLn('  [+] Created server/Crud' + ModelName + '.pas');
-
-
 
   // 4. Update ServerApp.pas
 
   WriteLn('[4/5] Wiring Crud' + ModelName + ' endpoints and WebSockets into server/ServerApp.pas...');
-
   UpdateServerApp(ServerAppFile, ModelName, PluralName);
-
-
 
   // 5. Generate <ModelName>View.bv & Update app.bv
 
   WriteLn('[5/5] Generating reactive Single File Component & routes...');
-
   ForceDir(ViewsDir);
-
   WriteStringToFile(ViewFile, GenerateCrudBVView(ModelName, PluralName, Fields));
-
   WriteLn('  [+] Created src/views/' + ModelName + 'View.bv');
-
-
-
   UpdateAppRoutes(AppFile, ModelName, PluralName);
-
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  [SUCCESS] Full-Stack CRUD for ' + ModelName + ' generated successfully!');
-
   WriteLn('======================================================================');
-
   WriteLn('');
-
   WriteLn('Generated Artifacts:');
-
   WriteLn('  Backend:');
-
   WriteLn('    - server/ServerModels.pas   : T' + ModelName + ' record & DTO contracts');
-
   WriteLn('    - server/Crud' + ModelName + '.pas: High-performance mORMot 2 CRUD service');
-
   WriteLn('    - server/ServerApp.pas      : Wired /api/' + LowerCase(PluralName) + ' endpoints & WebSockets');
-
   WriteLn('  Frontend:');
-
   WriteLn('    - src/views/' + ModelName + 'View.bv : Reactive CRUD Single File Component');
-
   WriteLn('    - src/app.bv                   : Registered route "/' + LowerCase(PluralName) + '" & nav links');
-
   WriteLn('');
-
   WriteLn('Next steps:');
-
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
-
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-
   WriteLn('  3. Start full-stack server:  bv mormot run');
-
   WriteLn('');
-
 end;
 
-
-
-
-
 function GenerateAuthServicePascalUnit: string;
-
 begin
-
   Result :=
 
     'unit AuthService;' + #13#10 +
@@ -19358,8 +15083,6 @@ begin
     '  TAuthService = class' + #13#10 +
 
     '  private' + #13#10;
-
-
 
   Result := Result +
 
@@ -19443,8 +15166,6 @@ begin
 
     '  FUsers[0].User.CreatedAt := DateTimeToStr(Now);' + #13#10;
 
-
-
   Result := Result +
 
     '  FUsers[0].PasswordHash := HashPassword(''admin123'');' + #13#10 +
@@ -19526,8 +15247,6 @@ begin
     '  end;' + #13#10 +
 
     'end;' + #13#10;
-
-
 
   Result := Result +
 
@@ -19611,8 +15330,6 @@ begin
 
     '                 '',"name":"'' + StringReplace(AUser.Name, ''"'', ''\"'', [rfReplaceAll]) + ''"'' +' + #13#10;
 
-
-
   Result := Result +
 
     '                 '',"role":"'' + StringReplace(AUser.Role, ''"'', ''\"'', [rfReplaceAll]) + ''"'' +' + #13#10 +
@@ -19694,8 +15411,6 @@ begin
     '  if SigReceived <> ExpectedSig then' + #13#10 +
 
     '    Exit;' + #13#10;
-
-
 
   Result := Result +
 
@@ -19779,8 +15494,6 @@ begin
 
     '' + #13#10;
 
-
-
   Result := Result +
 
     '  AUser := FUsers[Idx].User;' + #13#10 +
@@ -19862,8 +15575,6 @@ begin
     'function TAuthService.HandleRequest(Ctxt: THttpServerRequestAbstract; const CleanUrl: RawUtf8; out HttpResult: cardinal): Boolean;' + #13#10 +
 
     'var' + #13#10;
-
-
 
   Result := Result +
 
@@ -19947,8 +15658,6 @@ begin
 
     '      HttpResult := 401; // Unauthorized' + #13#10;
 
-
-
   Result := Result +
 
     '    end;' + #13#10 +
@@ -20031,8 +15740,6 @@ begin
 
     '    Exit;' + #13#10;
 
-
-
   Result := Result +
 
     '  end;' + #13#10 +
@@ -20114,15 +15821,10 @@ begin
     'end.' + #13#10 +
 
     '' + #13#10;
-
 end;
 
-
-
 function GenerateLoginBVView: string;
-
 begin
-
   Result :=
 
     '<template>' + #13#10 +
@@ -20204,8 +15906,6 @@ begin
     '        <div class="form-group">' + #13#10 +
 
     '          <label class="form-label">Senha:</label>' + #13#10;
-
-
 
   Result := Result +
 
@@ -20289,8 +15989,6 @@ begin
 
     '              👤 Usuário' + #13#10;
 
-
-
   Result := Result +
 
     '            </button>' + #13#10 +
@@ -20372,8 +16070,6 @@ begin
     '        if (!this.email || !this.password) {' + #13#10 +
 
     '          this.errorMessage = ''Por favor, informe o e-mail e a senha.'';' + #13#10;
-
-
 
   Result := Result +
 
@@ -20457,8 +16153,6 @@ begin
 
     '    end;' + #13#10;
 
-
-
   Result := Result +
 
     '</script>' + #13#10 +
@@ -20541,8 +16235,6 @@ begin
 
     '  .logged-actions { display: flex; gap: 8px; }' + #13#10;
 
-
-
   Result := Result +
 
     '  .logged-actions .bui-btn { flex: 1; }' + #13#10 +
@@ -20550,38 +16242,21 @@ begin
     '</style>' + #13#10 +
 
     '' + #13#10;
-
 end;
-
-
 
 procedure UpdateServerModelsForAuth(const ModelsFile: string);
 
 var
-
   Content, NewRecord: string;
-
   PosImpl: Integer;
-
 begin
-
   if not FileExists(ModelsFile) then Exit;
-
   Content := ReadFileToString(ModelsFile);
-
-
-
   if Pos('TAuthUser = record', Content) > 0 then
-
   begin
-
     WriteLn('  [-] TAuthUser is already declared in server/ServerModels.pas (skipping)');
-
     Exit;
-
   end;
-
-
 
   NewRecord :=
 
@@ -20613,140 +16288,82 @@ begin
 
     '  TUserWithPasswordDynArray = array of TUserWithPassword;' + #13#10#13#10;
 
-
-
   PosImpl := Pos('implementation', Content);
-
   if PosImpl > 0 then
-
     Content := Copy(Content, 1, PosImpl - 1) + NewRecord + Copy(Content, PosImpl, MaxInt)
 
   else
-
     Content := Content + #13#10 + NewRecord;
 
-
-
   WriteStringToFile(ModelsFile, Content);
-
   WriteLn('  [+] Registered TAuthUser & TUserWithPassword in server/ServerModels.pas');
-
 end;
-
-
 
 procedure UpdateServerAppForAuth(const ServerAppFile: string);
 
 var
-
   Content: string;
-
   PosMarker: Integer;
-
 begin
-
   if not FileExists(ServerAppFile) then Exit;
-
   Content := ReadFileToString(ServerAppFile);
-
-
 
   // 1. In uses: add AuthService
 
   if Pos('AuthService', Content) = 0 then
-
   begin
-
     if Pos('ServerModels;', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels;', 'ServerModels, AuthService;', [])
 
     else if Pos('ServerModels,', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels,', 'ServerModels, AuthService,', []);
-
   end;
 
-
-
   // 2. In private fields: add FAuthService: TAuthService;
-
   if Pos('FAuthService:', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FItems: TBlaiseItemDynArray;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('    FAuthService: TAuthService;' + #13#10,
 
         Content, PosMarker + Length('FItems: TBlaiseItemDynArray;' + #13#10));
-
     end;
-
   end;
-
-
 
   // 3. In constructor Create: instantiate FAuthService
 
   if Pos('FAuthService :=', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer := TWebSocketServer.Create', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FAuthService := TAuthService.Create;' + #13#10 +
 
              '  FAuthService.OnBroadcast := BroadcastEvent;' + #13#10 + '  ',
 
              Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 4. In destructor Destroy: free FAuthService
 
   if Pos('FAuthService.Free;', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer.Free;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FAuthService.Free;' + #13#10 + '  ', Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 5. In DoRequest: handle REST routing /api/auth/*
 
   if Pos('FAuthService.HandleRequest', Content) = 0 then
-
   begin
-
     PosMarker := Pos('// 5. Static File Server', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  // Authentication REST API: /api/auth/*' + #13#10 +
 
              '  if FAuthService.HandleRequest(Ctxt, CleanUrl, Result) then' + #13#10 +
@@ -20754,20 +16371,12 @@ begin
              '    Exit;' + #13#10#13#10,
 
              Content, PosMarker);
-
     end;
-
   end;
 
-
-
   WriteStringToFile(ServerAppFile, Content);
-
   WriteLn('  [+] Integrated TAuthService into server/ServerApp.pas');
-
 end;
-
-
 
 procedure UpdateAppRoutesForAuth(const AppFile: string);
 
@@ -20776,245 +16385,131 @@ const
   Q = #39;
 
 var
-
   Content, RouteLine, NavLine, DrawerLine: string;
-
   PosMarker: Integer;
-
 begin
-
   if not FileExists(AppFile) then Exit;
-
   Content := ReadFileToString(AppFile);
-
-
 
   // 1. Add route in router: routes:
 
   RouteLine := Q + '/login' + Q + ': ' + Q + 'login-view-page' + Q + ';';
-
   if Pos(Q + '/login' + Q, Content) = 0 then
-
   begin
-
     PosMarker := Pos('routes:', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert(#13#10 + '      ' + RouteLine, Content, PosMarker + Length('routes:'));
-
     end;
-
   end;
-
-
 
   // 2. Add link to navbar <div class="nav-links">
 
   NavLine := '<a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ' + Q + 'Entrar' + Q + ' }}</a>';
-
   if Pos('href="#/login"', Content) = 0 then
-
   begin
-
     PosMarker := Pos('<div class="nav-links">', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert(#13#10 + '        ' + NavLine, Content, PosMarker + Length('<div class="nav-links">'));
-
     end;
-
   end;
-
-
 
   // 3. Add link to drawer <div class="drawer-nav"> if drawer exists
 
   DrawerLine := '<a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ' + Q + 'Entrar' + Q + ' }}</a>';
-
   if (Pos('<div class="drawer-nav">', Content) > 0) and (Pos('href="#/login" class="drawer-link"', Content) = 0) then
-
   begin
-
     PosMarker := Pos('<div class="drawer-nav">', Content);
-
     Insert(#13#10 + '        ' + DrawerLine, Content, PosMarker + Length('<div class="drawer-nav">'));
-
   end;
 
-
-
   WriteStringToFile(AppFile, Content);
-
   WriteLn('  [+] Registered route /login & navigation links in src/app.bv');
-
 end;
-
-
 
 procedure CmdMormotAuth(const ProjectRoot: string);
 
 var
-
   ServerDir, ModelsFile, ServerAppFile, AuthServiceFile, ViewsDir, ViewFile, AppFile: string;
-
 begin
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  BlaiseVue Enterprise Authentication & Route Guard Generator');
-
   WriteLn('  (bv mormot auth)');
-
   WriteLn('======================================================================');
-
   WriteLn('  Architecture: Native mORMot 2 SHA-256 Hashing + HS256 JWT Token Engine');
-
   WriteLn('  Frontend:     Reactive $auth helper + Router Navigation Guards');
-
   WriteLn('----------------------------------------------------------------------');
-
-
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   ModelsFile := ServerDir + DirectorySeparator + 'ServerModels.pas';
-
   ServerAppFile := ServerDir + DirectorySeparator + 'ServerApp.pas';
-
   AuthServiceFile := ServerDir + DirectorySeparator + 'AuthService.pas';
-
   ViewsDir := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'views';
-
   ViewFile := ViewsDir + DirectorySeparator + 'LoginView.bv';
-
   AppFile := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
-
-
 
   // 1. Ensure server/ exists
 
   WriteLn('[1/5] Checking mORMot 2 backend server in server/...');
-
   if not DirectoryExists(ServerDir) or not FileExists(ModelsFile) or not FileExists(ServerAppFile) then
-
   begin
-
     WriteLn('  [!] server/ not found. Initializing backend scaffolding first...');
-
     CmdServer('init');
-
   end
 
   else
-
     WriteLn('  [+] Backend server project found in server/');
-
-
 
   // 2. Update ServerModels.pas
 
   WriteLn('[2/5] Registering TAuthUser & TUserWithPassword in server/ServerModels.pas...');
-
   UpdateServerModelsForAuth(ModelsFile);
-
-
 
   // 3. Generate AuthService.pas
 
   WriteLn('[3/5] Generating native JWT & hashing AuthService in server/AuthService.pas...');
-
   WriteStringToFile(AuthServiceFile, GenerateAuthServicePascalUnit);
-
   WriteLn('  [+] Created server/AuthService.pas');
-
-
 
   // 4. Update ServerApp.pas
 
   WriteLn('[4/5] Wiring AuthService endpoints into server/ServerApp.pas...');
-
   UpdateServerAppForAuth(ServerAppFile);
-
-
 
   // 5. Generate LoginView.bv & Update app.bv
 
   WriteLn('[5/5] Generating reactive LoginView.bv & updating routes...');
-
   ForceDir(ViewsDir);
-
   WriteStringToFile(ViewFile, GenerateLoginBVView);
-
   WriteLn('  [+] Created src/views/LoginView.bv');
-
-
-
   UpdateAppRoutesForAuth(AppFile);
-
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  [SUCCESS] Enterprise Authentication scaffolded successfully!');
-
   WriteLn('======================================================================');
-
   WriteLn('');
-
   WriteLn('Authentication Endpoints:');
-
   WriteLn('  - POST /api/auth/login    : Authenticates user credentials & returns JWT token');
-
   WriteLn('  - POST /api/auth/logout   : Invalidates / flushes active session');
-
   WriteLn('  - GET  /api/auth/me       : Returns current authenticated user profile');
-
   WriteLn('  - POST /api/auth/register : Registers new user account');
-
   WriteLn('');
-
   WriteLn('Pre-seeded User Accounts:');
-
   WriteLn('  - Admin:   admin@blaisevue.dev   / admin123   (Role: admin)');
-
   WriteLn('  - Manager: manager@blaisevue.dev / manager123 (Role: manager)');
-
   WriteLn('  - User:    user@blaisevue.dev    / user123    (Role: user)');
-
   WriteLn('');
-
   WriteLn('Next steps:');
-
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
-
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-
   WriteLn('  3. Start full-stack server:  bv mormot run');
-
   WriteLn('  4. Access in browser:        http://localhost:8090/#/login');
-
   WriteLn('');
-
 end;
 
-
-
-
-
 function GenerateSwaggerServicePascalUnit: string;
-
 begin
-
   Result :=
 
     'unit SwaggerService;' + #13#10 +
@@ -21096,8 +16591,6 @@ begin
     '    function GetSwaggerHtml: RawUtf8;' + #13#10 +
 
     '    function HandleRequest(Ctxt: THttpServerRequestAbstract; const CleanUrl: RawUtf8; out HttpResult: cardinal): Boolean;' + #13#10;
-
-
 
   Result := Result +
 
@@ -21181,8 +16674,6 @@ begin
 
     '    ''    .swagger-ui .info .title small.version-stamp { background: #42b883; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: white; }''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''    .swagger-ui .btn.authorize { color: #42b883; border-color: #42b883; }''#13#10 +' + #13#10 +
@@ -21264,8 +16755,6 @@ begin
     '    ''    };''#13#10 +' + #13#10 +
 
     '    ''  </script>''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -21349,8 +16838,6 @@ begin
 
     '    ''  ],''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''  "components": {''#13#10 +' + #13#10 +
@@ -21432,8 +16919,6 @@ begin
     '    ''        }''#13#10 +' + #13#10 +
 
     '    ''      },''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -21517,8 +17002,6 @@ begin
 
     '    ''        }''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''      },''#13#10 +' + #13#10 +
@@ -21600,8 +17083,6 @@ begin
     '    ''        "tags": ["Authentication"],''#13#10 +' + #13#10 +
 
     '    ''        "summary": "Authenticate with Email and Password",''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -21685,8 +17166,6 @@ begin
 
     '    ''    "/api/auth/me": {''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''      "get": {''#13#10 +' + #13#10 +
@@ -21768,8 +17247,6 @@ begin
     '    ''            "content": {''#13#10 +' + #13#10 +
 
     '    ''              "application/json": {''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -21853,8 +17330,6 @@ begin
 
     '    ''        },''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''        "responses": {''#13#10 +' + #13#10 +
@@ -21936,8 +17411,6 @@ begin
     '    ''        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],''#13#10 +' + #13#10 +
 
     '    ''        "responses": {''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -22021,8 +17494,6 @@ begin
 
     '    ''          "201": { "description": "Product created successfully" }''#13#10 +' + #13#10;
 
-
-
   Result := Result +
 
     '    ''        }''#13#10 +' + #13#10 +
@@ -22104,8 +17575,6 @@ begin
     '    ''          "200": {''#13#10 +' + #13#10 +
 
     '    ''            "description": "List of real-time items",''#13#10 +' + #13#10;
-
-
 
   Result := Result +
 
@@ -22189,8 +17658,6 @@ begin
 
     '  if (CleanUrl = ''/api/docs'') or (CleanUrl = ''/api/docs/'') or (CleanUrl = ''/api/swagger'') then' + #13#10;
 
-
-
   Result := Result +
 
     '  begin' + #13#10 +
@@ -22256,137 +17723,83 @@ begin
     'end.' + #13#10 +
 
     '' + #13#10;
-
 end;
-
-
 
 procedure UpdateServerAppForSwagger(const ServerAppFile: string);
 
 var
-
   Content: string;
-
   PosMarker: Integer;
-
 begin
-
   if not FileExists(ServerAppFile) then Exit;
-
   Content := ReadFileToString(ServerAppFile);
-
-
 
   // 1. In uses: add SwaggerService
 
   if Pos('SwaggerService', Content) = 0 then
-
   begin
-
     if Pos('AuthService;', Content) > 0 then
-
       Content := StringReplace(Content, 'AuthService;', 'AuthService, SwaggerService;', [])
 
     else if Pos('ServerModels;', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels;', 'ServerModels, SwaggerService;', [])
 
     else if Pos('ServerModels,', Content) > 0 then
-
       Content := StringReplace(Content, 'ServerModels,', 'ServerModels, SwaggerService,', []);
-
   end;
 
-
-
   // 2. In private fields: add FSwaggerService: TSwaggerService;
-
   if Pos('FSwaggerService:', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FItems: TBlaiseItemDynArray;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('    FSwaggerService: TSwaggerService;' + #13#10,
 
         Content, PosMarker + Length('FItems: TBlaiseItemDynArray;' + #13#10));
-
     end;
-
   end;
-
-
 
   // 3. In constructor Create: instantiate FSwaggerService
 
   if Pos('FSwaggerService :=', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer := TWebSocketServer.Create', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FSwaggerService := TSwaggerService.Create(' + #39 + 'BlaiseVue Full-Stack mORMot 2 API' + #39 + ', ' + #39 + '4.0.0' + #39 + ', FPort);' + #13#10 + '  ',
 
              Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 4. In destructor Destroy: free FSwaggerService
 
   if Pos('FSwaggerService.Free;', Content) = 0 then
-
   begin
-
     PosMarker := Pos('FServer.Free;', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert('  FSwaggerService.Free;' + #13#10 + '  ', Content, PosMarker);
-
     end;
-
   end;
-
-
 
   // 5. In DoRequest: handle /api/docs and /api/openapi.json
 
   if Pos('FSwaggerService.HandleRequest', Content) = 0 then
-
   begin
-
     PosMarker := Pos('// Product CRUD REST API', Content);
-
     if PosMarker = 0 then
-
       PosMarker := Pos('// Customer CRUD REST API', Content);
 
     if PosMarker = 0 then
-
       PosMarker := Pos('// Authentication REST API', Content);
 
     if PosMarker = 0 then
-
       PosMarker := Pos('// 5. Static File Server', Content);
 
     if PosMarker > 0 then
-
     begin
-
       Insert('  // Interactive OpenAPI 3.0 & Swagger UI: /api/docs, /api/openapi.json' + #13#10 +
 
              '  if FSwaggerService.HandleRequest(Ctxt, CleanUrl, Result) then' + #13#10 +
@@ -22394,20 +17807,12 @@ begin
              '    Exit;' + #13#10#13#10,
 
              Content, PosMarker);
-
     end;
-
   end;
 
-
-
   WriteStringToFile(ServerAppFile, Content);
-
   WriteLn('  [+] Integrated TSwaggerService into server/ServerApp.pas');
-
 end;
-
-
 
 procedure UpdateAppForSwagger(const AppFile: string);
 
@@ -22416,183 +17821,98 @@ const
   Q = #39;
 
 var
-
   Content, NavLine, DrawerLine: string;
-
   PosMarker: Integer;
-
 begin
-
   if not FileExists(AppFile) then Exit;
-
   Content := ReadFileToString(AppFile);
-
-
 
   // 1. Add link to navbar <div class="nav-links">
 
   NavLine := '<a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>';
-
   if Pos('href="/api/docs"', Content) = 0 then
-
   begin
-
     PosMarker := Pos('<div class="nav-links">', Content);
-
     if PosMarker > 0 then
-
     begin
-
       Insert(#13#10 + '        ' + NavLine, Content, PosMarker + Length('<div class="nav-links">'));
-
     end;
-
   end;
-
-
 
   // 2. Add link to drawer <div class="drawer-nav"> if drawer exists
 
   DrawerLine := '<a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>';
-
   if (Pos('<div class="drawer-nav">', Content) > 0) and (Pos('href="/api/docs" target="_blank" class="drawer-link"', Content) = 0) then
-
   begin
-
     PosMarker := Pos('<div class="drawer-nav">', Content);
-
     Insert(#13#10 + '        ' + DrawerLine, Content, PosMarker + Length('<div class="drawer-nav">'));
-
   end;
 
-
-
   WriteStringToFile(AppFile, Content);
-
   WriteLn('  [+] Registered Swagger documentation links in src/app.bv');
-
 end;
-
-
 
 procedure CmdMormotDocs(const ProjectRoot: string);
 
 var
-
   ServerDir, ServerAppFile, SwaggerServiceFile, AppFile: string;
-
 begin
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  BlaiseVue Auto-Generated Swagger & OpenAPI 3.0 Generator');
-
   WriteLn('  (bv mormot docs / bv mormot swagger)');
-
   WriteLn('======================================================================');
-
   WriteLn('  Specification: RFC-Compliant OpenAPI 3.0.3 (JSON)');
-
   WriteLn('  Explorer:      Interactive Swagger UI embedded at /api/docs');
-
   WriteLn('----------------------------------------------------------------------');
-
-
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   ServerAppFile := ServerDir + DirectorySeparator + 'ServerApp.pas';
-
   SwaggerServiceFile := ServerDir + DirectorySeparator + 'SwaggerService.pas';
-
   AppFile := ProjectRoot + DirectorySeparator + 'src' + DirectorySeparator + 'app.bv';
-
-
 
   // 1. Ensure server/ exists
 
   WriteLn('[1/3] Checking mORMot 2 backend server in server/...');
-
   if not DirectoryExists(ServerDir) or not FileExists(ServerAppFile) then
-
   begin
-
     WriteLn('  [!] server/ not found. Initializing backend scaffolding first...');
-
     CmdServer('init');
-
   end
 
   else
-
     WriteLn('  [+] Backend server project found in server/');
-
-
 
   // 2. Generate SwaggerService.pas
 
   WriteLn('[2/3] Generating OpenAPI 3.0 & Swagger UI service in server/SwaggerService.pas...');
-
   WriteStringToFile(SwaggerServiceFile, GenerateSwaggerServicePascalUnit);
-
   WriteLn('  [+] Created server/SwaggerService.pas');
-
-
 
   // 3. Update ServerApp.pas & app.bv
 
   WriteLn('[3/3] Wiring SwaggerService into server/ServerApp.pas & updating links...');
-
   UpdateServerAppForSwagger(ServerAppFile);
-
   UpdateAppForSwagger(AppFile);
-
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  [SUCCESS] Swagger & OpenAPI 3.0 scaffolded successfully!');
-
   WriteLn('======================================================================');
-
   WriteLn('');
-
   WriteLn('Documentation Endpoints:');
-
   WriteLn('  - http://localhost:8090/api/docs         : Interactive Swagger UI Explorer');
-
   WriteLn('  - http://localhost:8090/api/openapi.json : OpenAPI 3.0.3 Specification (JSON)');
-
   WriteLn('  - http://localhost:8090/api/status       : System Performance Metrics');
-
   WriteLn('');
-
   WriteLn('Next steps:');
-
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
-
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-
   WriteLn('  3. Start full-stack server:  bv mormot run');
-
   WriteLn('  4. Explore API in browser:   http://localhost:8090/api/docs');
-
   WriteLn('');
-
 end;
 
-
-
-
-
 function GenerateDockerfileContent: string;
-
 begin
-
   Result :=
 
     '# =====================================================================' + #13#10 +
@@ -22675,8 +17995,6 @@ begin
 
     '' + #13#10;
 
-
-
   Result := Result +
 
     'RUN apk add --no-cache ca-certificates gcompat libc6-compat' + #13#10 +
@@ -22744,15 +18062,10 @@ begin
     'CMD ["--port", "8090"]' + #13#10 +
 
     '' + #13#10;
-
 end;
 
-
-
 function GenerateDockerComposeContent: string;
-
 begin
-
   Result :=
 
     '# =====================================================================' + #13#10 +
@@ -22806,15 +18119,10 @@ begin
     '      start_period: 5s' + #13#10 +
 
     '' + #13#10;
-
 end;
 
-
-
 function GenerateDockerIgnoreContent: string;
-
 begin
-
   Result :=
 
     '# Git & OS metadata' + #13#10 +
@@ -22890,129 +18198,66 @@ begin
     'compile_err.txt' + #13#10 +
 
     '' + #13#10;
-
 end;
-
-
 
 procedure CmdMormotDocker(const ProjectRoot: string);
 
 var
-
   ServerDir, DockerfilePath, ComposePath, IgnorePath: string;
-
   HasDockerCli: Boolean;
-
   WantBuild: Boolean;
-
   i: Integer;
-
 begin
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  BlaiseVue Cloud-Native Micro-Container Generator');
-
   WriteLn('  (bv mormot docker)');
-
   WriteLn('======================================================================');
-
   WriteLn('  Target Architecture: Multi-Stage Alpine Linux Micro-Container (<20MB)');
-
   WriteLn('  Engine:              Synopse mORMot 2 Native Linux Binary + Static SPA');
-
   WriteLn('----------------------------------------------------------------------');
-
-
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   DockerfilePath := ProjectRoot + DirectorySeparator + 'Dockerfile';
-
   ComposePath := ProjectRoot + DirectorySeparator + 'docker-compose.yml';
-
   IgnorePath := ProjectRoot + DirectorySeparator + '.dockerignore';
-
-
-
   WantBuild := False;
-
   for i := 2 to ParamCount do
-
   begin
-
     if (ParamStr(i) = '--build') or (ParamStr(i) = '-b') then
-
       WantBuild := True;
-
   end;
-
-
 
   // 1. Ensure server/ exists
 
   WriteLn('[1/3] Checking mORMot 2 backend server in server/...');
-
   if not DirectoryExists(ServerDir) then
-
   begin
-
     WriteLn('  [!] server/ not found. Initializing backend scaffolding first...');
-
     CmdServer('init');
-
   end
 
   else
-
     WriteLn('  [+] Backend server project found in server/');
-
-
 
   // 2. Generate Dockerfile, docker-compose.yml, .dockerignore
 
   WriteLn('[2/3] Generating cloud-native micro-container files...');
-
   WriteStringToFile(DockerfilePath, GenerateDockerfileContent);
-
   WriteLn('  [+] Created Dockerfile (Multi-stage Debian builder -> Alpine runtime)');
-
-
-
   WriteStringToFile(ComposePath, GenerateDockerComposeContent);
-
   WriteLn('  [+] Created docker-compose.yml (One-command orchestration)');
-
-
-
   WriteStringToFile(IgnorePath, GenerateDockerIgnoreContent);
-
   WriteLn('  [+] Created .dockerignore (Zero clutter build cache)');
-
-
 
   // 3. Inspect Docker environment
 
   WriteLn('[3/3] Checking local Docker daemon & CLI environment...');
-
-
-
   HasDockerCli := HasCommand('docker');
-
-
-
   if HasDockerCli then
-
   begin
-
     WriteLn('  [+] Docker CLI detected on system!');
-
     if WantBuild then
-
     begin
-
       WriteLn('  [+] Executing "docker compose build"...');
 
       {$IFDEF WINDOWS}
@@ -23024,103 +18269,44 @@ begin
       ExecuteProcess('/bin/sh', '-c "cd ''' + ProjectRoot + ''' && docker compose build"');
 
       {$ENDIF}
-
     end
 
     else
-
     begin
-
       WriteLn('  [Tip] Run "docker compose up -d" or "bv mormot docker --build" to build and run container.');
-
     end;
-
   end
 
   else
-
   begin
-
     WriteLn('  [-] Docker CLI not installed locally (Docker Desktop is optional for development).');
-
     WriteLn('  [+] All micro-container files were generated with 100% production accuracy!');
-
     WriteLn('  [+] When deploying to AWS, DigitalOcean, Hetzner, or any Linux VPS, simply run:');
-
     WriteLn('      docker compose up -d');
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  [SUCCESS] Cloud-Native containerization configured successfully!');
-
   WriteLn('======================================================================');
-
   WriteLn('');
-
   WriteLn('Container Specifications:');
-
   WriteLn('  - Base Image:        alpine:3.20 (Minimal Linux)');
-
   WriteLn('  - Runtime Footprint: < 20 MB (vs 500MB+ for Node.js / Java)');
-
   WriteLn('  - Startup Time:      < 15 milliseconds');
-
   WriteLn('  - Base Memory:       < 25 MB RAM');
-
   WriteLn('  - Security:          Non-root user (blaise:1001)');
-
   WriteLn('  - Healthcheck:       GET http://localhost:8090/api/status');
-
   WriteLn('  - Port:              8090:8090');
-
   WriteLn('');
-
   WriteLn('To deploy:');
-
   WriteLn('  1. Compile app:      bv run ssg (or bv run build)');
-
   WriteLn('  2. Launch container: docker compose up -d');
-
   WriteLn('');
-
 end;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function GenerateDefaultServicesUnit: string;
-
 begin
-
   Result :=
 
     'unit Services;'#10#10 +
@@ -23268,15 +18454,10 @@ begin
     'implementation'#10#10 +
 
     'end.'#10;
-
 end;
 
-
-
 function GenerateClientProxiesUnit: string;
-
 begin
-
   Result :=
 
     'unit ClientProxies;'#10#10 +
@@ -23946,196 +19127,104 @@ begin
     '  SystemService;'#10#10 +
 
     'end.'#10;
-
 end;
-
-
 
 procedure CmdMormotRPC(const ProjectRoot: string);
 
 var
-
   CommonDir, ServerDir, GenDir, ServicesFile, ClientProxiesFile, GenProxiesFile, AppCfgFile: string;
-
   AppCfgContent: string;
-
 begin
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  BlaiseVue 4.3 End-to-End Type-Safe Pascal RPC with mORMot 2');
-
   WriteLn('  (bv mormot rpc)');
-
   WriteLn('======================================================================');
-
   WriteLn('  Specification: Compile-Time Verified mORMot 2 SOA Client Proxies');
-
   WriteLn('  Protocol:      JSON-RPC 2.0 & mORMot SOA Wire Format over HTTP & WS');
-
   WriteLn('  Validation:    100% Strict Type Safety (No REST String URLs)');
-
   WriteLn('----------------------------------------------------------------------');
-
-
-
   CommonDir := ProjectRoot + DirectorySeparator + 'common';
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   GenDir := ProjectRoot + DirectorySeparator + 'generated';
-
   ServicesFile := CommonDir + DirectorySeparator + 'Services.pas';
-
   ClientProxiesFile := CommonDir + DirectorySeparator + 'ClientProxies.pas';
-
   GenProxiesFile := GenDir + DirectorySeparator + 'ClientProxies.pas';
-
   AppCfgFile := ProjectRoot + DirectorySeparator + 'app.cfg';
-
-
 
   // 1. Ensure common/ and Services.pas exist
 
   WriteLn('[1/3] Checking shared service contracts in common/Services.pas...');
-
   ForceDir(CommonDir);
-
   ForceDir(GenDir);
-
-
-
   if not FileExists(ServicesFile) then
-
   begin
-
     if FileExists(ServerDir + DirectorySeparator + 'Services.pas') then
-
     begin
-
       WriteStringToFile(ServicesFile, ReadFileToString(ServerDir + DirectorySeparator + 'Services.pas'));
-
       WriteLn('  [+] Synced service contracts from server/Services.pas to common/Services.pas');
-
     end
 
     else
-
     begin
-
       WriteStringToFile(ServicesFile, GenerateDefaultServicesUnit);
-
       WriteLn('  [+] Scaffolded standard service contracts in common/Services.pas');
-
     end;
-
   end
 
   else
-
     WriteLn('  [+] Service contracts found: common/Services.pas');
-
-
 
   // 2. Generate ClientProxies.pas
 
   WriteLn('[2/3] Generating strongly typed client proxies in ClientProxies.pas...');
-
   WriteStringToFile(ClientProxiesFile, GenerateClientProxiesUnit);
-
   WriteStringToFile(GenProxiesFile, GenerateClientProxiesUnit);
-
   WriteLn('  [+] Generated common/ClientProxies.pas');
-
   WriteLn('  [+] Generated generated/ClientProxies.pas');
-
-
 
   // 3. Ensure app.cfg has -Fucommon
 
   WriteLn('[3/3] Checking project compiler search paths in app.cfg...');
-
   if FileExists(AppCfgFile) then
-
   begin
-
     AppCfgContent := ReadFileToString(AppCfgFile);
-
     if Pos('-Fucommon', AppCfgContent) = 0 then
-
     begin
-
       AppCfgContent := AppCfgContent + #10 + '-Fucommon' + #10;
-
       WriteStringToFile(AppCfgFile, AppCfgContent);
-
       WriteLn('  [+] Appended -Fucommon to app.cfg');
-
     end
 
     else
-
       WriteLn('  [+] Search path -Fucommon already active in app.cfg');
-
   end;
 
-
-
   WriteLn('');
-
   WriteLn('======================================================================');
-
   WriteLn('  [SUCCESS] End-to-End Type-Safe RPC proxies generated successfully!');
-
   WriteLn('======================================================================');
-
   WriteLn('');
-
   WriteLn('Available Services:');
-
   WriteLn('  - CustomerService (ICustomerService): GetAll, GetById, Save, Delete');
-
   WriteLn('  - ProductService  (IProductService):  GetAll, GetById, Save, Delete');
-
   WriteLn('  - SystemService   (ISystemService):   GetStatus, Ping, Echo');
-
   WriteLn('');
-
   WriteLn('Usage in Views or Object Pascal code:');
-
   WriteLn('  uses Services, ClientProxies;');
-
   WriteLn('');
-
   WriteLn('  CustomerService.GetAll(procedure(Items: TCustomerDynArray)');
-
   WriteLn('  begin');
-
   WriteLn('    this.customers := Items;');
-
   WriteLn('  end);');
-
   WriteLn('');
-
   WriteLn('Or with Promises (Async/Await):');
-
   WriteLn('  CustomerService.GetByIdAsync(42).then(procedure(Item: JSValue)');
-
   WriteLn('  begin');
-
   WriteLn('    ShowToast(''Customer loaded'');');
-
   WriteLn('  end);');
-
   WriteLn('');
-
 end;
-
-
-
-
 
 function IsTcpPortAvailable(APort: Word): Boolean;
 var
@@ -24175,128 +19264,66 @@ end;
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
-
   ServerDir, BinDir, LibDir, TemplateDir, DbEngineArg, EnvFile, EnvContent: string;
-
   ProjectRoot, DeployDir, DistDir, ZipFile: string;
-
   LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
-
   IsRelease, HasZip, UserSpecifiedPort: Boolean;
-
   TargetPort, OrigPort: Word;
-
   EnvLines: TStringList;
-
   EnvLine: string;
-
   i: Integer;
-
   HttpClient: TFPHTTPClient;
-
   StatusResp: string;
-
   F: TextFile;
-
-
-
   procedure ParseArg(const A: string);
-
   var
-
     S: string;
-
   begin
-
     S := LowerCase(A);
-
     if S = '' then Exit;
-
     if (S = '--release') or (S = '-r') or (S = 'release') then
-
       IsRelease := True
-
     else if (S = '--debug') or (S = '-d') or (S = 'debug') then
-
       IsRelease := False
-
     else if (S = '--zip') or (S = '-z') or (S = 'zip') then
-
       HasZip := True
-
     else if (Copy(S, 1, 7) = '--port=') then
-
       PortArg := Copy(A, 8, MaxInt)
-
     else if (Copy(S, 1, 6) = '--out=') then
-
       DeployDir := Copy(A, 7, MaxInt);
-
   end;
-
-
-
 begin
-
   ProjectRoot := GetCurrentDir;
-
   if not DirectoryExists(ProjectRoot + DirectorySeparator + 'server') and
 
      FileExists(ProjectRoot + DirectorySeparator + 'server.lpr') then
-
   begin
-
     ProjectRoot := ExpandFileName(ProjectRoot + DirectorySeparator + '..');
-
   end;
 
-
-
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
-
   BinDir := ServerDir + DirectorySeparator + 'bin';
-
   LibDir := ServerDir + DirectorySeparator + 'lib';
-
   LprFile := ServerDir + DirectorySeparator + 'server.lpr';
-
   TargetExe := BinDir + DirectorySeparator + 'server' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
-
   TemplateDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
-
   DeployDir := ProjectRoot + DirectorySeparator + 'deploy';
-
   IsRelease := False;
-
   HasZip := False;
-
   PortArg := '';
   DbEngineArg := 'sqlite';
-
-
-
   for i := 2 to ParamCount do
-
   begin
-
     if (ParamStr(i) = '--port') or (ParamStr(i) = '-p') then
-
     begin
-
       if i + 1 <= ParamCount then
-
         PortArg := ParamStr(i + 1);
-
     end
 
     else if (ParamStr(i) = '--out') or (ParamStr(i) = '-o') then
-
     begin
-
       if i + 1 <= ParamCount then
-
         DeployDir := ParamStr(i + 1);
-
     end
     else if (ParamStr(i) = '--db') or (ParamStr(i) = '--database') or (ParamStr(i) = '-d') then
     begin
@@ -24309,95 +19336,53 @@ begin
     end
 
     else
-
       ParseArg(ParamStr(i));
-
   end;
 
-
-
   ParseArg(Arg1);
-
   ParseArg(Arg2);
-
-
-
   if (SubCmd = 'crud') then
-
   begin
-
     CmdMormotCrud(ProjectRoot);
-
     Exit;
-
   end
 
   else if (SubCmd = 'auth') then
-
   begin
-
     CmdMormotAuth(ProjectRoot);
-
     Exit;
-
   end
 
   else if (SubCmd = 'docs') or (SubCmd = 'swagger') or (SubCmd = 'openapi') then
-
   begin
-
     CmdMormotDocs(ProjectRoot);
-
     Exit;
-
   end
 
   else if (SubCmd = 'docker') or (SubCmd = 'container') then
-
   begin
-
     CmdMormotDocker(ProjectRoot);
-
     Exit;
-
   end
 
-
-
   else if (SubCmd = 'rpc') or (SubCmd = 'soa') or (SubCmd = 'proxies') then
-
   begin
-
     CmdMormotRPC(ProjectRoot);
-
     Exit;
-
   end
 
   else if (SubCmd = 'init') then
-
   begin
-
     WriteLn('Initializing BlaiseVue mORMot 2 Native Backend Server in server/...');
-
     if not DirectoryExists(TemplateDir) then
-
     begin
-
       WriteLn('Error: Fullstack mORMot template directory not found at: ' + TemplateDir);
-
       Halt(1);
-
     end;
 
-
-
     ForceDir(ServerDir);
-
     CopyDir(TemplateDir, ServerDir, ['bin', 'lib']);
-
     ForceDir(BinDir);
-
     ForceDir(LibDir);
 
     // Multi-Database ORM Configuration
@@ -24414,7 +19399,6 @@ begin
     if (DbEngineArg = 'postgresql') then DbEngineArg := 'postgres';
     if (DbEngineArg = 'mariadb') then DbEngineArg := 'mysql';
     if (DbEngineArg = 'fb') then DbEngineArg := 'firebird';
-
     EnvFile := ProjectRoot + DirectorySeparator + '.env';
     if not FileExists(EnvFile) then
     begin
@@ -24434,106 +19418,56 @@ begin
     end;
 
     WriteLn('  [+] Pluggable Database Engine Configured: ' + UpperCase(DbEngineArg));
-
-
-
     WriteLn('  [+] Full-Stack mORMot 2 server template scaffolded successfully in server/ !');
-
     WriteLn('');
-
     WriteLn('Next steps:');
-
     WriteLn('  1. Run "bv build" (or "bv run build") to compile your reactive frontend to dist/');
-
     WriteLn('  2. Run "bv mormot build" (or "bv mormot build --release") to compile the native server');
-
     WriteLn('  3. Run "bv mormot run" to launch the server on port 8090');
-
     WriteLn('  Or open server/server.lpi in Lazarus IDE and press F9!');
-
   end
 
   else if (SubCmd = 'build') then
-
   begin
-
     if not FileExists(LprFile) then
-
     begin
-
       WriteLn('No server project found in server/. Initializing first...');
-
       CmdServer('init');
-
     end;
-
-
 
     MormotPath := FindMormot2Path;
-
     if MormotPath = '' then
-
     begin
-
       WriteLn('[!] Error: Synopse mORMot 2 installation not found.');
-
       WriteLn('    BlaiseVue searched:');
-
       WriteLn('    - Environment variable MORMOT2_PATH');
-
       WriteLn('    - C:\ComponenteLazarus\mORMot2');
-
       WriteLn('    - Local config file server/mormot.path');
-
       WriteLn('    - ../mORMot2, /opt/mormot2, ~/mORMot2');
-
       WriteLn('');
-
       WriteLn('    To fix:');
-
       WriteLn('    1. Set MORMOT2_PATH to your mORMot 2 directory:');
-
       WriteLn('       set MORMOT2_PATH=C:\ComponenteLazarus\mORMot2');
-
       WriteLn('    2. Or create server/mormot.path containing your mORMot 2 directory path.');
-
       Halt(1);
-
     end;
 
-
-
     ForceDir(BinDir);
-
     ForceDir(LibDir);
-
-
-
     WriteLn('Building BlaiseVue mORMot 2 Native Server...');
-
     WriteLn('  [+] mORMot 2 Path: ' + MormotPath);
-
     if IsRelease then
-
       WriteLn('  [+] Mode: RELEASE (Optimized -O3, stripped symbols)')
 
     else
-
       WriteLn('  [+] Mode: DEBUG (-O2, debug symbols active)');
 
-
-
     FpcCmd := 'fpc -MObjFPC -Sh ';
-
     if IsRelease then
-
       FpcCmd := FpcCmd + '-O3 -Xs -dRELEASE '
 
     else
-
       FpcCmd := FpcCmd + '-O2 -g -gl -dDEBUG ';
-
-
 
     FpcCmd := FpcCmd +
 
@@ -24562,8 +19496,6 @@ begin
       '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'soa" ' +
 
       '-Fu"' + MormotPath + DirectorySeparator + 'src' + DirectorySeparator + 'misc" ';
-
-
 
     {$IFDEF WINDOWS}
     ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
@@ -24608,7 +19540,6 @@ begin
 
     TargetPort := 8090;
     UserSpecifiedPort := (PortArg <> '');
-
     if not UserSpecifiedPort then
     begin
       EnvFile := ProjectRoot + DirectorySeparator + '.env';
@@ -24660,7 +19591,6 @@ begin
     end;
 
     ExtraArgs := ' --port ' + IntToStr(TargetPort);
-
     WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
     WriteLn('Executable: ' + TargetExe);
     WriteLn('Port:       ' + IntToStr(TargetPort));
@@ -24733,15 +19663,12 @@ begin
     WriteLn('Checking BlaiseVue mORMot 2 server status on http://localhost:' + PortArg + '/api/status ...');
     HttpClient := TFPHTTPClient.Create(nil);
     HttpClient.IOTimeout := 2000;
-
     try
 
       try
 
         StatusResp := HttpClient.Get('http://localhost:' + PortArg + '/api/status');
-
         WriteLn('[+] Server is ONLINE!');
-
         WriteLn(StatusResp);
 
       except
@@ -24765,227 +19692,127 @@ begin
     finally
 
       HttpClient.Free;
-
     end;
-
   end
 
   else if (SubCmd = 'deploy') then
-
   begin
-
     if PortArg = '' then
-
       PortArg := '8090';
 
-
-
     WriteLn('================================================================');
-
     WriteLn('  BlaiseVue + mORMot 2 Production Deployment Packager');
-
     WriteLn('================================================================');
-
     WriteLn('');
-
-
-
     if not FileExists(LprFile) then
-
     begin
-
       WriteLn('[!] No server project found in server/. Initializing first...');
-
       CmdServer('init');
-
     end;
-
-
 
     // 1. Build frontend in production mode
 
     WriteLn('[1/4] Compiling reactive frontend (bv run build)...');
-
     ChDir(ProjectRoot);
-
     CmdRunBuild;
-
     DistDir := ProjectRoot + DirectorySeparator + 'dist';
-
     if not DirectoryExists(DistDir) then
-
     begin
-
       WriteLn('[ERROR] Frontend production build failed. dist/ folder not found.');
-
       Halt(1);
-
     end;
 
     WriteLn('  [+] Frontend compiled with production hashes in dist/');
-
     WriteLn('');
-
-
 
     // 2. Build native backend in RELEASE mode
 
     WriteLn('[2/4] Compiling native mORMot 2 server (bv mormot build --release)...');
-
     CmdServer('build', '--release');
-
     if not FileExists(TargetExe) then
-
     begin
-
       WriteLn('[ERROR] Server compilation failed: ' + TargetExe);
-
       Halt(1);
-
     end;
 
     WriteLn('  [+] Native server binary built in: ' + TargetExe);
-
     WriteLn('');
-
-
 
     // 3. Assemble deployment directory
 
     WriteLn('[3/4] Assembling standalone deployment package in: ' + DeployDir);
-
     if DirectoryExists(DeployDir) then
-
       DeleteDir(DeployDir);
 
     ForceDir(DeployDir);
-
     ForceDir(DeployDir + DirectorySeparator + 'dist');
-
-
 
     // Copy server binary
 
     CopyFile(TargetExe, DeployDir + DirectorySeparator + ExtractFileName(TargetExe));
 
-
-
     // Copy dist/ contents
 
     CopyDir(DistDir, DeployDir + DirectorySeparator + 'dist', []);
 
-
-
     // Create start.bat (Windows)
 
     AssignFile(F, DeployDir + DirectorySeparator + 'start.bat');
-
     Rewrite(F);
-
     WriteLn(F, '@echo off');
-
     WriteLn(F, 'title BlaiseVue Server (Port ' + PortArg + ')');
-
     WriteLn(F, 'echo ====================================================');
-
     WriteLn(F, 'echo  Starting BlaiseVue mORMot 2 Native Server...');
-
     WriteLn(F, 'echo  Port: ' + PortArg);
-
     WriteLn(F, 'echo  Hosting API and Static Frontend from ./dist');
-
     WriteLn(F, 'echo ====================================================');
-
     WriteLn(F, ExtractFileName(TargetExe) + ' --port ' + PortArg);
-
     WriteLn(F, 'if errorlevel 1 pause');
-
     CloseFile(F);
-
-
 
     // Create start.sh (Linux/macOS)
 
     AssignFile(F, DeployDir + DirectorySeparator + 'start.sh');
-
     Rewrite(F);
-
     WriteLn(F, '#!/bin/sh');
-
     WriteLn(F, 'echo "===================================================="');
-
     WriteLn(F, 'echo " Starting BlaiseVue mORMot 2 Native Server..."');
-
     WriteLn(F, 'echo " Port: ' + PortArg + '"');
-
     WriteLn(F, 'echo " Hosting API and Static Frontend from ./dist"');
-
     WriteLn(F, 'echo "===================================================="');
-
     WriteLn(F, 'chmod +x ./' + ExtractFileName(TargetExe));
-
     WriteLn(F, './' + ExtractFileName(TargetExe) + ' --port ' + PortArg);
-
     CloseFile(F);
-
-
 
     // Create README.txt
 
     AssignFile(F, DeployDir + DirectorySeparator + 'README.txt');
-
     Rewrite(F);
-
     WriteLn(F, 'BlaiseVue Full-Stack Standalone Deployment Package');
-
     WriteLn(F, '==================================================');
-
     WriteLn(F, '');
-
     WriteLn(F, 'This deployment directory is 100% self-contained and ready to copy to your server.');
-
     WriteLn(F, 'No Node.js, npm, or Free Pascal installation required on the production host!');
-
     WriteLn(F, '');
-
     WriteLn(F, 'How to run on the server:');
-
     WriteLn(F, '  Windows: Double-click start.bat (or run "' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
-
     WriteLn(F, '  Linux:   Run "./start.sh" (or "./' + ExtractFileName(TargetExe) + ' --port ' + PortArg + '")');
-
     WriteLn(F, '');
-
     WriteLn(F, 'Files:');
-
     WriteLn(F, '  - ' + ExtractFileName(TargetExe) + ' : Native mORMot 2 backend executable');
-
     WriteLn(F, '  - dist/            : Compiled reactive SPA frontend');
-
     WriteLn(F, '  - start.bat        : Windows startup script');
-
     WriteLn(F, '  - start.sh         : Linux startup script');
-
     CloseFile(F);
-
-
-
     WriteLn('  [+] Deployment directory assembled successfully!');
-
     WriteLn('');
-
-
 
     // 4. Create ZIP archive if requested
 
     if HasZip then
-
     begin
-
       ZipFile := ProjectRoot + DirectorySeparator + 'deploy.zip';
-
       if FileExists(ZipFile) then
-
         DeleteFile(ZipFile);
 
       WriteLn('[4/4] Packaging standalone archive: ' + ZipFile);
@@ -25001,67 +19828,38 @@ begin
       {$ENDIF}
 
       if FileExists(ZipFile) then
-
         WriteLn('  [SUCCESS] Archive created: ' + ZipFile)
 
       else
-
         WriteLn('  [!] Notice: ZIP packaging skipped (zip utility not found). The deploy/ directory is ready.');
-
     end
 
     else
-
     begin
-
       WriteLn('[4/4] Deployment directory ready: ' + DeployDir);
-
       WriteLn('      Tip: Run "bv mormot deploy --zip" to automatically generate a deploy.zip archive.');
-
     end;
 
-
-
     WriteLn('');
-
     WriteLn('================================================================');
-
     WriteLn('  [SUCCESS] Application ready for production deployment!');
-
     WriteLn('  Just copy "' + ExtractFileName(DeployDir) + '" to your server and run start.bat (or ./start.sh)');
-
     WriteLn('================================================================');
-
   end
 
   else
-
   begin
-
     WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
-
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
-
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
-
     WriteLn('  run [--port <port>]   Launches native server');
-
     WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
-
     WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
-
-
-
     WriteLn('  crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
-
   end;
-
 end;
 
-
-
 // =====================================================================
-
 
 // =====================================================================
 //  COMMAND: RENAME (Components, Views, Services, Projects)
@@ -25084,7 +19882,6 @@ begin
   ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'services' + DirectorySeparator;
   OldFile := ServicePath + 'u' + OldNorm + '.pas';
   NewFile := ServicePath + 'u' + NewNorm + '.pas';
-
   if not FileExists(OldFile) then
   begin
     WriteLn('[ERROR] Service "u', OldNorm, '.pas" not found in src/services/');
@@ -25106,7 +19903,6 @@ begin
   Content := StringReplace(Content, 'T' + OldNorm + ';', 'T' + NewNorm + ';', [rfReplaceAll]);
   Content := StringReplace(Content, 'T' + OldNorm + ')', 'T' + NewNorm + ')', [rfReplaceAll]);
   Content := StringReplace(Content, OldNorm + 'Helper', NewNorm + 'Helper', [rfReplaceAll]);
-
   WriteStringToFile(NewFile, Content);
   DeleteFile(OldFile);
   WriteLn('Service renamed: src/services/u', OldNorm, '.pas -> src/services/u', NewNorm, '.pas');
@@ -25156,7 +19952,6 @@ begin
   CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
   OldFile := CompPath + OldName + '.bv';
   NewFile := CompPath + NewName + '.bv';
-
   if not FileExists(OldFile) then
   begin
     WriteLn('[ERROR] Component "', OldName, '.bv" not found in src/components/');
@@ -25172,7 +19967,6 @@ begin
   WriteStringToFile(NewFile, ReadFileToString(OldFile));
   DeleteFile(OldFile);
   WriteLn('Component renamed: src/components/', OldName, '.bv -> src/components/', NewName, '.bv');
-
   OldTag := PascalToKebab(OldName);
   NewTag := PascalToKebab(NewName);
   WriteLn('HTML tag updated: <', OldTag, '> -> <', NewTag, '>');
@@ -25181,7 +19975,6 @@ begin
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator;
   OldTest := TestPath + OldName + '.test.pas';
   NewTest := TestPath + NewName + '.test.pas';
-
   if FileExists(OldTest) then
   begin
     TestContent := ReadFileToString(OldTest);
@@ -25213,7 +20006,6 @@ begin
   ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
   OldFile := ViewPath + OldName + '.bv';
   NewFile := ViewPath + NewName + '.bv';
-
   if not FileExists(OldFile) then
   begin
     WriteLn('[ERROR] View "', OldName, '.bv" not found in src/views/');
@@ -25229,7 +20021,6 @@ begin
   WriteStringToFile(NewFile, ReadFileToString(OldFile));
   DeleteFile(OldFile);
   WriteLn('View renamed: src/views/', OldName, '.bv -> src/views/', NewName, '.bv');
-
   OldKebab := PascalToKebab(OldName);
   NewKebab := PascalToKebab(NewName);
   OldTag := OldKebab + '-page';
@@ -25239,7 +20030,6 @@ begin
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator;
   OldTest := TestPath + OldName + '.test.pas';
   NewTest := TestPath + NewName + '.test.pas';
-
   if FileExists(OldTest) then
   begin
     TestContent := ReadFileToString(OldTest);
@@ -25293,7 +20083,6 @@ begin
     TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
 
   Result := False;
-
   if FileExists(TargetDir + 'app.cfg') then Exit(True);
   if FileExists(TargetDir + 'src' + DirectorySeparator + 'app.bv') then Exit(True);
   if DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'views') or
@@ -25389,7 +20178,6 @@ begin
   TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
   DirName := ExtractFileName(ExcludeTrailingPathDelimiter(TargetDir));
   Result := DirName;
-
   if FileExists(TargetDir + 'package.json') then
   begin
     Raw := ReadFileToString(TargetDir + 'package.json');
@@ -25431,7 +20219,6 @@ var
 begin
   TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
   Result := '1.0.0';
-
   if FileExists(TargetDir + 'package.json') then
   begin
     Raw := ReadFileToString(TargetDir + 'package.json');
@@ -25517,12 +20304,10 @@ begin
   NormCurDir := LowerCase(CurDir);
   ProjName := GetProjectNameFromDir(CurDir);
   ProjVer := GetProjectVersionFromDir(CurDir);
-
   if not LoadProjectsRegistry(RootObj) then Exit;
   try
     ProjectsArr := RootObj.Arrays['projects'];
     FoundIdx := -1;
-
     for i := 0 to ProjectsArr.Count - 1 do
     begin
       ProjData := ProjectsArr[i];
@@ -25557,7 +20342,6 @@ begin
 
     RootObj.Strings['active'] := ProjName;
     SaveProjectsRegistry(RootObj);
-
     WriteLn('');
     WriteLn('  [SUCCESS] Project "', ProjName, '" successfully registered in BlaiseVue registry!');
     WriteLn('  Path:    ', CurDir);
@@ -25583,11 +20367,9 @@ begin
   try
     ActiveName := GetJsonString(RootObj, 'active', '');
     ProjectsArr := RootObj.Arrays['projects'];
-
     WriteLn('');
     WriteLn('  Registered BlaiseVue Projects:');
     WriteLn('  ' + StringOfChar('-', 76));
-
     if ProjectsArr.Count = 0 then
     begin
       WriteLn('  No projects registered yet.');
@@ -25604,7 +20386,6 @@ begin
           PName := GetJsonString(ProjObj, 'name', 'unnamed');
           PPath := GetJsonString(ProjObj, 'path', '');
           PVer := GetJsonString(ProjObj, 'version', '1.0.0');
-
           if SameText(PName, ActiveName) then
             Marker := '* '
           else
@@ -25755,7 +20536,6 @@ begin
 
   CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
   CurName := GetProjectNameFromDir(CurDir);
-
   if SameText(CurName, NewProjectName) then
   begin
     if LoadPackageJson(PkgJson) then
@@ -26002,7 +20782,6 @@ begin
         RUrl := RepoObj.Get('url', '');
         RType := RepoObj.Get('type', 'ecosystem');
         IsDef := RepoObj.Get('default', False);
-
         if IsDef then
           WriteLn('  * ' + RName + ' (default)')
         else
@@ -26068,7 +20847,6 @@ begin
     NewRepo.Add('type', 'ecosystem');
     NewRepo.Add('default', False);
     ReposArr.Add(NewRepo);
-
     SaveReposRegistry(RootObj);
     WriteLn('[SUCCESS] Repository "' + CleanName + '" added successfully!');
     WriteLn('          URL: ' + CleanURL);
@@ -26101,7 +20879,6 @@ begin
   try
     ReposArr := RootObj.Get('repositories', TJSONArray(nil));
     if not Assigned(ReposArr) then Exit;
-
     Found := False;
     for i := ReposArr.Count - 1 downto 0 do
     begin
@@ -26144,11 +20921,9 @@ begin
   end;
 
   if not LoadReposRegistry(RootObj) then Exit;
-
   try
     ReposArr := RootObj.Get('repositories', TJSONArray(nil));
     if not Assigned(ReposArr) then Exit;
-
     Found := False;
     for i := 0 to ReposArr.Count - 1 do
     begin
@@ -26195,15 +20970,12 @@ var
   PkgCount: Integer;
 begin
   if not LoadReposRegistry(RootObj) then Exit;
-
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
   ForceDir(CacheDir);
-
   WriteLn('=== Synchronizing BlaiseVue Repositories Catalog ===');
   try
     ReposArr := RootObj.Get('repositories', TJSONArray(nil));
     if not Assigned(ReposArr) then Exit;
-
     for i := 0 to ReposArr.Count - 1 do
     begin
       if ReposArr.Types[i] = jtObject then
@@ -26211,7 +20983,6 @@ begin
         RepoObj := TJSONObject(ReposArr.Objects[i]);
         RName := RepoObj.Get('name', '');
         RUrl := RepoObj.Get('url', '');
-
         RawUrl := RUrl;
         if Pos('github.com/', RawUrl) > 0 then
         begin
@@ -26229,7 +21000,6 @@ begin
             Resp := Client.Get(RawUrl);
             CacheFile := CacheDir + DirectorySeparator + RName + '-ecosystem.json';
             WriteStringToFile(CacheFile, Resp);
-
             PkgCount := 0;
             CatParser := TJSONParser.Create(Resp, True);
             try
@@ -26302,7 +21072,6 @@ begin
     Halt(1);
   end;
 end;
-
 
 procedure SplitTokens(const S: string; Tokens: TStringList);
 var
@@ -26502,7 +21271,6 @@ begin
   ActiveName := InitialName;
   ActivePath := InitialPath;
   BvExePath := GetOwnExecutablePath;
-
   WriteLn('');
   WriteLn('========================================================================');
   WriteLn('  [BlaiseVue Interactive Cockpit]');
@@ -26511,7 +21279,6 @@ begin
   WriteLn('  Type "help" for command list, or "exit" to quit.');
   WriteLn('========================================================================');
   WriteLn('');
-
   ClearInputBuffer;
   Tokens := TStringList.Create;
   try
@@ -26910,7 +21677,6 @@ begin
   CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
   ProjName := GetProjectNameFromDir(CurDir);
   ProjVer := GetProjectVersionFromDir(CurDir);
-
   RunCockpitShell(ProjName, CurDir);
 end;
 
@@ -26978,7 +21744,6 @@ var
   HasServer, HasFrontend, ServerUpdated, PkgUpdated, RtlUpdated: Boolean;
   i, BackupCount: Integer;
   UsesPos, VarPos, BeginPos, PosMarker, MainPortPos, MainBeginPos, p: Integer;
-
   procedure CreateFileBackup(const RelFilePath: string);
   var
     Src, Dst: string;
@@ -26992,14 +21757,12 @@ var
     Inc(BackupCount);
     WriteLn('  [BACKUP] Saved snapshot: .bv_backup' + DirectorySeparator + 'update_' + CurTimestamp + DirectorySeparator + RelFilePath);
   end;
-
 begin
   DryRun := False;
   OnlyServer := False;
   OnlyFrontend := False;
   NoBackup := False;
   Force := False;
-
   for i := 2 to ParamCount do
   begin
     if (ParamStr(i) = '--dry-run') or (ParamStr(i) = '-d') then
@@ -27037,10 +21800,8 @@ begin
   AppCfgFile := ServerDir + 'app.cfg';
   PkgFile := BaseDir + 'package.json';
   DistJsDir := BaseDir + 'dist' + DirectorySeparator + 'js' + DirectorySeparator;
-
   HasServer := DirectoryExists(ServerDir) and FileExists(ServerLprFile);
   HasFrontend := FileExists(PkgFile) or DirectoryExists(BaseDir + 'src');
-
   if not HasServer and not HasFrontend then
   begin
     WriteLn('');
@@ -27055,7 +21816,6 @@ begin
 
   ProjName := GetProjectNameFromDir(ExcludeTrailingPathDelimiter(BaseDir));
   ProjVer := GetProjectVersionFromDir(ExcludeTrailingPathDelimiter(BaseDir));
-
   WriteLn('');
   WriteLn('======================================================================');
   WriteLn('  BlaiseVue Project Infrastructure Updater (bv update)');
@@ -27070,11 +21830,9 @@ begin
   WriteLn('                 models/, controllers/, etc.) are NEVER touched.');
   WriteLn('======================================================================');
   WriteLn('');
-
   CurTimestamp := FormatDateTime('yyyymmdd_hhnnss', Now);
   BackupDir := BaseDir + '.bv_backup' + DirectorySeparator + 'update_' + CurTimestamp + DirectorySeparator;
   BackupCount := 0;
-
   ServerUpdated := False;
   PkgUpdated := False;
   RtlUpdated := False;
@@ -27353,7 +22111,6 @@ begin
 
   WriteLn('  Safety Rule:   100% PRESERVED - All user custom directories and files');
   WriteLn('                 (kernel/, packages/, models/, src/, etc.) were NOT touched.');
-
   if (not DryRun) and (not NoBackup) and (BackupCount > 0) then
     WriteLn('  Backup:        Saved to .bv_backup/update_', CurTimestamp, '/')
   else if DryRun then
@@ -27576,7 +22333,6 @@ begin
   CheckOnly := False;
   ForceUpdate := False;
   TargetBranch := ChannelOverride;
-
   for i := 2 to ParamCount do
   begin
     if (ParamStr(i) = '--check') or (ParamStr(i) = '-c') then
@@ -27662,7 +22418,6 @@ begin
     DiffList.Free;
   end;
   GitStatusOut := FilteredStatus;
-
   if (Trim(GitStatusOut) <> '') and (not CheckOnly) then
   begin
     if ForceUpdate then
@@ -27697,7 +22452,6 @@ begin
   ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count origin/' + TargetBranch + '..HEAD', AheadOut);
   BehindOut := Trim(BehindOut);
   AheadOut := Trim(AheadOut);
-
   if TargetBranch = CurBranch then
   begin
     // Check if GitHub has zero incoming commits
@@ -27850,7 +22604,6 @@ var
   SDKDir, CurBranch, ShortHash, RemoteUrl, SubCmd, TargetBranch: string;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
-
   if not DirectoryExists(SDKDir + DirectorySeparator + '.git') then
   begin
     WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository.');
@@ -27884,7 +22637,6 @@ begin
     CurBranch := Trim(CurBranch);
     ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --short HEAD', ShortHash);
     ExecCmdCapture('git -C "' + SDKDir + '" remote get-url origin', RemoteUrl);
-
     WriteLn('');
     WriteLn('======================================================================');
     WriteLn('  BlaiseVue Framework Channels (Git)');
@@ -27924,18 +22676,11 @@ end;
 
 // =====================================================================
 
-
-
 var
-
   Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP: string;
-
   SkipTest, SkipTestsArg, IsGlobalArg: Boolean;
-
   i: Integer;
-
 begin
-
   if (ParamCount = 1) and ((ParamStr(1) = '--version') or (ParamStr(1) = '-v') or (ParamStr(1) = 'version')) then
   begin
     WriteLn('BlaiseVue CLI v' + GetCliVersion + ' (Universal Pascal Full-Stack Platform)');
@@ -28040,64 +22785,39 @@ begin
     Halt(0);
   end;
 
-
-
   Cmd := LowerCase(ParamStr(1));
-
-
-
   if Cmd = 'create' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
       WriteLn('Usage: bv create <project-name> [--lib] [--license <mit|apache|lgpl|commercial|none>]');
-
       Halt(1);
-
     end;
 
     CmdCreate(ParamStr(2));
-
   end
 
   else if Cmd = 'check' then
-
   begin
-
     if ParamCount >= 2 then
-
       CmdCheck(ParamStr(2))
 
     else
-
       CmdCheck('');
-
   end
 
   else if Cmd = 'clean' then
-
   begin
-
     CmdClean;
-
   end
 
   else if Cmd = 'test' then
-
   begin
-
     if (ParamCount >= 2) and (LowerCase(ParamStr(2)) = 'e2e') then
-
       CmdTestE2E
 
     else
-
       CmdTest;
-
   end
 
   else if Cmd = 'build' then
@@ -28106,29 +22826,19 @@ begin
   end
 
   else if (Cmd = 'serve') or (Cmd = 'dev') then
-
   begin
-
     CmdServe;
-
   end
 
   else if Cmd = 'transpile' then
-
   begin
-
     CmdTranspile;
-
   end
 
   else if (Cmd = 'new') or (Cmd = 'generate') or (Cmd = 'g') then
-
   begin
-
     if (ParamCount < 3) then
-
     begin
-
       WriteLn('Usage: bv <g|new|generate> <c|v|s|t> <Name> [--no-test]');
       WriteLn('Aliases: bv g, bv new, bv generate');
       WriteLn('Types: component (c), view (v), service (s), test (t)');
@@ -28138,55 +22848,36 @@ begin
       WriteLn('  bv g v Dashboard         # Scaffolds route view and test in tests/views/');
       WriteLn('  bv g s PaymentProcessor  # Scaffolds domain service and test in tests/services/');
       WriteLn('  bv g t UserCard          # Scaffolds test file');
-
       Halt(1);
-
     end;
 
     TypeArg := LowerCase(ParamStr(2));
-
     NameArg := ParamStr(3);
-
     SkipTest := False;
-
     for i := 4 to ParamCount do
-
     begin
-
       if (LowerCase(ParamStr(i)) = '--no-test') or (LowerCase(ParamStr(i)) = '-nt') or 
 
          (LowerCase(ParamStr(i)) = '--skip-test') then
-
         SkipTest := True;
-
     end;
 
-
-
     if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
-
       CmdNewComponent(NameArg, not SkipTest)
 
     else if (TypeArg = 'v') or (TypeArg = 'view') then
-
       CmdNewView(NameArg, not SkipTest)
     else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
       CmdNewService(NameArg, not SkipTest)
 
     else if (TypeArg = 't') or (TypeArg = 'test') then
-
       CmdNewTest(NameArg)
 
     else
-
     begin
-
       WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
-
       Halt(1);
-
     end;
-
   end
 
   else if (Cmd = 'remove') or (Cmd = 'rm') or (Cmd = 'del') then
@@ -28248,17 +22939,11 @@ begin
   end
 
   else if Cmd = 'list' then
-
   begin
-
     if (ParamCount < 2) then
-
     begin
-
       WriteLn('Usage: bv list <c|v|t|lib>');
-
       Halt(1);
-
     end;
 
     if (ParamStr(2) = 'lib') or (ParamStr(2) = 'libs') then
@@ -28270,25 +22955,17 @@ begin
     end
     else
       CmdList(ParamStr(2));
-
   end
 
   else if Cmd = 's' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
        WriteLn('Usage: bv s <component-name>');
-
        Halt(1);
-
     end;
 
     CmdSetup(ParamStr(2));
-
   end
 
   else if Cmd = 'lib' then
@@ -28408,61 +23085,38 @@ begin
     CmdLibInstall(PkgNameArg, IsGlobalArg);
   end
   else if Cmd = 'theme' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
        WriteLn('Usage: bv theme <list|use <name>>');
-
        Halt(1);
-
     end;
 
     Cmd := LowerCase(ParamStr(2));
-
     if Cmd = 'list' then CmdThemeList
 
     else if Cmd = 'use' then
-
     begin
-
        if ParamCount < 3 then begin WriteLn('Usage: bv theme use <name>'); Halt(1); end;
-
        CmdThemeUse(ParamStr(3));
-
     end
 
     else
-
     begin
-
        WriteLn('Unknown theme subcommand: ', Cmd);
-
        Halt(1);
-
     end;
-
   end
 
   else if Cmd = 'run' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
       WriteLn('Usage: bv run <build|dev|preview>');
-
       Halt(1);
-
     end;
 
     Cmd := LowerCase(ParamStr(2));
-
     if Cmd = 'build' then CmdRunBuild
 
     else if Cmd = 'dev' then
@@ -28476,143 +23130,90 @@ begin
     else if Cmd = 'preview' then CmdRunPreview
 
     else if Cmd = 'compile-sfc' then
-
     begin
-
       if ParamCount < 2 then Halt(1);
-
       CmdCompileSFC(ParamStr(2));
-
     end
 
     else
-
     begin
-
       WriteLn('Unknown run subcommand: ', Cmd);
-
       Halt(1);
-
     end;
-
   end
 
   else if Cmd = 'doc' then
-
   begin
-
     CmdDoc((ParamCount >= 2) and (LowerCase(ParamStr(2)) = '--serve'));
-
   end
 
   else if Cmd = 'ssg' then
-
   begin
-
     CmdSSG;
-
   end
 
   else if Cmd = 'wasm' then
-
   begin
-
     if ParamCount < 2 then
-
       CmdWasm('info')
 
     else
-
       CmdWasm(LowerCase(ParamStr(2)));
-
   end
 
   else if (Cmd = 'extension') or (Cmd = 'vsix') then
-
   begin
-
     if Cmd = 'vsix' then
-
       CmdExtension('pack', 'vscode')
 
     else if ParamCount >= 3 then
-
       CmdExtension(LowerCase(ParamStr(2)), ParamStr(3))
 
     else if ParamCount >= 2 then
-
       CmdExtension(LowerCase(ParamStr(2)))
 
     else
-
       CmdExtension('list');
-
   end
 
   else if Cmd = 'mobile' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
       WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
-
       WriteLn('       Targets: android | ios | all (default: android)');
-
       Halt(1);
-
     end;
 
     CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
-
   end
 
   else if Cmd = 'desktop' then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
       WriteLn('Usage: bv desktop <init [name]|sync|build [target] [--release]|run [target] [--release]>');
-
       WriteLn('       Targets: windows | linux | macos | all (default: host OS)');
-
       Halt(1);
-
     end;
 
     CmdDesktop(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
-
   end
 
   else if Cmd = 'studio' then
-
   begin
-
     CmdStudio;
-
   end
 
   else if (Cmd = 'mormot') or (Cmd = 'server') then
-
   begin
-
     if ParamCount < 2 then
-
     begin
-
       WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
-
       Halt(1);
-
     end;
 
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
-
   end
 
   else if (Cmd = 'format') or (Cmd = 'fmt') then
@@ -28621,19 +23222,13 @@ begin
   end
 
   else if Cmd = 'license' then
-
   begin
-
     CmdLicense;
-
   end
 
   else if Cmd = 'meta' then
-
   begin
-
     CmdMeta;
-
   end
 
   else if (Cmd = 'path') or (Cmd = 'paths') or (Cmd = 'unit-path') then
@@ -28732,6 +23327,4 @@ begin
     WriteLn('Use "bv" without arguments for help.');
     Halt(1);
   end;
-
 end.
-
