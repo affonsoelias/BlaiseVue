@@ -17,7 +17,7 @@
 | **v4.2** | ✅ Delivered | **LiveBindings & Reactive `TBVDataSet`** | Delphi/Lazarus data-aware state machine, cursor navigation (`First`, `Next`), transactional buffering, `b-field` directive. |
 | **v4.3** | ✅ Delivered | **Type-Safe Pascal RPC with mORMot 2** | JSON-RPC 2.0, dual HTTP/WebSocket transport, shared `ICustomerService` interfaces, compile-time API validation. |
 | **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, unified extensions (`bv extension`). |
-| **v5.0** | 🚀 In Progress | **Cloud, PWA & Real-Time Era** | BlaiseX state machines (`TBVStore 2.0`), PWA Background Sync (`bv pwa`), Node-free dynamic SSR (<3ms), BlaiseStudio 2.0 visual modeler. |
+| **v5.0** | 🚀 In Progress | **Cloud, PWA & Real-Time Era** | BlaiseX state machines (`TBVStore 2.0`), PWA Background Sync (`bv pwa`), Node-free dynamic SSR (<3ms), BlaiseStudio 2.0 visual modeler, Vue 3-style Fragments (Multi-Root Templates). |
 
 ---
 
@@ -163,14 +163,14 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 ## 🔮 4. The Next Horizon: BlaiseVue 5.0 — The Cloud, PWA & Real-Time Era (🚀 In Progress)
 
 ```
-                                  BLAISEVUE 5.0
-                                        │
-        ┌───────────────┬───────────────┴───────────────┬───────────────┐
-        ▼               ▼                               ▼               ▼
-   [Pillar 1]      [Pillar 2]                      [Pillar 3]      [Pillar 4]
-    BlaiseX /       Full PWA &                    Node-Free SSR    Visual Studio
-   TBVStore 2.0    Offline Sync                   (mORMot SSR)    Cockpit & DB
- (Store Evolution) (PWA Engine)                  (SSR Evolution) (Studio Evolution)
+                                          BLAISEVUE 5.0
+                                                │
+        ┌───────────────┬───────────────────────┼───────────────────────┬───────────────┐
+        ▼               ▼                       ▼                       ▼               ▼
+   [Pillar 1]      [Pillar 2]              [Pillar 3]              [Pillar 4]      [Pillar 5]
+    BlaiseX /       Full PWA &            Node-Free SSR           Visual Studio     Vue 3-Style
+   TBVStore 2.0    Offline Sync           (mORMot SSR)            Cockpit & DB      Fragments
+ (Store Evolution) (PWA Engine)          (SSR Evolution)        (Studio Evolution) (Multi-Root)
 ```
 
 | 5.0 Strategic Pillar | Target Milestone | Focus Subsystem | Primary Architecture |
@@ -179,6 +179,7 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 | **Pillar 2: Full PWA Engine & Background Sync (`bv pwa`)** | v5.0-beta | `bin/bv.pas`, `core/BVDataSet.pas` | Service Worker caching, background sync with `ApplyUpdates` |
 | **Pillar 3: Node-Free Dynamic Server-Side Rendering (mORMot 2 SSR)** | v5.0-rc | `server/`, `core/BVCompiler.pas` | Native Pascal SSR executed in <3ms without Node.js |
 | **Pillar 4: BlaiseVue Studio 2.0 (Visual Modeler & Cockpit)** | v5.0-GA | `packages/core/blaise-studio/` | Drag-and-drop DB modeler, visual AST editor, live telemetry |
+| **Pillar 5: Vue 3-Style Fragments (Multi-Root Templates)** | v5.0-GA | `core/BVCompiler.pas` | Comment anchor boundaries, Option A automatic attribute fallthrough |
 
 ---
 
@@ -252,6 +253,32 @@ ightarrow$ `OrderItems`) with foreign key constraints.
      - Visual timeline capturing every reactive proxy mutation, computed property evaluation, and `TBVDataSet` cursor navigation step with step-by-step replay.
   3. **Live Network & RPC Latency Telemetry**:
      - Real-time dashboard tracking JSON-RPC 2.0 throughput, WebSocket frame roundtrips, and database query execution times.
+---
+
+### 🧩 Pillar 5: Vue 3-Style Component Fragments (Multi-Root Templates & Attribute Fallthrough)
+**Goal**: Eliminate the single-root wrapper `<div>` requirement in `.bv` component templates, implementing native Vue 3-style Fragments with comment anchor node boundaries and friendly automatic attribute fallthrough.
+
+- **Motivation**:
+  1. **Invalid HTML Elimination**: Components generating table rows (`<tr>` elements inside `<tbody>`) or list items (`<li>` inside `<ul>`) no longer require extraneous, layout-breaking `<div>` wrappers.
+  2. **Flexbox & CSS Grid Purity**: Eliminates ghost wrapper containers that interfere with parent grid/flex track alignments.
+  3. **Modern Developer Ergonomics**: Developers can freely declare multiple sibling elements at the root of any `.bv` template without compiler errors.
+
+- **Architectural Scope**:
+  1. **Comment Anchor Boundaries (`<!-- [bv-fragment: <tag>] -->` ... `<!-- [/bv-fragment] -->`)**:
+     - Single-root components retain high-speed direct node replacement (`replaceChild(rEl, el)`) with zero overhead.
+     - Multi-root templates compile into a live `DocumentFragment` flanked by start and end comment anchor nodes.
+     - Sibling nodes between anchors are tracked via `__bv_fragment_nodes__` on the component instance.
+  2. **Option A (Automatic & Friendly) Attribute Fallthrough**:
+     - Root attributes (`class`, `style`, `id`) and event listeners (`@click`, `@input`) passed by the parent onto `<my-fragment-component>` fall through automatically onto the **first visible element node** of the fragment.
+     - **Explicit `$attrs` Target**: If the developer desires attributes applied to another root node, declaring `b-bind="$attrs"` (or `v-bind="$attrs"`) explicitly targets that specific element.
+  3. **Reactive Directives & Teardown Lifecycle (`b-if`, `b-for`, `unmounted`)**:
+     - When toggling visibility (`b-if="false"`), the runtime locates the `startAnchor` and tears down all sibling nodes up to `endAnchor`.
+     - When re-engaging (`b-if="true"`), the template fragment re-hydrates into the exact anchor position in the parent container.
+  4. **Hot Module Replacement (HMR) with Multi-Root Slices**:
+     - During live development, the HMR engine in `core/BVCompiler.pas` removes the DOM range between anchors and injects updated compiled nodes in-place without triggering a browser refresh.
+  5. **Verification & Quality Harness**:
+     - Comprehensive test suite in `tests/framework/fragments.test.pas` validating sibling tags, dynamic table rows inside `<tbody>`, scoped styles, and nested fragment components.
+
 
 ---
 
