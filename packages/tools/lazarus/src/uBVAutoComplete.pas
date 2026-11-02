@@ -33,6 +33,11 @@ type
       ); override;
     procedure PrefixChanged(const NewPrefix: string; var NewIndex: integer;
       var s: TStrings); override;
+    function HasCustomPaint: boolean; override;
+    procedure PaintItem(const AKey: string; ACanvas: TCanvas;
+      X, Y: integer; ItemSelected: boolean; Index: integer); override;
+    function MeasureItem(const AKey: string; ACanvas: TCanvas;
+      ItemSelected: boolean; Index: integer): TPoint; override;
     property LastPrefix: string read FLastPrefix write SetLastPrefix;
   end;
 
@@ -238,6 +243,7 @@ begin
     LowItem := LowerCase(s);
     if (Pos(LowPrefix, LowItem) = 1) or
        ((Length(LowItem) > 1) and (LowItem[1] = '<') and (Pos(LowPrefix, Copy(LowItem, 2, Length(LowItem))) = 1)) or
+       ((Length(LowItem) > 2) and (Copy(LowItem, 1, 2) = '</') and (Pos(LowPrefix, Copy(LowItem, 3, Length(LowItem))) = 1)) or
        ((Length(LowItem) > 1) and (LowItem[1] in [':', '@', '$']) and (Pos(LowPrefix, Copy(LowItem, 2, Length(LowItem))) = 1)) or
        (Pos(LowPrefix, LowItem) > 0) then
     begin
@@ -320,6 +326,45 @@ begin
   NewIndex := 0;
   LastPrefix := NewPrefix;
   s.Assign(FFilteredList);
+end;
+
+function TBVSrcEditCompletion.HasCustomPaint: boolean;
+begin
+  Result := True;
+end;
+
+procedure TBVSrcEditCompletion.PaintItem(const AKey: string; ACanvas: TCanvas;
+  X, Y: integer; ItemSelected: boolean; Index: integer);
+var
+  ItemText: string;
+begin
+  ItemText := AKey;
+  if ItemSelected then
+  begin
+    ACanvas.Brush.Color := clHighlight;
+    ACanvas.Font.Color := clHighlightText;
+  end else begin
+    ACanvas.Brush.Color := clWindow;
+    if (Length(ItemText) > 0) and (ItemText[1] = '<') then
+      ACanvas.Font.Color := clNavy
+    else if (Length(ItemText) > 0) and (ItemText[1] in [':', '@']) then
+      ACanvas.Font.Color := TColor($008000) // Directive green
+    else if (Length(ItemText) > 0) and (ItemText[1] = '$') then
+      ACanvas.Font.Color := TColor($800080) // Service purple
+    else if (Pos('bv-', ItemText) = 1) then
+      ACanvas.Font.Color := TColor($B8860B) // Component gold
+    else
+      ACanvas.Font.Color := clWindowText;
+  end;
+  ACanvas.FillRect(Rect(X, Y, X + ACanvas.TextWidth(ItemText) + 24, Y + ACanvas.TextHeight('W')));
+  ACanvas.TextOut(X + 4, Y, ItemText);
+end;
+
+function TBVSrcEditCompletion.MeasureItem(const AKey: string; ACanvas: TCanvas;
+  ItemSelected: boolean; Index: integer): TPoint;
+begin
+  Result.X := ACanvas.TextWidth(AKey) + 20;
+  Result.Y := ACanvas.TextHeight('W');
 end;
 
 initialization
