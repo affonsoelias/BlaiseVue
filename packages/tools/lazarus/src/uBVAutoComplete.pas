@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Graphics, LCLProc, LCLType,
-  SrcEditorIntf;
+  SynEdit, SrcEditorIntf, uBVSynMultiSyn;
 
 type
   { TBVSrcEditCompletion }
@@ -271,7 +271,9 @@ begin
       Idx := SourceStart.X - 1; // character immediately preceding token
       if (Idx >= 1) and (Idx <= Length(Line)) and (Length(Value) > 1) then
       begin
-        if (Line[Idx] = Value[1]) and (Value[1] in ['@', ':', '<', '$']) then
+        if (Idx >= 2) and (Line[Idx-1] = '<') and (Line[Idx] = '/') and (Copy(Value, 1, 2) = '</') then
+          Dec(SourceStart.X, 2)
+        else if (Line[Idx] = Value[1]) and (Value[1] in ['@', ':', '<', '$']) then
           Dec(SourceStart.X);
       end;
     except
@@ -294,13 +296,17 @@ procedure TBVSrcEditCompletion.Init(SrcEdit: TSourceEditorInterface;
   var BoxX, BoxY: integer);
 var
   Ext: string;
+  IsBV: Boolean;
 begin
   Abort := False;
   Handled := False;
   if SrcEdit = nil then Exit;
   Ext := LowerCase(ExtractFileExt(SrcEdit.FileName));
+  IsBV := (Ext = '.bv');
+  if not IsBV and (SrcEdit.EditorControl is TCustomSynEdit) then
+    IsBV := (TCustomSynEdit(SrcEdit.EditorControl).Highlighter is TBVSynMultiSyn);
 
-  if Ext <> '.bv' then Exit;
+  if not IsBV then Exit;
 
   Handled := True;
   FEditor := SrcEdit;
