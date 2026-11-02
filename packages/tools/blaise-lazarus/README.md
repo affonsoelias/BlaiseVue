@@ -34,7 +34,7 @@ A instalação é feita como qualquer pacote padrão do Lazarus:
 2. No menu superior, clique em **Package $\rightarrow$ Open Package File (.lpk)...**
 3. Navegue até o diretório do BlaiseVue e selecione:
    ```text
-   packages/tools/lazarus/blaisevue_ide.lpk
+   packages/tools/blaise-lazarus/blaisevue_ide.lpk
    ```
 4. Na janela do gerenciador de pacotes que se abrir:
    - Clique no botão **Compile** (para verificar a compilação).
@@ -65,7 +65,7 @@ Basta abrir qualquer arquivo `.bv` no Lazarus (via menu `File -> Open`, pelo Ins
 ## 📂 Estrutura do Pacote
 
 ```text
-packages/tools/lazarus/
+packages/tools/blaise-lazarus/
 ├── blaisevue_ide.lpk           # Manifesto XML do pacote Lazarus
 ├── blaisevue_ide.pas           # Arquivo raiz gerado pelo Lazarus
 ├── README.md                   # Este guia de documentação

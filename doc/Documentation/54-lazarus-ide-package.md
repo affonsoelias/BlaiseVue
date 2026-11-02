@@ -37,10 +37,10 @@ BlaiseVue delivers official design-time integration for the **Lazarus IDE**, bri
 
 ## 📦 Package Architecture
 
-The Lazarus package lives in [`packages/tools/lazarus/`](/BlaiseVue/packages/tools/lazarus/):
+The Lazarus package lives in [`packages/tools/blaise-lazarus/`](/BlaiseVue/packages/tools/blaise-lazarus/):
 
 ```text
-packages/tools/lazarus/
+packages/tools/blaise-lazarus/
 ├── blaisevue_ide.lpk           # Official Lazarus Package manifest
 ├── blaisevue_ide.pas           # Package unit root
 ├── README.md                   # Quick installation guide
@@ -60,7 +60,7 @@ packages/tools/lazarus/
 ### Step 1: Open the Package
 1. Open **Lazarus IDE**.
 2. In the main menu, go to **Package $\rightarrow$ Open Package File (.lpk)...**
-3. Select `packages/tools/lazarus/blaisevue_ide.lpk`.
+3. Select `packages/tools/blaise-lazarus/blaisevue_ide.lpk`.
 
 ### Step 2: Install and Rebuild
 1. In the Package Manager window, click **Compile** to verify.

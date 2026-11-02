@@ -240,9 +240,9 @@ BlaiseVue/
 │   │   ├── blaise-studio/     # Developer cockpit & visual AST inspector
 │   │   └── blaise-ui-mobile/  # Mobile-first Ionic components & Pascal wrappers
 │   └── tools/                 # Development extensions & tooling
-│       ├── devtools-extension/# Browser DevTools extension (Chrome, Firefox, Edge)
-│       ├── vscode-extension/  # Official VS Code extension (.vsix packaging & snippets)
-│       └── lazarus/           # Official Lazarus IDE package (.lpk, .bv multi-syntax, wizards)
+│       ├── blaise-devtools/   # Browser DevTools extension (Chrome, Firefox, Edge)
+│       ├── blaise-vscode/     # Official VS Code extension (.vsix packaging & snippets)
+│       └── blaise-lazarus/    # Official Lazarus IDE package (.lpk, .bv multi-syntax, wizards)
 ├── vendor/                    # Embedded compiler & backend engines
 │   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework

@@ -56,17 +56,17 @@ bv extension install blaise-vscode
 3. Select **"Install from VSIX..."** (*Instalar a partir do VSIX...*).
 4. Select the packaged extension:
    ```text
-   packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+   packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix
    ```
 5. Wait for the confirmation prompt.
 
 ### Option 3: Command Line via `code` CLI
 ```bash
-code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+code --install-extension packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix
 ```
 
 ### Option 4: Direct PowerShell Script (Windows)
-Run from the `packages/tools/vscode-extension` directory:
+Run from the `packages/tools/blaise-vscode` directory:
 ```powershell
 .\install_extension.ps1
 ```

@@ -9524,11 +9524,22 @@ begin
     WriteLn('  [+] Synchronized: ' + TargetFile + ' (v' + TargetVer + ')');
   end;
 
-  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'vscode-extension' + DirectorySeparator + 'package.json';
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-vscode' + DirectorySeparator + 'package.json';
+  if not FileExists(TargetFile) then
+    TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'vscode-extension' + DirectorySeparator + 'package.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
 
-  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'devtools-extension' + DirectorySeparator + 'manifest.json';
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-devtools' + DirectorySeparator + 'manifest.json';
+  if not FileExists(TargetFile) then
+    TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'devtools-extension' + DirectorySeparator + 'manifest.json';
   UpdateJsonFileVersion(TargetFile, TargetVer);
+
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-vscode' + DirectorySeparator + 'tool.json';
+  if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-lazarus' + DirectorySeparator + 'tool.json';
+  if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
+  TargetFile := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'tools' + DirectorySeparator + 'blaise-devtools' + DirectorySeparator + 'tool.json';
+  if FileExists(TargetFile) then UpdateJsonFileVersion(TargetFile, TargetVer);
 
   CoreDir := RootDir + DirectorySeparator + 'packages' + DirectorySeparator + 'core' + DirectorySeparator;
   if DirectoryExists(CoreDir) and (FindFirst(CoreDir + '*', faDirectory, SR) = 0) then
@@ -12422,87 +12433,239 @@ end;
 
 
 
-function CheckVSCodeExtensionInstalled(const HomeDir: string; out FoundVersion: string): Boolean;
+type
+  TBVTool = record
+    Name: string;
+    Category: string;
+    Description: string;
+    Version: string;
+    DirPath: string;
+    StatusScript: string;
+    InstallScript: string;
+    RemoveScript: string;
+    PackScript: string;
+    IsCustom: Boolean;
+  end;
+  TBVToolArray = array of TBVTool;
+
+function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
-  SR: TSearchRec;
-  CheckDirs: array[0..2] of string;
-  I: Integer;
-  BaseDir: string;
+  Ext, ScriptPath, RunnerCmd, CmdLine: string;
+  Proc: TProcess;
+  OutputStream: TStringStream;
+  BytesRead: LongInt;
+  Buffer: array[0..2047] of Byte;
+begin
+  Result := -1;
+  ScriptOutput := '';
+  if ScriptName = '' then Exit;
+
+  ScriptPath := IncludeTrailingPathDelimiter(ToolDir) + ScriptName;
+  if not FileExists(ScriptPath) then
+  begin
+    WriteLn('Error: Script not found: ' + ScriptPath);
+    Exit;
+  end;
+
+  Ext := LowerCase(ExtractFileExt(ScriptName));
+  if Ext = '.py' then
+    RunnerCmd := 'python'
+  else if Ext = '.pas' then
+    RunnerCmd := 'instantfpc'
+  else
+    RunnerCmd := '';
+
+  if CaptureOutput then
+  begin
+    Proc := TProcess.Create(nil);
+    try
+      if RunnerCmd <> '' then
+      begin
+        Proc.Executable := RunnerCmd;
+        Proc.Parameters.Add(ScriptPath);
+      end
+      else
+        Proc.Executable := ScriptPath;
+
+      Proc.CurrentDirectory := ToolDir;
+      Proc.Options := [poUsePipes, poNoConsole];
+      try
+        Proc.Execute;
+        OutputStream := TStringStream.Create('');
+        try
+          while Proc.Running do
+          begin
+            while (Proc.Output <> nil) and (Proc.Output.NumBytesAvailable > 0) do
+            begin
+              BytesRead := Proc.Output.Read(Buffer, SizeOf(Buffer));
+              if BytesRead > 0 then
+                OutputStream.Write(Buffer, BytesRead);
+            end;
+            Sleep(10);
+          end;
+          while (Proc.Output <> nil) and (Proc.Output.NumBytesAvailable > 0) do
+          begin
+            BytesRead := Proc.Output.Read(Buffer, SizeOf(Buffer));
+            if BytesRead > 0 then
+              OutputStream.Write(Buffer, BytesRead);
+          end;
+          ScriptOutput := Trim(OutputStream.DataString);
+          Result := Proc.ExitStatus;
+        finally
+          OutputStream.Free;
+        end;
+      except
+        on E: Exception do
+        begin
+          ScriptOutput := '';
+          Result := -1;
+        end;
+      end;
+    finally
+      Proc.Free;
+    end;
+  end
+  else
+  begin
+    if RunnerCmd <> '' then
+      CmdLine := RunnerCmd + ' "' + ScriptPath + '"'
+    else
+      CmdLine := '"' + ScriptPath + '"';
+
+    {$IFDEF WINDOWS}
+    Result := ExecuteProcess('cmd', '/c cd /d "' + ToolDir + '" && ' + CmdLine);
+    {$ELSE}
+    Result := ExecuteProcess('/bin/sh', '-c "cd ''' + ToolDir + ''' && ' + CmdLine + '"');
+    {$ENDIF}
+  end;
+end;
+
+function LoadToolFromDir(const DirPath: string; IsCustom: Boolean; out Tool: TBVTool): Boolean;
+var
+  ManifestFile, Content: string;
+  Parser: TJSONParser;
+  JsonData: TJSONData;
+  Obj, ScriptsObj: TJSONObject;
 begin
   Result := False;
-  FoundVersion := '';
-  CheckDirs[0] := HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions';
-  CheckDirs[1] := HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions';
-  CheckDirs[2] := HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions';
+  Tool.Name := '';
+  Tool.Category := '';
+  Tool.Description := '';
+  Tool.Version := '';
+  Tool.DirPath := DirPath;
+  Tool.StatusScript := '';
+  Tool.InstallScript := '';
+  Tool.RemoveScript := '';
+  Tool.PackScript := '';
+  Tool.IsCustom := IsCustom;
 
-  for I := 0 to High(CheckDirs) do
-  begin
-    BaseDir := CheckDirs[I];
-    if DirectoryExists(BaseDir) then
-    begin
-      if DirectoryExists(BaseDir + DirectorySeparator + 'blaisevue-vscode') then
+  ManifestFile := IncludeTrailingPathDelimiter(DirPath) + 'tool.json';
+  if not FileExists(ManifestFile) then Exit;
+
+  Content := ReadFileToString(ManifestFile);
+  if Content = '' then Exit;
+
+  try
+    Parser := TJSONParser.Create(Content);
+    try
+      JsonData := Parser.Parse;
+      if (JsonData <> nil) and (JsonData is TJSONObject) then
       begin
+        Obj := TJSONObject(JsonData);
+        Tool.Name := Obj.Get('name', ExtractFileName(ExcludeTrailingPathDelimiter(DirPath)));
+        Tool.Category := Obj.Get('category', 'Tool');
+        Tool.Description := Obj.Get('description', '');
+        Tool.Version := Obj.Get('version', '');
+
+        if Obj.Find('scripts') is TJSONObject then
+        begin
+          ScriptsObj := TJSONObject(Obj.Find('scripts'));
+          Tool.StatusScript := ScriptsObj.Get('status', '');
+          Tool.InstallScript := ScriptsObj.Get('install', '');
+          Tool.RemoveScript := ScriptsObj.Get('remove', '');
+          Tool.PackScript := ScriptsObj.Get('pack', '');
+        end;
         Result := True;
-        Exit;
       end;
-      if FindFirst(BaseDir + DirectorySeparator + 'blaisevue.blaisevue-vscode*', faDirectory, SR) = 0 then
+    finally
+      if JsonData <> nil then JsonData.Free;
+      Parser.Free;
+    end;
+  except
+    Result := False;
+  end;
+end;
+
+function DiscoverAllTools: TBVToolArray;
+var
+  ToolsList: TBVToolArray;
+  BuiltinPath, UserPath, SubDir: string;
+  SR: TSearchRec;
+  Tool: TBVTool;
+
+  procedure ScanDir(const BasePath: string; IsCustom: Boolean);
+  begin
+    if (BasePath <> '') and DirectoryExists(BasePath) then
+    begin
+      if FindFirst(IncludeTrailingPathDelimiter(BasePath) + '*', faDirectory, SR) = 0 then
       begin
         repeat
           if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
           begin
-            FoundVersion := Copy(SR.Name, Length('blaisevue.blaisevue-vscode-') + 1, Length(SR.Name));
-            Result := True;
-            FindClose(SR);
-            Exit;
+            SubDir := IncludeTrailingPathDelimiter(BasePath) + SR.Name;
+            if LoadToolFromDir(SubDir, IsCustom, Tool) then
+            begin
+              SetLength(ToolsList, Length(ToolsList) + 1);
+              ToolsList[High(ToolsList)] := Tool;
+            end
+            else if IsCustom then
+            begin
+              Tool.Name := SR.Name;
+              Tool.Category := 'User Custom Tool';
+              Tool.Description := 'Custom tool in ~/.blaisevue/tools';
+              Tool.Version := '';
+              Tool.DirPath := SubDir;
+              Tool.IsCustom := True;
+              Tool.StatusScript := '';
+              Tool.InstallScript := '';
+              Tool.RemoveScript := '';
+              Tool.PackScript := '';
+              if FileExists(SubDir + DirectorySeparator + 'status.py') then Tool.StatusScript := 'status.py'
+              else if FileExists(SubDir + DirectorySeparator + 'status.pas') then Tool.StatusScript := 'status.pas';
+              if FileExists(SubDir + DirectorySeparator + 'install.py') then Tool.InstallScript := 'install.py'
+              else if FileExists(SubDir + DirectorySeparator + 'install.pas') then Tool.InstallScript := 'install.pas';
+              if FileExists(SubDir + DirectorySeparator + 'remove.py') then Tool.RemoveScript := 'remove.py'
+              else if FileExists(SubDir + DirectorySeparator + 'remove.pas') then Tool.RemoveScript := 'remove.pas';
+              SetLength(ToolsList, Length(ToolsList) + 1);
+              ToolsList[High(ToolsList)] := Tool;
+            end;
           end;
         until FindNext(SR) <> 0;
         FindClose(SR);
       end;
     end;
   end;
-end;
 
-procedure DeleteVSCodeExtension(const HomeDir: string);
-var
-  SR: TSearchRec;
-  CheckDirs: array[0..2] of string;
-  I: Integer;
-  BaseDir: string;
 begin
-  CheckDirs[0] := HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions';
-  CheckDirs[1] := HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions';
-  CheckDirs[2] := HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions';
-
-  for I := 0 to High(CheckDirs) do
-  begin
-    BaseDir := CheckDirs[I];
-    if DirectoryExists(BaseDir) then
-    begin
-      if DirectoryExists(BaseDir + DirectorySeparator + 'blaisevue-vscode') then
-        DeleteDir(BaseDir + DirectorySeparator + 'blaisevue-vscode');
-      if FindFirst(BaseDir + DirectorySeparator + 'blaisevue.blaisevue-vscode*', faDirectory, SR) = 0 then
-      begin
-        repeat
-          if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
-            DeleteDir(BaseDir + DirectorySeparator + SR.Name);
-        until FindNext(SR) <> 0;
-        FindClose(SR);
-      end;
-    end;
-  end;
+  SetLength(ToolsList, 0);
+  BuiltinPath := GetBuiltinToolsPath;
+  ScanDir(BuiltinPath, False);
+  UserPath := GetGlobalToolsPath;
+  ScanDir(UserPath, True);
+  Result := ToolsList;
 end;
 
 procedure CmdExtension(const Action: string = ''; const Target: string = '');
 var
-  ExtDir, DevtoolsDir, LazarusDir, LazarusPkg, LazbuildPath, ScriptPath, SubCmd, TargetLower: string;
-  GlobalToolsDir, CustomToolPath, HomeDir, InstalledVer: string;
-  VSCodeInstalled: Boolean;
-  SR: TSearchRec;
-  Count: Integer;
+  SubCmd, TargetLower, StatusText, Dummy: string;
+  AllTools: TBVToolArray;
+  I, FoundIndex: Integer;
 begin
   SubCmd := LowerCase(Trim(Action));
   TargetLower := LowerCase(Trim(Target));
   if SubCmd = '' then SubCmd := 'list';
+
+  AllTools := DiscoverAllTools;
 
   if (SubCmd = 'list') or (SubCmd = 'ls') then
   begin
@@ -12512,57 +12675,26 @@ begin
     WriteLn(PadRight('Extension', 22), PadRight('Category / Target', 26), PadRight('Status', 26));
     WriteLn(StringOfChar('-', 74));
 
-    {$IFDEF WINDOWS}
-    HomeDir := GetEnvironmentVariable('USERPROFILE');
-    if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
-    {$ELSE}
-    HomeDir := GetEnvironmentVariable('HOME');
-    {$ENDIF}
-
-    VSCodeInstalled := CheckVSCodeExtensionInstalled(HomeDir, InstalledVer);
-
-    if VSCodeInstalled then
+    if Length(AllTools) = 0 then
+      WriteLn('No tools or extensions found.')
+    else
     begin
-      if InstalledVer <> '' then
-        WriteLn(PadRight('blaise-vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (v' + InstalledVer + ')')
-      else
-        WriteLn(PadRight('blaise-vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (IDE)');
-    end
-    else
-      WriteLn(PadRight('blaise-vscode', 22), PadRight('VS Code / VSCodium', 26), 'Available (Run: bv extension install blaise-vscode)');
-
-    LazarusDir := GetBuiltinToolsPath + 'lazarus';
-    LazarusPkg := LazarusDir + DirectorySeparator + 'blaisevue_ide.lpk';
-    if DirectoryExists(LazarusDir) and FileExists(LazarusPkg) then
-      WriteLn(PadRight('blaise-lazarus', 22), PadRight('Lazarus IDE Package', 26), 'Available (Run: bv extension install blaise-lazarus)')
-    else
-      WriteLn(PadRight('blaise-lazarus', 22), PadRight('Lazarus IDE Package', 26), 'Not found');
-
-    DevtoolsDir := GetBuiltinToolsPath + 'devtools-extension';
-    if DirectoryExists(DevtoolsDir) then
-      WriteLn(PadRight('blaise-devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Available (Run: bv extension install blaise-devtools)')
-    else
-      WriteLn(PadRight('blaise-devtools', 22), PadRight('Browser DevTools (F12)', 26), 'Not found');
-
-    GlobalToolsDir := GetGlobalToolsPath;
-    Count := 0;
-    if DirectoryExists(GlobalToolsDir) and (FindFirst(GlobalToolsDir + '*', faDirectory, SR) = 0) then
-    begin
-      repeat
-        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
-        begin
-          Inc(Count);
-          WriteLn(PadRight(SR.Name, 22), PadRight('User Custom Tool', 26), 'Custom (~/.blaisevue/tools)');
-        end;
-      until FindNext(SR) <> 0;
-      FindClose(SR);
+      for I := 0 to High(AllTools) do
+      begin
+        StatusText := '';
+        if AllTools[I].StatusScript <> '' then
+          RunToolScript(AllTools[I].DirPath, AllTools[I].StatusScript, StatusText, True);
+        if StatusText = '' then
+          StatusText := 'Available (Run: bv extension install ' + AllTools[I].Name + ')';
+        WriteLn(PadRight(AllTools[I].Name, 22), PadRight(AllTools[I].Category, 26), StatusText);
+      end;
     end;
 
     WriteLn(StringOfChar('-', 74));
     WriteLn('Commands:');
-    WriteLn('  bv extension install <target>   Installs a tool (e.g. blaise-vscode, blaise-lazarus, blaise-devtools)');
-    WriteLn('  bv extension remove <target>    Uninstalls a tool (e.g. blaise-vscode, <custom>)');
-    WriteLn('  bv extension pack [target]      Packages extension into a standalone .vsix bundle');
+    WriteLn('  bv extension install <target>   Installs a tool package');
+    WriteLn('  bv extension remove <target>    Uninstalls a tool package');
+    WriteLn('  bv extension pack [target]      Packages extension into a standalone bundle');
     WriteLn('');
   end
   else if (SubCmd = 'install') or (SubCmd = 'i') or (SubCmd = 'add') then
@@ -12573,127 +12705,39 @@ begin
       WriteLn('Usage: bv extension install <target>');
       WriteLn('');
       WriteLn('Available targets:');
-      WriteLn('  blaise-vscode   - Installs official VS Code / Antigravity IDE extension (alias: vscode)');
-      WriteLn('  blaise-lazarus  - Compiles and registers official Lazarus IDE package (alias: lazarus)');
-      WriteLn('  blaise-devtools - Instructions to load browser DevTools extension (alias: devtools)');
-      WriteLn('  <custom>        - Installs a custom tool from ~/.blaisevue/tools/<name>');
+      for I := 0 to High(AllTools) do
+        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
       Exit;
     end;
 
-    if (TargetLower = 'blaise-vscode') or (TargetLower = 'vscode') then
+    FoundIndex := -1;
+    for I := 0 to High(AllTools) do
     begin
-      ExtDir := GetBuiltinToolsPath + 'vscode-extension';
-      if not DirectoryExists(ExtDir) then
-        ExtDir := GetSDKPath + 'vscode-extension';
-      if not DirectoryExists(ExtDir) then
+      if (LowerCase(AllTools[I].Name) = TargetLower) or
+         (AllTools[I].Name = 'blaise-' + TargetLower) or
+         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
+         ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
+         ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
       begin
-        WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
-        Exit;
-      end;
-
-      WriteLn('Installing BlaiseVue VS Code extension into ~/.vscode/extensions...');
-      ScriptPath := ExtDir + DirectorySeparator + 'install_extension.ps1';
-      {$IFDEF WINDOWS}
-      ExecuteProcess('powershell', '-File "' + ScriptPath + '"');
-      {$ELSE}
-      ExecuteProcess('/bin/sh', '-c "mkdir -p ~/.vscode/extensions/blaisevue-vscode && cp -r ''' + ExtDir + '''/* ~/.vscode/extensions/blaisevue-vscode/"');
-      {$ENDIF}
-    end
-    else if (TargetLower = 'blaise-lazarus') or (TargetLower = 'lazarus') then
-    begin
-      LazarusDir := GetBuiltinToolsPath + 'lazarus';
-      LazarusPkg := LazarusDir + DirectorySeparator + 'blaisevue_ide.lpk';
-      if not FileExists(LazarusPkg) then
-      begin
-        WriteLn('Error: Lazarus package not found at: ' + LazarusPkg);
-        Exit;
-      end;
-
-      WriteLn('=== BlaiseVue Lazarus IDE Package ===');
-      WriteLn('Package: ' + LazarusPkg);
-      WriteLn('');
-
-      LazbuildPath := '';
-      {$IFDEF WINDOWS}
-      if FileExists('C:\lazarus\lazbuild.exe') then
-        LazbuildPath := 'C:\lazarus\lazbuild.exe'
-      else if FileExists('lazbuild.exe') then
-        LazbuildPath := 'lazbuild.exe';
-      {$ELSE}
-      if FileExists('/usr/bin/lazbuild') then
-        LazbuildPath := '/usr/bin/lazbuild'
-      else if FileExists('/usr/local/bin/lazbuild') then
-        LazbuildPath := '/usr/local/bin/lazbuild';
-      {$ENDIF}
-
-      if LazbuildPath <> '' then
-      begin
-        WriteLn('Compiling package with lazbuild (' + LazbuildPath + ')...');
-        ExecuteProcess(LazbuildPath, LazarusPkg);
-        WriteLn('');
-        WriteLn('Package compiled successfully!');
-        WriteLn('To complete installation in Lazarus:');
-        WriteLn('  1. Open Lazarus IDE');
-        WriteLn('  2. Go to: Package -> Open Package File (.lpk)');
-        WriteLn('  3. Select: ' + LazarusPkg);
-        WriteLn('  4. Click "Use" -> "Install" and restart Lazarus');
-      end
-      else
-      begin
-        WriteLn('To install into Lazarus IDE:');
-        WriteLn('  1. Open Lazarus IDE');
-        WriteLn('  2. Go to: Package -> Open Package File (.lpk)');
-        WriteLn('  3. Select: ' + LazarusPkg);
-        WriteLn('  4. Click "Use" -> "Install"');
-      end;
-    end
-    else if (TargetLower = 'blaise-devtools') or (TargetLower = 'devtools') then
-    begin
-      DevtoolsDir := GetBuiltinToolsPath + 'devtools-extension';
-      WriteLn('');
-      WriteLn('=== BlaiseVue Browser DevTools Extension ===');
-      WriteLn('Directory: ' + DevtoolsDir);
-      WriteLn('');
-      WriteLn('To install in Mozilla Firefox:');
-      WriteLn('  1. Open Firefox and navigate to: about:debugging#/runtime/this-firefox');
-      WriteLn('  2. Click "Load Temporary Add-on..."');
-      WriteLn('  3. Select the file: ' + DevtoolsDir + DirectorySeparator + 'manifest.json');
-      WriteLn('');
-      WriteLn('To install in Google Chrome / Brave / Edge:');
-      WriteLn('  1. Open your browser and navigate to: chrome://extensions');
-      WriteLn('  2. Toggle on "Developer mode" (top-right corner)');
-      WriteLn('  3. Click "Load unpacked" (top-left button)');
-      WriteLn('  4. Select the folder: ' + DevtoolsDir);
-      WriteLn('');
-      WriteLn('Once loaded, open your BlaiseVue app, press F12, and click the "BlaiseVue" tab!');
-      WriteLn('');
-    end
-    else
-    begin
-      CustomToolPath := GetGlobalToolsPath + TargetLower;
-      if DirectoryExists(CustomToolPath) then
-      begin
-        WriteLn('Custom tool "' + TargetLower + '" found in ' + CustomToolPath);
-        if FileExists(CustomToolPath + DirectorySeparator + 'install.ps1') then
-        begin
-          WriteLn('Executing installation script: install.ps1...');
-          {$IFDEF WINDOWS}
-          ExecuteProcess('powershell', '-File "' + CustomToolPath + DirectorySeparator + 'install.ps1"');
-          {$ELSE}
-          if FileExists(CustomToolPath + DirectorySeparator + 'install.sh') then
-            ExecuteProcess('/bin/sh', '"' + CustomToolPath + DirectorySeparator + 'install.sh"');
-          {$ENDIF}
-        end
-        else
-          WriteLn('Tool is ready at: ' + CustomToolPath);
-      end
-      else
-      begin
-        WriteLn('Error: Extension or tool "' + TargetLower + '" not found.');
-        WriteLn('Available built-in tools: blaise-vscode, blaise-lazarus, blaise-devtools');
-        WriteLn('User tools directory: ' + GetGlobalToolsPath);
+        FoundIndex := I;
+        Break;
       end;
     end;
+
+    if FoundIndex = -1 then
+    begin
+      WriteLn('Error: Extension or tool "' + TargetLower + '" not found.');
+      WriteLn('');
+      WriteLn('Available targets:');
+      for I := 0 to High(AllTools) do
+        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
+      Exit;
+    end;
+
+    if AllTools[FoundIndex].InstallScript <> '' then
+      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].InstallScript, Dummy, False)
+    else
+      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define an install script.');
   end
   else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
   begin
@@ -12703,87 +12747,62 @@ begin
       WriteLn('Usage: bv extension remove <target>');
       WriteLn('');
       WriteLn('Available targets:');
-      WriteLn('  blaise-vscode   - Uninstalls official VS Code / Antigravity IDE extension (alias: vscode)');
-      WriteLn('  <custom>        - Uninstalls a custom tool from ~/.blaisevue/tools/<name>');
+      for I := 0 to High(AllTools) do
+        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
       Exit;
     end;
 
-    if (TargetLower = 'blaise-vscode') or (TargetLower = 'vscode') then
+    FoundIndex := -1;
+    for I := 0 to High(AllTools) do
     begin
-      WriteLn('Removing BlaiseVue VS Code extension...');
-      {$IFDEF WINDOWS}
-      HomeDir := GetEnvironmentVariable('USERPROFILE');
-      if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
-      {$ELSE}
-      HomeDir := GetEnvironmentVariable('HOME');
-      {$ENDIF}
-      DeleteVSCodeExtension(HomeDir);
-      WriteLn('BlaiseVue VS Code extension removed successfully.');
-    end
-    else if (TargetLower = 'blaise-devtools') or (TargetLower = 'devtools') then
-    begin
-      WriteLn('The browser DevTools extension is a temporary/unpacked extension.');
-      WriteLn('To remove it, simply click "Remove" in your browser:');
-      WriteLn('  - Firefox: about:debugging#/runtime/this-firefox -> Remove');
-      WriteLn('  - Chrome / Edge: chrome://extensions -> Remove');
-    end
-    else
-    begin
-      CustomToolPath := GetGlobalToolsPath + TargetLower;
-      if DirectoryExists(CustomToolPath) then
+      if (LowerCase(AllTools[I].Name) = TargetLower) or
+         (AllTools[I].Name = 'blaise-' + TargetLower) or
+         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
+         ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
+         ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
       begin
-        DeleteDir(CustomToolPath);
-        WriteLn('Custom tool "' + TargetLower + '" removed successfully from ~/.blaisevue/tools/.');
-      end
-      else
-        WriteLn('Error: Extension or tool "' + TargetLower + '" not found to remove.');
+        FoundIndex := I;
+        Break;
+      end;
     end;
+
+    if FoundIndex = -1 then
+    begin
+      WriteLn('Error: Extension or tool "' + TargetLower + '" not found to remove.');
+      Exit;
+    end;
+
+    if AllTools[FoundIndex].RemoveScript <> '' then
+      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].RemoveScript, Dummy, False)
+    else
+      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define a remove script.');
   end
   else if (SubCmd = 'pack') or (SubCmd = 'package') or (SubCmd = 'pkg') or (SubCmd = 'vsix') then
   begin
-    if (TargetLower = '') or (TargetLower = 'blaise-vscode') or (TargetLower = 'vscode') then
+    if TargetLower = '' then TargetLower := 'blaise-vscode';
+
+    FoundIndex := -1;
+    for I := 0 to High(AllTools) do
     begin
-      ExtDir := GetBuiltinToolsPath + 'vscode-extension';
-      if not DirectoryExists(ExtDir) then
-        ExtDir := GetSDKPath + 'vscode-extension';
-      if not DirectoryExists(ExtDir) then
+      if (LowerCase(AllTools[I].Name) = TargetLower) or
+         (AllTools[I].Name = 'blaise-' + TargetLower) or
+         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) then
       begin
-        WriteLn('Error: vscode-extension directory not found at: ' + ExtDir);
-        Exit;
+        FoundIndex := I;
+        Break;
       end;
-      if not HasCommand('node') then
-      begin
-        PrintNodeRequiredError('package the VS Code extension (@vscode/vsce)');
-        Exit;
-      end;
-      WriteLn('Packaging BlaiseVue VS Code extension into .vsix bundle...');
-      {$IFDEF WINDOWS}
-      ExecuteProcess('cmd', '/c cd /d "' + ExtDir + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
-      {$ELSE}
-      ExecuteProcess('/bin/sh', '-c "cd ''' + ExtDir + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
-      {$ENDIF}
-      WriteLn('Packaging completed successfully!');
-    end
-    else
-    begin
-      CustomToolPath := GetGlobalToolsPath + TargetLower;
-      if DirectoryExists(CustomToolPath) then
-      begin
-        if not HasCommand('node') then
-        begin
-          PrintNodeRequiredError('package the extension (@vscode/vsce)');
-          Exit;
-        end;
-        WriteLn('Packaging custom extension at ' + CustomToolPath + '...');
-        {$IFDEF WINDOWS}
-        ExecuteProcess('cmd', '/c cd /d "' + CustomToolPath + '" && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository');
-        {$ELSE}
-        ExecuteProcess('/bin/sh', '-c "cd ''' + CustomToolPath + ''' && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository"');
-        {$ENDIF}
-      end
-      else
-        WriteLn('Error: Directory for extension "' + TargetLower + '" not found.');
     end;
+
+    if FoundIndex = -1 then
+    begin
+      WriteLn('Error: Extension or tool "' + TargetLower + '" not found to pack.');
+      Exit;
+    end;
+
+    if AllTools[FoundIndex].PackScript <> '' then
+      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].PackScript, Dummy, False)
+    else
+      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define a pack script.');
   end
   else
   begin
@@ -12791,8 +12810,6 @@ begin
     WriteLn('Available subcommands: list, install, remove, pack');
   end;
 end;
-
-
 
 procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 

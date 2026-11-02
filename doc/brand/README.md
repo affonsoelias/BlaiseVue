@@ -33,7 +33,7 @@ All official visual assets are stored in this directory:
 | [`banner-2x.png`](banner-2x.png) | PNG | 2048x420 | High-DPI horizontal banner for 4K / retina displays. |
 | [`banner.svg`](banner.svg) | SVG | Vector 1024x210 | Scalable vector banner. |
 | [`preview.html`](preview.html) | HTML | Interactive | Brand showcase gallery with scaling simulations and banner previews. |
-| [`../../packages/tools/vscode-extension/icon.png`](../../packages/tools/vscode-extension/icon.png) | PNG | 128x128 | Official Visual Studio Code extension marketplace icon. |
+| [`../../packages/tools/blaise-vscode/icon.png`](../../packages/tools/blaise-vscode/icon.png) | PNG | 128x128 | Official Visual Studio Code extension marketplace icon. |
 | [`../../demo-app/public/favicon.ico`](../../demo-app/public/favicon.ico) | ICO | 16, 32, 48, 64 | Multi-resolution favicon for BlaiseVue web applications. |
 
 ---

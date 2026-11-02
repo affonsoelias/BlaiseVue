@@ -154,8 +154,8 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 
 #### 🛠️ Pillar 10: Unified Development Extensions & Tools Architecture (`packages/tools/`, `bv extension`)
 - **Centralized Extension Tooling (`bv extension`)**: Unified management (`list`, `install`, `remove`, `pack`) for IDE and browser extensions.
-- **VS Code Extension Packaging (`bv extension pack vscode`)**: Directly invokes `@vscode/vsce` to package production `.vsix` bundles from `packages/tools/vscode-extension/`.
-- **Browser DevTools Deployment (`bv extension install devtools`)**: Automated deployment guides and installation bridges for Chrome, Edge, and Firefox DevTools extensions from `packages/tools/devtools-extension/`.
+- **VS Code Extension Packaging (`bv extension pack vscode`)**: Directly invokes `@vscode/vsce` to package production `.vsix` bundles from `packages/tools/blaise-vscode/`.
+- **Browser DevTools Deployment (`bv extension install devtools`)**: Automated deployment guides and installation bridges for Chrome, Edge, and Firefox DevTools extensions from `packages/tools/blaise-devtools/`.
 - **User Global Tools (`~/.blaisevue/tools/`)**: Isolated user directory protecting custom community tools from framework `bv self-update` operations.
 
 ---

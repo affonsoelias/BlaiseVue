@@ -168,8 +168,8 @@ bv meta sync
 This ensures zero version drift across:
 - `core/uAppVersion.pas`
 - `demo-app/package.json` and `demo-app/src/uAppVersion.pas`
-- `packages/tools/vscode-extension/package.json`
-- `packages/tools/devtools-extension/manifest.json`
+- `packages/tools/blaise-vscode/package.json`
+- `packages/tools/blaise-devtools/manifest.json`
 - All sub-packages in `packages/core/*/package.json`
 
 ---
