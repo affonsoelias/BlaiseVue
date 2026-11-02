@@ -51,6 +51,7 @@ uses
 function ReadFileToString(const FileName: string): string; forward;
 function GetCliVersion: string; forward;
 function GetCliMajorMinor: string; forward;
+{ Synchronizes SemVer version strings across all official core packages in packages/core/. }
 procedure SyncMonorepoVersions(const TargetVer: string); forward;
 function GetPas2JSPackagesRoot: string; forward;
 function GetPas2JSPackageDescription(const PkgName: string): string; forward;
@@ -97,6 +98,7 @@ begin
   end;
 end;
 
+{ Resolves the absolute canonical file path of the running BlaiseVue CLI executable (bv / bv.exe). }
 function GetOwnExecutablePath: string;
 var
   {$IFDEF LINUX}
@@ -389,6 +391,7 @@ begin
   Result.Sort;
 end;
 
+{ Returns the filesystem path to the compiled Pas2JS runtime library (rtl.js). }
 function GetRTLPath: string;
 
 var
@@ -468,6 +471,7 @@ begin
   WriteLn('          Ensure "node" and "npm" are accessible in your system PATH.');
 end;
 
+{ Converts a PascalCase or UpperCamelCase identifier into a kebab-case HTML element tag name (e.g. "MyButton" -> "my-button"). }
 function PascalToKebab(const S: string): string;
 
 var
@@ -497,6 +501,7 @@ begin
   end;
 end;
 
+{ Converts a kebab-case HTML tag name into a PascalCase identifier (e.g. "my-button" -> "MyButton"). }
 function KebabToPascal(const S: string): string;
 
 var
@@ -524,22 +529,26 @@ begin
   end;
 end;
 
+{ Escapes single quotes for Object Pascal string literals by doubling them (e.g. "'" -> "''"). }
 function EscapeQuotes(const S: string): string;
 begin
   Result := StringReplace(S, '''', '''''', [rfReplaceAll]);
 end;
 
+{ Trims leading and trailing whitespace from a single line string. }
 function TrimLine(const S: string): string;
 begin
   Result := Trim(S);
 end;
 
+{ Creates a directory path recursively, including any missing parent folders. }
 procedure ForceDir(const D: string);
 begin
   if not DirectoryExists(D) then
     ForceDirectories(D);
 end;
 
+{ Recursively deletes a directory, all its subdirectories, and files. }
 procedure DeleteDir(Path: string);
 
 var
@@ -566,6 +575,7 @@ begin
   RemoveDir(Path);
 end;
 
+{ Reads and returns the entire contents of a text file as an Object Pascal string. }
 function ReadFileToString(const FileName: string): string;
 
 var
@@ -583,6 +593,7 @@ begin
   end;
 end;
 
+{ Writes an Object Pascal string buffer to a file on disk, overwriting any existing content. }
 procedure WriteStringToFile(const FileName, Content: string);
 
 var
@@ -603,6 +614,7 @@ begin
   end;
 end;
 
+{ Computes a fast hash/timestamp fingerprint for file change detection during builds. }
 function GetFileHash(const FileName: string): string;
 
 var
@@ -674,38 +686,47 @@ type
     InjectCode: string;
     HasRouter: Boolean;
   end;
+{ Parses the <script> section of a .bv Single File Component, extracting props, data fields, router configurations, methods, computed properties, watchers, and lifecycle hooks into a TBVParsed record. }
 procedure ParseScriptBlock(const Block: string; var Parsed: TBVParsed); forward;
 procedure ScanDirForBV(const Path: string; List: TStringList); forward;
 procedure ScanDirForCSS(const Path: string; List: TStringList); forward;
 procedure ScanDirForJS(const Path: string; List: TStringList); forward;
+{ Scans test directories to discover test files for automated test execution. }
 procedure ScanDirForTests(const Path: string; List: TStringList); forward;
 function GetReposConfigPath: string; forward;
 function LoadReposRegistry(out RootObj: TJSONObject): Boolean; forward;
 procedure GetOrderedRepoNames(out RepoNames: TStringList); forward;
+{ Checks if a package name is reserved to prevent namespace collision attacks. }
 function IsReservedCorePackageName(const Name: string): Boolean; forward;
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean; forward;
 procedure CmdRepoSync; forward;
+{ Lists all installed libraries and framework packages for the current project or globally (bv lib list). }
 procedure CmdLibList(IsGlobal: Boolean = False); forward;
 procedure CmdLibInstall(const TargetArg: string; IsGlobal: Boolean = False); forward;
 procedure CmdLibRemove(const LibName: string; IsGlobal: Boolean = False); forward;
 procedure CmdLibUpdate(const LibName: string = ''; IsGlobal: Boolean = False); forward;
+{ Checks if newer versions of installed packages are available in registered repositories (bv lib outdated). }
 procedure CmdLibOutdated(IsGlobal: Boolean = False); forward;
 procedure CmdLibSearch(const Query: string); forward;
 procedure CmdCreateLib(const LibName: string; const SelectedLicense: string); forward;
 procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean); forward;
+{ Displays all available Bootswatch and custom themes (bv theme list). }
 procedure CmdThemeList; forward;
 procedure CmdThemeUse(const ThemeName: string); forward;
 procedure CmdDoc(const ServeMode: Boolean); forward;
 procedure CmdSSG; forward;
+{ WebAssembly compilation, diagnostic, and benchmark runner (bv wasm). }
 procedure CmdWasm(const SubCmd: string); forward;
 procedure CmdTestE2E; forward;
 procedure CmdStudio; forward;
 procedure CmdCheck(const TargetFile: string); forward;
+{ Reformats a .bv Single File Component with standardized Pascal indentation and clean HTML tags. }
 function FormatBVContent(const AContent: string): string; forward;
 procedure CmdFormat(const TargetFile: string; CheckOnly: Boolean = False); forward;
 procedure CmdLicense; forward;
 procedure CmdMeta; forward;
+{ Unit search path command dispatcher (bv path). }
 procedure CmdPath; forward;
 procedure CmdLazarus; forward;
 procedure CmdReset; forward;
@@ -714,6 +735,7 @@ procedure CmdDoctor; forward;
 procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
 procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
+{ Removes native desktop platform scaffolding and WebUI bindings (bv remove desktop). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
@@ -737,11 +759,11 @@ begin
   Parsed.WatchCode := '';
   Parsed.ComputedCode := '';
 
-  Parsed.UpdatedCode := ''; // New
+  Parsed.UpdatedCode := ''; // Lifecycle hook: updated
 
-  Parsed.ProvideCode := ''; // New
+  Parsed.ProvideCode := ''; // Dependency injection: provide
 
-  Parsed.InjectCode := '';  // New
+  Parsed.InjectCode := '';  // Dependency injection: inject
 
   Parsed.HasRouter := False;
   SetLength(Parsed.DataFields, 0);
@@ -815,6 +837,7 @@ begin
   end;
 end;
 
+{ Parses the <script> section of a .bv Single File Component, extracting props, data fields, router configurations, methods, computed properties, watchers, and lifecycle hooks into a TBVParsed record. }
 procedure ParseScriptBlock(const Block: string; var Parsed: TBVParsed);
 
 var
@@ -1019,6 +1042,7 @@ end;
   - GenerateStyleInjection: Compiles scoped/global CSS for runtime DOM injection
 }
 
+{ Preprocesses template expressions and Pascal identifiers to ensure type-safe member access (e.g. converting "state.prop" and "this.prop" accesses) while preserving inline string literals and asm ... end blocks. }
 function CleanPascalProps(const S: string): string;
 
 var
@@ -1126,6 +1150,7 @@ begin
   Result := Res;
 end;
 
+{ Generates the data(): TJSObject reactive state factory method for a component from its parsed data fields. }
 function GenerateDataCode(const Fields: array of TDataField): string;
 
 var
@@ -1185,6 +1210,7 @@ begin
     '  end;' + #10;
 end;
 
+{ Generates the declared props array and property accessors for component parameter binding. }
 function GeneratePropsCode(const Fields: array of TDataField): string;
 
 var
@@ -1306,6 +1332,7 @@ begin
   end;
 end;
 
+{ Extracts and compiles Pascal procedures and functions declared in the <script> block, binding them to the component instance dispatch table. }
 function GenerateMethodsCode(const RawCode: string): string;
 
 var
@@ -1425,6 +1452,7 @@ begin
   end;
 end;
 
+{ Transforms the HTML <template> into an escaped, multiline Pascal string literal constant for runtime DOM mounting. }
 function GenerateTemplateString(const Template: string): string;
 
 var
@@ -1458,6 +1486,7 @@ begin
   end;
 end;
 
+{ Compiles <style> tag content into a client-side stylesheet injector for scoped and global component styling. }
 function GenerateStyleInjection(const Style: string): string;
 
 var
@@ -1489,6 +1518,7 @@ begin
     '  document.head.appendChild(_styleEl);' + #10;
 end;
 
+{ Emits lifecycle hook registration code (created, mounted, updated, destroyed) for component lifecycle management. }
 function GenerateLifecycleCode(const Key, RawCode: string): string;
 
 var
@@ -1524,6 +1554,7 @@ begin
     Result := Result + '    begin' + #10 + '      asm if (!_this) _this = this; end;' + #10 + CleanCode + #10 + '    end;' + #10;
 end;
 
+{ Generates reactive state watcher callbacks that trigger on specific data mutations. }
 function GenerateWatchCode(const RawCode: string): string;
 
 var
@@ -1586,6 +1617,7 @@ begin
   end;
 end;
 
+{ Generates reactive computed properties with automatic dependency tracking and result caching. }
 function GenerateComputedCode(const RawCode: string): string;
 
 var
@@ -1623,6 +1655,7 @@ begin
   end;
 end;
 
+{ Generates dependency injection "provide" descriptors for hierarchical state sharing. }
 function GenerateProvideCode(const RawCode: string): string;
 
 var
@@ -1658,6 +1691,7 @@ begin
   end;
 end;
 
+{ Generates dependency injection "inject" descriptors to resolve parent-provided services. }
 function GenerateInjectCode(const RawCode: string): string;
 
 var
@@ -2119,6 +2153,7 @@ begin
   end;
 end;
 
+{ Recursively copies all files and subdirectories from Source to Dest, respecting an exclusion list. }
 procedure CopyDir(const Source, Dest: string; const ExcludeList: array of string);
 
 var
@@ -2169,36 +2204,43 @@ type
     Count: QWord;
     Buffer: array[0..63] of Byte;
   end;
+{ Performs a 32-bit right rotation of x by n bits (RFC 6234 cryptographic primitive). }
 function ROR32(x: Cardinal; n: Byte): Cardinal; inline;
 begin
   Result := (x shr n) or (x shl (32 - n));
 end;
 
+{ SHA-256 Ch bitwise operator: (x and y) xor ((not x) and z). }
 function Ch32(x, y, z: Cardinal): Cardinal; inline;
 begin
   Result := (x and y) xor ((not x) and z);
 end;
 
+{ SHA-256 Maj bitwise operator: (x and y) xor (x and z) xor (y and z). }
 function Maj32(x, y, z: Cardinal): Cardinal; inline;
 begin
   Result := (x and y) xor (x and z) xor (y and z);
 end;
 
+{ SHA-256 Sigma0 bitwise operator: ROR32(x, 2) xor ROR32(x, 13) xor ROR32(x, 22). }
 function Sigma0_32(x: Cardinal): Cardinal; inline;
 begin
   Result := ROR32(x, 2) xor ROR32(x, 13) xor ROR32(x, 22);
 end;
 
+{ SHA-256 Sigma1 bitwise operator: ROR32(x, 6) xor ROR32(x, 11) xor ROR32(x, 25). }
 function Sigma1_32(x: Cardinal): Cardinal; inline;
 begin
   Result := ROR32(x, 6) xor ROR32(x, 11) xor ROR32(x, 25);
 end;
 
+{ SHA-256 Gamma0 bitwise operator: ROR32(x, 7) xor ROR32(x, 18) xor (x shr 3). }
 function Gamma0_32(x: Cardinal): Cardinal; inline;
 begin
   Result := ROR32(x, 7) xor ROR32(x, 18) xor (x shr 3);
 end;
 
+{ SHA-256 Gamma1 bitwise operator: ROR32(x, 17) xor ROR32(x, 19) xor (x shr 10). }
 function Gamma1_32(x: Cardinal): Cardinal; inline;
 begin
   Result := ROR32(x, 17) xor ROR32(x, 19) xor (x shr 10);
@@ -2216,6 +2258,7 @@ const
     $748f82ee, $78a5636f, $84c87814, $8cc70208, $90befffa, $a4506ceb, $bef9a3f7, $c67178f2
   );
 
+{ Processes a single 512-bit (64-byte) block with the SHA-256 compression function. }
 procedure SHA256Transform(var State: array of Cardinal; const Block: array of Byte);
 var
   W: array[0..63] of Cardinal;
@@ -2242,6 +2285,7 @@ begin
   Inc(State[4], e); Inc(State[5], f); Inc(State[6], g); Inc(State[7], h);
 end;
 
+{ Initializes a SHA-256 cryptographic hashing context with standard initial constants. }
 procedure SHA256Init(var Ctx: TSHA256Context);
 begin
   Ctx.State[0] := $6a09e667; Ctx.State[1] := $bb67ae85;
@@ -2252,6 +2296,7 @@ begin
   FillChar(Ctx.Buffer, SizeOf(Ctx.Buffer), 0);
 end;
 
+{ Feeds a byte buffer into the active SHA-256 cryptographic hashing context. }
 procedure SHA256Update(var Ctx: TSHA256Context; const Data; Len: Cardinal);
 var
   BufferIndex, BufferLeft: Cardinal;
@@ -2280,6 +2325,7 @@ begin
     Move(P^, Ctx.Buffer[BufferIndex], Len);
 end;
 
+{ Finalizes the SHA-256 context and returns the resulting 64-character lowercase hexadecimal hash. }
 function SHA256FinalHex(var Ctx: TSHA256Context): string;
 var
   BitLen: QWord;
@@ -2307,6 +2353,7 @@ begin
   Result := LowerCase(Result);
 end;
 
+{ Computes the cryptographic SHA-256 checksum of a file on disk. }
 function FileSHA256(const FileName: string): string;
 var
   FS: TFileStream;
@@ -2364,6 +2411,7 @@ begin
   if Result = '' then Result := 'CustomComponent';
 end;
 
+{ Converts arbitrary text into a lowercase kebab-case slug. }
 function ToKebabCase(const S: string): string;
 var
   i: Integer;
@@ -3268,6 +3316,7 @@ begin
   Result := D[Len1, Len2];
 end;
 
+{ Finds the closest matching candidate string for a target identifier using Levenshtein distance for compiler typo hints. }
 function FindClosestMatch(const Target: string; Candidates: TStringList): string;
 
 var
@@ -3294,6 +3343,7 @@ begin
     Result := BestMatch;
 end;
 
+{ Checks whether an identifier is an ECMAScript / JavaScript reserved keyword. }
 function IsJSReservedWord(const W: string): Boolean;
 
 var
@@ -3318,6 +3368,7 @@ begin
             (L = 'delete') or (L = 'yield') or (L = 'await') or (L = 'async');
 end;
 
+{ Extracts declared procedure and function names from a Pascal code fragment for symbol table validation. }
 procedure ExtractPascalRoutines(const Code: string; Names: TStringList);
 
 var
@@ -3350,6 +3401,7 @@ begin
   end;
 end;
 
+{ Parses an AST expression to extract root variable identifiers for template scope verification. }
 procedure ExtractRootIdentifiers(const Expr: string; Identifiers: TStringList);
 
 var
@@ -3434,6 +3486,7 @@ begin
   end;
 end;
 
+{ Determines whether a symbol exists in a symbol table using case-insensitive comparison. }
 function HasSymbolCaseInsensitive(const Symbol: string; Symbols: TStringList): Boolean;
 
 var
@@ -3453,6 +3506,7 @@ begin
   Result := False;
 end;
 
+{ Statically verifies template directives (b-model, b-for, b-if, @click) against declared component Pascal state and methods, emitting compile-time diagnostics with typo suggestions. }
 function ValidateComponentTemplate(const BVFilePath: string; const Parsed: TBVParsed; const StrictMode: Boolean = False): Integer;
 
 var
@@ -3677,6 +3731,7 @@ begin
   end;
 end;
 
+{ Executes static verification of Single File Component templates and scripts (bv check). }
 procedure CmdCheck(const TargetFile: string);
 
 var
@@ -3733,6 +3788,7 @@ begin
   end;
 end;
 
+{ Reformats a .bv Single File Component with standardized Pascal indentation and clean HTML tags. }
 function FormatBVContent(const AContent: string): string;
 var
   InLines, OutLines: TStringList;
@@ -3743,6 +3799,7 @@ var
   InMethodBody: Boolean;
   StyleIndent: Integer;
   LastEmpty: Boolean;
+{ Validates that all HTML opening tags have matching closing tags in the template. }
   function CountUnclosedTags(const S: string): Integer;
   var
     P, TagStart, TagEnd: Integer;
@@ -3954,6 +4011,7 @@ begin
   end;
 end;
 
+{ Formats .bv components across the project with uniform styling rules (bv format). }
 procedure CmdFormat(const TargetFile: string; CheckOnly: Boolean = False);
 var
   BVFiles: TStringList;
@@ -4711,6 +4769,7 @@ begin
   end;
 end;
 
+{ Executes package post-install and setup lifecycle scripts (install.py, setup.py). }
 function RunSetupScript(const LibName, Action: string): Boolean;
 
 var
@@ -4757,6 +4816,7 @@ begin
   Result := (ExitCode = 0);
 end;
 
+{ Launches the interactive package and framework setup wizard (bv setup). }
 procedure CmdSetup(const LibName: string);
 
 var
@@ -4800,6 +4860,7 @@ begin
   else WriteLn('Action cancelled.');
 end;
 
+{ Resolves the installation folder of an official core package in packages/core/. }
 function GetCorePackageFolder(const Name: string): string;
 var
   L: string;
@@ -4816,6 +4877,7 @@ begin
   else Result := '';
 end;
 
+{ Reads the version string from a package manifest (package.json). }
 function GetPackageVersionFromFolder(const FolderPath: string): string;
 var
   JsonFile, Raw, BaseName, CoreDir: string;
@@ -4876,6 +4938,7 @@ begin
   end;
 end;
 
+{ Extracts a ZIP archive, stripping redundant single-folder wrapper structures. }
 procedure ExtractZipSmart(const ZipFile, DestBaseDir, PkgName: string);
 var
   UnZipper: TUnZipper;
@@ -4917,6 +4980,7 @@ begin
   end;
 end;
 
+{ Returns True if the package name belongs to the official @blaise-ui / @blaise-* namespace. }
 function IsOfficialCorePackage(const Name: string): Boolean;
 var
   L: string;
@@ -4932,6 +4996,7 @@ begin
             DirectoryExists(GetPackagesPath + L);
 end;
 
+{ Checks if a package name is reserved to prevent namespace collision attacks. }
 function IsReservedCorePackageName(const Name: string): Boolean;
 var
   L: string;
@@ -4943,6 +5008,7 @@ begin
             (L = 'framework') or (L = 'std') or (L = 'runtime');
 end;
 
+{ Installs an official framework core package into the local project lib/ directory. }
 procedure InstallCorePackage(const Name: string);
 var
   L, LibPath, PkgSource: string;
@@ -5041,6 +5107,7 @@ begin
   end;
 end;
 
+{ Downloads and installs a package archive directly from an HTTP/HTTPS URL. }
 procedure InstallDirectArchive(const URL: string; IsGlobal: Boolean);
 var
   TargetBase, DownloadURL, ZipName: string;
@@ -5093,6 +5160,7 @@ begin
   WriteLn('Installation completed successfully!');
 end;
 
+{ Returns the list of registered package repository names ordered by priority. }
 procedure GetOrderedRepoNames(out RepoNames: TStringList);
 var
   RootObj, RepoObj: TJSONObject;
@@ -5148,6 +5216,7 @@ begin
     RepoNames.Add('official');
 end;
 
+{ Queries registered package repositories to locate a package satisfying a SemVer constraint. }
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean;
 var
@@ -5310,6 +5379,7 @@ begin
   end;
 end;
 
+{ Lists all installed libraries and framework packages for the current project or globally (bv lib list). }
 procedure CmdLibList(IsGlobal: Boolean = False);
 var
   SR: TSearchRec;
@@ -5375,6 +5445,7 @@ begin
   end;
 end;
 
+{ Uninstalls a package and removes its source code and assets from the project (bv lib remove). }
 procedure CmdLibRemove(const LibName: string; IsGlobal: Boolean = False);
 var
   Path, CorePath: string;
@@ -5429,6 +5500,7 @@ begin
   end;
 end;
 
+{ Installs a package from registry, local folder, or URL into the project (bv lib install). }
 procedure CmdLibInstall(const TargetArg: string; IsGlobal: Boolean = False);
 var
   RawArg, PkgName, ReqVersion, TargetRepo, RemainingArg: string;
@@ -5610,6 +5682,7 @@ begin
   end;
 end;
 
+{ Updates installed packages to their latest compatible SemVer versions (bv lib update). }
 procedure CmdLibUpdate(const LibName: string = ''; IsGlobal: Boolean = False);
 var
   TargetBase, PkgDir, CurrentVer, FoundVer, DownloadURL, Checksum, RepoName: string;
@@ -5707,6 +5780,7 @@ begin
     WriteLn(IntToStr(UpdatedCount) + ' library(ies) updated successfully!');
 end;
 
+{ Checks if newer versions of installed packages are available in registered repositories (bv lib outdated). }
 procedure CmdLibOutdated(IsGlobal: Boolean = False);
 var
   TargetBase, InstalledVer, FoundVer, DownloadURL, Checksum, RepoName, RowStatus: string;
@@ -5786,6 +5860,7 @@ begin
   WriteLn('');
 end;
 
+{ Searches registered package repositories for packages matching a query (bv lib search). }
 procedure CmdLibSearch(const Query: string);
 var
   CacheDir, CacheFile, RawJson, PkgKey, PkgDesc, PkgLatest, PkgAuthor, QueryLower: string;
@@ -5894,6 +5969,7 @@ begin
   WriteLn(StringOfChar('-', 65));
 end;
 
+{ Packages a local library into a distributable release ZIP archive (bv lib pack). }
 procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean);
 var
   BaseDir, PkgJsonFile, PkgName, PkgVersion, DistDir, ZipFile, ChecksumFile: string;
@@ -5904,6 +5980,7 @@ var
   FS: TFileStream;
   JData: TJSONData;
   JObj: TJSONObject;
+{ Recursively compresses a folder tree into a ZIP archive file. }
   procedure AddDirectoryToZip(const RootDir, SubDir: string);
   var
     SR: TSearchRec;
@@ -6073,6 +6150,7 @@ begin
   WriteLn('');
 end;
 
+{ Displays all available Bootswatch and custom themes (bv theme list). }
 procedure CmdThemeList;
 
 var
@@ -6105,6 +6183,7 @@ begin
   WriteLn(StringOfChar('-', 40));
 end;
 
+{ Applies a selected theme to index.html and project configuration (bv theme use). }
 procedure CmdThemeUse(const ThemeName: string);
 
 var
@@ -6157,6 +6236,7 @@ begin
   WriteLn('Theme successfully set to "', CleanName, '" in ', ExtractFileName(IndexPath));
 end;
 
+{ Discovers all CSS stylesheet assets in installed packages for injection into index.html. }
 procedure ScanDirForCSS(const Path: string; List: TStringList);
 
 var
@@ -6184,6 +6264,7 @@ begin
   end;
 end;
 
+{ Discovers all JS script bundles in installed packages for injection into index.html. }
 procedure ScanDirForJS(const Path: string; List: TStringList);
 
 var
@@ -6208,6 +6289,7 @@ begin
   end;
 end;
 
+{ Deletes a view component and removes its associated route from App.pas (bv remove view). }
 procedure CmdRemoveView(const ViewName: string);
 
 var
@@ -6780,6 +6862,7 @@ begin
   end;
 end;
 
+{ Removes native desktop platform scaffolding and WebUI bindings (bv remove desktop). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean);
 var
   DesktopDir, BinDesktopDir: string;
@@ -6959,6 +7042,7 @@ begin
   end;
 end;
 
+{ Persists a modified TJSONObject configuration back to package.json. }
 procedure SavePackageJson(JsonObj: TJSONObject);
 var
   Formatted: string;
@@ -6968,6 +7052,7 @@ begin
   WriteStringToFile('package.json', Formatted + #10);
 end;
 
+{ Helper to retrieve a string value from a TJSONObject with a fallback default. }
 function GetJsonString(Obj: TJSONObject; const PropName, DefaultVal: string): string;
 var
   Item: TJSONData;
@@ -6979,6 +7064,7 @@ begin
     Result := Item.AsString;
 end;
 
+{ Helper to insert or update a string value in a TJSONObject. }
 procedure SetJsonString(Obj: TJSONObject; const PropName, Val: string);
 var
   Idx: Integer;
@@ -6991,6 +7077,7 @@ begin
     Obj.Add(PropName, Val);
 end;
 
+{ Generates or updates src/uAppVersion.pas, synchronizing version, author, and license constants. }
 procedure SyncAppVersionUnit(const AppName, AppVersion, AppAuthor, AppLicense: string);
 var
   BuildDate, UnitPath, UnitContent: string;
@@ -7032,6 +7119,7 @@ end;
 
 var
   CachedCliVersion: string = '';
+{ Returns the current SemVer version string of the BlaiseVue CLI. }
 function GetCliVersion: string;
 var
   CurP, SdkDir, PkgPath, Content: string;
@@ -7086,6 +7174,7 @@ begin
   CachedCliVersion := Result;
 end;
 
+{ Returns the major.minor version string of the BlaiseVue CLI (e.g. "4.4"). }
 function GetCliMajorMinor: string;
 var
   FullVer: string;
@@ -7105,6 +7194,7 @@ begin
     Result := FullVer;
 end;
 
+{ Updates the "version" property of a package.json file on disk. }
 procedure UpdateJsonFileVersion(const FilePath, NewVer: string);
 var
   Content: string;
@@ -7127,6 +7217,7 @@ begin
   end;
 end;
 
+{ Synchronizes SemVer version strings across all official core packages in packages/core/. }
 procedure SyncMonorepoVersions(const TargetVer: string);
 var
   RootDir, TargetFile, CoreDir: string;
@@ -7221,6 +7312,7 @@ begin
   CachedCliVersion := TargetVer;
 end;
 
+{ Calculates the next SemVer version string according to the requested bump type (major, minor, patch). }
 function BumpSemVer(const CurrentVer, BumpType: string): string;
 var
   Parts: TStringList;
@@ -7272,6 +7364,7 @@ begin
   Result := IntToStr(Major) + '.' + IntToStr(Minor) + '.' + IntToStr(Patch);
 end;
 
+{ Retrieves canonical license identifiers, titles, and full legal text (MIT, Apache-2.0, LGPL-3.0, etc.). }
 function GetLicenseDetails(const Key: string; out CanonId, Title, Body: string; const Author, Year: string): Boolean;
 var
   NormKey, YearStr, AuthorStr: string;
@@ -7462,6 +7555,7 @@ begin
     Result := False;
 end;
 
+{ Returns True if the CLI is running inside the framework demo-app workspace. }
 function IsFrameworkCoreDemoApp: Boolean;
 var
   CurDir, ParentDir: string;
@@ -7491,6 +7585,7 @@ begin
   end;
 end;
 
+{ Interactive project license configuration tool (bv license). }
 procedure CmdLicense;
 var
   SubCmd, LicType, AuthorArg, YearArg: string;
@@ -7667,6 +7762,7 @@ begin
   WriteLn('  [+] License applied successfully: ' + CanonId);
 end;
 
+{ Interactive SemVer version bumping and metadata synchronization suite (bv meta). }
 procedure CmdMeta;
 var
   SubCmd, FieldArg, ValueArg: string;
@@ -7852,6 +7948,7 @@ begin
   Halt(1);
 end;
 
+{ Lists all configured unit search paths in blaisevue.json (bv path list). }
 procedure CmdPathList;
 var
   AppCfgPath, Line, CleanLine, PathVal, PkgName: string;
@@ -7935,6 +8032,7 @@ begin
   end;
 end;
 
+{ Appends a custom unit search path to blaisevue.json (bv path add). }
 procedure CmdPathAdd(const Target: string);
 var
   AppCfgPath, CleanTarget, ResolvedPath, FinalPath, FormattedLine, PkgNameOnly: string;
@@ -8025,6 +8123,7 @@ begin
   end;
 end;
 
+{ Removes a unit search path from blaisevue.json (bv path remove). }
 procedure CmdPathRemove(const Target: string);
 var
   AppCfgPath, CleanTarget, NormTarget, Line, CleanLine, PathVal: string;
@@ -8092,6 +8191,7 @@ begin
   end;
 end;
 
+{ Lists all unit search paths available across the framework SDK (bv path available). }
 procedure CmdPathAvailable;
 var
   Packages: TStringList;
@@ -8129,6 +8229,7 @@ begin
   end;
 end;
 
+{ Unit search path command dispatcher (bv path). }
 procedure CmdPath;
 var
   SubCmd, TargetArg: string;
@@ -8176,6 +8277,7 @@ begin
   Halt(1);
 end;
 
+{ Returns True if a directory name should be excluded from project compilation scans. }
 function IsIgnoredProjectDir(const DirName: string): Boolean;
 var
   LName: string;
@@ -8197,6 +8299,7 @@ begin
             (LName = '.gradle');
 end;
 
+{ Determines if a file is an Object Pascal source file relevant for project compilation. }
 function IsRelevantProjectFile(const FileName: string; IsRootDir: Boolean): Boolean;
 var
   Ext, LName: string;
@@ -8219,6 +8322,7 @@ begin
   Result := False;
 end;
 
+{ Recursively discovers all Pascal source units in a project directory. }
 procedure CollectProjectUnits(const Dir, RelPrefix: string; List: TStringList; IsRootDir: Boolean = False);
 var
   SR: TSearchRec;
@@ -8257,6 +8361,7 @@ begin
   end;
 end;
 
+{ Generates and updates Lazarus IDE project files (.lpi, .lpr) for native IDE integration (bv lazarus). }
 procedure CmdLazarus;
 var
   SubCmd: string;
@@ -8409,6 +8514,7 @@ begin
   end;
 end;
 
+{ Performs a clean-slate project reset with double-layered safety guards (bv reset). }
 procedure CmdReset;
 var
   BareFlag, ForceFlag, NoBackupFlag: Boolean;
@@ -8824,6 +8930,7 @@ begin
   WriteLn('DevTools disabled via -dPRODUCTION');
 end;
 
+{ Runs the local development HTTP server with WebSocket HMR bridge (bv serve). }
 procedure CmdServe;
 begin
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Dev Server (HMR Enabled) ===');
@@ -8963,6 +9070,7 @@ begin
             '};';
 end;
 
+{ Compiles an isolated Single File Component to Object Pascal for testing (bv compile-sfc). }
 procedure CmdCompileSFC(const FileName: string);
 
 var
@@ -8973,6 +9081,7 @@ begin
   Write(GenerateComponentJS(ChangeFileExt(ExtractFileName(FileName), ''), PascalToKebab(ChangeFileExt(ExtractFileName(FileName), '')), Parsed));
 end;
 
+{ Scans test directories to discover test files for automated test execution. }
 procedure ScanDirForTests(const Path: string; List: TStringList);
 
 var
@@ -9005,6 +9114,7 @@ begin
   end;
 end;
 
+{ Executes the framework and application test suite using Vitest (bv test). }
 procedure CmdTest;
 
 var
@@ -9120,6 +9230,7 @@ begin
   end;
 end;
 
+{ Generates and optionally serves interactive Storybook-like component documentation (bv doc). }
 procedure CmdDoc(const ServeMode: Boolean);
 
 var
@@ -9473,6 +9584,7 @@ begin
   end;
 end;
 
+{ Pre-renders the SPA application into static HTML pages for SEO and instant loading (bv run ssg). }
 procedure CmdSSG;
 
 var
@@ -9549,6 +9661,7 @@ begin
   WriteLn('All routes are pre-rendered for instant First Contentful Paint (<50ms).');
 end;
 
+{ WebAssembly compilation, diagnostic, and benchmark runner (bv wasm). }
 procedure CmdWasm(const SubCmd: string);
 begin
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' WebAssembly Engine ===');
@@ -9577,6 +9690,7 @@ begin
   end;
 end;
 
+{ Runs headless end-to-end browser test suites validating navigation, forms, and hydration (bv test e2e). }
 procedure CmdTestE2E;
 begin
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Headless E2E Test Suite ===');
@@ -9872,6 +9986,7 @@ type
     IsCustom: Boolean;
   end;
   TBVToolArray = array of TBVTool;
+{ Dispatches execution to a developer extension lifecycle script (status.py, install.py). }
 function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
   Ext, ScriptPath, RunnerCmd, CmdLine, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
@@ -10025,12 +10140,14 @@ begin
   end;
 end;
 
+{ Enumerates all installed tools and extensions across system and user directories. }
 function DiscoverAllTools: TBVToolArray;
 var
   ToolsList: TBVToolArray;
   BuiltinPath, UserPath, SubDir: string;
   SR: TSearchRec;
   Tool: TBVTool;
+  { Helper that scans a directory for extension manifests (tool.json). }
   procedure ScanDir(const BasePath: string; IsCustom: Boolean);
   begin
     if (BasePath <> '') and DirectoryExists(BasePath) then
@@ -10082,6 +10199,7 @@ begin
   Result := ToolsList;
 end;
 
+{ Manages developer ecosystem extensions (VS Code, Lazarus IDE, Chrome DevTools) (bv extension). }
 procedure CmdExtension(const Action: string = ''; const Target: string = '');
 var
   SubCmd, TargetLower, StatusText, Dummy: string;
@@ -10234,6 +10352,7 @@ begin
   end;
 end;
 
+{ Mobile application compiler and device orchestrator targeting Android and iOS (bv mobile). }
 procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
@@ -10244,6 +10363,7 @@ var
   IsRelease, IsAllTargets, UseEmulator: Boolean;
   AvdList: TStringList;
   i: Integer;
+{ Locates the Android SDK emulator executable on the host system. }
   function FindAndroidEmulator: string;
   var
     AndroidHome, LocalAppData, P: string;
@@ -10345,6 +10465,7 @@ var
     end;
   end;
 
+{ Launches an Android Virtual Device (AVD) emulator in the background. }
   function StartEmulator(const SpecificAVD: string = ''): Boolean;
   var
     EmulatorExe, TargetAVD: string;
@@ -10386,6 +10507,7 @@ var
     Result := True;
   end;
 
+  { Parses an individual command line option flag or positional parameter. }
   procedure ParseArg(const A: string);
   var
     S: string;
@@ -10414,6 +10536,7 @@ var
       ActualAppId := A;
   end;
 
+  { Fast regex/substring extractor for JSON properties without full parser overhead. }
   function ExtractJsonField(const Content, Prop: string): string;
   var
     P, Q, StartVal, EndVal: Integer;
@@ -10430,6 +10553,7 @@ var
     Result := Copy(Content, StartVal + 1, EndVal - StartVal - 1);
   end;
 
+{ Compiles native binary artifacts for a specified platform target. }
   function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
   var
     TBinDir, SourceApk, TargetApk, AltApk: string;
@@ -10997,6 +11121,7 @@ begin
   end;
 end;
 
+{ Native desktop application compiler using ultra-lightweight WebUI (bv desktop). }
 procedure CmdDesktop(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
@@ -11010,6 +11135,7 @@ var
   FoundLpr: string;
   TargetExe, TargetBin, TargetExt: string;
   IsRelease, IsAllTargets: Boolean;
+  { Parses an individual command line option flag or positional parameter. }
   procedure ParseArg(const A: string);
   var
     S: string;
@@ -11032,6 +11158,7 @@ var
       DisplayName := A;
   end;
 
+{ Compiles native binary artifacts for a specified platform target. }
   function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
   var
     TBin, TUnits: string;
@@ -12639,6 +12766,7 @@ function FindMormot2Path: string;
 var
   Candidate: string;
   ConfigFile: string;
+{ Verifies that the Synopse mORMot 2 framework distribution is present and valid. }
   function IsValidMormot(const Dir: string): Boolean;
   var
     P: string;
@@ -12774,6 +12902,7 @@ type
     IsDetail: Boolean;
   end;
   TCrudFieldArray = array of TCrudField;
+{ Generates the plural form of an English noun for relational tables and REST endpoints. }
 function Pluralize(const S: string): string;
 var
   L: Integer;
@@ -12810,18 +12939,21 @@ begin
   Result := S + 's';
 end;
 
+{ Capitalizes the initial character of an identifier. }
 function CapitalizeWord(const S: string): string;
 begin
   if S = '' then Exit('');
   Result := UpperCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
 end;
 
+{ Formats a string identifier in camelCase. }
 function CamelCaseWord(const S: string): string;
 begin
   if S = '' then Exit('');
   Result := LowerCase(Copy(S, 1, 1)) + Copy(S, 2, MaxInt);
 end;
 
+{ Parses a CRUD model field specification string (e.g. "title:string:required:len=100"). }
 function ParseCrudField(const Spec: string; FieldIndex: Integer; const ModelName: string): TCrudField;
 
 var
@@ -12981,6 +13113,7 @@ begin
   end;
 end;
 
+{ Generates a type-safe Synopse mORMot 2 server model unit (uModel<Name>.pas). }
 function GenerateCrudPascalUnit(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
 
 const
@@ -13815,6 +13948,7 @@ begin
     'end.' + #13#10;
 end;
 
+{ Generates a reactive front-end Single File Component CRUD view (<Name>View.bv). }
 function GenerateCrudBVView(const ModelName, PluralName: string; const Fields: TCrudFieldArray): string;
 
 const
@@ -14648,6 +14782,7 @@ begin
     '</style>' + #13#10;
 end;
 
+{ Registers a new CRUD model in the server models unit. }
 procedure UpdateServerModels(const ModelsFile, ModelName: string; const Fields: TCrudFieldArray);
 
 var
@@ -14714,6 +14849,7 @@ begin
   WriteLn('  [+] Registered T' + ModelName + ' record & DTO in server/ServerModels.pas');
 end;
 
+{ Registers REST endpoints and ORM collections in the mORMot 2 server application. }
 procedure UpdateServerApp(const ServerAppFile, ModelName, PluralName: string);
 
 var
@@ -14797,6 +14933,7 @@ begin
   WriteLn('  [+] Integrated TCrud' + ModelName + 'Service into server/ServerApp.pas');
 end;
 
+{ Injects routes for a newly scaffolded CRUD view into src/App.pas. }
 procedure UpdateAppRoutes(const AppFile, ModelName, PluralName: string);
 
 const
@@ -14850,6 +14987,7 @@ begin
   WriteLn('  [+] Registered route /' + PluralLower + ' & navigation in src/app.bv');
 end;
 
+{ Generates complete full-stack master-detail CRUD models with ORM persistence (bv mormot crud). }
 procedure CmdMormotCrud(const ProjectRoot: string);
 
 var
@@ -15000,6 +15138,7 @@ begin
   WriteLn('');
 end;
 
+{ Generates the server-side JWT authentication and user management service unit. }
 function GenerateAuthServicePascalUnit: string;
 begin
   Result :=
@@ -15823,6 +15962,7 @@ begin
     '' + #13#10;
 end;
 
+{ Generates the reactive front-end Login and Registration view. }
 function GenerateLoginBVView: string;
 begin
   Result :=
@@ -16244,6 +16384,7 @@ begin
     '' + #13#10;
 end;
 
+{ Injects User and Session records into the server models unit. }
 procedure UpdateServerModelsForAuth(const ModelsFile: string);
 
 var
@@ -16299,6 +16440,7 @@ begin
   WriteLn('  [+] Registered TAuthUser & TUserWithPassword in server/ServerModels.pas');
 end;
 
+{ Injects JWT authentication endpoints into the server application. }
 procedure UpdateServerAppForAuth(const ServerAppFile: string);
 
 var
@@ -16378,6 +16520,7 @@ begin
   WriteLn('  [+] Integrated TAuthService into server/ServerApp.pas');
 end;
 
+{ Injects authentication routes and navigation guards into the client application. }
 procedure UpdateAppRoutesForAuth(const AppFile: string);
 
 const
@@ -16428,6 +16571,7 @@ begin
   WriteLn('  [+] Registered route /login & navigation links in src/app.bv');
 end;
 
+{ Scaffolds enterprise JWT authentication, user persistence, and route guards (bv mormot auth). }
 procedure CmdMormotAuth(const ProjectRoot: string);
 
 var
@@ -16508,6 +16652,7 @@ begin
   WriteLn('');
 end;
 
+{ Generates OpenAPI 3.0 / Swagger documentation endpoints for the server. }
 function GenerateSwaggerServicePascalUnit: string;
 begin
   Result :=
@@ -17725,6 +17870,7 @@ begin
     '' + #13#10;
 end;
 
+{ Configures the server to serve OpenAPI JSON specifications. }
 procedure UpdateServerAppForSwagger(const ServerAppFile: string);
 
 var
@@ -17814,6 +17960,7 @@ begin
   WriteLn('  [+] Integrated TSwaggerService into server/ServerApp.pas');
 end;
 
+{ Injects Swagger UI navigation into the client application. }
 procedure UpdateAppForSwagger(const AppFile: string);
 
 const
@@ -17852,6 +17999,7 @@ begin
   WriteLn('  [+] Registered Swagger documentation links in src/app.bv');
 end;
 
+{ Generates automated OpenAPI 3.0 and Swagger documentation endpoints (bv mormot docs). }
 procedure CmdMormotDocs(const ProjectRoot: string);
 
 var
@@ -17911,6 +18059,7 @@ begin
   WriteLn('');
 end;
 
+{ Generates a multi-stage production Dockerfile for sub-20MB Alpine micro-containers. }
 function GenerateDockerfileContent: string;
 begin
   Result :=
@@ -18064,6 +18213,7 @@ begin
     '' + #13#10;
 end;
 
+{ Generates a docker-compose.yml file orchestrating the mORMot 2 micro-container. }
 function GenerateDockerComposeContent: string;
 begin
   Result :=
@@ -18121,6 +18271,7 @@ begin
     '' + #13#10;
 end;
 
+{ Generates a .dockerignore file to exclude build artifacts and node_modules. }
 function GenerateDockerIgnoreContent: string;
 begin
   Result :=
@@ -18200,6 +18351,7 @@ begin
     '' + #13#10;
 end;
 
+{ Generates cloud-native Docker and Docker Compose container configurations (bv mormot docker). }
 procedure CmdMormotDocker(const ProjectRoot: string);
 
 var
@@ -18305,6 +18457,7 @@ begin
   WriteLn('');
 end;
 
+{ Generates shared RPC service interfaces for full-stack Pascal communication. }
 function GenerateDefaultServicesUnit: string;
 begin
   Result :=
@@ -18456,6 +18609,7 @@ begin
     'end.'#10;
 end;
 
+{ Generates type-safe client RPC proxies for mORMot 2 server methods. }
 function GenerateClientProxiesUnit: string;
 begin
   Result :=
@@ -19129,6 +19283,7 @@ begin
     'end.'#10;
 end;
 
+{ Generates compile-time validated client/server RPC proxies (bv mormot rpc). }
 procedure CmdMormotRPC(const ProjectRoot: string);
 
 var
@@ -19226,6 +19381,7 @@ begin
   WriteLn('');
 end;
 
+{ Checks if a specific TCP port is unallocated and available on localhost. }
 function IsTcpPortAvailable(APort: Word): Boolean;
 var
   S: TSocket;
@@ -19247,6 +19403,7 @@ begin
   end;
 end;
 
+{ Scans localhost for the next free TCP port starting from a base port. }
 function FindNextAvailableTcpPort(StartPort: Word; MaxAttempts: Word = 50): Word;
 var
   Candidate: Word;
@@ -19261,6 +19418,7 @@ begin
   Result := StartPort;
 end;
 
+{ Central CLI orchestrator for the full-stack Synopse mORMot 2 backend engine (bv mormot). }
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
@@ -19275,6 +19433,7 @@ var
   HttpClient: TFPHTTPClient;
   StatusResp: string;
   F: TextFile;
+  { Parses an individual command line option flag or positional parameter. }
   procedure ParseArg(const A: string);
   var
     S: string;
@@ -19942,6 +20101,7 @@ begin
   if FileExists(GenOldJs) then DeleteFile(GenOldJs);
 end;
 
+{ Renames a .bv component across all project usages and template references (bv rename c). }
 procedure CmdRenameComponent(const OldName, NewName: string);
 var
   CompPath, OldFile, NewFile: string;
@@ -19995,6 +20155,7 @@ begin
   if FileExists(GenOldJs) then DeleteFile(GenOldJs);
 end;
 
+{ Renames an SPA view and updates its route in App.pas (bv rename v). }
 procedure CmdRenameView(const OldName, NewName: string);
 var
   ViewPath, OldFile, NewFile: string;
@@ -20063,6 +20224,7 @@ begin
   if FileExists(GenOldJs) then DeleteFile(GenOldJs);
 end;
 
+{ Renames a project in its configuration, folders, and global registry (bv rename p). }
 procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string); forward;
 
 // =====================================================================
@@ -20073,6 +20235,7 @@ procedure CmdUse(const ProjName: string); forward;
 procedure CmdEnter; forward;
 procedure RunCockpitShell(const InitialName, InitialPath: string); forward;
 
+{ Validates whether a directory contains a valid BlaiseVue project structure. }
 function IsValidBlaiseVueProject(const ADir: string = ''): Boolean;
 var
   TargetDir, PkgContent: string;
@@ -20095,6 +20258,7 @@ begin
   end;
 end;
 
+{ Returns the path to the global registered projects database (~/.blaisevue/projects.json). }
 function GetProjectsConfigPath: string;
 var
   HomeDir, BaseDir: string;
@@ -20111,6 +20275,7 @@ begin
   Result := BaseDir + DirectorySeparator + 'projects.json';
 end;
 
+{ Loads the global project registry JSON document. }
 function LoadProjectsRegistry(out RootObj: TJSONObject): Boolean;
 var
   ConfigFile, Raw: string;
@@ -20159,6 +20324,7 @@ begin
   end;
 end;
 
+{ Saves the global project registry JSON document. }
 procedure SaveProjectsRegistry(RootObj: TJSONObject);
 var
   ConfigFile, JsonStr: string;
@@ -20168,6 +20334,7 @@ begin
   WriteStringToFile(ConfigFile, JsonStr);
 end;
 
+{ Resolves the project name from a directory configuration or folder name. }
 function GetProjectNameFromDir(const ADir: string): string;
 var
   TargetDir, Raw, Val, DirName: string;
@@ -20210,6 +20377,7 @@ begin
   end;
 end;
 
+{ Resolves the project version from package.json or metadata files. }
 function GetProjectVersionFromDir(const ADir: string): string;
 var
   TargetDir, Raw, Val: string;
@@ -20245,6 +20413,7 @@ begin
   end;
 end;
 
+{ Locates a registered project by name in the global registry. }
 function FindRegisteredProject(const ProjName: string; out ProjPath, ProjVer: string): Boolean;
 var
   RootObj, ProjObj: TJSONObject;
@@ -20280,6 +20449,7 @@ begin
   end;
 end;
 
+{ Registers the current project into the global workspace registry (bv project add). }
 procedure CmdProjectAdd;
 var
   RootObj, ProjObj: TJSONObject;
@@ -20355,6 +20525,7 @@ begin
   end;
 end;
 
+{ Lists all registered projects with their active status and paths (bv project list). }
 procedure CmdProjectList;
 var
   RootObj, ProjObj: TJSONObject;
@@ -20404,6 +20575,7 @@ begin
   end;
 end;
 
+{ Displays detailed information about the currently active project (bv project current). }
 procedure CmdProjectCurrent;
 var
   RootObj, ProjObj: TJSONObject;
@@ -20457,6 +20629,7 @@ begin
   end;
 end;
 
+{ Unregisters a project from the global workspace registry (bv project remove). }
 procedure CmdProjectRemove(const ProjName: string);
 var
   RootObj, ProjObj: TJSONObject;
@@ -20507,6 +20680,7 @@ begin
   end;
 end;
 
+{ Renames a project in its configuration, folders, and global registry (bv rename p). }
 procedure CmdRenameProject(const NewProjectName: string; out RenamedName: string);
 var
   CurDir, CurName, AppVer, AppAuth, AppLic: string;
@@ -20636,6 +20810,7 @@ begin
   WriteLn('');
 end;
 
+{ Global project registry command dispatcher (bv project). }
 procedure CmdProject;
 var
   SubCmd: string;
@@ -20693,6 +20868,7 @@ begin
   Result := GetUserBlaiseVueDir + DirectorySeparator + 'repos.json';
 end;
 
+{ Loads the multi-repository package catalog registry from disk. }
 function LoadReposRegistry(out RootObj: TJSONObject): Boolean;
 var
   ConfigFile, Raw: string;
@@ -20740,6 +20916,7 @@ begin
   end;
 end;
 
+{ Persists the multi-repository package catalog registry to disk. }
 procedure SaveReposRegistry(RootObj: TJSONObject);
 var
   ConfigFile: string;
@@ -20749,6 +20926,7 @@ begin
   WriteStringToFile(ConfigFile, RootObj.FormatJSON);
 end;
 
+{ Lists all registered package repositories and their priority order (bv repo list). }
 procedure CmdRepoList;
 var
   RootObj, RepoObj: TJSONObject;
@@ -20797,6 +20975,7 @@ begin
   end;
 end;
 
+{ Registers a new package repository URL (bv repo add). }
 procedure CmdRepoAdd(const Name, URL: string);
 var
   RootObj, NewRepo, Existing: TJSONObject;
@@ -20855,6 +21034,7 @@ begin
   end;
 end;
 
+{ Removes a package repository from the ecosystem (bv repo remove). }
 procedure CmdRepoRemove(const Name: string);
 var
   RootObj, RepoObj: TJSONObject;
@@ -20905,6 +21085,7 @@ begin
   end;
 end;
 
+{ Designates a repository as the default package publishing target (bv repo default). }
 procedure CmdRepoDefault(const Name: string);
 var
   RootObj, RepoObj: TJSONObject;
@@ -20956,6 +21137,7 @@ begin
   end;
 end;
 
+{ Synchronizes package catalogs from all registered repositories (bv repo sync). }
 procedure CmdRepoSync;
 var
   RootObj, RepoObj: TJSONObject;
@@ -21030,6 +21212,7 @@ begin
   end;
 end;
 
+{ Multi-repository package catalog dispatcher (bv repo). }
 procedure CmdRepo;
 var
   SubCmd: string;
@@ -21073,6 +21256,7 @@ begin
   end;
 end;
 
+{ Tokenizes an interactive command string into arguments. }
 procedure SplitTokens(const S: string; Tokens: TStringList);
 var
   i: Integer;
@@ -21101,6 +21285,7 @@ begin
     Tokens.Add(Cur);
 end;
 
+{ Clears pending keyboard characters from the console input buffer. }
 procedure ClearInputBuffer;
 begin
   try
@@ -21116,6 +21301,7 @@ begin
   end;
 end;
 
+{ Runs an external executable within the interactive developer cockpit shell. }
 procedure ExecInCockpit(const ExePath, WorkingDir, Args: string);
 begin
   try
@@ -21137,6 +21323,7 @@ begin
   end;
 end;
 
+{ Executes an arbitrary shell command within the developer cockpit. }
 procedure ExecShellCmd(const WorkingDir, CmdLine: string);
 begin
   try
@@ -21680,6 +21867,7 @@ begin
   RunCockpitShell(ProjName, CurDir);
 end;
 
+{ Switches the active project context in the developer cockpit (use <project>). }
 procedure CmdUse(const ProjName: string);
 var
   ProjPath, ProjVer: string;
@@ -21744,6 +21932,7 @@ var
   HasServer, HasFrontend, ServerUpdated, PkgUpdated, RtlUpdated: Boolean;
   i, BackupCount: Integer;
   UsesPos, VarPos, BeginPos, PosMarker, MainPortPos, MainBeginPos, p: Integer;
+{ Creates a timestamped backup copy of a file before performing destructive mutations. }
   procedure CreateFileBackup(const RelFilePath: string);
   var
     Src, Dst: string;
