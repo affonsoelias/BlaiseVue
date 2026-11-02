@@ -1,61 +1,134 @@
-# 🛡️ Module 11: Pro Features (Master Architecture)
+# 🛡️ Módulo 11: Recursos Pro (Master Architecture)
+**Aprenda as técnicas arquiteturais que os profissionais usam em aplicações de grande porte.**
 
-We've reached the last level of the journey! BlaiseVue is not just about displaying data; it's about creating scalable architectures. In this module, you will learn how to handle the tools that major modern frameworks (like Vue and React) use to maintain giant applications.
-
----
-
-## 1. 🏛️ Composition with Slots
-Components are not just for logic; they are for creating "templates".
-Use `<slot>` to leave holes and fill them from the parent component. If you have many holes, use **Named Slots** (`slot="header"`, `slot="footer"`).
-
-> **Moral of the Story:** The Parent sends the content, the Child sends the structure (CSS).
+Parabéns por chegar até aqui! Você já domina reatividade, diretivas, formulários, componentes e rotas. Agora vamos dar um salto de qualidade e aprender os padrões que mantêm sistemas corporativos gigantes organizados, elegantes e fáceis de evoluir.
 
 ---
 
-## 2. ✨ Visual Experience (Transitions)
-Interfaces that jump on the screen without smoothness look amateur. BlaiseVue automates animations with the `<transition>` tag.
-Just wrap your `b-if` with it, and the engine will inject CSS classes like `-enter-active` and `-leave-to` for you.
+## 🖼️ 1. Composição Avançada com `<slot>` (A Moldura de Quadro)
+
+Nos módulos anteriores, vimos como passar dados para componentes usando `props:` (como texto ou números). Mas e se você quiser que um componente receba **pedaços inteiros de HTML** de fora?
+
+Pense em uma **moldura de quadro**: a moldura tem a borda dourada, o vidro e o suporte na parede, mas a foto que vai dentro quem escolhe é você! No BlaiseVue, usamos a tag **`<slot>`** para deixar esse "espaço reservado":
+
+### O Componente Moldura (`src/components/CardMoldura.bv`):
+```html
+<template>
+  <div class="cartao-moldura">
+    <div class="cabecalho-moldura">
+      <!-- Slot nomeado para o título do cabeçalho -->
+      <slot name="cabecalho"></slot>
+    </div>
+
+    <div class="corpo-moldura">
+      <!-- Slot padrão para qualquer conteúdo que vier de fora -->
+      <slot></slot>
+    </div>
+  </div>
+</template>
+```
+
+### Usando a Moldura na Página:
+```html
+<card-moldura>
+  <!-- Encaixa no slot name="cabecalho": -->
+  <template #cabecalho>
+    <h3>🔒 Área Restrita</h3>
+  </template>
+
+  <!-- Encaixa no slot padrão: -->
+  <p>Digite sua senha para desbloquear os dados sigilosos.</p>
+  <button class="btn btn-primary">Confirmar</button>
+</card-moldura>
+```
 
 ---
 
-## 3. 🧠 Central Intelligence (B-Store)
-Stop passing props (data) through 10 levels of components. Use the `$store`.
-Any component can read and write to it. It is the **Digital Brain** of your application.
+## 🧠 2. Estado Global Compartilhado ($store / B-Store)
+
+Imagine que a sua aplicação tem um **Carrinho de Compras**:
+- O menu superior precisa mostrar quantos itens estão no carrinho.
+- A página do produto precisa ter um botão "Adicionar ao Carrinho".
+- A página de checkout precisa listar os itens e calcular o valor final.
+
+Ficar passando esses dados de pai para filho através de 10 níveis de componentes seria cansativo e fácil de errar (o chamado *Prop Drilling*).
+
+Em vez disso, usamos a analogia da **caixa d'água central**: a caixa d'água fica no topo da casa e todos os cômodos pegam água diretamente dela através de canos! No BlaiseVue, esse repositório central é o **`$store`**:
+
+```pascal
+// Qualquer tela pode ler o estado central:
+quantidadeItens := Integer(this['$store']['carrinhoTotal']);
+
+// E qualquer botão pode alterar o estado central:
+procedure adicionarAoCarrinho;
+begin
+  this['$store']['carrinhoTotal'] := Integer(this['$store']['carrinhoTotal']) + 1;
+end;
+```
 
 ---
 
-## 4. 🧬 Silent Transmission (Provide/Inject)
-Need to pass a "Log Service" or "API Configuration" to all components deep down?
-Use `provide` at the Root (App) and `inject` in those that need it. It's clean, it's fast, it's typed.
+## ✨ 3. Animações e Transições Suaves (`<transition>`)
+
+Elementos que aparecem e somem da tela de forma instantânea e seca deixam a interface com cara de rascunho. Com a tag **`<transition>`**, o BlaiseVue injeta animações suaves de desvanecimento (*fade*) ou deslizamento (*slide*) automaticamente!
+
+```html
+<template>
+  <div>
+    <button @click="abrirAviso">Alternar Alerta</button>
+
+    <!-- Envolva seu b-if com a tag transition -->
+    <transition name="fade">
+      <div b-if="mostrarAviso" class="caixa-alerta">
+        🛡️ Notificação: Seu backup foi concluído com sucesso!
+      </div>
+    </transition>
+  </div>
+</template>
+
+<style>
+  /* O BlaiseVue controla estas classes de animação para você: */
+  .fade-enter-active, .fade-leave-active {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+</style>
+```
 
 ---
 
-## 5. 🛡️ Pro Lifecycle Control
-- **`updated`**: Know when anything has changed. Extremely useful for real-time audit logs.
-- **`unmounted`**: Cleanup time. Use to shut down processes that are no longer needed.
+## 💉 4. Injeção de Dependências (Provide / Inject)
+
+Quando você quer que um componente de topo (como a raiz `App.bv`) disponibilize uma configuração global (por exemplo: o idioma ativo `'pt-BR'` ou um serviço de logs) para qualquer componente que estiver lá no fundo da árvore hierárquica, usamos **`provide`** no pai e **`inject`** no neto/bisneto:
+
+```pascal
+// No componente Pai (App.bv):
+provide:
+  appTema: 'dark';
+  versaoApp: 'v4.4.0';
+
+// No componente Filho em qualquer nível de profundidade:
+inject:
+  appTema: string;
+```
 
 ---
 
-## 6. 📦 Library Ecosystem (/lib)
-BlaiseVue allows loading external libraries and UI kits (like **BlaiseUI**) simply by placing components inside the `/lib` folder.
-- **Auto-Link**: Any library CSS (like `blaise-ui.css`) is automatically linked into `index.html`.
-- **Auto-Registration**: Library components like `<bv-btn>`, `<bv-modal>`, and `<bv-card>` are registered globally without needing manual `import` statements.
+## 🎯 5. Exercício Prático do Módulo 11
+
+1. Crie um componente chamado `ModalDialog.bv` usando `<slot>` para o título e o corpo da mensagem.
+2. Envolva a exibição desse modal com uma tag `<transition name="fade">`.
+3. Adicione um botão para abrir e fechar o modal e veja como a transição suave faz toda a diferença na qualidade percebida da sua aplicação!
 
 ---
 
-## 7. ⚙️ Advanced Component Setup
+## 🏆 Resumo do Que Você Aprendeu
+- Como criar estruturas flexíveis e reutilizáveis usando `<slot>` e slots nomeados.
+- Como compartilhar informações entre telas distantes usando o B-Store central.
+- Como transformar interfaces duras em experiências fluidas com `<transition>`.
+- Como transmitir configurações de forma limpa usando `provide` e `inject`.
 
-Components in the `/lib` folder can now be much more than just sets of `.bv` files. They can include a **Life-cycle Setup Script**.
-- **`setup.pas`**: An optional script that handles folder creation, configuration, and dependency registration.
-- **`bv s <name>`**: The interactive command to trigger the setup menu (Install, Reinstall, Delete).
-- **Auto-Cleanup**: When you remove a component via `bv lib remove`, the cleanup script is automatically executed to leave your project clean.
-
----
-
-### 🎉 Congratulations, BlaiseVue Master!
-You have completed the core and pro modules. Now you have the power of **Object Pascal** running at 100% in your browser with the modern flexibility of **Vue.js**.
-
-**Pro Challenge:** Refactor your current application to use at least one **Named Slot** and move some important data to the **B-Store**.
-
----
-**BlaiseVue: Stability, Typing, and Reactivity.** 🛡️✨🚀
+**Quer ter 100% de certeza de que o seu código nunca vai quebrar sem você perceber? Vamos aprender no [Módulo 12: Qualidade Marcial (Testes Unitários)](12-tests.md)!** ⚔️🛡️✨
