@@ -1,186 +1,187 @@
-# 🧬 Módulo 02: O Motor Reativo
-**Descubra como os dados ganham vida própria na tela.**
+# 🧬 Module 02: The Reactive Engine
+**Discover how data gains a dynamic life of its own on the screen.**
 
-No módulo anterior, vimos que o Pascal é o "cérebro" da aplicação. Agora vamos entender o conceito mais importante de qualquer aplicação web moderna: a **Reatividade**.
+In the previous module, we saw that Pascal acts as the "brain" of the application. Now let's explore the most fundamental concept of any modern web framework: **Reactivity**.
 
 ---
 
-## 📦 1. O Que é uma Variável? (Para Iniciantes)
+## 📦 1. What is a Variable? (For Beginners)
 
-Se você nunca programou antes, imagine uma variável como uma **caixa com uma etiqueta**:
-- A **etiqueta** é o nome que você dá para ela (ex: `nome`, `idade`, `estaLigado`).
-- O **conteúdo** é o que você guarda dentro da caixa (ex: o texto `'Carlos'`, o número `25`).
-- O **tipo** define o que cabe nessa caixa. No Pascal, somos muito organizados com tipos!
+If you have never programmed before, imagine a variable as a **labeled storage box**:
+- The **label** is the name you give it (e.g. `username`, `score`, `isActive`).
+- The **content** is the value stored inside the box (e.g. the text `'Alice'`, the number `25`).
+- The **type** defines what fits inside the box. Pascal is strongly typed, ensuring safety and precision!
 
-Aqui estão os tipos mais comuns que você usará no dia a dia:
+Here are the most common types you will use:
 
-| Tipo em Pascal | O Que Guarda? | Exemplo |
+| Type in Pascal | What Does It Store? | Example |
 | :--- | :--- | :--- |
-| `string` | Textos e palavras (sempre entre aspas simples `'...'`) | `'Maria da Silva'`, `'São Paulo'` |
-| `integer` | Números inteiros (positivos ou negativos, sem vírgula) | `0`, `42`, `100`, `-5` |
-| `real` | Números com casas decimais (preços, medidas) | `19.90`, `3.1415` |
-| `boolean` | Apenas duas opções: Verdadeiro (`true`) ou Falso (`false`) | `true`, `false` |
+| `string` | Text and words (always enclosed in single quotes `'...'`) | `'Alice Johnson'`, `'San Francisco'` |
+| `integer` | Whole numbers (positive or negative, without decimals) | `0`, `42`, `100`, `-5` |
+| `real` | Numbers with decimal places (prices, percentages) | `19.99`, `3.1415` |
+| `boolean` | True or False states | `true`, `false` |
 
 ---
 
-## ⚡ 2. O Que Significa "Reatividade"? (A Analogia do Excel)
+## ⚡ 2. What Does "Reactivity" Mean? (The Spreadsheet Analogy)
 
-Pense em uma planilha do Excel:
-- Na célula **A1**, você digita o preço de um pão: `R$ 2,00`.
-- Na célula **A2**, você digita a quantidade: `5`.
-- Na célula **A3**, você coloca a fórmula de multiplicação: `=A1 * A2`. O Excel mostra `R$ 10,00`.
+Think of a spreadsheet in Microsoft Excel:
+- In cell **A1**, you enter the price of a book: `$ 20.00`.
+- In cell **A2**, you enter the quantity: `3`.
+- In cell **A3**, you enter a multiplication formula: `=A1 * A2`. Excel displays `$ 60.00`.
 
-Se você for até a célula **A2** e mudar a quantidade de `5` para `10`, o que acontece com a célula **A3**?  
-**Ela atualiza sozinha na mesma fração de segundo!**
+If you change cell **A2** from `3` to `5`, what happens to cell **A3**?  
+**It recalculates and updates instantly!**
 
-O **BlaiseVue funciona exatamente assim**. Quando você altera o valor de uma variável no código Pascal, o BlaiseVue descobre automaticamente quais partes da página mostram aquele valor e atualiza a tela na hora para o usuário.
+**BlaiseVue works the exact same way**. When you update a variable in Pascal code, BlaiseVue detects which parts of the HTML rely on that variable and updates the screen in milliseconds without flickering.
 
 ---
 
-## 🛠️ 3. Onde Declaramos as Variáveis? (A Seção `data:`)
+## 🛠️ 3. Where Do We Declare Variables? (The `data:` Section)
 
-No arquivo `.bv`, dentro do bloco `<script>`, temos uma seção chamada `data:`. É nela que criamos as variáveis reativas da nossa tela:
+Inside the `<script>` block of a `.bv` component, we have a section called `data:`. This is where all reactive state is declared:
 
 ```pascal
 <script>
   data:
-    // Uma caixa de texto para o nome do usuário:
-    nomeUsuario: string = 'Ana';
+    // A string box for the user's name:
+    userName: string = 'Alice';
     
-    // Uma caixa numérica para contar cliques:
-    contador: integer = 0;
+    // An integer box for counting clicks:
+    clickCount: integer = 0;
     
-    // Uma caixa lógica para saber se uma mensagem está visível:
-    mensagemAtiva: boolean = true;
+    // A boolean flag to toggle a message:
+    showMessage: boolean = true;
 </script>
 ```
 
-Para mostrar esses valores no HTML, usamos a interpolação com chaves duplas:
+In the `<template>`, we display these values using double curly braces:
 ```html
 <template>
   <div>
-    <h1>Olá, {{ nomeUsuario }}!</h1>
-    <p>O contador está em: {{ contador }}</p>
+    <h1>Hello, {{ userName }}!</h1>
+    <p>Current click count: {{ clickCount }}</p>
   </div>
 </template>
 ```
 
 ---
 
-## 🚀 4. Exemplo Completo Passo a Passo: O Contador Interativo
+## 🚀 4. Full Step-by-Step Example: An Interactive Counter
 
-Vamos construir juntos um exemplo prático completo: uma tela com botões que somam, diminuem e zeram um contador.
+Let's build a complete interactive counter with buttons to increment, decrement, and reset the score.
 
-Crie ou substitua o conteúdo do seu componente com este código:
+Replace the contents of your view component (e.g. `src/views/Home.bv`) with:
 
 ```html
 <template>
-  <div class="painel-contador">
-    <h2>Meu Contador Reativo 🛡️</h2>
+  <div class="counter-card">
+    <h2>My Reactive Counter 🛡️</h2>
     
-    <!-- Mostra o valor atual da variável 'pontos' -->
-    <div class="display-numero">
-      {{ pontos }}
+    <!-- Renders the current value of the 'score' variable -->
+    <div class="score-display">
+      {{ score }}
     </div>
 
-    <div class="botoes">
-      <!-- @click diz: quando o botão for clicado, execute esta ação -->
-      <button class="btn btn-verde" @click="somar">Aumentar (+1)</button>
-      <button class="btn btn-vermelho" @click="subtrair">Diminuir (-1)</button>
-      <button class="btn btn-cinza" @click="zerar">Zerar</button>
+    <div class="button-group">
+      <!-- @click listens for mouse clicks and triggers Pascal methods -->
+      <button class="btn btn-green" @click="increment">Increment (+1)</button>
+      <button class="btn btn-red" @click="decrement">Decrement (-1)</button>
+      <button class="btn btn-gray" @click="resetScore">Reset</button>
     </div>
   </div>
 </template>
 
 <script>
   data:
-    pontos: integer = 0;
+    score: integer = 0;
 
   methods:
-    // Ação 1: Somar 1 ponto
-    procedure somar;
+    // Action 1: Add 1 point
+    procedure increment;
     begin
-      this['pontos'] := Integer(this['pontos']) + 1;
+      this['score'] := Integer(this['score']) + 1;
     end;
 
-    // Ação 2: Diminuir 1 ponto
-    procedure subtrair;
+    // Action 2: Subtract 1 point
+    procedure decrement;
     begin
-      this['pontos'] := Integer(this['pontos']) - 1;
+      this['score'] := Integer(this['score']) - 1;
     end;
 
-    // Ação 3: Voltar o contador para 0
-    procedure zerar;
+    // Action 3: Reset back to zero
+    procedure resetScore;
     begin
-      this['pontos'] := 0;
+      this['score'] := 0;
     end;
 </script>
 
 <style>
-  .painel-contador {
-    max-width: 350px;
+  .counter-card {
+    max-width: 360px;
     margin: 40px auto;
     padding: 24px;
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     text-align: center;
     font-family: sans-serif;
   }
-  .display-numero {
+  .score-display {
     font-size: 56px;
     font-weight: bold;
     color: #2b6cb0;
     margin: 20px 0;
   }
-  .botoes {
+  .button-group {
     display: flex;
     gap: 8px;
     justify-content: center;
   }
   .btn {
-    padding: 10px 16px;
+    padding: 10px 14px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     color: white;
   }
-  .btn-verde { background-color: #38a169; }
-  .btn-vermelho { background-color: #e53e3e; }
-  .btn-cinza { background-color: #718096; }
+  .btn-green { background-color: #38a169; }
+  .btn-red { background-color: #e53e3e; }
+  .btn-gray { background-color: #718096; }
+  .btn:hover { opacity: 0.9; }
 </style>
 ```
 
-### Entendendo o Código Pascal:
-- `data: pontos: integer = 0;`: Inicializa a variável `pontos` valendo zero.
-- `this['pontos']`: É a forma como o Pascal acessa os dados do componente atual.
-- `Integer(this['pontos']) + 1`: Pega o valor que está lá, soma 1 e guarda de volta na caixa.
-- No mesmo instante em que a linha é executada, o BlaiseVue atualiza o número na tela sem piscar!
+### Understanding the Pascal Logic:
+- `data: score: integer = 0;`: Initializes the variable `score` with zero.
+- `this['score']`: Accesses the reactive data property of the current component instance.
+- `Integer(this['score']) + 1`: Evaluates the current value, adds 1, and assigns it back.
+- BlaiseVue's reactive proxy automatically intercepts the assignment and updates the DOM in real time!
 
 ---
 
-## 🎯 5. Exercício Prático do Módulo 02
+## 🎯 5. Practical Exercise: Module 02
 
-Agora é a sua vez de praticar!
+Now it's your turn to experiment:
 
-1. No código acima, adicione um novo botão chamado **"Dobrar"**.
-2. No bloco `methods:`, crie a procedure para ele:
+1. Add a fourth button labeled **"Double (x2)"**.
+2. In the `methods:` section, write the procedure:
    ```pascal
-   procedure dobrar;
+   procedure doubleScore;
    begin
-     this['pontos'] := Integer(this['pontos']) * 2;
+     this['score'] := Integer(this['score']) * 2;
    end;
    ```
-3. Teste no navegador: clique em "Aumentar" até chegar em 5 e depois clique em "Dobrar". O número virou 10? Parabéns, você acaba de programar a sua primeira lógica reativa!
+3. Test it in the browser: click "Increment" until you reach 5, then click "Double". The display instantly turns into 10!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- O que são variáveis e quais os tipos básicos em Pascal (`string`, `integer`, `boolean`).
-- Como a reatividade funciona atualizando o HTML em tempo real.
-- Como declarar dados em `data:` e criar ações em `methods:`.
-- Como conectar o clique de um botão a uma ação usando `@click`.
+## 🏆 What You Learned Today
+- How variables work and the basic data types in Pascal (`string`, `integer`, `boolean`, `real`).
+- How reactivity updates the user interface automatically when state changes.
+- How to declare reactive variables in `data:` and actions in `methods:`.
+- How to connect button clicks to Pascal methods using `@click`.
 
-**No próximo módulo, vamos ensinar nossa página a tomar decisões inteligentes com as Diretivas! Siga para o [Módulo 03: Diretivas Essenciais](03-directives.md)!** ⚔️🛡️✨
+**Next up: teaching our screen to make smart decisions with Directives! Proceed to [Module 03: Essential Directives](03-directives.md)!** ⚔️🛡️✨

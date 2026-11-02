@@ -1,128 +1,128 @@
-# 🛡️ Módulo 13: O Desafio Final - Painel de Controle de Vendas
-**Consolide todo o seu conhecimento construindo uma aplicação real e completa.**
+# 🛡️ Module 13: The Final Challenge - Real-Time Sales Dashboard
+**Consolidate all your skills by building a complete, production-grade application.**
 
-Parabéns, aventureiro! Você percorreu toda a trilha de aprendizado do BlaiseVue: desde os conceitos básicos de variáveis e reatividade até diretivas, formulários, componentes, rotas e testes.
+Congratulations, adventurer! You have completed the entire BlaiseVue curriculum: from fundamental variables and reactivity to directives, two-way form binding, components, routing, and automated testing.
 
-Agora é a hora de provar para si mesmo que você domina as runas do Object Pascal para a Web. Vamos construir juntos uma aplicação completa: um **Painel de Controle Financeiro e de Vendas**!
-
----
-
-## 🎯 1. O Que o Seu Painel Deve Conter?
-
-1. **Cards de Métricas Reutilizáveis**: Componentes que exibem o Total de Vendas, a Média por Pedido e o Status da Meta.
-2. **Formulário com `b-model`**: Onde o usuário digita a descrição da venda, o valor em reais e seleciona a categoria.
-3. **Lista Dinâmica com `b-for`**: Exibindo todas as vendas cadastradas com botão para remover.
-4. **Cálculos Automáticos com `computed:`**:
-   - Soma total das vendas em tempo real.
-   - Cálculo da média por venda.
-   - Verificação automática se a meta de R$ 1.000,00 foi batida.
-5. **Decisões Visuais com `b-if`**: Mensagem comemorativa com troféu (`🏆`) caso a meta seja atingida!
+Now it is time to prove your mastery of Object Pascal for the modern Web. Let's build a complete, real-time **Sales & Expense Dashboard**!
 
 ---
 
-## 🚀 2. O Código Completo do Projeto (Pronto Para Rodar)
+## 🎯 1. What Will Your Dashboard Include?
 
-Copie e cole este código completo dentro do seu arquivo principal (ex: `src/views/Home.bv`) para ver a aplicação funcionando na íntegra:
+1. **Reusable Metric Cards**: Summary cards displaying Total Revenue, Average Ticket, and Target Status.
+2. **Dynamic Form with `b-model`**: Allowing users to enter transaction descriptions, amounts, and categories.
+3. **Reactive List with `b-for`**: Rendering all recorded sales with a button to remove transactions.
+4. **Automatic Intelligence with `computed:`**:
+   - Real-time sum of all sales in the list.
+   - Dynamic calculation of the average sale amount.
+   - Automatic evaluation of whether the `$ 1,000.00` revenue target has been achieved.
+5. **Conditional Banner with `b-if`**: A celebration badge with a trophy icon (`🏆`) when the revenue target is achieved!
+
+---
+
+## 🚀 2. The Complete, Runnable Project Code
+
+Copy and paste this complete code into your main view file (e.g. `src/views/Home.bv`):
 
 ```html
 <template>
   <div class="dashboard-container">
     
-    <!-- Cabeçalho -->
-    <header class="topo-dashboard">
-      <h1>💼 Painel de Controle de Vendas</h1>
-      <p class="subtitulo">Gerencie suas vendas em tempo real com a reatividade do Object Pascal.</p>
+    <!-- Header -->
+    <header class="dashboard-header">
+      <h1>💼 Enterprise Sales Dashboard</h1>
+      <p class="subtitle">Track and manage transactions in real time with the power of Object Pascal.</p>
     </header>
 
-    <!-- Linha de Cards de Resumo (Métricas) -->
-    <section class="grade-cards">
-      <div class="card-metrica">
-        <span class="icone-card">💰</span>
-        <div class="info-card">
-          <small>Faturamento Total</small>
-          <h3>R$ {{ totalVendas.toFixed(2) }}</h3>
+    <!-- Top Summary Metric Cards -->
+    <section class="metrics-grid">
+      <div class="metric-card">
+        <span class="card-icon">💰</span>
+        <div class="card-info">
+          <small>Total Revenue</small>
+          <h3>$ {{ totalRevenue.toFixed(2) }}</h3>
         </div>
       </div>
 
-      <div class="card-metrica">
-        <span class="icone-card">📊</span>
-        <div class="info-card">
-          <small>Ticket Médio</small>
-          <h3>R$ {{ ticketMedio.toFixed(2) }}</h3>
+      <div class="metric-card">
+        <span class="card-icon">📊</span>
+        <div class="card-info">
+          <small>Average Ticket</small>
+          <h3>$ {{ averageTicket.toFixed(2) }}</h3>
         </div>
       </div>
 
-      <div class="card-metrica">
-        <span class="icone-card">📦</span>
-        <div class="info-card">
-          <small>Total de Vendas</small>
-          <h3>{{ listaVendas.length }} pedidos</h3>
+      <div class="metric-card">
+        <span class="card-icon">📦</span>
+        <div class="card-info">
+          <small>Recorded Sales</small>
+          <h3>{{ salesList.length }} orders</h3>
         </div>
       </div>
     </section>
 
-    <!-- Aviso Condicional com b-if se a meta foi batida -->
-    <div b-if="metaBatida" class="alerta-meta">
-      🏆 <strong>Parabéns!</strong> A meta de R$ 1.000,00 foi superada com sucesso!
+    <!-- Conditional Celebration Alert with b-if -->
+    <div b-if="targetAchieved" class="target-alert">
+      🏆 <strong>Outstanding!</strong> The monthly target of $ 1,000.00 has been surpassed!
     </div>
 
-    <!-- Área Principal Dividida em Duas Colunas -->
-    <div class="corpo-dashboard">
+    <!-- Main Two-Column Layout -->
+    <div class="dashboard-body">
       
-      <!-- Coluna Esquerda: Formulário de Nova Venda -->
-      <div class="painel-formulario">
-        <h3>➕ Nova Venda</h3>
+      <!-- Left Column: New Transaction Form -->
+      <div class="form-panel">
+        <h3>➕ Record New Sale</h3>
 
-        <div class="campo">
-          <label>Descrição do Item:</label>
-          <input type="text" b-model="novaDescricao" placeholder="Ex: Consultoria Pascal">
+        <div class="field">
+          <label>Item Description:</label>
+          <input type="text" b-model="newDescription" placeholder="e.g. Pascal Architecture Audit">
         </div>
 
-        <div class="campo">
-          <label>Valor (R$):</label>
-          <input type="number" b-model="novoValor" min="1" step="10" placeholder="0.00">
+        <div class="field">
+          <label>Amount ($):</label>
+          <input type="number" b-model="newAmount" min="1" step="25" placeholder="0.00">
         </div>
 
-        <div class="campo">
-          <label>Categoria:</label>
-          <select b-model="novaCategoria">
+        <div class="field">
+          <label>Category:</label>
+          <select b-model="newCategory">
             <option value="Software">Software</option>
-            <option value="Treinamento">Treinamento</option>
-            <option value="Suporte">Suporte</option>
+            <option value="Training">Training</option>
+            <option value="Support">Support</option>
           </select>
         </div>
 
-        <button class="btn btn-adicionar" @click="adicionarVenda">
-          Registrar Venda
+        <button class="btn btn-add" @click="addTransaction">
+          Record Transaction
         </button>
       </div>
 
-      <!-- Coluna Direita: Lista de Vendas Realizadas -->
-      <div class="painel-tabela">
-        <h3>📋 Histórico de Transações</h3>
+      <!-- Right Column: Transaction History Table -->
+      <div class="table-panel">
+        <h3>📋 Transaction History</h3>
 
-        <!-- Aviso se não houver vendas cadastradas -->
-        <p b-if="listaVendas.length == 0" class="tabela-vazia">
-          Nenhuma venda cadastrada ainda. Registre uma nova venda ao lado!
+        <!-- Empty state alert when no items exist -->
+        <p b-if="salesList.length == 0" class="empty-table">
+          No transactions recorded yet. Add your first sale using the form on the left!
         </p>
 
-        <!-- Tabela desenhada com b-for -->
-        <table b-else class="tabela-dados">
+        <!-- Dynamic table rendered with b-for -->
+        <table b-else class="data-table">
           <thead>
             <tr>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Valor</th>
-              <th>Ação</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr b-for="venda in listaVendas">
-              <td><strong>{{ venda.item }}</strong></td>
-              <td><span class="tag-categoria">{{ venda.categoria }}</span></td>
-              <td class="coluna-preco">R$ {{ venda.valor.toFixed(2) }}</td>
+            <tr b-for="sale in salesList">
+              <td><strong>{{ sale.item }}</strong></td>
+              <td><span class="category-pill">{{ sale.category }}</span></td>
+              <td class="amount-cell">$ {{ sale.amount.toFixed(2) }}</td>
               <td>
-                <button class="btn-excluir" @click="removerVenda(venda)">Remover</button>
+                <button class="btn-delete" @click="removeTransaction(sale)">Remove</button>
               </td>
             </tr>
           </tbody>
@@ -136,132 +136,132 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
 
 <script>
   data:
-    novaDescricao: string = '';
-    novoValor: real = 150.00;
-    novaCategoria: string = 'Software';
-    listaVendas: TJSArray;
+    newDescription: string = '';
+    newAmount: real = 150.00;
+    newCategory: string = 'Software';
+    salesList: TJSArray;
 
   computed:
-    // 1. Calcula a soma de todas as vendas da lista
-    function totalVendas: real;
+    // 1. Sums all transaction amounts in the list
+    function totalRevenue: real;
     var
       i: integer;
-      soma: real;
-      venda: TJSObject;
+      sum: real;
+      sale: TJSObject;
     begin
-      soma := 0.0;
-      if Assigned(this['listaVendas']) then
+      sum := 0.0;
+      if Assigned(this['salesList']) then
       begin
-        for i := 0 to TJSArray(this['listaVendas']).length - 1 do
+        for i := 0 to TJSArray(this['salesList']).length - 1 do
         begin
-          venda := TJSObject(TJSArray(this['listaVendas'])[i]);
-          soma := soma + Real(venda['valor']);
+          sale := TJSObject(TJSArray(this['salesList'])[i]);
+          sum := sum + Real(sale['amount']);
         end;
       end;
-      Result := soma;
+      Result := sum;
     end;
 
-    // 2. Calcula o valor médio por venda
-    function ticketMedio: real;
+    // 2. Calculates average ticket per sale
+    function averageTicket: real;
     begin
-      if (not Assigned(this['listaVendas'])) or (TJSArray(this['listaVendas']).length = 0) then
+      if (not Assigned(this['salesList'])) or (TJSArray(this['salesList']).length = 0) then
         Result := 0.0
       else
-        Result := Real(this['totalVendas']) / TJSArray(this['listaVendas']).length;
+        Result := Real(this['totalRevenue']) / TJSArray(this['salesList']).length;
     end;
 
-    // 3. Informa se atingiu a meta de R$ 1.000,00
-    function metaBatida: boolean;
+    // 3. Evaluates if the $ 1,000.00 revenue target is met
+    function targetAchieved: boolean;
     begin
-      Result := Real(this['totalVendas']) >= 1000.00;
+      Result := Real(this['totalRevenue']) >= 1000.00;
     end;
 
   methods:
-    // Ação: Adiciona uma nova venda à lista
-    procedure adicionarVenda;
+    // Action: Appends a new transaction to the array
+    procedure addTransaction;
     var
-      nova: TJSObject;
+      itemObj: TJSObject;
     begin
-      if Trim(string(this['novaDescricao'])) = '' then Exit;
+      if Trim(string(this['newDescription'])) = '' then Exit;
 
-      nova := TJSObject.new;
-      nova['item'] := this['novaDescricao'];
-      nova['valor'] := Real(this['novoValor']);
-      nova['categoria'] := this['novaCategoria'];
+      itemObj := TJSObject.new;
+      itemObj['item'] := this['newDescription'];
+      itemObj['amount'] := Real(this['newAmount']);
+      itemObj['category'] := this['newCategory'];
 
-      TJSArray(this['listaVendas']).push(nova);
+      TJSArray(this['salesList']).push(itemObj);
 
-      // Limpa os campos para a próxima entrada
-      this['novaDescricao'] := '';
-      this['novoValor'] := 100.00;
+      // Reset inputs for the next entry
+      this['newDescription'] := '';
+      this['newAmount'] := 100.00;
     end;
 
-    // Ação: Remove a venda clicada da lista
-    procedure removerVenda(itemParaRemover: TJSObject);
+    // Action: Removes the clicked transaction from the array
+    procedure removeTransaction(itemToRemove: TJSObject);
     var
       i: integer;
-      venda: TJSObject;
+      sale: TJSObject;
     begin
-      for i := 0 to TJSArray(this['listaVendas']).length - 1 do
+      for i := 0 to TJSArray(this['salesList']).length - 1 do
       begin
-        venda := TJSObject(TJSArray(this['listaVendas'])[i]);
-        if venda['item'] = itemParaRemover['item'] then
+        sale := TJSObject(TJSArray(this['salesList'])[i]);
+        if sale['item'] = itemToRemove['item'] then
         begin
-          TJSArray(this['listaVendas']).splice(i, 1);
+          TJSArray(this['salesList']).splice(i, 1);
           Break;
         end;
       end;
     end;
 
   mounted:
-    // Inicializa a lista com 3 vendas de exemplo para começar bem
+    // Pre-populates 3 starter transactions when the screen mounts
     procedure;
     var
-      v1, v2, v3: TJSObject;
+      s1, s2, s3: TJSObject;
     begin
-      this['listaVendas'] := TJSArray.new;
+      this['salesList'] := TJSArray.new;
 
-      v1 := TJSObject.new;
-      v1['item'] := 'Licença BlaiseVue Pro';
-      v1['valor'] := 450.00;
-      v1['categoria'] := 'Software';
-      TJSArray(this['listaVendas']).push(v1);
+      s1 := TJSObject.new;
+      s1['item'] := 'BlaiseVue Enterprise License';
+      s1['amount'] := 450.00;
+      s1['category'] := 'Software';
+      TJSArray(this['salesList']).push(s1);
 
-      v2 := TJSObject.new;
-      v2['item'] := 'Curso do Zero ao Ninja';
-      v2['valor'] := 250.00;
-      v2['categoria'] := 'Treinamento';
-      TJSArray(this['listaVendas']).push(v2);
+      s2 := TJSObject.new;
+      s2['item'] := 'Zero to Ninja Course Bundle';
+      s2['amount'] := 250.00;
+      s2['category'] := 'Training';
+      TJSArray(this['salesList']).push(s2);
 
-      v3 := TJSObject.new;
-      v3['item'] := 'Suporte Mensal Dedicado';
-      v3['valor'] := 200.00;
-      v3['categoria'] := 'Suporte';
-      TJSArray(this['listaVendas']).push(v3);
+      s3 := TJSObject.new;
+      s3['item'] := 'Priority Technical Support';
+      s3['amount'] := 200.00;
+      s3['category'] := 'Support';
+      TJSArray(this['salesList']).push(s3);
     end;
 </script>
 
 <style>
   .dashboard-container {
-    max-width: 950px;
+    max-width: 960px;
     margin: 30px auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #2d3748;
   }
-  .topo-dashboard {
+  .dashboard-header {
     margin-bottom: 24px;
     text-align: center;
   }
-  .topo-dashboard h1 { margin: 0 0 6px 0; color: #2b6cb0; font-size: 28px; }
-  .subtitulo { margin: 0; color: #718096; font-size: 14px; }
+  .dashboard-header h1 { margin: 0 0 6px 0; color: #2b6cb0; font-size: 28px; }
+  .subtitle { margin: 0; color: #718096; font-size: 14px; }
 
-  /* Cards de Métricas */
-  .grade-cards {
+  /* Metric Cards */
+  .metrics-grid {
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
   }
-  .card-metrica {
+  .metric-card {
     flex: 1;
     background: #ffffff;
     border-radius: 12px;
@@ -272,11 +272,11 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     gap: 16px;
     border: 1px solid #e2e8f0;
   }
-  .icone-card { font-size: 36px; }
-  .info-card small { display: block; color: #718096; font-weight: bold; font-size: 11px; text-transform: uppercase; }
-  .info-card h3 { margin: 4px 0 0 0; color: #1a202c; font-size: 22px; }
+  .card-icon { font-size: 36px; }
+  .card-info small { display: block; color: #718096; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+  .card-info h3 { margin: 4px 0 0 0; color: #1a202c; font-size: 22px; }
 
-  .alerta-meta {
+  .target-alert {
     background: #c6f6d5;
     color: #22543d;
     padding: 14px 20px;
@@ -285,15 +285,14 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     text-align: center;
     font-size: 15px;
     border: 1px solid #9ae6b4;
-    animation: pulse 2s infinite;
   }
 
-  /* Corpo com Duas Colunas */
-  .corpo-dashboard {
+  /* Two-Column Body */
+  .dashboard-body {
     display: flex;
     gap: 24px;
   }
-  .painel-formulario {
+  .form-panel {
     flex: 1;
     background: #ffffff;
     padding: 20px;
@@ -301,10 +300,10 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     border: 1px solid #e2e8f0;
   }
-  .painel-formulario h3 { margin-top: 0; margin-bottom: 16px; font-size: 16px; color: #2b6cb0; }
-  .campo { margin-bottom: 14px; }
-  .campo label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #4a5568; }
-  .campo input, .campo select {
+  .form-panel h3 { margin-top: 0; margin-bottom: 16px; font-size: 16px; color: #2b6cb0; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #4a5568; }
+  .field input, .field select {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #cbd5e0;
@@ -312,7 +311,7 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     font-size: 14px;
     box-sizing: border-box;
   }
-  .btn-adicionar {
+  .btn-add {
     width: 100%;
     background: #3182ce;
     color: white;
@@ -323,10 +322,10 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     cursor: pointer;
     margin-top: 10px;
   }
-  .btn-adicionar:hover { background: #2b6cb0; }
+  .btn-add:hover { background: #2b6cb0; }
 
-  /* Tabela de Dados */
-  .painel-tabela {
+  /* Data Table */
+  .table-panel {
     flex: 2;
     background: #ffffff;
     padding: 20px;
@@ -334,14 +333,14 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     border: 1px solid #e2e8f0;
   }
-  .painel-tabela h3 { margin-top: 0; margin-bottom: 16px; font-size: 16px; color: #2b6cb0; }
-  .tabela-vazia { color: #a0aec0; text-align: center; padding: 30px; font-style: italic; }
-  .tabela-dados {
+  .table-panel h3 { margin-top: 0; margin-bottom: 16px; font-size: 16px; color: #2b6cb0; }
+  .empty-table { color: #a0aec0; text-align: center; padding: 30px; font-style: italic; }
+  .data-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
   }
-  .tabela-dados th {
+  .data-table th {
     text-align: left;
     padding: 10px;
     border-bottom: 2px solid #edf2f7;
@@ -349,11 +348,11 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     font-size: 12px;
     text-transform: uppercase;
   }
-  .tabela-dados td {
+  .data-table td {
     padding: 12px 10px;
     border-bottom: 1px solid #edf2f7;
   }
-  .tag-categoria {
+  .category-pill {
     background: #edf2f7;
     color: #4a5568;
     padding: 3px 8px;
@@ -361,8 +360,8 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     font-size: 11px;
     font-weight: bold;
   }
-  .coluna-preco { font-weight: bold; color: #2b6cb0; }
-  .btn-excluir {
+  .amount-cell { font-weight: bold; color: #2b6cb0; }
+  .btn-delete {
     background: #fff5f5;
     color: #e53e3e;
     border: 1px solid #feb2b2;
@@ -372,21 +371,21 @@ Copie e cole este código completo dentro do seu arquivo principal (ex: `src/vie
     font-size: 12px;
     font-weight: bold;
   }
-  .btn-excluir:hover { background: #fed7d7; }
+  .btn-delete:hover { background: #fed7d7; }
 </style>
 ```
 
 ---
 
-## 🏆 3. Parabéns, Desenvolvedor BlaiseVue!
+## 🏆 3. Congratulations, BlaiseVue Developer!
 
-Você completou o curso com honras! Olhe para trás e veja tudo o que você conquistou:
-- Aprendeu como o Pascal ganha superpoderes na Web.
-- Construiu interfaces reativas sem precisar decorar frameworks complexos de JavaScript.
-- Entendeu como componentes, rotas, formulários e eventos trabalham em harmonia.
+You have completed the entire BlaiseVue curriculum! Look at how much you have achieved:
+- You know how Object Pascal commands the modern browser.
+- You build reactive user interfaces without getting tangled in complex JavaScript toolchains.
+- You understand how components, two-way bindings, forms, lifecycles, and events synchronize in harmony.
 
-### 📚 Para Onde Ir Agora?
-- Explore a **[Documentação Técnica Oficial](../Documentation/README.md)** para conhecer recursos avançados como formulários de validação (`b-validate`), internacionalização (`blaise-i18n`), micro-containers Docker e backends de alta performance com **mORMot 2**.
-- Visite os exemplos e o código fonte em `demo-app/` para ver aplicações corporativas completas.
+### 📚 Where to Go Next?
+- Explore the **[Official Technical Documentation](../Documentation/README.md)** to discover enterprise topics such as form validation (`b-validate`), internationalization (`blaise-i18n`), lightweight Docker micro-containers, and high-performance server backends with **mORMot 2**.
+- Inspect the full production showcase in `demo-app/` for real-world architecture examples.
 
-**O mundo da Web em Pascal está aberto para você. Vá em frente e construa grandes aplicações!** 🛡️✨🚀🏆
+**The modern Web with Object Pascal is in your hands. Go build extraordinary applications!** 🛡️✨🚀🏆

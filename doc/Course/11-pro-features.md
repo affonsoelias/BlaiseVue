@@ -1,134 +1,134 @@
-# 🛡️ Módulo 11: Recursos Pro (Master Architecture)
-**Aprenda as técnicas arquiteturais que os profissionais usam em aplicações de grande porte.**
+# 🛡️ Module 11: Pro Features (Master Architecture)
+**Learn the advanced architectural techniques used in enterprise-grade applications.**
 
-Parabéns por chegar até aqui! Você já domina reatividade, diretivas, formulários, componentes e rotas. Agora vamos dar um salto de qualidade e aprender os padrões que mantêm sistemas corporativos gigantes organizados, elegantes e fáceis de evoluir.
+Congratulations on reaching this milestone! You now have a firm grasp of reactivity, directives, form binding, components, and routing. Now let's explore the architectural patterns that keep large-scale software organized, elegant, and maintainable.
 
 ---
 
-## 🖼️ 1. Composição Avançada com `<slot>` (A Moldura de Quadro)
+## 🖼️ 1. Flexible Composition with `<slot>` (The Picture Frame)
 
-Nos módulos anteriores, vimos como passar dados para componentes usando `props:` (como texto ou números). Mas e se você quiser que um componente receba **pedaços inteiros de HTML** de fora?
+In previous modules, we passed data into components using `props:` (such as strings or numbers). But what if you want a component to accept **custom blocks of HTML** from its caller?
 
-Pense em uma **moldura de quadro**: a moldura tem a borda dourada, o vidro e o suporte na parede, mas a foto que vai dentro quem escolhe é você! No BlaiseVue, usamos a tag **`<slot>`** para deixar esse "espaço reservado":
+Think of a **picture frame**: the frame provides the borders, styling, and glass, but you choose what photo goes inside! In BlaiseVue, we use the **`<slot>`** tag to reserve that content placeholder:
 
-### O Componente Moldura (`src/components/CardMoldura.bv`):
+### The Frame Component (`src/components/CardFrame.bv`):
 ```html
 <template>
-  <div class="cartao-moldura">
-    <div class="cabecalho-moldura">
-      <!-- Slot nomeado para o título do cabeçalho -->
-      <slot name="cabecalho"></slot>
+  <div class="card-frame">
+    <div class="frame-header">
+      <!-- Named slot for the header section -->
+      <slot name="header"></slot>
     </div>
 
-    <div class="corpo-moldura">
-      <!-- Slot padrão para qualquer conteúdo que vier de fora -->
+    <div class="frame-body">
+      <!-- Default slot for any content passed inside -->
       <slot></slot>
     </div>
   </div>
 </template>
 ```
 
-### Usando a Moldura na Página:
+### Using the Frame in Your View:
 ```html
-<card-moldura>
-  <!-- Encaixa no slot name="cabecalho": -->
-  <template #cabecalho>
-    <h3>🔒 Área Restrita</h3>
+<card-frame>
+  <!-- Injected into slot name="header": -->
+  <template #header>
+    <h3>🔒 Restricted Access</h3>
   </template>
 
-  <!-- Encaixa no slot padrão: -->
-  <p>Digite sua senha para desbloquear os dados sigilosos.</p>
-  <button class="btn btn-primary">Confirmar</button>
-</card-moldura>
+  <!-- Injected into the default slot: -->
+  <p>Please enter your administrative credentials to continue.</p>
+  <button class="btn btn-primary">Authenticate</button>
+</card-frame>
 ```
 
 ---
 
-## 🧠 2. Estado Global Compartilhado ($store / B-Store)
+## 🧠 2. Shared Global State ($store / B-Store)
 
-Imagine que a sua aplicação tem um **Carrinho de Compras**:
-- O menu superior precisa mostrar quantos itens estão no carrinho.
-- A página do produto precisa ter um botão "Adicionar ao Carrinho".
-- A página de checkout precisa listar os itens e calcular o valor final.
+Imagine an application with a **Shopping Cart**:
+- The top navigation bar needs to display total items in the cart.
+- The product catalog needs an "Add to Cart" button.
+- The checkout page needs to list items and calculate shipping.
 
-Ficar passando esses dados de pai para filho através de 10 níveis de componentes seria cansativo e fácil de errar (o chamado *Prop Drilling*).
+Passing cart data up and down through 10 levels of components would be cumbersome (*prop drilling*).
 
-Em vez disso, usamos a analogia da **caixa d'água central**: a caixa d'água fica no topo da casa e todos os cômodos pegam água diretamente dela através de canos! No BlaiseVue, esse repositório central é o **`$store`**:
+Instead, think of a **central water reservoir**: the tank sits at the top of the house and all rooms draw water directly from it! In BlaiseVue, that central reactive repository is the **`$store`**:
 
 ```pascal
-// Qualquer tela pode ler o estado central:
-quantidadeItens := Integer(this['$store']['carrinhoTotal']);
+// Any component view can read the shared store:
+totalItems := Integer(this['$store']['cartCount']);
 
-// E qualquer botão pode alterar o estado central:
-procedure adicionarAoCarrinho;
+// And any button can mutate the shared state:
+procedure addToCart;
 begin
-  this['$store']['carrinhoTotal'] := Integer(this['$store']['carrinhoTotal']) + 1;
+  this['$store']['cartCount'] := Integer(this['$store']['cartCount']) + 1;
 end;
 ```
 
 ---
 
-## ✨ 3. Animações e Transições Suaves (`<transition>`)
+## ✨ 3. Smooth Transitions (`<transition>`)
 
-Elementos que aparecem e somem da tela de forma instantânea e seca deixam a interface com cara de rascunho. Com a tag **`<transition>`**, o BlaiseVue injeta animações suaves de desvanecimento (*fade*) ou deslizamento (*slide*) automaticamente!
+User interfaces that snap in and out abruptly can feel jarring. With the **`<transition>`** component, BlaiseVue injects smooth fade or slide CSS transitions automatically:
 
 ```html
 <template>
   <div>
-    <button @click="abrirAviso">Alternar Alerta</button>
+    <button @click="toggleAlert">Toggle Notification</button>
 
-    <!-- Envolva seu b-if com a tag transition -->
+    <!-- Wrap your b-if or b-show block with the transition tag -->
     <transition name="fade">
-      <div b-if="mostrarAviso" class="caixa-alerta">
-        🛡️ Notificação: Seu backup foi concluído com sucesso!
+      <div b-if="showAlert" class="alert-box">
+        🛡️ System Notice: Your daily cloud backup completed successfully!
       </div>
     </transition>
   </div>
 </template>
 
 <style>
-  /* O BlaiseVue controla estas classes de animação para você: */
+  /* BlaiseVue manages these transition lifecycle classes: */
   .fade-enter-active, .fade-leave-active {
     transition: opacity 0.4s ease, transform 0.4s ease;
   }
   .fade-enter, .fade-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 </style>
 ```
 
 ---
 
-## 💉 4. Injeção de Dependências (Provide / Inject)
+## 💉 4. Dependency Injection (Provide / Inject)
 
-Quando você quer que um componente de topo (como a raiz `App.bv`) disponibilize uma configuração global (por exemplo: o idioma ativo `'pt-BR'` ou um serviço de logs) para qualquer componente que estiver lá no fundo da árvore hierárquica, usamos **`provide`** no pai e **`inject`** no neto/bisneto:
+When a root component (such as `App.bv`) needs to provide a global configuration (e.g. active locale `'en-US'` or an API service client) to deeply nested child components without manually piping props down every layer, use **`provide`** and **`inject`**:
 
 ```pascal
-// No componente Pai (App.bv):
+// In the Root Component (App.bv):
 provide:
-  appTema: 'dark';
-  versaoApp: 'v4.4.0';
+  activeTheme: 'darkly';
+  apiVersion: 'v4.4.0';
 
-// No componente Filho em qualquer nível de profundidade:
+// In any descendant child component:
 inject:
-  appTema: string;
+  activeTheme: string;
 ```
 
 ---
 
-## 🎯 5. Exercício Prático do Módulo 11
+## 🎯 5. Practical Exercise: Module 11
 
-1. Crie um componente chamado `ModalDialog.bv` usando `<slot>` para o título e o corpo da mensagem.
-2. Envolva a exibição desse modal com uma tag `<transition name="fade">`.
-3. Adicione um botão para abrir e fechar o modal e veja como a transição suave faz toda a diferença na qualidade percebida da sua aplicação!
+1. Build a `ModalDialog.bv` component using `<slot>` for the dialog title and modal body.
+2. Wrap the modal container with `<transition name="fade">`.
+3. Add a button to open and close the modal dialog to experience how smooth transitions elevate perceived app quality!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Como criar estruturas flexíveis e reutilizáveis usando `<slot>` e slots nomeados.
-- Como compartilhar informações entre telas distantes usando o B-Store central.
-- Como transformar interfaces duras em experiências fluidas com `<transition>`.
-- Como transmitir configurações de forma limpa usando `provide` e `inject`.
+## 🏆 What You Learned Today
+- How to build flexible layouts using `<slot>` and named slots.
+- How to share global reactive state across screens using the B-Store (`$store`).
+- How to polish visual interfaces with `<transition>`.
+- How to pass configuration data down deep component hierarchies cleanly with `provide` / `inject`.
 
-**Quer ter 100% de certeza de que o seu código nunca vai quebrar sem você perceber? Vamos aprender no [Módulo 12: Qualidade Marcial (Testes Unitários)](12-tests.md)!** ⚔️🛡️✨
+**Want to guarantee that your code will never break unexpectedly? Let's master [Module 12: Fearless Unit Testing](12-tests.md)!** ⚔️🛡️✨

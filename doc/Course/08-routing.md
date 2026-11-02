@@ -1,101 +1,101 @@
-# 🛰️ Módulo 08: Navegação sem Recarregar (Rotas e SPAs)
-**Crie sistemas fluidos com múltiplas telas que abrem na velocidade de um app nativo.**
+# 🛰️ Module 08: Flicker-Free Navigation (SPAs & Routing)
+**Create seamless multi-page user journeys that load with the speed of a native mobile app.**
 
-Você já deve ter reparado que sites mais antigos piscam uma tela branca toda vez que você clica em um link. Já em aplicativos modernos como Spotify Web, Gmail ou Twitter, você clica nos menus laterais e o conteúdo muda instantaneamente sem recarregar o navegador.
+You have probably noticed that older websites flash a white blank screen every time you click a link. In contrast, modern web apps like Spotify Web, Gmail, or Twitter load instantly when switching tabs, without any flicker or page reload.
 
-Isso é o que chamamos de **SPA (Single Page Application)** — e o BlaiseVue já vem com um roteador integrado pronto para isso!
+This architectural pattern is called a **Single Page Application (SPA)** — and BlaiseVue comes with a built-in router ready out of the box!
 
 ---
 
-## ⚡ 1. O Que É uma SPA e Como Funciona o Roteamento?
+## ⚡ 1. What is an SPA and How Does Routing Work?
 
-Nas aplicações tradicionais, cada clique em um menu pede um arquivo HTML totalmente novo para o servidor.
+In traditional websites, every menu click asks the web server for a completely new HTML file.
 
-Em uma SPA com o BlaiseVue:
-1. O seu navegador carrega a casca da aplicação **uma única vez**.
-2. Quando o usuário clica em um link como `#/sobre`, o **Roteador do BlaiseVue** percebe a mudança na URL.
-3. Ele esconde a página antiga e coloca a página nova na tela **no mesmo milissegundo**, sem nenhuma piscada!
+In a BlaiseVue SPA:
+1. The browser downloads the application shell **only once**.
+2. When the user navigates to a route like `#/about`, the **BlaiseVue Router** catches the URL hash change.
+3. It smoothly replaces the active component inside `<router-view>` **in a single frame**, without reloading the browser!
 
 ```mermaid
 flowchart LR
-    A["Usuário Clica em #/sobre"] --> B["Roteador do BlaiseVue"]
-    B -->|Troca apenas o miolo da tela| C["Página Sobre Carrega Instantaneamente!"]
+    A["User Clicks #/about"] --> B["BlaiseVue Router"]
+    B -->|Swaps only the center content| C["About Page Renders Instantly!"]
 ```
 
 ---
 
-## 🗺️ 2. As Rotas Automáticas do BlaiseVue
+## 🗺️ 2. Automatic Route Discovery in BlaiseVue
 
-O BlaiseVue organiza as suas telas dentro da pasta **`src/views/`**:
+BlaiseVue organizes view screens inside the **`src/views/`** directory:
 
-- `src/views/Home.bv` ➔ Rota: `#/` ou `#/home`
-- `src/views/About.bv` ➔ Rota: `#/about`
-- `src/views/Products.bv` ➔ Rota: `#/products`
-- `src/views/Contact.bv` ➔ Rota: `#/contact`
+- `src/views/Home.bv` ➔ Route: `#/` or `#/home`
+- `src/views/About.bv` ➔ Route: `#/about`
+- `src/views/Products.bv` ➔ Route: `#/products`
+- `src/views/Contact.bv` ➔ Route: `#/contact`
 
-Você não precisa configurar arquivos gigantescos de rotas se não quiser; o compilador reconhece as suas telas automaticamente!
+You do not need to maintain complex routing manifests for standard workflows; the compiler associates views automatically!
 
 ---
 
-## 🔗 3. Como Navegar Entre Páginas
+## 🔗 3. Navigating Between Pages
 
-Existem duas formas fáceis de levar o usuário de uma tela para outra:
+There are two primary ways to navigate users between screens:
 
-### Forma 1: Usando Links Comuns no HTML
-Basta colocar o caminho com o símbolo de cerquilha (`#`):
+### Method 1: Using Standard HTML Links
+Simply prefix the target route with the hash (`#`) symbol:
 ```html
 <nav>
-  <a href="#/home">Início</a>
-  <a href="#/about">Sobre Nós</a>
-  <a href="#/contact">Fale Conosco</a>
+  <a href="#/home">Home</a>
+  <a href="#/about">About Us</a>
+  <a href="#/contact">Contact Us</a>
 </nav>
 ```
 
-### Forma 2: Navegando Através do Código Pascal
-Se você quiser mudar de página depois que o usuário clicar em um botão ou terminar de salvar um cadastro:
+### Method 2: Programmatic Navigation in Pascal
+When you want to redirect the user after an action (e.g. after a form submission or login):
 ```pascal
-procedure finalizarCadastro;
+procedure completeRegistration;
 begin
-  // Salva os dados... e depois redireciona para a tela de sucesso!
-  TJSFunction(this['$router']['push']).apply(this['$router'], ['#/sucesso']);
+  // Save data... and then redirect to the success view!
+  TJSFunction(this['$router']['push']).apply(this['$router'], ['#/success']);
 end;
 ```
 
 ---
 
-## 🚀 4. Exemplo Completo Passo a Passo: Criando Uma Barra de Navegação
+## 🚀 4. Full Step-by-Step Example: Building an App Navigation Bar
 
-Vamos estruturar um menu superior que funciona em qualquer tela do seu sistema.
+Let's build a top navigation bar that stays persistent across all screens.
 
-Abra o seu arquivo principal de layout (ou `App.bv`) e monte a navegação:
+Open your main application layout file (e.g. `App.bv`) and set up the layout:
 
 ```html
 <template>
-  <div class="aplicacao-layout">
+  <div class="app-layout">
     
-    <!-- Barra Superior de Navegação -->
+    <!-- Top Persistent Navigation Bar -->
     <header class="navbar">
-      <div class="marca">
-        <span class="icone-marca">🛡️</span>
-        <strong>Meu Portal BlaiseVue</strong>
+      <div class="brand">
+        <span class="brand-icon">🛡️</span>
+        <strong>BlaiseVue Portal</strong>
       </div>
 
-      <nav class="links-menu">
-        <a href="#/" class="link-item">🏠 Início</a>
-        <a href="#/about" class="link-item">ℹ️ Sobre</a>
-        <a href="#/contact" class="link-item">📞 Contato</a>
+      <nav class="nav-links">
+        <a href="#/" class="nav-item">🏠 Home</a>
+        <a href="#/about" class="nav-item">ℹ️ About</a>
+        <a href="#/contact" class="nav-item">📞 Contact</a>
       </nav>
     </header>
 
-    <!-- Área Onde a Página Selecionada Aparece -->
-    <main class="conteudo-principal">
-      <!-- O roteador do BlaiseVue injeta a view ativa aqui! -->
+    <!-- Main View Outlet Where the Active Screen Renders -->
+    <main class="main-content">
+      <!-- BlaiseVue router injects the active view here! -->
       <router-view></router-view>
     </main>
 
-    <!-- Rodapé Comum a Todas as Páginas -->
-    <footer class="rodape">
-      <p>© 2026 - Desenvolvido com Object Pascal e BlaiseVue.</p>
+    <!-- Global Persistent Footer -->
+    <footer class="app-footer">
+      <p>© 2026 - Built with Object Pascal and the BlaiseVue Framework.</p>
     </footer>
 
   </div>
@@ -116,17 +116,17 @@ Abra o seu arquivo principal de layout (ou `App.bv`) e monte a navegação:
     padding: 14px 28px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   }
-  .marca {
+  .brand {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 18px;
   }
-  .links-menu {
+  .nav-links {
     display: flex;
     gap: 16px;
   }
-  .link-item {
+  .nav-item {
     color: #e2e8f0;
     text-decoration: none;
     font-weight: bold;
@@ -135,17 +135,17 @@ Abra o seu arquivo principal de layout (ou `App.bv`) e monte a navegação:
     border-radius: 6px;
     transition: background 0.2s ease;
   }
-  .link-item:hover {
+  .nav-item:hover {
     background-color: rgba(255, 255, 255, 0.15);
     color: #ffffff;
   }
-  .conteudo-principal {
+  .main-content {
     max-width: 900px;
     margin: 30px auto;
     padding: 0 20px;
     min-height: calc(100vh - 180px);
   }
-  .rodape {
+  .app-footer {
     text-align: center;
     padding: 20px;
     background: #edf2f7;
@@ -157,33 +157,34 @@ Abra o seu arquivo principal de layout (ou `App.bv`) e monte a navegação:
 
 ---
 
-## 🎯 5. Exercício Prático do Módulo 08
+## 🎯 5. Practical Exercise: Module 08
 
-1. Crie uma nova tela chamada `Contact.bv` dentro da pasta `src/views/`:
+1. Create a new screen called `Contact.bv` inside `src/views/`:
    ```html
    <template>
-     <div class="cartao-contato">
-       <h2>📞 Fale Conosco</h2>
-       <p>Envie um e-mail para: <strong>contato@meuprojeto.com</strong></p>
+     <div class="contact-card">
+       <h2>📞 Contact Us</h2>
+       <p>Reach out anytime at: <strong>team@myproject.com</strong></p>
      </div>
    </template>
    <style>
-     .cartao-contato {
+     .contact-card {
        background: white;
        padding: 24px;
        border-radius: 8px;
+       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
      }
    </style>
    ```
-2. Abra o navegador em `http://localhost:8080` e clique no link "📞 Contato".
-3. Veja a nova página abrir instantaneamente sem nenhum recarregamento de tela!
+2. Navigate to `http://localhost:8080` and click the "📞 Contact" link in the menu.
+3. Observe how the new page mounts instantly without a browser page refresh!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- A grande vantagem de uma SPA (Single Page Application) em velocidade e experiência de usuário.
-- Como o roteador do BlaiseVue mapeia arquivos em `src/views/` para rotas na URL.
-- Como navegar usando links `href="#/..."` ou programaticamente com `$router.push`.
-- O papel do elemento `<router-view>` para projetar as páginas ativas.
+## 🏆 What You Learned Today
+- Why Single Page Applications provide superior user experience and speed.
+- How the BlaiseVue router maps views in `src/views/` to URL hash routes.
+- How to navigate using standard links `href="#/..."` or programmatically via `$router.push`.
+- The role of the `<router-view>` outlet for hosting dynamic screens.
 
-**Quer saber o momento exato em que a tela carrega ou tocar em um campo diretamente? Siga para o [Módulo 09: $refs e Ciclo de Vida](09-refs.md)!** ⚔️🛡️✨
+**Need to execute code right when a component mounts or focus an input? Let's dive into [Module 09: $refs and Lifecycle](09-refs.md)!** ⚔️🛡️✨

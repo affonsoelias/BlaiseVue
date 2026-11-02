@@ -1,108 +1,108 @@
-# 📜 Módulo 03: Diretivas Essenciais (b-if, b-for e b-show)
-**Ensine a sua tela a tomar decisões e a exibir listas automaticamente.**
+# 📜 Module 03: Essential Directives (b-if, b-for, and b-show)
+**Teach your user interface to make decisions and render dynamic lists automatically.**
 
-Imagine que você está criando uma loja virtual:
-- Se o usuário estiver logado, você quer mostrar o botão **"Sair"**.
-- Se ele não estiver logado, você quer mostrar o botão **"Entrar"**.
-- Se ele tiver 10 produtos no carrinho, você não quer ter que escrever 10 vezes o mesmo bloco de HTML à mão!
+Imagine building an online store:
+- If a user is logged in, you want to show a **"Log Out"** button.
+- If they are not logged in, you want to show a **"Sign In"** button.
+- If their cart has 10 items, you certainly do not want to write 10 repetitive HTML blocks by hand!
 
-Para resolver tudo isso de forma elegante, usamos as **Diretivas**!
+To handle these tasks cleanly, we use **Directives**!
 
 ---
 
-## 🧭 1. O Que é uma Diretiva?
+## 🧭 1. What is a Directive?
 
-Uma diretiva é uma palavra especial (que começa com `b-` no BlaiseVue) que colocamos dentro de uma tag HTML para dar a ela um comportamento inteligente.
+A directive is a special HTML attribute (prefixed with `b-` in BlaiseVue) that adds reactive superpowers to an HTML element.
 
 > [!TIP]
-> **Compatibilidade com Vue.js:**  
-> Se você já viu tutoriais de Vue.js na internet usando `v-if`, `v-for`, etc., fique tranquilo: o BlaiseVue aceita tanto o prefixo `b-` quanto o `v-` de forma intercambiável! Você pode usar `b-if` ou `v-if` com o mesmo resultado.
+> **Vue.js Compatibility:**  
+> If you are coming from Vue.js or looking at Vue tutorials, BlaiseVue supports the `v-` prefix as a direct alias! You can write `b-if` or `v-if`, `b-for` or `v-for`, with identical runtime behavior.
 
 ---
 
-## 🔀 2. Decisões na Tela: `b-if`, `b-else-if` e `b-else`
+## 🔀 2. Conditional Rendering: `b-if`, `b-else-if`, and `b-else`
 
-Assim como na vida fazemos escolhas (*"Se chover, levo guarda-chuva; senão, levo óculos de sol"*), no BlaiseVue usamos o `b-if`:
+Just like in everyday logic (*"If it rains, take an umbrella; otherwise, wear sunglasses"*), in BlaiseVue we use `b-if`:
 
 ```html
-<!-- Se a variável usuarioLogado for verdadeira (true), mostra a saudação: -->
-<p b-if="usuarioLogado">Bem-vindo de volta! 🛡️</p>
+<!-- If isLoggedIn is true, render the greeting: -->
+<p b-if="isLoggedIn">Welcome back, adventurer! 🛡️</p>
 
-<!-- Se for falsa (false), mostra o botão de login: -->
-<p b-else>Por favor, faça seu login para continuar. ⚔️</p>
+<!-- If false, render the login button: -->
+<p b-else>Please sign in to access your dashboard. ⚔️</p>
 ```
 
-Você também pode encadear várias opções com `b-else-if`:
+You can also chain multiple conditions with `b-else-if`:
 ```html
-<span b-if="pontos >= 100" class="badge ouro">Nível Ouro 🏆</span>
-<span b-else-if="pontos >= 50" class="badge prata">Nível Prata 🥈</span>
-<span b-else class="badge bronze">Nível Iniciante 🥉</span>
+<span b-if="points >= 100" class="badge gold">Gold Tier 🏆</span>
+<span b-else-if="points >= 50" class="badge silver">Silver Tier 🥈</span>
+<span b-else class="badge bronze">Bronze Tier 🥉</span>
 ```
 
 ---
 
-## 👁️ 3. Qual a Diferença Entre `b-if` e `b-show`?
+## 👁️ 3. What is the Difference Between `b-if` and `b-show`?
 
-Tanto o `b-if` quanto o `b-show` servem para ocultar ou exibir coisas, mas eles funcionam de formas diferentes por baixo do capô:
+Both `b-if` and `b-show` toggle element visibility, but they operate differently under the hood:
 
-| Diretiva | Como Funciona? | Quando Usar? |
+| Directive | How It Works | When to Use It |
 | :--- | :--- | :--- |
-| **`b-if`** | Destrói ou cria o elemento no HTML de verdade. | Quando a condição não muda com frequência (ex: usuário com permissão de administrador ou não). |
-| **`b-show`** | O elemento sempre existe no HTML, mas fica invisível com CSS (`display: none`). | Quando você precisa alternar muitas vezes na tela (ex: abrir e fechar uma caixa de menu ou popup com um clique). |
+| **`b-if`** | Physically creates or destroys the element in the DOM tree. | When the condition rarely changes (e.g. administrator vs. regular user permission). |
+| **`b-show`** | The element remains in the DOM, but is toggled using CSS (`display: none`). | When an element opens and closes frequently (e.g. dropdown menus, modal popups). |
 
 ---
 
-## 🔁 4. Repetindo Listas Sem Esforço: `b-for`
+## 🔁 4. Repeating Lists with Ease: `b-for`
 
-Em vez de escrever linhas repetidas no HTML, guardamos os itens em uma lista no Pascal e pedimos para o `b-for` desenhar um por um:
+Instead of writing repetitive HTML tags, we store items in a Pascal array and let `b-for` render them systematically:
 
 ```html
 <ul>
-  <!-- Para cada 'fruta' dentro da lista 'cesta', desenhe um item <li> -->
-  <li b-for="fruta in cesta">
-    🍎 {{ fruta }}
+  <!-- For each 'fruit' in the 'basket' array, render an <li> item -->
+  <li b-for="fruit in basket">
+    🍎 {{ fruit }}
   </li>
 </ul>
 ```
 
 ---
 
-## 🚀 5. Exemplo Completo Passo a Passo: Lista de Tarefas Interativa
+## 🚀 5. Full Step-by-Step Example: An Interactive Task List
 
-Vamos criar um aplicativo completo de tarefas onde podemos:
-1. Listar tarefas cadastradas com `b-for`.
-2. Mostrar um aviso com `b-if` se não houver tarefas.
-3. Abrir e fechar a visualização usando `b-show`.
-4. Marcar tarefas como concluídas com um clique.
+Let's build a complete task manager application where we:
+1. Render tasks dynamically with `b-for`.
+2. Display an empty state alert using `b-if` when there are no tasks.
+3. Toggle list visibility smoothly with `b-show`.
+4. Allow users to toggle completion status with a button click.
 
-Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.bv`):
+Copy and paste this code into your view file (e.g. `src/views/Home.bv`):
 
 ```html
 <template>
-  <div class="cartao-tarefas">
-    <h2>Minha Lista de Tarefas 🛡️</h2>
+  <div class="tasks-card">
+    <h2>My Task Manager 🛡️</h2>
 
-    <!-- Botão para alternar a visualização da lista inteira -->
-    <button class="btn-toggle" @click="alternarVisibilidade">
-      {{ visivel ? 'Esconder Tarefas' : 'Mostrar Tarefas' }}
+    <!-- Button to toggle the entire task container visibility -->
+    <button class="btn-toggle" @click="toggleVisibility">
+      {{ isVisible ? 'Hide Tasks' : 'Show Tasks' }}
     </button>
 
-    <!-- b-show: Mostra ou esconde o container suavemente -->
-    <div b-show="visivel" class="conteudo-lista">
+    <!-- b-show: Toggles visibility smoothly without re-creating DOM nodes -->
+    <div b-show="isVisible" class="tasks-content">
       
-      <!-- b-if: Se a lista estiver vazia, mostra esta mensagem de descanso -->
-      <div b-if="tarefas.length == 0" class="aviso-vazio">
-        🎉 Parabéns! Você não tem nenhuma tarefa pendente.
+      <!-- b-if: Shown only when the task list is completely empty -->
+      <div b-if="tasks.length == 0" class="empty-state">
+        🎉 Great job! You have no pending tasks right now.
       </div>
 
-      <!-- b-else: Se a lista NÃO estiver vazia, desenha as tarefas -->
-      <ul b-else class="lista">
-        <li b-for="item in tarefas" class="item-tarefa">
-          <span :class="{ 'concluida': item.feita }">
-            {{ item.titulo }}
+      <!-- b-else: Renders the active list of tasks -->
+      <ul b-else class="task-list">
+        <li b-for="item in tasks" class="task-item">
+          <span :class="{ 'completed': item.done }">
+            {{ item.title }}
           </span>
-          <button class="btn-acao" @click="concluir(item)">
-            {{ item.feita ? 'Desfazer' : 'Concluir' }}
+          <button class="btn-action" @click="toggleTask(item)">
+            {{ item.done ? 'Undo' : 'Complete' }}
           </button>
         </li>
       </ul>
@@ -113,55 +113,55 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
 
 <script>
   data:
-    visivel: boolean = true;
-    tarefas: TJSArray;
+    isVisible: boolean = true;
+    tasks: TJSArray;
 
   methods:
-    // Alterna entre verdadeiro e falso
-    procedure alternarVisibilidade;
+    // Toggles visibility between true and false
+    procedure toggleVisibility;
     begin
-      this['visivel'] := not Boolean(this['visivel']);
+      this['isVisible'] := not Boolean(this['isVisible']);
     end;
 
-    // Alterna o status da tarefa clicada
-    procedure concluir(item: TJSObject);
+    // Toggles the completed status of the clicked task
+    procedure toggleTask(item: TJSObject);
     begin
-      item['feita'] := not Boolean(item['feita']);
+      item['done'] := not Boolean(item['done']);
     end;
 
   mounted:
-    // Quando a tela carregar, colocamos 3 tarefas iniciais na lista:
+    // When the component mounts, populate with 3 starter tasks:
     procedure;
     var
       t1, t2, t3: TJSObject;
     begin
-      this['tarefas'] := TJSArray.new;
+      this['tasks'] := TJSArray.new;
       
       t1 := TJSObject.new;
-      t1['titulo'] := 'Instalar o BlaiseVue com bv doctor';
-      t1['feita'] := true;
-      TJSArray(this['tarefas']).push(t1);
+      t1['title'] := 'Run bv doctor to check dependencies';
+      t1['done'] := true;
+      TJSArray(this['tasks']).push(t1);
 
       t2 := TJSObject.new;
-      t2['titulo'] := 'Aprender variáveis no Módulo 02';
-      t2['feita'] := true;
-      TJSArray(this['tarefas']).push(t2);
+      t2['title'] := 'Master reactive variables in Module 02';
+      t2['done'] := true;
+      TJSArray(this['tasks']).push(t2);
 
       t3 := TJSObject.new;
-      t3['titulo'] := 'Dominar diretivas no Módulo 03';
-      t3['feita'] := false;
-      TJSArray(this['tarefas']).push(t3);
+      t3['title'] := 'Build dynamic lists with b-for in Module 03';
+      t3['done'] := false;
+      TJSArray(this['tasks']).push(t3);
     end;
 </script>
 
 <style>
-  .cartao-tarefas {
+  .tasks-card {
     max-width: 480px;
     margin: 30px auto;
-    background: #fff;
+    background: #ffffff;
     padding: 24px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     font-family: sans-serif;
   }
   .btn-toggle {
@@ -174,23 +174,23 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     margin-bottom: 16px;
     font-weight: bold;
   }
-  .lista {
+  .task-list {
     list-style: none;
     padding: 0;
     margin: 0;
   }
-  .item-tarefa {
+  .task-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px;
     border-bottom: 1px solid #edf2f7;
   }
-  .concluida {
+  .completed {
     text-decoration: line-through;
     color: #a0aec0;
   }
-  .btn-acao {
+  .btn-action {
     background: #edf2f7;
     border: 1px solid #cbd5e0;
     padding: 4px 10px;
@@ -198,41 +198,40 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     cursor: pointer;
     font-size: 12px;
   }
-  .btn-acao:hover {
+  .btn-action:hover {
     background: #e2e8f0;
   }
-  .aviso-vazio {
+  .empty-state {
     padding: 20px;
     background: #f0fff4;
     color: #276749;
     border-radius: 8px;
     text-align: center;
+    font-weight: bold;
   }
 </style>
 ```
 
 ---
 
-## 🎯 6. Exercício Prático do Módulo 03
+## 🎯 6. Practical Exercise: Module 03
 
-Para exercitar suas novas habilidades:
-
-1. No código acima, adicione um botão **"Limpar Todas as Tarefas"**.
-2. Na seção `methods:`, crie a procedure para limpar a lista:
+1. Add a **"Clear All Tasks"** button next to the toggle button.
+2. In the `methods:` section, create the procedure:
    ```pascal
-   procedure limparTudo;
+   procedure clearAll;
    begin
-     this['tarefas'] := TJSArray.new;
+     this['tasks'] := TJSArray.new;
    end;
    ```
-3. Teste no navegador: ao clicar em "Limpar Todas as Tarefas", o `b-else` vai sumir e o `b-if="tarefas.length == 0"` vai aparecer instantaneamente com a mensagem verde comemorativa!
+3. Test in the browser: when you click "Clear All", the list disappears and the green celebration alert renders instantly via `b-if="tasks.length == 0"`!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- O que são diretivas e como facilitam o controle do HTML.
-- Como tomar decisões com `b-if`, `b-else-if` e `b-else`.
-- Quando preferir `b-show` para itens que abrem e fecham frequentemente.
-- Como desenhar listas dinâmicas com `b-for`.
+## 🏆 What You Learned Today
+- How directives simplify DOM manipulation.
+- How to make conditional UI branches with `b-if`, `b-else-if`, and `b-else`.
+- When to use `b-show` for elements that toggle frequently.
+- How to iterate and render arrays dynamically with `b-for`.
 
-**Quer receber dados que o usuário digita no teclado? Siga em frente para o [Módulo 04: Sincronização com b-model](04-synchronization.md)!** ⚔️🛡️✨
+**Want to capture user input from forms and text boxes? Proceed to [Module 04: Synchronization with b-model](04-synchronization.md)!** ⚔️🛡️✨

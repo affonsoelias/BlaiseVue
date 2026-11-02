@@ -1,52 +1,52 @@
-# 🎓 Módulo 12: Qualidade Marcial (Testes Unitários Descomplicados)
-**A espada que nunca falha: garanta que seu sistema funcione perfeitamente antes de ir para o ar.**
+# 🎓 Module 12: Fearless Unit Testing
+**The sword that never fails: validate your business logic before releasing to production.**
 
-Você já passou pela experiência de alterar uma única linha de código e, sem querer, quebrar algo que já estava funcionando perfeitamente em outra parte do sistema? Isso é muito comum na vida de qualquer programador e se chama **Regressão**.
+Have you ever tweaked a single line of code, only to accidentally break something that was previously working in an entirely different part of the application? In software engineering, this is known as a **Regression**.
 
-Para que você possa programar com total tranquilidade e dormir com a consciência limpa, usamos **Testes Automatizados**!
-
----
-
-## ✈️ 1. O Que É um Teste Unitário? (A Analogia do Piloto de Avião)
-
-Antes de qualquer avião decolar, os pilotos pegam uma prancheta com um *checklist*:
-- As luzes estão acendendo? *Sim.*
-- Os freios estão respondendo? *Sim.*
-- O combustível está no nível certo? *Sim.*
-
-Um **Teste Unitário** é exatamente esse checklist, só que executado por um robozinho em alta velocidade! Ele roda todas as funções e telas do seu sistema em poucos segundos e avisa imediatamente se algo der errado.
-
-No BlaiseVue, o mais incrível é que **você escreve os testes na própria linguagem Object Pascal**!
+To code with confidence and peace of mind, professional developers use **Automated Unit Tests**!
 
 ---
 
-## 🔬 2. A Estrutura de um Teste em Pascal
+## ✈️ 1. What is a Unit Test? (The Airplane Pre-Flight Analogy)
 
-Os testes no BlaiseVue ficam guardados na pasta `tests/` com o formato de arquivo `nome.test.pas`. Eles são divididos em três blocos fáceis de ler:
+Before any passenger jet takes off, the flight crew goes through a rigorous pre-flight checklist:
+- Are the navigation lights working? *Check.*
+- Are the brakes responding properly? *Check.*
+- Is fuel pressure nominal? *Check.*
 
-1. **`Describe`**: Diz qual tela ou função você está testando (o título do teste).
-2. **`It`**: Diz qual comportamento específico você espera que aconteça.
-3. **`Expect`**: É a conferência final! *"Espero que o total seja 10"*, *"Espero que o texto contenha 'Sucesso'"*.
+A **Unit Test** is that automated checklist for your software! It executes all your critical calculations, components, and workflows in seconds and alerts you immediately if any calculation produces an unexpected result.
 
-Veja como é claro:
+Best of all: in BlaiseVue, **you write your tests in native Object Pascal**!
+
+---
+
+## 🔬 2. Anatomy of a Test in Pascal
+
+Test files in BlaiseVue live inside the `tests/` folder with the file extension `name.test.pas`. They are structured into three intuitive blocks:
+
+1. **`Describe`**: Declares what component or feature is under test.
+2. **`It`**: Describes the specific behavior you expect to happen.
+3. **`Expect`**: The final verification! *"I expect the count to be 0"*, *"I expect the text to contain 'Success'"*.
+
+Look how clean and readable it is:
 
 ```pascal
-program teste_contador;
-uses JS, Web, BVTestUtils, uMeuComponente;
+program counter_test;
+uses JS, Web, BVTestUtils, uMyCounter;
 
 begin
-  Register_uMeuComponente; // Registra o componente para o teste
+  Register_uMyCounter; // Registers the component for the test harness
 
-  Describe('Meu Componente de Contador', procedure
+  Describe('My Counter Component', procedure
   begin
     
-    // Teste 1: O estado inicial
-    It('deve iniciar marcando zero pontos', procedure
+    // Test 1: Verify the initial state
+    It('should start with zero points', procedure
     var
       Wrapper: TBVWrapper;
     begin
-      Wrapper := Mount('meu-contador'); // Monta o componente na memória
-      Expect(Wrapper.Text).ToContain('0'); // Confere se o número 0 está lá!
+      Wrapper := Mount('my-counter'); // Mounts the component into an in-memory DOM
+      Expect(Wrapper.Text).ToContain('0'); // Verifies that 0 is physically present!
     end);
 
   end);
@@ -55,20 +55,20 @@ end.
 
 ---
 
-## 🚀 3. Passo a Passo: Executando os Testes com o CLI `bv`
+## 🚀 3. Step-by-Step: Running Tests with the `bv` CLI
 
-Rodar a bateria de testes do BlaiseVue é tão simples quanto digitar um único comando no terminal:
+Running your entire test suite is as simple as typing one command in your terminal:
 
 ```bash
 bv test
 ```
 
-### O Que Acontece nos Bastidores:
-1. O CLI procura todos os arquivos `.test.pas` do seu projeto.
-2. Ele compila seus códigos Pascal e atualiza os componentes em milissegundos.
-3. Ele executa cada teste e imprime na tela uma lista com os resultados em verde:
+### What Happens Under the Hood:
+1. The CLI scans for all `.test.pas` files across your project.
+2. It compiles the Pascal test sources and transpiles the required components.
+3. It runs the Vitest execution engine and outputs clear green pass indicators:
    ```text
-   ✓ demo-app/generated/tests/components/Contador.test.js (1 test) 8ms
+   ✓ demo-app/generated/tests/components/Counter.test.js (1 test) 8ms
    ✓ demo-app/generated/tests/views/Home.test.js (3 tests) 15ms
 
    Test Files  2 passed (2)
@@ -76,22 +76,22 @@ bv test
      Duration  1.20s
    ```
 
-Se algum teste falhar (por exemplo, se você esperava que o total desse `100` e o cálculo resultou em `80`), o terminal avisa em vermelho exatamente em qual linha o erro aconteceu!
+If a test ever fails (e.g. if a calculation was expected to be `100` but returned `80`), the terminal reports the exact line number where the discrepancy occurred.
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 12
+## 🎯 4. Practical Exercise: Module 12
 
-1. Abra o terminal na pasta do seu projeto.
-2. Execute o comando `bv test`.
-3. Veja todos os testes do framework rodando e passando com sucesso (`passed`).
-4. **Desafio mental**: Pense em uma funcionalidade que você criou (como o frete grátis do Módulo 05). Como você testaria se uma compra de R$ 200,00 realmente devolve a mensagem `'Frete Grátis'`? Escrever esse teste é a garantia de que nenhum desconto futuro vai quebrar essa regra!
+1. Open your terminal in the BlaiseVue directory.
+2. Run `bv test`.
+3. Watch all the framework's unit tests run and pass (`365 passed`).
+4. **Thought experiment**: Think about the free shipping feature from Module 05. How would you write a test verifying that an order of `$ 120.00` correctly displays `'FREE SHIPPING'`? Writing that test ensures no future coupon changes will ever break your shipping rules!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Por que os testes automatizados eliminam o medo de alterar código.
-- A anatomia de um teste em Pascal com `Describe`, `It` e `Expect`.
-- Como executar sua suíte de testes completa com um único comando: `bv test`.
+## 🏆 What You Learned Today
+- Why automated tests eliminate the fear of refactoring.
+- The anatomy of a Pascal test with `Describe`, `It`, and `Expect`.
+- How to execute your test battery with a single command: `bv test`.
 
-**Você chegou ao momento ápice da sua jornada! É hora de juntar todas as peças e construir uma aplicação completa no [Módulo 13: O Desafio Final](13-final-challenge.md)!** ⚔️🛡️✨
+**You have reached the pinnacle of your training! It is time to assemble everything into a production-grade application in [Module 13: The Final Challenge](13-final-challenge.md)!** ⚔️🛡️✨

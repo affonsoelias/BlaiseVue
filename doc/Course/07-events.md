@@ -1,97 +1,96 @@
-# 🛰️ Módulo 07: Comunicação e Eventos ($emit)
-**Fazendo os componentes conversarem entre si e reagirem ao usuário.**
+# 🛰️ Module 07: Communication & Events ($emit)
+**Making components communicate with each other and react to user actions.**
 
-No mundo real, quando alguém aperta a campainha da sua casa:
-1. O **botão da campainha** não sabe quem está dentro da casa nem o que você vai fazer. Ele apenas faz: *Plim-Plom!*
-2. **Você**, dentro da casa, ouve o som e decide o que fazer: levanta do sofá, olha no olho mágico ou abre o portão.
+In the real world, when a visitor presses the doorbell outside your house:
+1. The **doorbell button** does not know who is inside the house or what you will do. It simply rings: *Ding-Dong!*
+2. **You**, inside the house, hear the chime and decide what action to take: answer the door, look through the peep-hole, or check the camera.
 
-No BlaiseVue, esse mecanismo é a base de toda a arquitetura de eventos:
-- **Props descem:** O pai passa dados para o filho.
-- **Eventos sobem ($emit):** O filho avisa o pai quando algo aconteceu!
+In BlaiseVue, this is the foundational pattern of component communication:
+- **Props go DOWN:** The parent passes data down to the child.
+- **Events go UP ($emit):** The child notifies the parent when an action occurs!
 
 ---
 
-## 👂 1. Escutando Eventos com `@` (ou `b-on:`)
+## 👂 1. Listening to Events with `@` (or `b-on:`)
 
-Para fazer um botão ou campo reagir às ações do usuário, usamos a arroba `@` seguida do nome do evento:
+To make buttons and inputs react to user actions, we prepend the `@` symbol before the event name:
 
-| Sintaxe | Quando Dispara? | Exemplo de Uso |
+| Syntax | When Does It Fire? | Example |
 | :--- | :--- | :--- |
-| `@click` | Quando o usuário clica com o mouse ou toca na tela | `@click="salvarDados"` |
-| `@input` | Toda vez que uma letra é digitada no campo | `@input="verificarTexto"` |
-| `@keyup.enter` | Quando o usuário pressiona a tecla **Enter** | `@keyup.enter="enviarMensagem"` |
-| `@mouseenter` | Quando o ponteiro do mouse passa por cima | `@mouseenter="mostrarTooltip"` |
+| `@click` | When the user clicks or taps the element | `@click="saveRecord"` |
+| `@input` | Every time a character is typed into a field | `@input="validateEntry"` |
+| `@keyup.enter` | When the user presses the **Enter** key | `@keyup.enter="submitComment"` |
+| `@mouseenter` | When the mouse pointer hovers over an element | `@mouseenter="showTooltip"` |
 
-As ações que esses eventos chamam ficam sempre organizadas dentro do bloco `methods:` do seu código Pascal:
+The logic executed by these listeners is declared in the `methods:` section of your Pascal code:
 
 ```pascal
 <script>
   methods:
-    procedure salvarDados;
+    procedure saveRecord;
     begin
-      // Executa quando o botão for clicado!
-      WriteLn('Salvando dados no sistema...');
+      WriteLn('Saving record to database...');
     end;
 </script>
 ```
 
 ---
 
-## 📢 2. O Que É o `$emit` (O Filho Avisando o Pai)?
+## 📢 2. What is `$emit` (The Child Calling the Parent)?
 
-Quando criamos um componente filho — como um botão especial, um formulário ou um item de lista — ele não deve alterar dados do pai diretamente. Em vez disso, ele "grita" um evento para quem quiser ouvir usando `$emit`:
+A child component (such as a custom button, shopping item, or form widget) should never directly modify its parent's variables. Instead, it dispatches an event up the tree using `$emit`:
 
 ```pascal
-// O filho dispara o evento 'comprar' levando o nome do item:
-TJSFunction(this['$emit']).apply(this, ['comprar', 'Espada de Pascal']);
+// The child emits an event named 'purchase' carrying the item title:
+TJSFunction(this['$emit']).apply(this, ['purchase', 'Pascal Blade']);
 ```
 
-E no componente pai, nós escutamos com `@comprar`:
+And in the parent component, we listen to that custom event with `@purchase`:
 ```html
-<item-loja @comprar="adicionarAoCarrinho"></item-loja>
+<store-item @purchase="addToCart"></store-item>
 ```
 
 ---
 
-## 🚀 3. Exemplo Completo Passo a Passo: O Sistema de Curtidas (Likes)
+## 🚀 3. Full Step-by-Step Example: Community Upvoting System
 
-Vamos construir um exemplo prático com dois arquivos:
-1. Um componente filho reutilizável: um botão de curtir com coração (`LikeButton.bv`).
-2. Uma página pai que coloca 3 botões na tela e mantém um placar com o **Total Geral de Curtidas**!
+Let's build a practical two-component voting system:
+1. A reusable child button component (`LikeButton.bv`) with its own click count and heart animation.
+2. A parent dashboard view that renders three vote buttons and tracks the **Total Community Votes** in a master scoreboard!
 
 ---
 
-### Passo 1: Criar o Filho (`src/components/LikeButton.bv`)
+### Step 1: Create the Child Component (`src/components/LikeButton.bv`)
 
-Crie o arquivo `LikeButton.bv` na pasta `demo-app/src/components/`:
+Create `LikeButton.bv` inside `demo-app/src/components/`:
 
 ```html
 <template>
-  <button class="btn-like" :class="{ 'curtido': foiCurtido }" @click="darLike">
-    <span class="icone-coracao">{{ foiCurtido ? '❤️' : '🤍' }}</span>
-    <span class="rotulo">{{ rotulo }}</span>
-    <span class="contador-badge">{{ contagem }}</span>
+  <button class="btn-like" :class="{ 'liked': hasLiked }" @click="triggerLike">
+    <span class="heart-icon">{{ hasLiked ? '❤️' : '🤍' }}</span>
+    <span class="label">{{ label }}</span>
+    <span class="count-badge">{{ count }}</span>
   </button>
 </template>
 
 <script>
   props:
-    rotulo: string = 'Curtir';
+    label: string = 'Like';
 
   data:
-    contagem: integer = 0;
-    foiCurtido: boolean = false;
+    count: integer = 0;
+    hasLiked: boolean = false;
 
   methods:
-    procedure darLike;
+    procedure triggerLike;
     begin
-      // 1. Atualiza o estado interno do botão
-      this['contagem'] := Integer(this['contagem']) + 1;
-      this['foiCurtido'] := true;
+      // 1. Update internal component state
+      this['count'] := Integer(this['count']) + 1;
+      this['hasLiked'] := true;
 
-      // 2. Avisa o componente Pai que uma curtida aconteceu!
-      // Dispara o evento 'curtida-realizada' passando o rótulo do botão
-      TJSFunction(this['$emit']).apply(this, ['curtida-realizada', this['rotulo']]);
+      // 2. Notify parent component that a like occurred!
+      // Emits 'vote-cast' carrying the label parameter
+      TJSFunction(this['$emit']).apply(this, ['vote-cast', this['label']]);
     end;
 </script>
 
@@ -113,11 +112,11 @@ Crie o arquivo `LikeButton.bv` na pasta `demo-app/src/components/`:
     border-color: #cbd5e0;
     transform: translateY(-2px);
   }
-  .curtido {
+  .liked {
     border-color: #feb2b2;
     background: #fff5f5;
   }
-  .contador-badge {
+  .count-badge {
     background: #edf2f7;
     padding: 2px 8px;
     border-radius: 10px;
@@ -128,40 +127,40 @@ Crie o arquivo `LikeButton.bv` na pasta `demo-app/src/components/`:
 
 ---
 
-### Passo 2: Usar o Botão e Ouvir os Eventos no Pai (`src/views/Home.bv`)
+### Step 2: Listen to Events in the Parent View (`src/views/Home.bv`)
 
-Abra `src/views/Home.bv` e coloque o placar principal:
+Open `src/views/Home.bv` and assemble the master scoreboard:
 
 ```html
 <template>
-  <div class="painel-votacao">
-    <h2>🏆 Central de Votação da Comunidade</h2>
+  <div class="voting-panel">
+    <h2>🏆 Community Technology Poll</h2>
     
-    <!-- Placar Central que escuta os botões -->
-    <div class="placar-total">
-      <p class="numero-placar">{{ totalGeral }}</p>
-      <span class="legenda">Curtidas Registradas no Total</span>
+    <!-- Central Scoreboard that aggregates child events -->
+    <div class="total-scoreboard">
+      <p class="score-number">{{ totalVotes }}</p>
+      <span class="score-legend">Total Votes Cast</span>
     </div>
 
-    <p class="ultima-acao" b-if="ultimaNoticia != ''">
-      📢 Última novidade: {{ ultimaNoticia }}
+    <p class="latest-alert" b-if="latestMessage != ''">
+      📢 Activity: {{ latestMessage }}
     </p>
 
-    <div class="grade-botoes">
-      <!-- Escutamos o evento @curtida-realizada disparado pelo filho! -->
+    <div class="buttons-grid">
+      <!-- We listen to the @vote-cast custom event emitted by the child! -->
       <like-button 
-        rotulo="BlaiseVue Framework" 
-        @curtida-realizada="registrarVoto">
+        label="BlaiseVue Framework" 
+        @vote-cast="recordVote">
       </like-button>
 
       <like-button 
-        rotulo="Free Pascal Compiler" 
-        @curtida-realizada="registrarVoto">
+        label="Free Pascal Compiler" 
+        @vote-cast="recordVote">
       </like-button>
 
       <like-button 
-        rotulo="Lazarus IDE" 
-        @curtida-realizada="registrarVoto">
+        label="Lazarus IDE" 
+        @vote-cast="recordVote">
       </like-button>
     </div>
 
@@ -170,24 +169,24 @@ Abra `src/views/Home.bv` e coloque o placar principal:
 
 <script>
   data:
-    totalGeral: integer = 0;
-    ultimaNoticia: string = '';
+    totalVotes: integer = 0;
+    latestMessage: string = '';
 
   methods:
-    // Esta procedure recebe a mensagem enviada pelo filho via $emit!
-    procedure registrarVoto(itemNome: string);
+    // This procedure receives the argument passed via $emit!
+    procedure recordVote(itemName: string);
     begin
-      // 1. Soma no total geral do placar
-      this['totalGeral'] := Integer(this['totalGeral']) + 1;
+      // 1. Increment grand total
+      this['totalVotes'] := Integer(this['totalVotes']) + 1;
       
-      // 2. Atualiza a mensagem na tela
-      this['ultimaNoticia'] := 'Alguém acabou de curtir "' + itemNome + '"!';
+      // 2. Display activity message
+      this['latestMessage'] := 'Someone just upvoted "' + itemName + '"!';
     end;
 </script>
 
 <style>
-  .painel-votacao {
-    max-width: 550px;
+  .voting-panel {
+    max-width: 560px;
     margin: 30px auto;
     background: #ffffff;
     padding: 24px;
@@ -196,26 +195,26 @@ Abra `src/views/Home.bv` e coloque o placar principal:
     text-align: center;
     font-family: sans-serif;
   }
-  .placar-total {
+  .total-scoreboard {
     background: #ebf8ff;
     padding: 20px;
     border-radius: 12px;
     margin: 20px 0;
   }
-  .numero-placar {
+  .score-number {
     font-size: 48px;
     font-weight: bold;
     color: #2b6cb0;
     margin: 0;
   }
-  .legenda {
+  .score-legend {
     font-size: 13px;
     color: #4a5568;
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 1px;
   }
-  .ultima-acao {
+  .latest-alert {
     font-size: 13px;
     color: #2f855a;
     background: #f0fff4;
@@ -223,7 +222,7 @@ Abra `src/views/Home.bv` e coloque o placar principal:
     border-radius: 6px;
     margin-bottom: 20px;
   }
-  .grade-botoes {
+  .buttons-grid {
     display: flex;
     justify-content: center;
     gap: 12px;
@@ -234,16 +233,16 @@ Abra `src/views/Home.bv` e coloque o placar principal:
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 07
+## 🎯 4. Practical Exercise: Module 07
 
-1. Clique em qualquer um dos três botões de like. Veja o número no próprio botão subir, o coração ficar vermelho (`❤️`) e, ao mesmo tempo, o placar total geral do pai aumentar!
-2. **Desafio**: Adicione um quarto botão para `"mORMot 2 Framework"`. Sem precisar mexer em quase nada de código, ele já se integrará perfeitamente ao placar!
+1. Click any of the three vote buttons. Notice how the individual count increases, the heart turns red (`❤️`), and the master scoreboard simultaneously increments!
+2. **Challenge**: Add a fourth button for `"mORMot 2 Framework"`. With zero plumbing, it integrates into the master scoreboard seamlessly!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Como escutar eventos nativos do navegador (`@click`, `@input`, `@keyup.enter`).
-- Como organizar a lógica de ações dentro do bloco `methods:`.
-- Como usar `$emit` para fazer componentes filhos avisarem seus pais com total desacoplamento.
+## 🏆 What You Learned Today
+- How to listen to browser events using `@click`, `@input`, and `@keyup.enter`.
+- How to structure business procedures within the `methods:` section.
+- How child components communicate with parent components cleanly via `$emit`.
 
-**Agora que seus componentes conversam, como criamos um sistema com várias páginas sem recarregar a tela? Vamos para o [Módulo 08: Navegação sem Recarregar (Rotas SPA)](08-routing.md)!** ⚔️🛡️✨
+**Now that components communicate, how do we build multi-page apps without refreshing? Let's explore [Module 08: Flicker-Free Navigation (SPA Router)](08-routing.md)!** ⚔️🛡️✨

@@ -1,117 +1,117 @@
-# ⚔️ Módulo 10: O Maestro do Terminal (CLI bv)
-**Domine os comandos simples que constroem, testam e turbinam suas aplicações.**
+# ⚔️ Module 10: The Terminal Maestro (CLI bv)
+**Master the simple commands that run, test, and package your applications.**
 
-Se você nunca usou o terminal antes (aquela tela preta com letras brancas), pode parecer um pouco assustador no começo. Mas não se preocupe: o terminal é apenas uma forma de conversar diretamente com o computador usando comandos de texto!
+If you have never worked with the command line before (that black terminal window with white text), it might feel intimidating at first glance. But don't worry: the terminal is simply a way to speak directly to your operating system using clear text commands!
 
-Para facilitar a sua vida, o BlaiseVue vem com uma ferramenta de linha de comando chamada **`bv`** (ou `bv.exe` no Windows). Ela é o seu copiloto: cuida da compilação, dos testes e das configurações chatas com comandos simples de uma única linha.
+To make life easy, BlaiseVue provides a unified command-line tool called **`bv`** (or `bv.exe` on Windows). It serves as your automated co-pilot: handling compilation, testing, and configuration with single-word commands.
 
 ---
 
-## 💻 1. Como Abrir o Terminal?
+## 💻 1. How to Open Your Terminal
 
-- **Dentro do seu editor (VS Code / Antigravity IDE):**  
-  Pressione o atalho **`Ctrl + '`** (ou vá no menu superior: *Terminal $\rightarrow$ Novo Terminal*). Um terminal já se abrirá na pasta exata do seu projeto!
-- **No Windows:** Abra o *PowerShell* ou *Prompt de Comando*.
-- **No Linux ou macOS:** Abra o *Terminal* do sistema.
+- **Inside your editor (VS Code / Antigravity IDE):**  
+  Press the keyboard shortcut **`Ctrl + '`** (or navigate to *Terminal $\rightarrow$ New Terminal*). A terminal will open directly inside your project folder!
+- **On Windows:** Open *PowerShell* or *Command Prompt*.
+- **On Linux or macOS:** Open your system *Terminal* app.
 
 > [!TIP]
-> **Duas Dicas de Ouro no Terminal:**
-> 1. **Repetir o último comando:** Pressione a **tecla de seta para cima ($\uparrow$)** no teclado. O terminal digita o último comando para você!
-> 2. **Interromper um processo:** Se você quiser parar o servidor de desenvolvimento, pressione **`Ctrl + C`**.
+> **Two Essential Terminal Shortcuts:**
+> 1. **Repeat previous command:** Press the **Up Arrow ($\uparrow$)** key. The terminal retypes your last command for you!
+> 2. **Stop a running server:** Press **`Ctrl + C`** to gracefully terminate a process.
 
 ---
 
-## 🧰 2. O Guia Definitivo dos Comandos Essenciais
+## 🧰 2. Essential Commands Catalog
 
-Aqui estão os comandos que você mais usará no seu dia a dia:
+Here are the commands you will use most often:
 
-### 1. Iniciar o Servidor de Desenvolvimento
-Inicia o servidor local com recarregamento em tempo real (Hot Module Replacement) na porta `8080`:
+### 1. Start the Development Server
+Launches the local development server with live Hot Module Replacement (HMR) on port `8080`:
 ```bash
 bv run dev
-# (ou de forma abreviada:)
+# (or simply:)
 bv dev
 ```
-Abra o navegador em `http://localhost:8080` e divirta-se programando!
+Open your browser at `http://localhost:8080` and start coding with live reload!
 
-### 2. O Médico da Sua Máquina (`bv doctor`)
-Faz um check-up completo no seu ambiente e confirma se tudo o que você precisa está instalado e pronto com `[v]`:
+### 2. Environment Health Check (`bv doctor`)
+Performs a comprehensive diagnostic scan to ensure all required compilers and scripting engines are healthy:
 ```bash
 bv doctor
 ```
-Ele confere:
-- **Git**: Para atualizações automáticas.
-- **Free Pascal (FPC) e InstantFPC**: Os compiladores e motores de script em Pascal.
-- **Python 3**: Recomendado para rodar os scripts de ferramentas e extensões.
-- **Pas2JS e mORMot 2**: Os compiladores embutidos de Web e Backend.
-- **Node.js**: Para o servidor de testes e recarregamento rápido.
+It validates:
+- **Git**: For version control and automated framework updates.
+- **Free Pascal (FPC) & InstantFPC**: The Pascal compiler and script runner.
+- **Python 3**: Recommended for executing dynamic tool package scripts.
+- **Pas2JS & mORMot 2**: The embedded web and backend Pascal frameworks.
+- **Node.js**: For running the Vitest automated testing suite and HMR server.
 
-### 3. Executar Testes Automatizados
-Compila e valida todos os seus arquivos de teste `.test.pas`:
+### 3. Run Automated Unit Tests
+Compiles and validates your test suites (`.test.pas`):
 ```bash
 bv test
 ```
 
-### 4. Gerar a Versão Final para a Internet (`bv build`)
-Quando o seu site estiver pronto para ir para o ar, este comando cria uma pasta chamada `dist/`:
+### 4. Build for Production (`bv build`)
+When your application is ready to be published to the internet, run:
 ```bash
 bv build
 ```
-A pasta `dist/` contém apenas arquivos estáticos HTML, CSS e JavaScript otimizados e minificados. Você pode hospedar essa pasta em qualquer servidor web gratuito (como GitHub Pages, Vercel, Netlify) ou servidor próprio!
+This produces a production-ready `dist/` directory with optimized, minified HTML, CSS, and JavaScript. You can host this folder on any web server or static host (Vercel, Netlify, GitHub Pages, Apache, NGINX)!
 
-### 5. Limpar Arquivos Temporários
-Se você quiser limpar caches e compilações antigas:
+### 5. Clean Temporary Build Artifacts
+Wipes temporary caches and stale compilation files:
 ```bash
 bv clean
 ```
 
 ---
 
-## 🎨 3. Gerenciando Extensões e Temas Visuais
+## 🎨 3. Managing Extensions and Visual Themes
 
-O CLI `bv` também gerencia as extensões de desenvolvimento e a aparência do seu sistema:
+The `bv` CLI also manages developer extensions and theme styling:
 
-### Extensões de Desenvolvimento (`bv extension`)
+### Developer Tools & Extensions (`bv extension`)
 ```bash
-# Ver as ferramentas disponíveis e se já estão instaladas:
+# View available extension packages and their installation status:
 bv extension list
 
-# Instalar a extensão oficial para o seu VS Code / Antigravity IDE:
+# Install the official extension for VS Code / Antigravity IDE:
 bv extension install blaise-vscode
 
-# Ver as instruções para instalar o DevTools no navegador Chrome/Firefox:
+# Show instructions for installing the browser DevTools in Chrome/Firefox:
 bv extension install blaise-devtools
 ```
 
-### Temas Visuais Prontos (Bootswatch)
-Cansado de criar estilos CSS do zero? O BlaiseVue já vem com suítes de temas profissionais pré-configuradas:
+### Ready-to-Use UI Themes (Bootswatch)
+Tired of styling everything from scratch? BlaiseVue comes with professional themes ready to use:
 ```bash
-# Listar todos os temas disponíveis (darkly, flatly, cosmo, pulse, etc.):
+# List all installed themes (darkly, flatly, cosmo, pulse, etc.):
 bv theme list
 
-# Aplicar um tema escuro moderno no seu projeto com 1 comando:
+# Switch to a modern dark theme with 1 command:
 bv theme use darkly
 
-# Voltar para um tema claro limpo e profissional:
+# Switch back to a clean corporate light theme:
 bv theme use flatly
 ```
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 10
+## 🎯 4. Practical Exercise: Module 10
 
-1. Abra o seu terminal.
-2. Digite `bv doctor` e confirme se todos os itens estão verdes com `[v]`.
-3. Digite `bv extension list` e veja as ferramentas dinâmicas instaladas no seu computador.
-4. Experimente digitar `bv theme use darkly`, salve e olhe no navegador para ver o seu projeto ganhar um visual dark mode sofisticado na mesma hora!
+1. Open your terminal in the BlaiseVue directory.
+2. Run `bv doctor` and verify all green `[v]` status indicators.
+3. Run `bv extension list` to inspect your tool packages.
+4. Try switching your theme with `bv theme use darkly`, save, and inspect your browser to see a dark mode interface instantly!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- O terminal não é um bicho de sete cabeças: é uma ferramenta prática de produtividade.
-- Como usar `bv dev` para programar com recarregamento em tempo real.
-- Como o `bv doctor` garante a saúde do seu ambiente.
-- Como gerar o build de produção final com `bv build`.
-- Como alternar temas visuais inteiros com `bv theme use`.
+## 🏆 What You Learned Today
+- Why the command-line interface boosts developer productivity.
+- How to start live dev mode with `bv dev`.
+- How `bv doctor` maintains environment reliability.
+- How to build production bundles with `bv build`.
+- How to switch application-wide themes with `bv theme use`.
 
-**Preparado para descobrir os recursos que os programadores seniores utilizam? Avance para o [Módulo 11: Recursos Pro (Master Architecture)](11-pro-features.md)!** ⚔️🛡️✨
+**Ready to level up to senior architectural concepts? Advance to [Module 11: Pro Architectural Features](11-pro-features.md)!** ⚔️🛡️✨

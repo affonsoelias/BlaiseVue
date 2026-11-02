@@ -1,107 +1,107 @@
-# 🧠 Módulo 05: O Poder do Cérebro (Computed Properties)
-**Faça o BlaiseVue calcular fórmulas e tomar decisões automáticas para você.**
+# 🧠 Module 05: The Brain (Computed Properties)
+**Make BlaiseVue calculate formulas and make automatic decisions for you.**
 
-No módulo anterior, vimos que o `b-model` sincroniza o que o usuário digita diretamente em uma variável. Mas e quando você precisa fazer uma conta com esses dados — como somar dois números, calcular um desconto ou juntar o primeiro nome com o sobrenome?
+In the previous module, we saw how `b-model` synchronizes what the user types directly into variables. But what happens when you need to calculate a formula with that data — such as calculating a total price, applying a coupon, or joining first and last names together?
 
-É aí que entram as **Propriedades Calculadas (`computed`)**!
+That is precisely what **Computed Properties (`computed`)** are designed for!
 
 ---
 
-## 🧮 1. Por Que Usar `computed` em Vez de Contas no HTML?
+## 🧮 1. Why Use `computed` Instead of Formulas in HTML?
 
-Você poderia pensar em tentar colocar contas diretamente dentro do HTML:
+You might be tempted to put formulas directly inside the HTML template:
 ```html
-<!-- EVITE FAZER ISSO: Fica feio e difícil de entender -->
-<p>Total: {{ (preco * quantidade) - ((preco * quantidade) * 0.1) }}</p>
+<!-- AVOID DOING THIS: Messy and hard to maintain -->
+<p>Total: {{ (unitPrice * quantity) - ((unitPrice * quantity) * 0.1) }}</p>
 ```
 
-Colocar fórmulas no meio do HTML tem dois grandes problemas:
-1. **O código fica confuso e difícil de manter**.
-2. **Desempenho**: O navegador teria que refazer essa conta o tempo todo!
+Putting formulas inside HTML templates creates two major issues:
+1. **The template becomes cluttered and difficult to read**.
+2. **Performance penalties**: The browser would re-evaluate that equation on every single render cycle!
 
-Com o bloco `computed:`, nós criamos uma função em Pascal limpa e elegante. O BlaiseVue guarda o resultado em **Cache Inteligente**: ele só recalcula a conta se o preço ou a quantidade realmente mudarem!
+With the `computed:` section, we write clean Pascal functions. BlaiseVue automatically caches the result: it **only recalculates if the dependent variables actually change**!
 
 ---
 
-## 📐 2. Como Declarar uma Função no Bloco `computed:`
+## 📐 2. How to Declare Functions in the `computed:` Block
 
-No Pascal, uma função (`function`) é um bloco de código que faz um cálculo e devolve uma resposta através da palavra mágica `Result`:
+In Pascal, a function (`function`) performs a calculation and returns a value using the keyword `Result`:
 
 ```pascal
 <script>
   data:
-    primeiroNome: string = 'Blaise';
-    sobrenome: string = 'Pascal';
+    firstName: string = 'Blaise';
+    lastName: string = 'Pascal';
 
   computed:
-    // Uma propriedade calculada que junta os dois nomes:
-    function nomeCompleto: string;
+    // A computed property that joins the names together:
+    function fullName: string;
     begin
-      Result := string(this['primeiroNome']) + ' ' + string(this['sobrenome']);
+      Result := string(this['firstName']) + ' ' + string(this['lastName']);
     end;
 </script>
 ```
 
-No HTML, usamos `{{ nomeCompleto }}` exatamente como se fosse uma variável comum:
+In the `<template>`, you use `{{ fullName }}` just like any ordinary variable:
 ```html
-<h1>Bem-vindo, {{ nomeCompleto }}!</h1>
+<h1>Welcome, {{ fullName }}!</h1>
 ```
 
 ---
 
-## 🚀 3. Exemplo Completo Passo a Passo: O Simulador de Compras
+## 🚀 3. Full Step-by-Step Example: Real-Time Order Calculator
 
-Vamos construir um simulador de compras em tempo real. O usuário escolhe o produto, ajusta a quantidade e o cupom de desconto, e o BlaiseVue calcula Subtotal, Desconto, Total e se tem direito a Frete Grátis!
+Let's build a real-time order simulator. The user selects a product, changes the quantity, and toggles a discount coupon. BlaiseVue automatically calculates Subtotal, Discount, Total, and whether the order qualifies for Free Shipping!
 
-Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.bv`):
+Replace your view component (e.g. `src/views/Home.bv`) with:
 
 ```html
 <template>
-  <div class="caixa-compra">
-    <h2>🛒 Simulador de Pedido Reativo</h2>
+  <div class="checkout-card">
+    <h2>🛒 Real-Time Order Simulator</h2>
 
-    <!-- Entradas do Usuário -->
-    <div class="grid-campos">
-      <div class="campo">
-        <label>Preço Unitário (R$):</label>
-        <input type="number" b-model="precoUnitario" min="0" step="10">
+    <!-- User Inputs -->
+    <div class="fields-grid">
+      <div class="field">
+        <label>Unit Price ($):</label>
+        <input type="number" b-model="unitPrice" min="0" step="5">
       </div>
 
-      <div class="campo">
-        <label>Quantidade:</label>
-        <input type="number" b-model="quantidade" min="1" max="100">
+      <div class="field">
+        <label>Quantity:</label>
+        <input type="number" b-model="quantity" min="1" max="50">
       </div>
     </div>
 
-    <div class="campo-cupom">
+    <div class="coupon-field">
       <label>
-        <input type="checkbox" b-model="temCupom">
-        Aplicar Cupom Promocional (10% OFF) 🎟️
+        <input type="checkbox" b-model="hasCoupon">
+        Apply 10% Discount Coupon 🎟️
       </label>
     </div>
 
-    <hr class="divisor">
+    <hr class="divider">
 
-    <!-- Resumo dos Cálculos Feitos pelo 'computed' -->
-    <div class="resumo-financeiro">
-      <div class="linha-resumo">
+    <!-- Calculated Summary Generated by 'computed' -->
+    <div class="order-summary">
+      <div class="summary-row">
         <span>Subtotal:</span>
-        <strong>R$ {{ subtotal.toFixed(2) }}</strong>
+        <strong>$ {{ subtotal.toFixed(2) }}</strong>
       </div>
 
-      <div class="linha-resumo desconto" b-if="temCupom">
-        <span>Desconto (10%):</span>
-        <strong>- R$ {{ valorDesconto.toFixed(2) }}</strong>
+      <div class="summary-row discount" b-if="hasCoupon">
+        <span>Coupon Discount (10%):</span>
+        <strong>- $ {{ discountAmount.toFixed(2) }}</strong>
       </div>
 
-      <div class="linha-resumo total">
-        <span>Total a Pagar:</span>
-        <span class="valor-total">R$ {{ totalFinal.toFixed(2) }}</span>
+      <div class="summary-row total">
+        <span>Total Due:</span>
+        <span class="total-amount">$ {{ finalTotal.toFixed(2) }}</span>
       </div>
 
-      <!-- Mensagem calculada dinamicamente -->
-      <div class="aviso-frete" :class="freteGratis ? 'frete-ok' : 'frete-alerta'">
-        {{ statusFrete }}
+      <!-- Dynamically computed status banner -->
+      <div class="shipping-banner" :class="freeShipping ? 'shipping-ok' : 'shipping-alert'">
+        {{ shippingMessage }}
       </div>
     </div>
 
@@ -110,55 +110,55 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
 
 <script>
   data:
-    precoUnitario: real = 50.00;
-    quantidade: integer = 2;
-    temCupom: boolean = false;
+    unitPrice: real = 45.00;
+    quantity: integer = 2;
+    hasCoupon: boolean = false;
 
   computed:
-    // 1. Calcula o subtotal bruto (preço * quantidade)
+    // 1. Calculates gross subtotal (price * quantity)
     function subtotal: real;
     begin
-      Result := Real(this['precoUnitario']) * Integer(this['quantidade']);
+      Result := Real(this['unitPrice']) * Integer(this['quantity']);
     end;
 
-    // 2. Calcula o valor economizado com o cupom de 10%
-    function valorDesconto: real;
+    // 2. Calculates discount amount if coupon is active
+    function discountAmount: real;
     begin
-      if Boolean(this['temCupom']) then
+      if Boolean(this['hasCoupon']) then
         Result := Real(this['subtotal']) * 0.10
       else
         Result := 0.0;
     end;
 
-    // 3. Calcula o valor final a pagar
-    function totalFinal: real;
+    // 3. Calculates final total due
+    function finalTotal: real;
     begin
-      Result := Real(this['subtotal']) - Real(this['valorDesconto']);
+      Result := Real(this['subtotal']) - Real(this['discountAmount']);
     end;
 
-    // 4. Retorna verdadeiro se a compra atingir R$ 150,00
-    function freteGratis: boolean;
+    // 4. Returns true if order reaches $ 100.00
+    function freeShipping: boolean;
     begin
-      Result := Real(this['totalFinal']) >= 150.00;
+      Result := Real(this['finalTotal']) >= 100.00;
     end;
 
-    // 5. Gera um texto amigável de incentivo
-    function statusFrete: string;
+    // 5. Generates an encouraging user message
+    function shippingMessage: string;
     var
-      falta: real;
+      remaining: real;
     begin
-      if Boolean(this['freteGratis']) then
-        Result := '🚚 Parabéns! Você ganhou FRETE GRÁTIS!'
+      if Boolean(this['freeShipping']) then
+        Result := '🚚 Awesome! Your order qualifies for FREE SHIPPING!'
       else
       begin
-        falta := 150.00 - Real(this['totalFinal']);
-        Result := 'Faltam apenas R$ ' + falta.toFixed(2) + ' para FRETE GRÁTIS!';
+        remaining := 100.00 - Real(this['finalTotal']);
+        Result := 'Add $ ' + remaining.toFixed(2) + ' more to unlock FREE SHIPPING!';
       end;
     end;
 </script>
 
 <style>
-  .caixa-compra {
+  .checkout-card {
     max-width: 460px;
     margin: 30px auto;
     background: #ffffff;
@@ -167,22 +167,22 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     box-shadow: 0 4px 18px rgba(0,0,0,0.08);
     font-family: sans-serif;
   }
-  .grid-campos {
+  .fields-grid {
     display: flex;
     gap: 16px;
   }
-  .campo {
+  .field {
     flex: 1;
     margin-bottom: 12px;
   }
-  .campo label {
+  .field label {
     display: block;
     font-size: 13px;
     font-weight: bold;
     color: #4a5568;
     margin-bottom: 4px;
   }
-  .campo input {
+  .field input {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #cbd5e0;
@@ -190,24 +190,24 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     font-size: 15px;
     box-sizing: border-box;
   }
-  .campo-cupom {
+  .coupon-field {
     margin: 10px 0 16px 0;
     font-size: 14px;
     color: #2b6cb0;
   }
-  .divisor {
+  .divider {
     border: 0;
     height: 1px;
     background: #e2e8f0;
     margin: 16px 0;
   }
-  .linha-resumo {
+  .summary-row {
     display: flex;
     justify-content: space-between;
     padding: 6px 0;
     font-size: 14px;
   }
-  .desconto {
+  .discount {
     color: #e53e3e;
   }
   .total {
@@ -217,11 +217,11 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     font-size: 18px;
     font-weight: bold;
   }
-  .valor-total {
+  .total-amount {
     color: #2b6cb0;
     font-size: 22px;
   }
-  .aviso-frete {
+  .shipping-banner {
     margin-top: 16px;
     padding: 10px;
     border-radius: 6px;
@@ -229,24 +229,24 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     text-align: center;
     font-weight: bold;
   }
-  .frete-ok { background: #c6f6d5; color: #22543d; }
-  .frete-alerta { background: #feebc8; color: #7b341e; }
+  .shipping-ok { background: #c6f6d5; color: #22543d; }
+  .shipping-alert { background: #feebc8; color: #7b341e; }
 </style>
 ```
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 05
+## 🎯 4. Practical Exercise: Module 05
 
-1. Experimente alterar a quantidade para `4`. Veja o total e a mensagem de frete mudarem na hora.
-2. Marque a opção do cupom de desconto de 10% e veja o desconto e o valor final atualizarem juntos!
-3. **Desafio**: Adicione uma nova propriedade calculada chamada `impostoEstimado` que calcule 5% sobre o `totalFinal`. Mostre esse valor no resumo!
+1. Change the quantity to `3`. Observe how the subtotal, final total, and shipping status update immediately.
+2. Toggle the coupon checkbox on and off, watching the savings and final total recalculate seamlessly.
+3. **Challenge**: Add a new computed function called `estimatedTax` that calculates an 8% sales tax on the `finalTotal`, and display it in the summary rows!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Por que usar `computed` para fórmulas em vez de sujar o HTML.
-- Como escrever funções no Pascal usando `Result := ...`.
-- Como propriedades calculadas dependem de outras e atualizam em cascata com alta velocidade e cache.
+## 🏆 What You Learned Today
+- Why computed properties are superior to in-template formulas.
+- How to declare functions in Pascal using `Result := ...`.
+- How smart caching ensures calculations run only when underlying reactive state changes.
 
-**Pronto para dividir sua aplicação em peças de LEGO organizadas? Siga para o [Módulo 06: Componentes SFC (.bv)](06-components.md)!** ⚔️🛡️✨
+**Ready to split your app into modular LEGO pieces? Let's explore [Module 06: Components (.bv)](06-components.md)!** ⚔️🛡️✨

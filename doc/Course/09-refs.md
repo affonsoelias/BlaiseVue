@@ -1,127 +1,127 @@
-# 👁️ Módulo 09: $refs e o Ciclo de Vida do Componente
-**Descubra os momentos exatos em que a tela nasce e como tocar diretamente nos elementos.**
+# 👁️ Module 09: $refs and Component Lifecycles
+**Discover exact component mounting moments and how to access elements directly.**
 
-Na maior parte do tempo no BlaiseVue, você não precisa se preocupar em manipular o HTML diretamente — você simplesmente altera uma variável no Pascal e a reatividade cuida de atualizar a tela.
+Most of the time in BlaiseVue, you do not need to touch the DOM tree manually — you update a Pascal variable and the reactivity engine handles the screen update for you.
 
-No entanto, existem situações do mundo real em que você precisa de controle direto:
-- Colocar o cursor piscando automaticamente dentro de uma caixa de texto assim que a página carregar (foco).
-- Tocar um som ou iniciar um contador regressivo no momento certo.
-- Limpar um campo e focar nele de novo após o clique de um botão.
+However, real-world development occasionally demands direct physical element access:
+- Placing the blinking cursor automatically into a search box as soon as the screen loads (autofocus).
+- Playing an audio cue or initializing a third-party charting library.
+- Clearing an input and returning keyboard focus back to it when the user clicks "Clear".
 
-Para isso, usamos os ganchos do **Ciclo de Vida** e a diretiva **`b-ref`**!
+To handle these scenarios, we use **Lifecycle Hooks** and the **`b-ref`** directive!
 
 ---
 
-## 🐣 1. O Que É o Ciclo de Vida (Lifecycle)?
+## 🐣 1. What is the Component Lifecycle?
 
-Assim como uma pessoa tem fases na vida (nascer, crescer e se despedir), todo componente no BlaiseVue passa por quatro etapas principais:
+Just like living beings go through stages (birth, activity, and departure), every BlaiseVue component progresses through four core stages:
 
 ```mermaid
 flowchart TD
-    A["1. created: O cérebro em Pascal acordou, as variáveis existem na memória"] --> B["2. mounted: O componente foi desenhado no navegador e está visível!"]
-    B --> C["3. updated: Uma variável mudou e a tela foi atualizada"]
-    C --> D["4. unmounted: O usuário mudou de página e o componente foi embora"]
+    A["1. created: Pascal logic and data exist in memory, but HTML is not yet drawn"] --> B["2. mounted: The component HTML is physically rendered and visible in the browser!"]
+    B --> C["3. updated: A reactive variable changed and the DOM was re-rendered"]
+    C --> D["4. unmounted: The component was removed from the screen (user navigated away)"]
 ```
 
-| Gancho | O Que Acontece? | Exemplo Típico de Uso |
+| Lifecycle Hook | What Happens? | Typical Use Case |
 | :--- | :--- | :--- |
-| **`created:`** | As variáveis do `data:` já foram criadas, mas o HTML ainda não existe na tela. | Carregar dados iniciais de uma API ou banco de dados. |
-| **`mounted:`** | O HTML acabou de ser desenhado na tela! | Colocar foco no cursor, iniciar bibliotecas de gráficos ou timers. |
-| **`updated:`** | Algo mudou e o BlaiseVue redesenhou a tela. | Salvar um rascunho automático ou registrar auditoria. |
-| **`unmounted:`** | O componente está sendo destruído (usuário mudou de tela). | Parar timers para não gastar memória do computador. |
+| **`created:`** | The `data:` variables exist in memory, but the DOM element is not mounted yet. | Pre-fetching remote data from an API. |
+| **`mounted:`** | The component has been rendered into the live browser DOM! | Autofocusing inputs, starting animation timers, measuring element dimensions. |
+| **`updated:`** | State changed and the virtual DOM patched the HTML. | Auto-saving drafts or writing audit logs. |
+| **`unmounted:`** | The component is being torn down. | Cleaning up background intervals or active WebSocket listeners. |
 
 ---
 
-## 🎯 2. O Que É o `b-ref` (A Varinha Mágica de Acesso Direto)?
+## 🎯 2. What is `b-ref` (Direct Element Handle)?
 
-Para dar um nome único a um elemento HTML específico e poder tocá-lo pelo Pascal, colocamos o atributo `b-ref`:
+To assign a unique identifier to a specific HTML tag so you can interact with it directly in Pascal, attach the `b-ref` attribute:
 
 ```html
-<!-- Damos o identificador 'meuInput' para esta caixa: -->
-<input type="text" b-ref="meuInput">
+<!-- Assign the reference identifier 'searchInput' to this input: -->
+<input type="text" b-ref="searchInput">
 ```
 
-E no seu código Pascal, você acessa esse elemento através do dicionário especial `this['$refs']`:
+In your Pascal code, you access that physical DOM node via the special dictionary `this['$refs']`:
 
 ```pascal
-procedure focarNaCaixa;
+procedure focusSearch;
 begin
-  // Acessa o elemento HTML diretamente e chama a função de foco nativa:
-  TJSObject(this['$refs'])['meuInput'].focus();
+  // Access the native DOM element and invoke its browser method:
+  TJSObject(this['$refs'])['searchInput'].focus();
 end;
 ```
 
 ---
 
-## 🚀 3. Exemplo Completo Passo a Passo: Campo de Busca com Foco Automático
+## 🚀 3. Full Step-by-Step Example: Autofocusing Search Field
 
-Vamos criar um componente de busca inteligente onde:
-1. Assim que a página abrir (`mounted:`), o cursor já aparece piscando na caixa de busca para o usuário não precisar clicar nela.
-2. Ao clicar no botão "Limpar", o texto é apagado e o cursor volta a piscar nela imediatamente usando `$refs`!
+Let's build an interactive search widget where:
+1. As soon as the page finishes mounting (`mounted:`), the cursor is automatically focused inside the search box without requiring a mouse click.
+2. Clicking the "Clear" button resets the text and immediately returns focus back to the input using `$refs`!
 
-Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.bv`):
+Replace your view component (e.g. `src/views/Home.bv`) with:
 
 ```html
 <template>
-  <div class="cartao-busca">
-    <h2>🔍 Busca Rápida de Produtos</h2>
-    <p class="instrucao">O cursor é focado automaticamente assim que a tela abre!</p>
+  <div class="search-card">
+    <h2>🔍 Instant Product Search</h2>
+    <p class="instruction">The cursor is automatically focused as soon as the screen mounts!</p>
 
-    <div class="linha-busca">
-      <!-- b-ref dá uma etiqueta direta para este elemento -->
+    <div class="search-row">
+      <!-- b-ref gives this element an accessible handle in Pascal -->
       <input 
         type="text" 
-        b-ref="campoBusca"
-        b-model="termoBusca" 
-        placeholder="Digite o nome do item..."
-        @keyup.enter="executarBusca">
+        b-ref="searchInput"
+        b-model="searchTerm" 
+        placeholder="Type a product name..."
+        @keyup.enter="performSearch">
 
-      <button class="btn btn-buscar" @click="executarBusca">Buscar</button>
-      <button class="btn btn-limpar" @click="limparEFocar">Limpar</button>
+      <button class="btn btn-search" @click="performSearch">Search</button>
+      <button class="btn btn-clear" @click="clearAndFocus">Clear</button>
     </div>
 
-    <!-- Feedback do que está sendo digitado -->
-    <div class="resultado" b-if="mensagemStatus != ''">
-      {{ mensagemStatus }}
+    <!-- Feedback banner -->
+    <div class="status-banner" b-if="statusMessage != ''">
+      {{ statusMessage }}
     </div>
   </div>
 </template>
 
 <script>
   data:
-    termoBusca: string = '';
-    mensagemStatus: string = '';
+    searchTerm: string = '';
+    statusMessage: string = '';
 
   methods:
-    procedure executarBusca;
+    procedure performSearch;
     begin
-      if Trim(string(this['termoBusca'])) = '' then
-        this['mensagemStatus'] := '⚠️ Por favor, digite algo para buscar!'
+      if Trim(string(this['searchTerm'])) = '' then
+        this['statusMessage'] := '⚠️ Please enter a keyword to search!'
       else
-        this['mensagemStatus'] := '🔎 Buscando resultados para: "' + string(this['termoBusca']) + '"...';
+        this['statusMessage'] := '🔎 Searching catalog for: "' + string(this['searchTerm']) + '"...';
     end;
 
-    procedure limparEFocar;
+    procedure clearAndFocus;
     begin
-      // 1. Limpa o texto da variável reativa
-      this['termoBusca'] := '';
-      this['mensagemStatus'] := 'Campo limpo. Pode digitar novamente!';
+      // 1. Reset reactive state
+      this['searchTerm'] := '';
+      this['statusMessage'] := 'Search cleared. Ready for next query!';
 
-      // 2. Usa $refs para colocar o cursor piscando de volta no input!
-      TJSObject(this['$refs'])['campoBusca'].focus();
+      // 2. Return focus directly to the input via $refs!
+      TJSObject(this['$refs'])['searchInput'].focus();
     end;
 
   mounted:
-    // Gancho do Ciclo de Vida: Executa automaticamente assim que o HTML nasce na tela!
+    // Lifecycle Hook: Runs automatically right when HTML finishes mounting!
     procedure;
     begin
-      WriteLn('Componente carregado na tela! Aplicando foco automático...');
-      TJSObject(this['$refs'])['campoBusca'].focus();
+      WriteLn('Component mounted! Applying automatic keyboard focus...');
+      TJSObject(this['$refs'])['searchInput'].focus();
     end;
 </script>
 
 <style>
-  .cartao-busca {
+  .search-card {
     max-width: 520px;
     margin: 40px auto;
     background: #ffffff;
@@ -130,16 +130,16 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     box-shadow: 0 4px 18px rgba(0,0,0,0.08);
     font-family: sans-serif;
   }
-  .instrucao {
+  .instruction {
     font-size: 13px;
     color: #718096;
     margin-bottom: 20px;
   }
-  .linha-busca {
+  .search-row {
     display: flex;
     gap: 8px;
   }
-  .linha-busca input {
+  .search-row input {
     flex: 1;
     padding: 10px 14px;
     border: 2px solid #cbd5e0;
@@ -148,7 +148,7 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     outline: none;
     transition: border-color 0.2s ease;
   }
-  .linha-busca input:focus {
+  .search-row input:focus {
     border-color: #3182ce;
   }
   .btn {
@@ -159,9 +159,9 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     font-weight: bold;
     font-size: 13px;
   }
-  .btn-buscar { background: #3182ce; color: white; }
-  .btn-limpar { background: #e2e8f0; color: #4a5568; }
-  .resultado {
+  .btn-search { background: #3182ce; color: white; }
+  .btn-clear { background: #e2e8f0; color: #4a5568; }
+  .status-banner {
     margin-top: 16px;
     padding: 12px;
     background: #ebf8ff;
@@ -175,17 +175,17 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 09
+## 🎯 4. Practical Exercise: Module 09
 
-1. Salve o arquivo e abra o navegador. Repare que você não precisou dar nenhum clique com o mouse: o cursor já está piscando na caixa de texto pronto para você digitar!
-2. Digite um texto qualquer, clique em "Limpar" e veja como o texto desaparece e o cursor continua piscando no campo sem você perder o foco.
+1. Save the file and reload your browser. Notice how the cursor is already blinking in the input field without you needing to click on it!
+2. Type a search query, then click "Clear". Observe how the input is emptied and the keyboard focus returns to the input box automatically.
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- As quatro fases do ciclo de vida: `created`, `mounted`, `updated`, `unmounted`.
-- O poder do gancho `mounted:` para executar códigos logo que o HTML entra no ar.
-- Como dar uma etiqueta para uma tag usando `b-ref="nome"`.
-- Como acessar e chamar métodos nativos do elemento com `this['$refs']['nome'].focus()`.
+## 🏆 What You Learned Today
+- The four lifecycle stages: `created`, `mounted`, `updated`, and `unmounted`.
+- How the `mounted:` hook executes logic as soon as physical HTML is active.
+- How to tag an element using `b-ref="name"`.
+- How to call native browser methods directly via `this['$refs']['name'].focus()`.
 
-**Quer virar um mestre dos comandos no terminal? Siga para o [Módulo 10: O Maestro do Terminal (CLI)](10-cli.md)!** ⚔️🛡️✨
+**Ready to master the developer command line? Proceed to [Module 10: The Terminal Maestro (CLI bv)](10-cli.md)!** ⚔️🛡️✨

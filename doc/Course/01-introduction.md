@@ -1,51 +1,51 @@
-# 📝 Módulo 01: O Início da Sua Jornada Web com Pascal
-**Descubra como o Pascal cria páginas web modernas do zero e de forma descomplicada.**
+# 📝 Module 01: The Beginning of Your Web Pascal Journey
+**Discover how Object Pascal builds modern web applications from scratch.**
 
-Seja muito bem-vindo! Se você nunca criou uma página para a internet antes, ou se você já programa em Pascal (Delphi, Lazarus/Free Pascal) para computadores desktop e sempre achou o desenvolvimento web confuso ou cheio de siglas estranhas, este módulo foi feito especialmente para você.
+Welcome! If you have never created a web page before, or if you already know Pascal for desktop software (Delphi, Lazarus/Free Pascal) and always found modern web development overly complicated, this module is made specifically for you.
 
 ---
 
-## 🌐 1. Como Funciona uma Página da Web?
+## 🌐 1. How Does a Web Page Work?
 
-Toda página na internet — desde uma página simples até sistemas como YouTube ou Mercado Livre — é composta por três camadas fundamentais:
+Every web application on the internet — from simple landing pages to large-scale platforms — is composed of three fundamental layers:
 
 ```mermaid
 flowchart TD
-    A["HTML (O Esqueleto)"] -->|Define botões, textos e caixas de entrada| D["Sua Aplicação Web no Navegador"]
-    B["CSS (A Roupa / Estilo)"] -->|Define cores, tamanhos, fontes e margens| D
-    C["Object Pascal no BlaiseVue (O Cérebro)"] -->|Calcula, responde aos cliques e muda a tela na hora| D
+    A["HTML (The Skeleton)"] -->|Defines buttons, text, and inputs| D["Your Web App in the Browser"]
+    B["CSS (The Clothes / Styling)"] -->|Defines colors, fonts, sizes, and layout| D
+    C["Object Pascal in BlaiseVue (The Brain)"] -->|Calculates, responds to clicks, and updates the screen| D
 ```
 
-1. **HTML (O Esqueleto)**: Diz o que existe na tela (por exemplo: um título `<h1>`, um parágrafo `<p>`, ou um botão `<button>`).
-2. **CSS (A Roupa / Estilo)**: Diz como as coisas devem se parecer (cores de fundo, tamanhos de fonte, alinhamentos).
-3. **Pascal no BlaiseVue (O Cérebro)**: É onde a inteligência mora! É ele quem responde quando você clica em um botão, soma valores e decide o que mostrar.
+1. **HTML (The Skeleton)**: Declares what elements exist on the screen (such as titles `<h1>`, paragraphs `<p>`, or buttons `<button>`).
+2. **CSS (The Styling)**: Declares how things look (background colors, fonts, margins, animations).
+3. **Pascal in BlaiseVue (The Brain)**: Where logic lives! It responds when the user clicks a button, calculates numbers, and decides what to show.
 
-No desenvolvimento web tradicional, você precisaria de arquivos separados e aprender linguagens diferentes. No **BlaiseVue**, tudo o que uma tela precisa fica reunido em um único arquivo com a extensão **`.bv`**!
+In traditional web development, you would need separate files and different languages. In **BlaiseVue**, everything a screen needs is unified in a single file with the extension **`.bv`**!
 
 ---
 
-## 📦 2. A Anatomia de um Arquivo `.bv` (Componente de Arquivo Único)
+## 📦 2. The Anatomy of a `.bv` File (Single File Component)
 
-Um arquivo `.bv` é dividido em três blocos fáceis de entender:
+A `.bv` file is divided into three intuitive sections:
 
 ```html
-<!-- PARTE 1: O que o usuário vê na tela (HTML) -->
+<!-- PART 1: What the user sees on screen (HTML template) -->
 <template>
-  <div class="cartao">
-    <h1>{{ titulo }}</h1>
-    <p>Olá, seja bem-vindo ao mundo do BlaiseVue!</p>
+  <div class="card">
+    <h1>{{ title }}</h1>
+    <p>Hello and welcome to the BlaiseVue world!</p>
   </div>
 </template>
 
-<!-- PARTE 2: A inteligência e os dados em Pascal -->
+<!-- PART 2: The logic and data in Object Pascal -->
 <script>
   data:
-    titulo: string = 'Minha Primeira Aplicação';
+    title: string = 'My First BlaiseVue Application';
 </script>
 
-<!-- PARTE 3: O visual e as cores (CSS) -->
+<!-- PART 3: The styling and colors (CSS) -->
 <style>
-  .cartao {
+  .card {
     background-color: #f0f4f8;
     padding: 20px;
     border-radius: 8px;
@@ -58,77 +58,77 @@ Um arquivo `.bv` é dividido em três blocos fáceis de entender:
 ```
 
 > [!NOTE]
-> Observe as chaves duplas: `{{ titulo }}`. Isso se chama **Interpolação**. Elas dizem para o navegador: *"Vá até o bloco `<script>` em Pascal, pegue o valor da variável `titulo` e desenhe aqui na tela!"*.
+> Notice the double curly braces: `{{ title }}`. This is called **Interpolation**. It tells the browser: *"Look at the `<script>` block in Pascal, retrieve the value of the `title` variable, and render it right here on the screen!"*.
 
 ---
 
-## 🚀 3. Passo a Passo: Colocando a Aplicação para Rodar
+## 🚀 3. Step-by-Step: Running Your First Application
 
-Vamos agora colocar a aplicação de exemplo para rodar no seu computador! Siga estes 4 passos:
+Let's run the sample application on your computer:
 
-### Passo 1: Verificar se tudo está saudável
-Abra o seu terminal (Prompt de Comando, PowerShell ou Terminal do Linux/macOS) na pasta do BlaiseVue e digite:
+### Step 1: Verify Environment Health
+Open your terminal (PowerShell, Command Prompt, or Linux/macOS terminal) in the BlaiseVue repository directory and run:
 ```bash
 bv doctor
 ```
-Você verá uma mensagem informando que suas ferramentas (Free Pascal, Node.js, Python, etc.) estão prontas com o símbolo `[v]`.
+You will see that all tools (Free Pascal, InstantFPC, Python 3, Node.js) are detected and verified with `[v]`.
 
-### Passo 2: Iniciar o Servidor de Desenvolvimento
-Ainda no terminal, entre na pasta da aplicação de demonstração e digite:
+### Step 2: Start the Development Server
+Navigate into the demo application directory and start the dev server:
 ```bash
 cd demo-app
 bv run dev
 ```
-*(Dica: você também pode digitar apenas `bv dev`)*.
+*(Tip: you can also simply run `bv dev`)*.
 
-O terminal mostrará algo como:
+The terminal will display:
 ```text
   ➜  Local:   http://localhost:8080/
   ➜  Network: use --host to expose
 ```
 
-### Passo 3: Abrir no Navegador
-Abra o seu navegador de internet favorito (Google Chrome, Firefox, Edge, etc.) e acesse:  
+### Step 3: Open in Your Browser
+Open your favorite web browser (Google Chrome, Firefox, Edge, Safari) and navigate to:  
 👉 `http://localhost:8080`
 
-Você verá a tela da aplicação carregando imediatamente!
+The application will render immediately!
 
-### Passo 4: Fazer Sua Primeira Alteração ao Vivo (HMR)
-1. Deixe o navegador aberto em uma metade da tela.
-2. Abra o arquivo `demo-app/src/views/Home.bv` em seu editor de código (como o VS Code ou Antigravity IDE).
-3. Procure a variável de título ou o texto do cabeçalho e altere para:
+### Step 4: Make Your First Live Edit (HMR)
+1. Keep your browser open on one side of your screen.
+2. Open `demo-app/src/views/Home.bv` in your code editor (such as VS Code or Antigravity IDE).
+3. Locate the title variable in the `<script>` section and change it to:
    ```pascal
-   'Meu Primeiro App Reativo com Pascal!'
+   'My First Reactive App in Pascal!'
    ```
-4. Salve o arquivo (`Ctrl + S`).
-5. **Olhe para o navegador!** A tela atualiza instantaneamente, sem você precisar clicar no botão de recarregar a página! Isso se chama **HMR (Hot Module Replacement)**.
+4. Save the file (`Ctrl + S`).
+5. **Look at the browser!** The screen updates instantly without needing a full page reload! This is **Hot Module Replacement (HMR)** in action.
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 01
+## 🎯 4. Practical Exercise: Module 01
 
-Para fixar o que você aprendeu, tente fazer este pequeno desafio:
+To solidify what you have learned:
 
-1. No arquivo `Home.bv`, dentro da tag `<template>`, adicione uma nova linha com um parágrafo:
+1. Inside `Home.bv`, within the `<template>` block, add a new paragraph line:
    ```html
-   <p class="meu-texto">Aprendendo Pascal para a Web com BlaiseVue!</p>
+   <p class="custom-text">Learning Pascal for the modern Web with BlaiseVue!</p>
    ```
-2. No bloco `<style>`, dê uma cor bonita para ele:
+2. In the `<style>` block, add a nice green style for it:
    ```css
-   .meu-texto {
+   .custom-text {
      color: #38a169;
      font-weight: bold;
      font-size: 18px;
    }
    ```
-3. Salve o arquivo e confira o resultado na tela do navegador!
+3. Save the file and observe the instant live update in your browser!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Como o HTML, o CSS e o Pascal trabalham juntos.
-- A estrutura de um arquivo `.bv` (`<template>`, `<script>`, `<style>`).
-- Como iniciar o servidor de testes com `bv run dev`.
-- Como o BlaiseVue atualiza a tela na hora em que você salva suas alterações.
+## 🏆 What You Learned Today
+- How HTML, CSS, and Object Pascal work together seamlessly.
+- The structure of a `.bv` component (`<template>`, `<script>`, `<style>`).
+- How to start the dev server with `bv run dev`.
+- How BlaiseVue delivers instant live updates as soon as you save.
 
-**Tudo pronto? Vamos dar vida às nossas variáveis no [Módulo 02: O Motor Reativo](02-reactivity.md)!** ⚔️🛡️✨
+**Ready to give life to your data? Let's move on to [Module 02: The Reactive Engine](02-reactivity.md)!** ⚔️🛡️✨

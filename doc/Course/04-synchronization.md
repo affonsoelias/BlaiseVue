@@ -1,124 +1,124 @@
-# 🔄 Módulo 04: Sincronização com b-model
-**O diálogo contínuo entre o teclado do usuário e as variáveis em Pascal.**
+# 🔄 Module 04: Synchronization with b-model
+**The seamless dialogue between user input and Pascal variables.**
 
-Até agora, você aprendeu a mostrar dados do Pascal na tela e a responder a cliques de botões. Mas como fazemos para o usuário digitar informações — como seu nome, email, ou o valor de uma compra — e o Pascal receber isso em tempo real?
+So far, you have learned how to render Pascal data onto the screen and respond to button clicks. But how do we capture information that the user types — such as names, email addresses, or quantities — and feed it back to Pascal in real time?
 
-A resposta é a diretiva mágica **`b-model`**!
+The answer is the two-way binding directive: **`b-model`**!
 
 ---
 
-## 🪞 1. O Que é "Ligação de Mão Dupla" (Two-Way Binding)?
+## 🪞 1. What is "Two-Way Data Binding"?
 
-Pense no `b-model` como um espelho perfeito de mão dupla:
+Think of `b-model` as a two-way reactive mirror:
 
 ```mermaid
 flowchart LR
-    A["Usuário Digita no Teclado"] -->|b-model atualiza na hora| B["Variável em Pascal (data:)"]
-    B -->|Pascal altera o valor| A
+    A["User Types in Form Field"] -->|b-model updates state immediately| B["Pascal Variable in data:"]
+    B -->|Pascal modifies variable| A
 ```
 
-- **Mão 1 (Da tela para o Pascal):** Conforme o usuário digita cada letra dentro de uma caixa `<input>`, a variável em Pascal recebe esse novo texto no mesmo milissegundo.
-- **Mão 2 (Do Pascal para a tela):** Se o seu código Pascal alterar o valor da variável (por exemplo, limpando o campo ou carregando dados de um banco), a caixa de texto na tela atualiza na mesma hora!
+- **Way 1 (DOM to Pascal):** As the user types into an `<input>` field, the corresponding Pascal variable receives the updated value on every single keystroke.
+- **Way 2 (Pascal to DOM):** If your Pascal code changes the variable (e.g. loading saved data from an API or resetting a form), the input on screen updates simultaneously!
 
 ---
 
-## 🎛️ 2. Tipos de Campos Suportados
+## 🎛️ 2. Supported Form Controls
 
-O `b-model` funciona com qualquer elemento de formulário da Web:
+The `b-model` directive works seamlessly with all standard HTML form controls:
 
-### Caixa de Texto Comum
+### Standard Text Input
 ```html
-<label>Seu Nome:</label>
-<input type="text" b-model="nome">
-<p>Você digitou: {{ nome }}</p>
+<label>Your Name:</label>
+<input type="text" b-model="userName">
+<p>You typed: {{ userName }}</p>
 ```
 
-### Caixa de Seleção Sim/Não (Checkbox)
+### Boolean Checkbox
 ```html
 <label>
-  <input type="checkbox" b-model="aceitouTermos">
-  Concordo com os termos de uso
+  <input type="checkbox" b-model="termsAccepted">
+  I agree to the terms of service
 </label>
 ```
 
-### Menu Suspenso (Select)
+### Dropdown Menu (Select)
 ```html
-<select b-model="pais">
-  <option value="Brasil">Brasil</option>
-  <option value="Portugal">Portugal</option>
-  <option value="Angola">Angola</option>
+<select b-model="selectedCountry">
+  <option value="United States">United States</option>
+  <option value="United Kingdom">United Kingdom</option>
+  <option value="Brazil">Brazil</option>
 </select>
 ```
 
 ---
 
-## 🚀 3. Exemplo Completo Passo a Passo: O Gerador de Crachá em Tempo Real
+## 🚀 3. Full Step-by-Step Example: Real-Time ID Badge Generator
 
-Vamos construir uma aplicação interativa: um formulário onde você digita os dados de um profissional e, ao lado, um **Crachá de Identificação** é desenhado e atualizado letra por letra em tempo real!
+Let's build an interactive application: a form where you enter employee details, and an **ID Badge** beside the form updates letter-by-letter in real time!
 
-Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.bv`):
+Replace your view component (e.g. `src/views/Home.bv`) with:
 
 ```html
 <template>
-  <div class="container-cracha">
+  <div class="badge-app-container">
     
-    <!-- LADO ESQUERDO: O Formulário de Entrada -->
-    <div class="formulario">
-      <h3>📝 Dados do Profissional</h3>
+    <!-- LEFT COLUMN: The Input Form -->
+    <div class="form-panel">
+      <h3>📝 Employee Details</h3>
 
-      <div class="campo">
-        <label>Nome Completo:</label>
-        <input type="text" b-model="nome" placeholder="Digite seu nome">
+      <div class="field">
+        <label>Full Name:</label>
+        <input type="text" b-model="fullName" placeholder="Enter full name">
       </div>
 
-      <div class="campo">
-        <label>Cargo / Função:</label>
-        <input type="text" b-model="cargo" placeholder="Ex: Desenvolvedor Pascal">
+      <div class="field">
+        <label>Role / Position:</label>
+        <input type="text" b-model="role" placeholder="e.g. Lead Pascal Architect">
       </div>
 
-      <div class="campo">
-        <label>Nível de Acesso:</label>
-        <select b-model="nivel">
-          <option value="Visitante">Visitante</option>
-          <option value="Operador">Operador</option>
-          <option value="Administrador">Administrador</option>
+      <div class="field">
+        <label>Access Level:</label>
+        <select b-model="accessLevel">
+          <option value="Visitor">Visitor</option>
+          <option value="Operator">Operator</option>
+          <option value="Administrator">Administrator</option>
         </select>
       </div>
 
-      <div class="campo-check">
+      <div class="checkbox-field">
         <label>
-          <input type="checkbox" b-model="ativo">
-          Crachá Ativo no Sistema
+          <input type="checkbox" b-model="isActive">
+          Active Security Badge
         </label>
       </div>
 
-      <div class="acoes">
-        <!-- Demonstra a mão inversa: Pascal altera e os inputs refletem! -->
-        <button class="btn btn-preencher" @click="preencherExemplo">Preencher Exemplo</button>
-        <button class="btn btn-limpar" @click="limpar">Limpar Tudo</button>
+      <div class="action-buttons">
+        <!-- Demonstrates the reverse direction: Pascal assigns data and inputs update! -->
+        <button class="btn btn-preset" @click="loadPreset">Load Example</button>
+        <button class="btn btn-clear" @click="clearForm">Clear Form</button>
       </div>
     </div>
 
-    <!-- LADO DIREITO: O Crachá que Reflete os Dados -->
-    <div class="preview">
-      <h3>🪪 Visualização do Crachá</h3>
+    <!-- RIGHT COLUMN: The Real-Time ID Badge -->
+    <div class="preview-panel">
+      <h3>🪪 Live Badge Preview</h3>
       
-      <div class="cracha" :class="{ 'cracha-inativo': !ativo }">
-        <div class="cracha-topo">
-          <span class="logo">🛡️ BLAISE CORP</span>
-          <span class="status-tag" :class="ativo ? 'tag-verde' : 'tag-vermelha'">
-            {{ ativo ? 'ATIVO' : 'BLOQUEADO' }}
+      <div class="id-badge" :class="{ 'badge-inactive': !isActive }">
+        <div class="badge-header">
+          <span class="corp-logo">🛡️ BLAISE CORP</span>
+          <span class="status-pill" :class="isActive ? 'pill-active' : 'pill-disabled'">
+            {{ isActive ? 'ACTIVE' : 'BLOCKED' }}
           </span>
         </div>
 
-        <div class="cracha-foto">
+        <div class="badge-avatar">
           👤
         </div>
 
-        <div class="cracha-dados">
-          <h4>{{ nome || 'Nome da Pessoa' }}</h4>
-          <p class="cargo-texto">{{ cargo || 'Cargo a Definir' }}</p>
-          <div class="nivel-badge">{{ nivel }}</div>
+        <div class="badge-info">
+          <h4>{{ fullName || 'Employee Name' }}</h4>
+          <p class="role-text">{{ role || 'Role to be assigned' }}</p>
+          <div class="access-badge">{{ accessLevel }}</div>
         </div>
       </div>
     </div>
@@ -128,57 +128,57 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
 
 <script>
   data:
-    nome: string = '';
-    cargo: string = '';
-    nivel: string = 'Visitante';
-    ativo: boolean = true;
+    fullName: string = '';
+    role: string = '';
+    accessLevel: string = 'Visitor';
+    isActive: boolean = true;
 
   methods:
-    // Ação: Preenche dados no Pascal e o b-model joga para os inputs!
-    procedure preencherExemplo;
+    // Action: Fills data in Pascal, and b-model updates all inputs on screen!
+    procedure loadPreset;
     begin
-      this['nome'] := 'Blaise Pascal';
-      this['cargo'] := 'Arquiteto de Software & Matemático';
-      this['nivel'] := 'Administrador';
-      this['ativo'] := true;
+      this['fullName'] := 'Blaise Pascal';
+      this['role'] := 'Principal Software Architect & Mathematician';
+      this['accessLevel'] := 'Administrator';
+      this['isActive'] := true;
     end;
 
-    // Ação: Zera todas as variáveis
-    procedure limpar;
+    // Action: Resets all variables
+    procedure clearForm;
     begin
-      this['nome'] := '';
-      this['cargo'] := '';
-      this['nivel'] := 'Visitante';
-      this['ativo'] := false;
+      this['fullName'] := '';
+      this['role'] := '';
+      this['accessLevel'] := 'Visitor';
+      this['isActive'] := false;
     end;
 </script>
 
 <style>
-  .container-cracha {
+  .badge-app-container {
     display: flex;
     gap: 30px;
-    max-width: 800px;
+    max-width: 820px;
     margin: 30px auto;
     font-family: sans-serif;
   }
-  .formulario, .preview {
+  .form-panel, .preview-panel {
     flex: 1;
     background: #ffffff;
     padding: 24px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   }
-  .campo {
+  .field {
     margin-bottom: 14px;
   }
-  .campo label {
+  .field label {
     display: block;
     font-size: 13px;
     font-weight: bold;
     margin-bottom: 4px;
     color: #4a5568;
   }
-  .campo input, .campo select {
+  .field input, .field select {
     width: 100%;
     padding: 10px;
     border: 1px solid #cbd5e0;
@@ -186,10 +186,10 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     font-size: 14px;
     box-sizing: border-box;
   }
-  .campo-check {
+  .checkbox-field {
     margin: 16px 0;
   }
-  .acoes {
+  .action-buttons {
     display: flex;
     gap: 10px;
     margin-top: 15px;
@@ -201,11 +201,11 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     font-weight: bold;
     cursor: pointer;
   }
-  .btn-preencher { background: #3182ce; color: white; }
-  .btn-limpar { background: #e2e8f0; color: #4a5568; }
+  .btn-preset { background: #3182ce; color: white; }
+  .btn-clear { background: #e2e8f0; color: #4a5568; }
 
-  /* Estilo do Crachá */
-  .cracha {
+  /* Badge Styling */
+  .id-badge {
     border: 2px solid #2b6cb0;
     border-radius: 12px;
     padding: 20px;
@@ -213,40 +213,40 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
     text-align: center;
     transition: opacity 0.3s ease;
   }
-  .cracha-inativo {
-    opacity: 0.5;
+  .badge-inactive {
+    opacity: 0.45;
     border-color: #e53e3e;
   }
-  .cracha-topo {
+  .badge-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
   }
-  .logo { font-weight: bold; font-size: 12px; color: #2b6cb0; }
-  .status-tag {
+  .corp-logo { font-weight: bold; font-size: 12px; color: #2b6cb0; }
+  .status-pill {
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 10px;
     font-weight: bold;
   }
-  .tag-verde { background: #c6f6d5; color: #22543d; }
-  .tag-vermelha { background: #fed7d7; color: #742a2a; }
-  .cracha-foto {
+  .pill-active { background: #c6f6d5; color: #22543d; }
+  .pill-disabled { background: #fed7d7; color: #742a2a; }
+  .badge-avatar {
     font-size: 64px;
     margin: 10px 0;
   }
-  .cracha-dados h4 {
+  .badge-info h4 {
     margin: 8px 0 4px 0;
     font-size: 18px;
     color: #1a202c;
   }
-  .cargo-texto {
+  .role-text {
     margin: 0;
     font-size: 13px;
     color: #718096;
   }
-  .nivel-badge {
+  .access-badge {
     display: inline-block;
     margin-top: 12px;
     background: #2b6cb0;
@@ -261,26 +261,21 @@ Copie e cole este código no seu arquivo de visualização (ex: `src/views/Home.
 
 ---
 
-## 🎯 4. Exercício Prático do Módulo 04
+## 🎯 4. Practical Exercise: Module 04
 
-Para praticar com o `b-model`:
-
-1. Adicione um novo campo no formulário: **"Departamento / Setor"** (ex: Financeiro, TI, Vendas).
-2. Na seção `data:`, declare a nova variável:
+1. Add a new input field: **"Department"** (e.g. Engineering, Finance, Security).
+2. In the `data:` section, declare the variable:
    ```pascal
-   departamento: string = 'Tecnologia da Informação';
+   department: string = 'Software Engineering';
    ```
-3. No crachá visual, exiba o departamento logo abaixo do cargo:
-   ```html
-   <p class="depto-texto">Setor: {{ departamento }}</p>
-   ```
-4. Digite no novo campo e veja o crachá atualizar letra por letra!
+3. Display the department on the ID badge underneath the role.
+4. Type in the input and watch the badge synchronize letter-by-letter!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- O que é o *Two-Way Data Binding* (Ligação de mão dupla).
-- Como conectar campos de formulário (`<input>`, `<select>`, `<input type="checkbox">`) com variáveis em Pascal.
-- Como o `b-model` mantém o HTML e o Pascal 100% sincronizados sem você precisar programar escutadores manuais.
+## 🏆 What You Learned Today
+- The mechanics of two-way data binding with `b-model` (and alias `v-model`).
+- How form elements (`<input>`, `<select>`, `<input type="checkbox">`) stay synchronized with Pascal state.
+- How assigning variables in Pascal immediately updates input elements on screen without manual event listeners.
 
-**E se precisarmos fazer contas matemáticas ou transformar dados automaticamente? Vamos ao [Módulo 05: O Poder do Cérebro (Computed)](05-computed.md)!** ⚔️🛡️✨
+**What if we need to perform calculations or compute derived values automatically? Let's move to [Module 05: The Brain (Computed Properties)](05-computed.md)!** ⚔️🛡️✨

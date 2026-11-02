@@ -1,92 +1,91 @@
-# 🏰 Módulo 06: Componentes SFC (.bv) - Construindo com Blocos de LEGO
-**Divida o seu sistema em peças pequenas, reutilizáveis e fáceis de manter.**
+# 🏰 Module 06: Components (.bv) - Building with LEGO Bricks
+**Break your application into small, reusable, and easy-to-maintain pieces.**
 
-Imagine que você está montando um castelo de LEGO. Em vez de moldar o castelo inteiro em uma única pedra gigante, você usa vários bloquinhos pequenos: tijolos, janelas, portas e telhados. Se uma janela quebrar, você só conserta aquela janela!
+Imagine building a castle out of LEGO bricks. Instead of carving an entire fortress out of a single monolithic stone, you assemble individual blocks: bricks, windows, doors, and towers. If one window needs a different color, you only swap that window!
 
-No desenvolvimento de software moderno, cada um desses bloquinhos é um **Componente**!
-
----
-
-## 🧱 1. Por Que Usar Componentes?
-
-Quando você começa um projeto sem componentes, o seu arquivo HTML rapidamente fica com 1.000 ou 2.000 linhas de código confuso e impossível de ler.
-
-Com os componentes do BlaiseVue (`.bv`):
-1. **Reutilização**: Você cria um `<cartao-usuario>` uma única vez e pode usá-lo 10, 50 ou 100 vezes em páginas diferentes.
-2. **Organização**: Cada componente fica em seu próprio arquivo dentro da pasta `src/components/`.
-3. **Foco**: Se você precisar mudar o estilo do botão, você só abre o arquivo daquele botão!
+In modern web development, each of those modular blocks is called a **Component**!
 
 ---
 
-## 🏷️ 2. Como o BlaiseVue Dá Nome aos Componentes?
+## 🧱 1. Why Use Components?
 
-O BlaiseVue possui um compilador muito inteligente. Você não precisa ficar fazendo `import` manual de dezenas de arquivos!
+When you start an application without components, a single file quickly balloons into 1,000+ lines of messy, tangled code.
 
-Basta criar o arquivo dentro da pasta `src/components/`:
-- Se o arquivo se chama `ProductCard.bv`, o BlaiseVue cria a tag `<product-card>`.
-- Se o arquivo se chama `UserBadge.bv`, ele cria a tag `<user-badge>`.
-- Se o arquivo se chama `AppHeader.bv`, ele cria a tag `<app-header>`.
+With BlaiseVue Single File Components (`.bv`):
+1. **Reusability**: You build a `<product-card>` once and reuse it 10, 50, or 100 times across different pages.
+2. **Organization**: Each component lives in its own dedicated file inside `src/components/`.
+3. **Maintainability**: If you ever need to change how a button or badge looks, you only touch that single file!
 
 ---
 
-## 🎁 3. O Que São `props:` (Passando Dados do Pai para o Filho)?
+## 🏷️ 2. How Does BlaiseVue Name Components?
 
-Pense em um crachá de identificação. O crachá tem sempre o mesmo formato físico de plástico, mas o **nome** e a **foto** impressos mudam para cada pessoa.
+BlaiseVue features an intelligent compiler. You do not need to write dozens of manual `import` or `require` statements!
 
-No BlaiseVue, essas informações que vêm de fora para dentro do componente são chamadas de **`props`**:
+Simply create your component file inside `src/components/`:
+- `ProductCard.bv` ➔ Creates the HTML tag `<product-card>`
+- `UserBadge.bv` ➔ Creates the HTML tag `<user-badge>`
+- `AppHeader.bv` ➔ Creates the HTML tag `<app-header>`
+
+---
+
+## 🎁 3. What are `props:` (Passing Data from Parent to Child)?
+
+Think of an employee ID badge. The plastic card has a standard physical template, but the **name** and **photo** printed on it differ for each person.
+
+In BlaiseVue, the input parameters passed from a parent component into a child are declared in the **`props:`** section:
 
 ```pascal
 <script>
-  // Props: Dados que o componente recebe de quem o chamou
+  // Props: Data passed into this component from its parent caller
   props:
-    titulo: string;
-    preco: real;
-    emPromocao: boolean;
+    title: string;
+    price: real;
+    isFeatured: boolean;
 </script>
 ```
 
 ---
 
-## 🚀 4. Exemplo Completo Passo a Passo: Criando e Usando um Card de Produto
+## 🚀 4. Full Step-by-Step Example: Creating and Using a Product Card
 
-Vamos criar juntos um componente de vitrine de produtos!
+Let's build a modular product showcase!
 
-### Passo 1: Criar o Componente Filho (`src/components/ProductCard.bv`)
+### Step 1: Create the Child Component (`src/components/ProductCard.bv`)
 
-Crie um novo arquivo chamado `ProductCard.bv` dentro da pasta `demo-app/src/components/`:
+Create a new file named `ProductCard.bv` inside `demo-app/src/components/`:
 
 ```html
 <template>
-  <div class="cartao-produto" :class="{ 'em-destaque': emDestaque }">
-    <div class="icone-produto">{{ icone }}</div>
-    <h3 class="nome-produto">{{ nome }}</h3>
-    <p class="descricao-produto">{{ descricao }}</p>
+  <div class="product-card" :class="{ 'featured': isFeatured }">
+    <div class="product-icon">{{ icon }}</div>
+    <h3 class="product-name">{{ name }}</h3>
+    <p class="product-desc">{{ description }}</p>
     
-    <div class="rodape-produto">
-      <span class="preco-texto">R$ {{ preco.toFixed(2) }}</span>
-      <button class="btn-comprar" @click="avisarClique">Comprar</button>
+    <div class="product-footer">
+      <span class="price-tag">$ {{ price.toFixed(2) }}</span>
+      <button class="btn-buy" @click="notifyClick">Purchase</button>
     </div>
   </div>
 </template>
 
 <script>
-  // Declara os dados que o componente espera receber do pai:
   props:
-    icone: string = '📦';
-    nome: string = 'Produto';
-    descricao: string = '';
-    preco: real = 0.0;
-    emDestaque: boolean = false;
+    icon: string = '📦';
+    name: string = 'Standard Product';
+    description: string = '';
+    price: real = 0.0;
+    isFeatured: boolean = false;
 
   methods:
-    procedure avisarClique;
+    procedure notifyClick;
     begin
-      TJSFunction(this['$emit']).apply(this, ['adicionado', this['nome']]);
+      TJSFunction(this['$emit']).apply(this, ['selected', this['name']]);
     end;
 </script>
 
 <style>
-  .cartao-produto {
+  .product-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
@@ -99,35 +98,35 @@ Crie um novo arquivo chamado `ProductCard.bv` dentro da pasta `demo-app/src/comp
     flex-direction: column;
     justify-content: space-between;
   }
-  .em-destaque {
+  .featured {
     border: 2px solid #3182ce;
     background: #ebf8ff;
   }
-  .icone-produto {
+  .product-icon {
     font-size: 40px;
     margin-bottom: 8px;
   }
-  .nome-produto {
+  .product-name {
     margin: 4px 0;
     font-size: 16px;
     color: #2d3748;
   }
-  .descricao-produto {
+  .product-desc {
     font-size: 12px;
     color: #718096;
     margin-bottom: 12px;
   }
-  .rodape-produto {
+  .product-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .preco-texto {
+  .price-tag {
     font-weight: bold;
     color: #2b6cb0;
     font-size: 15px;
   }
-  .btn-comprar {
+  .btn-buy {
     background: #38a169;
     color: white;
     border: none;
@@ -136,45 +135,45 @@ Crie um novo arquivo chamado `ProductCard.bv` dentro da pasta `demo-app/src/comp
     cursor: pointer;
     font-weight: bold;
   }
-  .btn-comprar:hover { background: #2f855a; }
+  .btn-buy:hover { background: #2f855a; }
 </style>
 ```
 
 ---
 
-### Passo 2: Usar o Componente na Página Principal (`src/views/Home.bv`)
+### Step 2: Use the Component in a Parent View (`src/views/Home.bv`)
 
-Agora abra `src/views/Home.bv` e utilize o seu novo `<product-card>` passando os valores com facilidade:
+Now open `src/views/Home.bv` and consume your `<product-card>`:
 
 ```html
 <template>
-  <div class="vitrine-loja">
-    <h2>🏪 Vitrine de Cursos Pascal</h2>
+  <div class="store-showcase">
+    <h2>🏪 Pascal Training Showcase</h2>
 
-    <div class="grid-produtos">
-      <!-- Usando o mesmo componente várias vezes com dados diferentes! -->
+    <div class="products-grid">
+      <!-- Using the exact same component multiple times with different props! -->
       <product-card 
-        icone="🛡️" 
-        nome="Pascal Básico" 
-        descricao="Aprenda a sintaxe mais limpa da programação." 
-        :preco="99.90"
-        :em-destaque="false">
+        icon="🛡️" 
+        name="Pascal Fundamentals" 
+        description="Learn the cleanest, most structured syntax in computing." 
+        :price="49.00"
+        :is-featured="false">
       </product-card>
 
       <product-card 
-        icone="⚡" 
-        nome="BlaiseVue Ninja" 
-        descricao="Construa SPAs ultrarrápidas para Web e Mobile." 
-        :preco="199.90"
-        :em-destaque="true">
+        icon="⚡" 
+        name="BlaiseVue Ninja" 
+        description="Build ultra-fast reactive SPAs for Web and Mobile." 
+        :price="99.00"
+        :is-featured="true">
       </product-card>
 
       <product-card 
-        icone="🚀" 
-        nome="mORMot 2 Backend" 
-        descricao="Servidores SOA de alta performance em Pascal." 
-        :preco="249.90"
-        :em-destaque="false">
+        icon="🚀" 
+        name="mORMot 2 Backend" 
+        description="High-throughput Pascal microservices and SOA servers." 
+        :price="129.00"
+        :is-featured="false">
       </product-card>
     </div>
 
@@ -182,12 +181,12 @@ Agora abra `src/views/Home.bv` e utilize o seu novo `<product-card>` passando os
 </template>
 
 <style>
-  .vitrine-loja {
-    max-width: 800px;
+  .store-showcase {
+    max-width: 820px;
     margin: 30px auto;
     font-family: sans-serif;
   }
-  .grid-produtos {
+  .products-grid {
     display: flex;
     gap: 20px;
     justify-content: center;
@@ -197,22 +196,22 @@ Agora abra `src/views/Home.bv` e utilize o seu novo `<product-card>` passando os
 ```
 
 > [!TIP]
-> **Por que tem dois pontos `:` antes de `:preco`?**  
-> Quando você escreve `nome="Pascal"`, você está passando um texto simples. Mas quando você quer passar um número ou um valor de variável Pascal, colocamos dois pontos na frente: `:preco="199.90"`. Isso avisa o BlaiseVue para interpretar o valor como uma expressão Pascal!
+> **Why is there a colon `:` before `:price`?**  
+> When you write `name="Pascal"`, you are passing a static raw string. When you want to pass a numeric value or a Pascal variable expression, prepend a colon: `:price="99.00"`. This instructs BlaiseVue to evaluate the attribute as a reactive Pascal expression!
 
 ---
 
-## 🎯 5. Exercício Prático do Módulo 06
+## 🎯 5. Practical Exercise: Module 06
 
-1. Adicione um quarto card de produto na vitrine (por exemplo: `"Banco de Dados com Pascal"`, preço `149.90`, ícone `💾`).
-2. Mude `:em-destaque="true"` no novo card e observe a borda azul e o destaque visual aparecerem automaticamente nele!
+1. Add a fourth product card to the showcase (e.g. `"Database Systems with Pascal"`, price `79.00`, icon `💾`).
+2. Set `:is-featured="true"` on the new card and observe the blue border and highlight background activate automatically!
 
 ---
 
-## 🏆 Resumo do Que Você Aprendeu
-- Como dividir sua aplicação em blocos modulares reutilizáveis.
-- Como o BlaiseVue registra automaticamente seus arquivos `.bv` como tags HTML.
-- Como passar informações de pai para filho através de `props:`.
-- Como usar a sintaxe de ligação `:` para passar números e variáveis.
+## 🏆 What You Learned Today
+- How to divide applications into clean, modular, reusable components.
+- How the BlaiseVue compiler registers `.bv` files into HTML tags automatically.
+- How to pass data from parent to child components using `props:`.
+- How the bound attribute prefix `:` evaluates expressions and numbers.
 
-**Agora que os componentes sabem se vestir, como fazemos eles conversarem entre si? Vamos para o [Módulo 07: Comunicação e Eventos ($emit)](07-events.md)!** ⚔️🛡️✨
+**Now that components know how to look good, how do they talk to each other? Let's find out in [Module 07: Communication & Events ($emit)](07-events.md)!** ⚔️🛡️✨
