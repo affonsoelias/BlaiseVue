@@ -320,7 +320,7 @@ Pre-renders all registered application routes into static, SEO-friendly HTML fil
 ### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
 Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
 - `bv extension list`: Inspects available extensions (`vscode`, `devtools`, and custom tools) and their installation status.
-- `bv extension install [vscode|devtools|<tool>]`: Deploys the official VS Code / Antigravity IDE extension (`~/.vscode/extensions/`) or displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
+- `bv extension install [vscode|devtools|<tool>]`: Deploys the official VS Code / Antigravity IDE / Cursor extension (`~/.vscode/extensions/`, `~/.antigravity/extensions/`). After running this command, reload the window via `Ctrl + Shift + P` $\rightarrow$ `Developer: Reload Window` (or restart the IDE). Alternatively, install the pre-packaged `.vsix` manually through the Extensions UI (*Install from VSIX...*) or via terminal (`code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix`). For `devtools`, displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
 - `bv extension remove [vscode|<tool>]`: Uninstalls the extension cleanly from the environment.
 - `bv extension pack [vscode]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
 

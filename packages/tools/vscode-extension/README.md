@@ -39,19 +39,48 @@ Provides first-class tooling, syntax highlighting, IntelliSense, rich snippets, 
 
 ---
 
-## 📦 Installation
+## 🚀 Installation & Activation Guide
 
-### Option 1: Automatic Script (PowerShell)
-Run from the `vscode-extension` directory:
+The BlaiseVue extension is compatible with **Visual Studio Code**, **Google Antigravity IDE**, **Cursor**, and other Chromium/VS Code-based editors.
+
+### Option 1: Automatic via BlaiseVue CLI (Recommended)
+From anywhere in your BlaiseVue project, run:
+```bash
+bv extension install
+```
+*Or explicitly targeting VS Code:*
+```bash
+bv extension install vscode
+```
+
+### Option 2: Manual Installation via Editor UI (Install from VSIX...)
+1. Open the Extensions sidebar (**`Ctrl + Shift + X`**).
+2. Click the three dots menu (**`...`**) in the top-right corner of the Extensions panel (*Views and More Actions*).
+3. Select **"Install from VSIX..."** (*Instalar a partir do VSIX...*).
+4. Select the packaged extension:
+   ```text
+   packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+   ```
+5. Wait for the confirmation prompt.
+
+### Option 3: Command Line via `code` CLI
+```bash
+code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+```
+
+### Option 4: Direct PowerShell Script (Windows)
+Run from the `packages/tools/vscode-extension` directory:
 ```powershell
 .\install_extension.ps1
 ```
 
-### Option 2: Install via .VSIX
-Package and install the standalone `.vsix` file:
-```bash
-code --install-extension blaisevue-vscode-3.5.0.vsix
-```
+---
+
+### ⚠️ Important: Activating the Extension (Reload Window)
+After installing through any of the options above, **reload the IDE window** to activate the extension:
+1. Press **`Ctrl + Shift + P`** (or `Cmd + Shift + P` on macOS) to open the Command Palette.
+2. Select **`Developer: Reload Window`**.
+3. *Alternative*: Simply close and restart VS Code / Antigravity IDE.
 
 ---
 

@@ -19,22 +19,94 @@ BlaiseVue delivers a first-class Developer Experience (DX) for modern Object Pas
 
 ---
 
-## 📦 Extension CLI Commands
+## 📦 Guia Completo de Instalação e Ativação (Passo a Passo)
 
-The native `bv` CLI manages extension packaging and installation:
+A extensão oficial do BlaiseVue é compatível com **Visual Studio Code**, **Google Antigravity IDE**, **Cursor** e outros editores baseados em VS Code / VSCodium.
+
+---
+
+### Método 1: Instalação Automática via BlaiseVue CLI (Recomendado)
+
+A forma mais rápida e recomendada de instalar ou atualizar a extensão em todas as suas IDEs compatíveis:
 
 ```bash
-# Packages the official extension into a distributable .vsix bundle
-bv extension pack
-
-# Or via the extension subcommand:
-bv extension pack
-
-# Installs the extension directly into local VS Code
+# Instala a extensão automaticamente no VS Code, Antigravity IDE e Cursor
 bv extension install
+
+# Ou especificando explicitamente o alvo:
+bv extension install vscode
 ```
 
-This command generates `blaisevue-language-tools-1.0.0.vsix` ready for team distribution or manual installation (`code --install-extension blaisevue-language-tools-1.0.0.vsix`).
+**O que este comando faz nos bastidores:**
+1. Localiza os fontes e bundles da extensão em `packages/tools/vscode-extension/`.
+2. Detecta automaticamente os diretórios de extensões ativos no seu perfil de usuário (`~/.vscode/extensions`, `~/.antigravity-ide/extensions`, `~/.antigravity/extensions`).
+3. Faz o deploy limpo dos grammars de sintaxe, schemas de autocompletion, catálogo de componentes e provedor de formatação.
+
+> [!IMPORTANT]
+> **Passo Obrigatório de Ativação**: Após executar a instalação, você **DEVE recarregar a janela da IDE** para que o editor carregue a nova versão da extensão:
+> 1. Pressione **`Ctrl + Shift + P`** (ou `Cmd + Shift + P` no macOS) para abrir a Paleta de Comandos (*Command Palette*).
+> 2. Digite e selecione: **`Developer: Reload Window`** (Recarregar Janela).
+> 3. *Alternativa*: Você também pode simplesmente fechar e reabrir o VS Code / Antigravity IDE.
+
+---
+
+### Método 2: Instalação Manual via Interface da IDE (Install from VSIX...)
+
+Se você preferir instalar diretamente pela interface gráfica do VS Code ou Antigravity IDE sem precisar abrir o terminal:
+
+1. Abra o painel lateral de **Extensões** pressionando **`Ctrl + Shift + X`** (ou clicando no ícone de blocos de extensões na barra lateral esquerda).
+2. Clique no menu de três pontinhos (**`...`**) localizado no canto superior direito do painel de extensões (*Views and More Actions* / Visualizações e Mais Ações).
+3. Selecione a opção **"Install from VSIX..."** (*Instalar a partir do VSIX...*).
+4. No gerenciador de arquivos que se abrir, navegue até a raiz do projeto e selecione o pacote compilado:
+   ```text
+   packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+   ```
+5. Clique em **Install**. Uma notificação de sucesso aparecerá no canto inferior direito confirmando a instalação (*Completed installing BlaiseVue extension*).
+6. Pressione **`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`** para ativar.
+
+---
+
+### Método 3: Instalação via Terminal com o comando `code`
+
+Se você possui o utilitário de linha de comando `code` (ou `cursor`) configurado no seu sistema:
+
+```bash
+# Para Visual Studio Code:
+code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+
+# Para Cursor:
+cursor --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix
+```
+
+Após a conclusão no terminal, recarregue a janela da IDE (**`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`**).
+
+---
+
+### Método 4: Script PowerShell Automatizado (Windows)
+
+No Windows, você também pode executar o instalador PowerShell oficial:
+
+```powershell
+cd packages/tools/vscode-extension
+.\install_extension.ps1
+```
+
+O script empacota automaticamente o bundle `.vsix` mais recente, remove versões antigas, distribui os arquivos para o VS Code e Antigravity IDE e exibe o status de conclusão na tela.
+
+---
+
+### 🛠️ Comandos Adicionais do CLI `bv extension`
+
+```bash
+# Listar status de instalação das extensões (VS Code, DevTools, etc.)
+bv extension list
+
+# Empacotar uma nova versão standalone .vsix
+bv extension pack vscode
+
+# Desinstalar a extensão do ambiente local
+bv extension remove vscode
+```
 
 ---
 
