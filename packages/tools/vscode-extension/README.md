@@ -46,8 +46,9 @@ The BlaiseVue extension is compatible with **Visual Studio Code**, **Google Anti
 ### Option 1: Automatic via BlaiseVue CLI (Recommended)
 From anywhere in your BlaiseVue project, run:
 ```bash
-bv extension install vscode
+bv extension install blaise-vscode
 ```
+*(Or use the short alias: `bv extension install vscode`)*
 
 ### Option 2: Manual Installation via Editor UI (Install from VSIX...)
 1. Open the Extensions sidebar (**`Ctrl + Shift + X`**).

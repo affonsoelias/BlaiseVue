@@ -319,14 +319,14 @@ Pre-renders all registered application routes into static, SEO-friendly HTML fil
 
 ### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
 Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
-- `bv extension list`: Inspects available extensions (`vscode`, `lazarus`, `devtools`, and custom tools) and their installation status and versions.
+- `bv extension list`: Inspects available extensions (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and custom tools) and their installation status and versions.
 - `bv extension install <target>`: Installs a specific target extension:
-  - `bv extension install vscode`: Deploys the official VS Code / Antigravity IDE / Cursor extension (`~/.vscode/extensions/`, `~/.antigravity/extensions/`). After running this command, reload the window via `Ctrl + Shift + P` $\rightarrow$ `Developer: Reload Window` (or restart the IDE). Alternatively, install the pre-packaged `.vsix` manually through the Extensions UI (*Install from VSIX...*) or via terminal (`code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix`).
-  - `bv extension install lazarus`: Compiles and validates the official Lazarus IDE package (`blaisevue_ide.lpk`) using `lazbuild`.
-  - `bv extension install devtools`: Displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
+  - `bv extension install blaise-vscode` (alias: `vscode`): Deploys the official VS Code / Antigravity IDE / Cursor extension (`~/.vscode/extensions/`, `~/.antigravity/extensions/`). After running this command, reload the window via `Ctrl + Shift + P` $\rightarrow$ `Developer: Reload Window` (or restart the IDE). Alternatively, install the pre-packaged `.vsix` manually through the Extensions UI (*Install from VSIX...*) or via terminal (`code --install-extension packages/tools/vscode-extension/blaisevue-vscode-4.4.0.vsix`).
+  - `bv extension install blaise-lazarus` (alias: `lazarus`): Compiles and validates the official Lazarus IDE package (`blaisevue_ide.lpk`) using `lazbuild`.
+  - `bv extension install blaise-devtools` (alias: `devtools`): Displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
   - `bv extension install <tool>`: Executes the custom installer from `~/.blaisevue/tools/<name>/install.ps1` (or `install.sh`).
-- `bv extension remove <target>`: Uninstalls a specific extension (e.g. `bv extension remove vscode` or `bv extension remove <tool>`).
-- `bv extension pack [vscode]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
+- `bv extension remove <target>`: Uninstalls a specific extension (e.g. `bv extension remove blaise-vscode` or `bv extension remove <tool>`).
+- `bv extension pack [target]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
 
 ### 5. `bv mobile` (Hybrid Mobile Platform Android / iOS & Capacitor)
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:

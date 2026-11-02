@@ -31,7 +31,9 @@ A forma mais rápida e recomendada de instalar ou atualizar a extensão em todas
 
 ```bash
 # Instala a extensão oficial do VS Code / Antigravity IDE / Cursor:
-bv extension install vscode
+bv extension install blaise-vscode
+
+# (alias curto também suportado: bv extension install vscode)
 ```
 
 **O que este comando faz nos bastidores:**
