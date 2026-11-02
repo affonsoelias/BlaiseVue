@@ -237,7 +237,9 @@ begin
     s := FList[i];
     LowItem := LowerCase(s);
     if (Pos(LowPrefix, LowItem) = 1) or
-       ((Length(LowItem) > 1) and (LowItem[1] = '<') and (Pos(LowPrefix, Copy(LowItem, 2, Length(LowItem))) = 1)) then
+       ((Length(LowItem) > 1) and (LowItem[1] = '<') and (Pos(LowPrefix, Copy(LowItem, 2, Length(LowItem))) = 1)) or
+       ((Length(LowItem) > 1) and (LowItem[1] in [':', '@', '$']) and (Pos(LowPrefix, Copy(LowItem, 2, Length(LowItem))) = 1)) or
+       (Pos(LowPrefix, LowItem) > 0) then
     begin
       FFilteredList.Add(s);
     end;
@@ -258,8 +260,24 @@ end;
 
 procedure TBVSrcEditCompletion.Complete(var Value: string; SourceValue: string;
   var SourceStart, SourceEnd: TPoint; KeyChar: TUTF8Char; Shift: TShiftState);
+var
+  Line: string;
+  Idx: Integer;
 begin
-  // No transformation needed; Value is inserted directly
+  if (FEditor <> nil) and (Value <> '') then
+  begin
+    try
+      Line := FEditor.CurrentLineText;
+      Idx := SourceStart.X - 1; // character immediately preceding token
+      if (Idx >= 1) and (Idx <= Length(Line)) and (Length(Value) > 1) then
+      begin
+        if (Line[Idx] = Value[1]) and (Value[1] in ['@', ':', '<', '$']) then
+          Dec(SourceStart.X);
+      end;
+    except
+      // Keep defaults safely
+    end;
+  end;
 end;
 
 procedure TBVSrcEditCompletion.CompletePrefix(var Prefix: string);
@@ -277,14 +295,12 @@ procedure TBVSrcEditCompletion.Init(SrcEdit: TSourceEditorInterface;
 var
   Ext: string;
 begin
+  Abort := False;
+  Handled := False;
   if SrcEdit = nil then Exit;
   Ext := LowerCase(ExtractFileExt(SrcEdit.FileName));
 
-  if Ext <> '.bv' then
-  begin
-    Handled := False;
-    Exit;
-  end;
+  if Ext <> '.bv' then Exit;
 
   Handled := True;
   FEditor := SrcEdit;
