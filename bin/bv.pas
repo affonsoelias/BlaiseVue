@@ -12422,10 +12422,80 @@ end;
 
 
 
+function CheckVSCodeExtensionInstalled(const HomeDir: string; out FoundVersion: string): Boolean;
+var
+  SR: TSearchRec;
+  CheckDirs: array[0..2] of string;
+  I: Integer;
+  BaseDir: string;
+begin
+  Result := False;
+  FoundVersion := '';
+  CheckDirs[0] := HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions';
+  CheckDirs[1] := HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions';
+  CheckDirs[2] := HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions';
+
+  for I := 0 to High(CheckDirs) do
+  begin
+    BaseDir := CheckDirs[I];
+    if DirectoryExists(BaseDir) then
+    begin
+      if DirectoryExists(BaseDir + DirectorySeparator + 'blaisevue-vscode') then
+      begin
+        Result := True;
+        Exit;
+      end;
+      if FindFirst(BaseDir + DirectorySeparator + 'blaisevue.blaisevue-vscode*', faDirectory, SR) = 0 then
+      begin
+        repeat
+          if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+          begin
+            FoundVersion := Copy(SR.Name, Length('blaisevue.blaisevue-vscode-') + 1, Length(SR.Name));
+            Result := True;
+            FindClose(SR);
+            Exit;
+          end;
+        until FindNext(SR) <> 0;
+        FindClose(SR);
+      end;
+    end;
+  end;
+end;
+
+procedure DeleteVSCodeExtension(const HomeDir: string);
+var
+  SR: TSearchRec;
+  CheckDirs: array[0..2] of string;
+  I: Integer;
+  BaseDir: string;
+begin
+  CheckDirs[0] := HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions';
+  CheckDirs[1] := HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions';
+  CheckDirs[2] := HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions';
+
+  for I := 0 to High(CheckDirs) do
+  begin
+    BaseDir := CheckDirs[I];
+    if DirectoryExists(BaseDir) then
+    begin
+      if DirectoryExists(BaseDir + DirectorySeparator + 'blaisevue-vscode') then
+        DeleteDir(BaseDir + DirectorySeparator + 'blaisevue-vscode');
+      if FindFirst(BaseDir + DirectorySeparator + 'blaisevue.blaisevue-vscode*', faDirectory, SR) = 0 then
+      begin
+        repeat
+          if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+            DeleteDir(BaseDir + DirectorySeparator + SR.Name);
+        until FindNext(SR) <> 0;
+        FindClose(SR);
+      end;
+    end;
+  end;
+end;
+
 procedure CmdExtension(const Action: string = ''; const Target: string = '');
 var
   ExtDir, DevtoolsDir, ScriptPath, SubCmd, TargetLower: string;
-  GlobalToolsDir, CustomToolPath, HomeDir: string;
+  GlobalToolsDir, CustomToolPath, HomeDir, InstalledVer: string;
   VSCodeInstalled: Boolean;
   SR: TSearchRec;
   Count: Integer;
@@ -12445,18 +12515,19 @@ begin
     {$IFDEF WINDOWS}
     HomeDir := GetEnvironmentVariable('USERPROFILE');
     if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
-    VSCodeInstalled := DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') or
-                       DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode') or
-                       DirectoryExists(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') or
-                       DirectoryExists(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
     {$ELSE}
     HomeDir := GetEnvironmentVariable('HOME');
-    VSCodeInstalled := DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue-vscode') or
-                       DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0');
     {$ENDIF}
 
+    VSCodeInstalled := CheckVSCodeExtensionInstalled(HomeDir, InstalledVer);
+
     if VSCodeInstalled then
-      WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (IDE)')
+    begin
+      if InstalledVer <> '' then
+        WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (v' + InstalledVer + ')')
+      else
+        WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Installed (IDE)');
+    end
     else
       WriteLn(PadRight('vscode', 22), PadRight('VS Code / VSCodium', 26), 'Available (Run: bv extension install)');
 
@@ -12564,21 +12635,10 @@ begin
       {$IFDEF WINDOWS}
       HomeDir := GetEnvironmentVariable('USERPROFILE');
       if HomeDir = '' then HomeDir := GetEnvironmentVariable('APPDATA');
-      if DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
-        DeleteDir(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
-      if DirectoryExists(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode') then
-        DeleteDir(HomeDir + DirectorySeparator + '.vscode' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue-vscode');
-      if DirectoryExists(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
-        DeleteDir(HomeDir + DirectorySeparator + '.antigravity-ide' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
-      if DirectoryExists(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0') then
-        DeleteDir(HomeDir + DirectorySeparator + '.antigravity' + DirectorySeparator + 'extensions' + DirectorySeparator + 'blaisevue.blaisevue-vscode-3.5.0');
       {$ELSE}
       HomeDir := GetEnvironmentVariable('HOME');
-      if DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue-vscode') then
-        DeleteDir(HomeDir + '/.vscode/extensions/blaisevue-vscode');
-      if DirectoryExists(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0') then
-        DeleteDir(HomeDir + '/.vscode/extensions/blaisevue.blaisevue-vscode-3.5.0');
       {$ENDIF}
+      DeleteVSCodeExtension(HomeDir);
       WriteLn('BlaiseVue VS Code extension removed successfully.');
     end
     else if TargetLower = 'devtools' then
