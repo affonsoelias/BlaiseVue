@@ -1,30 +1,68 @@
 program bv;
 
 {
+  =============================================================================
+  🛡️ BlaiseVue Compiler, Single File Component (SFC) Preprocessor & CLI Engine
+  =============================================================================
+  Part of the BlaiseVue Universal Reactive Framework for Object Pascal.
+  Version: 4.4.0 (Universal Enterprise Release)
+  Target:  Free Pascal Compiler (FPC 3.2.0+) / Windows, Linux, macOS
+  Build:   fpc -FEbin bin/bv.pas (or "fpc bv.pas" from within bin/)
 
-  BlaiseVue CLI & SFC (Single File Component) Preprocessor
+  -----------------------------------------------------------------------------
+  OVERVIEW & CORE MISSION
+  -----------------------------------------------------------------------------
+  This monolithic orchestrator acts as the primary compiler pipeline, build
+  system, code generator, and developer cockpit for BlaiseVue applications.
+  It enables writing modern reactive Single Page Applications (SPA), mobile apps
+  (Android/iOS), lightweight desktop apps, and high-performance microservices
+  using 100% pure Object Pascal and Vue-inspired component syntax (.bv).
 
-  --------------------------------------------------------
+  -----------------------------------------------------------------------------
+  COMPILER PIPELINE ARCHITECTURE (.bv -> .pas -> .js)
+  -----------------------------------------------------------------------------
+  1. SFC Parsing & Tokenization (ParseBVFile, ParseScriptBlock):
+     Deconstructs .bv files into <template>, <script>, and <style> blocks.
+     Extracts Pascal state variables, props, methods, computed properties,
+     reactive watchers, dependency injection (provide/inject), and lifecycles.
 
-  Build with: fpc bv.pas
+  2. Pure Pascal AST Code Generation (Component Member & Unit Assemblers):
+     Transforms component sub-blocks into idiomatic Object Pascal units
+     (unit U<Name>; interface ... implementation ... end.) and generates the
+     application orchestrator (src/App.pas) and root entry point (main.pas).
 
-  
+  3. Compile-Time Template Verification (ValidateComponentTemplate):
+     Statically verifies template bindings (b-model, b-for, b-if, @click)
+     against declared Pascal symbols, providing Levenshtein typo suggestions.
 
-  Usage:
+  4. Transpilation & Bundling (Pas2JS Compiler & Asset Pipeline):
+     Orchestrates the bundled Pas2JS compiler to transpile generated Pascal units
+     into optimized JavaScript, injecting runtime CSS stylesheets, JS bundles,
+     cache busters (__CACHE_BUST__), and WebSocket live reload (HMR).
 
-    bv create <project-name>    - Scaffolds a new project structure
+  -----------------------------------------------------------------------------
+  ENTERPRISE SUBSYSTEMS INCLUDED IN THIS BINARY
+  -----------------------------------------------------------------------------
+  • Multiplatform Runtime Targets:
+    - Web SPA & Static Site Generator / Pre-rendering (bv run ssg)
+    - Hybrid Mobile via Capacitor & Android SDK (bv mobile)
+    - Native Desktop via Ultra-Lightweight WebUI Bridge (bv desktop)
+    - WebAssembly Acceleration Engine (bv wasm)
 
-    bv build                     - Full compilation cycle: .bv -> .pas -> .js
+  • Full-Stack Synopse mORMot 2 Enterprise Suite:
+    - Relational Master-Detail CRUD & Multi-Database ORM (bv mormot crud)
+    - Compile-Time Type-Safe RPC Proxies (bv mormot rpc)
+    - Enterprise JWT Authentication & Navigation Guards (bv mormot auth)
+    - Automated Swagger / OpenAPI 3.0 Documentation (bv mormot docs)
+    - Sub-20MB Production Docker Micro-Containers (bv mormot docker)
 
-    bv run dev                  - Real-time build with debug features
-
-    bv g c <ComponentName>      - Scaffolds a new .bv component (alias: bv new c)
-    bv g v <ViewName>           - Scaffolds a new .bv view (alias: bv new v)
-    bv g s <ServiceName>        - Scaffolds a new pure Pascal service unit (alias: bv new s)
-    bv g t <TestName>           - Scaffolds a test file (alias: bv new t)
-
-    bv clean                     - Purges the dist/ and generated/ folders
-
+  • Developer Cockpit & Tooling Ecosystem:
+    - Interactive REPL & Project Registry (bv project, ~/.blaisevue/projects.json)
+    - Decentralized Package Ecosystem & Registries (bv repo, bv lib)
+    - VS Code & Lazarus IDE Extension Suite (bv extension, bv lazarus)
+    - System Health & Dependency Diagnostics (bv doctor)
+    - Automated Git Framework Self-Updater (bv self-update, bv channel)
+  =============================================================================
 }
 
 {$mode objfpc}{$H+}
