@@ -750,6 +750,15 @@ procedure CmdLibSearch(const Query: string); forward;
 procedure CmdCreateLib(const LibName: string; const SelectedLicense: string); forward;
 procedure CmdLibPack(const TargetDir: string; SkipTests: Boolean); forward;
 { Displays all available Bootswatch and custom themes (bv theme list). }
+function LoadPackageJson(out JsonObj: TJSONObject): Boolean; forward;
+procedure SavePackageJson(JsonObj: TJSONObject); forward;
+function GetJsonString(Obj: TJSONObject; const PropName, DefaultVal: string): string; forward;
+procedure SetJsonString(Obj: TJSONObject; const PropName, Val: string); forward;
+function IsThemeLibraryInstalled: Boolean; forward;
+procedure GetAvailableThemesList(List: TStringList); forward;
+function GetProjectThemesConfig(out DefaultTheme: string; ConfiguredThemes: TStringList): Boolean; forward;
+function IsThemeCSSFile(const FilePath: string; out ThemeName: string): Boolean; forward;
+procedure CmdTheme(const SubCmd: string; const ThemeArg: string = ''); forward;
 procedure CmdThemeList; forward;
 procedure CmdThemeUse(const ThemeName: string); forward;
 procedure CmdDoc(const ServeMode: Boolean); forward;
@@ -4294,9 +4303,9 @@ procedure CmdBuild;
 
 var
   SR: TSearchRec;
-  BVFiles, UnitNames, CSSFiles: TStringList;
+  BVFiles, UnitNames, CSSFiles, ConfigThemes: TStringList;
   i: Integer;
-  FileName, UnitName, TagName, GenPath, DistPath, PublicPath, GeneratedCode, Pas2jsCmd, CSSTags, JSTags: string;
+  FileName, UnitName, TagName, GenPath, DistPath, PublicPath, GeneratedCode, Pas2jsCmd, CSSTags, JSTags, DefTheme: string;
   Parsed: TBVParsed;
   IsApp: Boolean;
   JSFiles: TStringList;
@@ -4314,7 +4323,9 @@ begin
   ForceDir(DistPath + 'js');
   BVFiles := TStringList.Create;
   UnitNames := TStringList.Create;
+  ConfigThemes := TStringList.Create;
   try
+    GetProjectThemesConfig(DefTheme, ConfigThemes);
 
     // Recursively scan .bv files in src/
 
@@ -4452,16 +4463,18 @@ begin
         for i := 0 to CSSFiles.Count - 1 do
         begin
            FileName := ExtractFileName(CSSFiles[i]);
+           if IsThemeCSSFile(CSSFiles[i], UnitName) then
+           begin
+             if (ConfigThemes.Count > 0) and (ConfigThemes.IndexOf(UnitName) < 0) then
+               Continue; // Skip unconfigured theme
+           end;
            try
-
              WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
-
            except
-
              WriteLn('  WARNING: Could not update ', FileName, ' (locked). Skipping.');
            end;
-
-           CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
+           if not IsThemeCSSFile(CSSFiles[i], UnitName) then
+             CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
         end;
       end;
 
@@ -4556,6 +4569,7 @@ begin
 
     BVFiles.Free;
     UnitNames.Free;
+    ConfigThemes.Free;
   end;
 end;
 
@@ -6188,42 +6202,113 @@ begin
   WriteLn('');
 end;
 
-{ Displays all available Bootswatch and custom themes (bv theme list). }
-procedure CmdThemeList;
+// =====================================================================
+//  ENTERPRISE THEME MANAGER & BUILD-TIME FILTERING SUITE (bv theme)
+// =====================================================================
 
+{ Checks whether the @blaise-themes package or themes folder is installed in the project. }
+function IsThemeLibraryInstalled: Boolean;
+begin
+  Result := DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes') or
+            DirectoryExists(GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-themes') or
+            DirectoryExists(GetPackagesPath + 'blaise-themes');
+end;
+
+{ Collects available Bootswatch and custom theme names from installed libraries or SDK packages. }
+procedure GetAvailableThemesList(List: TStringList);
 var
   SR: TSearchRec;
-  Path: string;
-  Count: Integer;
+  ScanPath: string;
 begin
-  Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes' + DirectorySeparator;
-  WriteLn('');
-  WriteLn('Available Themes in lib/themes/:');
-  WriteLn(StringOfChar('-', 40));
-  Count := 0;
-  if DirectoryExists(Path) and (FindFirst(Path + '*.min.css', faAnyFile, SR) = 0) then
+  List.Clear;
+  ScanPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes';
+  if not DirectoryExists(ScanPath) then
+    ScanPath := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-themes' + DirectorySeparator + 'themes';
+  if not DirectoryExists(ScanPath) then
+    ScanPath := GetPackagesPath + 'blaise-themes' + DirectorySeparator + 'themes';
+
+  if DirectoryExists(ScanPath) and (FindFirst(ScanPath + DirectorySeparator + '*.min.css', faAnyFile, SR) = 0) then
   begin
     repeat
-
-      WriteLn('  - ', StringReplace(SR.Name, '.min.css', '', [rfIgnoreCase]));
-      Inc(Count);
-
+      List.Add(LowerCase(StringReplace(SR.Name, '.min.css', '', [rfIgnoreCase])));
     until FindNext(SR) <> 0;
     FindClose(SR);
   end;
 
-  if Count = 0 then
+  if List.Count = 0 then
   begin
-    WriteLn('  (No themes installed in lib/themes/)');
-    WriteLn('  Run "bv lib install themes" to install the Bootswatch suite.');
+    List.Add('cosmo');
+    List.Add('cyborg');
+    List.Add('darkly');
+    List.Add('flatly');
+    List.Add('lux');
+    List.Add('pulse');
+    List.Add('solar');
+    List.Add('vapor');
+    List.Add('zephyr');
   end;
+end;
 
-  WriteLn(StringOfChar('-', 40));
+{ Reads the default theme and configured themes array from package.json. Returns True if "themes" is explicitly configured. }
+function GetProjectThemesConfig(out DefaultTheme: string; ConfiguredThemes: TStringList): Boolean;
+var
+  JsonObj: TJSONObject;
+  ThemesData, ThemeData: TJSONData;
+  ThemesArr: TJSONArray;
+  i: Integer;
+begin
+  Result := False;
+  DefaultTheme := 'flatly';
+  ConfiguredThemes.Clear;
+  if not LoadPackageJson(JsonObj) then Exit;
+  try
+    ThemeData := JsonObj.Find('theme');
+    if (ThemeData <> nil) and (ThemeData.JSONType = jtString) then
+      DefaultTheme := LowerCase(Trim(ThemeData.AsString));
+
+    ThemesData := JsonObj.Find('themes');
+    if (ThemesData <> nil) and (ThemesData is TJSONArray) then
+    begin
+      ThemesArr := TJSONArray(ThemesData);
+      for i := 0 to ThemesArr.Count - 1 do
+      begin
+        if ThemesArr.Items[i].JSONType = jtString then
+          ConfiguredThemes.Add(LowerCase(Trim(ThemesArr.Strings[i])));
+      end;
+      Result := True;
+    end;
+  finally
+    JsonObj.Free;
+  end;
+end;
+
+{ Identifies whether a CSS file path represents a Bootswatch theme stylesheet. }
+function IsThemeCSSFile(const FilePath: string; out ThemeName: string): Boolean;
+var
+  BaseName: string;
+begin
+  Result := False;
+  ThemeName := '';
+  BaseName := LowerCase(ExtractFileName(FilePath));
+  if EndsText('.min.css', BaseName) then
+  begin
+    ThemeName := Copy(BaseName, 1, Length(BaseName) - 8);
+    if (ThemeName = 'cosmo') or (ThemeName = 'cyborg') or (ThemeName = 'darkly') or
+       (ThemeName = 'flatly') or (ThemeName = 'lux') or (ThemeName = 'pulse') or
+       (ThemeName = 'solar') or (ThemeName = 'vapor') or (ThemeName = 'zephyr') or
+       (Pos('themes', LowerCase(FilePath)) > 0) then
+      Result := True;
+  end;
+end;
+
+{ Displays available Bootswatch and project-configured themes (bv theme list). }
+procedure CmdThemeList;
+begin
+  CmdTheme('list');
 end;
 
 { Applies a selected theme to index.html and project configuration (bv theme use). }
 procedure CmdThemeUse(const ThemeName: string);
-
 var
   IndexPath, Content, CleanName, NewLink: string;
   PStart, PEnd: Integer;
@@ -6233,16 +6318,10 @@ begin
   if not FileExists(IndexPath) then
     IndexPath := GetCurrentDir + DirectorySeparator + 'index.html';
 
-  if not FileExists(IndexPath) then
-  begin
-    WriteLn('Error: index.html not found.');
-    Exit;
-  end;
+  if not FileExists(IndexPath) then Exit;
 
   Content := ReadFileToString(IndexPath);
   NewLink := '<link id="bv-theme" rel="stylesheet" href="lib/themes/' + CleanName + '.min.css">';
-
-  // If <link id="bv-theme" already exists, replace it
 
   PStart := Pos('id="bv-theme"', Content);
   if PStart = 0 then
@@ -6256,7 +6335,6 @@ begin
     Delete(Content, PStart, PEnd - PStart + 1);
     Insert(NewLink, Content, PStart);
   end
-
   else
   begin
     PStart := Pos('</head>', Content);
@@ -6265,13 +6343,238 @@ begin
 
     if PStart > 0 then
       Insert('    ' + NewLink + #10, Content, PStart)
-
     else
       Content := Content + #10 + NewLink;
   end;
 
   WriteStringToFile(IndexPath, Content);
-  WriteLn('Theme successfully set to "', CleanName, '" in ', ExtractFileName(IndexPath));
+end;
+
+{ Central controller for project theme configuration, package.json persistence, and build optimization. }
+procedure CmdTheme(const SubCmd: string; const ThemeArg: string);
+var
+  CleanCmd, CleanTheme, DefaultTheme: string;
+  AvailThemes, ConfigThemes: TStringList;
+  JsonObj: TJSONObject;
+  ThemesArr: TJSONArray;
+  ThemesData: TJSONData;
+  i, FoundIdx: Integer;
+  HasConfig: Boolean;
+begin
+  CleanCmd := LowerCase(Trim(SubCmd));
+  CleanTheme := LowerCase(Trim(ThemeArg));
+
+  if not IsThemeLibraryInstalled then
+  begin
+    WriteLn('');
+    WriteLn('  [!] Error: @blaise-themes library is not installed in this project.');
+    WriteLn('      Run "bv lib install @blaise-themes" to install theme support.');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  AvailThemes := TStringList.Create;
+  ConfigThemes := TStringList.Create;
+  try
+    GetAvailableThemesList(AvailThemes);
+    HasConfig := GetProjectThemesConfig(DefaultTheme, ConfigThemes);
+
+    if (CleanCmd = '') or (CleanCmd = 'list') or (CleanCmd = 'status') or (CleanCmd = 'show') then
+    begin
+      WriteLn('');
+      WriteLn('======================================================================');
+      WriteLn('  BlaiseVue Theme Manager');
+      WriteLn('======================================================================');
+      WriteLn('  Active Default Theme: "', DefaultTheme, '"');
+      WriteLn('');
+      if HasConfig and (ConfigThemes.Count > 0) then
+      begin
+        WriteLn('  Configured Project Themes in package.json (Optimized build enabled):');
+        for i := 0 to ConfigThemes.Count - 1 do
+          WriteLn('    [v] ', ConfigThemes[i]);
+      end
+      else
+      begin
+        WriteLn('  Configured Project Themes:');
+        WriteLn('    [All supported - Full compatibility mode (all library themes bundled)]');
+      end;
+      WriteLn('');
+      WriteLn('  Available Catalog Themes in @blaise-themes:');
+      WriteLn('    ' + StringReplace(AvailThemes.CommaText, ',', ', ', [rfReplaceAll]));
+      WriteLn('');
+      WriteLn('  Commands:');
+      WriteLn('    bv theme add <name>     - Add theme to project bundle in package.json');
+      WriteLn('    bv theme remove <name>  - Remove theme from project bundle in package.json');
+      WriteLn('    bv theme use <name>     - Set active default theme and update index.html');
+      WriteLn('    bv theme reset          - Bundle all themes (default compatibility mode)');
+      WriteLn('======================================================================');
+      WriteLn('');
+    end
+    else if CleanCmd = 'add' then
+    begin
+      if CleanTheme = '' then
+      begin
+        WriteLn('Usage: bv theme add <theme-name>');
+        Halt(1);
+      end;
+      if AvailThemes.IndexOf(CleanTheme) < 0 then
+      begin
+        WriteLn('  [!] Error: Unknown theme "', CleanTheme, '".');
+        WriteLn('      Available themes: ' + StringReplace(AvailThemes.CommaText, ',', ', ', [rfReplaceAll]));
+        Halt(1);
+      end;
+
+      if not LoadPackageJson(JsonObj) then
+      begin
+        WriteLn('  [!] Error: Could not read package.json in current directory.');
+        Halt(1);
+      end;
+      try
+        ThemesData := JsonObj.Find('themes');
+        if (ThemesData = nil) or not (ThemesData is TJSONArray) then
+        begin
+          if ThemesData <> nil then JsonObj.Delete(JsonObj.IndexOfName('themes'));
+          ThemesArr := TJSONArray.Create;
+          JsonObj.Add('themes', ThemesArr);
+          if (DefaultTheme <> '') and (DefaultTheme <> CleanTheme) then
+            ThemesArr.Add(DefaultTheme);
+        end
+        else
+          ThemesArr := TJSONArray(ThemesData);
+
+        FoundIdx := -1;
+        for i := 0 to ThemesArr.Count - 1 do
+        begin
+          if LowerCase(ThemesArr.Strings[i]) = CleanTheme then
+          begin
+            FoundIdx := i;
+            Break;
+          end;
+        end;
+
+        if FoundIdx >= 0 then
+          WriteLn('  [*] Theme "', CleanTheme, '" is already configured in package.json.')
+        else
+        begin
+          ThemesArr.Add(CleanTheme);
+          SavePackageJson(JsonObj);
+          WriteLn('  [+] Added theme "', CleanTheme, '" to themes in package.json.');
+        end;
+      finally
+        JsonObj.Free;
+      end;
+    end
+    else if (CleanCmd = 'remove') or (CleanCmd = 'rm') or (CleanCmd = 'del') then
+    begin
+      if CleanTheme = '' then
+      begin
+        WriteLn('Usage: bv theme remove <theme-name>');
+        Halt(1);
+      end;
+      if not LoadPackageJson(JsonObj) then
+      begin
+        WriteLn('  [!] Error: Could not read package.json in current directory.');
+        Halt(1);
+      end;
+      try
+        ThemesData := JsonObj.Find('themes');
+        if (ThemesData = nil) or not (ThemesData is TJSONArray) then
+        begin
+          WriteLn('  [*] No themes array configured in package.json (all themes currently enabled).');
+          Exit;
+        end;
+        ThemesArr := TJSONArray(ThemesData);
+        FoundIdx := -1;
+        for i := 0 to ThemesArr.Count - 1 do
+        begin
+          if LowerCase(ThemesArr.Strings[i]) = CleanTheme then
+          begin
+            FoundIdx := i;
+            Break;
+          end;
+        end;
+        if FoundIdx >= 0 then
+        begin
+          ThemesArr.Delete(FoundIdx);
+          SavePackageJson(JsonObj);
+          WriteLn('  [-] Removed theme "', CleanTheme, '" from package.json.');
+        end
+        else
+          WriteLn('  [*] Theme "', CleanTheme, '" was not present in package.json.');
+      finally
+        JsonObj.Free;
+      end;
+    end
+    else if (CleanCmd = 'use') or (CleanCmd = 'set') then
+    begin
+      if CleanTheme = '' then
+      begin
+        WriteLn('Usage: bv theme use <theme-name>');
+        Halt(1);
+      end;
+      if AvailThemes.IndexOf(CleanTheme) < 0 then
+      begin
+        WriteLn('  [!] Error: Unknown theme "', CleanTheme, '".');
+        WriteLn('      Available themes: ' + StringReplace(AvailThemes.CommaText, ',', ', ', [rfReplaceAll]));
+        Halt(1);
+      end;
+      if not LoadPackageJson(JsonObj) then
+      begin
+        WriteLn('  [!] Error: Could not read package.json in current directory.');
+        Halt(1);
+      end;
+      try
+        SetJsonString(JsonObj, 'theme', CleanTheme);
+        ThemesData := JsonObj.Find('themes');
+        if (ThemesData <> nil) and (ThemesData is TJSONArray) then
+        begin
+          ThemesArr := TJSONArray(ThemesData);
+          FoundIdx := -1;
+          for i := 0 to ThemesArr.Count - 1 do
+          begin
+            if LowerCase(ThemesArr.Strings[i]) = CleanTheme then
+            begin
+              FoundIdx := i;
+              Break;
+            end;
+          end;
+          if FoundIdx < 0 then
+            ThemesArr.Add(CleanTheme);
+        end;
+        SavePackageJson(JsonObj);
+        WriteLn('  [*] Set default theme to "', CleanTheme, '" in package.json.');
+      finally
+        JsonObj.Free;
+      end;
+      CmdThemeUse(CleanTheme);
+    end
+    else if CleanCmd = 'reset' then
+    begin
+      if not LoadPackageJson(JsonObj) then
+      begin
+        WriteLn('  [!] Error: Could not read package.json in current directory.');
+        Halt(1);
+      end;
+      try
+        FoundIdx := JsonObj.IndexOfName('themes');
+        if FoundIdx >= 0 then JsonObj.Delete(FoundIdx);
+        SavePackageJson(JsonObj);
+        WriteLn('  [!] Theme configuration reset in package.json.');
+        WriteLn('      All library themes will be bundled on build (compatibility mode).');
+      finally
+        JsonObj.Free;
+      end;
+    end
+    else
+    begin
+      WriteLn('Unknown theme command: ', CleanCmd);
+      WriteLn('Usage: bv theme <list|add <name>|remove <name>|use <name>|reset>');
+      Halt(1);
+    end;
+  finally
+    AvailThemes.Free;
+    ConfigThemes.Free;
+  end;
 end;
 
 { Discovers all CSS stylesheet assets in installed packages for injection into index.html. }
@@ -8866,8 +9169,8 @@ procedure CmdRunBuild;
 var
   GenPath, DistPath, PublicPath: string;
   Hash, IndexHTML: string;
-  JSFiles, CSSFiles: TStringList;
-  JSTags, CSSTags, FileName: string;
+  JSFiles, CSSFiles, ConfigThemes: TStringList;
+  JSTags, CSSTags, FileName, DefTheme, ThemeId: string;
   i: Integer;
 begin
   WriteLn('=== BlaiseVue Professional Build (ProductionMode) ===');
@@ -8928,20 +9231,32 @@ begin
 
     CSSFiles := TStringList.Create;
     ScanDirForCSS(GetCurrentDir + DirectorySeparator + 'lib', CSSFiles);
-    if CSSFiles.Count > 0 then
-    begin
-      CSSTags := '';
-      ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
-      for i := 0 to CSSFiles.Count - 1 do
+    ConfigThemes := TStringList.Create;
+    try
+      GetProjectThemesConfig(DefTheme, ConfigThemes);
+      if CSSFiles.Count > 0 then
       begin
-         FileName := ExtractFileName(CSSFiles[i]);
-         WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
-         CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '">' + #10;
-      end;
+        CSSTags := '';
+        ForceDir(DistPath + 'css' + DirectorySeparator + 'lib');
+        for i := 0 to CSSFiles.Count - 1 do
+        begin
+           FileName := ExtractFileName(CSSFiles[i]);
+           if IsThemeCSSFile(CSSFiles[i], ThemeId) then
+           begin
+             if (ConfigThemes.Count > 0) and (ConfigThemes.IndexOf(ThemeId) < 0) then
+               Continue;
+           end;
+           WriteStringToFile(DistPath + 'css' + DirectorySeparator + 'lib' + DirectorySeparator + FileName, ReadFileToString(CSSFiles[i]));
+           if not IsThemeCSSFile(CSSFiles[i], ThemeId) then
+             CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '">' + #10;
+        end;
 
-      CSSFiles.Free;
-      if CSSTags <> '' then
-        IndexHTML := StringReplace(IndexHTML, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
+        CSSFiles.Free;
+        if CSSTags <> '' then
+          IndexHTML := StringReplace(IndexHTML, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
+      end;
+    finally
+      ConfigThemes.Free;
     end;
 
     // Inject package JS scripts (Production mode)
@@ -22997,8 +23312,11 @@ begin
     WriteLn('  bv lib list [--global|-g]  Lists installed libraries');
     WriteLn('  bv lib search [[<repo>:]term] Searches packages in registered repositories');
     WriteLn('  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)');
-    WriteLn('  bv theme list              Lists all available installed themes');
-    WriteLn('  bv theme use <name>        Sets default project theme in index.html (e.g. darkly, lux)');
+    WriteLn('  bv theme [list]            Displays active and available themes in @blaise-themes');
+    WriteLn('  bv theme add <name>        Adds a theme to package.json for optimized bundling');
+    WriteLn('  bv theme remove <name>     Removes a theme from package.json');
+    WriteLn('  bv theme use <name>        Sets active default theme in package.json & index.html');
+    WriteLn('  bv theme reset             Resets theme filters (bundles all themes in compatibility mode)');
     WriteLn('  bv extension <list|install|remove|pack> [target] Manages development extensions & tools');
     WriteLn('');
     WriteLn('  # === Project Metadata & Licensing ===');
@@ -23331,28 +23649,12 @@ begin
     end;
     CmdLibInstall(PkgNameArg, IsGlobalArg);
   end
-  else if Cmd = 'theme' then
+  else if (Cmd = 'theme') or (Cmd = 'themes') then
   begin
     if ParamCount < 2 then
-    begin
-       WriteLn('Usage: bv theme <list|use <name>>');
-       Halt(1);
-    end;
-
-    Cmd := LowerCase(ParamStr(2));
-    if Cmd = 'list' then CmdThemeList
-
-    else if Cmd = 'use' then
-    begin
-       if ParamCount < 3 then begin WriteLn('Usage: bv theme use <name>'); Halt(1); end;
-       CmdThemeUse(ParamStr(3));
-    end
-
+      CmdTheme('list')
     else
-    begin
-       WriteLn('Unknown theme subcommand: ', Cmd);
-       Halt(1);
-    end;
+      CmdTheme(LowerCase(ParamStr(2)), ParamStr(3));
   end
 
   else if Cmd = 'run' then
