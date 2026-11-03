@@ -7124,6 +7124,26 @@ begin
 
   UnitContent :=
     'unit uAppVersion;' + #10#10 +
+    '{' + #10 +
+    '  =============================================================================' + #10 +
+    '  🛡️ BlaiseVue Application Metadata & Version Specification' + #10 +
+    '  =============================================================================' + #10 +
+    '  Auto-generated and synchronized by the BlaiseVue CLI (bv meta / bv license).' + #10 +
+    '  ' + #10 +
+    '  OVERVIEW:' + #10 +
+    '  This unit exposes compile-time application constants in pure Object Pascal,' + #10 +
+    '  providing strongly typed access to project metadata defined in package.json:' + #10 +
+    '  • APP_NAME:        Canonical application or library identifier.' + #10 +
+    '  • APP_VERSION:     Semantic Versioning string (SemVer 2.0).' + #10 +
+    '  • APP_AUTHOR:      Registered maintainer or author organization.' + #10 +
+    '  • APP_LICENSE:     SPDX license identifier (e.g. MIT, Apache-2.0, LGPL-3.0).' + #10 +
+    '  • APP_BUILD_DATE:  Build or synchronization timestamp (YYYY-MM-DD).' + #10 +
+    '  ' + #10 +
+    '  USAGE:' + #10 +
+    '  Import "uAppVersion" into any Pascal unit or .bv Single File Component to' + #10 +
+    '  display version numbers, footer credits, about dialogs, or telemetry tags.' + #10 +
+    '  =============================================================================' + #10 +
+    '}' + #10#10 +
     '{$mode objfpc}{$H+}' + #10#10 +
     'interface' + #10#10 +
     'const' + #10 +

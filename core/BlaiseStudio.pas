@@ -1,5 +1,33 @@
 unit BlaiseStudio;
 
+{
+  =============================================================================
+  🛡️ BlaiseVue Studio - Real-time Developer Cockpit & Telemetry Bridge
+  =============================================================================
+  Part of the BlaiseVue Universal Reactive Framework for Object Pascal.
+  Package: @blaise-studio / Core Telemetry Client
+  
+  OVERVIEW:
+  This unit provides a high-throughput WebSocket telemetry bridge connecting
+  running BlaiseVue client applications directly to the BlaiseVue Studio
+  cockpit and browser DevTools extension.
+
+  KEY RESPONSIBILITIES:
+  • Real-time Component State Inspection:
+    Captures and streams reactive component state mutations, props, and
+    lifecycle events to the Studio inspector.
+  • WebSocket Frame Tracking:
+    Observes and records bidirectional WebSocket messages exchanged with
+    mORMot 2 servers or custom backends.
+  • Structured Telemetry & Diagnostics:
+    Provides standardized logging (SendLog), event emission (SendEvent),
+    and status reporting without interfering with production UI performance.
+  • Resilient Dual-Mode Execution:
+    Operates transparently when connected to a live Studio server, or acts
+    as a zero-overhead no-op when running standalone in production.
+  =============================================================================
+}
+
 {$mode objfpc}
 
 interface
