@@ -3358,6 +3358,15 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
           bv.trigger(Data.FData, ""); // Initial trigger for all expressions
         };
     
+        // Writes only a real difference, so the echo of typing never moves the cursor.
+        // A number being typed, such as "12.0" for 12, stays as it is while the field has the focus.
+        bv.writeFieldValue = function(el, v) {
+           let text = (v === undefined || v === null) ? '' : String(v);
+           if (el.value === text) return;
+           if (typeof v === 'number' && document.activeElement === el && Number(el.value) === v) return;
+           el.value = text;
+        };
+    
         // Safely removes an element while triggering lifecycle hooks
         bv.unmount = function(el) {
            if (!el) return;
@@ -3902,13 +3911,17 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    // Component v-model (handled logic in step 9)
                 } else {
                    const isCheck = (el.type === 'checkbox');
+                   const isRadio = (el.type === 'radio');
+                   // A radio keeps its own value, and :value is applied only in step 9
+                   const radioBind = isRadio ? binds.find(function(b) { return b.name === 'value'; }) : null;
+                   const radioValue = function() { return radioBind ? Data.Evaluate(radioBind.expr) : el.value; };
                    if (isCheck) {
                      el.checked = Boolean(Data.Evaluate(vmodel));
-                   } else {
+                   } else if (!isRadio) {
                      el.value = Data.Evaluate(vmodel) || '';
                    }
                    const sync = function() {
-                     const val = isCheck ? this.checked : this.value;
+                     const val = isCheck ? this.checked : (isRadio ? radioValue() : this.value);
                      Data.SetValue(vmodel, val);
                    };
                    el.oninput = sync; el.onchange = sync; 
@@ -3925,8 +3938,10 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                      let v = Data.Evaluate(vmodel);
                      if (isCheck) {
                        if (el.checked !== Boolean(v)) el.checked = Boolean(v);
+                     } else if (isRadio) {
+                       el.checked = (v !== undefined && v !== null) && String(v) === String(radioValue());
                      } else {
-                       if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                       bv.writeFieldValue(el, v);
                      }
                    });
                 }
@@ -3968,7 +3983,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
                    bv.effect(function() {
                      let v = getNativeFieldVal();
-                     if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                     bv.writeFieldValue(el, v);
                    });
                 }
               }

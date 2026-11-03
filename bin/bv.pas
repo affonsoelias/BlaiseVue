@@ -4319,7 +4319,7 @@ var
   SR: TSearchRec;
   BVFiles, UnitNames, CSSFiles, ConfigThemes: TStringList;
   i: Integer;
-  FileName, UnitName, TagName, GenPath, DistPath, PublicPath, GeneratedCode, Pas2jsCmd, CSSTags, JSTags, DefTheme: string;
+  FileName, UnitName, TagName, GenPath, DistPath, PublicPath, GeneratedCode, Pas2jsCmd, CSSTags, JSTags, DefTheme, ThemeId, IndexHTML: string;
   Parsed: TBVParsed;
   IsApp: Boolean;
   JSFiles: TStringList;
@@ -4458,14 +4458,14 @@ begin
     WriteLn('');
     if FileExists(PublicPath + 'index.html') then
     begin
-      UnitName := ReadFileToString(PublicPath + 'index.html');
+      IndexHTML := ReadFileToString(PublicPath + 'index.html');
       TagName := IntToStr(DateTimeToUnix(Now));
 
       
 
       // Inject real cache buster into asset placeholders
 
-      UnitName := StringReplace(UnitName, '__CACHE_BUST__', TagName, [rfReplaceAll]);
+      IndexHTML := StringReplace(IndexHTML, '__CACHE_BUST__', TagName, [rfReplaceAll]);
 
       
 
@@ -4478,9 +4478,9 @@ begin
         for i := 0 to CSSFiles.Count - 1 do
         begin
            FileName := ExtractFileName(CSSFiles[i]);
-           if IsThemeCSSFile(CSSFiles[i], UnitName) then
+           if IsThemeCSSFile(CSSFiles[i], ThemeId) then
            begin
-             if (ConfigThemes.Count > 0) and (ConfigThemes.IndexOf(UnitName) < 0) then
+             if (ConfigThemes.Count > 0) and (ConfigThemes.IndexOf(ThemeId) < 0) then
                Continue; // Skip unconfigured theme
            end;
            try
@@ -4488,7 +4488,7 @@ begin
            except
              WriteLn('  WARNING: Could not update ', FileName, ' (locked). Skipping.');
            end;
-           if not IsThemeCSSFile(CSSFiles[i], UnitName) then
+           if not IsThemeCSSFile(CSSFiles[i], ThemeId) then
              CSSTags := CSSTags + '  <link rel="stylesheet" href="css/lib/' + FileName + '?v=' + TagName + '">' + #10;
         end;
       end;
@@ -4510,30 +4510,30 @@ begin
       // Inject library CSS at end of <head> and scripts before rtl.js
 
       if CSSTags <> '' then
-        UnitName := StringReplace(UnitName, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
+        IndexHTML := StringReplace(IndexHTML, '</head>', CSSTags + '</head>', [rfIgnoreCase]);
 
       if JSTags <> '' then
       begin
         // Inject library JS before framework runtime to ensure availability
 
-        if Pos('js/rtl.js', UnitName) > 0 then
-          UnitName := StringReplace(UnitName, '<script src="js/rtl.js', JSTags + '    <script src="js/rtl.js', [rfIgnoreCase])
+        if Pos('js/rtl.js', IndexHTML) > 0 then
+          IndexHTML := StringReplace(IndexHTML, '<script src="js/rtl.js', JSTags + '    <script src="js/rtl.js', [rfIgnoreCase])
 
         else
-          UnitName := StringReplace(UnitName, '</head>', JSTags + '</head>', [rfIgnoreCase]);
+          IndexHTML := StringReplace(IndexHTML, '</head>', JSTags + '</head>', [rfIgnoreCase]);
       end;
 
       
 
       // Fallback: if user did not include __CACHE_BUST__, inject v= into main.js
 
-      if Pos('main.js?v=', UnitName) = 0 then
-        UnitName := StringReplace(UnitName, 'main.js', 'main.js?v=' + TagName, [rfReplaceAll]);
+      if Pos('main.js?v=', IndexHTML) = 0 then
+        IndexHTML := StringReplace(IndexHTML, 'main.js', 'main.js?v=' + TagName, [rfReplaceAll]);
 
-      if Pos('rtl.js?v=', UnitName) = 0 then
-        UnitName := StringReplace(UnitName, 'rtl.js', 'rtl.js?v=' + TagName, [rfReplaceAll]);
+      if Pos('rtl.js?v=', IndexHTML) = 0 then
+        IndexHTML := StringReplace(IndexHTML, 'rtl.js', 'rtl.js?v=' + TagName, [rfReplaceAll]);
 
-      WriteStringToFile(DistPath + 'index.html', UnitName);
+      WriteStringToFile(DistPath + 'index.html', IndexHTML);
       WriteLn('  index.html -> dist/ (cache bust v=' + TagName + ')');
     end;
 
