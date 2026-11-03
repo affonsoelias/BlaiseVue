@@ -21,12 +21,13 @@ implementation
 procedure InitDevTools;
 begin
   asm
-    console.log("%c BlaiseVue DevTools 3.0 ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "v3.0-enterprise");
+    let ver = (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? ('v' + pas.uAppVersion.APP_VERSION) : 'v4.4.0';
+    console.log("%c BlaiseVue DevTools " + ver + " ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", ver + "-enterprise");
 
     // Initialize global DevTools Hook for browser extensions and external inspectors
     if (!window.__BV_DEVTOOLS_HOOK__) {
       window.__BV_DEVTOOLS_HOOK__ = {
-        version: "3.0.0",
+        version: (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? pas.uAppVersion.APP_VERSION : "4.4.0",
         listeners: {},
         events: [],
         snapshots: [],
@@ -163,7 +164,7 @@ begin
            <i class="bv-dt-live-blob"></i>
          </div>
          <div class="bv-dt-header-actions">
-           <span class="bv-dt-tag">v3.0</span>
+           <span class="bv-dt-tag">` + ver + `</span>
            <button class="bv-dt-collapse-btn" id="bv-dt-btn" title="Minimizar">—</button>
          </div>
        </div>
