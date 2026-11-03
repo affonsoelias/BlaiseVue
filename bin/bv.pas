@@ -4141,6 +4141,19 @@ end;
 
 // =====================================================================
 
+{ src/ is not on the pas2js path, so without this copy the version of the framework is used }
+procedure SyncProjectVersionUnit(const GenPath: string);
+var
+  SrcUnit: string;
+begin
+  SrcUnit := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'uAppVersion.pas';
+  ForceDir(GenPath);
+  if FileExists(SrcUnit) then
+    WriteStringToFile(GenPath + 'uAppVersion.pas', ReadFileToString(SrcUnit))
+  else if FileExists(GenPath + 'uAppVersion.pas') then
+    DeleteFile(GenPath + 'uAppVersion.pas');
+end;
+
 procedure CmdTranspile;
 
 var
@@ -4154,6 +4167,7 @@ var
   IsApp: Boolean;
 begin
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator;
+  SyncProjectVersionUnit(GenPath);
   if not DirectoryExists(GetCurrentDir + DirectorySeparator + 'src') then
   begin
     Exit;
@@ -4309,6 +4323,7 @@ begin
     WriteLn('ERROR: "src/" folder not found. Are you in a BlaiseVue project root?');
     Halt(1);
   end;
+  SyncProjectVersionUnit(GenPath);
 
   ForceDir(GenPath);
   ForceDir(DistPath + 'js');
