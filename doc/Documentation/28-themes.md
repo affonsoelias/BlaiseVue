@@ -48,20 +48,65 @@ This command installs 9 popular Bootswatch themes into your project's `lib/theme
 
 ---
 
-## 3. Switching Themes via CLI (`bv theme`)
+## 3. Managing and Optimizing Themes via CLI (`bv theme`)
 
-You can inspect and set the default initial theme directly from your terminal:
+BlaiseVue features an enterprise-grade theme management and build-time optimization subsystem. You can inspect themes, configure production bundle whitelisting in `package.json`, and set the active default theme directly from your terminal.
+
+> [!IMPORTANT]
+> The theme commands require the official theme package `@blaise-themes`. If it is not yet installed in your project, install it first via:
+> ```bash
+> bv lib install @blaise-themes
+> ```
+> If `@blaise-themes` is missing, `bv theme` commands will halt gracefully with an explicit error and guidance.
+
+### 3.1. CLI Commands
 
 ```bash
-# List all installed themes in your project
+# Display active configuration, current default theme, and available catalog themes
 bv theme list
+# (or simply: bv theme)
 
-# Switch the default theme in public/index.html
+# Whitelist themes for production build-time tree-shaking (stored in package.json)
+bv theme add darkly
+bv theme add flatly
+
+# Remove a theme from the production bundle whitelist
+bv theme remove flatly
+
+# Set active default theme (persisted in package.json and synchronized in public/index.html)
 bv theme use darkly
-bv theme use flatly
+
+# Reset theme filtering to default compatibility mode (all themes will be bundled)
+bv theme reset
 ```
 
-The CLI automatically detects your `index.html` and creates or updates `<link id="bv-theme" rel="stylesheet" href="lib/themes/<name>.min.css">`.
+### 3.2. Project Configuration (`package.json`)
+
+Theme preferences and bundling filters are automatically persisted in your project's `package.json`:
+
+```json
+{
+  "name": "my-blaisevue-app",
+  "version": "1.0.0",
+  "theme": "darkly",
+  "themes": [
+    "darkly",
+    "flatly"
+  ]
+}
+```
+
+- **`theme`**: Defines the default initial theme rendered in `public/index.html` (`<link id="bv-theme" rel="stylesheet" href="lib/themes/darkly.min.css">`).
+- **`themes`**: Whitelist array of themes to include during production build (`bv build`).
+
+### 3.3. Build-Time Tree-Shaking & Bundle Optimization
+
+By default, without a `"themes"` whitelist in `package.json`, BlaiseVue operates in **backward-compatibility mode**, bundling all available catalog themes (~2.0 MB total).
+
+When you configure explicit themes with `bv theme add`:
+- **~80% - 90% Payload Reduction**: A project needing only `darkly` and `flatly` bundles only ~440 KB of CSS instead of ~2.0 MB.
+- **Single-Theme Projects**: If you only use one theme, production dist contains only ~220 KB of theme CSS.
+- **Automated Verification**: `bv build` reads `package.json`, copies only the whitelisted `.min.css` files to `dist/lib/themes/`, and logs the optimized asset count.
 
 ---
 

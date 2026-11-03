@@ -297,9 +297,13 @@ bv lib remove test
 bv lib remove test --global
 ```
 
-- **Theme Switcher CLI (`bv theme`)**:
-  - `bv theme list`: Lists all installed Bootswatch themes in `lib/themes/`.
-  - `bv theme use <name>`: Updates the active project stylesheet link in `public/index.html` (e.g. `bv theme use darkly`).
+- **Enterprise Theme Manager & Build-Time Optimizer (`bv theme`)**:
+  - `bv theme [list]`: Displays active project themes configured in `package.json`, the current default theme, and all catalog themes provided by `@blaise-themes`.
+  - `bv theme add <name>`: Registers a theme into the `"themes"` array in `package.json`. When building (`bv build`), only configured themes are bundled, reducing CSS payload by ~90% (from ~2.0 MB down to ~220 KB per theme).
+  - `bv theme remove <name>`: Removes a theme from the `"themes"` whitelist in `package.json`.
+  - `bv theme use <name>`: Sets the default active theme in `package.json` (`"theme": "<name>"`) and synchronizes `<link id="bv-theme" rel="stylesheet" href="lib/themes/<name>.min.css">` in `public/index.html`.
+  - `bv theme reset`: Resets theme filtering in `package.json` to compatibility mode, causing `bv build` to bundle all available themes.
+  - *Safety Guard*: Requires `@blaise-themes` (installed via `bv lib install @blaise-themes`). If missing, provides immediate installation guidance.
 - **Auto-Autoload**: Any `.bv` files within `lib/` (or subdirectories) are automatically registered as global components.
 - **Auto-Asset Injection**: Non-theme `.css` and `.js` files found in `lib/` are automatically injected into `dist/index.html`.
 - **Interactive Library Setup (`bv s <name>`)**: Triggers an interactive installation and configuration menu for modular libraries following the **[setup.pas standard](18-external-libraries.md)**.

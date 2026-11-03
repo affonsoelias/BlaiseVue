@@ -83,18 +83,23 @@ bv extension install blaise-vscode
 bv extension install blaise-devtools
 ```
 
-### Ready-to-Use UI Themes (Bootswatch)
-Tired of styling everything from scratch? BlaiseVue comes with professional themes ready to use:
+### Ready-to-Use UI Themes & Bundle Optimization (Bootswatch)
+Tired of styling everything from scratch? BlaiseVue includes an enterprise theme system with built-in bundle optimization:
 ```bash
-# List all installed themes (darkly, flatly, cosmo, pulse, etc.):
+# List configured and available themes (darkly, flatly, cosmo, pulse, etc.):
 bv theme list
 
 # Switch to a modern dark theme with 1 command:
 bv theme use darkly
 
+# Optimize your production build: include only the themes you actually use!
+bv theme add darkly
+bv theme add flatly
+
 # Switch back to a clean corporate light theme:
 bv theme use flatly
 ```
+When you run `bv build`, only the themes registered with `bv theme add` are bundled into `dist/`, slashing up to 90% of unused CSS from your final production release!
 
 ---
 
@@ -103,7 +108,7 @@ bv theme use flatly
 1. Open your terminal in the BlaiseVue directory.
 2. Run `bv doctor` and verify all green `[v]` status indicators.
 3. Run `bv extension list` to inspect your tool packages.
-4. Try switching your theme with `bv theme use darkly`, save, and inspect your browser to see a dark mode interface instantly!
+4. Try switching your theme with `bv theme use darkly`, add it with `bv theme add darkly`, and inspect how easy it is to keep production builds lean!
 
 ---
 
@@ -112,6 +117,6 @@ bv theme use flatly
 - How to start live dev mode with `bv dev`.
 - How `bv doctor` maintains environment reliability.
 - How to build production bundles with `bv build`.
-- How to switch application-wide themes with `bv theme use`.
+- How to manage and optimize application themes with `bv theme` (`list`, `add`, `use`).
 
 **Ready to level up to senior architectural concepts? Advance to [Module 11: Pro Architectural Features](11-pro-features.md)!** ⚔️🛡️✨

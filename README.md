@@ -123,8 +123,11 @@ bv lib outdated [--global] # Checks for available updates in installed packages
 bv lib list [--global]     # Lists installed libraries (project /lib or user global cache)
 bv lib search [[<repo>:]term] # Searches packages in registered repositories
 bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
-bv theme list              # Lists all available installed themes
-bv theme use <name>        # Sets default project theme in index.html (e.g. darkly, lux)
+bv theme [list]            # Displays active configuration and available themes in @blaise-themes
+bv theme add <name>        # Adds theme to package.json for optimized tree-shaken bundling
+bv theme remove <name>     # Removes theme from package.json
+bv theme use <name>        # Sets active default theme in package.json & index.html
+bv theme reset             # Resets theme filters (bundles all themes in compatibility mode)
 
 # === Extensions & Developer Tools ===
 bv extension list          # Lists installed and available extensions (VS Code, DevTools, custom)
