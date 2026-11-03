@@ -42,6 +42,38 @@ Think of a **picture frame**: the frame provides the borders, styling, and glass
 </card-frame>
 ```
 
+### 💡 The App Shell (Layout) Pattern
+Have you ever wondered how to avoid copying and pasting your navigation bar, sidebar, and footer into every single page of your application? 
+
+You don't need a separate, heavy layout library! In BlaiseVue, **a layout is simply a component with a `<slot>`**:
+
+1. **Create your shell (`src/layouts/MainLayout.bv` or `src/components/MainLayout.bv`)**:
+   ```html
+   <template>
+     <div class="main-layout">
+       <nav class="navbar bg-primary text-white p-3 shadow-sm">
+         <h4>🛡️ My Enterprise App</h4>
+       </nav>
+       <div class="content-container p-4">
+         <slot></slot> <!-- The active page will appear here! -->
+       </div>
+       <footer class="footer text-center p-3 text-muted border-top">
+         &copy; 2026 BlaiseVue Enterprise
+       </footer>
+     </div>
+   </template>
+   ```
+
+2. **Reuse it across any page (`src/views/Home.bv`)**:
+   ```html
+   <template>
+     <main-layout>
+       <h1>Welcome to Home Page!</h1>
+       <p>Look how clean this view is — no duplicated navigation bars or footers!</p>
+     </main-layout>
+   </template>
+   ```
+
 ---
 
 ## 🧠 2. Shared Global State ($store / B-Store)

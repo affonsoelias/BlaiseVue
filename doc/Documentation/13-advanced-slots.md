@@ -131,6 +131,129 @@ In [`core/BVCompiler.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/BVCo
 
 ---
 
+## 🏛️ 3. Architectural Pattern: Building Reusable Page Layouts (App Shells)
+
+A common design requirement in real-world web applications is **Layout Organization**:
+- **Administrative Pages**: Require a persistent top navigation bar, collapsible sidebar menu, breadcrumbs, and user avatar.
+- **Authentication Pages (Login/Register)**: Require a minimalist, centered card on a clean background without navigation bars.
+- **Printing / Export Views**: Require an unadorned blank layout with no menus.
+
+Instead of introducing complex, opinionated meta-libraries or rigid magic conventions, BlaiseVue follows the fundamental Vue architecture: **"Layouts are simply components with slots"**.
+
+This guarantees:
+1. **Zero Runtime Overhead**: No extra layers, meta-resolvers, or hidden dependencies.
+2. **Total Design Freedom**: You control 100% of the HTML, CSS positioning (Flexbox, CSS Grid), and Pascal state.
+3. **100% Backward Compatibility**: Existing projects and single-page apps continue functioning with zero changes.
+
+---
+
+### 3.1. Creating a Master Layout Component (`src/layouts/AppLayout.bv`)
+
+Create an app shell component with your topbar, sidebar, and a default `<slot></slot>` where the page content will be projected:
+
+```html
+<!-- src/layouts/AppLayout.bv -->
+<template>
+  <div class="app-layout">
+    <!-- Top Navigation Header -->
+    <header class="app-header navbar navbar-dark bg-dark px-3">
+      <span class="navbar-brand">🛡️ Enterprise Dashboard</span>
+      <div class="user-profile text-white">
+        <span>Logged as: <strong>{{ userName }}</strong></span>
+      </div>
+    </header>
+
+    <div class="app-body d-flex">
+      <!-- Persistent Sidebar Navigation -->
+      <aside class="app-sidebar bg-light p-3 border-end" style="width: 240px; min-height: calc(100vh - 56px);">
+        <nav class="nav flex-column gap-2">
+          <router-link to="/" class="nav-link">📊 Dashboard</router-link>
+          <router-link to="/users" class="nav-link">👥 User Management</router-link>
+          <router-link to="/settings" class="nav-link">⚙️ Settings</router-link>
+        </nav>
+      </aside>
+
+      <!-- Main Content Injection Point (The Page Slot) -->
+      <main class="app-content flex-grow-1 p-4">
+        <slot></slot>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+unit uAppLayout;
+interface
+uses JS, Web;
+
+var
+  userName: string = 'Admin User';
+end.
+</script>
+```
+
+---
+
+### 3.2. Consuming the Layout in a Route View (`src/views/DashboardView.bv`)
+
+In your page views, simply wrap your page content inside `<app-layout>`:
+
+```html
+<!-- src/views/DashboardView.bv -->
+<template>
+  <app-layout>
+    <div class="dashboard-page">
+      <h2>System Overview</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm">
+            <h5>Total Sales</h5>
+            <p class="display-6 text-primary">$124,500</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card p-3 shadow-sm">
+            <h5>Active Users</h5>
+            <p class="display-6 text-success">1,420</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-layout>
+</template>
+```
+
+---
+
+### 3.3. Multi-Layout Architecture (Switching Shells)
+
+When your application requires different shells (such as `AuthLayout.bv` for login and `AppLayout.bv` for internal views), create each shell in `src/layouts/`:
+
+```html
+<!-- src/layouts/AuthLayout.bv -->
+<template>
+  <div class="auth-layout min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="auth-container" style="max-width: 420px; width: 100%;">
+      <slot></slot>
+    </div>
+  </div>
+</template>
+```
+
+In `src/views/LoginView.bv`:
+```html
+<template>
+  <auth-layout>
+    <div class="card shadow p-4">
+      <h3 class="text-center mb-3">Sign In</h3>
+      <!-- Login form here -->
+    </div>
+  </auth-layout>
+</template>
+```
+
+---
+
 ## 📋 Syntax Cheat Sheet
 
 | Syntax | Supported | Notes |

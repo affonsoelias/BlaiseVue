@@ -14,6 +14,9 @@ my-app/
 │   ├── components/        # Reusable visual components (.bv)
 │   │   ├── Counter.bv
 │   │   └── InfoCard.bv
+│   ├── layouts/           # Master Layouts & App Shells (.bv) [Recommended Pattern]
+│   │   ├── AppLayout.bv   # Sidebar + Navbar shell with <slot />
+│   │   └── AuthLayout.bv  # Centered card shell for login/register
 │   ├── views/             # Full route pages (.bv, mapped to -page tags)
 │   │   ├── Home.bv
 │   │   └── About.bv
@@ -61,6 +64,7 @@ my-app/
 
 - **`app.bv`**: Root component. Declares global layouts, navigation bars, application state, and SPA route definitions.
 - **`components/`**: Modular, reusable UI components (e.g., buttons, cards, modals, headers). Automatically given natural kebab-case HTML tags (e.g., `<product-card>`).
+- **`layouts/`** *(Optional, Highly Recommended)*: Master page shells and layout templates (e.g. `AppLayout.bv`, `AuthLayout.bv`). Eliminates code duplication by encapsulating navigation bars, sidebars, headers, and footers in components using standard `<slot></slot>`.
 - **`views/`**: Top-level page views connected to the router. Each view generates an internal `<view-name-page>` tag.
 - **`services/`**: Pure Object Pascal units (`.pas`) containing calculation engines, validators, domain models, formatters, and mORMot 2 client proxies. Configured out-of-the-box in `app.cfg` via `-Fusrc/services`.
 
