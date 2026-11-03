@@ -612,6 +612,15 @@ initialization
       bv.trigger(Data.FData, ""); // Initial trigger for all expressions
     };
 
+    // Writes only a real difference, so the echo of typing never moves the cursor.
+    // A number being typed, such as "12.0" for 12, stays as it is while the field has the focus.
+    bv.writeFieldValue = function(el, v) {
+       let text = (v === undefined || v === null) ? '' : String(v);
+       if (el.value === text) return;
+       if (typeof v === 'number' && document.activeElement === el && Number(el.value) === v) return;
+       el.value = text;
+    };
+
     // Safely removes an element while triggering lifecycle hooks
     bv.unmount = function(el) {
        if (!el) return;
@@ -1186,8 +1195,7 @@ initialization
                  } else if (isRadio) {
                    el.checked = (v !== undefined && v !== null) && String(v) === String(radioValue());
                  } else {
-                   // The focus guard protects typing, and a select keeps the focus after a choice
-                   if ((tagName === 'select' || document.activeElement !== el) && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                   bv.writeFieldValue(el, v);
                  }
                });
             }
@@ -1229,7 +1237,7 @@ initialization
 
                bv.effect(function() {
                  let v = getNativeFieldVal();
-                 if (document.activeElement !== el && el.value !== v) el.value = (v === undefined || v === null) ? '' : v;
+                 bv.writeFieldValue(el, v);
                });
             }
           }

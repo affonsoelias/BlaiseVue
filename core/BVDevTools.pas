@@ -237,5 +237,7 @@ end;
 
 initialization
   { Automatical initialization if the module is included in the project }
+  {$IFNDEF PRODUCTION}
   InitDevTools;
+  {$ENDIF}
 end.
