@@ -254,12 +254,14 @@ bv lib install myrepo:my-widget
 # Install directly into user global cache (~/.blaisevue/packages/):
 bv lib install test --global # (or alias: -g)
 
-# Install official core packages:
-bv lib install ui        # Installs complete BlaiseUI suite into lib/blaise-ui/
-bv lib install themes    # Installs Bootswatch themes into lib/themes/
-bv lib install icons     # Installs Bootstrap Icons fonts & CSS into lib/icons/
-bv lib install charts    # Installs Chart.js suite into lib/blaise-charts/
-bv lib install reports   # Installs BlaiseReports PDF generator into lib/blaise-reports/
+# Install official core packages (supports short aliases, full names, or @blaise-* namespaces):
+bv lib install themes    # (or: blaise-themes, @blaise-themes) -> lib/themes/
+bv lib install ui        # (or: blaise-ui, @blaise-ui)         -> lib/blaise-ui/
+bv lib install icons     # (or: blaise-icons, @blaise-icons)   -> lib/icons/
+bv lib install charts    # (or: blaise-charts, @blaise-charts) -> lib/blaise-charts/
+bv lib install reports   # (or: blaise-reports, @blaise-reports) -> lib/blaise-reports/
+bv lib install mobile    # (or: blaise-ui-mobile, @blaise-ui-mobile) -> lib/blaise-ui-mobile/
+bv lib install studio    # (or: blaise-studio, @blaise-studio) -> lib/blaise-studio/
 
 # Install from arbitrary URL or local .zip archive:
 bv lib install https://example.com/vendor-package.zip

@@ -26,11 +26,28 @@ Themes in BlaiseVue are built on top of standard Bootstrap 5 stylesheets from Bo
 
 ## 2. Installing Themes via CLI
 
-To install the official themes suite into your BlaiseVue project, run:
+To install the official themes suite into your BlaiseVue project, you can use either the convenient short alias, the full package name, or the scoped namespace:
 
 ```bash
+# Convenient short alias:
 bv lib install themes
+
+# Full package name:
+bv lib install blaise-themes
+
+# Scoped canonical package name:
+bv lib install @blaise-themes
 ```
+
+> [!TIP]
+> All three commands perform the exact same installation! BlaiseVue provides short aliases for everyday developer ergonomics, but fully recognizes the full `blaise-*` and `@blaise-*` namespace formats. This flexible alias system works consistently across all official core packages:
+> - **Themes**: `bv lib install themes` / `blaise-themes` / `@blaise-themes`
+> - **UI Kit**: `bv lib install ui` / `blaise-ui` / `@blaise-ui`
+> - **Icons**: `bv lib install icons` / `blaise-icons` / `@blaise-icons`
+> - **Charts**: `bv lib install charts` / `blaise-charts` / `@blaise-charts`
+> - **Reports**: `bv lib install reports` / `blaise-reports` / `@blaise-reports`
+> - **Mobile**: `bv lib install mobile` / `blaise-ui-mobile` / `@blaise-ui-mobile`
+> - **Studio**: `bv lib install studio` / `blaise-studio` / `@blaise-studio`
 
 This command installs 9 popular Bootswatch themes into your project's `lib/themes/` directory:
 

@@ -107,12 +107,14 @@ bv lib install internal-corp:my-pkg
 bv lib install test --global  # (or alias: -g)
 
 # 4. Install official core framework packages:
-bv lib install ui        # Installs complete BlaiseUI suite into lib/blaise-ui/
-bv lib install themes    # Installs Bootswatch themes into lib/themes/
-bv lib install icons     # Installs Bootstrap Icons fonts & CSS into lib/icons/
-bv lib install charts    # Installs Chart.js data visualization into lib/blaise-charts/
-bv lib install reports   # Installs BlaiseReports PDF generator into lib/blaise-reports/
-bv lib install studio    # Installs BlaiseStudio developer cockpit into lib/blaise-studio/
+# Supports short aliases (themes), full names (blaise-themes), or scoped names (@blaise-themes):
+bv lib install themes    # (or: blaise-themes, @blaise-themes) -> lib/themes/
+bv lib install ui        # (or: blaise-ui, @blaise-ui)         -> lib/blaise-ui/
+bv lib install icons     # (or: blaise-icons, @blaise-icons)   -> lib/icons/
+bv lib install charts    # (or: blaise-charts, @blaise-charts) -> lib/blaise-charts/
+bv lib install reports   # (or: blaise-reports, @blaise-reports) -> lib/blaise-reports/
+bv lib install mobile    # (or: blaise-ui-mobile, @blaise-ui-mobile) -> lib/blaise-ui-mobile/
+bv lib install studio    # (or: blaise-studio, @blaise-studio) -> lib/blaise-studio/
 
 # 5. Install from arbitrary URL or local archive:
 bv lib install https://vendor.com/assets/my-library.zip

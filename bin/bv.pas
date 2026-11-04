@@ -4933,6 +4933,7 @@ var
   L: string;
 begin
   L := LowerCase(Trim(Name));
+  if StartsText('@', L) then L := Copy(L, 2, Length(L) - 1);
   if (L = 'themes') or (L = 'blaise-themes') then Result := GetPackagesPath + 'blaise-themes'
   else if (L = 'icons') or (L = 'blaise-icons') then Result := GetPackagesPath + 'blaise-icons'
   else if (L = 'ui') or (L = 'blaise-ui') then Result := GetPackagesPath + 'blaise-ui'
@@ -5053,6 +5054,7 @@ var
   L: string;
 begin
   L := LowerCase(Trim(Name));
+  if StartsText('@', L) then L := Copy(L, 2, Length(L) - 1);
   Result := (L = 'themes') or (L = 'blaise-themes') or
             (L = 'icons') or (L = 'blaise-icons') or
             (L = 'ui') or (L = 'blaise-ui') or
@@ -5519,6 +5521,8 @@ var
   CanonicalName: string;
 begin
   CanonicalName := LowerCase(Trim(LibName));
+  if StartsText('@', CanonicalName) then
+    CanonicalName := Copy(CanonicalName, 2, Length(CanonicalName) - 1);
   CorePath := GetPackagesPath + CanonicalName;
   if DirectoryExists(CorePath) or 
      (CanonicalName = 'themes') or (CanonicalName = 'icons') or 
@@ -5549,7 +5553,12 @@ begin
     if not DirectoryExists(Path) then
     begin
       if (CanonicalName = 'themes') or (CanonicalName = 'blaise-themes') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'themes'
-      else if (CanonicalName = 'icons') or (CanonicalName = 'blaise-icons') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'icons';
+      else if (CanonicalName = 'icons') or (CanonicalName = 'blaise-icons') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'icons'
+      else if (CanonicalName = 'ui') or (CanonicalName = 'blaise-ui') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-ui'
+      else if (CanonicalName = 'mobile') or (CanonicalName = 'blaise-ui-mobile') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-ui-mobile'
+      else if (CanonicalName = 'charts') or (CanonicalName = 'blaise-charts') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-charts'
+      else if (CanonicalName = 'reports') or (CanonicalName = 'blaise-reports') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-reports'
+      else if (CanonicalName = 'studio') or (CanonicalName = 'blaise-studio') then Path := GetCurrentDir + DirectorySeparator + 'lib' + DirectorySeparator + 'blaise-studio';
     end;
 
     if DirectoryExists(Path) then
@@ -5604,16 +5613,33 @@ begin
     RemainingArg := RawArg;
   end;
 
-  AtPos := Pos('@', RemainingArg);
-  if AtPos > 0 then
+  if (Length(RemainingArg) > 1) and (RemainingArg[1] = '@') then
   begin
-    PkgName := Trim(Copy(RemainingArg, 1, AtPos - 1));
-    ReqVersion := Trim(Copy(RemainingArg, AtPos + 1, Length(RemainingArg) - AtPos));
+    AtPos := Pos('@', Copy(RemainingArg, 2, Length(RemainingArg) - 1));
+    if AtPos > 0 then
+    begin
+      PkgName := Copy(RemainingArg, 2, AtPos - 1);
+      ReqVersion := Trim(Copy(RemainingArg, AtPos + 2, Length(RemainingArg) - AtPos - 1));
+    end
+    else
+    begin
+      PkgName := Copy(RemainingArg, 2, Length(RemainingArg) - 1);
+      ReqVersion := '';
+    end;
   end
   else
   begin
-    PkgName := Trim(RemainingArg);
-    ReqVersion := '';
+    AtPos := Pos('@', RemainingArg);
+    if AtPos > 0 then
+    begin
+      PkgName := Trim(Copy(RemainingArg, 1, AtPos - 1));
+      ReqVersion := Trim(Copy(RemainingArg, AtPos + 1, Length(RemainingArg) - AtPos));
+    end
+    else
+    begin
+      PkgName := Trim(RemainingArg);
+      ReqVersion := '';
+    end;
   end;
 
   if PkgName = '' then
