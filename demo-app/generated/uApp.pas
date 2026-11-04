@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCounter, uFormHeader, uInfoCard, uMemberBodies, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCounter, uFormHeader, uInfoCard, uMemberBodies, uStatPills, uTableCells, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uFragmentsView, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -46,6 +46,10 @@ begin
   Register_uInfoCard;
   asm console.log("[Init] Registering uMemberBodies..."); end;
   Register_uMemberBodies;
+  asm console.log("[Init] Registering uStatPills..."); end;
+  Register_uStatPills;
+  asm console.log("[Init] Registering uTableCells..."); end;
+  Register_uTableCells;
   asm console.log("[Init] Registering uAbout..."); end;
   Register_uAbout;
   asm console.log("[Init] Registering uCharts..."); end;
@@ -56,6 +60,8 @@ begin
   Register_uDatasetView;
   asm console.log("[Init] Registering uFormulario..."); end;
   Register_uFormulario;
+  asm console.log("[Init] Registering uFragmentsView..."); end;
+  Register_uFragmentsView;
   asm console.log("[Init] Registering uHome..."); end;
   Register_uHome;
   asm console.log("[Init] Registering uLibBootstrap..."); end;
@@ -192,6 +198,7 @@ begin
     '    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->' +
     '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' +
     '      <div class="drawer-nav">' +
+    '        <a href="#/fragments" class="drawer-link" @click="closeDrawer" style="background: #10b981; color: white; font-weight: bold;">🧩 Fragments (v5.0)</a>' +
     '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' +
     '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' +
     '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : ''Entrar'' }}</a>' +
@@ -218,6 +225,7 @@ begin
     '        <strong class="brand">BlaiseVue {{ $store.appVersion }}</strong>' +
     '      </div>' +
     '      <div class="nav-links">' +
+    '        <a href="#/fragments" style="background: #10b981; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">🧩 Fragments (v5.0)</a>' +
     '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' +
     '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' +
     '        <a href="#/customers">📦 Customers</a>' +
@@ -337,6 +345,11 @@ begin
 ;
   routerOpts := TJSObject.new;
   routesArr := TJSArray.new;
+
+  r := TJSObject.new;
+  r['path'] := '/fragments';
+  r['component'] := 'fragments-view-page';
+  routesArr.push(r);
 
   r := TJSObject.new;
   r['path'] := '/reports';

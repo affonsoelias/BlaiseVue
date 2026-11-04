@@ -3606,7 +3606,7 @@ begin
     Symbols.Add('$mobile'); Symbols.Add('$desktop'); Symbols.Add('$wasm'); Symbols.Add('$ionic');
     Symbols.Add('$store'); Symbols.Add('Router'); Symbols.Add('$router'); Symbols.Add('$route');
     Symbols.Add('$v'); Symbols.Add('$errors'); Symbols.Add('$validate');
-    Symbols.Add('$event'); Symbols.Add('$refs'); Symbols.Add('$slots'); Symbols.Add('$index'); Symbols.Add('$emit');
+    Symbols.Add('$event'); Symbols.Add('$refs'); Symbols.Add('$slots'); Symbols.Add('$attrs'); Symbols.Add('$index'); Symbols.Add('$emit');
     Symbols.Add('item'); Symbols.Add('idx'); Symbols.Add('index'); Symbols.Add('p');
     Symbols.Add('col'); Symbols.Add('row'); Symbols.Add('tab'); Symbols.Add('opt');
     Symbols.Add('key'); Symbols.Add('val'); Symbols.Add('value'); Symbols.Add('entry');

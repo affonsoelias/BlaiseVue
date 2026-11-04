@@ -1,0 +1,322 @@
+<template>
+  <div class="fragments-view-page">
+    <!-- TOP BANNER -->
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <span style="background: #10b981; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 5</span>
+          <span style="background: rgba(255,255,255,0.12); color: #a5b4fc; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Vue 3-Style Multi-Root &amp; $attrs</span>
+        </div>
+        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🧩 Component Fragments (Multi-Root Templates &amp; $attrs Fallthrough)</h1>
+        <p style="font-size: 13px; color: #cbd5e1; margin-top: 6px;">Componentes com múltiplos nós irmãos na raiz sem <code>&lt;div&gt;</code> wrapper artificial, parser HTML5 <code>&lt;template&gt;</code> nativo para <code>&lt;td&gt;</code>/<code>&lt;tr&gt;</code> e herança reativa de <code>$attrs</code>.</p>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-primary" style="background: #10b981;" @click="addModuleRow">➕ Adicionar Linha (&lt;table-cells&gt;)</button>
+        <button type="button" class="btn-outline" style="border-color: #a5b4fc; color: #e0e7ff; background: rgba(255,255,255,0.06);" @click="focusAndInspectDOM">🔍 Inspecionar Âncoras DOM</button>
+      </div>
+    </div>
+
+    <!-- STATUS NOTIFICATION BANNER -->
+    <div style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <span>✨ <strong>{{ lastAction }}</strong></span>
+      <span style="font-size: 12px; color: #047857;">Fragmentos em Tabela: <strong>{{ modules.length }}</strong> | Inspeções DOM: <strong>#{{ inspectionCount }}</strong></span>
+    </div>
+
+    <!-- SECTION 1: NATIVE TABLE CELLS FRAGMENT + EXPLICIT b-bind="$attrs" -->
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <div>
+          <h3 style="margin: 0; color: #1e293b;">1. Fragmentos Nativos em Tabelas (<code>&lt;table-cells&gt;</code> + <code>b-bind="$attrs"</code>)</h3>
+          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">
+            O componente <code>&lt;table-cells&gt;</code> possui <strong>3 elementos <code>&lt;td&gt;</code> irmãos na raiz</strong> sem nenhum <code>&lt;div&gt;</code> intermediário, mantendo a semântica válida de <code>&lt;tr&gt;</code>. O atributo <code>class="clickable-status-cell"</code> e o evento <code>@click</code> são repassados explicitamente à 3ª coluna via <code>b-bind="$attrs"</code>.
+          </p>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="btn-primary" @click="addModuleRow">➕ Nova Linha</button>
+          <button type="button" class="btn-danger" @click="removeLastRow">➖ Remover Última</button>
+        </div>
+      </div>
+
+      <table class="frag-demo-table">
+        <thead>
+          <tr>
+            <th style="width: 130px;">Código (td #1)</th>
+            <th>Módulo Arquitetural (td #2)</th>
+            <th style="width: 190px;">Status via $attrs (td #3)</th>
+            <th style="width: 140px; text-align: center;">Ação Direta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr b-for="item in modules" class="frag-table-row">
+            <table-cells
+              :code="item.code"
+              :name="item.name"
+              :status="item.status"
+              class="clickable-status-cell"
+              data-fallthrough="explicit-attrs"
+              title="Clique para alternar o status via $attrs fallthrough"
+              @click="toggleModuleStatus(item)"
+            ></table-cells>
+            <td style="text-align: center;">
+              <button type="button" class="btn-outline" style="padding: 4px 10px; font-size: 12px;" @click="toggleModuleStatus(item)">🔄 Alternar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SECTION 2: CSS GRID MULTI-ROOT FRAGMENT + AUTOMATIC OPTION A FALLTHROUGH -->
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <div>
+          <h3 style="margin: 0; color: #1e293b;">2. Fragmentos em CSS Grid &amp; Fallthrough Automático (<code>&lt;stat-pills&gt;</code> — Opção A)</h3>
+          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">
+            Cada <code>&lt;stat-pills&gt;</code> emite 2 nós irmãos (<code>.frag-grid-label</code> e <code>.frag-grid-value</code>) diretamente como filhos do container CSS Grid de 2 colunas. Na <strong>Opção A</strong>, atributos não-props (como <code>:class</code> e <code>@click</code>) herdam automaticamente para o <strong>1º elemento raiz visível</strong>.
+          </p>
+        </div>
+        <button type="button" class="btn-primary" style="background: #6366f1;" @click="toggleHighlightAttrs">
+          🎨 Alternar Classe em $attrs ({{ highlightActive ? 'Destaque Ativo' : 'Padrão' }})
+        </button>
+      </div>
+
+      <div class="frag-css-grid">
+        <stat-pills
+          label="Parser HTML5 Nativo (<template>)"
+          metric="Preserva <tr>, <td>, <li>"
+          :class="highlightClass"
+          data-mode="auto-first-root"
+          @click="onPillClick('Parser HTML5 <template>')"
+        ></stat-pills>
+        <stat-pills
+          label="Âncoras de Comentário no DOM"
+          metric="<!-- [bv-fragment] -->"
+          :class="highlightClass"
+          @click="onPillClick('Âncoras de Comentário')"
+        ></stat-pills>
+        <stat-pills
+          label="Overhead de Wrappers <div> Extras"
+          metric="0 Nós Extras (Zero-Wrapper)"
+          :class="highlightClass"
+          @click="onPillClick('Zero-Wrapper Overhead')"
+        ></stat-pills>
+      </div>
+    </div>
+
+    <!-- SECTION 3: LIVE DOM ANCHOR INSPECTOR -->
+    <div id="dom-inspector-panel" :class="inspectorFlash ? 'frag-inspector-card frag-inspector-flash' : 'frag-inspector-card'">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Âncoras de Fragmento no DOM Real (Leitura #{{ inspectionCount }})</h3>
+          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Verifica os nós <code>Comment</code> (<code>nodeType === 8</code>) delimitadores de fragmentos ativos nesta página.</p>
+        </div>
+        <button type="button" class="btn-primary" style="background: #0284c7; font-size: 12px;" @click="focusAndInspectDOM">🔄 Executar Varredura DOM Agora</button>
+      </div>
+      <pre class="frag-dom-inspector">{{ domInspectionReport }}</pre>
+    </div>
+  </div>
+</template>
+
+<script>
+  data:
+    modules: TJSArray;
+    nextId: integer = 5;
+    inspectionCount: integer = 0;
+    inspectorFlash: boolean = false;
+    highlightActive: boolean = true;
+    highlightClass: string = 'frag-highlight-root';
+    lastAction: string = 'Fragmentos Multi-Root montados diretamente no DOM sem <div> intermediária.';
+    domInspectionReport: string = '';
+
+  created:
+    begin
+      this['modules'] := JsonParse('[' +
+        '{"code":"FRAG-01","name":"HTML5 <template> Native Parser","status":"Ativo ✅"},' +
+        '{"code":"FRAG-02","name":"Comment Anchors [bv-fragment]","status":"Ativo ✅"},' +
+        '{"code":"FRAG-03","name":"Reactive $attrs & b-bind Fallthrough","status":"Ativo ✅"},' +
+        '{"code":"FRAG-04","name":"HMR Live Patching Multi-Root","status":"Pronto 🚀"}' +
+      ']');
+    end;
+
+  mounted:
+    begin
+      CallMethod(this, 'inspectFragmentDOM');
+    end;
+
+  methods:
+    procedure toggleModuleStatus(item: JSValue);
+    var
+      cur, codeStr: string;
+    begin
+      cur := GetFieldStr(item, 'status');
+      codeStr := GetFieldStr(item, 'code');
+      if cur = 'Ativo ✅' then
+        TJSObject(item)['status'] := 'Em Revisão ⚡'
+      else if cur = 'Em Revisão ⚡' then
+        TJSObject(item)['status'] := 'Pronto 🚀'
+      else
+        TJSObject(item)['status'] := 'Ativo ✅';
+
+      this['lastAction'] := 'Evento @click recebido via b-bind="$attrs" na 3ª célula <td> do módulo ' + codeStr + '!';
+      CallMethod(this, 'inspectFragmentDOM');
+    end;
+
+    procedure addModuleRow;
+    var
+      arr: TJSArray;
+      newObj: TJSObject;
+      n: Integer;
+      codeStr: string;
+    begin
+      arr := TJSArray(this['modules']);
+      n := Integer(this['nextId']);
+      this['nextId'] := n + 1;
+      if n < 10 then
+        codeStr := 'FRAG-0' + IntToStr(n)
+      else
+        codeStr := 'FRAG-' + IntToStr(n);
+
+      newObj := TJSObject.new;
+      newObj['code'] := codeStr;
+      newObj['name'] := 'Componente Multi-Root Dinâmico #' + IntToStr(n);
+      newObj['status'] := 'Ativo ✅';
+      arr.push(newObj);
+
+      this['lastAction'] := 'Nova linha adicionada à tabela com 3 células <td> irmãs via <table-cells> (' + codeStr + ').';
+      CallMethod(this, 'inspectFragmentDOM');
+    end;
+
+    procedure removeLastRow;
+    var
+      arr: TJSArray;
+    begin
+      arr := TJSArray(this['modules']);
+      if (arr <> nil) and (arr.Length > 1) then
+      begin
+        arr.pop;
+        this['lastAction'] := 'Último fragmento <table-cells> desmontado (3 nós <td> + âncoras removidos do DOM).';
+        CallMethod(this, 'inspectFragmentDOM');
+      end;
+    end;
+
+    procedure toggleHighlightAttrs;
+    begin
+      if Boolean(this['highlightActive']) then
+      begin
+        this['highlightActive'] := False;
+        this['highlightClass'] := '';
+        this['lastAction'] := 'Fallthrough automático ($attrs.class) desativado nos fragmentos <stat-pills>.';
+      end
+      else
+      begin
+        this['highlightActive'] := True;
+        this['highlightClass'] := 'frag-highlight-root';
+        this['lastAction'] := 'Fallthrough automático ($attrs.class = "frag-highlight-root") aplicado ao 1º nó raiz de cada <stat-pills>!';
+      end;
+      CallMethod(this, 'inspectFragmentDOM');
+    end;
+
+    procedure onPillClick(pillName: string);
+    begin
+      this['lastAction'] := 'Clique capturado via Fallthrough Automático (Opção A) no 1º nó raiz de <stat-pills>: ' + pillName;
+    end;
+
+    procedure inspectFragmentDOM;
+    var
+      report: string;
+      cnt: Integer;
+    begin
+      cnt := Integer(this['inspectionCount']) + 1;
+      this['inspectionCount'] := cnt;
+      report := '';
+      asm
+        let root = document.querySelector('.fragments-view-page') || document.body;
+        let startAnchors = [];
+        let endAnchors = 0;
+        let walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
+        let node;
+        while ((node = walker.nextNode())) {
+          let txt = (node.nodeValue || '').trim();
+          if (txt.indexOf('[bv-fragment:') === 0) {
+            startAnchors.push(node);
+          } else if (txt === '[/bv-fragment]') {
+            endAnchors++;
+          }
+        }
+        let nowStr = new Date().toLocaleTimeString();
+        let lines = [];
+        lines.push('[Leitura #' + cnt + ' às ' + nowStr + '] Âncoras de Início (<!-- [bv-fragment: ...] -->): ' + startAnchors.length + ' | Âncoras de Fim (<!-- [/bv-fragment] -->): ' + endAnchors);
+        lines.push('--------------------------------------------------------------------------------');
+        for (let i = 0; i < startAnchors.length; i++) {
+          let a = startAnchors[i];
+          let sibs = (window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) ? window.__BV_CORE__.getFragmentNodes(a) : [];
+          let tagList = [];
+          for (let j = 0; j < sibs.length; j++) {
+            if (sibs[j].nodeType === 1) {
+              tagList.push('<' + sibs[j].tagName.toLowerCase() + (sibs[j].className ? ' class="' + sibs[j].className + '"' : '') + '>');
+            }
+          }
+          lines.push('#' + (i + 1) + ' <!--' + a.nodeValue + '-->  ==>  ' + tagList.join(' + ') + '  ==>  <!-- [/bv-fragment] -->');
+        }
+        report = lines.join('\n');
+      end;
+      this['domInspectionReport'] := report;
+    end;
+
+    procedure focusAndInspectDOM;
+    var
+      cnt, totalFrags: Integer;
+    begin
+      CallMethod(this, 'inspectFragmentDOM');
+      cnt := Integer(this['inspectionCount']);
+      totalFrags := TJSArray(this['modules']).Length + 3;
+      this['lastAction'] := '🔍 Inspeção DOM #' + IntToStr(cnt) + ' concluída: ' + IntToStr(totalFrags) + ' fragmentos Multi-Root ativos (' + IntToStr(totalFrags * 2) + ' âncoras de comentário) verificados!';
+      this['inspectorFlash'] := True;
+      asm
+        let panel = document.getElementById('dom-inspector-panel');
+        if (panel && panel.scrollIntoView) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        setTimeout(function() {
+          _this.inspectorFlash = false;
+        }, 900);
+      end;
+    end;
+</script>
+
+<style>
+  .fragments-view-page { animation: fadeIn 0.35s ease-in; }
+  .frag-demo-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .frag-css-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 14px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .frag-inspector-card {
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 2px solid transparent;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .frag-inspector-flash {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+  }
+  .frag-dom-inspector {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 12px;
+    overflow-x: auto;
+    color: #4ade80;
+    max-height: 260px;
+    white-space: pre-wrap;
+    font-family: 'Consolas', monospace;
+  }
+</style>

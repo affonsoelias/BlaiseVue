@@ -339,7 +339,13 @@ var
 begin
   if not Assigned(ViewEl) or not Assigned(CompOpt) then Exit;
   navEl := TJSHTMLElement(document.createElement('div'));
-  navEl.innerHTML := string(TJSObject(CompOpt)['template']);
+  asm
+    let rawTpl = String(CompOpt.template || '');
+    if (window.__BV_CORE__ && window.__BV_CORE__.sanitizeTableComponents) {
+      rawTpl = window.__BV_CORE__.sanitizeTableComponents(rawTpl);
+    }
+    navEl.innerHTML = rawTpl;
+  end;
   rootPageEl := TJSHTMLElement(navEl.firstElementChild);
   if not Assigned(rootPageEl) then Exit;
   asm 

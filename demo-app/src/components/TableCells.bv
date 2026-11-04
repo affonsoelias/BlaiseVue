@@ -1,0 +1,22 @@
+<template>
+  <td class="frag-cell-code"><code>{{ code }}</code></td>
+  <td class="frag-cell-name"><strong>{{ name }}</strong></td>
+  <td class="frag-cell-status" b-bind="$attrs">
+    <span class="frag-status-badge">{{ status }}</span>
+  </td>
+</template>
+
+<script>
+  props:
+    code: string = 'MOD-01';
+    name: string = 'Módulo BlaiseVue';
+    status: string = 'Ativo';
+</script>
+
+<style>
+  .frag-cell-code code { background: #eef2ff; color: #4f46e5; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; }
+  .frag-cell-name { color: #1e293b; }
+  .frag-status-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #dcfce7; color: #15803d; }
+  .clickable-status-cell { cursor: pointer; transition: background 0.2s; }
+  .clickable-status-cell:hover { background: #f0fdf4; }
+</style>

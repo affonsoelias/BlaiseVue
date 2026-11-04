@@ -3368,7 +3368,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            el.value = text;
         };
     
-        // Safely removes an element while triggering lifecycle hooks
+        // Safely removes an element or multi-root fragment while triggering lifecycle hooks
         bv.unmount = function(el) {
            if (!el) return;
            // A component replaces its placeholder in the DOM, so unmount what is really there
@@ -3378,27 +3378,233 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               bv.unmount(replacement);
               return;
            }
-           if (el['bvUnmount']) el['bvUnmount']();
+           if (el['__bv_is_fragment__']) {
+              if (el['bvUnmount']) {
+                 let uFn = el['bvUnmount'];
+                 el['bvUnmount'] = null;
+                 uFn();
+              }
+              let fragNodes = bv.getFragmentNodes(el);
+              let endAnchor = el['__bv_end_anchor__'];
+              for (let i = 0; i < fragNodes.length; i++) {
+                 bv.unmount(fragNodes[i]);
+              }
+              if (endAnchor && endAnchor.parentNode) endAnchor.parentNode.removeChild(endAnchor);
+              if (el.parentNode) el.parentNode.removeChild(el);
+              return;
+           }
+           if (el['bvUnmount']) {
+              let uFn = el['bvUnmount'];
+              el['bvUnmount'] = null;
+              uFn();
+           }
            if (el.nodeType === 1 && el.querySelectorAll) {
               let children = el.querySelectorAll('*');
               for (let i = 0; i < children.length; i++) {
-                 if (children[i]['bvUnmount']) children[i]['bvUnmount']();
+                 let c = children[i];
+                 if (c['bvUnmount']) {
+                    let cFn = c['bvUnmount'];
+                    c['bvUnmount'] = null;
+                    cFn();
+                 }
+                 let fAnchor = c['__bv_fragment_anchor__'];
+                 if (fAnchor && fAnchor['bvUnmount']) {
+                    let aFn = fAnchor['bvUnmount'];
+                    fAnchor['bvUnmount'] = null;
+                    aFn();
+                 }
               }
            }
-           if (el.remove) el.remove();
+           if (el.parentNode) el.parentNode.removeChild(el);
+           else if (el.remove) el.remove();
         };
     
         // Prevent redundant processing on managed nodes
+        // Collects all live DOM nodes belonging to a component fragment between its comment anchors
+        bv.getFragmentNodes = function(anchor) {
+           if (!anchor || !anchor['__bv_is_fragment__']) return [];
+           let endAnchor = anchor['__bv_end_anchor__'];
+           if (anchor.parentNode && endAnchor && endAnchor.parentNode === anchor.parentNode) {
+              let nodes = [];
+              let curr = anchor.nextSibling;
+              while (curr && curr !== endAnchor) {
+                 nodes.push(curr);
+                 curr = curr.nextSibling;
+              }
+              anchor['__bv_fragment_nodes__'] = nodes;
+              return nodes;
+           }
+           return anchor['__bv_fragment_nodes__'] || [];
+        };
+        bv.decorateFragmentAnchor = function(startAnchor, endAnchor, tagName, pRef, opts, Data, Methods) {
+           startAnchor['bvManaged'] = true;
+           startAnchor['__bv_is_fragment__'] = true;
+           startAnchor['__bv_component_tag__'] = tagName;
+           startAnchor['__bv_instance_data__'] = pRef;
+           startAnchor['__bv_instance_opts__'] = opts;
+           startAnchor['__bv_parent_data__'] = Data;
+           startAnchor['__bv_parent_methods__'] = Methods;
+           startAnchor['__bv_end_anchor__'] = endAnchor;
+           endAnchor['bvManaged'] = true;
+           endAnchor['__bv_is_fragment_end__'] = true;
+           endAnchor['__bv_start_anchor__'] = startAnchor;
+    
+           startAnchor.querySelector = function(sel) {
+              let nodes = bv.getFragmentNodes(startAnchor);
+              for (let i = 0; i < nodes.length; i++) {
+                 let n = nodes[i];
+                 if (n.nodeType === 1) {
+                    if (n.matches && n.matches(sel)) return n;
+                    if (n.querySelector) {
+                       let found = n.querySelector(sel);
+                       if (found) return found;
+                    }
+                 }
+              }
+              return null;
+           };
+           startAnchor.querySelectorAll = function(sel) {
+              let res = [];
+              let nodes = bv.getFragmentNodes(startAnchor);
+              for (let i = 0; i < nodes.length; i++) {
+                 let n = nodes[i];
+                 if (n.nodeType === 1) {
+                    if (n.matches && n.matches(sel)) res.push(n);
+                    if (n.querySelectorAll) {
+                       res.push.apply(res, Array.from(n.querySelectorAll(sel)));
+                    }
+                 }
+              }
+              return res;
+           };
+        };
+    
         bv.markManaged = function(node) {
            if (!node) return;
            node['bvManaged'] = true;
-           if (node.nodeType === 1) {
+           if (node['__bv_is_fragment__']) {
+              if (node['__bv_end_anchor__']) node['__bv_end_anchor__']['bvManaged'] = true;
+              bv.getFragmentNodes(node).forEach(function(fn) { bv.markManaged(fn); });
+              return;
+           }
+           if (node.nodeType === 1 && node.querySelectorAll) {
               node.querySelectorAll('*').forEach(function(c) { c['bvManaged'] = true; });
            }
         };
     
+        // Prevents HTML5 table foster-parenting of custom component tags inside <tr>, <tbody>, <thead>, <tfoot>
+        bv.sanitizeTableComponents = function(html) {
+           if (!html || typeof html !== 'string' || html.toLowerCase().indexOf('<table') === -1) return html;
+           return html.replace(/<tr(\b[^>]*)>([\s\S]*?)<\/tr>/gi, function(fullTr, trAttrs, trBody) {
+              let newBody = trBody.replace(/<([a-z][a-z0-9]*-[a-z0-9-]*)(\b[^>]*?)\/>/gi, '<td data-bv-is="$1"$2></td>');
+              newBody = newBody.replace(/<([a-z][a-z0-9]*-[a-z0-9-]*)(\b[^>]*)>([\s\S]*?)<\/\1>/gi, '<td data-bv-is="$1"$2>$3</td>');
+              return '<tr' + trAttrs + '>' + newBody + '</tr>';
+           });
+        };
+    
+        bv.formatClassValue = function(val) {
+           if (!val) return '';
+           if (typeof val === 'string') return val.trim();
+           if (Array.isArray(val)) return val.map(bv.formatClassValue).filter(Boolean).join(' ').trim();
+           if (typeof val === 'object') {
+              return Object.keys(val).filter(function(k) { return !!val[k]; }).join(' ').trim();
+           }
+           return String(val).trim();
+        };
+    
+        bv.formatStyleValue = function(val) {
+           if (!val) return '';
+           if (typeof val === 'string') return val.trim().replace(/;+\s*$/, '');
+           if (typeof val === 'object') {
+              return Object.keys(val).map(function(k) {
+                 let v = val[k];
+                 if (v === null || v === undefined || v === '') return '';
+                 let cssKey = k.replace(/([A-Z])/g, '-$1').toLowerCase();
+                 return cssKey + ': ' + v;
+              }).filter(Boolean).join('; ');
+           }
+           return String(val).trim();
+        };
+    
+        // Attribute Fallthrough & b-bind="$attrs" Engine
+        bv.applyAttrs = function(targetEl, attrsSourceFn, isExplicitBind) {
+           if (!targetEl || targetEl.nodeType !== 1) return;
+           let ownClass = targetEl.getAttribute('class') || '';
+           let ownStyle = targetEl.getAttribute('style') || '';
+           let ownId = targetEl.getAttribute('id') || '';
+           let prevAppliedKeys = [];
+    
+           bv.effect(function() {
+              let attrs = attrsSourceFn ? attrsSourceFn() : null;
+              if (!attrs || typeof attrs !== 'object') return;
+              let currentKeys = Object.keys(attrs);
+    
+              prevAppliedKeys.forEach(function(pk) {
+                 if (pk !== 'class' && pk !== 'style' && pk !== 'id' && currentKeys.indexOf(pk) === -1) {
+                    targetEl.removeAttribute(pk);
+                 }
+              });
+              prevAppliedKeys = currentKeys.slice();
+    
+              if ('class' in attrs) {
+                 let ftClass = bv.formatClassValue(attrs['class']);
+                 let combinedClass = (ownClass ? (ftClass ? ownClass + ' ' + ftClass : ownClass) : ftClass).trim();
+                 targetEl['_bv_static_class'] = combinedClass;
+                 if (combinedClass) targetEl.setAttribute('class', combinedClass);
+                 else targetEl.removeAttribute('class');
+              }
+    
+              if ('style' in attrs) {
+                 let ftStyle = bv.formatStyleValue(attrs['style']);
+                 let combinedStyle = (ownStyle ? (ftStyle ? ownStyle.replace(/;+\s*$/, '') + '; ' + ftStyle : ownStyle) : ftStyle).trim();
+                 targetEl['_bv_static_style'] = combinedStyle;
+                 if (combinedStyle) targetEl.setAttribute('style', combinedStyle);
+                 else targetEl.removeAttribute('style');
+              }
+    
+              currentKeys.forEach(function(k) {
+                 if (k === 'class' || k === 'style') return;
+                 let v = attrs[k];
+                 if (k === 'id') {
+                    if (isExplicitBind || !ownId) {
+                       if (v !== null && v !== undefined && v !== false && v !== '') {
+                          targetEl.setAttribute('id', v);
+                       } else if (!ownId) {
+                          targetEl.removeAttribute('id');
+                       }
+                    }
+                    return;
+                 }
+                 let isBoolAttr = ['disabled', 'readonly', 'checked', 'required', 'hidden', 'selected', 'multiple', 'autofocus'].indexOf(k.toLowerCase()) !== -1;
+                 if (isBoolAttr) {
+                    let isTrue = (v === true || v === 'true' || v === '');
+                    if (isTrue) {
+                       targetEl.setAttribute(k, '');
+                       try { targetEl[k] = true; } catch(e) {}
+                    } else {
+                       targetEl.removeAttribute(k);
+                       try { targetEl[k] = false; } catch(e) {}
+                    }
+                 } else {
+                    if (v === null || v === undefined || v === false) {
+                       targetEl.removeAttribute(k);
+                    } else if (typeof v !== 'object' && typeof v !== 'function') {
+                       targetEl.setAttribute(k, v);
+                    }
+                 }
+              });
+           });
+        };
+    
         // Transition Engine: Coordinates CSS animations
         bv.applyTransition = function(el, type, name, next) {
+           if (!el) { if (next) next(); return; }
+           if (el['__bv_replacement__']) el = el['__bv_replacement__'];
+           if (el['__bv_is_fragment__']) {
+              let fEls = bv.getFragmentNodes(el).filter(function(n) { return n.nodeType === 1; });
+              el = fEls[0] || null;
+           }
+           if (!el || el.nodeType !== 1 || !el.classList) { if (next) next(); return; }
            const cls = {
              from: name + '-' + type + '-from',
              active: name + '-' + type + '-active',
@@ -3519,7 +3725,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               return (node.nodeValue.indexOf('{{') === -1);
            }
            if (node.nodeType === 1) {
-              let tag = node.tagName.toLowerCase();
+              let tag = (node.getAttribute('data-bv-is') || node.getAttribute('b-is') || node.tagName).toLowerCase();
               if (tag.indexOf('-') !== -1 || (bv.components && bv.components[tag])) return false;
               if (tag === 'router-view' || tag === 'transition' || tag === 'transition-group' || tag === 'b-transition-group' || tag === 'teleport' || tag === 'b-teleport' || tag === 'suspense' || tag === 'b-suspense' || tag === 'slot' || tag === 'b-slot') return false;
               if (node.attributes) {
@@ -3545,22 +3751,133 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
            if (!bv.components) bv.components = {};
            bv.components[tagName] = newOptions;
     
-           let instances = Array.from(document.querySelectorAll('[data-bv-component="' + tagName + '"]'));
-           if (instances.length === 0) {
-              instances = Array.from(document.querySelectorAll('*')).filter(function(el) {
+           let rawMatches = Array.from(document.querySelectorAll('[data-bv-component="' + tagName + '"]'));
+           if (rawMatches.length === 0) {
+              rawMatches = Array.from(document.querySelectorAll('*')).filter(function(el) {
                  return el['__bv_component_tag__'] === tagName;
               });
            }
+           let seenInst = new Set();
+           let instances = [];
+           rawMatches.forEach(function(m) {
+              let rootInst = m['__bv_fragment_anchor__'] || m;
+              if (!seenInst.has(rootInst)) {
+                 seenInst.add(rootInst);
+                 instances.push(rootInst);
+              }
+           });
     
            instances.forEach(function(instEl) {
               let existingData = instEl['__bv_instance_data__'];
               let parentData = instEl['__bv_parent_data__'];
               let parentMethods = instEl['__bv_parent_methods__'];
               if (existingData && newOptions.template) {
-                 let temp = document.createElement('div');
-                 temp.innerHTML = newOptions.template;
-                 let newEl = temp.firstElementChild;
-                 if (newEl) {
+                 let tpl = document.createElement('template');
+                 tpl.innerHTML = bv.sanitizeTableComponents(newOptions.template || '');
+                 let root_c = tpl.content;
+                 let topElements = Array.from(root_c.children);
+                 let meaningfulNodes = Array.from(root_c.childNodes).filter(function(n) {
+                    return n.nodeType === 1 || (n.nodeType === 3 && n.nodeValue.trim() !== '');
+                 });
+                 if (meaningfulNodes.length === 0) return;
+                 let isNewFragment = meaningfulNodes.length > 1 || topElements.length === 0;
+                 let newEl = topElements[0] || meaningfulNodes[0];
+    
+                 if (newOptions.methods) {
+                    Object.keys(newOptions.methods).forEach(function(k) {
+                       existingData[k] = function() {
+                          if (arguments.length > 0 && arguments[0] === existingData) {
+                             return newOptions.methods[k].apply(existingData, arguments);
+                          }
+                          return newOptions.methods[k].apply(existingData, [existingData, ...arguments]);
+                       };
+                    });
+                 }
+                 if (newOptions.computed) {
+                    Object.keys(newOptions.computed).forEach(function(ck) {
+                       bv.defineComputed(existingData, ck, newOptions.computed[ck]);
+                    });
+                 }
+    
+                 let hasExplicitAttrsBind = Array.from(root_c.querySelectorAll('[b-bind], [v-bind]')).some(function(node) {
+                    let bVal = (node.getAttribute('b-bind') || node.getAttribute('v-bind') || '').trim();
+                    return bVal === '$attrs';
+                 });
+                 if (newEl && newEl.nodeType === 1 && !hasExplicitAttrsBind && newOptions.inheritAttrs !== false && existingData['$attrs']) {
+                    bv.applyAttrs(newEl, function() { return existingData['$attrs']; }, false);
+                 }
+    
+                 let cD = {
+                    FData: existingData,
+                    Evaluate: function(expr, ev) {
+                       return bv.fastEval(this.FData, expr, ev);
+                    },
+                    SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
+                 };
+    
+                 if (instEl['__bv_is_fragment__']) {
+                    let endAnchor = instEl['__bv_end_anchor__'];
+                    let oldNodes = bv.getFragmentNodes(instEl);
+                    oldNodes.forEach(function(on) { bv.unmount(on); });
+                    instEl['__bv_instance_opts__'] = newOptions;
+                    if (newEl && newEl.nodeType === 1) {
+                       newEl.setAttribute('data-bv-component', tagName);
+                    }
+                    Array.from(root_c.childNodes).forEach(function(fn) {
+                       fn['bvManaged'] = true;
+                       fn['__bv_fragment_anchor__'] = instEl;
+                       if (fn.nodeType === 1) {
+                          fn['__bv_component_tag__'] = tagName;
+                          fn['__bv_instance_data__'] = existingData;
+                          fn['__bv_instance_opts__'] = newOptions;
+                          fn['__bv_parent_data__'] = parentData;
+                          fn['__bv_parent_methods__'] = parentMethods;
+                       }
+                    });
+                    if (endAnchor && endAnchor.parentNode) {
+                       endAnchor.parentNode.insertBefore(root_c, endAnchor);
+                    }
+                    let newFragNodes = bv.getFragmentNodes(instEl);
+                    newFragNodes.forEach(function(fNode) {
+                       fNode['bvManaged'] = true;
+                       if (!fNode['bvTraversed'] && (!instEl.parentNode || fNode.parentNode === instEl.parentNode)) {
+                          bv.traverse(fNode, cD, newOptions.methods);
+                       }
+                    });
+                    bv.getFragmentNodes(instEl);
+                 } else if (isNewFragment) {
+                    let startAnchor = document.createComment('[bv-fragment: ' + tagName + ']');
+                    let endAnchor = document.createComment('[/bv-fragment]');
+                    bv.decorateFragmentAnchor(startAnchor, endAnchor, tagName, existingData, newOptions, parentData, parentMethods);
+                    if (newEl && newEl.nodeType === 1) {
+                       newEl.setAttribute('data-bv-component', tagName);
+                    }
+                    Array.from(root_c.childNodes).forEach(function(fn) {
+                       fn['bvManaged'] = true;
+                       fn['__bv_fragment_anchor__'] = startAnchor;
+                       if (fn.nodeType === 1) {
+                          fn['__bv_component_tag__'] = tagName;
+                          fn['__bv_instance_data__'] = existingData;
+                          fn['__bv_instance_opts__'] = newOptions;
+                          fn['__bv_parent_data__'] = parentData;
+                          fn['__bv_parent_methods__'] = parentMethods;
+                       }
+                    });
+                    if (instEl.parentNode) {
+                       instEl.parentNode.insertBefore(startAnchor, instEl);
+                       instEl.parentNode.insertBefore(root_c, instEl);
+                       instEl.parentNode.insertBefore(endAnchor, instEl);
+                       instEl.parentNode.removeChild(instEl);
+                    }
+                    let newFragNodes = bv.getFragmentNodes(startAnchor);
+                    newFragNodes.forEach(function(fNode) {
+                       fNode['bvManaged'] = true;
+                       if (!fNode['bvTraversed'] && (!startAnchor.parentNode || fNode.parentNode === startAnchor.parentNode)) {
+                          bv.traverse(fNode, cD, newOptions.methods);
+                       }
+                    });
+                    bv.getFragmentNodes(startAnchor);
+                 } else if (newEl) {
                     newEl['bvManaged'] = true;
                     newEl.setAttribute('data-bv-component', tagName);
                     newEl['__bv_component_tag__'] = tagName;
@@ -3568,34 +3885,13 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                     newEl['__bv_instance_opts__'] = newOptions;
                     newEl['__bv_parent_data__'] = parentData;
                     newEl['__bv_parent_methods__'] = parentMethods;
-    
-                    if (newOptions.methods) {
-                       Object.keys(newOptions.methods).forEach(function(k) {
-                          existingData[k] = function() { return newOptions.methods[k].apply(this, [this, ...arguments]); };
-                       });
+                    if (instEl.parentNode) {
+                       instEl.parentNode.replaceChild(newEl, instEl);
                     }
-                    if (newOptions.computed) {
-                       Object.keys(newOptions.computed).forEach(function(ck) {
-                          bv.defineComputed(existingData, ck, newOptions.computed[ck]);
-                       });
-                    }
-    
-                    let cD = {
-                       FData: existingData,
-                       Evaluate: function(expr, ev) {
-                          try {
-                             let f = new Function('data', '$event', 'with(data) { try { return ' + expr + '; } catch(e) { return undefined; } }');
-                             return f(this.FData, ev);
-                          } catch(ex) { return undefined; }
-                       },
-                       SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
-                    };
-    
-                    instEl.parentNode.replaceChild(newEl, instEl);
                     bv.traverse(newEl, cD, newOptions.methods);
-                    if (newOptions.updated) newOptions.updated.call(existingData, existingData);
-                    console.log("[HMR] Component <" + tagName + "> patched in-place!");
                  }
+                 if (newOptions.updated) newOptions.updated.call(existingData, existingData);
+                 console.log("[HMR] Component <" + tagName + "> patched in-place!");
               }
            });
     
@@ -3764,7 +4060,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               
               if (Node.nodeType !== 1) return;
               let el = Node;
-              let tagName = el.tagName.toLowerCase();
+              let bvIsAttr = el.getAttribute('data-bv-is') || el.getAttribute('b-is') || el.getAttribute('is') || '';
+              if (bvIsAttr.indexOf('vue:') === 0) bvIsAttr = bvIsAttr.substring(4);
+              let tagName = (bvIsAttr || el.tagName).toLowerCase();
               if (tagName === 'script' || tagName === 'style') return;
     
               // 2. Special tags: <transition>, <teleport>, <suspense>
@@ -3857,7 +4155,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
     
               // 3. Directive Collection
               let vmodel = null, vfor = null, vif = null, vshow = null, vref = null, vvalidate = null, vvalidateField = null, vfield = null;
-              let velseif = null, velse = false;
+              let velseif = null, velse = false, vbindObj = null;
+              let origStaticClass = el.getAttribute('class') || '';
+              let origStaticStyle = el.getAttribute('style') || '';
               let binds = [];
               let events = [];
               if (el.attributes) {
@@ -3877,6 +4177,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    else if (n === 'b-else' || n === 'v-else') velse = true;
                    else if (n === 'b-show' || n === 'v-show') vshow = a.value;
                    else if (n === 'b-ref' || n === 'ref') vref = a.value; 
+                   else if (n === 'b-bind' || n === 'v-bind') vbindObj = a.value;
                    else if (n.startsWith('@') || n.startsWith('v-on:') || n.startsWith('b-on:')) {
                       let rawName = n.startsWith('@') ? n.substring(1) : (n.startsWith('v-on:') ? n.substring(5) : n.substring(5));
                       let parts = rawName.split('.');
@@ -4045,7 +4346,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                     let n = s.nextSibling;
                     while(n && n !== e) { 
                        let res_n = n; 
-                       n = n.nextSibling; 
+                       if (res_n['__bv_is_fragment__'] && res_n['__bv_end_anchor__']) {
+                          n = res_n['__bv_end_anchor__'].nextSibling;
+                       } else {
+                          n = n.nextSibling;
+                       }
                        bv.unmount(res_n);
                     }
                     let lst = Data.Evaluate(lExp);
@@ -4257,72 +4562,86 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
               }
     
               // 8. b-show directive
+              let vshowTransition = null;
               if (vshow) {
                 el.removeAttribute('b-show'); el.removeAttribute('v-show');
-                let tName = el.getAttribute('bv-transition');
-                bv.effect(function() {
-                  let res = !!Data.Evaluate(vshow);
-                  if (res) {
-                     if (el.style.display === 'none') {
-                        el.style.display = '';
-                        bv.nonReactive(function() {
-                          bv.traverse(el, Data, Methods);
-                        });
-                        if (tName) bv.applyTransition(el, 'enter', tName);
+                vshowTransition = el.getAttribute('bv-transition');
+                if (!opts) {
+                   bv.effect(function() {
+                     let res = !!Data.Evaluate(vshow);
+                     if (res) {
+                        if (el.style.display === 'none') {
+                           el.style.display = '';
+                           bv.nonReactive(function() {
+                             bv.traverse(el, Data, Methods);
+                           });
+                           if (vshowTransition) bv.applyTransition(el, 'enter', vshowTransition);
+                        }
+                     } else {
+                        if (el.style.display !== 'none') {
+                           if (vshowTransition) bv.applyTransition(el, 'leave', vshowTransition, function() { el.style.display = 'none'; });
+                           else el.style.display = 'none';
+                        }
                      }
-                  } else {
-                     if (el.style.display !== 'none') {
-                        if (tName) bv.applyTransition(el, 'leave', tName, function() { el.style.display = 'none'; });
-                        else el.style.display = 'none';
-                     }
-                  }
-                });
+                   });
+                }
               }
     
-              // 9. Attribute Binding (:attr)
-              binds.forEach(function(b) {
-                 bv.effect(function() {
-                    let v = Data.Evaluate(b.expr);
-                    if (b.name === 'class') {
-                      if (el['_bv_static_class'] === undefined) el['_bv_static_class'] = el.getAttribute('class') || '';
-                      if (typeof v === 'object' && !Array.isArray(v)) {
-                        el.className = el['_bv_static_class'];
-                        Object.keys(v).forEach(function(ck) { if (v[ck]) el.classList.add(ck); else el.classList.remove(ck); });
-                      } else {
-                        let dyn = Array.isArray(v) ? v.filter(Boolean).join(' ') : (v || '');
-                        el.className = (el['_bv_static_class'] ? (el['_bv_static_class'] + ' ' + dyn) : dyn).trim();
-                      }
-                    } else if (b.name === 'style') {
-                      if (el['_bv_static_style'] === undefined) el['_bv_static_style'] = el.getAttribute('style') || '';
-                      if (typeof v === 'object') {
-                        if (el['_bv_static_style']) el.style.cssText = el['_bv_static_style'];
-                        Object.assign(el.style, v);
-                      } else {
-                        el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
-                      }
-                    } else {
-                       let isBoolAttr = ['disabled', 'readonly', 'checked', 'required', 'hidden', 'selected', 'multiple', 'autofocus'].indexOf(b.name) !== -1;
-                       if (isBoolAttr) {
-                          let isTrue = (v === true || v === 'true' || v === '');
-                          if (isTrue) {
-                             el.setAttribute(b.name, '');
-                             try { el[b.name] = true; } catch(e) {}
-                          } else {
-                             el.removeAttribute(b.name);
-                             try { el[b.name] = false; } catch(e) {}
-                          }
+              // 9. Attribute Binding (:attr and b-bind="obj")
+              if (vbindObj) {
+                 el.removeAttribute('b-bind');
+                 el.removeAttribute('v-bind');
+                 if (!opts) {
+                    bv.applyAttrs(el, function() {
+                       return Data.Evaluate(vbindObj);
+                    }, true);
+                 }
+              }
+              if (!opts) {
+                 binds.forEach(function(b) {
+                    bv.effect(function() {
+                       let v = Data.Evaluate(b.expr);
+                       if (b.name === 'class') {
+                         if (el['_bv_static_class'] === undefined) el['_bv_static_class'] = el.getAttribute('class') || '';
+                         if (typeof v === 'object' && !Array.isArray(v)) {
+                           el.className = el['_bv_static_class'];
+                           Object.keys(v).forEach(function(ck) { if (v[ck]) el.classList.add(ck); else el.classList.remove(ck); });
+                         } else {
+                           let dyn = Array.isArray(v) ? v.filter(Boolean).join(' ') : (v || '');
+                           el.className = (el['_bv_static_class'] ? (el['_bv_static_class'] + ' ' + dyn) : dyn).trim();
+                         }
+                       } else if (b.name === 'style') {
+                         if (el['_bv_static_style'] === undefined) el['_bv_static_style'] = el.getAttribute('style') || '';
+                         if (typeof v === 'object') {
+                           if (el['_bv_static_style']) el.style.cssText = el['_bv_static_style'];
+                           Object.assign(el.style, v);
+                         } else {
+                           el.style.cssText = (el['_bv_static_style'] ? (el['_bv_static_style'] + '; ' + v) : String(v));
+                         }
                        } else {
-                          if (v === null || v === undefined || v === false) {
-                             el.removeAttribute(b.name);
-                          } else if (typeof v !== 'object') {
-                             el.setAttribute(b.name, v);
+                          let isBoolAttr = ['disabled', 'readonly', 'checked', 'required', 'hidden', 'selected', 'multiple', 'autofocus'].indexOf(b.name) !== -1;
+                          if (isBoolAttr) {
+                             let isTrue = (v === true || v === 'true' || v === '');
+                             if (isTrue) {
+                                el.setAttribute(b.name, '');
+                                try { el[b.name] = true; } catch(e) {}
+                             } else {
+                                el.removeAttribute(b.name);
+                                try { el[b.name] = false; } catch(e) {}
+                             }
+                          } else {
+                             if (v === null || v === undefined || v === false) {
+                                el.removeAttribute(b.name);
+                             } else if (typeof v !== 'object') {
+                                el.setAttribute(b.name, v);
+                             }
                           }
                        }
-                    }
+                    });
                  });
-              });
+              }
     
-              // 10. Component Logic, Slots & Provide/Inject
+              // 10. Component Logic, Slots, Fallthrough $attrs & Provide/Inject
               if (opts) {
                 if (window.__BV_CORE__.mixins && window.__BV_CORE__.mixins.length > 0) {
                    let merged = opts;
@@ -4338,7 +4657,12 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       if (dRaw[k] === undefined) dRaw[k] = opts.defaultProps[k];
                    });
                 }
+                let initialDataKeys = Object.assign({}, dRaw);
+                let attrsRaw = {};
+                let attrsRef = bv.defineReactive(attrsRaw);
+                dRaw['$attrs'] = attrsRef;
                 let pRef = bv.defineReactive(dRaw);
+                pRef['$attrs'] = attrsRef;
                 
                 if (window.__BV_CORE__.router) {
                    pRef['Router'] = window.__BV_CORE__.router;
@@ -4377,67 +4701,203 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (window.__BV_CORE__.validation) {
                    window.__BV_CORE__.validation.initDataValidation(pRef);
                 }
+    
+                function findDeclaredProp(attrName) {
+                   if (opts.props && Array.isArray(opts.props)) {
+                      let found = opts.props.find(function(p) {
+                         return p.toLowerCase() === attrName.toLowerCase() || p.toLowerCase() === attrName.replace(/-/g, '').toLowerCase();
+                      });
+                      if (found) return found;
+                   }
+                   if (opts.defaultProps) {
+                      let foundDef = Object.keys(opts.defaultProps).find(function(p) {
+                         return p.toLowerCase() === attrName.toLowerCase() || p.toLowerCase() === attrName.replace(/-/g, '').toLowerCase();
+                      });
+                      if (foundDef) return foundDef;
+                   }
+                   return null;
+                }
+    
+                function isFallthroughAttr(attrName) {
+                   let low = attrName.toLowerCase();
+                   if (low === 'data-bv-is' || low === 'b-is' || low === 'is') return false;
+                   if (low === 'class' || low === 'style' || low === 'id') return true;
+                   if (findDeclaredProp(attrName)) return false;
+                   if (initialDataKeys && (attrName in initialDataKeys)) return false;
+                   return true;
+                }
                 
-                // Props Initialization
+                // Props & Fallthrough $attrs Initialization
+                let hasDynClass = false;
+                let hasDynStyle = false;
                 if (el.attributes) {
                    for (let i = 0; i < el.attributes.length; i++) {
                       let a = el.attributes[i];
                       let n = a.name;
-                      if (n.startsWith(':') || n.startsWith('b-bind:')) {
-                         let pn = n.replace('b-bind:', '').replace(':', '');
-                         let targetProp = pn;
-                         if (opts.props && Array.isArray(opts.props)) {
-                            let found = opts.props.find(p => p.toLowerCase() === pn.toLowerCase() || p.toLowerCase() === pn.replace(/-/g, '').toLowerCase());
-                            if (found) targetProp = found;
-                         }
+                      if (n.startsWith(':') || n.startsWith('b-bind:') || n.startsWith('v-bind:')) {
+                         let pn = n.replace('v-bind:', '').replace('b-bind:', '').replace(':', '');
+                         let targetProp = findDeclaredProp(pn) || pn;
+                         if (pn.toLowerCase() === 'class') hasDynClass = true;
+                         if (pn.toLowerCase() === 'style') hasDynStyle = true;
                          bv.effect(function() {
                             let val = Data.Evaluate(a.value);
-                            pRef[targetProp] = val;
-                            if (targetProp !== pn) pRef[pn] = val;
+                            if (pn.toLowerCase() === 'class') {
+                               let dynCls = bv.formatClassValue(val);
+                               let mergedCls = (origStaticClass ? (dynCls ? origStaticClass + ' ' + dynCls : origStaticClass) : dynCls).trim();
+                               attrsRef['class'] = mergedCls;
+                               pRef[targetProp] = mergedCls;
+                            } else if (pn.toLowerCase() === 'style') {
+                               let dynSt = bv.formatStyleValue(val);
+                               let mergedSt = (origStaticStyle ? (dynSt ? origStaticStyle.replace(/;+\s*$/, '') + '; ' + dynSt : origStaticStyle) : dynSt).trim();
+                               attrsRef['style'] = mergedSt;
+                               pRef[targetProp] = mergedSt;
+                            } else {
+                               pRef[targetProp] = val;
+                               if (targetProp !== pn) pRef[pn] = val;
+                               if (isFallthroughAttr(pn)) {
+                                  attrsRef[pn] = val;
+                               }
+                            }
                          });
-                      } else if (!n.startsWith('@') && !n.startsWith('b-') && !n.startsWith('v-')) {
-                         let targetProp = n;
-                         if (opts.props && Array.isArray(opts.props)) {
-                            let found = opts.props.find(p => p.toLowerCase() === n.toLowerCase() || p.toLowerCase() === n.replace(/-/g, '').toLowerCase());
-                            if (found) targetProp = found;
-                         }
+                      } else if (!n.startsWith('@') && !n.startsWith('b-') && !n.startsWith('v-') && !n.startsWith('#') && n !== 'ref' && n !== 'slot' && n !== 'slot-scope' && n !== 'data-bv-is' && n !== 'is') {
+                         let targetProp = findDeclaredProp(n) || n;
                          pRef[targetProp] = a.value;
                          if (targetProp !== n) pRef[n] = a.value;
+                         if (n.toLowerCase() === 'class') {
+                            if (!hasDynClass) attrsRef['class'] = origStaticClass;
+                         } else if (n.toLowerCase() === 'style') {
+                            if (!hasDynStyle) attrsRef['style'] = origStaticStyle;
+                         } else if (isFallthroughAttr(n)) {
+                            attrsRef[n] = a.value;
+                         }
                       }
                    }
                 }
+                if (vbindObj) {
+                   bv.effect(function() {
+                      let obj = Data.Evaluate(vbindObj);
+                      if (obj && typeof obj === 'object') {
+                         Object.keys(obj).forEach(function(k) {
+                            let val = obj[k];
+                            let tp = findDeclaredProp(k) || k;
+                            pRef[tp] = val;
+                            if (tp !== k) pRef[k] = val;
+                            if (isFallthroughAttr(k)) {
+                               if (k === 'class') {
+                                  let dc = bv.formatClassValue(val);
+                                  attrsRef['class'] = (origStaticClass ? (dc ? origStaticClass + ' ' + dc : origStaticClass) : dc).trim();
+                               } else if (k === 'style') {
+                                  let ds = bv.formatStyleValue(val);
+                                  attrsRef['style'] = (origStaticStyle ? (ds ? origStaticStyle.replace(/;+\s*$/, '') + '; ' + ds : origStaticStyle) : ds).trim();
+                               } else {
+                                  attrsRef[k] = val;
+                               }
+                            }
+                         });
+                      }
+                   });
+                }
     
-                // Manage Slots (Standard & Scoped Slots)
+                // Manage Slots & HTML5 <template> Parsing (Single-Root & Multi-Root Fragments)
                 let originalChildren = Array.from(el.childNodes);
-                let root_c = document.createElement('div');
-                root_c.innerHTML = opts.template;
-                let rEl = root_c.firstElementChild;
-                if (!rEl) { console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template); return; }
-                if (el.getAttribute('class')) {
-                   let origClass = el.getAttribute('class');
-                   let rClass = rEl.getAttribute('class') || '';
-                   rEl.setAttribute('class', (rClass ? rClass + ' ' : '') + origClass);
+                let tpl = document.createElement('template');
+                tpl.innerHTML = bv.sanitizeTableComponents(opts.template || '');
+                let root_c = tpl.content;
+                let topElements = Array.from(root_c.children);
+                let meaningfulNodes = Array.from(root_c.childNodes).filter(function(n) {
+                   return n.nodeType === 1 || (n.nodeType === 3 && n.nodeValue.trim() !== '');
+                });
+                if (meaningfulNodes.length === 0) {
+                   console.error("[Compiler] NO ROOT ELEMENT in template for <" + tagName + ">: " + opts.template);
+                   return;
                 }
-                if (el.getAttribute('style')) {
-                   let origStyle = el.getAttribute('style');
-                   let rStyle = rEl.getAttribute('style') || '';
-                   rEl.setAttribute('style', (rStyle ? rStyle + '; ' : '') + origStyle);
+                let isFragment = meaningfulNodes.length > 1 || topElements.length === 0;
+                let rEl = topElements[0] || meaningfulNodes[0];
+                let startAnchor = null;
+                let endAnchor = null;
+                let slotElements = Array.from(root_c.querySelectorAll('slot, b-slot'));
+    
+                let explicitAttrsTargets = Array.from(root_c.querySelectorAll('[b-bind], [v-bind]')).filter(function(node) {
+                   let bVal = (node.getAttribute('b-bind') || node.getAttribute('v-bind') || '').trim();
+                   return bVal === '$attrs';
+                });
+                let hasExplicitAttrsBind = explicitAttrsTargets.length > 0;
+    
+                if (rEl && rEl.nodeType === 1 && !hasExplicitAttrsBind && opts.inheritAttrs !== false) {
+                   bv.applyAttrs(rEl, function() { return pRef['$attrs']; }, false);
                 }
-                if (el.getAttribute('id') && !rEl.getAttribute('id')) {
-                   rEl.setAttribute('id', el.getAttribute('id'));
+    
+                let evtTargets = hasExplicitAttrsBind ? explicitAttrsTargets : ((rEl && rEl.nodeType === 1 && opts.inheritAttrs !== false) ? [rEl] : []);
+                if (evtTargets.length > 0 && events.length > 0) {
+                   let tplStr = opts.template || '';
+                   events.forEach(function(evt) {
+                      let evLow = (evt.name || '').toLowerCase();
+                      let isDeclaredEmit = (opts.emits && Array.isArray(opts.emits) && opts.emits.some(function(e) { return e.toLowerCase() === evLow; })) ||
+                                           tplStr.indexOf("'" + evt.name + "'") !== -1 || tplStr.indexOf('"' + evt.name + '"') !== -1;
+                      if (!isDeclaredEmit) {
+                         evtTargets.forEach(function(tNode) {
+                            tNode.addEventListener(evt.name, function(domEv) {
+                               if (evt.modifiers) {
+                                  if (evt.modifiers.indexOf('stop') !== -1 && domEv.stopPropagation) domEv.stopPropagation();
+                                  if (evt.modifiers.indexOf('prevent') !== -1 && domEv.preventDefault) domEv.preventDefault();
+                               }
+                               let r = Data.Evaluate(evt.expr, domEv);
+                               if (r === undefined && Methods && typeof Methods[evt.expr] === 'function') {
+                                  try { Methods[evt.expr].call(Data.FData || null, Data.FData || null, domEv); }
+                                  catch(ex) { console.error("[Compiler] Method " + evt.expr + " error:", ex); }
+                               } else if (typeof r === 'function') {
+                                  try { r.call(Data.FData || null, domEv); }
+                                  catch(ex) { console.error("[Compiler] Event handler error:", ex); }
+                               }
+                            }, false);
+                         });
+                      }
+                   });
                 }
-                rEl['bvManaged'] = true;
-                rEl.setAttribute('data-bv-component', tagName);
-                rEl['__bv_component_tag__'] = tagName;
-                rEl['__bv_instance_data__'] = pRef;
-                rEl['__bv_instance_opts__'] = opts;
-                rEl['__bv_parent_data__'] = Data;
-                rEl['__bv_parent_methods__'] = Methods;
-                console.log("[Compiler] Expanding <" + tagName + ">. Template length: " + opts.template.length);
-                if (el.parentNode) {
-                   el.parentNode.replaceChild(rEl, el);
+    
+                console.log("[Compiler] Expanding <" + tagName + ">" + (isFragment ? " [Fragment]" : "") + ". Template length: " + opts.template.length);
+    
+                if (isFragment) {
+                   startAnchor = document.createComment('[bv-fragment: ' + tagName + ']');
+                   endAnchor = document.createComment('[/bv-fragment]');
+                   bv.decorateFragmentAnchor(startAnchor, endAnchor, tagName, pRef, opts, Data, Methods);
+    
+                   if (rEl && rEl.nodeType === 1) {
+                      rEl.setAttribute('data-bv-component', tagName);
+                   }
+                   Array.from(root_c.childNodes).forEach(function(fn) {
+                      fn['bvManaged'] = true;
+                      fn['__bv_fragment_anchor__'] = startAnchor;
+                      if (fn.nodeType === 1) {
+                         fn['__bv_component_tag__'] = tagName;
+                         fn['__bv_instance_data__'] = pRef;
+                         fn['__bv_instance_opts__'] = opts;
+                         fn['__bv_parent_data__'] = Data;
+                         fn['__bv_parent_methods__'] = Methods;
+                      }
+                   });
+    
+                   if (el.parentNode) {
+                      el.parentNode.insertBefore(startAnchor, el);
+                      el.parentNode.insertBefore(root_c, el);
+                      el.parentNode.insertBefore(endAnchor, el);
+                      el.parentNode.removeChild(el);
+                   }
+                   bv.getFragmentNodes(startAnchor);
+                   el['__bv_replacement__'] = startAnchor;
+                } else {
+                   rEl['bvManaged'] = true;
+                   rEl.setAttribute('data-bv-component', tagName);
+                   rEl['__bv_component_tag__'] = tagName;
+                   rEl['__bv_instance_data__'] = pRef;
+                   rEl['__bv_instance_opts__'] = opts;
+                   rEl['__bv_parent_data__'] = Data;
+                   rEl['__bv_parent_methods__'] = Methods;
+                   if (el.parentNode) {
+                      el.parentNode.replaceChild(rEl, el);
+                   }
+                   el['__bv_replacement__'] = rEl;
                 }
-                el['__bv_replacement__'] = rEl;
     
                 function isNamedSlotNode(node) {
                    if (!node || node.nodeType !== 1) return false;
@@ -4453,7 +4913,6 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    return false;
                 }
     
-                let slotElements = Array.from(rEl.querySelectorAll('slot, b-slot'));
                 slotElements.forEach(function(sNode) {
                    let sName = sNode.getAttribute('name') || 'default';
                    
@@ -4487,7 +4946,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                          else if (cn.hasAttribute('v-slot:' + sName)) cnSlot = sName;
                          else if (cn.hasAttribute('b-slot:' + sName)) cnSlot = sName;
                       }
-                      if (sName === 'default' && !cnSlot) {
+                      if (sName === 'default' && !cnSlot && !isNamedSlotNode(cn)) {
                          if (cn.hasAttribute('slot-scope') || cn.hasAttribute('v-slot') || cn.hasAttribute('b-slot') || cn.tagName.toLowerCase() === 'template') {
                             cnSlot = 'default';
                          }
@@ -4545,18 +5004,26 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       });
                       if (sNode.parentNode) sNode.remove();
                    } else if (sName === 'default') {
-                      let hasBareNodes = false;
-                      originalChildren.forEach(function(cn) {
-                         if (!isNamedSlotNode(cn)) {
-                            let targetNode = cn;
-                            if (sNode.parentNode) sNode.parentNode.insertBefore(targetNode, sNode);
-                            bv.traverse(targetNode, Data, Methods);
-                            let finalNode = targetNode['__bv_replacement__'] || targetNode;
-                            bv.markManaged(finalNode);
-                            hasBareNodes = true;
-                         }
+                      let bareChildren = originalChildren.filter(function(cn) {
+                         if (isNamedSlotNode(cn)) return false;
+                         if (cn.nodeType === 8) return false;
+                         if (cn.nodeType === 3 && !cn.nodeValue.trim()) return false;
+                         return true;
                       });
-                      if (hasBareNodes && sNode.parentNode) sNode.remove();
+                      if (bareChildren.length > 0) {
+                         originalChildren.forEach(function(cn) {
+                            if (!isNamedSlotNode(cn)) {
+                               let targetNode = cn;
+                               if (sNode.parentNode) sNode.parentNode.insertBefore(targetNode, sNode);
+                               bv.traverse(targetNode, Data, Methods);
+                               let finalNode = targetNode['__bv_replacement__'] || targetNode;
+                               bv.markManaged(finalNode);
+                            }
+                         });
+                         if (sNode.parentNode) sNode.remove();
+                      } else if (sNode.innerHTML === '' && sNode.parentNode) {
+                         sNode.remove();
+                      }
                    } else {
                       if (sNode.innerHTML === '' && sNode.parentNode) sNode.remove();
                    }
@@ -4620,8 +5087,9 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (opts.inject) {
                    opts.inject.forEach(function(k) {
                       let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
-                      if (!val && rEl && rEl.parentElement) {
-                         let curr = rEl.parentElement;
+                      let hostParent = (rEl && rEl.parentElement) || (startAnchor && startAnchor.parentElement);
+                      if (!val && hostParent) {
+                         let curr = hostParent;
                          while (curr && !val) {
                             if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
                                val = curr['__bv_instance_data__']['$provided'][k];
@@ -4677,6 +5145,11 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                       if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
                       rEl['__emitted__'][ev].push(arg);
                    }
+                   if (startAnchor) {
+                      if (!startAnchor['__emitted__']) startAnchor['__emitted__'] = {};
+                      if (!startAnchor['__emitted__'][ev]) startAnchor['__emitted__'][ev] = [];
+                      startAnchor['__emitted__'][ev].push(arg);
+                   }
                    if (ev === 'input' || ev === 'change') {
                       if (pRef['$onInput']) pRef['$onInput'](arg);
                    }
@@ -4713,7 +5186,47 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                   SetValue: function(k, val) { bv.setDeepValue(this.FData, k, val); }
                 };
                 
-                bv.traverse(rEl, cD, opts.methods);
+                if (isFragment) {
+                   let fragNodesToTraverse = bv.getFragmentNodes(startAnchor);
+                   fragNodesToTraverse.forEach(function(fNode) {
+                      fNode['bvManaged'] = true;
+                      if (!fNode['bvTraversed'] && (!startAnchor.parentNode || fNode.parentNode === startAnchor.parentNode)) {
+                         bv.traverse(fNode, cD, opts.methods);
+                      }
+                      if (fNode['__bv_replacement__']) {
+                         fNode['__bv_replacement__']['bvManaged'] = true;
+                      }
+                   });
+                   bv.getFragmentNodes(startAnchor);
+                } else {
+                   bv.traverse(rEl, cD, opts.methods);
+                }
+    
+                if (vshow) {
+                   bv.effect(function() {
+                      let res = !!Data.Evaluate(vshow);
+                      let targets = isFragment
+                         ? bv.getFragmentNodes(startAnchor).filter(function(n) { return n.nodeType === 1; })
+                         : ((rEl && rEl.nodeType === 1) ? [rEl] : []);
+                      targets.forEach(function(tEl) {
+                         if (tEl['_bv_orig_display'] === undefined) {
+                            tEl['_bv_orig_display'] = (tEl.style && tEl.style.display && tEl.style.display !== 'none') ? tEl.style.display : '';
+                         }
+                         if (res) {
+                            if (tEl.style.display === 'none') {
+                               tEl.style.display = tEl['_bv_orig_display'] || '';
+                               if (vshowTransition) bv.applyTransition(tEl, 'enter', vshowTransition);
+                            }
+                         } else {
+                            if (tEl.style.display !== 'none') {
+                               if (vshowTransition) bv.applyTransition(tEl, 'leave', vshowTransition, function() { tEl.style.display = 'none'; });
+                               else tEl.style.display = 'none';
+                            }
+                         }
+                      });
+                   });
+                }
+    
                 let stopEffect = bv.effect(function() {
                    if (opts.updated) opts.updated.call(pRef, pRef);
                 });
@@ -4722,13 +5235,18 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 if (window.__BV_DEVTOOLS_HOOK__) {
                    window.__BV_DEVTOOLS_HOOK__.emit('component:mount', { tag: tagName, instance: pRef });
                 }
-                rEl['bvUnmount'] = function() {
+                let unmountFn = function() {
                    if (stopEffect && typeof stopEffect === 'function') stopEffect();
                    if (opts.unmounted) opts.unmounted.call(pRef, pRef);
                    if (window.__BV_DEVTOOLS_HOOK__) {
                       window.__BV_DEVTOOLS_HOOK__.emit('component:unmount', { tag: tagName, instance: pRef });
                    }
                 };
+                if (isFragment) {
+                   startAnchor['bvUnmount'] = unmountFn;
+                } else {
+                   rEl['bvUnmount'] = unmountFn;
+                }
     
                 return;
               }
@@ -4970,7 +5488,11 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
       var pageData = undefined;
       if (!(ViewEl != null) || !pas.System.Assigned(CompOpt)) return;
       navEl = document.createElement("div");
-      navEl.innerHTML = "" + CompOpt["template"];
+      let rawTpl = String(CompOpt.template || '');
+      if (window.__BV_CORE__ && window.__BV_CORE__.sanitizeTableComponents) {
+        rawTpl = window.__BV_CORE__.sanitizeTableComponents(rawTpl);
+      }
+      navEl.innerHTML = rawTpl;
       rootPageEl = navEl.firstElementChild;
       if (!(rootPageEl != null)) return;
       rootPageEl['bvManaged'] = true; 
@@ -10372,6 +10894,68 @@ rtl.module("uMemberBodies",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("member-bodies",comp);
   };
 });
+rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uStatPills = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".frag-grid-label { padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; color: #334155; transition: all 0.2s; }   .frag-grid-value { padding: 12px 18px; background: #0f172a; color: #38bdf8; border-radius: 8px; font-weight: 800; font-family: 'Consolas', monospace; text-align: right; display: flex; align-items: center; justify-content: flex-end; }   .frag-highlight-root { background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="frag-grid-label">{{ label }}</div>' + '  <div class="frag-grid-value">{{ metric }}</div>';
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "Indicador";
+    comp["props"].push("metric");
+    comp["defaultProps"]["metric"] = "100%";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("stat-pills",comp);
+  };
+});
+rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uTableCells = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".frag-cell-code code { background: #eef2ff; color: #4f46e5; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; }   .frag-cell-name { color: #1e293b; }   .frag-status-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #dcfce7; color: #15803d; }   .clickable-status-cell { cursor: pointer; transition: background 0.2s; }   .clickable-status-cell:hover { background: #f0fdf4; }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <td class="frag-cell-code"><code>{{ code }}</code></td>' + '  <td class="frag-cell-name"><strong>{{ name }}</strong></td>' + '  <td class="frag-cell-status" b-bind="$attrs">' + '    <span class="frag-status-badge">{{ status }}</span>' + "  </td>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("code");
+    comp["defaultProps"]["code"] = "MOD-01";
+    comp["props"].push("name");
+    comp["defaultProps"]["name"] = "Módulo BlaiseVue";
+    comp["props"].push("status");
+    comp["defaultProps"]["status"] = "Ativo";
+    m = new Object();
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("table-cells",comp);
+  };
+});
 rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","uAppVersion"],function () {
   "use strict";
   var $mod = this;
@@ -11600,6 +12184,155 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("formulario-page",comp);
+  };
+});
+rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uFragmentsView = function () {
+    var comp = null;
+    var m = null;
+    var _styleEl = null;
+    _styleEl = document.createElement("style");
+    _styleEl.textContent = ".fragments-view-page { animation: fadeIn 0.35s ease-in; }   .frag-demo-table { width: 100%; border-collapse: collapse; margin-top: 8px; }   .frag-css-grid {     display: grid;     grid-template-columns: 1fr auto;     gap: 10px 14px;     align-items: center;     margin-top: 12px;   }   .frag-inspector-card {     background: #0f172a;     color: #f8fafc;     border-radius: 10px;     padding: 20px;     margin-top: 20px;     box-shadow: 0 4px 12px rgba(0,0,0,0.15);     border: 2px solid transparent;     transition: border-color 0.3s, box-shadow 0.3s;   }   .frag-inspector-flash {     border-color: #38bdf8;     box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);   }   .frag-dom-inspector {     background: #020617;     border: 1px solid #1e293b;     border-radius: 6px;     padding: 14px;     font-size: 12px;     overflow-x: auto;     color: #4ade80;     max-height: 260px;     white-space: pre-wrap;     font-family: 'Consolas', monospace;   }";
+    document.head.appendChild(_styleEl);
+    comp = new Object();
+    comp["template"] = '  <div class="fragments-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #10b981; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 5</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #a5b4fc; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Vue 3-Style Multi-Root &amp; $attrs</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🧩 Component Fragments (Multi-Root Templates &amp; $attrs Fallthrough)</h1>' + '        <p style="font-size: 13px; color: #cbd5e1; margin-top: 6px;">Componentes com múltiplos nós irmãos na raiz sem <code>&lt;div&gt;</code> wrapper artificial, parser HTML5 <code>&lt;template&gt;</code> nativo para <code>&lt;td&gt;</code>/<code>&lt;tr&gt;</code> e herança reativa de <code>$attrs</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button type="button" class="btn-primary" style="background: #10b981;" @click="addModuleRow">➕ Adicionar Linha (&lt;table-cells&gt;)</button>' + '        <button type="button" class="btn-outline" style="border-color: #a5b4fc; color: #e0e7ff; background: rgba(255,255,255,0.06);" @click="focusAndInspectDOM">🔍 Inspecionar Âncoras DOM</button>' + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">' + "      <span>✨ <strong>{{ lastAction }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Fragmentos em Tabela: <strong>{{ modules.length }}</strong> | Inspeções DOM: <strong>#{{ inspectionCount }}</strong></span>' + "    </div>" + "" + '    <!-- SECTION 1: NATIVE TABLE CELLS FRAGMENT + EXPLICIT b-bind="$attrs" -->' + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0; color: #1e293b;">1. Fragmentos Nativos em Tabelas (<code>&lt;table-cells&gt;</code> + <code>b-bind="$attrs"</code>)</h3>' + '          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">' + '            O componente <code>&lt;table-cells&gt;</code> possui <strong>3 elementos <code>&lt;td&gt;</code> irmãos na raiz</strong> sem nenhum <code>&lt;div&gt;</code> intermediário, mantendo a semântica válida de <code>&lt;tr&gt;</code>. O atributo <code>class="clickable-status-cell"</code> e o evento <code>@click</code> são repassados explicitamente à 3ª coluna via <code>b-bind="$attrs"</code>.' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="btn-primary" @click="addModuleRow">➕ Nova Linha</button>' + '          <button type="button" class="btn-danger" @click="removeLastRow">➖ Remover Última</button>' + "        </div>" + "      </div>" + "" + '      <table class="frag-demo-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 130px;">Código (td #1)</th>' + "            <th>Módulo Arquitetural (td #2)</th>" + '            <th style="width: 190px;">Status via $attrs (td #3)</th>' + '            <th style="width: 140px; text-align: center;">Ação Direta</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in modules" class="frag-table-row">' + "            <table-cells" + '              :code="item.code"' + '              :name="item.name"' + '              :status="item.status"' + '              class="clickable-status-cell"' + '              data-fallthrough="explicit-attrs"' + '              title="Clique para alternar o status via $attrs fallthrough"' + '              @click="toggleModuleStatus(item)"' + "            ></table-cells>" + '            <td style="text-align: center;">' + '              <button type="button" class="btn-outline" style="padding: 4px 10px; font-size: 12px;" @click="toggleModuleStatus(item)">🔄 Alternar</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + "    <!-- SECTION 2: CSS GRID MULTI-ROOT FRAGMENT + AUTOMATIC OPTION A FALLTHROUGH -->" + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0; color: #1e293b;">2. Fragmentos em CSS Grid &amp; Fallthrough Automático (<code>&lt;stat-pills&gt;</code> — Opção A)</h3>' + '          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">' + "            Cada <code>&lt;stat-pills&gt;</code> emite 2 nós irmãos (<code>.frag-grid-label</code> e <code>.frag-grid-value</code>) diretamente como filhos do container CSS Grid de 2 colunas. Na <strong>Opção A</strong>, atributos não-props (como <code>:class</code> e <code>@click</code>) herdam automaticamente para o <strong>1º elemento raiz visível</strong>." + "          </p>" + "        </div>" + '        <button type="button" class="btn-primary" style="background: #6366f1;" @click="toggleHighlightAttrs">' + "          🎨 Alternar Classe em $attrs ({{ highlightActive ? 'Destaque Ativo' : 'Padrão' }})" + "        </button>" + "      </div>" + "" + '      <div class="frag-css-grid">' + "        <stat-pills" + '          label="Parser HTML5 Nativo (<template>)"' + '          metric="Preserva <tr>, <td>, <li>"' + '          :class="highlightClass"' + '          data-mode="auto-first-root"' + '          @click="onPillClick(\'Parser HTML5 <template>\')"' + "        ></stat-pills>" + "        <stat-pills" + '          label="Âncoras de Comentário no DOM"' + '          metric="<!-- [bv-fragment] -->"' + '          :class="highlightClass"' + '          @click="onPillClick(\'Âncoras de Comentário\')"' + "        ></stat-pills>" + "        <stat-pills" + '          label="Overhead de Wrappers <div> Extras"' + '          metric="0 Nós Extras (Zero-Wrapper)"' + '          :class="highlightClass"' + '          @click="onPillClick(\'Zero-Wrapper Overhead\')"' + "        ></stat-pills>" + "      </div>" + "    </div>" + "" + "    <!-- SECTION 3: LIVE DOM ANCHOR INSPECTOR -->" + '    <div id="dom-inspector-panel" :class="inspectorFlash ? \'frag-inspector-card frag-inspector-flash\' : \'frag-inspector-card\'">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Âncoras de Fragmento no DOM Real (Leitura #{{ inspectionCount }})</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Verifica os nós <code>Comment</code> (<code>nodeType === 8</code>) delimitadores de fragmentos ativos nesta página.</p>' + "        </div>" + '        <button type="button" class="btn-primary" style="background: #0284c7; font-size: 12px;" @click="focusAndInspectDOM">🔄 Executar Varredura DOM Agora</button>' + "      </div>" + '      <pre class="frag-dom-inspector">{{ domInspectionReport }}</pre>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["modules"] = "";
+      d["nextId"] = 5;
+      d["inspectionCount"] = 0;
+      d["inspectorFlash"] = false;
+      d["highlightActive"] = true;
+      d["highlightClass"] = "frag-highlight-root";
+      d["lastAction"] = "Fragmentos Multi-Root montados diretamente no DOM sem <div> intermediária.";
+      d["domInspectionReport"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["toggleModuleStatus"] = function (_this, item) {
+      var cur = "";
+      var codeStr = "";
+      cur = pas.BVPascalDX.GetFieldStr(item,"status","");
+      codeStr = pas.BVPascalDX.GetFieldStr(item,"code","");
+      if (cur === "Ativo ✅") {
+        item["status"] = "Em Revisão ⚡"}
+       else if (cur === "Em Revisão ⚡") {
+        item["status"] = "Pronto 🚀"}
+       else item["status"] = "Ativo ✅";
+      _this["lastAction"] = 'Evento @click recebido via b-bind="$attrs" na 3ª célula <td> do módulo ' + codeStr + "!";
+      pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+    };
+    m["addModuleRow"] = function (_this) {
+      var arr = null;
+      var newObj = null;
+      var n = 0;
+      var codeStr = "";
+      arr = _this["modules"];
+      n = rtl.trunc(_this["nextId"]);
+      _this["nextId"] = n + 1;
+      if (n < 10) {
+        codeStr = "FRAG-0" + pas.SysUtils.IntToStr(n)}
+       else codeStr = "FRAG-" + pas.SysUtils.IntToStr(n);
+      newObj = new Object();
+      newObj["code"] = codeStr;
+      newObj["name"] = "Componente Multi-Root Dinâmico #" + pas.SysUtils.IntToStr(n);
+      newObj["status"] = "Ativo ✅";
+      arr.push(newObj);
+      _this["lastAction"] = "Nova linha adicionada à tabela com 3 células <td> irmãs via <table-cells> (" + codeStr + ").";
+      pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+    };
+    m["removeLastRow"] = function (_this) {
+      var arr = null;
+      arr = _this["modules"];
+      if ((arr !== null) && (arr.length > 1)) {
+        arr.pop();
+        _this["lastAction"] = "Último fragmento <table-cells> desmontado (3 nós <td> + âncoras removidos do DOM).";
+        pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+      };
+    };
+    m["toggleHighlightAttrs"] = function (_this) {
+      if (!(_this["highlightActive"] == false)) {
+        _this["highlightActive"] = false;
+        _this["highlightClass"] = "";
+        _this["lastAction"] = "Fallthrough automático ($attrs.class) desativado nos fragmentos <stat-pills>.";
+      } else {
+        _this["highlightActive"] = true;
+        _this["highlightClass"] = "frag-highlight-root";
+        _this["lastAction"] = 'Fallthrough automático ($attrs.class = "frag-highlight-root") aplicado ao 1º nó raiz de cada <stat-pills>!';
+      };
+      pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+    };
+    m["onPillClick"] = function (_this, pillName) {
+      _this["lastAction"] = "Clique capturado via Fallthrough Automático (Opção A) no 1º nó raiz de <stat-pills>: " + pillName;
+    };
+    m["inspectFragmentDOM"] = function (_this) {
+      var report = "";
+      var cnt = 0;
+      cnt = rtl.trunc(_this["inspectionCount"]) + 1;
+      _this["inspectionCount"] = cnt;
+      report = "";
+      let root = document.querySelector('.fragments-view-page') || document.body;
+      let startAnchors = [];
+      let endAnchors = 0;
+      let walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
+      let node;
+      while ((node = walker.nextNode())) {
+        let txt = (node.nodeValue || '').trim();
+        if (txt.indexOf('[bv-fragment:') === 0) {
+          startAnchors.push(node);
+        } else if (txt === '[/bv-fragment]') {
+          endAnchors++;
+        }
+      }
+      let nowStr = new Date().toLocaleTimeString();
+      let lines = [];
+      lines.push('[Leitura #' + cnt + ' às ' + nowStr + '] Âncoras de Início (<!-- [bv-fragment: ...] -->): ' + startAnchors.length + ' | Âncoras de Fim (<!-- [/bv-fragment] -->): ' + endAnchors);
+      lines.push('--------------------------------------------------------------------------------');
+      for (let i = 0; i < startAnchors.length; i++) {
+        let a = startAnchors[i];
+        let sibs = (window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) ? window.__BV_CORE__.getFragmentNodes(a) : [];
+        let tagList = [];
+        for (let j = 0; j < sibs.length; j++) {
+          if (sibs[j].nodeType === 1) {
+            tagList.push('<' + sibs[j].tagName.toLowerCase() + (sibs[j].className ? ' class="' + sibs[j].className + '"' : '') + '>');
+          }
+        }
+        lines.push('#' + (i + 1) + ' <!--' + a.nodeValue + '-->  ==>  ' + tagList.join(' + ') + '  ==>  <!-- [/bv-fragment] -->');
+      }
+      report = lines.join('\n');
+      _this["domInspectionReport"] = report;
+    };
+    m["focusAndInspectDOM"] = function (_this) {
+      var cnt = 0;
+      var totalFrags = 0;
+      pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+      cnt = rtl.trunc(_this["inspectionCount"]);
+      totalFrags = _this["modules"].length + 3;
+      _this["lastAction"] = "🔍 Inspeção DOM #" + pas.SysUtils.IntToStr(cnt) + " concluída: " + pas.SysUtils.IntToStr(totalFrags) + " fragmentos Multi-Root ativos (" + pas.SysUtils.IntToStr(totalFrags * 2) + " âncoras de comentário) verificados!";
+      _this["inspectorFlash"] = true;
+      let panel = document.getElementById('dom-inspector-panel');
+      if (panel && panel.scrollIntoView) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      setTimeout(function() {
+        _this.inspectorFlash = false;
+      }, 900);
+    };
+    comp["methods"] = m;
+    comp["created"] = function (_this) {
+      if (!_this) _this = this;
+      _this["modules"] = pas.BVPascalDX.JsonParse("[" + '{"code":"FRAG-01","name":"HTML5 <template> Native Parser","status":"Ativo ✅"},' + '{"code":"FRAG-02","name":"Comment Anchors [bv-fragment]","status":"Ativo ✅"},' + '{"code":"FRAG-03","name":"Reactive $attrs & b-bind Fallthrough","status":"Ativo ✅"},' + '{"code":"FRAG-04","name":"HMR Live Patching Multi-Root","status":"Pronto 🚀"}' + "]");
+    };
+    comp["mounted"] = function (_this) {
+      if (!_this) _this = this;
+      pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
+    };
+    pas.BVComponents.RegisterComponent("fragments-view-page",comp);
   };
 });
 rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -14959,7 +15692,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCounter","uFormHeader","uInfoCard","uMemberBodies","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -14996,6 +15729,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uInfoCard.Register_uInfoCard();
     console.log("[Init] Registering uMemberBodies...");
     pas.uMemberBodies.Register_uMemberBodies();
+    console.log("[Init] Registering uStatPills...");
+    pas.uStatPills.Register_uStatPills();
+    console.log("[Init] Registering uTableCells...");
+    pas.uTableCells.Register_uTableCells();
     console.log("[Init] Registering uAbout...");
     pas.uAbout.Register_uAbout();
     console.log("[Init] Registering uCharts...");
@@ -15006,6 +15743,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uDatasetView.Register_uDatasetView();
     console.log("[Init] Registering uFormulario...");
     pas.uFormulario.Register_uFormulario();
+    console.log("[Init] Registering uFragmentsView...");
+    pas.uFragmentsView.Register_uFragmentsView();
     console.log("[Init] Registering uHome...");
     pas.uHome.Register_uHome();
     console.log("[Init] Registering uLibBootstrap...");
@@ -15135,7 +15874,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue {{ $store.appVersion }}</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate">' + "    <!-- RESPONSIVE DRAWER (MOBILE & DESKTOP OFFCANVAS) -->" + '    <bv-drawer ref="appDrawer" title="🧭 BlaiseVue Menu">' + '      <div class="drawer-nav">' + '        <a href="#/fragments" class="drawer-link" @click="closeDrawer" style="background: #10b981; color: white; font-weight: bold;">🧩 Fragments (v5.0)</a>' + '        <a href="#/reports" class="drawer-link" @click="closeDrawer" style="background: #ef4444; color: white; font-weight: bold;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer" style="background: #8e44ad; color: white; font-weight: bold;">⚡ RPC (v4.3)</a>' + '        <a href="#/login" class="drawer-link" @click="closeDrawer">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/customers" class="drawer-link" @click="closeDrawer">📦 Customers</a>' + '        <a href="#/products" class="drawer-link" @click="closeDrawer">📦 Products</a>' + '        <a href="#/dataset" class="drawer-link" @click="closeDrawer">💾 DataSet Offline (v4.4)</a>' + '        <a href="#/mobile" class="drawer-link" @click="closeDrawer">📱 Mobile & Desktop Kit</a>' + '        <a href="#/" class="drawer-link" @click="closeDrawer">🏠 {{ $t(\'nav.home\') }}</a>' + '        <a href="#/about" class="drawer-link" @click="closeDrawer">ℹ️ {{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" class="drawer-link" @click="closeDrawer">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form" class="drawer-link" @click="closeDrawer">📋 {{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap" class="drawer-link" @click="closeDrawer">🎨 {{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" class="drawer-link" @click="closeDrawer">📊 {{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" class="drawer-link" @click="closeDrawer">✨ {{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" class="drawer-link" @click="closeDrawer">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" class="drawer-link" @click="closeDrawer">📜 Swagger (/api/docs)</a>' + "      </div>" + "    </bv-drawer>" + "" + '    <nav class="navbar">' + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button class="drawer-btn" type="button" @click="toggleDrawer" title="Menu">☰</button>' + '        <img src="logo-transparent.png" alt="BlaiseVue" width="28" height="28" style="vertical-align: middle;">' + '        <strong class="brand">BlaiseVue {{ $store.appVersion }}</strong>' + "      </div>" + '      <div class="nav-links">' + '        <a href="#/fragments" style="background: #10b981; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">🧩 Fragments (v5.0)</a>' + '        <a href="#/reports" style="background: #ef4444; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">📄 Reports (v5.0)</a>' + '        <a href="#/customers" style="background: #8e44ad; color: white; font-weight: bold; border-radius: 4px; padding: 4px 10px;">⚡ RPC (v4.3)</a>' + '        <a href="#/customers">📦 Customers</a>' + '        <a href="#/products">📦 Products</a>' + '        <a href="#/dataset" style="background: #e67e22; color: white;">💾 DataSet (v4.4)</a>' + '        <a href="#/mobile" style="background: #3880ff; color: white;">📱 Mobile Kit</a>' + '        <a href="#/login" style="background: rgba(255,255,255,0.08); border: 1px solid #42b883; color: white;">🔐 {{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Entrar\' }}</a>' + '        <a href="#/">{{ $t(\'nav.home\') }}</a>' + '        <a href="#/about">{{ $t(\'nav.about\') }}</a>' + '        <a href="#/pro" style="background: #27ae60; color: white;">⚡ {{ $t(\'nav.pro\') }}</a>' + '        <a href="#/form">{{ $t(\'nav.form\') }}</a>' + '        <a href="#/bootstrap">{{ $t(\'nav.blaiseui\') }}</a>' + '        <a href="#/charts" style="background: #42b883; color: white;">{{ $t(\'nav.charts\') }}</a>' + '        <a href="#/showcase" style="background: #3498db; color: white;">{{ $t(\'nav.showcase\') }}</a>' + '        <a href="docs/index.html" style="background: #8e44ad; color: white;">📚 Docs (v4.0)</a>' + '        <a href="/api/docs" target="_blank" style="background: #2c3e50; border: 1px solid #3498db; color: #5dade2; font-weight: 600;">📜 Swagger</a>' + "      </div>" + '      <div class="lang-switcher">' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'pt\' }" @click="$setLocale(\'pt\')">🇧🇷 PT</button>' + '        <button class="lang-btn" :class="{ \'active-lang\': $i18n.locale === \'en\' }" @click="$setLocale(\'en\')">🇺🇸 EN</button>' + "      </div>" + '      <div class="theme-switcher">' + '        <button class="theme-toggle-btn" @click="$theme.toggle()" :title="$theme.isDark ? \'Modo Claro\' : \'Modo Escuro\'">' + '          <span v-if="$theme.isDark">☀️</span>' + '          <span v-if="!$theme.isDark">🌙</span>' + "        </button>" + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)">' + '          <option value="flatly">Flatly</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="darkly">Darkly</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + '      <span class="nav-msg">{{ mensagem }}</span>' + "    </nav>" + "" + "    <!-- MAIN RESPONSIVE CONTAINER -->" + '    <bv-container class="main-content-container">' + "      <router-view></router-view>" + "    </bv-container>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION (PINNED ON MOBILE SCREENS) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Início"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/form" icon="📋" label="Forms"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "" + '    <div class="footer-status desktop-only-footer">' + "       {{ $t('status.globalStore') }}: {{ $store.appVersion }} | {{ $t('status.localeActive') }}: <strong>{{ $i18n.locale.toUpperCase() }}</strong> | {{ $t('status.theme') }}: <strong>{{ $theme.current.toUpperCase() }}</strong> | ⚡ Wasm: <strong>Active</strong> | 🚀 SSG: <strong>Ready</strong> | Dev: {{ $store.user }}" + "    </div>" + "  </div>";
     data = new Object();
     data["mensagem"] = "BlaiseVue Universal SPA";
     methods = new Object();
@@ -15175,6 +15914,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     };
     routerOpts = new Object();
     routesArr = new Array();
+    r = new Object();
+    r["path"] = "/fragments";
+    r["component"] = "fragments-view-page";
+    routesArr.push(r);
     r = new Object();
     r["path"] = "/reports";
     r["component"] = "reports-view-page";

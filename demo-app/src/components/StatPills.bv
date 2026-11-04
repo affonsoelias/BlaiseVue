@@ -1,0 +1,16 @@
+<template>
+  <div class="frag-grid-label">{{ label }}</div>
+  <div class="frag-grid-value">{{ metric }}</div>
+</template>
+
+<script>
+  props:
+    label: string = 'Indicador';
+    metric: string = '100%';
+</script>
+
+<style>
+  .frag-grid-label { padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; color: #334155; transition: all 0.2s; }
+  .frag-grid-value { padding: 12px 18px; background: #0f172a; color: #38bdf8; border-radius: 8px; font-weight: 800; font-family: 'Consolas', monospace; text-align: right; display: flex; align-items: center; justify-content: flex-end; }
+  .frag-highlight-root { background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+</style>

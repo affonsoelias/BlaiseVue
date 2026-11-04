@@ -85,10 +85,22 @@ var
   El: TJSHTMLElement;
 begin
   El := GetElement;
+  Result := '';
   if El <> nil then
-    Result := string(El.innerHTML)
-  else
-    Result := '';
+  begin
+    asm
+      if (El['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+        let nodes = window.__BV_CORE__.getFragmentNodes(El);
+        Result = nodes.map(function(n) {
+          if (n.nodeType === 1) return n.outerHTML || '';
+          if (n.nodeType === 3) return n.nodeValue || '';
+          return '';
+        }).join('');
+      } else {
+        Result = String(El.innerHTML || '');
+      }
+    end;
+  end;
 end;
 
 function TWrapper.Text: string;
@@ -96,10 +108,21 @@ var
   El: TJSHTMLElement;
 begin
   El := GetElement;
+  Result := '';
   if El <> nil then
-    Result := string(El.textContent)
-  else
-    Result := '';
+  begin
+    asm
+      if (El['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+        let nodes = window.__BV_CORE__.getFragmentNodes(El);
+        Result = nodes.map(function(n) {
+          if (n.nodeType === 1 || n.nodeType === 3) return n.textContent || '';
+          return '';
+        }).join('');
+      } else {
+        Result = String(El.textContent || '');
+      }
+    end;
+  end;
 end;
 
 function TWrapper.Find(Selector: string): TJSHTMLElement;
@@ -107,17 +130,32 @@ var
   El: TJSHTMLElement;
 begin
   El := GetElement;
+  Result := nil;
   if El <> nil then
   begin
     asm
+      if (El['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+        let nodes = window.__BV_CORE__.getFragmentNodes(El);
+        for (let i = 0; i < nodes.length; i++) {
+          let n = nodes[i];
+          if (n.nodeType === 1) {
+            if (n.matches && n.matches(Selector)) return n;
+            if (n.querySelector) {
+              let found = n.querySelector(Selector);
+              if (found) return found;
+            }
+          }
+        }
+        return null;
+      }
       if (El.matches && El.matches(Selector)) {
         return El;
       }
+      if (El.querySelector) {
+        Result = El.querySelector(Selector);
+      }
     end;
-    Result := TJSHTMLElement(El.querySelector(Selector));
-  end
-  else
-    Result := nil;
+  end;
 end;
 
 function TWrapper.FindAll(Selector: string): TJSArray;
@@ -129,7 +167,22 @@ begin
   if El <> nil then
   begin
     asm
-      Result = Array.from(El.querySelectorAll(Selector));
+      if (El['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+        let res = [];
+        let nodes = window.__BV_CORE__.getFragmentNodes(El);
+        for (let i = 0; i < nodes.length; i++) {
+          let n = nodes[i];
+          if (n.nodeType === 1) {
+            if (n.matches && n.matches(Selector)) res.push(n);
+            if (n.querySelectorAll) {
+              res.push.apply(res, Array.from(n.querySelectorAll(Selector)));
+            }
+          }
+        }
+        Result = res;
+      } else if (El.querySelectorAll) {
+        Result = Array.from(El.querySelectorAll(Selector));
+      }
     end;
   end;
 end;
@@ -163,13 +216,26 @@ var
 begin
   El := GetElement;
   if El <> nil then
-    El.click();
+  begin
+    asm
+      let target = El;
+      if (target['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+        let els = window.__BV_CORE__.getFragmentNodes(target).filter(function(n) { return n.nodeType === 1; });
+        target = els[0] || null;
+      }
+      if (target && target.click) target.click();
+    end;
+  end;
 end;
 
 procedure TWrapper.SetValue(AVal: string);
 begin
   asm
     let el = this.GetElement();
+    if (el && el['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+      let els = window.__BV_CORE__.getFragmentNodes(el).filter(function(n) { return n.nodeType === 1; });
+      el = els[0] || null;
+    }
     if (el) {
       el.value = AVal;
       el.dispatchEvent(new Event('input'));
@@ -181,7 +247,11 @@ procedure TWrapper.Trigger(EventName: string);
 begin
   asm
     let el = this.GetElement();
-    if (el) {
+    if (el && el['__bv_is_fragment__'] && window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) {
+      let els = window.__BV_CORE__.getFragmentNodes(el).filter(function(n) { return n.nodeType === 1; });
+      el = els[0] || null;
+    }
+    if (el && el.dispatchEvent) {
       el.dispatchEvent(new Event(EventName));
     }
   end;
@@ -270,7 +340,11 @@ begin
   asm
     if (Props) {
       Object.keys(Props).forEach(k => {
-         El.setAttribute(':' + k, k);
+         if (k.indexOf('-') !== -1 && (typeof Props[k] === 'string' || typeof Props[k] === 'number')) {
+            El.setAttribute(k, String(Props[k]));
+         } else {
+            El.setAttribute(':' + k, k);
+         }
       });
     }
   end;
