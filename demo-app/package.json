@@ -4,10 +4,10 @@
   "description" : "BlaiseVue Enterprise Universal Showcase Application",
   "private" : true,
   "scripts" : {
-    "build" : "bv run build",
-    "server" : "bv server",
-    "mormot" : "bv mormot",
-    "dev" : "bv run dev"
+    "dev" : "bv dev",
+    "build" : "bv build --release",
+    "preview" : "bv preview",
+    "mormot" : "bv mormot"
   },
   "devDependencies" : {
     "@capacitor/android" : "^8.5.3",

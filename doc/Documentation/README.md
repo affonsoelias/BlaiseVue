@@ -112,12 +112,11 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 ```bash
 # === Development & Build ===
 bv check [file]            # Runs compile-time template AST type-checking and typo verification
-bv dev                     # Starts dev server with instant HMR on http://localhost:8080 (alias: bv serve)
-bv run dev                 # Builds project in development mode & launches dev server on http://localhost:8080
-bv build                   # Compiles project without launching server (ideal for watchers & CI)
-bv run build               # Builds optimized production bundle in dist/
-bv run ssg                 # Pre-renders static HTML for all routes (SSG)
-bv run preview             # Local HTTP preview of production build (port 5000)
+bv dev                     # Builds project in development mode & launches dev server with HMR on http://localhost:8080
+bv build                   # Compiles frontend in development/debug mode (Lazarus & watchers)
+bv build --release         # Builds optimized production bundle with hashes in dist/
+bv ssg                     # Pre-renders static HTML for all routes (SSG)
+bv preview                 # Local HTTP preview of production build (port 5000)
 
 # === Scaffolding & Packages ===
 bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services

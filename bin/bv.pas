@@ -2684,7 +2684,7 @@ begin
     '    "type": "library"' + #10 +
     '  },' + #10 +
     '  "scripts": {' + #10 +
-    '    "dev": "bv run dev",' + #10 +
+    '    "dev": "bv dev",' + #10 +
     '    "test": "bv test",' + #10 +
     '    "pack": "bv lib pack"' + #10 +
     '  }' + #10 +
@@ -2990,6 +2990,9 @@ begin
   WriteLn('  bv lib pack       # Assemble production artifact in dist/' + LibName + '-1.0.0.zip');
 end;
 
+procedure SyncLazarusProject(const TargetDir: string; DryRun: Boolean;
+  out LazCreated, LazUpdated: Boolean; out UnitsCount: Integer; out CleanNameOut: string); forward;
+
 { Scaffolds a complete project directory structure with sample pages }
 
 procedure CmdCreate(const ProjectName: string);
@@ -2997,9 +3000,9 @@ procedure CmdCreate(const ProjectName: string);
 var
   Base, TemplatePath: string;
   Content: string;
-  IsFullStack, IsLib: Boolean;
-  TemplateMormotDir, LicenseArg, RealProjectName: string;
-  i: Integer;
+  IsFullStack, IsLib, LazCreated, LazUpdated: Boolean;
+  TemplateMormotDir, LicenseArg, RealProjectName, LazCleanName: string;
+  i, LazUnitsCount: Integer;
 begin
   IsLib := False;
   LicenseArg := '';
@@ -3314,6 +3317,10 @@ begin
       WriteLn('  [+] Full-Stack mORMot 2 backend scaffolded successfully.');
     end;
   end;
+
+  // Generate project-named Lazarus IDE files (.lpi / .lpr) and clean up template leftovers
+  SyncLazarusProject(ExcludeTrailingPathDelimiter(Base), False, LazCreated, LazUpdated, LazUnitsCount, LazCleanName);
+  WriteLn('  [+] Generated Lazarus IDE project: ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).');
 
   WriteLn('');
   WriteLn('Project created successfully!');
@@ -8690,6 +8697,7 @@ begin
             (LName = 'dist') or
             (LName = 'units') or
             (LName = '.bv_backup') or
+            (LName = '.bv-backup') or
             (LName = 'backup') or
             (LName = 'lib_cache') or
             (LName = 'tmp') or
@@ -8760,6 +8768,247 @@ begin
     finally
       FindClose(SR);
     end;
+  end;
+end;
+
+{ Synchronizes root Lazarus IDE project files (<CleanName>.lpr and <CleanName>.lpi)
+  for any BlaiseVue project directory and removes leftover demo_app.* template files. }
+procedure SyncLazarusProject(const TargetDir: string; DryRun: Boolean;
+  out LazCreated, LazUpdated: Boolean; out UnitsCount: Integer; out CleanNameOut: string);
+var
+  CurDir, ProjName, CleanName, LprFile, LpiFile, OldLpiContent: string;
+  LprContent, LpiContent, RelFile: string;
+  UnitsList: TStringList;
+  i: Integer;
+begin
+  CurDir := ExcludeTrailingPathDelimiter(TargetDir);
+  ProjName := ExtractFileName(CurDir);
+  CleanName := StringReplace(ProjName, '-', '_', [rfReplaceAll]);
+  CleanName := StringReplace(CleanName, ' ', '_', [rfReplaceAll]);
+  if CleanName = '' then CleanName := 'BlaiseVueApp';
+  CleanNameOut := CleanName;
+
+  LprFile := CurDir + DirectorySeparator + CleanName + '.lpr';
+  LpiFile := CurDir + DirectorySeparator + CleanName + '.lpi';
+  LazCreated := (not FileExists(LprFile)) or (not FileExists(LpiFile));
+  LazUpdated := False;
+
+  // Clean up leftover template files (demo_app.lpi / demo_app.lpr / demo_app.lps) if project is not demo_app
+  if LowerCase(CleanName) <> 'demo_app' then
+  begin
+    if FileExists(CurDir + DirectorySeparator + 'demo_app.lpi') then
+    begin
+      if not DryRun then DeleteFile(CurDir + DirectorySeparator + 'demo_app.lpi');
+      LazUpdated := True;
+    end;
+    if FileExists(CurDir + DirectorySeparator + 'demo_app.lpr') then
+    begin
+      if not DryRun then DeleteFile(CurDir + DirectorySeparator + 'demo_app.lpr');
+      LazUpdated := True;
+    end;
+    if FileExists(CurDir + DirectorySeparator + 'demo_app.lps') then
+    begin
+      if not DryRun then DeleteFile(CurDir + DirectorySeparator + 'demo_app.lps');
+      LazUpdated := True;
+    end;
+  end;
+
+  // 1. Create <CleanName>.lpr if missing
+  if not FileExists(LprFile) then
+  begin
+    LprContent :=
+      'program ' + CleanName + ';' + #10 +
+      #10 +
+      '{$mode objfpc}{$H+}' + #10 +
+      #10 +
+      'uses' + #10 +
+      '  {$IFDEF UNIX}' + #10 +
+      '  cthreads,' + #10 +
+      '  {$ENDIF}' + #10 +
+      '  Classes, SysUtils;' + #10 +
+      #10 +
+      '// BlaiseVue Reactive Single File Components (.bv)' + #10 +
+      '// Press F9 in Lazarus IDE to launch the live dev server!' + #10 +
+      'begin' + #10 +
+      '  WriteLn(''BlaiseVue Project: ' + CleanName + ''');' + #10 +
+      'end.' + #10;
+    if not DryRun then
+      WriteStringToFile(LprFile, LprContent);
+  end;
+
+  // 2. Collect all project files across the whole project (*.bv, *.pas, configs)
+  UnitsList := TStringList.Create;
+  try
+    CollectProjectUnits(CurDir, '', UnitsList, True);
+    UnitsList.Sort;
+    UnitsCount := UnitsList.Count;
+
+    // 3. Assemble <CleanName>.lpi
+    LpiContent :=
+      '<?xml version="1.0" encoding="UTF-8"?>' + #10 +
+      '<CONFIG>' + #10 +
+      '  <ProjectOptions>' + #10 +
+      '    <Version Value="12"/>' + #10 +
+      '    <General>' + #10 +
+      '      <Flags>' + #10 +
+      '        <MainUnitHasCreateFormStatements Value="False"/>' + #10 +
+      '        <MainUnitHasTitleStatement Value="False"/>' + #10 +
+      '        <Scaled Value="True"/>' + #10 +
+      '      </Flags>' + #10 +
+      '      <SessionStorage Value="InProjectDir"/>' + #10 +
+      '      <Title Value="' + CleanName + '"/>' + #10 +
+      '      <ResourceType Value="res"/>' + #10 +
+      '      <UseXPManifest Value="True"/>' + #10 +
+      '    </General>' + #10 +
+      '    <BuildModes Count="1">' + #10 +
+      '      <Item1 Name="Default" Default="True"/>' + #10 +
+      '    </BuildModes>' + #10 +
+      '    <PublishOptions>' + #10 +
+      '      <Version Value="2"/>' + #10 +
+      '      <UseFileFilters Value="True"/>' + #10 +
+      '    </PublishOptions>' + #10 +
+      '    <RunParams>' + #10 +
+      '      <FormatVersion Value="2"/>' + #10 +
+      '      <Modes ActiveMode="default">' + #10 +
+      '        <Mode Name="default">' + #10 +
+      '          <local>' + #10 +
+      '            <HostApplicationFilename Value="bv.exe"/>' + #10 +
+      '            <CommandLineParams Value="dev"/>' + #10 +
+      '          </local>' + #10 +
+      '        </Mode>' + #10 +
+      '      </Modes>' + #10 +
+      '    </RunParams>' + #10 +
+      '    <Units Count="' + IntToStr(UnitsList.Count + 1) + '">' + #10 +
+      '      <Unit0>' + #10 +
+      '        <Filename Value="' + CleanName + '.lpr"/>' + #10 +
+      '        <IsPartOfProject Value="True"/>' + #10 +
+      '      </Unit0>' + #10;
+
+    for i := 0 to UnitsList.Count - 1 do
+    begin
+      RelFile := UnitsList[i];
+      LpiContent := LpiContent +
+        '      <Unit' + IntToStr(i + 1) + '>' + #10 +
+        '        <Filename Value="' + RelFile + '"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '      </Unit' + IntToStr(i + 1) + '>' + #10;
+    end;
+
+    LpiContent := LpiContent +
+      '    </Units>' + #10 +
+      '  </ProjectOptions>' + #10 +
+      '  <CompilerOptions>' + #10 +
+      '    <Version Value="11"/>' + #10 +
+      '    <Target>' + #10 +
+      '      <Filename Value="bin/' + CleanName + '"/>' + #10 +
+      '    </Target>' + #10 +
+      '    <SearchPaths>' + #10 +
+      '      <IncludeFiles Value="$(ProjOutDir)"/>' + #10 +
+      '      <OtherUnitFiles Value="src;src/services;src/components;src/views;server;tests;desktop;generated;lib"/>' + #10 +
+      '      <UnitOutputDirectory Value="generated/units"/>' + #10 +
+      '    </SearchPaths>' + #10 +
+      '    <Other>' + #10 +
+      '      <CustomOptions Value="-dBLAISEVUE"/>' + #10 +
+      '      <ExecuteBefore>' + #10 +
+      '        <Command Value="bv build"/>' + #10 +
+      '        <CompileReasons Compile="True" Build="True" Run="False"/>' + #10 +
+      '      </ExecuteBefore>' + #10 +
+      '    </Other>' + #10 +
+      '  </CompilerOptions>' + #10 +
+      '</CONFIG>' + #10;
+
+    if FileExists(LpiFile) then
+    begin
+      OldLpiContent := StringReplace(ReadFileToString(LpiFile), #13#10, #10, [rfReplaceAll]);
+      if OldLpiContent <> LpiContent then
+      begin
+        LazUpdated := True;
+        if not DryRun then
+          WriteStringToFile(LpiFile, LpiContent);
+      end;
+    end
+    else
+    begin
+      if not DryRun then
+        WriteStringToFile(LpiFile, LpiContent);
+    end;
+  finally
+    UnitsList.Free;
+  end;
+end;
+
+{ Synchronizes server/server.lpi for Full-Stack mORMot 2 backend projects. }
+procedure SyncServerLazarusProject(const ServerDir: string; DryRun: Boolean;
+  out ServerLpiCreated, ServerLpiUpdated: Boolean; out ServerUnitsCount: Integer);
+var
+  CleanServerDir, ServerLpiFile, TplServerLpi, LpiContent, OldContent, UnitsXml, RelFile: string;
+  UnitsList: TStringList;
+  StartPos, EndPos, i: Integer;
+begin
+  ServerLpiCreated := False;
+  ServerLpiUpdated := False;
+  ServerUnitsCount := 0;
+  CleanServerDir := ExcludeTrailingPathDelimiter(ServerDir);
+  ServerLpiFile := CleanServerDir + DirectorySeparator + 'server.lpi';
+  TplServerLpi := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot' + DirectorySeparator + 'server.lpi';
+
+  if not FileExists(ServerLpiFile) then
+  begin
+    if not FileExists(TplServerLpi) then Exit;
+    ServerLpiCreated := True;
+    LpiContent := ReadFileToString(TplServerLpi);
+  end
+  else
+    LpiContent := ReadFileToString(ServerLpiFile);
+
+  OldContent := StringReplace(LpiContent, #13#10, #10, [rfReplaceAll]);
+  LpiContent := OldContent;
+
+  UnitsList := TStringList.Create;
+  try
+    CollectProjectUnits(CleanServerDir, '', UnitsList, False);
+    // Remove server.lpr if present (already Unit0)
+    for i := UnitsList.Count - 1 downto 0 do
+      if LowerCase(UnitsList[i]) = 'server.lpr' then
+        UnitsList.Delete(i);
+    UnitsList.Sort;
+    ServerUnitsCount := UnitsList.Count + 1;
+
+    UnitsXml :=
+      '    <Units Count="' + IntToStr(UnitsList.Count + 1) + '">' + #10 +
+      '      <Unit0>' + #10 +
+      '        <Filename Value="server.lpr"/>' + #10 +
+      '        <IsPartOfProject Value="True"/>' + #10 +
+      '      </Unit0>' + #10;
+
+    for i := 0 to UnitsList.Count - 1 do
+    begin
+      RelFile := UnitsList[i];
+      UnitsXml := UnitsXml +
+        '      <Unit' + IntToStr(i + 1) + '>' + #10 +
+        '        <Filename Value="' + RelFile + '"/>' + #10 +
+        '        <IsPartOfProject Value="True"/>' + #10 +
+        '      </Unit' + IntToStr(i + 1) + '>' + #10;
+    end;
+    UnitsXml := UnitsXml + '    </Units>';
+
+    StartPos := Pos('    <Units Count="', LpiContent);
+    if StartPos = 0 then StartPos := Pos('<Units Count="', LpiContent);
+    EndPos := Pos('</Units>', LpiContent);
+    if (StartPos > 0) and (EndPos > StartPos) then
+    begin
+      LpiContent := Copy(LpiContent, 1, StartPos - 1) + UnitsXml + Copy(LpiContent, EndPos + Length('</Units>'), MaxInt);
+    end;
+
+    if ServerLpiCreated or (LpiContent <> OldContent) then
+    begin
+      if not ServerLpiCreated then
+        ServerLpiUpdated := True;
+      if not DryRun then
+        WriteStringToFile(ServerLpiFile, LpiContent);
+    end;
+  finally
+    UnitsList.Free;
   end;
 end;
 
@@ -9194,7 +9443,7 @@ begin
   WriteLn('');
   WriteLn('Next steps:');
   WriteLn('  bv test        Run test suite');
-  WriteLn('  bv run dev     Start development server');
+  WriteLn('  bv dev         Start development server');
   WriteLn('============================================================');
   WriteLn('');
 end;
@@ -9347,6 +9596,13 @@ end;
 { Runs the local development HTTP server with WebSocket HMR bridge (bv serve). }
 procedure CmdServe;
 begin
+  if not FileExists('dist' + DirectorySeparator + 'index.html') or
+     not FileExists('dist' + DirectorySeparator + 'js' + DirectorySeparator + 'main.js') then
+  begin
+    WriteLn('  [INFO] dist/ bundle not found. Running initial development build...');
+    CmdBuild;
+  end;
+
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Dev Server (HMR Enabled) ===');
   if not HasCommand('node') then
   begin
@@ -9431,7 +9687,7 @@ begin
   WriteLn('=== BlaiseVue Production Preview ===');
   if not DirectoryExists('dist') then
   begin
-    WriteLn('ERROR: /dist folder not found. Run "bv run build" first.');
+    WriteLn('ERROR: /dist folder not found. Run "bv build --release" first.');
     Exit;
   end;
 
@@ -20100,9 +20356,24 @@ begin
 
   else if (SubCmd = 'run') then
   begin
-    if not FileExists(TargetExe) or IsRelease then
+    if IsRelease then
     begin
-      CmdServer('build', Arg1, Arg2);
+      WriteLn('ERROR: "--release" is only supported with "bv mormot build --release".');
+      WriteLn('Usage: bv mormot run [--port <port>]');
+      Halt(1);
+    end;
+
+    if (not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'index.html') or
+        not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'js' + DirectorySeparator + 'main.js')) and
+       DirectoryExists(ProjectRoot + DirectorySeparator + 'src') then
+    begin
+      WriteLn('  [INFO] Frontend dist/ bundle not found. Building frontend before starting mORMot 2 server...');
+      CmdBuild;
+    end;
+
+    if not FileExists(TargetExe) then
+    begin
+      CmdServer('build');
     end;
 
     if not FileExists(TargetExe) then
@@ -20285,7 +20556,7 @@ begin
 
     // 1. Build frontend in production mode
 
-    WriteLn('[1/4] Compiling reactive frontend (bv run build)...');
+    WriteLn('[1/4] Compiling reactive frontend (bv build --release)...');
     ChDir(ProjectRoot);
     CmdRunBuild;
     DistDir := ProjectRoot + DirectorySeparator + 'dist';
@@ -20422,7 +20693,7 @@ begin
 
   else
   begin
-    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
     WriteLn('  run [--port <port>]   Launches native server');
@@ -21952,16 +22223,16 @@ begin
         WriteLn('    channel [use <name>]       Inspects or switches framework branch (main/develop)');
         WriteLn('');
         WriteLn('  Backend & Full-Stack (mORMot 2):');
-        WriteLn('    mormot run [--release]     Launches native backend server');
+        WriteLn('    mormot run                 Launches native backend server');
         WriteLn('    mormot build [--release]   Compiles native server with Free Pascal');
         WriteLn('    mormot status              Checks backend health & metrics');
         WriteLn('    mormot crud <Model> [fields] Scaffolds full-stack CRUD & data grid');
         WriteLn('    mormot docs / docker       Swagger API docs / Docker containers');
         WriteLn('');
         WriteLn('  Frontend & Development:');
-        WriteLn('    dev / serve                Starts dev server with HMR on http://localhost:8080');
-        WriteLn('    build                      Production build in dist/');
-        WriteLn('    run <build|dev|preview>    Unified build and run commands');
+        WriteLn('    dev                        Starts dev server with HMR on http://localhost:8080');
+        WriteLn('    build [--release]          Compiles frontend in dist/ (debug or --release)');
+        WriteLn('    preview                    Local HTTP preview of production build');
         WriteLn('    check [file]               AST template type-checker & validator');
         WriteLn('    clean                      Purges generated/ and dist/ folders');
         WriteLn('');
@@ -22085,26 +22356,26 @@ begin
           ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `mormot` / `server` backend commands
-      else if (CmdName = 'mormot') or (CmdName = 'server') then
+      // `mormot` backend commands
+      else if CmdName = 'mormot' then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `dev` / `serve`
-      else if (CmdName = 'dev') or (CmdName = 'serve') then
+      // `dev`
+      else if CmdName = 'dev' then
       begin
-        ExecInCockpit(BvExePath, ActivePath, 'dev');
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
       // `build`
       else if CmdName = 'build' then
       begin
-        ExecInCockpit(BvExePath, ActivePath, 'run build');
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `run`
-      else if CmdName = 'run' then
+      // `preview`
+      else if CmdName = 'preview' then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
@@ -22341,10 +22612,11 @@ end;
 procedure CmdUpdate;
 var
   BaseDir, ServerDir, ServerLprFile, AppCfgFile, PkgFile, DistJsDir, RtlDest, RtlSrc: string;
-  BackupDir, CurTimestamp, ProjName, ProjVer, LprContent, PkgContent: string;
+  BackupDir, CurTimestamp, ProjName, ProjVer, LprContent, PkgContent, LazCleanName: string;
   DryRun, OnlyServer, OnlyFrontend, NoBackup, Force: Boolean;
   HasServer, HasFrontend, ServerUpdated, PkgUpdated, RtlUpdated: Boolean;
-  i, BackupCount: Integer;
+  LazCreated, LazUpdated, ServerLpiCreated, ServerLpiUpdated: Boolean;
+  i, BackupCount, LazUnitsCount, ServerUnitsCount: Integer;
   UsesPos, VarPos, BeginPos, PosMarker, MainPortPos, MainBeginPos, p: Integer;
 { Creates a timestamped backup copy of a file before performing destructive mutations. }
   procedure CreateFileBackup(const RelFilePath: string);
@@ -22439,13 +22711,20 @@ begin
   ServerUpdated := False;
   PkgUpdated := False;
   RtlUpdated := False;
+  LazCreated := False;
+  LazUpdated := False;
+  ServerLpiCreated := False;
+  ServerLpiUpdated := False;
+  LazUnitsCount := 0;
+  ServerUnitsCount := 0;
+  LazCleanName := '';
 
   // -------------------------------------------------------------------
   // 1. Backend Server Infrastructure
   // -------------------------------------------------------------------
   if HasServer and (not OnlyFrontend) then
   begin
-    WriteLn('[1/3] Inspecting server infrastructure in server/server.lpr...');
+    WriteLn('[1/4] Inspecting server infrastructure in server/server.lpr...');
     LprContent := ReadFileToString(ServerLprFile);
 
     // 1.1: Ensure windows unit is in uses clause
@@ -22603,6 +22882,25 @@ begin
       WriteLn('  [OK] server/server.lpr is already up to date with the latest features.');
     end;
 
+    // 1.6: Synchronize server/server.lpi for Lazarus IDE
+    SyncServerLazarusProject(ServerDir, DryRun, ServerLpiCreated, ServerLpiUpdated, ServerUnitsCount);
+    if ServerLpiCreated then
+    begin
+      if not DryRun then
+        WriteLn('  [+] Created server/server.lpi (', ServerUnitsCount, ' server units indexed).')
+      else
+        WriteLn('  [*] [DRY-RUN] Would create server/server.lpi (', ServerUnitsCount, ' server units indexed).');
+    end
+    else if ServerLpiUpdated then
+    begin
+      if not DryRun then
+        WriteLn('  [+] Synchronized server/server.lpi (', ServerUnitsCount, ' server units indexed).')
+      else
+        WriteLn('  [*] [DRY-RUN] Would synchronize server/server.lpi (', ServerUnitsCount, ' server units indexed).');
+    end
+    else
+      WriteLn('  [OK] server/server.lpi is up to date (', ServerUnitsCount, ' server units indexed).');
+
     // Check if server binary should be rebuilt
     if (ServerUpdated or Force) and (not DryRun) then
     begin
@@ -22620,7 +22918,7 @@ begin
   // -------------------------------------------------------------------
   if HasFrontend and (not OnlyServer) then
   begin
-    WriteLn('[2/3] Inspecting frontend infrastructure...');
+    WriteLn('[2/4] Inspecting frontend infrastructure...');
 
     // 2.1: package.json scripts
     if FileExists(PkgFile) then
@@ -22628,19 +22926,48 @@ begin
       PkgContent := ReadFileToString(PkgFile);
       if Pos('"dev": "bv serve"', PkgContent) > 0 then
       begin
-        PkgContent := StringReplace(PkgContent, '"dev": "bv serve"', '"dev": "bv run dev"', [rfReplaceAll]);
+        PkgContent := StringReplace(PkgContent, '"dev": "bv serve"', '"dev": "bv dev"', [rfReplaceAll]);
         PkgUpdated := True;
       end;
-      if Pos('"server": "bv server"', PkgContent) = 0 then
+      if Pos('"dev": "bv run dev"', PkgContent) > 0 then
       begin
-        if Pos('"build": "bv run build"', PkgContent) > 0 then
-        begin
-          PkgContent := StringReplace(PkgContent,
-            '"build": "bv run build"',
-            '"build": "bv run build",' + #10 + '    "server": "bv server",' + #10 + '    "mormot": "bv mormot"',
-            [rfReplaceAll]);
-          PkgUpdated := True;
-        end;
+        PkgContent := StringReplace(PkgContent, '"dev": "bv run dev"', '"dev": "bv dev"', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('"dev" : "bv run dev"', PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '"dev" : "bv run dev"', '"dev" : "bv dev"', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('"build": "bv run build"', PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '"build": "bv run build"', '"build": "bv build --release"', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('"build" : "bv run build"', PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '"build" : "bv run build"', '"build" : "bv build --release"', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('    "server": "bv server",' + #10, PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '    "server": "bv server",' + #10, '', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('    "server" : "bv server",' + #10, PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '    "server" : "bv server",' + #10, '', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('    "server": "bv server",' + #13#10, PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '    "server": "bv server",' + #13#10, '', [rfReplaceAll]);
+        PkgUpdated := True;
+      end;
+      if Pos('    "server" : "bv server",' + #13#10, PkgContent) > 0 then
+      begin
+        PkgContent := StringReplace(PkgContent, '    "server" : "bv server",' + #13#10, '', [rfReplaceAll]);
+        PkgUpdated := True;
       end;
 
       if PkgUpdated then
@@ -22649,7 +22976,7 @@ begin
         begin
           CreateFileBackup('package.json');
           WriteStringToFile(PkgFile, PkgContent);
-          WriteLn('  [+] Synchronized package.json scripts ("dev": "bv run dev").');
+          WriteLn('  [+] Synchronized package.json scripts ("dev": "bv dev", "build": "bv build --release").');
         end
         else
           WriteLn('  [*] [DRY-RUN] Would update package.json scripts');
@@ -22681,9 +23008,34 @@ begin
   end;
 
   // -------------------------------------------------------------------
-  // 3. Registry & Non-destructive Safety Summary
+  // 3. Lazarus IDE Project Files (.lpi / .lpr)
   // -------------------------------------------------------------------
-  WriteLn('[3/3] Finalizing project registry and safety check...');
+  if not OnlyServer then
+  begin
+    WriteLn('[3/4] Inspecting Lazarus IDE project files...');
+    SyncLazarusProject(ExcludeTrailingPathDelimiter(BaseDir), DryRun, LazCreated, LazUpdated, LazUnitsCount, LazCleanName);
+    if LazCreated then
+    begin
+      if not DryRun then
+        WriteLn('  [+] Created ', LazCleanName, '.lpr and ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).')
+      else
+        WriteLn('  [*] [DRY-RUN] Would create ', LazCleanName, '.lpr and ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).');
+    end
+    else if LazUpdated then
+    begin
+      if not DryRun then
+        WriteLn('  [+] Synchronized ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).')
+      else
+        WriteLn('  [*] [DRY-RUN] Would synchronize ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).');
+    end
+    else
+      WriteLn('  [OK] ', LazCleanName, '.lpi and ', LazCleanName, '.lpr are already up to date (', LazUnitsCount, ' units indexed).');
+  end;
+
+  // -------------------------------------------------------------------
+  // 4. Registry & Non-destructive Safety Summary
+  // -------------------------------------------------------------------
+  WriteLn('[4/4] Finalizing project registry and safety check...');
   if not DryRun then
   begin
     CmdProjectAdd;
@@ -22698,6 +23050,8 @@ begin
   begin
     if ServerUpdated then
       WriteLn('  Server:        UPDATED (server.lpr + recompiled binary)')
+    else if ServerLpiCreated or ServerLpiUpdated then
+      WriteLn('  Server:        UPDATED (server/server.lpi synchronized)')
     else
       WriteLn('  Server:        ALREADY UP TO DATE');
   end
@@ -22710,6 +23064,16 @@ begin
       WriteLn('  Frontend:      UPDATED (scripts and/or runtime assets)')
     else
       WriteLn('  Frontend:      ALREADY UP TO DATE');
+  end;
+
+  if not OnlyServer then
+  begin
+    if LazCreated then
+      WriteLn('  Lazarus IDE:   CREATED (', LazCleanName, '.lpi, ', LazCleanName, '.lpr)')
+    else if LazUpdated then
+      WriteLn('  Lazarus IDE:   SYNCHRONIZED (', LazCleanName, '.lpi)')
+    else
+      WriteLn('  Lazarus IDE:   ALREADY UP TO DATE (', LazCleanName, '.lpi)');
   end;
 
   WriteLn('  Safety Rule:   100% PRESERVED - All user custom directories and files');
@@ -23297,13 +23661,12 @@ begin
     WriteLn('  ============================================================');
     WriteLn('  Usage: bv <command> [options]');
     WriteLn('');
-    WriteLn('  # === Development & Server ===');
-    WriteLn('  bv dev                     Starts dev server with HMR on http://localhost:8080 (alias: bv serve)');
-    WriteLn('  bv run dev                 Builds project in dev mode & launches dev server on http://localhost:8080');
-    WriteLn('  bv build                   Compiles project without launching server (ideal for watchers & CI)');
-    WriteLn('  bv run build               Builds optimized production bundle with hashes in dist/');
-    WriteLn('  bv run preview             Local HTTP preview of production build (port 5000)');
-    WriteLn('  bv run ssg                 Pre-renders all routes into static HTML (SSG)');
+    WriteLn('  # === Development & Frontend Build ===');
+    WriteLn('  bv dev                     Builds project in dev mode & starts dev server with HMR on http://localhost:8080');
+    WriteLn('  bv build                   Compiles frontend in development/debug mode (Lazarus & watchers)');
+    WriteLn('  bv build --release         Builds optimized production bundle with hashes in dist/');
+    WriteLn('  bv preview                 Local HTTP preview of production build (port 5000)');
+    WriteLn('  bv ssg                     Pre-renders all routes into static HTML (SSG)');
     WriteLn('  bv doc [--serve]           Generates interactive component documentation & playground');
     WriteLn('  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks');
     WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
@@ -23428,12 +23791,42 @@ begin
 
   else if Cmd = 'build' then
   begin
-    CmdBuild;
+    if ParamCount >= 2 then
+    begin
+      if LowerCase(ParamStr(2)) = '--release' then
+        CmdRunBuild
+      else
+      begin
+        WriteLn('Unknown build option: ', ParamStr(2));
+        WriteLn('Usage: bv build [--release]');
+        Halt(1);
+      end;
+    end
+    else
+      CmdBuild;
   end
 
-  else if (Cmd = 'serve') or (Cmd = 'dev') then
+  else if Cmd = 'dev' then
   begin
+    if ParamCount >= 2 then
+    begin
+      WriteLn('Unknown dev option: ', ParamStr(2));
+      WriteLn('Usage: bv dev');
+      Halt(1);
+    end;
+    CmdBuild;
     CmdServe;
+  end
+
+  else if Cmd = 'preview' then
+  begin
+    if ParamCount >= 2 then
+    begin
+      WriteLn('Unknown preview option: ', ParamStr(2));
+      WriteLn('Usage: bv preview');
+      Halt(1);
+    end;
+    CmdRunPreview;
   end
 
   else if Cmd = 'transpile' then
@@ -23698,38 +24091,9 @@ begin
       CmdTheme(LowerCase(ParamStr(2)), ParamStr(3));
   end
 
-  else if Cmd = 'run' then
+  else if (Cmd = 'run') and (ParamCount >= 3) and (LowerCase(ParamStr(2)) = 'compile-sfc') then
   begin
-    if ParamCount < 2 then
-    begin
-      WriteLn('Usage: bv run <build|dev|preview>');
-      Halt(1);
-    end;
-
-    Cmd := LowerCase(ParamStr(2));
-    if Cmd = 'build' then CmdRunBuild
-
-    else if Cmd = 'dev' then
-    begin
-      CmdBuild;
-      CmdServe;
-    end
-
-    else if Cmd = 'ssg' then CmdSSG
-
-    else if Cmd = 'preview' then CmdRunPreview
-
-    else if Cmd = 'compile-sfc' then
-    begin
-      if ParamCount < 2 then Halt(1);
-      CmdCompileSFC(ParamStr(2));
-    end
-
-    else
-    begin
-      WriteLn('Unknown run subcommand: ', Cmd);
-      Halt(1);
-    end;
+    CmdCompileSFC(ParamStr(3));
   end
 
   else if Cmd = 'doc' then
@@ -23795,11 +24159,11 @@ begin
     CmdStudio;
   end
 
-  else if (Cmd = 'mormot') or (Cmd = 'server') then
+  else if Cmd = 'mormot' then
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
       Halt(1);
     end;
 

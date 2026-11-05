@@ -185,7 +185,9 @@ function watchDir(dir) {
         try {
           const isWindows = process.platform === 'win32';
           const binName = isWindows ? 'bv.exe' : 'bv';
+          const selfDir = path.dirname(path.resolve(process.argv[1] || ROOT_DIR));
           const candidateExes = [
+            path.resolve(selfDir, binName),
             path.resolve(ROOT_DIR, 'bin', binName),
             path.resolve(ROOT_DIR, binName),
             path.resolve(ROOT_DIR, '..', 'bin', binName),

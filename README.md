@@ -87,13 +87,11 @@ bv lib install charts   # Installs Chart.js data visualization suite
 The BlaiseVue CLI is a single, zero-dependency native executable compiled with Free Pascal.
 
 ```bash
-# === Development & Server ===
-bv dev                     # Starts development server with HMR on http://localhost:8080 (alias: bv serve)
-bv serve                   # Starts development server with HMR
-bv run dev                 # Builds project in development mode & launches dev server on http://localhost:8080
-bv build                   # Compiles project without launching server (ideal for watchers & CI)
-bv run build               # Builds optimized production bundle in dist/
-bv run preview             # Local HTTP preview of production build (port 5000)
+# === Development & Frontend Build ===
+bv dev                     # Builds project in development mode & launches dev server with HMR on http://localhost:8080
+bv build                   # Compiles frontend in development/debug mode (Lazarus & watchers)
+bv build --release         # Builds optimized production bundle with hashes in dist/
+bv preview                 # Local HTTP preview of production build (port 5000)
 bv clean                   # Cleans generated files (generated/ and dist/)
 
 # === Scaffolding & Generators ===
@@ -172,7 +170,6 @@ bv mormot status           # Queries /api/status health endpoint (with 2s fast t
 bv mormot deploy           # Packages standalone production bundle in deploy/
 bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
 bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces
-                           # (Note: bv server commands preserved as aliases)
 
 # === Testing ===
 bv test                    # Compiles .test.pas files and runs Vitest suite
@@ -265,7 +262,7 @@ BlaiseVue/
 - **Git (v2.30+)**: Required for cloning the framework, automatic selective updates (`bv self-update`), and channel management (`bv channel`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server/`).
 - **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `remove.py`, `pack.py`) for the dynamic developer tooling ecosystem (`bv extension`) and custom user packages (`~/.blaisevue/tools/`).
-- **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv serve` / `bv dev`), automated testing (`bv test`), and mobile synchronization (`bv mobile`).
+- **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv mobile`).
 - **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv mobile build`), managing emulators, and running `bv mobile open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.
 
 > [!NOTE]
@@ -314,7 +311,7 @@ BlaiseVue comes with the `pas2js` transpiler already included under `vendor/pas2
 ### 6. Launch the Demo App
 ```bash
 cd demo-app
-bv serve           # or ..\bin\bv.exe serve on Windows
+bv dev             # or ..\bin\bv.exe dev on Windows
 # Open http://localhost:8080 in your browser
 ```
 

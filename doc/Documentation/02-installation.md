@@ -18,8 +18,8 @@ Before installing BlaiseVue, ensure the following core tools are installed on yo
    - Download: [https://www.lazarus-ide.org](https://www.lazarus-ide.org) or [https://www.freepascal.org](https://www.freepascal.org).
 
 3. **Node.js (v18+ LTS) & npm** *(Required for Dev Server & Tests)*:
-   - Powers the development server with live Hot Module Replacement (HMR) on port `8080` & WebSocket `8081` (`bv serve` / `bv dev`).
-   - Serves local production previews (`bv run preview`) and interactive component documentation (`bv doc --serve`).
+   - Powers the development server with live Hot Module Replacement (HMR) on port `8080` & WebSocket `8081` (`bv dev`).
+   - Serves local production previews (`bv preview`) and interactive component documentation (`bv doc --serve`).
    - Runs the automated test suite (`bv test` via Vitest).
    - Manages mobile dependencies and synchronization (`bv mobile init`, `bv mobile sync`).
    - Download: [https://nodejs.org](https://nodejs.org) (LTS version recommended; must be on your system `PATH`).
@@ -187,7 +187,7 @@ Launch the enterprise showcase application included with the framework:
 
 ```bash
 cd demo-app
-bv dev   # or bv serve
+bv dev
 ```
 Open **[http://localhost:8080](http://localhost:8080)** in your browser to experience instant Hot Module Replacement (HMR), reactive forms, and full-stack mORMot 2 integration!
 

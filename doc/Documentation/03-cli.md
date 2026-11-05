@@ -17,29 +17,28 @@ bv -v
 
 ---
 
-## 🏗️ Development and Serving Commands
+## 🏗️ Development and Build Commands
 
-### 1. `bv dev` / `bv serve` (Development Server with Instant HMR)
-Launches the integrated development server with live Hot Module Replacement:
-- **`bv dev`**: Modern standard command to boot the dev server with HMR.
-- **`bv serve`**: Legacy alias fully supported for backward compatibility.
-- **HTTP Server**: Serves your application bundle locally at `http://localhost:8080`.
+### 1. `bv dev` (Development Build & Server with Instant HMR)
+Compiles Single File Components (`.bv`) in development mode and boots the integrated development server with live Hot Module Replacement:
+- **Build & Serve**: Compiles all reactive templates (`BVDevTools` active) and launches the HMR development server on `http://localhost:8080`.
 - **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
-- **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and sends an in-place patch to the browser without reloading the page or losing state.
-
-### 2. `bv run dev` (Express Development Build & Server)
-Compiles Single File Components (`.bv`) and automatically boots the development server:
-- **Build & Serve**: Compiles all reactive templates and launches the HMR development server on `http://localhost:8080` (WebSocket HMR on port `8081`).
+- **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and updates the browser in real time.
 - **Cache Busting (`v=123...`)**: Injects timestamps into script and link tags in `index.html` to prevent stale browser caches.
-- **Diagnostic DevTools**: Injects diagnostic symbols and runtime hooks for browser extensions.
-- **Verbose Console Output**: Generates human-readable debug logs.
-- **Direct Shortcuts**: `bv dev` or `bv serve` also launch the dev server directly. For headless compilation without launching a server (ideal for watchers, linters, or CI), use `bv build`.
 
-### 3. `bv run build` (Optimized Production)
-Generates the production-ready distribution in `dist/`:
-- **Purge Artifacts**: Removes development scaffolding, debug symbols, and experimental units.
-- **Tree-Shaking & Minification**: Links only the required runtime units from Pas2JS RTL.
-- **Static Assets**: Bundles and hashes scripts for long-term caching.
+### 2. `bv build` (Development / Lazarus Compilation)
+Compiles Single File Components (`.bv`) in development/debug mode without launching the HTTP server:
+- Ideal for Lazarus IDE (`Ctrl+F9`), watchers, linters, and CI verification.
+- Injects diagnostic `BVDevTools` symbols and generates `dist/js/main.js`.
+
+### 3. `bv build --release` (Optimized Production Build)
+Generates the production-ready distribution in `dist/` (`-dPRODUCTION`):
+- **Purge Artifacts**: Removes development scaffolding, `BVDevTools`, and debug hooks.
+- **Tree-Shaking & Optimization**: Links only the required runtime units from Pas2JS RTL.
+- **Static Assets & Hashing**: Bundles and hashes scripts (`main.<hash>.js`) for long-term caching.
+
+### 4. `bv preview` (Production Preview Server)
+Starts a local static HTTP server on `http://localhost:5000` to inspect the production build in `dist/`.
 
 ---
 
@@ -398,7 +397,7 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 - **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
 - **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
 - **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
-  - Compiles frontend in production mode (`bv run build`).
+  - Compiles frontend in production mode (`bv build --release`).
   - Compiles backend in release mode (`bv mormot build --release`).
   - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
   - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
@@ -508,11 +507,12 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
 * `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
 * `test` — Runs full test suite (Pas2JS + Vitest).
-* `dev` — Starts dev server with instant HMR.
-* `build` — Compiles production distribution with hashes.
+* `dev` — Builds in debug mode & starts dev server with instant HMR.
+* `build [--release]` — Compiles frontend distribution (debug or `--release` with hashes).
+* `preview` — Starts local HTTP preview server for `dist/`.
 * `check [file]` — Validates SFC templates with AST type-checker.
 * `clean` — Purges `generated/` and `dist/`.
-* `update` / `upgrade` — Surgically syncs project infrastructure with latest framework features.
+* `update` / `upgrade` — Surgically syncs project infrastructure and Lazarus IDE files (`.lpi` / `.lpr`) with latest framework features.
 * `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
 * `self-update` — Synchronizes and recompiles BlaiseVue engine directly from GitHub.
 * `channel [use <name>]` — Inspects or switches framework branches (main / develop).
@@ -521,7 +521,7 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 
 > [!TIP]
 > **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
-> Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev`, `serve`, `run dev`, or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
+> Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev` or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
 
 ---
 
@@ -536,7 +536,7 @@ Performs a complete purge of the build workspace:
 ---
 
 ### `bv update` (alias: `bv upgrade`)
-Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, and RTL assets.
+Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, RTL assets, and **Lazarus IDE project files (`.lpi` / `.lpr` and `server/server.lpi`)**.
 
 ```bash
 # Preview what would be updated without touching any files
@@ -546,15 +546,15 @@ bv update --dry-run
 bv update
 
 # Available options
-bv update --server     # Update only backend infrastructure (server.lpr, binary)
-bv update --frontend   # Update only frontend infrastructure (package.json, rtl.js)
+bv update --server     # Update only backend infrastructure (server.lpr, server.lpi, binary)
+bv update --frontend   # Update only frontend & Lazarus IDE infrastructure (package.json, rtl.js, .lpi/.lpr)
 bv update --force      # Force rebuild and re-patching even if up to date
 bv update --no-backup  # Skip creating automatic backup snapshot
 ```
 
 > [!IMPORTANT]
 > **Zero-Risk Non-Destructive Guarantee**:  
-> `bv update` **NEVER** deletes, overwrites, or modifies custom user directories or files (such as `server/kernel/`, `server/packages/`, `server/models/`, `server/controllers/`, `src/`, etc.). It only updates framework glue files (`server/server.lpr`, `package.json` scripts, `dist/js/rtl.js`).  
+> `bv update` **NEVER** deletes, overwrites, or modifies custom user directories or files (such as `server/kernel/`, `server/packages/`, `server/models/`, `server/controllers/`, `src/`, etc.). It only updates framework glue files (`server/server.lpr`, `server/server.lpi`, `<project>.lpi`, `<project>.lpr`, `package.json` scripts, `dist/js/rtl.js`).  
 > Furthermore, an automatic snapshot is preserved in `.bv_backup/update_<timestamp>/` prior to modifying any file.
 
 ---

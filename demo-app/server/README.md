@@ -70,9 +70,6 @@ bv mormot deploy
 bv mormot deploy --zip
 ```
 
-> [!NOTE]
-> The legacy `bv server` command is preserved as a backward-compatible alias.
-
 ---
 
 ## API Endpoints
