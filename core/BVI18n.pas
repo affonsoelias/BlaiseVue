@@ -101,7 +101,13 @@ initialization
 
       setLocale: function(loc) {
         if (!loc) return;
-        i18n.state.locale = String(loc);
+        // A changed value notifies through the proxy; the same value re-renders explicitly,
+        // so messages added for the active locale reach what is already rendered
+        if (i18n.state.locale === String(loc)) i18n.refresh();
+        else i18n.state.locale = String(loc);
+      },
+
+      refresh: function() {
         if (bv.trigger) {
           bv.trigger(i18n.state, 'locale');
           bv.trigger(i18n, 'locale');
@@ -115,6 +121,7 @@ initialization
       addMessages: function(loc, msgs) {
         if (!i18n.messages[loc]) i18n.messages[loc] = {};
         i18n.mergeDeep(i18n.messages[loc], msgs);
+        if (loc === i18n.state.locale || loc === i18n.fallbackLocale) i18n.refresh();
       },
 
       mergeDeep: function(target, source) {

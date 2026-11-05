@@ -112,5 +112,46 @@ begin
 
             El.remove();
          end);
+
+       It('should re-render when messages arrive for the active locale and setLocale repeats it', procedure
+         var
+           El: TJSHTMLElement;
+           Data: TBlaiseData;
+         begin
+            TBVI18n.Init('en', 'en');
+            El := TJSHTMLElement(document.createElement('div'));
+            El.innerHTML := '<h2 id="late">{{ $t("lateKey") }}</h2>';
+            document.body.appendChild(El);
+            Data := TBlaiseData.Create(TJSObject.new);
+            Compile(El, Data, TJSObject.new);
+            Expect(El.querySelector('#late').textContent).ToBe('lateKey');
+
+            asm
+              pas.BVI18n.TBVI18n.AddMessages('en', { lateKey: 'Loaded later' });
+            end;
+            TBVI18n.SetLocale('en');
+            Expect(El.querySelector('#late').textContent).ToBe('Loaded later');
+            El.remove();
+         end);
+
+       It('should re-render when messages arrive for the active locale without setLocale', procedure
+         var
+           El: TJSHTMLElement;
+           Data: TBlaiseData;
+         begin
+            TBVI18n.Init('en', 'en');
+            El := TJSHTMLElement(document.createElement('div'));
+            El.innerHTML := '<h2 id="late2">{{ $t("lateKey2") }}</h2>';
+            document.body.appendChild(El);
+            Data := TBlaiseData.Create(TJSObject.new);
+            Compile(El, Data, TJSObject.new);
+            Expect(El.querySelector('#late2').textContent).ToBe('lateKey2');
+
+            asm
+              pas.BVI18n.TBVI18n.AddMessages('en', { lateKey2: 'Loaded later too' });
+            end;
+            Expect(El.querySelector('#late2').textContent).ToBe('Loaded later too');
+            El.remove();
+         end);
     end);
 end.

@@ -322,9 +322,11 @@ initialization
     // Notifier: Executes effects when a dependency changes
     bv.trigger = function(target, key) {
       if (!target) return;
+      // Dependencies are tracked on the raw object, so a proxy must be unwrapped
+      if (allProxies.has(target)) target = target.__bv_raw__;
       let deps = bv.targetMap.get(target);
       if (!deps) return;
-      
+
       const triggerKey = function(k) {
         let depSet = deps.get(k);
         if (depSet) {
