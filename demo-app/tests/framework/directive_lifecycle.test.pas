@@ -6,6 +6,7 @@ uses JS, Web, BVTestUtils, BVComponents, BVCompiler, BVReactivity;
 
 var
   Wrapper: TWrapper;
+  CreatedCount: Integer;
 
 procedure RegisterTemplate(const AName, ATemplate: string; AData: TJSObject);
 var
@@ -35,6 +36,8 @@ begin
 end;
 
 procedure SetupComponents;
+var
+  Comp: TJSObject;
 begin
   RegisterTemplate('test-select',
     '<div>' +
@@ -74,6 +77,48 @@ begin
     '  <div class="box" v-if="lang"><input class="field"></div>' +
     '</div>',
     new(['lang', 'a']));
+
+  Comp := TJSObject.new;
+  Comp['template'] :=
+    '<div class="counter"><span class="count">{{ count }}</span>' +
+    '<button class="inc" @click="count = count + 1">+</button></div>';
+  Comp['data'] := function(): TJSObject
+  begin
+    Result := new(['count', 0]);
+  end;
+  Comp['created'] := procedure
+  begin
+    Inc(CreatedCount);
+  end;
+  RegisterComponent('test-counter', Comp);
+
+  RegisterTemplate('test-wrapped-child',
+    '<div>' +
+    '  <button class="toggle" @click="open = !open">Toggle</button>' +
+    '  <div class="holder" v-if="open"><test-counter></test-counter></div>' +
+    '</div>',
+    new(['open', True]));
+
+  RegisterTemplate('test-else-child',
+    '<div>' +
+    '  <button class="toggle" @click="open = !open">Toggle</button>' +
+    '  <span class="closed" v-if="!open">Closed</span>' +
+    '  <div class="holder" v-else><test-counter></test-counter></div>' +
+    '</div>',
+    new(['open', True]));
+
+  RegisterTemplate('test-model-if',
+    '<div>' +
+    '  <button class="toggle" @click="open = !open">Toggle</button>' +
+    '  <input class="field" v-if="open" b-model="name">' +
+    '</div>',
+    new(['open', True, 'name', 'first']));
+end;
+
+procedure ToggleTwice;
+begin
+  Wrapper.Find('.toggle').click();
+  Wrapper.Find('.toggle').click();
 end;
 
 begin
@@ -135,6 +180,46 @@ begin
             Wrapper.Find('.change').click();
             After := Wrapper.Find('.field');
             Expect(Before = After).ToBe(True);
+         end);
+
+       It('should create a new component instance when its v-if parent opens again', procedure
+         var
+           Before: TJSElement;
+         begin
+            CreatedCount := 0;
+            Wrapper := Mount('test-wrapped-child');
+            Expect(CreatedCount).ToBe(1);
+            Wrapper.Find('.inc').click();
+            Expect(Wrapper.Find('.count').textContent).ToBe('1');
+            Before := Wrapper.Find('.holder');
+            ToggleTwice;
+            Expect(CreatedCount).ToBe(2);
+            Expect(Wrapper.Find('.count').textContent).ToBe('0');
+            Expect(Wrapper.Find('.holder') = Before).ToBe(False);
+         end);
+
+       It('should create a new component instance in a v-else branch shown again', procedure
+         begin
+            CreatedCount := 0;
+            Wrapper := Mount('test-else-child');
+            Expect(CreatedCount).ToBe(1);
+            Wrapper.Find('.inc').click();
+            ToggleTwice;
+            Expect(CreatedCount).ToBe(2);
+            Expect(Wrapper.Find('.count').textContent).ToBe('0');
+            ToggleTwice;
+            Expect(CreatedCount).ToBe(3);
+         end);
+
+       It('should keep b-model working on an element with v-if shown again', procedure
+         begin
+            Wrapper := Mount('test-model-if');
+            ToggleTwice;
+            Expect(TJSHTMLInputElement(Wrapper.Find('.field')).value).ToBe('first');
+            TJSHTMLInputElement(Wrapper.Find('.field')).value := 'second';
+            Wrapper.Find('.field').dispatchEvent(TJSEvent.new('input'));
+            ToggleTwice;
+            Expect(TJSHTMLInputElement(Wrapper.Find('.field')).value).ToBe('second');
          end);
     end);
 end.

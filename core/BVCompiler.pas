@@ -1650,13 +1650,17 @@ initialization
             if (el.parentNode) el.parentNode.insertBefore(m, el);
 
             let branches = [];
-            let componentCopy0 = opts ? el.cloneNode(true) : null;
-            if (componentCopy0 && vmodel) componentCopy0.setAttribute('b-model', vmodel);
+            // Every branch mounts a fresh copy, so components inside it get new instances.
+            // Steps 5-5.5 already removed their attributes from el, and the copy needs them back.
+            let pristine0 = el.cloneNode(true);
+            if (vmodel) pristine0.setAttribute('b-model', vmodel);
+            if (vfield) pristine0.setAttribute('b-field', vfield);
+            if (vvalidate) pristine0.setAttribute(vvalidateField ? 'b-validate:' + vvalidateField : 'b-validate', vvalidate);
             branches.push({
               el: el,
               expr: vif,
               isElse: false,
-              componentCopy: componentCopy0,
+              componentCopy: pristine0,
               vmodel: vmodel,
               tName: el.getAttribute('bv-transition'),
               opts: opts
@@ -1687,8 +1691,7 @@ initialization
                   let nextTag = nextEl.tagName.toLowerCase();
                   let nextOpts = (bv.components ? bv.components[nextTag] : null);
                   let nextModel = nextEl.getAttribute('b-model') || nextEl.getAttribute('v-model');
-                  let nextCopy = nextOpts ? nextEl.cloneNode(true) : null;
-                  if (nextCopy && nextModel) nextCopy.setAttribute('b-model', nextModel);
+                  let nextCopy = nextEl.cloneNode(true);
                   branches.push({
                     el: nextEl,
                     expr: elseIfExpr,
@@ -1709,8 +1712,7 @@ initialization
                   let nextTag = nextEl.tagName.toLowerCase();
                   let nextOpts = (bv.components ? bv.components[nextTag] : null);
                   let nextModel = nextEl.getAttribute('b-model') || nextEl.getAttribute('v-model');
-                  let nextCopy = nextOpts ? nextEl.cloneNode(true) : null;
-                  if (nextCopy && nextModel) nextCopy.setAttribute('b-model', nextModel);
+                  let nextCopy = nextEl.cloneNode(true);
                   branches.push({
                     el: nextEl,
                     expr: null,
