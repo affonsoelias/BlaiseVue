@@ -87,116 +87,105 @@ bv lib install charts   # Installs Chart.js data visualization suite
 The BlaiseVue CLI is a single, zero-dependency native executable compiled with Free Pascal.
 
 ```bash
-# === Development & Frontend Build ===
-bv dev                     # Builds project in development mode & launches dev server with HMR on http://localhost:8080
-bv build                   # Compiles frontend in development/debug mode (Lazarus & watchers)
-bv build --release         # Builds optimized production bundle with hashes in dist/
-bv preview                 # Local HTTP preview of production build (port 5000)
-bv clean                   # Cleans generated files (generated/ and dist/)
+  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+  ============================================================
+  Usage: bv <command> [options]
 
-# === Scaffolding & Generators ===
-bv create <app-name>       # Scaffolds a project with 4-tier testing hierarchy & domain services
-bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/ (alias: bv g c)
-bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv g v)
-bv new s <Name>            # Scaffolds a domain service & test in tests/services/ (alias: bv g s)
-bv new t <Name>            # Scaffolds a Pascal test file (smart detection: c, v, services) (alias: bv g t)
-bv remove <c|v|s|t|m|d> [Name] # Safely deletes a component, view, service, test, or platform (m/d)
-bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
-bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
+  # === Development & Frontend Build ===
+  bv dev                     Builds project in dev mode & starts dev server with HMR on http://localhost:8080
+  bv build                   Compiles frontend in development/debug mode (Lazarus & watchers)
+  bv build --release         Builds optimized production bundle with hashes in dist/
+  bv preview                 Local HTTP preview of production build (port 5000)
+  bv ssg                     Pre-renders all routes into static HTML (SSG)
+  bv doc [--serve]           Generates interactive component documentation & playground
+  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks
+  bv check [file]            Validates component templates against script declarations (AST Type-Checker)
+  bv clean                   Cleans generated build files (generated/ and dist/)
 
-# === Package Repositories & Ecosystem ===
-bv repo list               # Lists registered package repositories (default: official ecosystem)
-bv repo add <name> <url>   # Registers an external ecosystem or repository
-bv repo remove <name>      # Removes a registered repository
-bv repo default <name>     # Sets the default repository
-bv repo sync               # Synchronizes and caches ecosystem package catalog
-bv repo search <term>      # Searches packages across registered ecosystems
+  # === Scaffolding & Generators ===
+  bv create <name>           Scaffolds a new project with 4-tier testing hierarchy & domain services
+  bv g c <Name>              Scaffolds a component (.bv) & test in tests/components/ (alias: bv new c)
+  bv g v <Name>              Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)
+  bv g s <Name>              Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)
+  bv g t <Name>              Scaffolds a Pascal test file (.test.pas) (alias: bv new t)
+  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test
+  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs
+  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name
 
-# === Package & Theme Management ===
-bv lib install [<repo>:]<pkg[@ver]> # Installs package in project /lib (e.g. bv lib install test@1.0.0 or official:test)
-bv lib install <pkg> -g    # Installs package in global user cache (~/.blaisevue/packages/)
-bv lib remove <name>       # Removes installed package from lib/
-bv lib update [[<repo>:]name] # Updates library/libraries to latest version
-bv lib outdated [--global] # Checks for available updates in installed packages
-bv lib list [--global]     # Lists installed libraries (project /lib or user global cache)
-bv lib search [[<repo>:]term] # Searches packages in registered repositories
-bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
-bv theme [list]            # Displays active configuration and available themes in @blaise-themes
-bv theme add <name>        # Adds theme to package.json for optimized tree-shaken bundling
-bv theme remove <name>     # Removes theme from package.json
-bv theme use <name>        # Sets active default theme in package.json & index.html
-bv theme reset             # Resets theme filters (bundles all themes in compatibility mode)
+  # === Backend & Full-Stack (Synopse mORMot 2) ===
+  bv mormot init             Scaffolds mORMot 2 backend server in server/
+  bv mormot run [--release] [--port <p>] Starts native backend server (auto-fallback to next port if busy)
+  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)
+  bv mormot kill             Terminates lingering server.exe instances and releases ports
+  bv mormot status           Queries running mORMot 2 health endpoint (/api/status)
+  bv mormot deploy [--zip]   Assembles standalone production bundle in deploy/
+  bv mormot crud <Model>     Scaffolds full-stack ORM model, REST API & reactive DataGrid
+  bv mormot auth             Scaffolds JWT authentication, AuthService, LoginView & route guards
+  bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)
+  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml
+  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
 
-# === Extensions & Developer Tools ===
-bv extension list          # Lists installed and available extensions (VS Code, DevTools, custom)
-bv extension install [ext] # Installs development extension (e.g. vscode, devtools, or custom)
-bv extension remove [ext]  # Uninstalls development extension
-bv extension pack [ext]    # Packages extension into production artifact (.vsix)
+  # === Mobile (Android & iOS via Capacitor) ===
+  bv mobile init [name] [id] Scaffolds Capacitor & mobile/ native project
+  bv mobile sync             Syncs dist/ with native mobile assets
+  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json
+  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/
+  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)
+  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)
+  bv mobile emulator start   Boots Android emulator in background
+  bv mobile run android      Installs and launches APK on connected USB device
+  bv mobile run android --emulator Boots emulator, installs APK, and runs app
+  bv mobile open android     Opens project in Android Studio
 
-# === Project Metadata & Licensing ===
-bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
-bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
-bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
+  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
+  bv desktop init [name]     Scaffolds Lazarus (.lpi, .lpr) & WebUI project
+  bv desktop sync            Syncs dist/ with desktop/assets/
+  bv desktop remove [-y]     Safely deletes desktop/ native project
+  bv desktop build [target]  Compiles Debug native binary (live console logging)
+  bv desktop build [target] --release Compiles Release native binary (pure GUI - NO console)
+  bv desktop run [target]    Launches desktop app in Debug mode (with console)
+  bv desktop run [target] --release Launches desktop app in Release mode (clean GUI)
 
-# === Mobile (Android & iOS via Capacitor) ===
-bv mobile init [name] [id] # Scaffolds Capacitor & mobile/ native project (name & id optional)
-bv mobile sync             # Syncs dist/ with native mobile assets
-bv mobile remove [-y]      # Safely deletes mobile/ and capacitor.config.json (alias: bv remove mobile)
-bv mobile build android    # Builds native Android Debug APK in mobile/bin/android/
-bv mobile build android --release # Builds optimized Release APK (R8/ProGuard)
-bv mobile emulator list    # Lists installed Android Virtual Devices (AVD)
-bv mobile emulator start   # Boots Android emulator in background
-bv mobile run android      # Installs and launches APK on connected USB device
-bv mobile run android --emulator # Boots emulator, installs APK, and runs app
-bv mobile open android     # Opens project in Android Studio
+  # === Package & Theme Management ===
+  bv repo <list|add|remove|default|sync|search> Manages package repositories & ecosystem sources
+  bv lib install [<repo>:]<pkg[@ver]|url> [--global|-g] Installs package in project /lib or user cache
+  bv lib remove <name> [--global|-g] Removes package from lib/ or global cache
+  bv lib update [[<repo>:]name] [--global|-g] Updates package(s) to latest version
+  bv lib outdated [--global|-g] Checks for available updates in installed packages
+  bv lib list [--global|-g]  Lists installed libraries
+  bv lib search [[<repo>:]term] Searches packages in registered repositories
+  bv lib pack [dir]          Assembles & verifies release artifact (.zip with SHA-256)
+  bv theme [list]            Displays active and available themes in @blaise-themes
+  bv theme add <name>        Adds a theme to package.json for optimized bundling
+  bv theme remove <name>     Removes a theme from package.json
+  bv theme use <name>        Sets active default theme in package.json & index.html
+  bv theme reset             Resets theme filters (bundles all themes in compatibility mode)
+  bv extension <list|install|remove|pack> [target] Manages development extensions & tools
 
-# === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
-bv desktop init [name]     # Scaffolds Lazarus (.lpi, .lpr) & WebUI project
-bv desktop sync            # Syncs dist/ to desktop/assets/
-bv desktop remove [-y]     # Safely deletes desktop/ native project (alias: bv remove desktop)
-bv desktop build [target]  # Compiles Debug native binary (live console logging)
-bv desktop build [target] --release # Compiles Release native binary (pure GUI - NO console)
-bv desktop run [target]    # Launches desktop app in Debug mode (with console)
-bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
+  # === Project Metadata & Licensing ===
+  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)
+  bv meta [show|get|set|bump|sync] Manages project metadata and syncs SemVer across monorepo
+  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)
 
-# === Backend & Full-Stack (Synopse mORMot 2) ===
-bv create <name> --mormot  # Scaffolds full-stack app with mORMot 2 native backend (--fullstack / -m)
-bv mormot init             # Scaffolds mORMot 2 backend server in server/
-bv mormot build            # Compiles Debug native server with Free Pascal
-bv mormot build --release  # Compiles optimized Release native server (-O3, stripped)
-bv mormot run              # Starts native backend server (auto-fallback to 8091 if 8090 is busy)
-bv mormot kill             # Terminates lingering server.exe instances and releases ports
-bv mormot status           # Queries /api/status health endpoint (with 2s fast timeout)
-bv mormot deploy           # Packages standalone production bundle in deploy/
-bv mormot deploy --zip     # Packages standalone bundle into deploy.zip
-bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from mORMot 2 SOA interfaces
+  # === Compiler Search Paths & Legacy Migration ===
+  bv path [list]             Lists all active unit search paths (-Fu) in app.cfg
+  bv path add <dir|pas2js:p> Adds a folder or official Pas2JS package to app.cfg
+  bv path remove <target>    Removes a search path or Pas2JS package from app.cfg
+  bv path available          Lists all built-in Pas2JS packages available to link
 
-# === Testing ===
-bv test                    # Compiles .test.pas files and runs Vitest suite
+  # === Framework Diagnostics & Git Auto-Updater ===
+  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)
+  bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git
+  bv channel [use <name>]    Inspects or switches framework branch (main/develop)
+  bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features
 
-# === Framework Diagnostics & Git Auto-Updater ===
-bv doctor                  # Diagnoses environment tools (Git, Lazarus & FPC, InstantFPC, Python 3, Pas2JS, Node.js)
-bv self-update             # Synchronizes & recompiles BlaiseVue engine directly from GitHub via Git
-bv self-update --check     # Checks for remote updates without downloading
-bv channel                 # Inspects active channel (* main [stable] or develop [dev])
-bv channel use <name>      # Switches between stable release (main) and development (develop)
-
-# === Compiler Search Paths & Legacy Migration ===
-bv path                         # Lists all active search paths (-Fu) categorized by type
-bv path add <dir|pas2js:pkg>    # Adds directory or built-in Pas2JS package to app.cfg
-bv path remove <target>         # Removes search path from app.cfg
-bv path available               # Catalogs 30+ official Pas2JS packages with active indicator
-
-# === Cockpit & Multi-Project Management ===
-bv update                  # Surgically syncs project infrastructure with latest framework features
-bv update --dry-run        # Previews updates without modifying any files (non-destructive safety)
-bv enter                   # Enters interactive project Cockpit shell (e.g. [bv: my-app] >)
-bv use <project-name>      # Jumps into registered project Cockpit shell from anywhere
-bv project add             # Registers current project into global registry (~/.blaisevue/projects.json)
-bv project list            # Lists registered projects (* active)
-bv project current         # Shows currently active project details
-bv project remove <name>   # Unregisters project from global registry
-bv rename <s|c|v|p> <New>  # Smart rename for services, components, views, or project name
+  # === Cockpit & Multi-Project Management ===
+  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)
+  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere
+  bv project add             Registers current project into global registry
+  bv project list            Lists registered projects (* active)
+  bv project current         Shows active project details
+  bv project remove <name>   Unregisters a project from global registry
 ```
 
 ---

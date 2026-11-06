@@ -42,7 +42,7 @@ bv desktop init [AppName]
 # 2. Synchronize production build (dist/) into desktop/assets/
 bv desktop sync
 
-# 3. Safely remove desktop platform (alias: bv remove desktop / bv remove d)
+# 3. Safely remove desktop platform:
 bv desktop remove [-y]
 
 # 3. DEBUG Build Mode (with active console window for diagnostics and logging):

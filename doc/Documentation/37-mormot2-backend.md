@@ -36,42 +36,37 @@ With this architecture, Pascal developers can write **both frontend components a
 The BlaiseVue CLI provides end-to-end tooling to scaffold, build, run, and inspect the native mORMot 2 server.
 
 ```bash
-# 1. Create a full-stack project with backend from scratch:
-bv create my-fullstack-app --mormot     # or: --fullstack / -m
-
-# 2. Or initialize the mORMot 2 backend inside an existing project:
+# 1. Initialize the mORMot 2 backend inside a project:
 bv mormot init
 
-# 3. DEBUG Build Mode (includes debug symbols and diagnostic output):
+# 2. DEBUG Build Mode (includes debug symbols and diagnostic output):
 bv mormot build
 
-# 4. RELEASE Build Mode (maximum compiler optimization -O3, stripped symbols):
+# 3. RELEASE Build Mode (maximum compiler optimization -O3, stripped symbols):
 bv mormot build --release
 
-# 5. Launch the native server:
-bv mormot run                          # Starts on default port 8090
+# 4. Launch the native server:
+bv mormot run                          # Starts on default port 8090 (Debug mode)
 bv mormot run --port 8080              # Starts on custom port 8080
-bv mormot run --release                # Builds (if needed) and starts release binary
+bv mormot run --release                # Compiles frontend (bv build --release), backend (-O3) & starts in RELEASE mode
+bv mormot run --release --port 8080    # Starts in RELEASE mode on custom port 8080
 
-# 6. Check running server status and health:
+# 5. Check running server status and health:
 bv mormot status                       # Queries http://localhost:8090/api/status
 bv mormot status --port 8080           # Queries custom port
 
-# 7. Package standalone production bundle for deployment:
+# 6. Package standalone production bundle for deployment:
 bv mormot deploy                       # Generates standalone deploy/ directory
 bv mormot deploy --zip                 # Generates deploy/ and packages into deploy.zip
 bv mormot deploy --zip --port 80       # Customizes startup port in start.bat/start.sh
 ```
-
-> [!NOTE]
-> The legacy command `bv server` is fully preserved as a backward-compatible alias.
 
 ---
 
 ## 🚀 Standalone Production Deployment (`deploy/`)
 
 When running `bv mormot deploy`, BlaiseVue automates the complete production build pipeline:
-1. **Frontend Production Build**: Executes `bv run build`, generating minified JavaScript with cache-busting hashes in `dist/`.
+1. **Frontend Production Build**: Executes `bv build --release`, generating minified JavaScript with cache-busting hashes in `dist/`.
 2. **Backend Native Release Build**: Compiles `server/server.lpr` with maximum Free Pascal optimizations (`-O3 -Xs`), producing a stripped native binary under 2 MB.
 3. **Standalone Folder Assembly**: Assembles `deploy/`:
    - `server.exe` (or `server` on Linux)

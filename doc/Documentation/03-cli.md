@@ -337,7 +337,7 @@ Manages built-in framework developer tooling (`packages/tools/`) and user-level 
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
 - **`bv mobile init [name] [id]`**: Scaffolds the mobile directory structure inside `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
 - **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
-- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries (alias: `bv remove mobile` / `bv remove m`).
+- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
 - **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
   - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
   - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
@@ -367,7 +367,7 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 Manages the native desktop development lifecycle with Free Pascal and WebUI:
 - **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
 - **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
-- **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries (alias: `bv remove desktop` / `bv remove d`).
+- **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries.
 - **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
   - E.g.: `bv desktop build windows` (Debug mode on Windows with active logging console)
   - E.g.: `bv desktop build linux --release` (Release mode for Linux in `desktop/bin/linux/`)
@@ -388,12 +388,12 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 
 ### 7. `bv mormot` (Full-Stack Pascal with Synopse mORMot 2)
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-- **`bv create <name> --mormot`**: Scaffolds a full-stack project with both reactive frontend and native mORMot 2 backend.
 - **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
 - **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
   - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
-- **`bv mormot run [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+  - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
 - **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
 - **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
 - **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
@@ -408,7 +408,7 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | `bv mormot init` | - | Scaffolds native backend in `server/` |
 | `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
-| `bv mormot run` | `[--port <p>]` | Starts server with automatic port conflict fallback |
+| `bv mormot run` | `[--release] [--port <p>]` | Starts server (debug or release) with automatic port conflict fallback |
 | `bv mormot kill` | - | Forcefully terminates running `server.exe` instances |
 | `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
 | `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |

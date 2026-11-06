@@ -782,7 +782,7 @@ procedure CmdDoctor; forward;
 procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
 procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
-{ Removes native desktop platform scaffolding and WebUI bindings (bv remove desktop). }
+{ Removes native desktop platform scaffolding and WebUI bindings (bv desktop remove). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
@@ -3000,8 +3000,8 @@ procedure CmdCreate(const ProjectName: string);
 var
   Base, TemplatePath: string;
   Content: string;
-  IsFullStack, IsLib, LazCreated, LazUpdated: Boolean;
-  TemplateMormotDir, LicenseArg, RealProjectName, LazCleanName: string;
+  IsLib, LazCreated, LazUpdated: Boolean;
+  LicenseArg, RealProjectName, LazCleanName: string;
   i, LazUnitsCount: Integer;
 begin
   IsLib := False;
@@ -3278,46 +3278,6 @@ begin
     WriteLn('            Please install Node.js (https://nodejs.org) and run "npm install" inside ' + ProjectName + '.');
   end;
 
-  // Check if --mormot, --fullstack, -m, or -f flag was passed
-
-  IsFullStack := False;
-  for i := 2 to ParamCount do
-  begin
-    if (LowerCase(ParamStr(i)) = '--mormot') or
-
-       (LowerCase(ParamStr(i)) = '-m') or
-
-       (LowerCase(ParamStr(i)) = '--fullstack') or
-
-       (LowerCase(ParamStr(i)) = '-f') or
-
-       (LowerCase(ParamStr(i)) = '--template=fullstack-mormot') or
-
-       (LowerCase(ParamStr(i)) = '--template=mormot') or
-
-       ((LowerCase(ParamStr(i)) = '--template') and (i + 1 <= ParamCount) and
-
-        ((LowerCase(ParamStr(i + 1)) = 'fullstack-mormot') or (LowerCase(ParamStr(i + 1)) = 'mormot'))) then
-    begin
-      IsFullStack := True;
-      Break;
-    end;
-  end;
-
-  if IsFullStack then
-  begin
-    TemplateMormotDir := GetSDKPath + 'templates' + DirectorySeparator + 'fullstack-mormot';
-    if DirectoryExists(TemplateMormotDir) then
-    begin
-      WriteLn('Scaffolding Full-Stack mORMot 2 backend server in ', ProjectName, '/server...');
-      ForceDir(Base + 'server');
-      CopyDir(TemplateMormotDir, Base + 'server', ['bin', 'lib']);
-      ForceDir(Base + 'server' + DirectorySeparator + 'bin');
-      ForceDir(Base + 'server' + DirectorySeparator + 'lib');
-      WriteLn('  [+] Full-Stack mORMot 2 backend scaffolded successfully.');
-    end;
-  end;
-
   // Generate project-named Lazarus IDE files (.lpi / .lpr) and clean up template leftovers
   SyncLazarusProject(ExcludeTrailingPathDelimiter(Base), False, LazCreated, LazUpdated, LazUnitsCount, LazCleanName);
   WriteLn('  [+] Generated Lazarus IDE project: ', LazCleanName, '.lpi (', LazUnitsCount, ' units indexed).');
@@ -3328,9 +3288,9 @@ begin
   WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
   WriteLn('  bv dev');
-  if IsFullStack then
+  if DirectoryExists(Base + 'server') then
   begin
-    WriteLn('  bv mormot run          # Starts the native mORMot 2 backend on port 8090');
+    WriteLn('  bv mormot run [--release] # Starts the native mORMot 2 backend on port 8090');
   end;
 end;
 
@@ -7205,18 +7165,18 @@ begin
   BinMobileDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'mobile';
   if not DirectoryExists(MobileDir) and not FileExists(CapConfigFile) and not DirectoryExists(BinMobileDir) then
   begin
-    WriteLn('Plataforma Mobile nao encontrada no projeto atual (pasta mobile/ nao existe).');
+    WriteLn('Mobile platform not found in current project (mobile/ directory does not exist).');
     Exit;
   end;
 
   if not ForceFlag then
   begin
-    Write('Tem certeza que deseja remover a plataforma Mobile (pasta mobile/ e capacitor.config.json)? [s/N]: ');
+    Write('Are you sure you want to remove the Mobile platform (mobile/ directory and capacitor.config.json)? [y/N]: ');
     ReadLn(Ans);
     Ans := LowerCase(Trim(Ans));
     if (Ans <> 's') and (Ans <> 'y') and (Ans <> 'sim') and (Ans <> 'yes') then
     begin
-      WriteLn('Operacao cancelada.');
+      WriteLn('Operation cancelled.');
       Exit;
     end;
   end;
@@ -7224,34 +7184,34 @@ begin
   DeletedAny := False;
   if DirectoryExists(MobileDir) then
   begin
-    WriteLn('  [-] Excluindo pasta mobile/ ...');
+    WriteLn('  [-] Deleting mobile/ directory ...');
     DeleteDir(MobileDir);
     DeletedAny := True;
   end;
 
   if FileExists(CapConfigFile) then
   begin
-    WriteLn('  [-] Excluindo capacitor.config.json ...');
+    WriteLn('  [-] Deleting capacitor.config.json ...');
     DeleteFile(CapConfigFile);
     DeletedAny := True;
   end;
 
   if DirectoryExists(BinMobileDir) then
   begin
-    WriteLn('  [-] Excluindo binarios em bin/mobile/ ...');
+    WriteLn('  [-] Deleting binaries in bin/mobile/ ...');
     DeleteDir(BinMobileDir);
     DeletedAny := True;
   end;
 
   if DeletedAny then
   begin
-    WriteLn('  [SUCCESS] Plataforma Mobile removida com sucesso!');
-    WriteLn('  [INFO] Para reativa-la no futuro, basta executar:');
+    WriteLn('  [SUCCESS] Mobile platform removed successfully!');
+    WriteLn('  [INFO] To re-enable it in the future, simply run:');
     WriteLn('         bv mobile init');
   end;
 end;
 
-{ Removes native desktop platform scaffolding and WebUI bindings (bv remove desktop). }
+{ Removes native desktop platform scaffolding and WebUI bindings (bv desktop remove). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean);
 var
   DesktopDir, BinDesktopDir: string;
@@ -7262,18 +7222,18 @@ begin
   BinDesktopDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'desktop';
   if not DirectoryExists(DesktopDir) and not DirectoryExists(BinDesktopDir) then
   begin
-    WriteLn('Plataforma Desktop nao encontrada no projeto atual (pasta desktop/ nao existe).');
+    WriteLn('Desktop platform not found in current project (desktop/ directory does not exist).');
     Exit;
   end;
 
   if not ForceFlag then
   begin
-    Write('Tem certeza que deseja remover a plataforma Desktop (pasta desktop/)? [s/N]: ');
+    Write('Are you sure you want to remove the Desktop platform (desktop/ directory)? [y/N]: ');
     ReadLn(Ans);
     Ans := LowerCase(Trim(Ans));
     if (Ans <> 's') and (Ans <> 'y') and (Ans <> 'sim') and (Ans <> 'yes') then
     begin
-      WriteLn('Operacao cancelada.');
+      WriteLn('Operation cancelled.');
       Exit;
     end;
   end;
@@ -7281,22 +7241,22 @@ begin
   DeletedAny := False;
   if DirectoryExists(DesktopDir) then
   begin
-    WriteLn('  [-] Excluindo pasta desktop/ ...');
+    WriteLn('  [-] Deleting desktop/ directory ...');
     DeleteDir(DesktopDir);
     DeletedAny := True;
   end;
 
   if DirectoryExists(BinDesktopDir) then
   begin
-    WriteLn('  [-] Excluindo binarios em bin/desktop/ ...');
+    WriteLn('  [-] Deleting binaries in bin/desktop/ ...');
     DeleteDir(BinDesktopDir);
     DeletedAny := True;
   end;
 
   if DeletedAny then
   begin
-    WriteLn('  [SUCCESS] Plataforma Desktop removida com sucesso!');
-    WriteLn('  [INFO] Para reativa-la no futuro, basta executar:');
+    WriteLn('  [SUCCESS] Desktop platform removed successfully!');
+    WriteLn('  [INFO] To re-enable it in the future, simply run:');
     WriteLn('         bv desktop init');
   end;
 end;
@@ -15804,7 +15764,7 @@ begin
   WriteLn('Next steps:');
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-  WriteLn('  3. Start full-stack server:  bv mormot run');
+  WriteLn('  3. Start full-stack server:  bv mormot run (or bv mormot run --release)');
   WriteLn('');
 end;
 
@@ -17317,7 +17277,7 @@ begin
   WriteLn('Next steps:');
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-  WriteLn('  3. Start full-stack server:  bv mormot run');
+  WriteLn('  3. Start full-stack server:  bv mormot run (or bv mormot run --release)');
   WriteLn('  4. Access in browser:        http://localhost:8090/#/login');
   WriteLn('');
 end;
@@ -18724,7 +18684,7 @@ begin
   WriteLn('Next steps:');
   WriteLn('  1. Compile native server:    bv mormot build (or bv mormot build --release)');
   WriteLn('  2. Compile reactive app:     bv run build (or bv build)');
-  WriteLn('  3. Start full-stack server:  bv mormot run');
+  WriteLn('  3. Start full-stack server:  bv mormot run (or bv mormot run --release)');
   WriteLn('  4. Explore API in browser:   http://localhost:8090/api/docs');
   WriteLn('');
 end;
@@ -20250,9 +20210,9 @@ begin
     WriteLn('  [+] Full-Stack mORMot 2 server template scaffolded successfully in server/ !');
     WriteLn('');
     WriteLn('Next steps:');
-    WriteLn('  1. Run "bv build" (or "bv run build") to compile your reactive frontend to dist/');
+    WriteLn('  1. Run "bv build" (or "bv build --release") to compile your reactive frontend to dist/');
     WriteLn('  2. Run "bv mormot build" (or "bv mormot build --release") to compile the native server');
-    WriteLn('  3. Run "bv mormot run" to launch the server on port 8090');
+    WriteLn('  3. Run "bv mormot run" (or "bv mormot run --release") to launch the server on port 8090');
     WriteLn('  Or open server/server.lpi in Lazarus IDE and press F9!');
   end
 
@@ -20345,7 +20305,10 @@ begin
     if FileExists(TargetExe) then
     begin
       WriteLn('  [SUCCESS] Native mORMot 2 server compiled successfully: ' + TargetExe);
-      WriteLn('  [TIP] Run "bv mormot run" to start the server.');
+      if IsRelease then
+        WriteLn('  [TIP] Run "bv mormot run --release" to start the server in release mode.')
+      else
+        WriteLn('  [TIP] Run "bv mormot run" to start the server (or "bv mormot run --release" for release mode).');
     end
     else
     begin
@@ -20358,22 +20321,26 @@ begin
   begin
     if IsRelease then
     begin
-      WriteLn('ERROR: "--release" is only supported with "bv mormot build --release".');
-      WriteLn('Usage: bv mormot run [--port <port>]');
-      Halt(1);
-    end;
-
-    if (not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'index.html') or
-        not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'js' + DirectorySeparator + 'main.js')) and
-       DirectoryExists(ProjectRoot + DirectorySeparator + 'src') then
+      WriteLn('  [+] Compiling reactive frontend in RELEASE mode (bv build --release)...');
+      ChDir(ProjectRoot);
+      CmdRunBuild;
+      WriteLn('  [+] Compiling native server in RELEASE mode (bv mormot build --release)...');
+      CmdServer('build', '--release');
+    end
+    else
     begin
-      WriteLn('  [INFO] Frontend dist/ bundle not found. Building frontend before starting mORMot 2 server...');
-      CmdBuild;
-    end;
+      if (not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'index.html') or
+          not FileExists(ProjectRoot + DirectorySeparator + 'dist' + DirectorySeparator + 'js' + DirectorySeparator + 'main.js')) and
+         DirectoryExists(ProjectRoot + DirectorySeparator + 'src') then
+      begin
+        WriteLn('  [INFO] Frontend dist/ bundle not found. Building frontend before starting mORMot 2 server...');
+        CmdBuild;
+      end;
 
-    if not FileExists(TargetExe) then
-    begin
-      CmdServer('build');
+      if not FileExists(TargetExe) then
+      begin
+        CmdServer('build');
+      end;
     end;
 
     if not FileExists(TargetExe) then
@@ -20435,7 +20402,10 @@ begin
     end;
 
     ExtraArgs := ' --port ' + IntToStr(TargetPort);
-    WriteLn('Starting BlaiseVue mORMot 2 Native Server...');
+    if IsRelease then
+      WriteLn('Starting BlaiseVue mORMot 2 Native Server [RELEASE MODE]...')
+    else
+      WriteLn('Starting BlaiseVue mORMot 2 Native Server [DEBUG MODE]...');
     WriteLn('Executable: ' + TargetExe);
     WriteLn('Port:       ' + IntToStr(TargetPort));
     WriteLn('');
@@ -20693,10 +20663,10 @@ begin
 
   else
   begin
-    WriteLn('Usage: bv mormot <init|build [--release]|run [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
-    WriteLn('  run [--port <port>]   Launches native server');
+    WriteLn('  run [--release] [--port <port>] Launches native server (debug or release)');
     WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
     WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
     WriteLn('  crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
@@ -22223,7 +22193,7 @@ begin
         WriteLn('    channel [use <name>]       Inspects or switches framework branch (main/develop)');
         WriteLn('');
         WriteLn('  Backend & Full-Stack (mORMot 2):');
-        WriteLn('    mormot run                 Launches native backend server');
+        WriteLn('    mormot run [--release]     Launches native backend server');
         WriteLn('    mormot build [--release]   Compiles native server with Free Pascal');
         WriteLn('    mormot status              Checks backend health & metrics');
         WriteLn('    mormot crud <Model> [fields] Scaffolds full-stack CRUD & data grid');
@@ -23678,13 +23648,13 @@ begin
     WriteLn('  bv g v <Name>              Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)');
     WriteLn('  bv g s <Name>              Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)');
     WriteLn('  bv g t <Name>              Scaffolds a Pascal test file (.test.pas) (alias: bv new t)');
-    WriteLn('  bv remove <c|v|s|t|m|d> [Name] Safely deletes a component, view, service, test, or platform (m/d)');
+    WriteLn('  bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test');
     WriteLn('  bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs');
     WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
     WriteLn('');
     WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
     WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
-    WriteLn('  bv mormot run [--port <p>] Starts native backend server (auto-fallback to next port if busy)');
+    WriteLn('  bv mormot run [--release] [--port <p>] Starts native backend server (auto-fallback to next port if busy)');
     WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
     WriteLn('  bv mormot kill             Terminates lingering server.exe instances and releases ports');
     WriteLn('  bv mormot status           Queries running mORMot 2 health endpoint (/api/status)');
@@ -23695,17 +23665,26 @@ begin
     WriteLn('  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
     WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
     WriteLn('');
-    WriteLn('  # === Multiplatform (Mobile & Desktop) ===');
-    WriteLn('  bv mobile init [name] [id] Configures Capacitor and scaffolds Android/iOS project');
+    WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
+    WriteLn('  bv mobile init [name] [id] Scaffolds Capacitor & mobile/ native project');
+    WriteLn('  bv mobile sync             Syncs dist/ with native mobile assets');
     WriteLn('  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json');
-    WriteLn('  bv desktop remove [-y]     Safely deletes desktop/ native wrapper project');
-    WriteLn('  bv mobile sync             Syncs dist/ with native Android assets');
-    WriteLn('  bv mobile open             Syncs and opens Android Studio');
-    WriteLn('  bv mobile build            Builds native Android Debug APK via Gradle');
-    WriteLn('  bv desktop init [name]     Scaffolds WebUI & Lazarus desktop project in desktop/');
+    WriteLn('  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/');
+    WriteLn('  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)');
+    WriteLn('  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)');
+    WriteLn('  bv mobile emulator start   Boots Android emulator in background');
+    WriteLn('  bv mobile run android      Installs and launches APK on connected USB device');
+    WriteLn('  bv mobile run android --emulator Boots emulator, installs APK, and runs app');
+    WriteLn('  bv mobile open android     Opens project in Android Studio');
+    WriteLn('');
+    WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
+    WriteLn('  bv desktop init [name]     Scaffolds Lazarus (.lpi, .lpr) & WebUI project');
     WriteLn('  bv desktop sync            Syncs dist/ with desktop/assets/');
-    WriteLn('  bv desktop build [target]  Compiles native binary (windows|linux|macos|all)');
-    WriteLn('  bv desktop run [target]    Builds and launches desktop app for target');
+    WriteLn('  bv desktop remove [-y]     Safely deletes desktop/ native project');
+    WriteLn('  bv desktop build [target]  Compiles Debug native binary (live console logging)');
+    WriteLn('  bv desktop build [target] --release Compiles Release native binary (pure GUI - NO console)');
+    WriteLn('  bv desktop run [target]    Launches desktop app in Debug mode (with console)');
+    WriteLn('  bv desktop run [target] --release Launches desktop app in Release mode (clean GUI)');
     WriteLn('');
     WriteLn('  # === Package & Theme Management ===');
     WriteLn('  bv repo <list|add|remove|default|sync|search> Manages package repositories & ecosystem sources');
@@ -23883,57 +23862,59 @@ begin
   begin
     if (ParamCount < 2) then
     begin
-      WriteLn('Usage: bv remove <c|v|s|t|m|d> [Name]');
-      WriteLn('Types: component (c), view (v), service (s), test (t), mobile (m), desktop (d)');
+      WriteLn('Usage: bv remove <c|v|s|t> <Name>');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
       Halt(1);
     end;
 
     TypeArg := LowerCase(ParamStr(2));
     if (TypeArg = 'mobile') or (TypeArg = 'm') then
     begin
-      CmdRemoveMobile((ParamCount >= 3) and ((ParamStr(3) = '-y') or (ParamStr(3) = '--yes') or (ParamStr(3) = '-f') or (ParamStr(3) = '--force')));
+      WriteLn('ERROR: "bv remove ' + ParamStr(2) + '" was removed.');
+      WriteLn('Please use "bv mobile remove" to safely delete the mobile platform.');
+      Halt(1);
     end
     else if (TypeArg = 'desktop') or (TypeArg = 'd') then
     begin
-      CmdRemoveDesktop((ParamCount >= 3) and ((ParamStr(3) = '-y') or (ParamStr(3) = '--yes') or (ParamStr(3) = '-f') or (ParamStr(3) = '--force')));
+      WriteLn('ERROR: "bv remove ' + ParamStr(2) + '" was removed.');
+      WriteLn('Please use "bv desktop remove" to safely delete the desktop platform.');
+      Halt(1);
+    end;
+
+    if (ParamCount < 3) then
+    begin
+      WriteLn('Usage: bv remove <c|v|s|t> <Name>');
+      WriteLn('Types: component (c), view (v), service (s), test (t)');
+      Halt(1);
+    end;
+    NameArg := ParamStr(3);
+    if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
+      CmdRemoveComponent(NameArg)
+    else if (TypeArg = 'v') or (TypeArg = 'view') then
+      CmdRemoveView(NameArg)
+    else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
+      CmdRemoveService(NameArg)
+    else if (TypeArg = 't') or (TypeArg = 'test') then
+      CmdRemoveTest(NameArg)
+    else if (TypeArg = 'lib') or (TypeArg = 'l') then
+    begin
+      IsGlobalArg := False;
+      PkgNameArg := '';
+      for i := 3 to ParamCount do
+      begin
+        CurP := ParamStr(i);
+        if (CurP = '--global') or (CurP = '-g') then
+          IsGlobalArg := True
+        else if PkgNameArg = '' then
+          PkgNameArg := CurP;
+      end;
+      if PkgNameArg = '' then PkgNameArg := NameArg;
+      CmdLibRemove(PkgNameArg, IsGlobalArg);
     end
     else
     begin
-      if (ParamCount < 3) then
-      begin
-        WriteLn('Usage: bv remove <c|v|s|t> <Name>');
-        WriteLn('Types: component (c), view (v), service (s), test (t), mobile (m), desktop (d)');
-        Halt(1);
-      end;
-      NameArg := ParamStr(3);
-      if (TypeArg = 'c') or (TypeArg = 'comp') or (TypeArg = 'component') then
-        CmdRemoveComponent(NameArg)
-      else if (TypeArg = 'v') or (TypeArg = 'view') then
-        CmdRemoveView(NameArg)
-      else if (TypeArg = 's') or (TypeArg = 'service') or (TypeArg = 'serv') then
-        CmdRemoveService(NameArg)
-      else if (TypeArg = 't') or (TypeArg = 'test') then
-        CmdRemoveTest(NameArg)
-      else if (TypeArg = 'lib') or (TypeArg = 'l') then
-      begin
-        IsGlobalArg := False;
-        PkgNameArg := '';
-        for i := 3 to ParamCount do
-        begin
-          CurP := ParamStr(i);
-          if (CurP = '--global') or (CurP = '-g') then
-            IsGlobalArg := True
-          else if PkgNameArg = '' then
-            PkgNameArg := CurP;
-        end;
-        if PkgNameArg = '' then PkgNameArg := NameArg;
-        CmdLibRemove(PkgNameArg, IsGlobalArg);
-      end
-      else
-      begin
-        WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s), "test" (t), "mobile" (m) or "desktop" (d).');
-        Halt(1);
-      end;
+      WriteLn('Unknown type: ', ParamStr(2), '. Use "component" (c), "view" (v), "service" (s) or "test" (t).');
+      Halt(1);
     end;
   end
 
@@ -24163,7 +24144,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mormot <init|build [--release]|run [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
       Halt(1);
     end;
 
