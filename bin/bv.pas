@@ -24843,7 +24843,6 @@ begin
     WriteLn('  bv build --release         Builds optimized production bundle with hashes in dist/');
     WriteLn('  bv preview                 Local HTTP preview of production build (port 5000)');
     WriteLn('  bv ssg                     Pre-renders all routes into static HTML (SSG)');
-    WriteLn('  bv doc [--serve]           Generates interactive component documentation & playground');
     WriteLn('  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks');
     WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
     WriteLn('  bv clean                   Cleans generated build files (generated/ and dist/)');
@@ -24894,6 +24893,12 @@ begin
     WriteLn('  bv desktop build [target] --release Compiles Release native binary (pure GUI - NO console)');
     WriteLn('  bv desktop run [target]    Launches desktop app in Debug mode (with console)');
     WriteLn('  bv desktop run [target] --release Launches desktop app in Release mode (clean GUI)');
+    WriteLn('');
+    WriteLn('  # === Testing & Docs ===');
+    WriteLn('  bv test                    Compiles and runs all unit tests (.test.pas) with Vitest');
+    WriteLn('  bv test e2e                Runs headless browser End-to-End integration test suite');
+    WriteLn('  bv doc [--serve]           Generates interactive component documentation & playground');
+    WriteLn('  bv studio                  Launches BlaiseVue Studio developer dashboard (port 9000)');
     WriteLn('');
     WriteLn('  # === Package & Theme Management ===');
     WriteLn('  bv repo <list|add|remove|default|sync|search> Manages package repositories & ecosystem sources');

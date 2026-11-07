@@ -97,7 +97,6 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv build --release         Builds optimized production bundle with hashes in dist/
   bv preview                 Local HTTP preview of production build (port 5000)
   bv ssg                     Pre-renders all routes into static HTML (SSG)
-  bv doc [--serve]           Generates interactive component documentation & playground
   bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks
   bv check [file]            Validates component templates against script declarations (AST Type-Checker)
   bv clean                   Cleans generated build files (generated/ and dist/)
@@ -148,6 +147,12 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv desktop build [target] --release Compiles Release native binary (pure GUI - NO console)
   bv desktop run [target]    Launches desktop app in Debug mode (with console)
   bv desktop run [target] --release Launches desktop app in Release mode (clean GUI)
+
+  # === Testing & Docs ===
+  bv test                    Compiles and runs all unit tests (.test.pas) with Vitest
+  bv test e2e                Runs headless browser End-to-End integration test suite
+  bv doc [--serve]           Generates interactive component documentation & playground
+  bv studio                  Launches BlaiseVue Studio developer dashboard (port 9000)
 
   # === Package & Theme Management ===
   bv repo <list|add|remove|default|sync|search> Manages package repositories & ecosystem sources

@@ -160,22 +160,43 @@ bv rename p my-new-erp
 
 ---
 
-## 🧪 Automated Test Runner (`bv test`)
+## 🧪 Testing & Docs (v test, v test e2e, v doc, v studio)
 
-The `bv test` command compiles and executes all unit and integration tests across the 4-tier hierarchy:
-```bash
+### 1. Unit & Integration Tests (v test)
+The v test command compiles and executes all unit and integration tests across the 4-tier hierarchy:
+`ash
 bv test
-```
-1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
-2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/services/`, and `tests/framework/`.
-3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
-4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
+`
+1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in generated/tests/ to prevent orphan test execution.
+2. **Recursive Discovery:** Finds all *.test.pas files across 	ests/components/, 	ests/views/, 	ests/services/, and 	ests/framework/.
+3. **Component Transpilation:** Transpiles all .bv Single File Components into generated/.
+4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. generated/tests/views/Home.test.js).
 5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
 
 For continuous test-driven development:
-```bash
+`ash
 bv test --watch
-```
+`
+
+### 2. End-to-End Integration Tests (v test e2e)
+Runs headless browser End-to-End integration test suite across application views and workflows:
+`ash
+bv test e2e
+`
+
+### 3. Component Documentation & Playground (v doc [--serve])
+Parses the AST of all .bv components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at dist/docs/index.html:
+`ash
+bv doc          # Generates documentation in dist/docs/
+bv doc --serve  # Generates and starts dedicated HTTP preview server
+`
+
+### 4. BlaiseVue Studio Dashboard (v studio)
+Launches the visual developer cockpit and live telemetry hub on http://localhost:9000:
+`ash
+bv studio
+`
+See detailed documentation in **[40. BlaiseVue Studio Dashboard](40-blaise-studio.md)**.
 
 ---
 
