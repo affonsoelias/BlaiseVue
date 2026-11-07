@@ -167,7 +167,7 @@ bv rename p my-new-erp
 
 ---
 
-## 2. 🚀 Workspace & Project Cockpit (`bv enter`, `bv use`, `bv project`)
+## 2. 🚀 Workspace & Project Cockpit (`bv enter`, `bv use`, `bv project`, `bv files`, `bv clear`)
 
 BlaiseVue provides an interactive cockpit environment and global project registry for fast, error-free multi-project development without risk of modifying or deleting files in the wrong directory.
 
@@ -229,7 +229,34 @@ Commands available both from the terminal and inside the interactive cockpit:
 * **`project remove <name>` (or `bv project remove <name>`)**: Unregisters a project from the registry (keeps project files completely intact).
 * **`use <other-name>`**: Inside the cockpit, switch to another registered project on the fly without exiting the shell!
 
-### 5. Running Commands Inside the Cockpit
+### 5. Project File Explorer: `bv files` (or `files`)
+Inspect the structured tree of your BlaiseVue project with architectural role annotations and noise filtering:
+```bash
+bv files
+# Or inside Cockpit:
+[bv: my-app] > files
+```
+- **Architectural Role Annotations**: Automatically labels files by domain role (`[Root SFC App]`, `[Component]`, `[Route View]`, `[Domain Service]`, `[Test Suite]`, `[Lazarus Project Info]`, `[Docker Container]`, etc.).
+- **Automatic Noise Filtering**: Prunes distracting build artifacts and vendor directories (`node_modules`, `.git`, `dist`, `generated`, `backup`, `units`, `.gradle`, etc.) to keep the output focused and fast.
+- **Target Folder & Depth**: Pass any target folder (`bv files src` or `files tests`) or `--all` to view deep unpruned trees.
+- **Universal Multiplatform**: Uses clean ASCII formatting (`+-- `, `\-- `, `|   `) immune to character encoding issues on Windows (CP1252/CP850), Linux, and macOS.
+
+### 6. Terminal Clearing: `bv clear` (or `clear`)
+Native cross-platform terminal screen clearer:
+```bash
+bv clear
+# Or inside Cockpit:
+[bv: my-app] > clear
+```
+- Within the Cockpit, it completely clears the console buffer and re-prints the clean Cockpit header banner.
+- Implemented natively for Windows Console API (`cmd /c cls`) and POSIX ANSI VT100 sequence (`\033[2J\033[H\033[3J`) on Linux & macOS.
+
+### 7. Hierarchical Project Root Resolution & Safety Guard
+All platform scaffolding commands (`bv mobile init`, `bv desktop init`, `bv mormot init`) and generators (`bv g c`, `bv g v`, `bv g s`, `bv g t`, etc.) feature intelligent upward directory traversal:
+- **Run from Anywhere Inside Project**: Execute commands at root or inside any nested directory (`src/`, `src/components/`, `tests/services/`); the CLI traverses upwards to discover the project root (`app.cfg`, `package.json`, `src/app.bv`) and places generated files in the canonical root-relative paths (preventing duplicate nested paths like `src/src/...`).
+- **Safety Guard**: If executed outside a BlaiseVue project (e.g. in arbitrary system folders or the Desktop), the CLI refuses to execute and creates zero files or directories.
+
+### 8. Running Commands Inside the Cockpit
 Within the interactive cockpit (`[bv: <project>] > `), run commands directly without repeating `bv`:
 * `new s <Name> [--no-test]` — Scaffolds pure Pascal domain service and unit test.
 * `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
@@ -237,6 +264,8 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 * `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
 * `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
 * `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
+* `files [path] [--all]` — Displays structured project files tree with architectural roles.
+* `clear` — Clears terminal screen and refreshes clean Cockpit header.
 * `test` — Runs full test suite (Pas2JS + Vitest).
 * `dev` — Builds in debug mode & starts dev server with instant HMR.
 * `build [--release]` — Compiles frontend distribution (debug or `--release` with hashes).
@@ -254,7 +283,7 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 > **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
 > Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev` or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
 
-### 6. Real-Time Autocompletion, History & Typo Self-Correction
+### 9. Real-Time Autocompletion, History & Typo Self-Correction
 
 The BlaiseVue Cockpit provides a developer-grade interactive shell with zero external dependencies (powered directly by the native Free Pascal executable across Windows, Linux, and macOS):
 

@@ -121,6 +121,8 @@ bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, o
 bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 
 # === Workspace & Project Cockpit ===
+bv files [path] [--all]    # Displays structured project files tree with architecture roles
+bv clear                   # Clears terminal screen & refreshes header
 bv enter                   # Enters interactive project Cockpit shell ([bv: my-app] >)
 bv use <project-name>      # Jumps into registered project Cockpit shell from anywhere
 bv project add             # Registers current project into global registry

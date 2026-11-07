@@ -102,6 +102,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv rename <c|v|s|p>        Smart rename for services, components, views, or project name
 
   # === Workspace & Project Cockpit ===
+  bv files [path] [--all]    Displays structured project files tree with architecture roles
+  bv clear                   Clears terminal screen & refreshes header
   bv enter                   Enters interactive project Cockpit shell with [TAB] autocomplete & history
   bv use <project-name>      Jumps into registered project Cockpit shell from anywhere
   bv project add             Registers current project into global registry
