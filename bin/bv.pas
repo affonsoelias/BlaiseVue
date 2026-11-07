@@ -3313,7 +3313,9 @@ begin
   WriteLn('');
   WriteLn('Next steps:');
   WriteLn('  cd ', ProjectName);
-  WriteLn('  bv dev');
+  WriteLn('  bv doctor       # Verify environment & project health');
+  WriteLn('  bv enter        # (Optional) Enter interactive project Cockpit');
+  WriteLn('  bv dev          # Start local dev server at http://localhost:8080');
   if DirectoryExists(Base + 'server') then
   begin
     WriteLn('  bv mormot run [--release] # Starts the native mORMot 2 backend on port 8090');
@@ -22055,12 +22057,25 @@ begin
   Result := BaseDir + DirectorySeparator + 'projects.json';
 end;
 
+{ Saves the global project registry JSON document. }
+procedure SaveProjectsRegistry(RootObj: TJSONObject);
+var
+  ConfigFile, JsonStr: string;
+begin
+  ConfigFile := GetProjectsConfigPath;
+  JsonStr := RootObj.FormatJSON;
+  WriteStringToFile(ConfigFile, JsonStr);
+end;
+
 { Loads the global project registry JSON document. }
 function LoadProjectsRegistry(out RootObj: TJSONObject): Boolean;
 var
-  ConfigFile, Raw: string;
+  ConfigFile, Raw, PName, PPath: string;
   Parser: TJSONParser;
   Data: TJSONData;
+  ProjectsArr: TJSONArray;
+  i: Integer;
+  Modified: Boolean;
 begin
   Result := False;
   RootObj := nil;
@@ -22102,16 +22117,40 @@ begin
     RootObj.Add('projects', TJSONArray.Create);
     Result := True;
   end;
-end;
 
-{ Saves the global project registry JSON document. }
-procedure SaveProjectsRegistry(RootObj: TJSONObject);
-var
-  ConfigFile, JsonStr: string;
-begin
-  ConfigFile := GetProjectsConfigPath;
-  JsonStr := RootObj.FormatJSON;
-  WriteStringToFile(ConfigFile, JsonStr);
+  // Automatically filter and purge framework demo-app if present
+  if (RootObj <> nil) and (RootObj.Find('projects') <> nil) and (RootObj.Find('projects') is TJSONArray) then
+  begin
+    ProjectsArr := RootObj.Arrays['projects'];
+    Modified := False;
+    for i := ProjectsArr.Count - 1 downto 0 do
+    begin
+      if ProjectsArr[i] is TJSONObject then
+      begin
+        PName := LowerCase(GetJsonString(TJSONObject(ProjectsArr[i]), 'name', ''));
+        PPath := LowerCase(GetJsonString(TJSONObject(ProjectsArr[i]), 'path', ''));
+        if (PName = 'demo-app') or (PName = 'blaisevue-demo-app') or
+           (ExtractFileName(ExcludeTrailingPathDelimiter(PPath)) = 'demo-app') then
+        begin
+          ProjectsArr.Delete(i);
+          Modified := True;
+        end;
+      end;
+    end;
+
+    if (LowerCase(GetJsonString(RootObj, 'active', '')) = 'demo-app') or
+       (LowerCase(GetJsonString(RootObj, 'active', '')) = 'blaisevue-demo-app') then
+    begin
+      if ProjectsArr.Count > 0 then
+        RootObj.Strings['active'] := GetJsonString(TJSONObject(ProjectsArr[0]), 'name', '')
+      else
+        RootObj.Strings['active'] := '';
+      Modified := True;
+    end;
+
+    if Modified then
+      SaveProjectsRegistry(RootObj);
+  end;
 end;
 
 { Resolves the project name from a directory configuration or folder name. }
@@ -22238,6 +22277,18 @@ var
   CurDir, ProjName, ProjVer, NormCurDir, NormExisting: string;
   i, FoundIdx: Integer;
 begin
+  if IsFrameworkCoreDemoApp then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Cannot register the internal framework repository or demo-app.');
+    WriteLn('  Create and register your own standalone application with:');
+    WriteLn('    bv create <project-name>');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
   if not IsValidBlaiseVueProject then
   begin
     WriteLn('');
@@ -22254,6 +22305,18 @@ begin
   NormCurDir := LowerCase(CurDir);
   ProjName := GetProjectNameFromDir(CurDir);
   ProjVer := GetProjectVersionFromDir(CurDir);
+  if SameText(ProjName, 'demo-app') or SameText(ProjName, 'blaisevue-demo-app') then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] Cannot register the internal framework repository or demo-app.');
+    WriteLn('  Create and register your own standalone application with:');
+    WriteLn('    bv create <project-name>');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Exit;
+  end;
+
   if not LoadProjectsRegistry(RootObj) then Exit;
   try
     ProjectsArr := RootObj.Arrays['projects'];
@@ -22312,7 +22375,7 @@ var
   ProjectsArr: TJSONArray;
   ProjData: TJSONData;
   ActiveName, PName, PPath, PVer, Marker: string;
-  i: Integer;
+  i, ValidCount: Integer;
 begin
   if not LoadProjectsRegistry(RootObj) then Exit;
   try
@@ -22321,34 +22384,38 @@ begin
     WriteLn('');
     WriteLn('  Registered BlaiseVue Projects:');
     WriteLn('  ' + StringOfChar('-', 76));
-    if ProjectsArr.Count = 0 then
+    ValidCount := 0;
+    for i := 0 to ProjectsArr.Count - 1 do
     begin
-      WriteLn('  No projects registered yet.');
-      WriteLn('  To register a project: navigate to its folder, run "bv enter" and "project add"');
-    end
-    else
-    begin
-      for i := 0 to ProjectsArr.Count - 1 do
+      ProjData := ProjectsArr[i];
+      if ProjData is TJSONObject then
       begin
-        ProjData := ProjectsArr[i];
-        if ProjData is TJSONObject then
-        begin
-          ProjObj := TJSONObject(ProjData);
-          PName := GetJsonString(ProjObj, 'name', 'unnamed');
-          PPath := GetJsonString(ProjObj, 'path', '');
-          PVer := GetJsonString(ProjObj, 'version', '1.0.0');
-          if SameText(PName, ActiveName) then
-            Marker := '* '
-          else
-            Marker := '  ';
+        ProjObj := TJSONObject(ProjData);
+        PName := GetJsonString(ProjObj, 'name', 'unnamed');
+        PPath := GetJsonString(ProjObj, 'path', '');
+        PVer := GetJsonString(ProjObj, 'version', '1.0.0');
+        if SameText(PName, 'demo-app') or SameText(PName, 'blaisevue-demo-app') or
+           SameText(ExtractFileName(ExcludeTrailingPathDelimiter(PPath)), 'demo-app') then
+          Continue;
 
-          WriteLn('  ', Marker, PadRight(PName, 20), PadRight('v' + PVer, 10), PPath);
-        end;
+        Inc(ValidCount);
+        if SameText(PName, ActiveName) then
+          Marker := '* '
+        else
+          Marker := '  ';
+
+        WriteLn('  ', Marker, PadRight(PName, 20), PadRight('v' + PVer, 10), PPath);
       end;
     end;
 
+    if ValidCount = 0 then
+    begin
+      WriteLn('  No user projects registered yet.');
+      WriteLn('  To register a project: navigate to its folder, run "bv enter" and "project add"');
+    end;
+
     WriteLn('  ' + StringOfChar('-', 76));
-    WriteLn('  Total: ', ProjectsArr.Count, ' project(s) registered (* active)');
+    WriteLn('  Total: ', ValidCount, ' project(s) registered (* active)');
     WriteLn('');
   finally
     RootObj.Free;

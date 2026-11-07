@@ -104,23 +104,36 @@ source ~/.bashrc
 
 ---
 
-## 🩺 Step 3: Run Environment Diagnostics (`bv doctor`)
+## 📦 Step 3: Create Your First Project
 
-Restart your terminal and run the environment diagnostic tool:
+Scaffold a complete, standalone application using `bv create`:
+
+```bash
+bv create my-app
+cd my-app
+```
+
+`bv create` sets up a production-ready project workspace:
+* Reactive frontend SPA in `src/` with views, components, and formatters.
+* High-throughput native mORMot 2 backend server in `server/`.
+* Mobile Capacitor runtime in `mobile/` configured for Android and iOS.
+* Native desktop app support with Lazarus IDE project files (`.lpi`/`.lpr`).
+* 4-tier Vitest automated testing suite in `tests/`.
+
+---
+
+## 🩺 Step 4: Verify Environment Health (`bv doctor`)
+
+Inside your newly created project directory (`my-app`), run the built-in diagnostic doctor:
 
 ```bash
 bv doctor
 ```
 
-`bv doctor` automatically inspects your environment and verifies all core framework dependencies:
-* **Git CLI**: Verifies installation in PATH and reports the active channel.
-* **Free Pascal (FPC) & Lazarus IDE**: Detects FPC in PATH or bundled inside standard Lazarus installations (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
-* **InstantFPC**: Verifies the Pascal scripting engine in PATH or inside the Lazarus FPC directory.
-* **Python 3**: Verifies Python in PATH, recommended for dynamic extension lifecycle scripts (`bv extension`).
-* **Pas2JS (Bundled)**: Confirms the presence and integrity of the built-in transpiler in `vendor/pas2js/`.
-* **Synopse mORMot 2 (Bundled)**: Verifies the full-stack Pascal framework in `vendor/mormot2/`.
-* **Node.js & npm**: Checks runtime versions for Vitest and HMR dev server.
-* **Docker CLI**: Checks optional micro-container tooling.
+`bv doctor` inspects both your system compiler toolchain and project-level dependencies:
+* **Core Framework Tooling**: Git, Free Pascal (FPC), Lazarus IDE, InstantFPC, Pas2JS (Bundled), Synopse mORMot 2 (Bundled).
+* **Ecosystem & Testing**: Python 3, Node.js & npm, Vitest test runner.
+* **Mobile & Capacitor**: Validates local project dependencies and Android Studio / SDK setup with zero false positives.
 
 **Expected healthy output:**
 ```text
@@ -129,8 +142,8 @@ bv doctor
 ======================================================================
   Operating System:     Windows (x86_64)
   SDK Directory:        C:\Users\Pichau\Documents\BlaiseVue
-  Git Channel:          main (Commit: a1b2c3d)
-  Remote Origin:        https://github.com/affonsoelias/BlaiseVue.git
+  Project Directory:    C:\Users\Pichau\Documents\my-app
+  Project Name:         my-app (v1.0.0)
 
 [1] Core Framework Tooling:
   [v] Git CLI:              git version 2.50.1 detected in PATH
@@ -143,16 +156,63 @@ bv doctor
 [2] Ecosystem & Testing Tools:
   [v] Python 3:             v3.13.12 (system PATH, recommended for tool packages)
   [v] Node.js & npm:        Node v24.12.0 and npm v11.11.0 detected in PATH
-  [!] Docker CLI:           Not detected (Optional: production micro-containers)
+  [v] Project Dependencies: Local node_modules & Capacitor verified
 
 ======================================================================
-  [v] Diagnostics complete: Your environment is 100% healthy and ready!
+  [v] Diagnostics complete: Your project environment is 100% healthy!
 ======================================================================
 ```
 
 ---
 
-## 🔄 Step 4: Keeping BlaiseVue Updated (`bv self-update`)
+## 🎮 Step 5: Interactive Project Cockpit (`bv enter` - Optional)
+
+Enter the unified project Cockpit shell for rapid interactive workflows:
+
+```bash
+bv enter
+```
+This opens the context-aware shell:
+```text
+  [bv: my-app] >
+```
+From here, you can run generators (`g c Navbar`, `g v Dashboard`), manage themes (`theme use darkly`), or launch development with single-word commands (`dev`). Type `exit` to return to your normal terminal.
+
+---
+
+## ⚡ Step 6: Launch the Development Server
+
+Start the local development server with instant Hot Module Replacement (HMR):
+
+```bash
+bv dev
+```
+Open **[http://localhost:8080](http://localhost:8080)** in your browser to experience live reactive state, router navigation, and instant component updates!
+
+---
+
+## 📱 Step 7: Explore Full-Stack, Mobile & Desktop
+
+Your newly created project is ready to run across platforms:
+
+### 1. High-Performance Backend Server (Port 8090)
+```bash
+bv mormot run
+```
+
+### 2. Native Mobile on Android Emulator (Capacitor)
+```bash
+bv mobile run android --emulator
+```
+
+### 3. Native Desktop Application (WebUI)
+```bash
+bv desktop run
+```
+
+---
+
+## 🔄 Step 8: Keeping BlaiseVue Updated (`bv self-update`)
 
 Never manually re-download ZIP files or re-clone the repository to get bug fixes or new features. BlaiseVue includes a built-in Git auto-updater:
 
@@ -178,18 +238,6 @@ bv channel use develop
 # Switch back to stable release channel:
 bv channel use main
 ```
-
----
-
-## ⚡ Step 5: Test the Demo Application
-
-Launch the enterprise showcase application included with the framework:
-
-```bash
-cd demo-app
-bv dev
-```
-Open **[http://localhost:8080](http://localhost:8080)** in your browser to experience instant Hot Module Replacement (HMR), reactive forms, and full-stack mORMot 2 integration!
 
 ---
 

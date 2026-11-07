@@ -282,7 +282,8 @@ BlaiseVue/
 > [!NOTE]
 > **Pas2JS is pre-bundled**: You do **not** need to install `pas2js`. Official multi-platform binaries for Windows, Linux, and macOS are already included in `vendor/pas2js/`.
 
-### 1. Clone the Repository
+### 1. Clone the Repository & Configure PATH
+Clone the BlaiseVue SDK and configure the native CLI in your system `PATH`:
 ```bash
 # Clone official stable release channel (main):
 git clone https://github.com/affonsoelias/BlaiseVue.git
@@ -293,41 +294,65 @@ git clone -b develop https://github.com/affonsoelias/BlaiseVue.git
 cd BlaiseVue
 ```
 
-### 2. Configure PATH & Executable Permissions (Linux / macOS)
-On Linux and macOS, ensure executable permissions (`+x`) are set on the CLI and the bundled `pas2js` transpiler binaries, and add `bin/` to your shell `PATH`:
+#### Set Executable Permissions & PATH (Linux / macOS):
 ```bash
 chmod +x bin/bv vendor/pas2js/pas2js-*/bin/{pas2js,compileserver,makestub,webidl2pas} 2>/dev/null || true
 
 # Add to ~/.zshrc (if using Zsh, e.g. Manjaro/macOS) or ~/.bashrc (if using Bash):
 export PATH="$HOME/BlaiseVue/bin:$PATH"
 
-# Reload your active shell (use ~/.zshrc in Zsh or ~/.bashrc in Bash):
+# Reload your active shell:
 source ~/.zshrc   # or: source ~/.bashrc
 ```
 
+On Windows, add the full path to `BlaiseVue\bin` to your System or User Environment `Path` (or invoke directly via `.\bin\bv.exe`).
+
+### 2. Create Your First Project
+Scaffold a complete, modern BlaiseVue full-stack project and enter its directory:
+```bash
+bv create my-app
+cd my-app
+```
+`bv create` automatically scaffolds the reactive frontend, domain services, native mORMot 2 backend, mobile Capacitor runtime, Lazarus IDE project files (`.lpi`/`.lpr`), and 4-tier Vitest test suites with zero manual boilerplate.
+
 ### 3. Verify Environment Health
-Run the built-in diagnostic doctor:
+Run the built-in diagnostic doctor **inside** your newly created project directory:
 ```bash
-bv doctor          # or .\bin\bv.exe doctor on Windows
+bv doctor
 ```
+Running `bv doctor` inside your project verifies all system compilers (Git, FPC, Lazarus, Pas2JS, Node) along with your project's local dependencies and mobile configuration with zero false positives.
 
-### 4. Compile the BlaiseVue CLI (Optional)
-Pre-compiled binaries are provided in `bin/`. To rebuild manually with **Free Pascal Compiler 3.2+**:
+### 4. Interactive Cockpit Shell (Optional)
+BlaiseVue provides an interactive command shell with real-time autocompletion, project context, and unified workflow shortcuts:
 ```bash
-cd bin
-fpc -O2 bv.pas
-# Move bv or bv.exe to your PATH or use directly from bin/
+bv enter
+# Opens the interactive Cockpit: [bv: my-app] >
 ```
+*(You can exit the shell anytime by typing `exit` or continue executing commands directly via `bv <command>`)*.
 
-### 5. Pre-bundled Pas2JS Compiler
-BlaiseVue comes with the `pas2js` transpiler already included under `vendor/pas2js/`. The CLI automatically detects your platform (Windows, Linux, macOS) with zero manual configuration required!
-
-### 6. Launch the Demo App
+### 5. Launch the Development Server
+Start the local development server with instant Hot Module Replacement (HMR):
 ```bash
-cd demo-app
-bv dev             # or ..\bin\bv.exe dev on Windows
+bv dev
 # Open http://localhost:8080 in your browser
 ```
+Any modifications saved in `src/` or `app.bv` are recompiled and hot-swapped in the browser in milliseconds!
+
+### 6. Explore Full-Stack, Mobile & Desktop
+Your new project is multi-platform by design:
+```bash
+# Native mORMot 2 backend server (Port 8090):
+bv mormot run
+
+# Native Mobile on Android Emulator (Capacitor):
+bv mobile run android --emulator
+
+# Native Desktop Application (WebUI):
+bv desktop run
+```
+
+> [!TIP]
+> **Manual CLI Compilation (Optional)**: Pre-compiled binaries are provided in `bin/`. To rebuild manually with **Free Pascal Compiler 3.2+**, run `fpc -O2 bin/bv.pas -FEbin`. Pas2JS is pre-bundled in `vendor/pas2js/` with zero manual configuration required!
 
 ---
 

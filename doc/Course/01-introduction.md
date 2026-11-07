@@ -62,24 +62,30 @@ A `.bv` file is divided into three intuitive sections:
 
 ---
 
-## 🚀 3. Step-by-Step: Running Your First Application
+## 🚀 3. Step-by-Step: Creating & Running Your First Application
 
-Let's run the sample application on your computer:
+Let's create and run your very first BlaiseVue application on your computer:
 
-### Step 1: Verify Environment Health
-Open your terminal (PowerShell, Command Prompt, or Linux/macOS terminal) in the BlaiseVue repository directory and run:
+### Step 1: Create Your Project
+Open your terminal and scaffold a new project with the CLI:
+```bash
+bv create my-app
+cd my-app
+```
+BlaiseVue automatically sets up your project structure, reactive templates, local dependencies, and native desktop/mobile bridges!
+
+### Step 2: Verify Environment Health
+Inside your project directory (`my-app`), run the diagnostic doctor:
 ```bash
 bv doctor
 ```
-You will see that all tools (Free Pascal, InstantFPC, Python 3, Node.js) are detected and verified with `[v]`.
+You will see that all tools (Free Pascal, InstantFPC, Python 3, Node.js, and project dependencies) are detected and verified with `[v]`.
 
-### Step 2: Start the Development Server
-Navigate into the demo application directory and start the dev server:
+### Step 3: Start the Development Server (or enter Cockpit)
+You can optionally enter the interactive project Cockpit via `bv enter`, or start the dev server directly:
 ```bash
-cd demo-app
-bv run dev
+bv dev
 ```
-*(Tip: you can also simply run `bv dev`)*.
 
 The terminal will display:
 ```text
@@ -87,15 +93,15 @@ The terminal will display:
   ➜  Network: use --host to expose
 ```
 
-### Step 3: Open in Your Browser
+### Step 4: Open in Your Browser
 Open your favorite web browser (Google Chrome, Firefox, Edge, Safari) and navigate to:  
 👉 `http://localhost:8080`
 
 The application will render immediately!
 
-### Step 4: Make Your First Live Edit (HMR)
+### Step 5: Make Your First Live Edit (HMR)
 1. Keep your browser open on one side of your screen.
-2. Open `demo-app/src/views/Home.bv` in your code editor (such as VS Code or Antigravity IDE).
+2. Open `src/views/Home.bv` inside `my-app` in your code editor (such as VS Code or Antigravity IDE).
 3. Locate the title variable in the `<script>` section and change it to:
    ```pascal
    'My First Reactive App in Pascal!'
