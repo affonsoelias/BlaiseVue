@@ -23916,7 +23916,7 @@ begin
     Flush(Output);
   end;
 
-  if fpIsAtty(0) = 0 then
+  if isatty(0) = 0 then
   begin
     // Fallback if redirected or non-interactive pipe
     if Eof then Exit(False);
