@@ -24509,6 +24509,8 @@ begin
         WriteLn('  rename <c|v|s|p>           Smart rename for services, components, views, or project name');
         WriteLn('');
         WriteLn('  # === Workspace & Project Cockpit ===');
+        WriteLn('  files [path] [--all]       Displays structured project files tree');
+        WriteLn('  clear                      Clears terminal screen & refreshes header');
         WriteLn('  use <project-name>         Switches active project context immediately');
         WriteLn('  project add                Registers current project into global registry');
         WriteLn('  project list               Lists registered projects (* active)');
@@ -24597,8 +24599,6 @@ begin
         WriteLn('  update [--dry-run]         Updates project infrastructure non-destructively');
         WriteLn('');
         WriteLn('  # === Cockpit Session ===');
-        WriteLn('  clear                      Clears terminal screen & refreshes header');
-        WriteLn('  files [path] [--all]       Displays structured project files tree');
         WriteLn('  exit / quit / q            Exits the cockpit shell');
         WriteLn('  <shell command>            Runs any system command (git, npm, dir, etc.)');
         WriteLn('  ============================================================');
