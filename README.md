@@ -102,7 +102,7 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv rename <c|v|s|p>        Smart rename for services, components, views, or project name
 
   # === Workspace & Project Cockpit ===
-  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)
+  bv enter                   Enters interactive project Cockpit shell with [TAB] autocomplete & history
   bv use <project-name>      Jumps into registered project Cockpit shell from anywhere
   bv project add             Registers current project into global registry
   bv project list            Lists registered projects (* active)
@@ -323,7 +323,7 @@ bv doctor
 Running `bv doctor` inside your project verifies all system compilers (Git, FPC, Lazarus, Pas2JS, Node) along with your project's local dependencies and mobile configuration with zero false positives.
 
 ### 4. Interactive Cockpit Shell (Optional)
-BlaiseVue provides an interactive command shell with real-time autocompletion, project context, and unified workflow shortcuts:
+BlaiseVue provides an interactive command shell with real-time `[TAB]` autocompletion, session history (`↑`/`↓`), and intelligent subcommand guidance:
 ```bash
 bv enter
 # Opens the interactive Cockpit: [bv: my-app] >

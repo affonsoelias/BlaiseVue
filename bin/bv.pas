@@ -791,6 +791,8 @@ procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
+function CockpitReadLine(const Prompt: string; out S: string): Boolean; forward;
+function CockpitReadInteractive(const Prompt: string; out S: string): Boolean; forward;
 { Main Parser: Orchestrates the separation of <template>, <script>, and <style> sections }
 procedure ParseBVFile(const FileName: string; out Parsed: TBVParsed);
 var
@@ -11732,7 +11734,7 @@ var
       IsAllTargets := True
     else if (S = '--emulator') or (S = '-e') or (S = 'emulator') then
       UseEmulator := True
-    else if (S = '--fresh') or (S = '--restart') or (S = '--force-restart') then
+    else if S = '--fresh' then
       IsFreshEmulator := True
     else if (S = '--no-build') then
       IsNoBuild := True
@@ -12285,7 +12287,7 @@ begin
     CmdRemoveMobile(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
     Exit;
   end
-  else if (SubCmd = 'kill') or (SubCmd = 'stop') then
+  else if SubCmd = 'kill' then
   begin
     KillAndroidEmulator;
     Exit;
@@ -12773,7 +12775,7 @@ begin
       RunTarget('android');
     end
 
-    else if (EmulatorAction = 'kill') or (EmulatorAction = 'stop') or (EmulatorAction = 'reset') then
+    else if EmulatorAction = 'kill' then
     begin
       KillAndroidEmulator;
     end
@@ -21164,7 +21166,7 @@ var
       PortArg := Copy(A, 8, MaxInt)
     else if (Copy(S, 1, 6) = '--out=') then
       DeployDir := Copy(A, 7, MaxInt)
-    else if (S = '--fresh') or (S = '--restart') or (S = '--force-restart') then
+    else if S = '--fresh' then
       IsFresh := True;
   end;
 begin
@@ -21523,7 +21525,7 @@ begin
     {$ENDIF}
   end
 
-  else if (SubCmd = 'kill') or (SubCmd = 'stop') then
+  else if SubCmd = 'kill' then
   begin
     TargetPort := 8090;
     if PortArg <> '' then
@@ -23227,67 +23229,868 @@ begin
 end;
 {$ENDIF}
 
-function CockpitReadLine(out S: string): Boolean;
+// =====================================================================
+//  BLAISEVUE COCKPIT: COMMAND TREE & AUTOCOMPLETION ENGINE (PHASE 1)
+// =====================================================================
+
+{ Returns the complete list of top-level commands supported by the Cockpit shell. }
+function GetCockpitMainCommands: TStringList;
+begin
+  Result := TStringList.Create;
+  Result.Sorted := True;
+  Result.Duplicates := dupIgnore;
+  // Scaffolding & Generators
+  Result.Add('g');
+  Result.Add('new');
+  Result.Add('generate');
+  Result.Add('remove');
+  Result.Add('list');
+  Result.Add('rename');
+  // Workspace & Project Cockpit
+  Result.Add('enter');
+  Result.Add('use');
+  Result.Add('project');
+  // Development & Frontend Build
+  Result.Add('dev');
+  Result.Add('build');
+  Result.Add('test');
+  Result.Add('preview');
+  Result.Add('ssg');
+  Result.Add('check');
+  Result.Add('clean');
+  Result.Add('wasm');
+  Result.Add('doc');
+  // Full-Stack Backend (mORMot 2)
+  Result.Add('mormot');
+  // Mobile (Capacitor)
+  Result.Add('mobile');
+  // Desktop (WebUI)
+  Result.Add('desktop');
+  // Package & Theme Management
+  Result.Add('lib');
+  Result.Add('theme');
+  Result.Add('repo');
+  Result.Add('extension');
+  // Project Configuration & Paths
+  Result.Add('path');
+  Result.Add('meta');
+  Result.Add('license');
+  Result.Add('reset');
+  // Diagnostics & Maintenance
+  Result.Add('doctor');
+  Result.Add('update');
+  Result.Add('upgrade');
+  Result.Add('self-update');
+  Result.Add('channel');
+  // Cockpit Builtins
+  Result.Add('help');
+  Result.Add('exit');
+  Result.Add('quit');
+  Result.Add('clear');
+  Result.Add('cls');
+end;
+
+{ Returns all subcommands valid for a given parent command. }
+function GetCockpitSubcommands(const MainCmd: string): TStringList;
 var
-  ch: char;
-  len, avail: integer;
+  Cmd: string;
+begin
+  Result := TStringList.Create;
+  Result.Sorted := True;
+  Result.Duplicates := dupIgnore;
+  Cmd := LowerCase(MainCmd);
+
+  if Cmd = 'mormot' then
+  begin
+    Result.Add('run');
+    Result.Add('build');
+    Result.Add('crud');
+    Result.Add('auth');
+    Result.Add('docs');
+    Result.Add('swagger');
+    Result.Add('docker');
+    Result.Add('rpc');
+    Result.Add('status');
+    Result.Add('kill');
+    Result.Add('init');
+    Result.Add('deploy');
+  end
+  else if Cmd = 'mobile' then
+  begin
+    Result.Add('run');
+    Result.Add('build');
+    Result.Add('open');
+    Result.Add('sync');
+    Result.Add('init');
+    Result.Add('upgrade');
+    Result.Add('doctor');
+    Result.Add('kill');
+    Result.Add('remove');
+  end
+  else if Cmd = 'desktop' then
+  begin
+    Result.Add('run');
+    Result.Add('build');
+    Result.Add('init');
+    Result.Add('remove');
+  end
+  else if (Cmd = 'g') or (Cmd = 'new') or (Cmd = 'generate') or (Cmd = 'remove') then
+  begin
+    Result.Add('c');
+    Result.Add('v');
+    Result.Add('s');
+    Result.Add('t');
+    Result.Add('component');
+    Result.Add('view');
+    Result.Add('service');
+    Result.Add('test');
+  end
+  else if Cmd = 'list' then
+  begin
+    Result.Add('c');
+    Result.Add('v');
+    Result.Add('s');
+    Result.Add('t');
+    Result.Add('lib');
+  end
+  else if Cmd = 'rename' then
+  begin
+    Result.Add('c');
+    Result.Add('v');
+    Result.Add('s');
+    Result.Add('p');
+  end
+  else if Cmd = 'project' then
+  begin
+    Result.Add('list');
+    Result.Add('add');
+    Result.Add('current');
+    Result.Add('remove');
+  end
+  else if Cmd = 'theme' then
+  begin
+    Result.Add('list');
+    Result.Add('use');
+    Result.Add('add');
+    Result.Add('remove');
+    Result.Add('reset');
+  end
+  else if Cmd = 'lib' then
+  begin
+    Result.Add('list');
+    Result.Add('install');
+    Result.Add('remove');
+    Result.Add('search');
+    Result.Add('outdated');
+    Result.Add('pack');
+  end
+  else if Cmd = 'path' then
+  begin
+    Result.Add('list');
+    Result.Add('add');
+    Result.Add('remove');
+    Result.Add('available');
+  end
+  else if (Cmd = 'channel') or (Cmd = 'branch') then
+  begin
+    Result.Add('use');
+    Result.Add('main');
+    Result.Add('develop');
+  end
+  else if Cmd = 'meta' then
+  begin
+    Result.Add('show');
+    Result.Add('get');
+    Result.Add('set');
+    Result.Add('bump');
+    Result.Add('sync');
+  end
+  else if Cmd = 'license' then
+  begin
+    Result.Add('show');
+    Result.Add('list');
+    Result.Add('set');
+  end
+  else if Cmd = 'wasm' then
+  begin
+    Result.Add('info');
+    Result.Add('benchmark');
+  end;
+end;
+
+{ Returns formatted English subcommands guide and help overview for a parent command. }
+function GetCockpitSubcommandSummary(const MainCmd: string): string;
+var
+  Cmd: string;
+begin
+  Result := '';
+  Cmd := LowerCase(MainCmd);
+
+  if Cmd = 'mormot' then
+    Result :=
+      '  [HINT] Available subcommands for ''mormot'':' + LineEnding +
+      '   run [--release] [--fresh]   Starts native mORMot 2 backend server (Port 8090)' + LineEnding +
+      '   build [--release]          Compiles native server binary with Free Pascal' + LineEnding +
+      '   crud <Model>               Scaffolds full-stack ORM model, REST API & DataGrid' + LineEnding +
+      '   auth                       Scaffolds JWT authentication, login & route guards' + LineEnding +
+      '   docs | swagger             Interactive OpenAPI 3.0 & Swagger UI explorer' + LineEnding +
+      '   docker [--build]           Scaffolds sub-20MB Alpine micro-container' + LineEnding +
+      '   rpc                        Scaffolds type-safe Pascal RPC client proxies' + LineEnding +
+      '   status                     Queries running mORMot 2 health endpoint' + LineEnding +
+      '   kill                       Terminates lingering server instances' + LineEnding +
+      '   init                       Scaffolds mORMot 2 server structure in server/' + LineEnding +
+      '   deploy [--zip]             Assembles standalone production bundle in deploy/'
+  else if Cmd = 'mobile' then
+    Result :=
+      '  [HINT] Available subcommands for ''mobile'':' + LineEnding +
+      '   run android [--emulator]   Builds and launches app on Android emulator/device' + LineEnding +
+      '   build android              Compiles native Android Debug/Release APK or AAB' + LineEnding +
+      '   open android               Opens native Android project in Android Studio' + LineEnding +
+      '   sync                       Synchronizes dist/ web assets with native mobile/' + LineEnding +
+      '   init [name] [id]           Scaffolds Capacitor configuration and mobile runtime' + LineEnding +
+      '   upgrade [--check]          Migrates Capacitor dependencies & updates Gradle' + LineEnding +
+      '   doctor                     Validates Android SDK, JDK, ADB and emulators' + LineEnding +
+      '   kill                       Terminates lingering emulator & QEMU processes' + LineEnding +
+      '   remove [-y]                Safely deletes mobile/ and capacitor.config.json'
+  else if Cmd = 'desktop' then
+    Result :=
+      '  [HINT] Available subcommands for ''desktop'':' + LineEnding +
+      '   run                        Launches native desktop application window' + LineEnding +
+      '   build                      Compiles native desktop binary using Free Pascal' + LineEnding +
+      '   init                       Scaffolds WebUI desktop wrapper & Lazarus project' + LineEnding +
+      '   remove                     Safely deletes desktop/ scaffolding'
+  else if (Cmd = 'g') or (Cmd = 'new') or (Cmd = 'generate') then
+    Result :=
+      '  [HINT] Available subcommands for ''' + Cmd + ''' (generators):' + LineEnding +
+      '   c <Name>                   Scaffolds a component (.bv) & test in tests/components/' + LineEnding +
+      '   v <Name>                   Scaffolds a route view (.bv) & test in tests/views/' + LineEnding +
+      '   s <Name>                   Scaffolds a pure Pascal domain service in src/services/' + LineEnding +
+      '   t <Name>                   Scaffolds a Pascal test file (.test.pas)'
+  else if Cmd = 'remove' then
+    Result :=
+      '  [HINT] Available subcommands for ''remove'':' + LineEnding +
+      '   c <Name>                   Safely deletes a component and its unit test' + LineEnding +
+      '   v <Name>                   Safely deletes a view and its unit test' + LineEnding +
+      '   s <Name>                   Safely deletes a domain service from src/services/' + LineEnding +
+      '   t <Name>                   Safely deletes a test file'
+  else if Cmd = 'list' then
+    Result :=
+      '  [HINT] Available subcommands for ''list'':' + LineEnding +
+      '   c                          Lists all project components' + LineEnding +
+      '   v                          Lists all route views' + LineEnding +
+      '   s                          Lists all domain services' + LineEnding +
+      '   t                          Lists all test files' + LineEnding +
+      '   lib                        Lists all installed packages'
+  else if Cmd = 'rename' then
+    Result :=
+      '  [HINT] Available subcommands for ''rename'':' + LineEnding +
+      '   c <Old> <New>              Smart renames a component and updates references' + LineEnding +
+      '   v <Old> <New>              Smart renames a route view and updates router' + LineEnding +
+      '   s <Old> <New>              Smart renames a domain service' + LineEnding +
+      '   p <NewName>                Renames the entire project and syncs Lazarus/Capacitor'
+  else if Cmd = 'project' then
+    Result :=
+      '  [HINT] Available subcommands for ''project'':' + LineEnding +
+      '   list                       Lists registered projects (* active)' + LineEnding +
+      '   add                        Registers current project into global registry' + LineEnding +
+      '   current                    Shows active project details' + LineEnding +
+      '   remove <name>              Unregisters a project from global registry'
+  else if Cmd = 'theme' then
+    Result :=
+      '  [HINT] Available subcommands for ''theme'':' + LineEnding +
+      '   list                       Displays active and available themes in @blaise-themes' + LineEnding +
+      '   use <name>                 Sets active default theme in package.json & index.html' + LineEnding +
+      '   add <name>                 Adds a theme to package.json for optimized bundling' + LineEnding +
+      '   remove <name>              Removes a theme from package.json' + LineEnding +
+      '   reset                      Resets theme filters (bundles all themes in compatibility mode)'
+  else if Cmd = 'lib' then
+    Result :=
+      '  [HINT] Available subcommands for ''lib'':' + LineEnding +
+      '   list [--global|-g]         Lists installed libraries' + LineEnding +
+      '   install <name>             Downloads and installs a package into lib/' + LineEnding +
+      '   remove <name>              Safely uninstalls a package from lib/' + LineEnding +
+      '   search <term>              Searches packages in registered repositories' + LineEnding +
+      '   outdated [--global|-g]     Checks for available updates in installed packages' + LineEnding +
+      '   pack [dir]                 Assembles & verifies release artifact (.zip with SHA-256)'
+  else if Cmd = 'path' then
+    Result :=
+      '  [HINT] Available subcommands for ''path'':' + LineEnding +
+      '   list                       Lists all active unit search paths (-Fu) in app.cfg' + LineEnding +
+      '   add <dir|pas2js:p>         Adds a folder or official Pas2JS package to app.cfg' + LineEnding +
+      '   remove <target>            Removes a search path or Pas2JS package from app.cfg' + LineEnding +
+      '   available                  Lists all built-in Pas2JS packages available to link'
+  else if (Cmd = 'channel') or (Cmd = 'branch') then
+    Result :=
+      '  [HINT] Available subcommands for ''channel'':' + LineEnding +
+      '   use <main|develop>         Switches framework Git branch' + LineEnding +
+      '   main                       Switches to official stable release channel' + LineEnding +
+      '   develop                    Switches to bleeding-edge development channel'
+  else if Cmd = 'meta' then
+    Result :=
+      '  [HINT] Available subcommands for ''meta'':' + LineEnding +
+      '   show                       Displays project version, author, and description' + LineEnding +
+      '   bump <patch|minor|major>   Increments SemVer and synchronizes monorepo' + LineEnding +
+      '   sync                       Synchronizes version across all package files' + LineEnding +
+      '   set <field> <val>          Sets metadata field in package.json'
+  else if Cmd = 'license' then
+    Result :=
+      '  [HINT] Available subcommands for ''license'':' + LineEnding +
+      '   show                       Displays active project license and text' + LineEnding +
+      '   list                       Lists supported open-source licenses (MIT, Apache, etc.)' + LineEnding +
+      '   set <id>                   Applies a standard license to the project'
+  else if Cmd = 'wasm' then
+    Result :=
+      '  [HINT] Available subcommands for ''wasm'':' + LineEnding +
+      '   info                       Displays WebAssembly compiler runtime & memory status' + LineEnding +
+      '   benchmark                  Executes Wasm vs JS reactive performance benchmark';
+end;
+
+{ Finds the closest valid Cockpit command using Levenshtein distance and prefix matching. }
+function FindClosestCockpitCommand(const WrongCmd: string; out Suggestion: string): Boolean;
+var
+  MainCmds: TStringList;
+  i, Dist, MinDist: Integer;
+  Candidate, LowerWrong: string;
+begin
+  Result := False;
+  Suggestion := '';
+  LowerWrong := LowerCase(Trim(WrongCmd));
+  if LowerWrong = '' then Exit;
+
+  MainCmds := GetCockpitMainCommands;
+  try
+    MinDist := 999;
+    for i := 0 to MainCmds.Count - 1 do
+    begin
+      Candidate := MainCmds[i];
+      // Check prefix match first (e.g. "morm" -> "mormot")
+      if (Length(LowerWrong) >= 3) and (Pos(LowerWrong, Candidate) = 1) then
+      begin
+        Suggestion := Candidate;
+        Result := True;
+        Exit;
+      end;
+
+      Dist := LevenshteinDistance(LowerWrong, Candidate);
+      if (Dist <= 2) and (Dist < MinDist) then
+      begin
+        MinDist := Dist;
+        Suggestion := Candidate;
+        Result := True;
+      end;
+    end;
+  finally
+    MainCmds.Free;
+  end;
+end;
+
+{ Finds the closest valid subcommand using Levenshtein distance and prefix matching. }
+function FindClosestSubcommand(const MainCmd, WrongSub: string; out Suggestion: string): Boolean;
+var
+  SubList: TStringList;
+  i, Dist, MinDist: Integer;
+  Candidate, LowerWrong: string;
+begin
+  Result := False;
+  Suggestion := '';
+  LowerWrong := LowerCase(Trim(WrongSub));
+  if LowerWrong = '' then Exit;
+
+  SubList := GetCockpitSubcommands(MainCmd);
+  try
+    MinDist := 999;
+    for i := 0 to SubList.Count - 1 do
+    begin
+      Candidate := SubList[i];
+      if (Length(LowerWrong) >= 2) and (Pos(LowerWrong, Candidate) = 1) then
+      begin
+        Suggestion := Candidate;
+        Result := True;
+        Exit;
+      end;
+
+      Dist := LevenshteinDistance(LowerWrong, Candidate);
+      if (Dist <= 2) and (Dist < MinDist) then
+      begin
+        MinDist := Dist;
+        Suggestion := Candidate;
+        Result := True;
+      end;
+    end;
+  finally
+    SubList.Free;
+  end;
+end;
+
+{ Resolves autocompletion candidates for a given input buffer.
+  Returns True if completions are available.
+  If SingleMatch is found, FullMatch contains the completed string.
+  If multiple matches exist, Candidates contains the options. }
+function GetCockpitCompletions(const InputBuf: string; out FullMatch: string; out Candidates: TStringList): Boolean;
+var
+  Tokens, MainCmds, SubCmds: TStringList;
+  MainCmd, SubToken, Candidate: string;
+  HasTrailingSpace: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  FullMatch := '';
+  Candidates := TStringList.Create;
+  Candidates.Sorted := True;
+  Candidates.Duplicates := dupIgnore;
+
+  HasTrailingSpace := (Length(InputBuf) > 0) and (InputBuf[Length(InputBuf)] = ' ');
+  Tokens := TStringList.Create;
+  try
+    SplitTokens(InputBuf, Tokens);
+
+    // Case 1: Empty input -> return all main commands
+    if Tokens.Count = 0 then
+    begin
+      MainCmds := GetCockpitMainCommands;
+      try
+        Candidates.Assign(MainCmds);
+      finally
+        MainCmds.Free;
+      end;
+      Result := Candidates.Count > 0;
+      Exit;
+    end;
+
+    // Case 2: Exactly 1 token and NO trailing space -> complete main command
+    if (Tokens.Count = 1) and (not HasTrailingSpace) then
+    begin
+      MainCmd := LowerCase(Tokens[0]);
+      MainCmds := GetCockpitMainCommands;
+      try
+        for i := 0 to MainCmds.Count - 1 do
+        begin
+          Candidate := MainCmds[i];
+          if Pos(MainCmd, Candidate) = 1 then
+            Candidates.Add(Candidate);
+        end;
+      finally
+        MainCmds.Free;
+      end;
+
+      if Candidates.Count = 1 then
+        FullMatch := Candidates[0] + ' ';
+      Result := Candidates.Count > 0;
+      Exit;
+    end;
+
+    // Case 3: Main command entered + trailing space or subtoken -> complete subcommands
+    MainCmd := LowerCase(Tokens[0]);
+    SubCmds := GetCockpitSubcommands(MainCmd);
+    try
+      if SubCmds.Count = 0 then Exit; // Main command has no subcommands
+
+      if HasTrailingSpace and (Tokens.Count = 1) then
+      begin
+        // User typed "mormot " -> list all subcommands
+        Candidates.Assign(SubCmds);
+      end
+      else if Tokens.Count >= 2 then
+      begin
+        // User typed "mormot r" -> filter subcommands starting with "r"
+        SubToken := LowerCase(Tokens[1]);
+        for i := 0 to SubCmds.Count - 1 do
+        begin
+          Candidate := SubCmds[i];
+          if Pos(SubToken, Candidate) = 1 then
+            Candidates.Add(Candidate);
+        end;
+        if Candidates.Count = 1 then
+          FullMatch := Tokens[0] + ' ' + Candidates[0] + ' ';
+      end;
+    finally
+      SubCmds.Free;
+    end;
+
+    Result := Candidates.Count > 0;
+  finally
+    Tokens.Free;
+  end;
+end;
+
+var
+  CockpitHistory: TStringList = nil;
+
+{$IFDEF WINDOWS}
+function CockpitReadInteractive(const Prompt: string; out S: string): Boolean;
+var
+  hIn: THandle;
+  Mode, OldMode: DWORD;
+  IR: INPUT_RECORD;
+  Count: DWORD;
+  Buf, FullMatch: string;
+  Candidates: TStringList;
+  VK: Word;
+  Ch: AnsiChar;
+  i, HistIdx, ColWidth, ItemsPerLine: Integer;
 begin
   S := '';
+  Buf := '';
   Result := False;
-  {$IFDEF WINDOWS}
-  try
-    ReadLn(S);
-    Result := True;
-  except
-    Result := False;
-  end;
-  {$ELSE}
-  while True do
+  if Prompt <> '' then
   begin
-    ch := #0;
-    len := fpRead(0, ch, 1);
-    if (len < 0) and (fpGetErrno = ESysEINTR) then
-      Continue;
-    if len <= 0 then
-    begin
-      if S <> '' then Result := True;
-      Exit;
-    end;
-    if ch = #10 then
-    begin
-      Result := True;
-      Exit;
-    end
-    else if ch = #13 then
-    begin
-      avail := 0;
-      if (fpIOCtl(0, FIONREAD, @avail) >= 0) and (avail > 0) then
-      begin
-        fpRead(0, ch, 1);
-        if ch <> #10 then
-          S := S + ch;
-      end;
-      Result := True;
-      Exit;
-    end
-    else if (ch = #8) or (ch = #127) then
-    begin
-      if Length(S) > 0 then
-        SetLength(S, Length(S) - 1);
-    end
-    else if (ch >= ' ') or (ch = #9) then
-    begin
-      S := S + ch;
-    end;
+    Write(Prompt);
+    Flush(Output);
   end;
-  {$ENDIF}
+
+  hIn := GetStdHandle(STD_INPUT_HANDLE);
+  if (hIn = 0) or (hIn = INVALID_HANDLE_VALUE) or (not GetConsoleMode(hIn, OldMode)) then
+  begin
+    // Fallback if redirected or non-interactive pipe
+    if Eof then Exit(False);
+    try
+      ReadLn(S);
+      Result := True;
+    except
+      Result := False;
+    end;
+    Exit;
+  end;
+
+  // Disable line buffering and automatic echo to intercept Tab, Arrows, etc.
+  Mode := OldMode and (not (ENABLE_LINE_INPUT or ENABLE_ECHO_INPUT));
+  SetConsoleMode(hIn, Mode);
+  try
+    if CockpitHistory = nil then
+    begin
+      CockpitHistory := TStringList.Create;
+      CockpitHistory.Duplicates := dupIgnore;
+    end;
+    HistIdx := CockpitHistory.Count;
+
+    while True do
+    begin
+      Count := 0;
+      if not ReadConsoleInput(hIn, IR, 1, Count) then Break;
+      if (Count = 1) and (IR.EventType = KEY_EVENT) and (IR.Event.KeyEvent.bKeyDown) then
+      begin
+        VK := IR.Event.KeyEvent.wVirtualKeyCode;
+        Ch := IR.Event.KeyEvent.AsciiChar;
+
+        // Enter
+        if (VK = VK_RETURN) or (Ch = #13) or (Ch = #10) then
+        begin
+          WriteLn('');
+          S := Trim(Buf);
+          if S <> '' then
+          begin
+            if (CockpitHistory.Count = 0) or (CockpitHistory[CockpitHistory.Count - 1] <> S) then
+              CockpitHistory.Add(S);
+          end;
+          Result := True;
+          Break;
+        end
+
+        // Tab Autocompletion
+        else if (VK = VK_TAB) or (Ch = #9) then
+        begin
+          if GetCockpitCompletions(Buf, FullMatch, Candidates) then
+          begin
+            try
+              if FullMatch <> '' then
+              begin
+                // Single unique completion
+                Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + FullMatch);
+                Flush(Output);
+                Buf := FullMatch;
+              end
+              else if Candidates.Count > 1 then
+              begin
+                // Multiple completions -> display formatted grid
+                WriteLn('');
+                ColWidth := 16;
+                ItemsPerLine := 4;
+                for i := 0 to Candidates.Count - 1 do
+                begin
+                  if (i mod ItemsPerLine = 0) then
+                    Write('  ');
+                  Write(PadRight(Candidates[i], ColWidth));
+                  if (i mod ItemsPerLine = ItemsPerLine - 1) or (i = Candidates.Count - 1) then
+                    WriteLn('');
+                end;
+                Write(Prompt + Buf);
+                Flush(Output);
+              end;
+            finally
+              Candidates.Free;
+            end;
+          end;
+        end
+
+        // Up Arrow (Navigate history backwards)
+        else if VK = VK_UP then
+        begin
+          if (CockpitHistory.Count > 0) and (HistIdx > 0) then
+          begin
+            Dec(HistIdx);
+            Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + CockpitHistory[HistIdx]);
+            Flush(Output);
+            Buf := CockpitHistory[HistIdx];
+          end;
+        end
+
+        // Down Arrow (Navigate history forwards)
+        else if VK = VK_DOWN then
+        begin
+          if HistIdx < CockpitHistory.Count - 1 then
+          begin
+            Inc(HistIdx);
+            Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + CockpitHistory[HistIdx]);
+            Flush(Output);
+            Buf := CockpitHistory[HistIdx];
+          end
+          else if HistIdx = CockpitHistory.Count - 1 then
+          begin
+            HistIdx := CockpitHistory.Count;
+            Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt);
+            Flush(Output);
+            Buf := '';
+          end;
+        end
+
+        // Backspace
+        else if (VK = VK_BACK) or (Ch = #8) then
+        begin
+          if Length(Buf) > 0 then
+          begin
+            SetLength(Buf, Length(Buf) - 1);
+            Write(#8' '#8);
+            Flush(Output);
+          end;
+        end
+
+        // Escape (clear line)
+        else if VK = VK_ESCAPE then
+        begin
+          Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt);
+          Flush(Output);
+          Buf := '';
+          HistIdx := CockpitHistory.Count;
+        end
+
+        // Ctrl+C (Interrupt line)
+        else if (Ch = #3) or ((VK = Ord('C')) and ((IR.Event.KeyEvent.dwControlKeyState and (LEFT_CTRL_PRESSED or RIGHT_CTRL_PRESSED)) <> 0)) then
+        begin
+          WriteLn('^C');
+          Write(Prompt);
+          Flush(Output);
+          Buf := '';
+          HistIdx := CockpitHistory.Count;
+        end
+
+        // Standard Printable Characters
+        else if (Ch >= ' ') and (Ch <= #126) then
+        begin
+          Buf := Buf + Ch;
+          Write(Ch);
+          Flush(Output);
+        end;
+      end;
+    end;
+  finally
+    SetConsoleMode(hIn, OldMode);
+  end;
+end;
+{$ENDIF}
+
+{$IFDEF UNIX}
+function CockpitReadInteractive(const Prompt: string; out S: string): Boolean;
+var
+  OldTerm, NewTerm: TermIOS;
+  Ch, NextCh, DirCh: Char;
+  Buf, FullMatch: string;
+  Candidates: TStringList;
+  HistIdx, i, ColWidth, ItemsPerLine: Integer;
+begin
+  S := '';
+  Buf := '';
+  Result := False;
+  if Prompt <> '' then
+  begin
+    Write(Prompt);
+    Flush(Output);
+  end;
+
+  if fpIsAtty(0) = 0 then
+  begin
+    // Fallback if redirected or non-interactive pipe
+    if Eof then Exit(False);
+    try
+      ReadLn(S);
+      Result := True;
+    except
+      Result := False;
+    end;
+    Exit;
+  end;
+
+  TCGetAttr(0, OldTerm);
+  NewTerm := OldTerm;
+  NewTerm.c_lflag := NewTerm.c_lflag and (not (ICANON or ECHO));
+  NewTerm.c_cc[VMIN] := 1;
+  NewTerm.c_cc[VTIME] := 0;
+  TCSetAttr(0, TCSANOW, NewTerm);
+  try
+    if CockpitHistory = nil then
+    begin
+      CockpitHistory := TStringList.Create;
+      CockpitHistory.Duplicates := dupIgnore;
+    end;
+    HistIdx := CockpitHistory.Count;
+
+    while True do
+    begin
+      Ch := #0;
+      if fpRead(0, Ch, 1) <= 0 then Break;
+
+      // Enter
+      if (Ch = #10) or (Ch = #13) then
+      begin
+        WriteLn('');
+        S := Trim(Buf);
+        if S <> '' then
+        begin
+          if (CockpitHistory.Count = 0) or (CockpitHistory[CockpitHistory.Count - 1] <> S) then
+            CockpitHistory.Add(S);
+        end;
+        Result := True;
+        Break;
+      end
+
+      // Tab Autocompletion
+      else if Ch = #9 then
+      begin
+        if GetCockpitCompletions(Buf, FullMatch, Candidates) then
+        begin
+          try
+            if FullMatch <> '' then
+            begin
+              Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + FullMatch);
+              Flush(Output);
+              Buf := FullMatch;
+            end
+            else if Candidates.Count > 1 then
+            begin
+              WriteLn('');
+              ColWidth := 16;
+              ItemsPerLine := 4;
+              for i := 0 to Candidates.Count - 1 do
+              begin
+                if (i mod ItemsPerLine = 0) then
+                  Write('  ');
+                Write(PadRight(Candidates[i], ColWidth));
+                if (i mod ItemsPerLine = ItemsPerLine - 1) or (i = Candidates.Count - 1) then
+                  WriteLn('');
+              end;
+              Write(Prompt + Buf);
+              Flush(Output);
+            end;
+          finally
+            Candidates.Free;
+          end;
+        end;
+      end
+
+      // Backspace
+      else if (Ch = #127) or (Ch = #8) then
+      begin
+        if Length(Buf) > 0 then
+        begin
+          SetLength(Buf, Length(Buf) - 1);
+          Write(#8' '#8);
+          Flush(Output);
+        end;
+      end
+
+      // ANSI Escape Sequences (Arrow Keys)
+      else if Ch = #27 then
+      begin
+        NextCh := #0;
+        if fpRead(0, NextCh, 1) > 0 then
+        begin
+          if NextCh = '[' then
+          begin
+            DirCh := #0;
+            if fpRead(0, DirCh, 1) > 0 then
+            begin
+              // Up Arrow: ESC [ A
+              if DirCh = 'A' then
+              begin
+                if (CockpitHistory.Count > 0) and (HistIdx > 0) then
+                begin
+                  Dec(HistIdx);
+                  Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + CockpitHistory[HistIdx]);
+                  Flush(Output);
+                  Buf := CockpitHistory[HistIdx];
+                end;
+              end
+              // Down Arrow: ESC [ B
+              else if DirCh = 'B' then
+              begin
+                if HistIdx < CockpitHistory.Count - 1 then
+                begin
+                  Inc(HistIdx);
+                  Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt + CockpitHistory[HistIdx]);
+                  Flush(Output);
+                  Buf := CockpitHistory[HistIdx];
+                end
+                else if HistIdx = CockpitHistory.Count - 1 then
+                begin
+                  HistIdx := CockpitHistory.Count;
+                  Write(#13 + Prompt + StringOfChar(' ', Length(Buf)) + #13 + Prompt);
+                  Flush(Output);
+                  Buf := '';
+                end;
+              end;
+            end;
+          end;
+        end;
+      end
+
+      // Ctrl+C
+      else if Ch = #3 then
+      begin
+        WriteLn('^C');
+        Write(Prompt);
+        Flush(Output);
+        Buf := '';
+        HistIdx := CockpitHistory.Count;
+      end
+
+      // Standard Printable Characters
+      else if Ch >= ' ' then
+      begin
+        Buf := Buf + Ch;
+        Write(Ch);
+        Flush(Output);
+      end;
+    end;
+  finally
+    TCSetAttr(0, TCSANOW, OldTerm);
+  end;
+end;
+{$ENDIF}
+
+function CockpitReadLine(const Prompt: string; out S: string): Boolean;
+begin
+  Result := CockpitReadInteractive(Prompt, S);
+end;
+
+function CockpitReadLine(out S: string): Boolean;
+begin
+  Result := CockpitReadInteractive('', S);
 end;
 
 procedure RunCockpitShell(const InitialName, InitialPath: string);
 var
   ActiveName, ActivePath, InputLine, CmdName, DummyName: string;
-  Tokens: TStringList;
-  FoundPath, FoundVer: string;
+  Tokens, SubCmdList: TStringList;
+  FoundPath, FoundVer, SummaryHelp, Suggestion, SubSuggestion, RestOfLine: string;
   i: Integer;
   BvExePath: string;
   {$IFDEF UNIX}
@@ -23319,9 +24122,7 @@ begin
     while True do
     begin
       InputLine := '';
-      Write('[bv: ' + ActiveName + '] > ');
-      Flush(Output);
-      if not CockpitReadLine(InputLine) then
+      if not CockpitReadLine('[bv: ' + ActiveName + '] > ', InputLine) then
       begin
         WriteLn('');
         Break;
@@ -23344,6 +24145,44 @@ begin
         Tokens.Delete(0);
 
       CmdName := LowerCase(Tokens[0]);
+
+      // Phase 3: Subcommand Helper for incomplete parent commands
+      if (Tokens.Count = 1) and (CmdName <> 'exit') and (CmdName <> 'quit') and (CmdName <> 'q') and
+         (CmdName <> 'cls') and (CmdName <> 'clear') and (CmdName <> 'enter') and (CmdName <> 'help') and
+         (CmdName <> 'dev') and (CmdName <> 'build') and (CmdName <> 'preview') and (CmdName <> 'test') and
+         (CmdName <> 'clean') and (CmdName <> 'check') and (CmdName <> 'ssg') and (CmdName <> 'doctor') and
+         (CmdName <> 'self-update') and (CmdName <> 'reset') and (CmdName <> 'update') and (CmdName <> 'upgrade') then
+      begin
+        SummaryHelp := GetCockpitSubcommandSummary(CmdName);
+        if SummaryHelp <> '' then
+        begin
+          WriteLn('');
+          WriteLn(SummaryHelp);
+          WriteLn('');
+          Continue;
+        end;
+      end;
+
+      // Phase 4: Subcommand typo detection (e.g. "mormot buid")
+      if (Tokens.Count >= 2) and (Copy(Tokens[1], 1, 1) <> '-') then
+      begin
+        SubCmdList := GetCockpitSubcommands(CmdName);
+        try
+          if (SubCmdList.Count > 0) and (SubCmdList.IndexOf(LowerCase(Tokens[1])) < 0) then
+          begin
+            if FindClosestSubcommand(CmdName, Tokens[1], SubSuggestion) then
+            begin
+              WriteLn('');
+              WriteLn('  [?] Unrecognized subcommand: ''' + Tokens[1] + ''' for ''' + CmdName + '''');
+              WriteLn('   Did you mean: ''' + CmdName + ' ' + SubSuggestion + '''?');
+              WriteLn('');
+              Continue;
+            end;
+          end;
+        finally
+          SubCmdList.Free;
+        end;
+      end;
 
       // Exit / Quit
       if (CmdName = 'exit') or (CmdName = 'quit') or (CmdName = 'q') then
@@ -23671,7 +24510,29 @@ begin
       // Fallback: execute as a system shell command (e.g. git status, npm install, dir, ls)
       else
       begin
-        ExecShellCmd(ActivePath, InputLine);
+        if FindClosestCockpitCommand(CmdName, Suggestion) and (not HasCommand(CmdName)) and
+           (CmdName <> 'dir') and (CmdName <> 'ls') and (CmdName <> 'cat') and (CmdName <> 'type') and
+           (CmdName <> 'cd') and (CmdName <> 'mkdir') and (CmdName <> 'rmdir') and (CmdName <> 'copy') and
+           (CmdName <> 'cp') and (CmdName <> 'mv') and (CmdName <> 'del') and (CmdName <> 'rm') then
+        begin
+          WriteLn('');
+          WriteLn('  [?] Unrecognized command: ''' + CmdName + '''');
+          WriteLn('   Did you mean: ''' + Suggestion + '''?');
+          if Tokens.Count > 1 then
+          begin
+            RestOfLine := '';
+            for i := 1 to Tokens.Count - 1 do
+              RestOfLine := RestOfLine + ' ' + Tokens[i];
+            WriteLn('   Try: ' + Suggestion + RestOfLine);
+          end
+          else
+            WriteLn('   Try: ' + Suggestion);
+          WriteLn('');
+        end
+        else
+        begin
+          ExecShellCmd(ActivePath, InputLine);
+        end;
       end;
     end;
   finally

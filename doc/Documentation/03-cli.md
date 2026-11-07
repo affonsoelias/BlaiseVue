@@ -254,7 +254,51 @@ Within the interactive cockpit (`[bv: <project>] > `), run commands directly wit
 > **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
 > Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev` or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
 
----
+### 6. Real-Time Autocompletion, History & Typo Self-Correction
+
+The BlaiseVue Cockpit provides a developer-grade interactive shell with zero external dependencies (powered directly by the native Free Pascal executable across Windows, Linux, and macOS):
+
+- **Real-Time `[TAB]` Autocompletion**:
+  - Pressing `[TAB]` completes matching top-level commands inline (e.g. typing `mor` and pressing `[TAB]` automatically completes to `mormot `).
+  - If multiple candidates match (e.g. `m` + `[TAB]`), it prints an aligned multi-column matrix of choices (`meta`, `mobile`, `mormot`), re-prints the prompt, and preserves what you have already typed.
+  - Supports contextual subcommands after whitespace (e.g. `mormot r` + `[TAB]` completes to `mormot run `).
+
+- **Session Command History (`↑` and `↓` Arrow Keys)**:
+  - Automatically records commands entered during the session. Press `↑` to recall previous commands and `↓` to move forward in history.
+
+- **Incomplete Command Guidance (`[HINT]`)**:
+  - If you type a parent command without parameters (such as `mormot`, `mobile`, `desktop`, `g`, `theme`, `lib`, `path`) and press `[Enter]`, the Cockpit automatically prints a dedicated syntax and subcommands guide instead of an error:
+  ```text
+  [bv: my-app] > mormot
+
+    [HINT] Available subcommands for 'mormot':
+     run [--release] [--fresh]   Starts native mORMot 2 backend server (Port 8090)
+     build [--release]          Compiles native server binary with Free Pascal
+     crud <Model>               Scaffolds full-stack ORM model, REST API & DataGrid
+     auth                       Scaffolds JWT authentication, login & route guards
+     docs | swagger             Interactive OpenAPI 3.0 & Swagger UI explorer
+     docker [--build]           Scaffolds sub-20MB Alpine micro-container
+     rpc                        Scaffolds type-safe Pascal RPC client proxies
+     status                     Queries running mORMot 2 health endpoint
+     kill                       Terminates lingering server instances
+     init                       Scaffolds mORMot 2 server structure in server/
+     deploy [--zip]             Assembles standalone production bundle in deploy/
+  ```
+
+- **Fuzzy Typo Self-Correction (`Did you mean...?`)**:
+  - Uses Levenshtein distance to detect mistyped commands and subcommands:
+  ```text
+  [bv: my-app] > mormt run
+
+    [?] Unrecognized command: 'mormt'
+     Did you mean: 'mormot'?
+     Try: mormot run
+
+  [bv: my-app] > mormot buid
+
+    [?] Unrecognized subcommand: 'buid' for 'mormot'
+     Did you mean: 'mormot build'?
+  ```
 
 ---
 
@@ -312,7 +356,7 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
 - **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
   - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
-- **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
+- **`bv mormot kill`**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
 - **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
 - **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
   - Compiles frontend in production mode (`bv build --release`).
@@ -358,7 +402,7 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
   - **Combinable Flags**: You can combine flags in any order, e.g. `bv mobile run android --emulator --release --fresh`.
     - `--emulator` (`-e`): Boots and deploys to the Android Virtual Device emulator instead of physical USB device.
     - `--release` (`-r`): Builds optimized Release APK (R8/ProGuard) before running.
-    - `--fresh` (`--restart`): Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
+    - `--fresh`: Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
     - `--no-build`: Runs the existing APK without recompiling frontend or Gradle.
   - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv mobile run` auto-scaffolds it transparently!
 - **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).

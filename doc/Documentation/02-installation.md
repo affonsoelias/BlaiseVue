@@ -167,7 +167,7 @@ bv doctor
 
 ## 🎮 Step 5: Interactive Project Cockpit (`bv enter` - Optional)
 
-Enter the unified project Cockpit shell for rapid interactive workflows:
+Enter the unified project Cockpit shell for rapid interactive workflows with real-time `[TAB]` autocompletion, session history (`↑`/`↓`), and typo correction:
 
 ```bash
 bv enter
@@ -176,7 +176,12 @@ This opens the context-aware shell:
 ```text
   [bv: my-app] >
 ```
-From here, you can run generators (`g c Navbar`, `g v Dashboard`), manage themes (`theme use darkly`), or launch development with single-word commands (`dev`). Type `exit` to return to your normal terminal.
+From here, you can take advantage of:
+* **`[TAB]` Autocompletion**: Type `mor` + `[TAB]` to complete to `mormot `, or `mobile ` + `[TAB]` to explore subcommands.
+* **Session History (`↑`/`↓`)**: Navigate through previously executed commands seamlessly.
+* **Smart Typo Guidance**: Misspelled commands automatically suggest the closest valid match (e.g. `mormt run` ➔ `mormot run`).
+* **Subcommand Helpers**: Typing parent commands like `mormot`, `mobile`, `g`, `theme` displays an instant syntax and subcommands guide.
+* **Fast Scaffolding & Dev**: Run generators (`g c Navbar`, `g v Dashboard`), manage themes (`theme use darkly`), or launch development with single-word commands (`dev`). Type `exit` to return to your normal terminal.
 
 ---
 
