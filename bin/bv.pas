@@ -12283,6 +12283,11 @@ begin
     CmdRemoveMobile(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
     Exit;
   end
+  else if (SubCmd = 'kill') or (SubCmd = 'stop') then
+  begin
+    KillAndroidEmulator;
+    Exit;
+  end
   else if (SubCmd = 'init') then
   begin
     WriteLn('Initializing Capacitor Mobile platform in mobile/ ...');
@@ -21081,6 +21086,50 @@ begin
   Result := StartPort;
 end;
 
+{ Gracefully terminates mORMot 2 server processes, verifies socket release, and falls back to force kill. }
+function KillMormotServer(CheckPort: Word = 0): Boolean;
+var
+  PortReleased: Boolean;
+  Attempts: Integer;
+begin
+  WriteLn('  [+] Stopping mORMot 2 native server instances...');
+
+  // Step 1: Graceful termination attempt
+  {$IFDEF WINDOWS}
+  ExecuteProcess('cmd', '/c taskkill /IM server.exe > nul 2>&1');
+  {$ELSE}
+  ExecuteProcess('/bin/sh', ['-c', 'killall -15 server > /dev/null 2>&1']);
+  {$ENDIF}
+  Sleep(300);
+
+  // Step 2: Force termination with entire process tree (/T)
+  {$IFDEF WINDOWS}
+  ExecuteProcess('cmd', '/c taskkill /F /T /IM server.exe > nul 2>&1');
+  {$ELSE}
+  ExecuteProcess('/bin/sh', ['-c', 'pkill -9 -f "server(\.exe)?" > /dev/null 2>&1']);
+  {$ENDIF}
+
+  // Step 3: Verify port release if a port was specified or discovered
+  PortReleased := True;
+  if CheckPort > 0 then
+  begin
+    Attempts := 0;
+    while (Attempts < 15) and not IsTcpPortAvailable(CheckPort) do
+    begin
+      Sleep(150);
+      Inc(Attempts);
+    end;
+    PortReleased := IsTcpPortAvailable(CheckPort);
+    if PortReleased then
+      WriteLn('  [v] Port ' + IntToStr(CheckPort) + ' is free and released.')
+    else
+      WriteLn('  [!] Notice: Port ' + IntToStr(CheckPort) + ' is still occupied by another active service.');
+  end;
+
+  WriteLn('  [v] All server.exe processes terminated.');
+  Result := PortReleased;
+end;
+
 { Central CLI orchestrator for the full-stack Synopse mORMot 2 backend engine (bv mormot). }
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
@@ -21088,7 +21137,7 @@ var
   ServerDir, BinDir, LibDir, TemplateDir, DbEngineArg, EnvFile, EnvContent: string;
   ProjectRoot, DeployDir, DistDir, ZipFile: string;
   LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
-  IsRelease, HasZip, UserSpecifiedPort: Boolean;
+  IsRelease, HasZip, UserSpecifiedPort, IsFresh: Boolean;
   TargetPort, OrigPort: Word;
   EnvLines: TStringList;
   EnvLine: string;
@@ -21112,7 +21161,9 @@ var
     else if (Copy(S, 1, 7) = '--port=') then
       PortArg := Copy(A, 8, MaxInt)
     else if (Copy(S, 1, 6) = '--out=') then
-      DeployDir := Copy(A, 7, MaxInt);
+      DeployDir := Copy(A, 7, MaxInt)
+    else if (S = '--fresh') or (S = '--restart') or (S = '--force-restart') then
+      IsFresh := True;
   end;
 begin
   ProjectRoot := GetCurrentDir;
@@ -21132,6 +21183,7 @@ begin
   DeployDir := ProjectRoot + DirectorySeparator + 'deploy';
   IsRelease := False;
   HasZip := False;
+  IsFresh := False;
   PortArg := '';
   DbEngineArg := 'sqlite';
   for i := 2 to ParamCount do
@@ -21413,24 +21465,43 @@ begin
     if PortArg <> '' then
       TargetPort := StrToIntDef(PortArg, 8090);
 
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
-    {$ENDIF}
+    if IsFresh then
+    begin
+      WriteLn('  [+] Fresh mORMot server requested (--fresh). Resetting active instances...');
+      KillMormotServer(TargetPort);
+      Sleep(200);
+    end
+    else
+    begin
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
+      {$ENDIF}
+    end;
 
     if not IsTcpPortAvailable(TargetPort) then
     begin
-      if UserSpecifiedPort then
+      if IsFresh then
       begin
-        WriteLn('  [WARNING] Port ' + IntToStr(TargetPort) + ' is reported in use or locked by a lingering socket.');
-        WriteLn('            Server will attempt to bind, but if connections hang, specify another port.');
-      end
-      else
+        KillMormotServer(TargetPort);
+        Sleep(200);
+      end;
+
+      if not IsTcpPortAvailable(TargetPort) then
       begin
-        OrigPort := TargetPort;
-        TargetPort := FindNextAvailableTcpPort(TargetPort + 1);
-        PortArg := IntToStr(TargetPort);
-        WriteLn('  [!] Notice: Default port ' + IntToStr(OrigPort) + ' is busy or locked by a lingering socket.');
-        WriteLn('  [+] Automatically switched to available port: ' + PortArg);
+        if UserSpecifiedPort then
+        begin
+          WriteLn('  [WARNING] Port ' + IntToStr(TargetPort) + ' is reported in use or locked by a lingering socket.');
+          WriteLn('            Tip: Run "bv mormot kill" or use "bv mormot run --fresh".');
+        end
+        else
+        begin
+          OrigPort := TargetPort;
+          TargetPort := FindNextAvailableTcpPort(TargetPort + 1);
+          PortArg := IntToStr(TargetPort);
+          WriteLn('  [!] Notice: Default port ' + IntToStr(OrigPort) + ' is busy or locked by a lingering socket.');
+          WriteLn('  [+] Automatically switched to available port: ' + PortArg);
+          WriteLn('      (Tip: Run "bv mormot run --fresh" to terminate previous instances and keep port ' + IntToStr(OrigPort) + ')');
+        end;
       end;
     end;
 
@@ -21452,13 +21523,34 @@ begin
 
   else if (SubCmd = 'kill') or (SubCmd = 'stop') then
   begin
-    WriteLn('Terminating mORMot 2 native server instances...');
-    {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c taskkill /F /IM server.exe > nul 2>&1');
-    {$ELSE}
-    ExecuteProcess('/bin/sh', ['-c', 'killall -9 server > /dev/null 2>&1']);
-    {$ENDIF}
-    WriteLn('  [+] All server.exe processes terminated. Ports released.');
+    TargetPort := 8090;
+    if PortArg <> '' then
+      TargetPort := StrToIntDef(PortArg, 8090)
+    else
+    begin
+      EnvFile := ProjectRoot + DirectorySeparator + '.env';
+      if not FileExists(EnvFile) then
+        EnvFile := ServerDir + DirectorySeparator + '.env';
+      if FileExists(EnvFile) then
+      begin
+        EnvLines := TStringList.Create;
+        try
+          EnvLines.LoadFromFile(EnvFile);
+          for i := 0 to EnvLines.Count - 1 do
+          begin
+            EnvLine := Trim(EnvLines[i]);
+            if (EnvLine <> '') and (EnvLine[1] <> '#') and (Pos('PORT=', UpperCase(EnvLine)) = 1) then
+            begin
+              TargetPort := StrToIntDef(Trim(Copy(EnvLine, 6, MaxInt)), 8090);
+              Break;
+            end;
+          end;
+        finally
+          EnvLines.Free;
+        end;
+      end;
+    end;
+    KillMormotServer(TargetPort);
   end
 
   else if (SubCmd = 'status') then
@@ -24768,9 +24860,9 @@ begin
     WriteLn('');
     WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
     WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
-    WriteLn('  bv mormot run [--release] [--port <p>] Starts native backend server (auto-fallback to next port if busy)');
+    WriteLn('  bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh auto-terminates lingering instances)');
     WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
-    WriteLn('  bv mormot kill             Terminates lingering server.exe instances and releases ports');
+    WriteLn('  bv mormot kill [--port <p>] Gracefully terminates server.exe, frees socket & verifies port release');
     WriteLn('  bv mormot status           Queries running mORMot 2 health endpoint (/api/status)');
     WriteLn('  bv mormot deploy [--zip]   Assembles standalone production bundle in deploy/');
     WriteLn('  bv mormot crud <Model>     Scaffolds full-stack ORM model, REST API & reactive DataGrid');

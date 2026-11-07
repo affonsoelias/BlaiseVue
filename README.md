@@ -114,9 +114,9 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
 
   # === Backend & Full-Stack (Synopse mORMot 2) ===
   bv mormot init             Scaffolds mORMot 2 backend server in server/
-  bv mormot run [--release] [--port <p>] Starts native backend server (auto-fallback to next port if busy)
+  bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh kills lingering instances)
   bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)
-  bv mormot kill             Terminates lingering server.exe instances and releases ports
+  bv mormot kill [--port <p>] Terminates lingering server.exe instances & verifies port release
   bv mormot status           Queries running mORMot 2 health endpoint (/api/status)
   bv mormot deploy [--zip]   Assembles standalone production bundle in deploy/
   bv mormot crud <Model>     Scaffolds full-stack ORM model, REST API & reactive DataGrid
@@ -135,7 +135,7 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)
   bv mobile emulator list    Lists installed Android Virtual Devices (AVD)
   bv mobile emulator start   Boots Android emulator in background
-  bv mobile emulator kill    Terminates lingering emulator & QEMU processes
+  bv mobile emulator kill    Terminates lingering emulator & QEMU processes (alias: bv mobile kill)
   bv mobile run android      Installs and launches APK on connected USB device
   bv mobile run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
   bv mobile open android     Opens project in Android Studio

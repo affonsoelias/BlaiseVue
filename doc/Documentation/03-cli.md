@@ -421,8 +421,8 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | `bv mormot init` | - | Scaffolds native backend in `server/` |
 | `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
-| `bv mormot run` | `[--release] [--port <p>]` | Starts server (debug or release) with automatic port conflict fallback |
-| `bv mormot kill` | - | Forcefully terminates running `server.exe` instances |
+| `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
+| `bv mormot kill` | `[--port <p>]` | Two-stage termination of `server.exe` and port release verification |
 | `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
 | `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |

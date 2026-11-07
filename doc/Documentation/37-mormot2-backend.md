@@ -50,6 +50,8 @@ bv mormot run                          # Starts on default port 8090 (Debug mode
 bv mormot run --port 8080              # Starts on custom port 8080
 bv mormot run --release                # Compiles frontend (bv build --release), backend (-O3) & starts in RELEASE mode
 bv mormot run --release --port 8080    # Starts in RELEASE mode on custom port 8080
+bv mormot run --fresh                  # Auto-terminates lingering server instances and starts clean
+bv mormot kill                         # Two-stage termination and socket verification
 
 # 5. Check running server status and health:
 bv mormot status                       # Queries http://localhost:8090/api/status
