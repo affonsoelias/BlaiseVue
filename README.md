@@ -126,15 +126,18 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
 
   # === Mobile (Android & iOS via Capacitor) ===
-  bv mobile init [name] [id] Scaffolds Capacitor & mobile/ native project
+  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
+  bv mobile upgrade [--check] Migrates Capacitor dependencies & updates Gradle
   bv mobile sync             Syncs dist/ with native mobile assets
   bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json
   bv mobile build android    Builds native Android Debug APK in mobile/bin/android/
   bv mobile build android --release Builds optimized Release APK (R8/ProGuard)
+  bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)
   bv mobile emulator list    Lists installed Android Virtual Devices (AVD)
   bv mobile emulator start   Boots Android emulator in background
+  bv mobile emulator kill    Terminates lingering emulator & QEMU processes
   bv mobile run android      Installs and launches APK on connected USB device
-  bv mobile run android --emulator Boots emulator, installs APK, and runs app
+  bv mobile run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
   bv mobile open android     Opens project in Android Studio
 
   # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===

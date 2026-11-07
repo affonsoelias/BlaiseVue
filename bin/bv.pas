@@ -781,6 +781,11 @@ procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
 procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
+function FindBestJavaHome(out JavaHome, JavaVer, SourceDesc: string): Boolean; forward;
+function FindAndroidSdkPath: string; forward;
+function FindAndroidADBInfo(out AdbExe, AdbVer, SourceDesc: string): Boolean; forward;
+function FindAndroidEmulatorInfo(out EmuExe, SourceDesc: string; out AvdCount: Integer; out AvdListStr: string): Boolean; forward;
+function EnsureAndroidGradleCompatibility(const AAndroidDir: string): Boolean; forward;
 procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 { Removes native desktop platform scaffolding and WebUI bindings (bv desktop remove). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
@@ -3066,6 +3071,27 @@ begin
       Content := StringReplace(Content, '<title>BlaiseVue Demo</title>', '<title>' + ProjectName + '</title>', [rfReplaceAll]);
       WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html', Content);
     end;
+
+    // Customize mobile capacitor.config.json & purge stale demo binaries
+    LazCleanName := '';
+    for i := 1 to Length(ProjectName) do
+      if ProjectName[i] in ['a'..'z', 'A'..'Z', '0'..'9'] then
+        LazCleanName := LazCleanName + LowerCase(ProjectName[i]);
+    if LazCleanName = '' then LazCleanName := 'app';
+    if LazCleanName[1] in ['0'..'9'] then LazCleanName := 'app' + LazCleanName;
+
+    if FileExists(Base + 'capacitor.config.json') then
+    begin
+      Content := ReadFileToString(Base + 'capacitor.config.json');
+      Content := StringReplace(Content, 'com.blaisevue.demoapp', 'com.blaisevue.' + LazCleanName, [rfReplaceAll]);
+      Content := StringReplace(Content, 'BlaiseVue Demo', ProjectName, [rfReplaceAll]);
+      WriteStringToFile(Base + 'capacitor.config.json', Content);
+    end;
+
+    if DirectoryExists(Base + 'mobile' + DirectorySeparator + 'bin') then
+      DeleteDir(Base + 'mobile' + DirectorySeparator + 'bin');
+    if DirectoryExists(Base + 'mobile' + DirectorySeparator + 'android') then
+      DeleteDir(Base + 'mobile' + DirectorySeparator + 'android');
 
     
 
@@ -9392,6 +9418,42 @@ begin
 
   // 6. SYNC src/uAppVersion.pas
   SyncAppVersionUnit(ProjName, AppVer, AppAuth, AppLic);
+
+  // 7. SYNC mobile configuration and purge stale binaries
+  if FileExists(BaseDir + 'capacitor.config.json') or DirectoryExists(BaseDir + 'mobile') then
+  begin
+    Answer := '';
+    for i := 1 to Length(ProjName) do
+      if ProjName[i] in ['a'..'z', 'A'..'Z', '0'..'9'] then
+        Answer := Answer + LowerCase(ProjName[i]);
+    if Answer = '' then Answer := 'app';
+    if Answer[1] in ['0'..'9'] then Answer := 'app' + Answer;
+
+    if FileExists(BaseDir + 'capacitor.config.json') then
+    begin
+      HomeBvContent := ReadFileToString(BaseDir + 'capacitor.config.json');
+      HomeBvContent := StringReplace(HomeBvContent, 'com.blaisevue.demoapp', 'com.blaisevue.' + Answer, [rfReplaceAll]);
+      HomeBvContent := StringReplace(HomeBvContent, 'BlaiseVue Demo', ProjName, [rfReplaceAll]);
+      WriteStringToFile(BaseDir + 'capacitor.config.json', HomeBvContent);
+      WriteLn('  [+] Synchronized mobile configuration: capacitor.config.json');
+    end;
+
+    if DirectoryExists(BaseDir + 'mobile' + DirectorySeparator + 'bin') then
+      DeleteDir(BaseDir + 'mobile' + DirectorySeparator + 'bin');
+
+    if DirectoryExists(BaseDir + 'mobile' + DirectorySeparator + 'android') then
+    begin
+      if FileExists(BaseDir + 'mobile' + DirectorySeparator + 'android' + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle') then
+      begin
+        HomeBvContent := ReadFileToString(BaseDir + 'mobile' + DirectorySeparator + 'android' + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle');
+        if Pos('com.blaisevue.demoapp', HomeBvContent) > 0 then
+        begin
+          DeleteDir(BaseDir + 'mobile' + DirectorySeparator + 'android');
+          WriteLn('  [+] Reset mobile native android platform to match project identity: ' + ProjName);
+        end;
+      end;
+    end;
+  end;
   WriteLn('');
   WriteLn('============================================================');
   WriteLn('  BlaiseVue Project Reset Complete!');
@@ -10346,10 +10408,15 @@ end;
 function ExecCmdCapture(const CmdLine: string; out OutText: string): Boolean;
 var
   OutStr: string;
+  EffectiveCmd: string;
 begin
   OutStr := '';
   {$IFDEF WINDOWS}
-  Result := RunCommand('cmd.exe', ['/c', CmdLine], OutStr);
+  if Pos('"', CmdLine) > 0 then
+    EffectiveCmd := '"' + CmdLine + '"'
+  else
+    EffectiveCmd := CmdLine;
+  Result := RunCommand('cmd.exe', ['/c', EffectiveCmd], OutStr);
   {$ELSE}
   Result := RunCommand('sh', ['-c', CmdLine], OutStr);
   {$ENDIF}
@@ -10600,6 +10667,368 @@ begin
     Exit;
   end;
   {$ENDIF}
+end;
+
+{ ------------------------------------------------------------------- }
+{ Mobile Environment & Tooling Discovery (Java JDK, Android SDK, ADB) }
+{ ------------------------------------------------------------------- }
+
+function ParseJavaVersionMajor(const OutputStr: string; out FullVer: string): Integer;
+var
+  P1, P2: Integer;
+  VerStr, MajorStr: string;
+begin
+  Result := 0;
+  FullVer := '';
+  VerStr := '';
+  P1 := Pos('"', OutputStr);
+  if P1 > 0 then
+  begin
+    P2 := PosEx('"', OutputStr, P1 + 1);
+    if P2 > P1 then
+      VerStr := Copy(OutputStr, P1 + 1, P2 - P1 - 1);
+  end;
+  if VerStr = '' then
+  begin
+    P1 := Pos('version ', LowerCase(OutputStr));
+    if P1 > 0 then
+    begin
+      VerStr := Trim(Copy(OutputStr, P1 + 8, 20));
+      if Pos(' ', VerStr) > 0 then
+        VerStr := Copy(VerStr, 1, Pos(' ', VerStr) - 1);
+    end
+    else
+      VerStr := Trim(OutputStr);
+  end;
+  FullVer := VerStr;
+  if Copy(VerStr, 1, 2) = '1.' then
+    VerStr := Copy(VerStr, 3, MaxInt);
+  P1 := Pos('.', VerStr);
+  if P1 > 0 then
+    MajorStr := Copy(VerStr, 1, P1 - 1)
+  else
+  begin
+    P1 := Pos('-', VerStr);
+    if P1 > 0 then
+      MajorStr := Copy(VerStr, 1, P1 - 1)
+    else
+      MajorStr := VerStr;
+  end;
+  Result := StrToIntDef(MajorStr, 0);
+end;
+
+function ProbeJavaCandidate(const CandidateDir: string; out OutVer: string; out MajorVer: Integer): Boolean;
+var
+  ExePath, OutText: string;
+begin
+  Result := False;
+  OutVer := '';
+  MajorVer := 0;
+  if (CandidateDir = '') or not DirectoryExists(CandidateDir) then Exit;
+
+  ExePath := ExcludeTrailingPathDelimiter(CandidateDir) + DirectorySeparator + 'bin' + DirectorySeparator + 'java' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+  if not FileExists(ExePath) then Exit;
+
+  if ExecCmdCapture('"' + ExePath + '" -version 2>&1', OutText) and (OutText <> '') then
+  begin
+    MajorVer := ParseJavaVersionMajor(OutText, OutVer);
+    if MajorVer > 0 then
+      Result := True;
+  end;
+end;
+
+procedure CheckSingleJdkDir(const CandDir, LabelDesc: string; var BestHome, BestVer, BestDesc: string; var BestMajor: Integer; var FallbackHome, FallbackVer, FallbackDesc: string; var FallbackMajor: Integer);
+var
+  OutVer: string;
+  Major: Integer;
+begin
+  if (CandDir = '') or not DirectoryExists(CandDir) then Exit;
+  if ProbeJavaCandidate(CandDir, OutVer, Major) then
+  begin
+    if (Major >= 17) and (Major <= 21) then
+    begin
+      if (BestMajor = 0) or (Major = 17) then
+      begin
+        BestHome := ExcludeTrailingPathDelimiter(CandDir);
+        BestVer := OutVer;
+        BestDesc := LabelDesc;
+        BestMajor := Major;
+      end;
+    end
+    else if FallbackMajor = 0 then
+    begin
+      FallbackHome := ExcludeTrailingPathDelimiter(CandDir);
+      FallbackVer := OutVer;
+      FallbackDesc := LabelDesc;
+      FallbackMajor := Major;
+    end;
+  end;
+end;
+
+procedure ScanJdkDirectory(const BaseDir: string; var BestHome, BestVer, BestDesc: string; var BestMajor: Integer; var FallbackHome, FallbackVer, FallbackDesc: string; var FallbackMajor: Integer);
+var
+  SR: TSearchRec;
+  CandDir, OutVer: string;
+  Major: Integer;
+begin
+  if not DirectoryExists(BaseDir) then Exit;
+  if FindFirst(IncludeTrailingPathDelimiter(BaseDir) + '*', faDirectory, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+        begin
+          CandDir := IncludeTrailingPathDelimiter(BaseDir) + SR.Name;
+          if ProbeJavaCandidate(CandDir, OutVer, Major) then
+          begin
+            if (Major >= 17) and (Major <= 21) then
+            begin
+              if (BestMajor = 0) or (Major = 17) then
+              begin
+                BestHome := CandDir;
+                BestVer := OutVer;
+                BestDesc := SR.Name;
+                BestMajor := Major;
+              end;
+            end
+            else if FallbackMajor = 0 then
+            begin
+              FallbackHome := CandDir;
+              FallbackVer := OutVer;
+              FallbackDesc := SR.Name;
+              FallbackMajor := Major;
+            end;
+          end;
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+end;
+
+function FindBestJavaHome(out JavaHome, JavaVer, SourceDesc: string): Boolean;
+var
+  BestHome, BestVer, BestDesc: string;
+  FallbackHome, FallbackVer, FallbackDesc: string;
+  BestMajor, FallbackMajor: Integer;
+  EnvJava, WhereOut, FirstLine, CandDir: string;
+begin
+  JavaHome := '';
+  JavaVer := '';
+  SourceDesc := '';
+  BestHome := '';
+  BestVer := '';
+  BestDesc := '';
+  FallbackHome := '';
+  FallbackVer := '';
+  FallbackDesc := '';
+  BestMajor := 0;
+  FallbackMajor := 0;
+  Result := False;
+
+  // 1. Check JAVA_HOME environment variable
+  EnvJava := GetEnvironmentVariable('JAVA_HOME');
+  if EnvJava <> '' then
+    CheckSingleJdkDir(EnvJava, 'JAVA_HOME (' + EnvJava + ')', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+
+  // 2. Check Java in system PATH
+  {$IFDEF WINDOWS}
+  if ExecCmdCapture('where.exe java 2>nul', WhereOut) and (WhereOut <> '') then
+  begin
+    FirstLine := Trim(Copy(WhereOut, 1, Pos(#10, WhereOut + #10) - 1));
+    FirstLine := Trim(StringReplace(FirstLine, #13, '', [rfReplaceAll]));
+    if FileExists(FirstLine) then
+    begin
+      CandDir := ExtractFileDir(ExtractFileDir(FirstLine));
+      CheckSingleJdkDir(CandDir, 'system PATH (' + CandDir + ')', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    end;
+  end;
+  {$ELSE}
+  if ExecCmdCapture('which java 2>/dev/null', WhereOut) and (WhereOut <> '') then
+  begin
+    FirstLine := Trim(Copy(WhereOut, 1, Pos(#10, WhereOut + #10) - 1));
+    if FileExists(FirstLine) then
+    begin
+      CandDir := ExtractFileDir(ExtractFileDir(FirstLine));
+      CheckSingleJdkDir(CandDir, 'system PATH (' + CandDir + ')', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    end;
+  end;
+  {$ENDIF}
+
+  // 3. Scan common vendor JDK directories on Windows
+  {$IFDEF WINDOWS}
+  ScanJdkDirectory('C:\Program Files\Eclipse Adoptium', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  ScanJdkDirectory('C:\Program Files\Java', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  ScanJdkDirectory('C:\Program Files\Microsoft', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  ScanJdkDirectory('C:\Program Files\Zulu', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  ScanJdkDirectory('C:\Program Files\BellSoft\LibericaJDK', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+
+  // 4. Check Android Studio bundled JBR (Windows)
+  CheckSingleJdkDir('C:\Program Files\Android\Android Studio\jbr', 'Android Studio JBR', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  EnvJava := GetEnvironmentVariable('LOCALAPPDATA');
+  if EnvJava <> '' then
+    CheckSingleJdkDir(EnvJava + '\Programs\Android Studio\jbr', 'Android Studio JBR (Local)', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+  {$ELSE}
+    {$IFDEF DARWIN}
+    CheckSingleJdkDir('/Applications/Android Studio.app/Contents/jbr/Contents/Home', 'Android Studio JBR (macOS)', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    ScanJdkDirectory('/Library/Java/JavaVirtualMachines', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    {$ELSE}
+    ScanJdkDirectory('/usr/lib/jvm', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    CheckSingleJdkDir('/opt/android-studio/jbr', 'Android Studio JBR (/opt)', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    EnvJava := GetEnvironmentVariable('HOME');
+    if EnvJava <> '' then
+      CheckSingleJdkDir(EnvJava + '/.local/share/JetBrains/Toolbox/apps/android-studio/jbr', 'Android Studio JBR (Toolbox)', BestHome, BestVer, BestDesc, BestMajor, FallbackHome, FallbackVer, FallbackDesc, FallbackMajor);
+    {$ENDIF}
+  {$ENDIF}
+
+  if BestMajor > 0 then
+  begin
+    JavaHome := BestHome;
+    JavaVer := BestVer;
+    SourceDesc := BestDesc;
+    Result := True;
+  end
+  else if FallbackMajor > 0 then
+  begin
+    JavaHome := FallbackHome;
+    JavaVer := FallbackVer;
+    SourceDesc := FallbackDesc;
+    Result := True;
+  end;
+end;
+
+function FindAndroidSdkPath: string;
+var
+  EnvHome, LocalApp: string;
+begin
+  Result := '';
+  EnvHome := GetEnvironmentVariable('ANDROID_HOME');
+  if (EnvHome <> '') and DirectoryExists(EnvHome) then Exit(ExcludeTrailingPathDelimiter(EnvHome));
+
+  EnvHome := GetEnvironmentVariable('ANDROID_SDK_ROOT');
+  if (EnvHome <> '') and DirectoryExists(EnvHome) then Exit(ExcludeTrailingPathDelimiter(EnvHome));
+
+  {$IFDEF WINDOWS}
+  LocalApp := GetEnvironmentVariable('LOCALAPPDATA');
+  if (LocalApp <> '') and DirectoryExists(LocalApp + '\Android\Sdk') then
+    Exit(LocalApp + '\Android\Sdk');
+  {$ELSE}
+  LocalApp := GetEnvironmentVariable('HOME');
+  if LocalApp <> '' then
+  begin
+    if DirectoryExists(LocalApp + '/Android/Sdk') then
+      Exit(LocalApp + '/Android/Sdk');
+    if DirectoryExists(LocalApp + '/Library/Android/sdk') then
+      Exit(LocalApp + '/Library/Android/sdk');
+  end;
+  {$ENDIF}
+end;
+
+function FindAndroidADBInfo(out AdbExe, AdbVer, SourceDesc: string): Boolean;
+var
+  SdkPath, OutText, FirstLine: string;
+begin
+  AdbExe := '';
+  AdbVer := '';
+  SourceDesc := '';
+  Result := False;
+
+  SdkPath := FindAndroidSdkPath;
+  if (SdkPath <> '') and FileExists(SdkPath + DirectorySeparator + 'platform-tools' + DirectorySeparator + 'adb' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF}) then
+  begin
+    AdbExe := SdkPath + DirectorySeparator + 'platform-tools' + DirectorySeparator + 'adb' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+    SourceDesc := SdkPath + DirectorySeparator + 'platform-tools';
+  end
+  else
+  begin
+    {$IFDEF WINDOWS}
+    if ExecCmdCapture('where.exe adb 2>nul', OutText) and (OutText <> '') then
+    begin
+      FirstLine := Trim(Copy(OutText, 1, Pos(#10, OutText + #10) - 1));
+      FirstLine := Trim(StringReplace(FirstLine, #13, '', [rfReplaceAll]));
+      if FileExists(FirstLine) then
+      begin
+        AdbExe := FirstLine;
+        SourceDesc := 'system PATH';
+      end;
+    end;
+    {$ELSE}
+    if ExecCmdCapture('which adb 2>/dev/null', OutText) and (OutText <> '') then
+    begin
+      FirstLine := Trim(Copy(OutText, 1, Pos(#10, OutText + #10) - 1));
+      if FileExists(FirstLine) then
+      begin
+        AdbExe := FirstLine;
+        SourceDesc := 'system PATH';
+      end;
+    end;
+    {$ENDIF}
+  end;
+
+  if (AdbExe <> '') and FileExists(AdbExe) then
+  begin
+    if ExecCmdCapture('"' + AdbExe + '" version', OutText) then
+    begin
+      if Pos('version ', LowerCase(OutText)) > 0 then
+      begin
+        AdbVer := Copy(OutText, Pos('version ', LowerCase(OutText)) + 8, Length(OutText));
+        if Pos(#10, AdbVer) > 0 then
+          AdbVer := Copy(AdbVer, 1, Pos(#10, AdbVer) - 1);
+        AdbVer := Trim(StringReplace(AdbVer, #13, '', [rfReplaceAll]));
+      end
+      else
+        AdbVer := 'detected';
+    end;
+    Result := True;
+  end;
+end;
+
+function FindAndroidEmulatorInfo(out EmuExe, SourceDesc: string; out AvdCount: Integer; out AvdListStr: string): Boolean;
+var
+  SdkPath, OutText, Line: string;
+  Lines: TStringList;
+  i: Integer;
+begin
+  EmuExe := '';
+  SourceDesc := '';
+  AvdCount := 0;
+  AvdListStr := '';
+  Result := False;
+
+  SdkPath := FindAndroidSdkPath;
+  if (SdkPath <> '') and FileExists(SdkPath + DirectorySeparator + 'emulator' + DirectorySeparator + 'emulator' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF}) then
+  begin
+    EmuExe := SdkPath + DirectorySeparator + 'emulator' + DirectorySeparator + 'emulator' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
+    SourceDesc := SdkPath + DirectorySeparator + 'emulator';
+    Result := True;
+  end;
+
+  if Result and FileExists(EmuExe) then
+  begin
+    OutText := '';
+    if ExecCmdCapture('"' + EmuExe + '" -list-avds', OutText) and (OutText <> '') then
+    begin
+      Lines := TStringList.Create;
+      try
+        Lines.Text := OutText;
+        for i := 0 to Lines.Count - 1 do
+        begin
+          Line := Trim(Lines[i]);
+          if (Line <> '') and (Pos('INFO', Line) <> 1) and (Pos('WARNING', Line) <> 1) and (Pos('ERROR', Line) <> 1) then
+          begin
+            Inc(AvdCount);
+            if AvdListStr = '' then
+              AvdListStr := Line
+            else if AvdCount <= 3 then
+              AvdListStr := AvdListStr + ', ' + Line;
+          end;
+        end;
+      finally
+        Lines.Free;
+      end;
+    end;
+  end;
 end;
 
 type
@@ -10982,6 +11411,169 @@ begin
   end;
 end;
 
+{ Ensures Android Gradle compatibility with Java 17 LTS and configures signingConfig for local release testing. }
+function EnsureAndroidGradleCompatibility(const AAndroidDir: string): Boolean;
+var
+  BuildGradlePath, AppBuildGradlePath, CapBuildGradlePath, KeystoreExamplePath, GitIgnorePath: string;
+  LocalPropsPath, SdkPath, EscapedSdkPath: string;
+  Content: string;
+  Updated: Boolean;
+begin
+  Result := False;
+  if (AAndroidDir = '') or not DirectoryExists(AAndroidDir) then Exit;
+
+    // 0. Auto-generate local.properties with sdk.dir
+  LocalPropsPath := AAndroidDir + DirectorySeparator + 'local.properties';
+  if not FileExists(LocalPropsPath) then
+  begin
+    SdkPath := FindAndroidSdkPath;
+    if SdkPath <> '' then
+    begin
+      EscapedSdkPath := StringReplace(SdkPath, '\', '\\', [rfReplaceAll]);
+      EscapedSdkPath := StringReplace(EscapedSdkPath, ':', '\:', [rfReplaceAll]);
+      WriteStringToFile(LocalPropsPath, 'sdk.dir=' + EscapedSdkPath + #13#10);
+      Result := True;
+    end;
+  end;
+
+  // 1. Root build.gradle
+  BuildGradlePath := AAndroidDir + DirectorySeparator + 'build.gradle';
+  if FileExists(BuildGradlePath) then
+  begin
+    Content := ReadFileToString(BuildGradlePath);
+    Updated := False;
+    if Pos('VERSION_21', Content) > 0 then
+    begin
+      Content := StringReplace(Content, 'VERSION_21', 'VERSION_17', [rfReplaceAll]);
+      Updated := True;
+    end;
+    if Pos('subprojects', Content) = 0 then
+    begin
+      Content := Content + #13#10 +
+        'subprojects {' + #13#10 +
+        '    afterEvaluate { project ->' + #13#10 +
+        '        if (project.hasProperty("android")) {' + #13#10 +
+        '            android {' + #13#10 +
+        '                compileOptions {' + #13#10 +
+        '                    sourceCompatibility JavaVersion.VERSION_17' + #13#10 +
+        '                    targetCompatibility JavaVersion.VERSION_17' + #13#10 +
+        '                }' + #13#10 +
+        '            }' + #13#10 +
+        '        }' + #13#10 +
+        '        if (project.plugins.hasPlugin("org.jetbrains.kotlin.android") || project.plugins.hasPlugin("kotlin-android")) {' + #13#10 +
+        '            kotlin {' + #13#10 +
+        '                jvmToolchain(17)' + #13#10 +
+        '            }' + #13#10 +
+        '        }' + #13#10 +
+        '    }' + #13#10 +
+        '}' + #13#10;
+      Updated := True;
+    end;
+    if Updated then
+    begin
+      WriteStringToFile(BuildGradlePath, Content);
+      Result := True;
+    end;
+  end;
+
+  // 2. app/build.gradle
+  AppBuildGradlePath := AAndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle';
+  if FileExists(AppBuildGradlePath) then
+  begin
+    Content := ReadFileToString(AppBuildGradlePath);
+    Updated := False;
+    if Pos('VERSION_21', Content) > 0 then
+    begin
+      Content := StringReplace(Content, 'VERSION_21', 'VERSION_17', [rfReplaceAll]);
+      Updated := True;
+    end;
+
+    // Ensure signingConfigs with keystore.properties fallback
+    if (Pos('signingConfigs', Content) = 0) or (Pos('keystore.properties', Content) = 0) then
+    begin
+      if Pos('signingConfig signingConfigs.debug', Content) > 0 then
+      begin
+        Content := StringReplace(Content, 'signingConfig signingConfigs.debug',
+          'if (rootProject.file(''keystore.properties'').exists()) {' + #13#10 +
+          '                signingConfig signingConfigs.release' + #13#10 +
+          '            } else {' + #13#10 +
+          '                signingConfig signingConfigs.debug' + #13#10 +
+          '            }', []);
+        Updated := True;
+      end;
+
+      if (Pos('signingConfigs {', Content) = 0) and (Pos('buildTypes {', Content) > 0) then
+      begin
+        Content := StringReplace(Content, 'buildTypes {',
+          'signingConfigs {' + #13#10 +
+          '        release {' + #13#10 +
+          '            if (rootProject.file(''keystore.properties'').exists()) {' + #13#10 +
+          '                def keystoreProperties = new Properties()' + #13#10 +
+          '                keystoreProperties.load(new FileInputStream(rootProject.file(''keystore.properties'')))' + #13#10 +
+          '                storeFile file(keystoreProperties[''storeFile''])' + #13#10 +
+          '                storePassword keystoreProperties[''storePassword'']' + #13#10 +
+          '                keyAlias keystoreProperties[''keyAlias'']' + #13#10 +
+          '                keyPassword keystoreProperties[''keyPassword'']' + #13#10 +
+          '            }' + #13#10 +
+          '        }' + #13#10 +
+          '    }' + #13#10 +
+          '    buildTypes {', []);
+        Updated := True;
+      end;
+    end;
+
+    if Updated then
+    begin
+      WriteStringToFile(AppBuildGradlePath, Content);
+      Result := True;
+    end;
+  end;
+
+  // 3. app/capacitor.build.gradle
+  CapBuildGradlePath := AAndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'capacitor.build.gradle';
+  if FileExists(CapBuildGradlePath) then
+  begin
+    Content := ReadFileToString(CapBuildGradlePath);
+    if Pos('VERSION_21', Content) > 0 then
+    begin
+      Content := StringReplace(Content, 'VERSION_21', 'VERSION_17', [rfReplaceAll]);
+      WriteStringToFile(CapBuildGradlePath, Content);
+      Result := True;
+    end;
+  end;
+
+  // 4. Ensure keystore.properties.example template exists
+  KeystoreExamplePath := AAndroidDir + DirectorySeparator + 'keystore.properties.example';
+  if not FileExists(KeystoreExamplePath) then
+  begin
+    WriteStringToFile(KeystoreExamplePath,
+      '# BlaiseVue Production Android Keystore Configuration' + #13#10 +
+      '# Copy this file to keystore.properties and fill in your production credentials.' + #13#10 +
+      '# NEVER commit keystore.properties or your private .jks / .keystore to Git!' + #13#10 +
+      '#' + #13#10 +
+      '# storeFile=my-release-key.jks' + #13#10 +
+      '# storePassword=YourStorePassword' + #13#10 +
+      '# keyAlias=my-key-alias' + #13#10 +
+      '# keyPassword=YourKeyPassword' + #13#10);
+  end;
+
+  // 5. Ensure .gitignore protects keystore secrets
+  GitIgnorePath := AAndroidDir + DirectorySeparator + '.gitignore';
+  if FileExists(GitIgnorePath) then
+  begin
+    Content := ReadFileToString(GitIgnorePath);
+    if Pos('keystore.properties', Content) = 0 then
+    begin
+      Content := Content + #13#10 +
+        '# Keystore & Production Secrets' + #13#10 +
+        'keystore.properties' + #13#10 +
+        '*.jks' + #13#10 +
+        '*.keystore' + #13#10;
+      WriteStringToFile(GitIgnorePath, Content);
+    end;
+  end;
+end;
+
 { Mobile application compiler and device orchestrator targeting Android and iOS (bv mobile). }
 procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
@@ -10990,71 +11582,32 @@ var
   CapConfigFile, MobileCapConfigFile: string;
   ActualAppName, ActualAppId, ConfigContent, ReadmeFile, ReadmeContent: string;
   ExistingConfig, CleanName, TargetPlatform, SelectedAVD, EmulatorAction: string;
-  IsRelease, IsAllTargets, UseEmulator: Boolean;
+  RequestedCapVersion, CapTag, CapVerDisplay: string;
+  PkgJsonFile, PkgContent, CurrentCapVer, LatestCapVer, ExtraPkgs: string;
+  IsRelease, IsAllTargets, UseEmulator, IsBundle, IsCheckOnly, IsFreshEmulator, IsNoBuild, IsForceInit, NeedsAndroidRecreate: Boolean;
+  GradleText: string;
   AvdList: TStringList;
   i: Integer;
 { Locates the Android SDK emulator executable on the host system. }
   function FindAndroidEmulator: string;
   var
-    AndroidHome, LocalAppData, P: string;
+    EmuExe, EmuSrc, DummyList: string;
+    DummyCount: Integer;
   begin
-    Result := '';
-    {$IFDEF WINDOWS}
-
-    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-    if (AndroidHome <> '') and FileExists(AndroidHome + '\emulator\emulator.exe') then
-      Exit(AndroidHome + '\emulator\emulator.exe');
-
-    LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
-    if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\emulator\emulator.exe') then
-      Exit(LocalAppData + '\Android\Sdk\emulator\emulator.exe');
-
-    P := GetEnvironmentVariable('ProgramFiles');
-    if (P <> '') and FileExists(P + '\Android\Android Studio\jbr\bin\emulator.exe') then
-      Exit(P + '\Android\Android Studio\jbr\bin\emulator.exe');
-
-    Result := 'emulator.exe';
-    {$ELSE}
-
-    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-    if (AndroidHome <> '') and FileExists(AndroidHome + '/emulator/emulator') then
-      Exit(AndroidHome + '/emulator/emulator');
-
-    LocalAppData := GetEnvironmentVariable('HOME');
-    if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/emulator/emulator') then
-      Exit(LocalAppData + '/Android/Sdk/emulator/emulator');
-
-    Result := 'emulator';
-    {$ENDIF}
+    if FindAndroidEmulatorInfo(EmuExe, EmuSrc, DummyCount, DummyList) and (EmuExe <> '') then
+      Result := EmuExe
+    else
+      Result := 'emulator' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
   end;
 
   function FindAndroidADB: string;
   var
-    AndroidHome, LocalAppData: string;
+    AdbExe, AdbVer, AdbSrc: string;
   begin
-    Result := 'adb';
-    {$IFDEF WINDOWS}
-
-    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-    if (AndroidHome <> '') and FileExists(AndroidHome + '\platform-tools\adb.exe') then
-      Exit(AndroidHome + '\platform-tools\adb.exe');
-
-    LocalAppData := GetEnvironmentVariable('LOCALAPPDATA');
-    if (LocalAppData <> '') and FileExists(LocalAppData + '\Android\Sdk\platform-tools\adb.exe') then
-      Exit(LocalAppData + '\Android\Sdk\platform-tools\adb.exe');
-
-    Result := 'adb.exe';
-    {$ELSE}
-
-    AndroidHome := GetEnvironmentVariable('ANDROID_HOME');
-    if (AndroidHome <> '') and FileExists(AndroidHome + '/platform-tools/adb') then
-      Exit(AndroidHome + '/platform-tools/adb');
-
-    LocalAppData := GetEnvironmentVariable('HOME');
-    if (LocalAppData <> '') and FileExists(LocalAppData + '/Android/Sdk/platform-tools/adb') then
-      Exit(LocalAppData + '/Android/Sdk/platform-tools/adb');
-
-    {$ENDIF}
+    if FindAndroidADBInfo(AdbExe, AdbVer, AdbSrc) and (AdbExe <> '') then
+      Result := AdbExe
+    else
+      Result := 'adb' + {$IFDEF WINDOWS}'.exe'{$ELSE}''{$ENDIF};
   end;
 
   function GetInstalledAVDs: TStringList;
@@ -11127,7 +11680,7 @@ var
     WriteLn('  [+] Starting Android Emulator: ' + TargetAVD + ' ...');
     {$IFDEF WINDOWS}
 
-    ExecuteProcess('cmd', '/c set "PATH=' + ExtractFileDir(FindAndroidADB) + ';%PATH%" && start "" "' + EmulatorExe + '" -avd ' + TargetAVD);
+    ExecuteProcess('cmd', '/c set "PATH=' + ExtractFileDir(FindAndroidADB) + ';%PATH%" && start "" "' + EmulatorExe + '" -avd ' + TargetAVD + ' -no-snapshot-load');
 
     {$ELSE}
 
@@ -11135,6 +11688,22 @@ var
     {$ENDIF}
 
     Result := True;
+  end;
+
+  procedure KillAndroidEmulator;
+  var
+    AdbExe, OutText: string;
+  begin
+    WriteLn('  [+] Stopping Android Emulator instances...');
+    AdbExe := FindAndroidADB;
+    ExecCmdCapture('"' + AdbExe + '" -e emu kill 2>&1', OutText);
+    Sleep(500);
+    {$IFDEF WINDOWS}
+    ExecCmdCapture('taskkill /F /IM qemu-system-x86_64.exe /IM emulator.exe /T 2>&1', OutText);
+    {$ELSE}
+    ExecCmdCapture('pkill -9 -f "qemu-system|emulator" 2>&1', OutText);
+    {$ENDIF}
+    WriteLn('  [v] Android Emulator processes stopped.');
   end;
 
   { Parses an individual command line option flag or positional parameter. }
@@ -11146,6 +11715,11 @@ var
     if S = '' then Exit;
     if (S = '--release') or (S = '-r') or (S = 'release') then
       IsRelease := True
+    else if (S = '--bundle') or (S = '--aab') or (S = 'bundle') or (S = 'aab') then
+    begin
+      IsBundle := True;
+      IsRelease := True;
+    end
     else if (S = '--debug') or (S = '-d') or (S = 'debug') then
       IsRelease := False
     else if (S = 'android') or (S = '--android') or (S = '--target=android') then
@@ -11156,6 +11730,12 @@ var
       IsAllTargets := True
     else if (S = '--emulator') or (S = '-e') or (S = 'emulator') then
       UseEmulator := True
+    else if (S = '--fresh') or (S = '--restart') or (S = '--force-restart') then
+      IsFreshEmulator := True
+    else if (S = '--no-build') then
+      IsNoBuild := True
+    else if (S = '-f') or (S = '--force') then
+      IsForceInit := True
     else if (SubCmd = 'emulator') and (EmulatorAction = '') then
       EmulatorAction := S
     else if (UseEmulator or (SubCmd = 'emulator')) and (SelectedAVD = '') and (Copy(S, 1, 1) <> '-') then
@@ -11163,7 +11743,14 @@ var
     else if (ActualAppName = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
       ActualAppName := A
     else if (ActualAppId = '') and (SubCmd = 'init') and (Copy(S, 1, 1) <> '-') then
-      ActualAppId := A;
+      ActualAppId := A
+    else if (SubCmd = 'upgrade') or (SubCmd = 'migrate') then
+    begin
+      if (S = '--check') or (S = '-c') or (S = 'check') then
+        IsCheckOnly := True
+      else if (RequestedCapVersion = '') and (Copy(S, 1, 1) <> '-') then
+        RequestedCapVersion := A;
+    end;
   end;
 
   { Fast regex/substring extractor for JSON properties without full parser overhead. }
@@ -11184,9 +11771,10 @@ var
   end;
 
 { Compiles native binary artifacts for a specified platform target. }
-  function BuildSingleTarget(const ATarget: string; ARelease: Boolean): Boolean;
+  function BuildSingleTarget(const ATarget: string; ARelease: Boolean; ABundle: Boolean = False): Boolean;
   var
-    TBinDir, SourceApk, TargetApk, AltApk: string;
+    TBinDir, SourceApk, TargetApk, AltApk, SourceAab, TargetAab: string;
+    BestJavaHome, BestJavaVer, BestJavaSource, JavaPrefix, SdkPath: string;
   begin
     Result := False;
     TBinDir := BinDir + DirectorySeparator + ATarget;
@@ -11200,30 +11788,66 @@ var
         Exit(False);
       end;
 
-      if ARelease then
-        WriteLn('  [+] Compiling Android APK in RELEASE mode (Gradle assembleRelease)...')
+      EnsureAndroidGradleCompatibility(AndroidDir);
 
+      if ABundle then
+        WriteLn('  [+] Compiling Android App Bundle (AAB) for Google Play (Gradle bundleRelease)...')
+      else if ARelease then
+        WriteLn('  [+] Compiling Android APK in RELEASE mode (Gradle assembleRelease)...')
       else
         WriteLn('  [+] Compiling Android APK in DEBUG mode (Gradle assembleDebug)...');
 
+      JavaPrefix := '';
+      SdkPath := FindAndroidSdkPath;
+      if SdkPath <> '' then
+      begin
+        {$IFDEF WINDOWS}
+        JavaPrefix := 'set "ANDROID_HOME=' + SdkPath + '" && ';
+        {$ELSE}
+        JavaPrefix := 'export ANDROID_HOME="' + SdkPath + '" && ';
+        {$ENDIF}
+      end;
+      if FindBestJavaHome(BestJavaHome, BestJavaVer, BestJavaSource) and (BestJavaHome <> '') then
+      begin
+        {$IFDEF WINDOWS}
+        JavaPrefix := 'set "JAVA_HOME=' + BestJavaHome + '" && set "PATH=' + BestJavaHome + '\bin;%PATH%" && ';
+        {$ELSE}
+        JavaPrefix := 'export JAVA_HOME="' + BestJavaHome + '" && export PATH="' + BestJavaHome + '/bin:$PATH" && ';
+        {$ENDIF}
+      end;
+
       {$IFDEF WINDOWS}
-
-      if ARelease then
-        ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleRelease')
-
+      if ABundle then
+        ExecuteProcess('cmd', '/c ' + JavaPrefix + 'cd /d "' + AndroidDir + '" && gradlew.bat bundleRelease')
+      else if ARelease then
+        ExecuteProcess('cmd', '/c ' + JavaPrefix + 'cd /d "' + AndroidDir + '" && gradlew.bat assembleRelease')
       else
-        ExecuteProcess('cmd', '/c cd /d "' + AndroidDir + '" && gradlew.bat assembleDebug');
-
+        ExecuteProcess('cmd', '/c ' + JavaPrefix + 'cd /d "' + AndroidDir + '" && gradlew.bat assembleDebug');
       {$ELSE}
-
-      if ARelease then
-        ExecuteProcess('/bin/sh', '-c "cd ''' + AndroidDir + ''' && ./gradlew assembleRelease"')
+      if ABundle then
+        ExecuteProcess('/bin/sh', '-c "' + JavaPrefix + 'cd ''' + AndroidDir + ''' && ./gradlew bundleRelease"')
+      else if ARelease then
+        ExecuteProcess('/bin/sh', '-c "' + JavaPrefix + 'cd ''' + AndroidDir + ''' && ./gradlew assembleRelease"')
       else
-        ExecuteProcess('/bin/sh', '-c "cd ''' + AndroidDir + ''' && ./gradlew assembleDebug"');
-
+        ExecuteProcess('/bin/sh', '-c "' + JavaPrefix + 'cd ''' + AndroidDir + ''' && ./gradlew assembleDebug"');
       {$ENDIF}
 
-      if ARelease then
+      if ABundle then
+      begin
+        SourceAab := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'bundle' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release.aab';
+        TargetAab := TBinDir + DirectorySeparator + CleanName + '-release.aab';
+        if FileExists(SourceAab) then
+        begin
+          CopyFile(SourceAab, TargetAab);
+          Result := True;
+          WriteLn('  [SUCCESS] Google Play Android App Bundle generated: mobile/bin/android/' + ExtractFileName(TargetAab));
+          WriteLn('  [INFO] Target: Google Play Console (Production / Internal Testing track)');
+          WriteLn('  [TIP] Upload bundle at: https://play.google.com/console');
+        end
+        else
+          WriteLn('  [WARNING] Expected AAB was not found at: ' + SourceAab);
+      end
+      else if ARelease then
       begin
         SourceApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release.apk';
         AltApk := AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build' + DirectorySeparator + 'outputs' + DirectorySeparator + 'apk' + DirectorySeparator + 'release' + DirectorySeparator + 'app-release-unsigned.apk';
@@ -11237,24 +11861,24 @@ var
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-debug.apk';
       end;
 
-      if not FileExists(SourceApk) and (AltApk <> '') and FileExists(AltApk) then
-        SourceApk := AltApk;
-      if FileExists(SourceApk) then
+      if not ABundle then
       begin
-        CopyFile(SourceApk, TargetApk);
-        Result := True;
-        if ARelease then
-          WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk))
-        else
+        if not FileExists(SourceApk) and (AltApk <> '') and FileExists(AltApk) then
+          SourceApk := AltApk;
+        if FileExists(SourceApk) then
         begin
-          WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk));
-          WriteLn('  [TIP] To install on your connected device: adb install -r "mobile/bin/android/' + ExtractFileName(TargetApk) + '"');
-        end;
-      end
-
-      else
-      begin
-        WriteLn('  [WARNING] Expected APK was not found at: ' + SourceApk);
+          CopyFile(SourceApk, TargetApk);
+          Result := True;
+          if ARelease then
+            WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk))
+          else
+          begin
+            WriteLn('  [SUCCESS] Mobile Android package generated: mobile/bin/android/' + ExtractFileName(TargetApk));
+            WriteLn('  [TIP] To install on your connected device: adb install -r "mobile/bin/android/' + ExtractFileName(TargetApk) + '"');
+          end;
+        end
+        else
+          WriteLn('  [WARNING] Expected APK was not found at: ' + SourceApk);
       end;
     end
 
@@ -11280,9 +11904,14 @@ var
   procedure RunTarget(const ATarget: string);
   var
     TargetApk, TBinDir, AdbExe, AdbOutput, AdbTarget: string;
+    BootStatus, InstallOutput, LaunchOutput: string;
+    BootAttempts, InstallAttempts: Integer;
+    InstallSuccess: Boolean;
   begin
     if ATarget = 'android' then
     begin
+      if DirectoryExists(AndroidDir) then
+        EnsureAndroidGradleCompatibility(AndroidDir);
       TBinDir := BinDir + DirectorySeparator + 'android';
       if IsRelease then
         TargetApk := TBinDir + DirectorySeparator + CleanName + '-release.apk'
@@ -11298,9 +11927,16 @@ var
       AdbTarget := '';
       if UseEmulator then
       begin
+        if IsFreshEmulator then
+        begin
+          WriteLn('  [+] Fresh emulator requested (--fresh). Resetting active instances...');
+          KillAndroidEmulator;
+          Sleep(1000);
+        end;
+
         AdbTarget := '-e ';
         AdbOutput := '';
-        RunCommand(AdbExe, ['devices'], AdbOutput);
+        ExecCmdCapture('"' + AdbExe + '" devices', AdbOutput);
         if Pos('emulator-', AdbOutput) = 0 then
         begin
           WriteLn('  [+] No active emulator detected in ADB. Launching emulator...');
@@ -11308,24 +11944,44 @@ var
           WriteLn('  [+] Waiting for emulator to boot (adb -e wait-for-device)...');
 
           {$IFDEF WINDOWS}
-
           ExecuteProcess('cmd', '/c ' + AdbExe + ' -e wait-for-device');
-
           {$ELSE}
-
           ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' -e wait-for-device"');
-
           {$ENDIF}
-
-          WriteLn('  [+] Waiting for emulator system to finalize boot...');
-          Sleep(4000);
+        end
+        else
+        begin
+          WriteLn('  [i] Connected to active Android Emulator session in ADB (emulator-5554).');
+          WriteLn('      (Tip: If emulator window is hidden or stuck, run with --fresh to force restart)');
         end;
+
+        WriteLn('  [+] Waiting for Android OS to finish booting (sys.boot_completed)...');
+        BootAttempts := 0;
+        repeat
+          BootStatus := '';
+          ExecCmdCapture('"' + AdbExe + '" -e shell getprop sys.boot_completed', BootStatus);
+          if Pos('1', Trim(BootStatus)) = 1 then Break;
+          Sleep(2000);
+          Inc(BootAttempts);
+        until BootAttempts >= 45;
+        Sleep(1500);
+
+        WriteLn('  [+] Waiting for Package Manager service (pm path android)...');
+        BootAttempts := 0;
+        repeat
+          BootStatus := '';
+          ExecCmdCapture('"' + AdbExe + '" -e shell pm path android', BootStatus);
+          if Pos('package:', BootStatus) > 0 then Break;
+          Sleep(1500);
+          Inc(BootAttempts);
+        until BootAttempts >= 20;
+        Sleep(1000);
       end
 
       else
       begin
         AdbOutput := '';
-        RunCommand(AdbExe, ['devices'], AdbOutput);
+        ExecCmdCapture('"' + AdbExe + '" devices', AdbOutput);
         if (Pos('emulator-', AdbOutput) > 0) and (Pos(#10, Trim(AdbOutput)) > 0) then
           AdbTarget := '-d ';
       end;
@@ -11333,19 +11989,45 @@ var
       if FileExists(TargetApk) then
       begin
         if UseEmulator then
-          WriteLn('Installing and running APK on Android Emulator via ADB: ' + TargetApk)
+          WriteLn('  [+] Installing APK on Android Emulator via ADB: ' + ExtractFileName(TargetApk))
         else
-          WriteLn('Installing and running APK on Android device via ADB: ' + TargetApk);
-        {$IFDEF WINDOWS}
+          WriteLn('  [+] Installing APK on Android device via ADB: ' + ExtractFileName(TargetApk));
 
-        ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'install -r "' + TargetApk + '"');
-        ExecuteProcess('cmd', '/c ' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity');
+        InstallSuccess := False;
+        InstallAttempts := 0;
+        repeat
+          Inc(InstallAttempts);
+          InstallOutput := '';
+          ExecCmdCapture('"' + AdbExe + '" ' + AdbTarget + 'install -r "' + TargetApk + '" 2>&1', InstallOutput);
+          if Pos('Success', InstallOutput) > 0 then
+          begin
+            InstallSuccess := True;
+            Break;
+          end;
+          WriteLn('  [!] ADB install attempt ', InstallAttempts, ' notice: ', Trim(InstallOutput));
+          if InstallAttempts < 3 then
+          begin
+            WriteLn('  [*] Retrying installation in 2 seconds (attempt ', InstallAttempts + 1, ' of 3)...');
+            Sleep(2000);
+          end;
+        until InstallAttempts >= 3;
 
-        {$ELSE}
-
-        ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' ' + AdbTarget + 'install -r \"' + TargetApk + '\""');
-        ExecuteProcess('/bin/sh', '-c "' + AdbExe + ' ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity"');
-        {$ENDIF}
+        if InstallSuccess then
+        begin
+          WriteLn('  [SUCCESS] APK installed successfully!');
+          WriteLn('  [+] Launching application activity: ' + ActualAppId + '/.MainActivity ...');
+          LaunchOutput := '';
+          ExecCmdCapture('"' + AdbExe + '" ' + AdbTarget + 'shell am start -n ' + ActualAppId + '/.MainActivity', LaunchOutput);
+          if (Pos('Error', LaunchOutput) > 0) or (Pos('Exception', LaunchOutput) > 0) then
+            WriteLn('  [!] Activity launch notice: ', Trim(LaunchOutput))
+          else
+            WriteLn('  [SUCCESS] Application started on device/emulator!');
+        end
+        else
+        begin
+          WriteLn('  [ERROR] Failed to install APK after 3 attempts.');
+          WriteLn('          Error details: ', Trim(InstallOutput));
+        end;
       end
       else
       begin
@@ -11406,17 +12088,47 @@ var
 begin
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Mobile (Capacitor Engine) ===');
   IsRelease := False;
+  IsBundle := False;
   IsAllTargets := False;
   UseEmulator := False;
+  IsCheckOnly := False;
+  IsFreshEmulator := False;
+  IsNoBuild := False;
+  IsForceInit := False;
+  NeedsAndroidRecreate := False;
   TargetPlatform := '';
   SelectedAVD := '';
   EmulatorAction := '';
   ActualAppName := '';
   ActualAppId := '';
-  ParseArg(Arg1);
-  ParseArg(Arg2);
-  for i := 5 to ParamCount do
-    ParseArg(ParamStr(i));
+  RequestedCapVersion := '';
+
+  i := 3;
+  while i <= ParamCount do
+  begin
+    if (LowerCase(ParamStr(i)) = '--version') or (LowerCase(ParamStr(i)) = '-v') or
+       (LowerCase(ParamStr(i)) = '--target') or (LowerCase(ParamStr(i)) = '-t') then
+    begin
+      if i < ParamCount then
+      begin
+        Inc(i);
+        RequestedCapVersion := ParamStr(i);
+      end;
+    end
+    else if Copy(LowerCase(ParamStr(i)), 1, 10) = '--version=' then
+      RequestedCapVersion := Trim(Copy(ParamStr(i), 11, MaxInt))
+    else if Copy(LowerCase(ParamStr(i)), 1, 9) = '--target=' then
+      RequestedCapVersion := Trim(Copy(ParamStr(i), 10, MaxInt))
+    else if Copy(LowerCase(ParamStr(i)), 1, 3) = '-v=' then
+      RequestedCapVersion := Trim(Copy(ParamStr(i), 4, MaxInt))
+    else if Copy(LowerCase(ParamStr(i)), 1, 3) = '-t=' then
+      RequestedCapVersion := Trim(Copy(ParamStr(i), 4, MaxInt))
+    else if (LowerCase(ParamStr(i)) = '--check') or (LowerCase(ParamStr(i)) = '-c') or (LowerCase(ParamStr(i)) = 'check') then
+      IsCheckOnly := True
+    else
+      ParseArg(ParamStr(i));
+    Inc(i);
+  end;
 
   MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
   BinDir := MobileDir + DirectorySeparator + 'bin';
@@ -11455,29 +12167,114 @@ begin
     if ActualAppId = '' then ActualAppId := ExtractJsonField(ExistingConfig, 'appId');
   end;
 
+  PkgJsonFile := GetCurrentDir + DirectorySeparator + 'package.json';
+  if FileExists(PkgJsonFile) then
+    PkgContent := ReadFileToString(PkgJsonFile)
+  else
+    PkgContent := '';
+
+  // Smart migration for projects cloned from demo-app template
+  if (LowerCase(ExtractFileName(GetCurrentDir)) <> 'demo-app') and
+     ((PkgContent = '') or (ExtractJsonField(PkgContent, 'name') <> 'demo-app')) then
+  begin
+    if (ActualAppName = 'BlaiseVue Demo') or (ActualAppId = 'com.blaisevue.demoapp') then
+    begin
+      ActualAppName := '';
+      ActualAppId := '';
+      NeedsAndroidRecreate := True;
+    end;
+  end;
+
+  if ActualAppName = '' then
+  begin
+    if PkgContent <> '' then
+      ActualAppName := ExtractJsonField(PkgContent, 'name');
+    if ActualAppName = '' then
+      ActualAppName := ExtractFileName(GetCurrentDir);
+  end;
   if ActualAppName = '' then ActualAppName := 'BlaiseVue Mobile';
-  if ActualAppId = '' then ActualAppId := 'com.blaisevue.app';
+
   CleanName := '';
   for i := 1 to Length(ActualAppName) do
   begin
     if (ActualAppName[i] in ['a'..'z', 'A'..'Z', '0'..'9']) then
       CleanName := CleanName + ActualAppName[i]
-
     else if CleanName <> '' then
       CleanName := CleanName + '_';
   end;
-
   if CleanName = '' then CleanName := 'MobileApp';
   if CleanName[1] in ['0'..'9'] then CleanName := 'App' + CleanName;
+
+  if ActualAppId = '' then
+    ActualAppId := 'com.blaisevue.' + LowerCase(CleanName);
+
   if TargetPlatform = '' then
     TargetPlatform := 'android';
 
-  if (SubCmd = 'init') or (SubCmd = 'sync') or (SubCmd = 'open') or (SubCmd = 'build') then
+  if NeedsAndroidRecreate then
+  begin
+    WriteLn('  [+] Auto-synchronizing legacy demo configuration to project: ' + ActualAppName + ' (' + ActualAppId + ')');
+    ConfigContent := '{' + #10 +
+      '  "appId": "' + ActualAppId + '",' + #10 +
+      '  "appName": "' + ActualAppName + '",' + #10 +
+      '  "webDir": "dist",' + #10 +
+      '  "bundledWebRuntime": false,' + #10 +
+      '  "android": {' + #10 +
+      '    "path": "mobile/android"' + #10 +
+      '  },' + #10 +
+      '  "ios": {' + #10 +
+      '    "path": "mobile/ios"' + #10 +
+      '  }' + #10 +
+      '}';
+    WriteStringToFile(CapConfigFile, ConfigContent);
+    WriteStringToFile(MobileCapConfigFile, ConfigContent);
+
+    if FileExists(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-debug.apk') then
+      DeleteFile(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-debug.apk');
+    if FileExists(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-release.apk') then
+      DeleteFile(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-release.apk');
+    if FileExists(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-release.aab') then
+      DeleteFile(BinDir + DirectorySeparator + 'android' + DirectorySeparator + 'BlaiseVue_Demo-release.aab');
+
+    if FileExists(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle') then
+    begin
+      GradleText := ReadFileToString(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle');
+      if Pos('com.blaisevue.demoapp', GradleText) > 0 then
+      begin
+        GradleText := StringReplace(GradleText, 'applicationId "com.blaisevue.demoapp"', 'applicationId "' + ActualAppId + '"', [rfReplaceAll]);
+        WriteStringToFile(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle', GradleText);
+      end;
+    end;
+
+    if FileExists(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'src' + DirectorySeparator + 'main' + DirectorySeparator + 'res' + DirectorySeparator + 'values' + DirectorySeparator + 'strings.xml') then
+    begin
+      GradleText := ReadFileToString(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'src' + DirectorySeparator + 'main' + DirectorySeparator + 'res' + DirectorySeparator + 'values' + DirectorySeparator + 'strings.xml');
+      if Pos('BlaiseVue Demo', GradleText) > 0 then
+      begin
+        GradleText := StringReplace(GradleText, '>BlaiseVue Demo<', '>' + ActualAppName + '<', [rfReplaceAll]);
+        WriteStringToFile(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'src' + DirectorySeparator + 'main' + DirectorySeparator + 'res' + DirectorySeparator + 'values' + DirectorySeparator + 'strings.xml', GradleText);
+      end;
+    end;
+  end;
+
+  if (SubCmd = 'init') or (SubCmd = 'sync') or (SubCmd = 'open') or (SubCmd = 'build') or (SubCmd = 'upgrade') or (SubCmd = 'migrate') or (SubCmd = 'run') then
   begin
     if not HasCommand('node') then
     begin
       PrintNodeRequiredError('manage mobile projects with Capacitor');
       Exit;
+    end;
+  end;
+
+  // Auto-scaffold mobile platform transparently if missing
+  if (SubCmd = 'build') or (SubCmd = 'run') or (SubCmd = 'sync') then
+  begin
+    if (not FileExists(CapConfigFile)) or
+       (not DirectoryExists(MobileDir)) or
+       ((TargetPlatform = 'android') and not DirectoryExists(AndroidDir)) then
+    begin
+      WriteLn('  [+] Mobile platform not yet initialized. Auto-scaffolding for project: ' + ActualAppName + ' ...');
+      CmdMobile('init', ActualAppName, ActualAppId);
     end;
   end;
 
@@ -11521,29 +12318,84 @@ begin
 
       '}';
 
-    if not FileExists(CapConfigFile) then
+    if not FileExists(CapConfigFile) or (ParamCount >= 3) or IsForceInit then
     begin
       WriteStringToFile(CapConfigFile, ConfigContent);
-      WriteLn('  [+] Generated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
-    end
-
-    else
-      WriteLn('  [i] capacitor.config.json already exists.');
-
-    if not FileExists(MobileCapConfigFile) then
       WriteStringToFile(MobileCapConfigFile, ConfigContent);
+      WriteLn('  [+] Updated capacitor.config.json (appId: ' + ActualAppId + ', appName: ' + ActualAppName + ')');
+    end
+    else
+    begin
+      WriteLn('  [i] capacitor.config.json already exists.');
+      if not FileExists(MobileCapConfigFile) then
+        WriteStringToFile(MobileCapConfigFile, ConfigContent);
+    end;
 
-    // 2. Ensure @capacitor/core and @capacitor/cli are installed
+    // 2. Ensure @capacitor/core and @capacitor/cli are installed with requested version
+    CapTag := '';
+    CapVerDisplay := 'latest (Capacitor 8.x)';
+    if RequestedCapVersion <> '' then
+    begin
+      if (RequestedCapVersion = '8') or (RequestedCapVersion = 'v8') or (RequestedCapVersion = '8.x') then
+      begin
+        CapTag := '@^8.0.0';
+        CapVerDisplay := 'v8 LTS';
+      end
+      else if (RequestedCapVersion = '7') or (RequestedCapVersion = 'v7') or (RequestedCapVersion = '7.x') then
+      begin
+        CapTag := '@^7.0.0';
+        CapVerDisplay := 'v7 Legacy';
+      end
+      else if (RequestedCapVersion = '6') or (RequestedCapVersion = 'v6') or (RequestedCapVersion = '6.x') then
+      begin
+        CapTag := '@^6.0.0';
+        CapVerDisplay := 'v6 Legacy';
+      end
+      else if (LowerCase(RequestedCapVersion) = 'next') or (LowerCase(RequestedCapVersion) = 'beta') then
+      begin
+        CapTag := '@next';
+        CapVerDisplay := 'next (preview/beta)';
+      end
+      else if LowerCase(RequestedCapVersion) = 'latest' then
+      begin
+        CapTag := '@latest';
+        CapVerDisplay := 'latest';
+      end
+      else
+      begin
+        if Copy(RequestedCapVersion, 1, 1) = '@' then
+          CapTag := RequestedCapVersion
+        else
+          CapTag := '@' + RequestedCapVersion;
+        CapVerDisplay := RequestedCapVersion;
+      end;
+    end;
 
-    WriteLn('  [+] Installing Capacitor dependencies (@capacitor/core, @capacitor/cli, @capacitor/android)...');
+    WriteLn('  [+] Installing Capacitor dependencies (version: ' + CapVerDisplay + ')...');
 
     {$IFDEF WINDOWS}
-    ExecuteProcess('cmd', '/c npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev');
+    ExecuteProcess('cmd', '/c npm install @capacitor/core' + CapTag + ' @capacitor/cli' + CapTag + ' @capacitor/android' + CapTag + ' --save-dev');
     {$ELSE}
-    ExecuteProcess('/bin/sh', '-c "npm install @capacitor/core @capacitor/cli @capacitor/android --save-dev"');
+    ExecuteProcess('/bin/sh', '-c "npm install @capacitor/core' + CapTag + ' @capacitor/cli' + CapTag + ' @capacitor/android' + CapTag + ' --save-dev"');
     {$ENDIF}
 
-    // 3. Add Android platform if not present
+    // 3. Add Android platform if not present or if appId changed
+    NeedsAndroidRecreate := False;
+    if DirectoryExists(AndroidDir) then
+    begin
+      if FileExists(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle') then
+      begin
+        GradleText := ReadFileToString(AndroidDir + DirectorySeparator + 'app' + DirectorySeparator + 'build.gradle');
+        if (Pos(ActualAppId, GradleText) = 0) then
+          NeedsAndroidRecreate := True;
+      end;
+      if NeedsAndroidRecreate or IsForceInit then
+      begin
+        WriteLn('  [*] Re-scaffolding native Android project to match ' + ActualAppId + ' ...');
+        DeleteDir(AndroidDir);
+      end;
+    end;
+
     if not DirectoryExists(AndroidDir) then
     begin
       WriteLn('  [+] Adding Android native project (npx cap add android)...');
@@ -11553,10 +12405,15 @@ begin
       {$ELSE}
       ExecuteProcess('/bin/sh', '-c "npx cap add android"');
       {$ENDIF}
+      if EnsureAndroidGradleCompatibility(AndroidDir) then
+        WriteLn('  [+] Auto-configured Android Gradle compatibility (Java 17 LTS / Release signing).');
     end
-
     else
+    begin
       WriteLn('  [i] Native android/ directory already initialized at: ' + AndroidDir);
+      if EnsureAndroidGradleCompatibility(AndroidDir) then
+        WriteLn('  [+] Auto-configured Android Gradle compatibility (Java 17 LTS / Release signing).');
+    end;
 
     // 4. Generate README.md
 
@@ -11564,7 +12421,7 @@ begin
     begin
       ReadmeContent :=
 
-        '# ' + ActualAppName + ' (BlaiseVue 3.5 Mobile)' + #10 +
+        '# ' + ActualAppName + ' (BlaiseVue ' + GetCliMajorMinor + ' Mobile)' + #10 +
 
         '' + #10 +
 
@@ -11580,7 +12437,7 @@ begin
 
         '- `bin/`: Platform-segregated ready-to-install packages:' + #10 +
 
-        '  - `bin/android/`: Compiled APKs (`' + CleanName + '-debug.apk`, `' + CleanName + '-release.apk`).' + #10 +
+        '  - `bin/android/`: Compiled packages (`' + CleanName + '-debug.apk`, `' + CleanName + '-release.apk`, `' + CleanName + '-release.aab`).' + #10 +
 
         '  - `bin/ios/`: Compiled IPAs.' + #10 +
 
@@ -11602,7 +12459,9 @@ begin
 
         'bv mobile build android            # Debug APK' + #10 +
 
-        'bv mobile build android --release  # Release APK (optimized)' + #10 +
+        'bv mobile build android --release  # Release APK (optimized / local testing)' + #10 +
+
+        'bv mobile build android --bundle   # Android App Bundle (.aab) for Google Play Console' + #10 +
 
         '' + #10 +
 
@@ -11646,6 +12505,163 @@ begin
     WriteLn('Run "bv mobile build android" to compile APK to mobile/bin/android/.');
   end
 
+  else if (SubCmd = 'upgrade') or (SubCmd = 'migrate') then
+  begin
+    PkgJsonFile := GetCurrentDir + DirectorySeparator + 'package.json';
+    PkgContent := '';
+    if FileExists(PkgJsonFile) then
+      PkgContent := ReadFileToString(PkgJsonFile)
+    else if FileExists(MobileDir + DirectorySeparator + 'package.json') then
+    begin
+      PkgJsonFile := MobileDir + DirectorySeparator + 'package.json';
+      PkgContent := ReadFileToString(PkgJsonFile);
+    end;
+
+    if (Pos('@capacitor', PkgContent) = 0) and not DirectoryExists(MobileDir) and not FileExists(CapConfigFile) and not FileExists(MobileCapConfigFile) then
+    begin
+      WriteLn('  [!] No Capacitor project found in current directory.');
+      WriteLn('      Run "bv mobile init" to scaffold a mobile project first.');
+      Exit;
+    end;
+
+    // Detect currently installed Capacitor version
+    CurrentCapVer := '';
+    if ExecCmdCapture('npx --no-install cap --version 2>&1', CurrentCapVer) and (CurrentCapVer <> '') and (Pos('error', LowerCase(CurrentCapVer)) = 0) then
+      CurrentCapVer := Trim(CurrentCapVer)
+    else
+    begin
+      CurrentCapVer := ExtractJsonField(PkgContent, '@capacitor/core');
+      if CurrentCapVer = '' then CurrentCapVer := ExtractJsonField(PkgContent, '@capacitor/cli');
+      if (Length(CurrentCapVer) > 0) and ((CurrentCapVer[1] = '^') or (CurrentCapVer[1] = '~')) then
+        CurrentCapVer := Copy(CurrentCapVer, 2, MaxInt);
+    end;
+
+    if CurrentCapVer = '' then
+      CurrentCapVer := 'unknown';
+
+    WriteLn('Checking Capacitor versions...');
+    WriteLn('  [i] Installed Capacitor version: v' + CurrentCapVer);
+
+    // Query NPM registry for latest version
+    LatestCapVer := '';
+    if ExecCmdCapture('npm view @capacitor/core version 2>&1', LatestCapVer) then
+      LatestCapVer := Trim(LatestCapVer);
+
+    if LatestCapVer <> '' then
+      WriteLn('  [i] Latest stable on npm:        v' + LatestCapVer)
+    else
+      WriteLn('  [!] Could not connect to npm registry to fetch latest version.');
+
+    if IsCheckOnly then
+    begin
+      WriteLn('');
+      if (LatestCapVer <> '') and (CurrentCapVer <> 'unknown') then
+      begin
+        if CurrentCapVer = LatestCapVer then
+          WriteLn('  [v] All Capacitor dependencies are up to date!')
+        else
+        begin
+          WriteLn('  [*] An update is available (v' + CurrentCapVer + ' -> v' + LatestCapVer + ').');
+          WriteLn('      Run "bv mobile upgrade" to upgrade dependencies and migrate native platforms.');
+        end;
+      end
+      else
+        WriteLn('  Run "bv mobile upgrade" to upgrade Capacitor dependencies.');
+      Exit;
+    end;
+
+    // Execution Mode
+    WriteLn('');
+    WriteLn('======================================================================');
+    WriteLn('  Starting Native Capacitor Upgrade & Migration Workflow');
+    WriteLn('======================================================================');
+
+    // 1. Resolve Target Version Tag
+    CapTag := '';
+    CapVerDisplay := 'latest stable';
+    if RequestedCapVersion <> '' then
+    begin
+      if (RequestedCapVersion = '8') or (RequestedCapVersion = 'v8') or (RequestedCapVersion = '8.x') then
+      begin
+        CapTag := '@^8.0.0';
+        CapVerDisplay := 'v8 LTS';
+      end
+      else if (RequestedCapVersion = '7') or (RequestedCapVersion = 'v7') or (RequestedCapVersion = '7.x') then
+      begin
+        CapTag := '@^7.0.0';
+        CapVerDisplay := 'v7 Legacy';
+      end
+      else if (RequestedCapVersion = '6') or (RequestedCapVersion = 'v6') or (RequestedCapVersion = '6.x') then
+      begin
+        CapTag := '@^6.0.0';
+        CapVerDisplay := 'v6 Legacy';
+      end
+      else if (LowerCase(RequestedCapVersion) = 'next') or (LowerCase(RequestedCapVersion) = 'beta') then
+      begin
+        CapTag := '@next';
+        CapVerDisplay := 'next (preview/beta)';
+      end
+      else if LowerCase(RequestedCapVersion) = 'latest' then
+      begin
+        CapTag := '@latest';
+        CapVerDisplay := 'latest stable';
+      end
+      else
+      begin
+        if Copy(RequestedCapVersion, 1, 1) = '@' then
+          CapTag := RequestedCapVersion
+        else
+          CapTag := '@' + RequestedCapVersion;
+        CapVerDisplay := RequestedCapVersion;
+      end;
+    end
+    else
+    begin
+      CapTag := '@latest';
+      CapVerDisplay := 'latest stable (@latest)';
+    end;
+
+    ExtraPkgs := '';
+    if DirectoryExists(IOSDir) or (Pos('@capacitor/ios', PkgContent) > 0) then
+      ExtraPkgs := ' @capacitor/ios' + CapTag;
+
+    // 2. npm install dependencies
+    WriteLn('  [1/4] Updating Capacitor packages to ' + CapVerDisplay + '...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npm install @capacitor/core' + CapTag + ' @capacitor/cli' + CapTag + ' @capacitor/android' + CapTag + ExtraPkgs + ' --save-dev');
+    {$ELSE}
+    ExecuteProcess('/bin/sh', '-c "npm install @capacitor/core' + CapTag + ' @capacitor/cli' + CapTag + ' @capacitor/android' + CapTag + ExtraPkgs + ' --save-dev"');
+    {$ENDIF}
+
+    // 3. npx cap migrate
+    WriteLn('  [2/4] Executing native Capacitor platform migration (npx cap migrate)...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c npx cap migrate --noprompt');
+    {$ELSE}
+    ExecuteProcess('/bin/sh', '-c "npx cap migrate --noprompt"');
+    {$ENDIF}
+
+    // 4. Universal Self-Healing on Android Gradle
+    WriteLn('  [3/4] Running Universal Self-Healing on native Android configuration...');
+    if DirectoryExists(AndroidDir) then
+    begin
+      if EnsureAndroidGradleCompatibility(AndroidDir) then
+        WriteLn('        [+] Preserved Java 17 LTS, JVM toolchain & keystore signing configurations.')
+      else
+        WriteLn('        [OK] Android Gradle configuration is optimal.');
+    end;
+
+    // 5. Capacitor Sync
+    WriteLn('  [4/4] Synchronizing build artifacts with native platforms...');
+    CmdMobile('sync', TargetPlatform);
+
+    WriteLn('');
+    WriteLn('======================================================================');
+    WriteLn('  [v] Capacitor upgraded successfully to ' + CapVerDisplay + '!');
+    WriteLn('======================================================================');
+    WriteLn('Run "bv mobile build android" to compile the upgraded native APK.');
+  end
+
   else if (SubCmd = 'sync') then
   begin
     WriteLn('Synchronizing BlaiseVue dist/ with native Mobile platform...');
@@ -11667,6 +12683,12 @@ begin
       {$ENDIF}
     end;
 
+    if DirectoryExists(AndroidDir) then
+    begin
+      if EnsureAndroidGradleCompatibility(AndroidDir) then
+        WriteLn('  [+] Synchronized Android Gradle compatibility (Java 17 LTS / Release signing).');
+    end;
+
     WriteLn('Mobile assets synchronized successfully!');
   end
 
@@ -11677,18 +12699,24 @@ begin
     if IsAllTargets or (TargetPlatform = 'all') then
     begin
       WriteLn('Building native Mobile application for ALL platforms (android, ios)...');
-      BuildSingleTarget('android', IsRelease);
+      BuildSingleTarget('android', IsRelease, IsBundle);
       BuildSingleTarget('ios', IsRelease);
     end
 
     else
     begin
-      BuildSingleTarget(TargetPlatform, IsRelease);
+      BuildSingleTarget(TargetPlatform, IsRelease, IsBundle);
     end;
   end
 
   else if (SubCmd = 'run') then
   begin
+    if not IsNoBuild then
+    begin
+      WriteLn('Building and synchronizing native Mobile application...');
+      CmdMobile('sync', TargetPlatform);
+      BuildSingleTarget(TargetPlatform, IsRelease, IsBundle);
+    end;
     RunTarget(TargetPlatform);
   end
 
@@ -11738,15 +12766,20 @@ begin
       RunTarget('android');
     end
 
+    else if (EmulatorAction = 'kill') or (EmulatorAction = 'stop') or (EmulatorAction = 'reset') then
+    begin
+      KillAndroidEmulator;
+    end
+
     else
     begin
-      WriteLn('Usage: bv mobile emulator <list|start [name]|run [name]>');
+      WriteLn('Usage: bv mobile emulator <list|start [name]|run [name]|kill>');
     end;
   end
 
   else
   begin
-    WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
+    WriteLn('Usage: bv mobile <init [name] [id] [--version=<v>]|upgrade [--check]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
     WriteLn('       Targets: android | ios | all (default: android)');
   end;
 end;
@@ -23002,6 +24035,22 @@ begin
       WriteLn('  [OK] ', LazCleanName, '.lpi and ', LazCleanName, '.lpr are already up to date (', LazUnitsCount, ' units indexed).');
   end;
 
+  // 3.5: Mobile Android Gradle self-healing
+  if DirectoryExists(BaseDir + 'mobile' + DirectorySeparator + 'android') then
+  begin
+    if EnsureAndroidGradleCompatibility(BaseDir + 'mobile' + DirectorySeparator + 'android') then
+      WriteLn('  [+] Auto-repaired Mobile Android Gradle configuration (Java 17 LTS / Release signing).')
+    else
+      WriteLn('  [OK] Mobile Android Gradle configuration is up to date.');
+  end
+  else if DirectoryExists(BaseDir + 'android') then
+  begin
+    if EnsureAndroidGradleCompatibility(BaseDir + 'android') then
+      WriteLn('  [+] Auto-repaired Android Gradle configuration (Java 17 LTS / Release signing).')
+    else
+      WriteLn('  [OK] Android Gradle configuration is up to date.');
+  end;
+
   // -------------------------------------------------------------------
   // 4. Registry & Non-destructive Safety Summary
   // -------------------------------------------------------------------
@@ -23068,7 +24117,11 @@ var
   SDKDir, OSName, GitVer, FpcExe, FpcVer, FpcSource, Pas2Path, Pas2Ver: string;
   NodeVer, NpmVer, MormotPath, BranchName, ShortHash, RemoteUrl, DockerVer: string;
   PyExe, PyVer, PySource, IfpcExe, IfpcVer, IfpcSource: string;
+  JavaHome, JavaVer, JavaSource, AdbExe, AdbVer, AdbSource: string;
+  EmuExe, EmuSource, AvdListStr, CapVer, AndroidSdkPath, DummyStr: string;
   HasGit, HasFpc, HasPas2, HasMormot, HasNode, HasLazarus, HasPython, HasIfpc: Boolean;
+  HasJava, HasAdb, HasEmulator: Boolean;
+  MajorJava, AvdCount: Integer;
   AllHealthy: Boolean;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -23213,6 +24266,67 @@ begin
     WriteLn('  [v] Docker CLI:           ', DockerVer, ' detected (bv mormot docker)')
   else
     WriteLn('  [!] Docker CLI:           Not detected (Optional: production micro-containers)');
+
+  WriteLn('');
+  WriteLn('[3] Mobile & Cross-Platform Tooling (Android / Capacitor):');
+
+  // Java Runtime (JDK)
+  HasJava := FindBestJavaHome(JavaHome, JavaVer, JavaSource);
+  if HasJava then
+  begin
+    MajorJava := ParseJavaVersionMajor(JavaVer, DummyStr);
+    if (MajorJava >= 17) and (MajorJava <= 21) then
+      WriteLn('  [v] Java Runtime (JDK):   v', JavaVer, ' (', JavaSource, ' - LTS compatible)')
+    else
+      WriteLn('  [!] Java Runtime (JDK):   v', JavaVer, ' (', JavaSource, ' - Warning: Java 17 or 21 LTS recommended for Gradle)');
+  end
+  else
+    WriteLn('  [!] Java Runtime (JDK):   Not detected (Required for Android Gradle builds - install Java 17 LTS)');
+
+  // Android SDK
+  AndroidSdkPath := FindAndroidSdkPath;
+  if AndroidSdkPath <> '' then
+    WriteLn('  [v] Android SDK:          Detected at ', AndroidSdkPath)
+  else
+    WriteLn('  [!] Android SDK:          Not detected in standard paths (set ANDROID_HOME)');
+
+  // ADB
+  HasAdb := FindAndroidADBInfo(AdbExe, AdbVer, AdbSource);
+  if HasAdb then
+    WriteLn('  [v] Android Debug Bridge: v', AdbVer, ' (', AdbSource, ')')
+  else
+    WriteLn('  [!] Android Debug Bridge: Not detected (Optional: required for USB/emulator run)');
+
+  // Android Emulator & AVDs
+  HasEmulator := FindAndroidEmulatorInfo(EmuExe, EmuSource, AvdCount, AvdListStr);
+  if HasEmulator then
+  begin
+    if AvdCount > 0 then
+      WriteLn('  [v] Android Emulator:     Detected (', AvdCount, ' AVD: ', AvdListStr, ')')
+    else
+      WriteLn('  [!] Android Emulator:     Detected, but 0 AVDs created (create an AVD in Android Studio Device Manager)');
+  end
+  else
+    WriteLn('  [!] Android Emulator:     Not detected in Android SDK');
+
+  // Capacitor CLI & Runtime
+  CapVer := '';
+  if ExecCmdCapture('npx --no-install cap --version 2>&1', CapVer) and (CapVer <> '') and (Pos('error', LowerCase(CapVer)) = 0) and (Pos('not found', LowerCase(CapVer)) = 0) then
+  begin
+    CapVer := Trim(CapVer);
+    if Copy(CapVer, 1, 2) = '8.' then
+      WriteLn('  [v] Capacitor Runtime:    v', CapVer, ' (v8 LTS active - run "bv mobile upgrade --check" to inspect updates)')
+    else if Copy(CapVer, 1, 2) = '7.' then
+      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v7 Legacy - run "bv mobile upgrade" to migrate to latest)')
+    else if Copy(CapVer, 1, 2) = '6.' then
+      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v6 Legacy - run "bv mobile upgrade" to migrate to latest)')
+    else
+      WriteLn('  [v] Capacitor Runtime:    v', CapVer, ' (installed in project)');
+  end
+  else if ExecCmdCapture('cap --version 2>&1', CapVer) and (CapVer <> '') and (Pos('error', LowerCase(CapVer)) = 0) then
+    WriteLn('  [v] Capacitor CLI:        v', Trim(CapVer), ' (global PATH)')
+  else
+    WriteLn('  [!] Capacitor CLI:        Not detected (scaffold mobile project via bv mobile init)');
 
   WriteLn('');
   WriteLn('======================================================================');
@@ -23666,15 +24780,18 @@ begin
     WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
     WriteLn('');
     WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
-    WriteLn('  bv mobile init [name] [id] Scaffolds Capacitor & mobile/ native project');
+    WriteLn('  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
+    WriteLn('  bv mobile upgrade [--check] Migrates Capacitor dependencies & updates Gradle');
     WriteLn('  bv mobile sync             Syncs dist/ with native mobile assets');
     WriteLn('  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json');
     WriteLn('  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/');
     WriteLn('  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)');
+    WriteLn('  bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)');
     WriteLn('  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)');
     WriteLn('  bv mobile emulator start   Boots Android emulator in background');
+    WriteLn('  bv mobile emulator kill    Terminates lingering emulator & QEMU processes');
     WriteLn('  bv mobile run android      Installs and launches APK on connected USB device');
-    WriteLn('  bv mobile run android --emulator Boots emulator, installs APK, and runs app');
+    WriteLn('  bv mobile run android [--emulator] [--release] [--fresh] Compiles, deploys and launches app (flags can be combined)');
     WriteLn('  bv mobile open android     Opens project in Android Studio');
     WriteLn('');
     WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
@@ -24115,7 +25232,7 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mobile <init [name] [id]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
+      WriteLn('Usage: bv mobile <init [name] [id] [--version=<v>]|upgrade [--check]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
       WriteLn('       Targets: android | ios | all (default: android)');
       Halt(1);
     end;

@@ -97,17 +97,21 @@ bv mobile build android             # Builds Debug APK to mobile/bin/android/<Ap
 bv mobile build ios                 # Prepares and synchronizes native iOS project
 
 # 4. RELEASE Build Mode (R8/ProGuard code shrinking and bytecode optimization):
-bv mobile build android --release   # Builds Release APK to mobile/bin/android/<App>-release.apk
+bv mobile build android --release   # Builds Release APK to mobile/bin/android/<App>-release.apk (local testing)
+bv mobile build android --bundle    # Builds Android App Bundle (.aab) for Google Play Console
 bv mobile build all --release       # Compiles all mobile platforms
 
 # 5. Android Virtual Device (AVD) Emulator Management:
 bv mobile emulator list             # Lists all emulators installed in Android Studio
 bv mobile emulator start [name]      # Boots the specified emulator in the background
+bv mobile emulator kill              # Stops and terminates any lingering emulator/QEMU processes
 bv mobile emulator run [name]        # Boots emulator, waits for system, and launches the app
 
 # 6. Direct execution on connected device or emulator via ADB:
 bv mobile run android               # Installs and launches on USB-connected phone
 bv mobile run android --emulator    # Automatically boots emulator and launches the app
+bv mobile run android --emulator --fresh # Kills any previous ghost/stuck emulator and boots fresh
+bv mobile run android --emulator --release --fresh # Combines flags: clean emulator boot + Release APK build & launch!
 
 # 7. Open project in native IDE:
 bv mobile open android              # Opens project in Android Studio
@@ -118,12 +122,16 @@ bv mobile open ios                  # Opens project in Xcode (on macOS)
 
 | Mobile Command | Platform | Build Mode | Package / Action | Purpose |
 |---|---|---|---|---|
+| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version | Version selection (v8 LTS, v7, latest, next) |
+| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure | One-step migration with Universal Self-Healing |
 | `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` | Rapid testing, development, and Logcat diagnostics |
-| `bv mobile build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Compact, optimized production build for stores |
+| `bv mobile build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Compact, optimized production build for local testing |
+| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` | Official Android App Bundle for Google Play Store upload |
 | `bv mobile emulator list` | Android | - | Displays installed AVDs | Inspect configured emulators on host machine |
 | `bv mobile emulator start` | Android | - | Boots AVD in background | Prepares emulator environment for development |
+| `bv mobile emulator kill` | Android | - | Terminates emulator processes | Cleanly kills lingering QEMU and emulator instances |
 | `bv mobile run android` | Android | Debug | ADB Deploy & Launch | Direct installation on USB device |
-| `bv mobile run android --emulator` | Android | Debug | Boot AVD + ADB Deploy | 100% automated emulator launch and test |
+| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boot AVD + ADB Deploy | 100% automated build & launch (combine flags freely) |
 | `bv mobile open android` | Android | - | Android Studio | Native Java/Kotlin editing, emulators, profilers |
 | `bv mobile open ios` | iOS | - | Xcode | Signing and compiling for iPhone/iPad (macOS) |
 
@@ -217,3 +225,32 @@ adb exec-out screencap -p > screen_mobile_test.png
 1. **Total Code Reuse**: Over 95% of Object Pascal business logic, state management, and visual components are shared across Web, Android, iOS, and Desktop.
 2. **High Performance**: Native Pas2JS transpilation with a lightweight runtime and optional WebAssembly acceleration.
 3. **Visual Consistency**: Bootswatch theme palettes and BlaiseUI components behave uniformly across all resolutions. 🚀📱✨
+
+---
+
+## 🛡️ Zero-Config Resilient Mobile Architecture
+
+BlaiseVue 4.4 incorporates a comprehensive **Self-Healing Gradle** and device orchestration system:
+
+### 1. Universal Java Compatibility (Java 17 LTS)
+Capacitor generates Gradle configuration targeting Java 21 by default, which can cause compilation errors (`invalid source release: 21`) on machines running Java 17 LTS, or bytecode crashes on Java 25.
+BlaiseVue's `EnsureAndroidGradleCompatibility` inspects and automatically harmonizes `build.gradle`, `app/build.gradle`, and `capacitor.build.gradle` to **Java 17 LTS**, ensuring seamless builds on Java 17, 21, and newer JDKs.
+
+### 2. Dual Signing Modes: Local Release vs. Google Play
+- **Zero-Config Local Testing (`--release`)**: When compiling or running with `--release`, BlaiseVue injects `signingConfig signingConfigs.debug` as an automatic fallback if no production keystore is configured. This prevents `INSTALL_PARSE_FAILED_NO_CERTIFICATES` when testing production builds on devices or emulators.
+- **Production Store Signing (`keystore.properties`)**: When you are ready to publish, create a file `mobile/android/keystore.properties` (using `keystore.properties.example` as a guide):
+  ```properties
+  storeFile=my-release-key.jks
+  storePassword=MyStorePassword
+  keyAlias=my-key-alias
+  keyPassword=MyKeyPassword
+  ```
+  BlaiseVue automatically detects `keystore.properties` and signs release APKs and Bundles with your production key. Both `keystore.properties` and `*.jks` / `*.keystore` are protected in `.gitignore`.
+
+### 3. Resilient Emulator Boot & ADB Handshake
+When executing `bv mobile run android --emulator`:
+1. BlaiseVue boots the AVD in the background (if offline).
+2. Performs active polling on `sys.boot_completed == 1` (up to 90s timeout).
+3. Verifies that the Package Manager service (`pm path android`) is online and ready.
+4. Executes APK installation with an automatic 3-attempt retry loop to avoid transient stream errors.
+5. Launches the app activity (`com.domain.app/.MainActivity`) with verified window focus.

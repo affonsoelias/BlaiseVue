@@ -1,4 +1,4 @@
-# BlaiseVue Mobile (BlaiseVue 3.5 Mobile)
+# BlaiseVue Mobile (BlaiseVue 4.4 Mobile)
 
 Native mobile application powered by **Capacitor** and **BlaiseVue**.
 
@@ -6,7 +6,7 @@ Native mobile application powered by **Capacitor** and **BlaiseVue**.
 - `android/`: Native Android Studio project.
 - `ios/`: Native Xcode project (when added).
 - `bin/`: Platform-segregated ready-to-install packages:
-  - `bin/android/`: Compiled APKs (`BlaiseVue_Demo-debug.apk`, `BlaiseVue_Demo-release.apk`).
+  - `bin/android/`: Compiled APKs & Bundles (`BlaiseVue_Demo-debug.apk`, `BlaiseVue_Demo-release.apk`, `BlaiseVue_Demo-release.aab`).
   - `bin/ios/`: Compiled IPAs.
 - `capacitor.config.json`: Capacitor bridge configuration.
 
@@ -25,6 +25,7 @@ bv mobile sync
 # 2. Build for Android
 bv mobile build android            # Debug APK (with logs)
 bv mobile build android --release  # Release APK (optimized with R8/ProGuard)
+bv mobile build android --bundle   # Android App Bundle (.aab) for Google Play Store
 
 # 3. Build for iOS (macOS only)
 bv mobile build ios

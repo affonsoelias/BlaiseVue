@@ -335,18 +335,27 @@ Manages built-in framework developer tooling (`packages/tools/`) and user-level 
 
 ### 5. `bv mobile` (Hybrid Mobile Platform Android / iOS & Capacitor)
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
-- **`bv mobile init [name] [id]`**: Scaffolds the mobile directory structure inside `mobile/` (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
+- **`bv mobile init [name] [id] [--version=<ver>]`**: Scaffolds the mobile directory structure inside `mobile/` (supports `--version=8` for v8 LTS, `--version=7`, `--version=latest`, or `--version=next`) (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
+- **`bv mobile upgrade [--check] [--target=<ver>]`**: Upgrades Capacitor packages and runs native platform migration (`npx cap migrate`) with Universal Self-Healing for Android Gradle. Use `--check` to audit available updates without modifying files.
 - **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
 - **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
 - **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
   - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
   - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
+  - E.g.: `bv mobile build android --bundle` (Generates Google Play Android App Bundle `mobile/bin/android/<App>-release.aab` via Gradle `bundleRelease`)
   - E.g.: `bv mobile build ios` (Prepares and synchronizes native Xcode project)
   - E.g.: `bv mobile build all --release` (Compiles all mobile target platforms in release mode)
-- **`bv mobile emulator <list|start [name]|run [name]>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
+- **`bv mobile emulator <list|start [name]|run [name]|kill>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
   - E.g.: `bv mobile emulator list` (Lists all installed AVDs from Android Studio)
-  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background)
-- **`bv mobile run [target] [--emulator [name]]`**: Installs and launches the application directly on a connected device or emulator via ADB (`adb install -r` + `am start`). If `--emulator` is provided, automatically boots the emulator if it is offline.
+  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background with `-no-snapshot-load`)
+  - E.g.: `bv mobile emulator kill` (Cleanly terminates all emulator and QEMU instances)
+- **`bv mobile run [target] [--emulator [name]] [--release] [--fresh] [--no-build]`**: Compiles, syncs, installs and launches the application on a connected device or emulator via ADB (`adb install -r` + `am start`).
+  - **Combinable Flags**: You can combine flags in any order, e.g. `bv mobile run android --emulator --release --fresh`.
+    - `--emulator` (`-e`): Boots and deploys to the Android Virtual Device emulator instead of physical USB device.
+    - `--release` (`-r`): Builds optimized Release APK (R8/ProGuard) before running.
+    - `--fresh` (`--restart`): Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
+    - `--no-build`: Runs the existing APK without recompiling frontend or Gradle.
+  - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv mobile run` auto-scaffolds it transparently!
 - **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
 
 > [!NOTE]
@@ -354,12 +363,16 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 
 | Mobile Command | Platform | Build Mode | Output / Action |
 |---|---|---|---|
+| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
+| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
 | `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
 | `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
+| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
 | `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
 | `bv mobile emulator start` | Android | - | Boots emulator in background |
+| `bv mobile emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
 | `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
-| `bv mobile run android --emulator` | Android | Debug | Boots emulator, installs APK, and launches app |
+| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
 | `bv mobile open android` | Android | - | Opens project in Android Studio |
 | `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
 
