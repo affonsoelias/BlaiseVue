@@ -755,6 +755,21 @@ bv channel use main
 
 ---
 
+### `bv rollback` (alias: `bv revert-cli`)
+Restores the previous working CLI binary from the automated backup (`bv.bak` / `bv.bak.exe`). 
+
+```bash
+bv rollback
+```
+
+**Zero-Downtime Atomic Compilation Guarantee:**
+* **Isolated Temporary Build (`bv_new`)**: Whenever `bv self-update` or `bv channel use` recompiles the engine, Free Pascal outputs to a temporary staged binary (`bv_new` / `bv_new.exe`). The active binary is **never touched** during compilation.
+* **Failure Safety**: If a compilation error occurs (e.g., broken syntax or platform-specific discrepancy), the existing binary remains 100% intact, the partial build is discarded, and the CLI remains operational.
+* **Persistent Backup**: Upon successful compilation, the prior working binary is preserved at `bin/bv.bak` (`bin/bv.bak.exe` on Windows) before atomic promotion.
+* **Self-Healing Wrapper**: On Linux/macOS, the global entry point automatically restores from `bv.bak` or recompiles if the primary binary is ever deleted.
+
+---
+
 ## ⚡ CLI Performance Benchmark
 
 Written 100% in **Native Object Pascal (FreePascal)**, the `bv.exe` CLI transpiles and orchestrates SFC components up to **50x faster** than Node.js-based alternatives, delivering instant feedback on enterprise codebases. 🛡️✨🏆

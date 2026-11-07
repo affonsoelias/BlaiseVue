@@ -781,6 +781,7 @@ procedure CmdUpdate; forward;
 procedure CmdDoctor; forward;
 procedure CmdSelfUpdate(const ChannelOverride: string = ''); forward;
 procedure CmdChannel; forward;
+procedure CmdRollback; forward;
 function FindBestJavaHome(out JavaHome, JavaVer, SourceDesc: string): Boolean; forward;
 function FindAndroidSdkPath: string; forward;
 function FindAndroidADBInfo(out AdbExe, AdbVer, SourceDesc: string): Boolean; forward;
@@ -24307,6 +24308,7 @@ begin
         WriteLn('  doctor                     Diagnoses environment tools (Git, Lazarus, FPC, etc.)');
         WriteLn('  self-update [--check]      Syncs & recompiles BlaiseVue directly from GitHub');
         WriteLn('  channel [use <name>]       Inspects or switches framework branch (main/develop)');
+        WriteLn('  rollback                   Restores previous CLI binary from backup (bv.bak)');
         WriteLn('  update [--dry-run]         Updates project infrastructure non-destructively');
         WriteLn('');
         WriteLn('  # === Cockpit Session ===');
@@ -25416,7 +25418,7 @@ procedure CmdSelfUpdate(const ChannelOverride: string = '');
 var
   SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FilteredStatus, LineStr, FetchOut: string;
   DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource: string;
-  BinDir, CompCmd, CompOut, TargetBv, MoveCmd, DummyOut: string;
+  BinDir, CompCmd, CompOut, TargetBv, TargetNew, TargetBak, MoveCmd, DummyOut: string;
   DiffList: TStringList;
   CheckOnly, ForceUpdate, NeedRecompile, HadLocalBinMod: Boolean;
   i: Integer;
@@ -25618,18 +25620,24 @@ begin
     Exit;
   end;
 
+  // Pre-update safety: always ensure a persistent backup of the current working binary exists
+  BinDir := SDKDir + DirectorySeparator + 'bin';
+  {$IFDEF WINDOWS}
+  ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && if exist bv.exe copy /y bv.exe bv.bak.exe > nul 2>&1', DummyOut);
+  {$ELSE}
+  ExecCmdCapture('cd ''' + BinDir + ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi', DummyOut);
+  {$ENDIF}
+
   // Reset local CLI binary modifications before git checkout/pull to avoid binary merge conflicts
   if HadLocalBinMod or (TargetBranch <> CurBranch) or ForceUpdate then
   begin
-    BinDir := SDKDir + DirectorySeparator + 'bin';
+    ExecCmdCapture('git -C "' + SDKDir + '" checkout -- bin/bv bin/bv.exe bin/bv.o 2>/dev/null', DummyOut);
+    // If Git checkout removed or did not have bin/bv, restore from persistent backup immediately
     {$IFDEF WINDOWS}
-    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1';
-    ExecCmdCapture(MoveCmd, DummyOut);
+    ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && if not exist bv.exe if exist bv.bak.exe copy /y bv.bak.exe bv.exe > nul 2>&1', DummyOut);
     {$ELSE}
-    MoveCmd := 'cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null; mv -f bv bv_old 2>/dev/null';
-    ExecCmdCapture(MoveCmd, DummyOut);
+    ExecCmdCapture('cd ''' + BinDir + ''' && if [ ! -f bv ] && [ -f bv.bak ]; then cp -f bv.bak bv && chmod +x bv 2>/dev/null; fi', DummyOut);
     {$ENDIF}
-    ExecCmdCapture('git -C "' + SDKDir + '" checkout -- bin/bv bin/bv.exe bin/bv.o', DummyOut);
   end;
 
   // 7. Checkout branch if switching
@@ -25676,36 +25684,52 @@ begin
 
     BinDir := SDKDir + DirectorySeparator + 'bin';
     {$IFDEF WINDOWS}
-    MoveCmd := 'cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1';
-    ExecCmdCapture(MoveCmd, DummyOut);
-    CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh bv.pas';
+    TargetNew := BinDir + DirectorySeparator + 'bv_new.exe';
+    TargetBv := BinDir + DirectorySeparator + 'bv.exe';
+    TargetBak := BinDir + DirectorySeparator + 'bv.bak.exe';
+    // Clean any previous temporary binary
+    ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
+    // Compile into isolated temporary target (bv_new.exe)
+    CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh -obv_new.exe bv.pas';
     ExecCmdCapture(CompCmd, CompOut);
     {$ELSE}
-    MoveCmd := 'cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null; mv -f bv bv_old 2>/dev/null';
-    ExecCmdCapture(MoveCmd, DummyOut);
-    CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh bv.pas && chmod +x bv';
+    TargetNew := BinDir + DirectorySeparator + 'bv_new';
+    TargetBv := BinDir + DirectorySeparator + 'bv';
+    TargetBak := BinDir + DirectorySeparator + 'bv.bak';
+    // Clean any previous temporary binary
+    ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null', DummyOut);
+    // Compile into isolated temporary target (bv_new)
+    CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh -obv_new bv.pas && chmod +x bv_new';
     ExecCmdCapture(CompCmd, CompOut);
     {$ENDIF}
 
-    TargetBv := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'{$ENDIF};
-    if FileExists(TargetBv) then
+    if FileExists(TargetNew) then
     begin
-      WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) + ' recompiled successfully!');
+      // Atomic promotion: current binary backed up to bv.bak, bv_new becomes live bv
       {$IFDEF WINDOWS}
-      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1', DummyOut);
+      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && if exist bv.exe (del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1 & copy /y bv_old.exe bv.bak.exe > nul 2>&1 & del /f /q bv_old.exe > nul 2>&1) & move /y bv_new.exe bv.exe > nul 2>&1', DummyOut);
       {$ELSE}
-      ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_old 2>/dev/null', DummyOut);
+      ExecCmdCapture('cd ''' + BinDir + ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi && mv -f bv_new bv && chmod +x bv', DummyOut);
       {$ENDIF}
+      WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) + ' recompiled and updated successfully!');
+      WriteLn('  [BACKUP] Previous binary safely preserved at ' + ExtractFileName(TargetBak));
     end
     else
     begin
       WriteLn('  [ERROR] CLI recompilation failed:');
       WriteLn(CompOut);
+      // Clean up failed artifacts and ensure current binary is intact
       {$IFDEF WINDOWS}
-      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && move /y bv_old.exe bv.exe > nul 2>&1', DummyOut);
+      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
+      if not FileExists(TargetBv) and FileExists(TargetBak) then
+        ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && copy /y bv.bak.exe bv.exe > nul 2>&1', DummyOut);
       {$ELSE}
-      ExecCmdCapture('cd ''' + BinDir + ''' && mv -f bv_old bv 2>/dev/null', DummyOut);
+      ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null', DummyOut);
+      if not FileExists(TargetBv) and FileExists(TargetBak) then
+        ExecCmdCapture('cd ''' + BinDir + ''' && cp -f bv.bak bv && chmod +x bv 2>/dev/null', DummyOut);
       {$ENDIF}
+      WriteLn('  [SAFETY] Existing binary preserved intact. Your CLI remains fully functional.');
+      WriteLn('  [HINT] Run "bv rollback" anytime if you need to revert to the previous binary.');
     end;
   end;
 
@@ -25791,6 +25815,58 @@ begin
     WriteLn('======================================================================');
     WriteLn('');
   end;
+end;
+
+// =====================================================================
+//  FRAMEWORK BINARY ROLLBACK (bv rollback)
+// =====================================================================
+
+procedure CmdRollback;
+var
+  SDKDir, BinDir, TargetBv, TargetBak, DummyOut, VerOut: string;
+begin
+  SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
+  BinDir := SDKDir + DirectorySeparator + 'bin';
+  TargetBv := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'{$ENDIF};
+  TargetBak := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.bak.exe'{$ELSE}'bv.bak'{$ENDIF};
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Binary Rollback');
+  WriteLn('======================================================================');
+
+  if not FileExists(TargetBak) then
+  begin
+    WriteLn('  [ERROR] No backup binary found at:');
+    WriteLn('          ' + TargetBak);
+    WriteLn('  A backup (bv.bak) is automatically created whenever "bv self-update"');
+    WriteLn('  or "bv channel use" recompiles the CLI.');
+    WriteLn('======================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+
+  WriteLn('  [+] Restoring CLI binary from backup: ' + ExtractFileName(TargetBak) + '...');
+  {$IFDEF WINDOWS}
+  ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1 & copy /y bv.bak.exe bv.exe > nul 2>&1 & del /f /q bv_old.exe > nul 2>&1', DummyOut);
+  {$ELSE}
+  ExecCmdCapture('cd ''' + BinDir + ''' && cp -f bv.bak bv && chmod +x bv 2>/dev/null', DummyOut);
+  {$ENDIF}
+
+  if FileExists(TargetBv) then
+  begin
+    WriteLn('  [SUCCESS] Successfully restored binary to previous version!');
+    ExecCmdCapture('"' + TargetBv + '" --version', VerOut);
+    if Trim(VerOut) <> '' then
+      WriteLn('  Active CLI: ' + Trim(VerOut));
+  end
+  else
+  begin
+    WriteLn('  [ERROR] Failed to restore backup binary.');
+    Halt(1);
+  end;
+  WriteLn('======================================================================');
+  WriteLn('');
 end;
 
 //  MAIN ENTRY POINT
@@ -25916,6 +25992,7 @@ begin
   WriteLn('  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)');
   WriteLn('  bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git');
   WriteLn('  bv channel [use <name>]    Inspects or switches framework branch (main/develop)');
+  WriteLn('  bv rollback                Restores previous CLI binary from backup (bv.bak)');
   WriteLn('  bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features');
   WriteLn('');
     WriteLn('  For complete documentation and guides:');
@@ -26384,6 +26461,10 @@ begin
   else if (Cmd = 'channel') or (Cmd = 'branch') then
   begin
     CmdChannel;
+  end
+  else if (Cmd = 'rollback') or (Cmd = 'revert-cli') then
+  begin
+    CmdRollback;
   end
   else if Cmd = 'enter' then
   begin
