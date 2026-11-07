@@ -202,7 +202,7 @@ For the complete architectural evolution specifications, delivered enterprise pi
 
 - 🎓 **[Complete Course: Zero to Ninja (doc/Course/README.md)](doc/Course/README.md)**: 13 beginner-friendly practical modules with step-by-step guides, runnable `.bv` examples, and real-world analogies.
 - 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
-- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 53 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
+- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 54 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, and mORMot 2.
 - 🏛️ **[Core Architecture & Internals (doc/Architecture/README.md)](doc/Architecture/README.md)**: Deep dive into the compiler pipeline, AST evaluation, and reactive proxy engine.
 
 ---
@@ -211,42 +211,61 @@ For the complete architectural evolution specifications, delivered enterprise pi
 
 ```text
 BlaiseVue/
-├── bin/                       # BlaiseVue CLI compiler & dev server (bv.pas, bv.exe)
-├── core/                      # Core runtime engine
-│   ├── BlaiseVue.pas          # Core SPA instance orchestrator & Hydration
-│   ├── BVCompiler.pas         # Template engine, directives, AST parser
-│   ├── BVReactivity.pas       # Reactive proxy & dependency tracking
-│   ├── BVRouting.pas          # SPA Router & HTML5 History API
+├── bin/                       # BlaiseVue CLI compiler & development toolchain
+│   ├── bv.pas & bv.exe        # Zero-dependency native CLI compiler & orchestrator
+│   ├── dev-server.js          # Fast local development HTTP server with live HMR
+│   ├── studio-server.js       # BlaiseVue Studio telemetry hub & API bridge
+│   ├── studio/                # Embedded BlaiseVue Studio web cockpit UI
+│   └── templates.res          # Embedded pre-compiled project & component templates
+├── core/                      # Core runtime engine (Transpiled via Pas2JS)
+│   ├── BlaiseVue.pas          # Core SPA instance orchestrator & hydration
+│   ├── BVCompiler.pas         # Template engine, directives & AST parser
+│   ├── BVReactivity.pas       # Reactive proxy & dependency tracking ($ref, $computed)
+│   ├── BVRouting.pas          # SPA Router, navigation guards & HTML5 History API
 │   ├── BVValidation.pas       # Reactive form validation engine (b-validate)
-│   ├── BVI18n.pas             # Internationalization engine ($t)
+│   ├── BVI18n.pas             # Internationalization & localization engine ($t)
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
 │   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
 │   ├── BVStore.pas            # Centralized state management ($store)
-│   ├── BVClient.pas           # REST ($api) & WebSocket ($ws) client helpers
-├── templates/                 # Scaffolding templates
-│   ├── fullstack-mormot/      # High-performance mORMot 2 server template
-│   └── BVDevTools.pas         # Bridge to browser DevTools extension (v3.0)
-├── packages/                  # Modular package ecosystem & developer tools
+│   ├── BVAuth.pas             # JWT authentication, session storage & route protection
+│   ├── BVClient.pas           # Reactive REST ($api) & WebSocket ($ws) client helpers
+│   ├── BVDataSet.pas          # LiveBindings, reactive TDataSet & offline delta sync
+│   ├── BVRpc.pas              # Type-safe Pascal RPC client proxies for mORMot 2 SOA
+│   ├── BVMobile.pas           # Capacitor mobile runtime bridge & device events
+│   ├── BVDesktop.pas          # WebUI native desktop window & IPC bridge
+│   ├── BVDevTools.pas         # Browser DevTools extension telemetry bridge
+│   └── Blaise*.pas            # Official Pascal bindings (UI, Charts, Reports, Ionic)
+├── templates/                 # Scaffolding templates for new projects
+│   ├── fullstack-mormot/      # High-performance native mORMot 2 server template
+│   ├── *.bv                   # Component, View and App template blueprints
+│   └── *.pas                  # Domain services, test suites and config templates
+├── packages/                  # Modular package ecosystem & developer tooling
 │   ├── core/                  # Official core framework packages
-│   │   ├── blaise-ui/         # 25+ native UI components & styles
-│   │   ├── blaise-themes/     # 9 Bootswatch themes & theme switchers
-│   │   ├── blaise-icons/      # Bootstrap Icons fonts & stylesheet
+│   │   ├── blaise-ui/         # 25+ native reactive UI components & styles
+│   │   ├── blaise-themes/     # 9 Bootswatch themes & build-time pruning optimizer
+│   │   ├── blaise-icons/      # Bootstrap Icons fonts & stylesheet bundle
 │   │   ├── blaise-charts/     # Reactive Chart.js visualization & Pascal wrappers
 │   │   ├── blaise-reports/    # Declarative PDF reports generation engine
-│   │   ├── blaise-studio/     # Developer cockpit & visual AST inspector
+│   │   ├── blaise-studio/     # Developer cockpit telemetry & AST inspector
 │   │   └── blaise-ui-mobile/  # Mobile-first Ionic components & Pascal wrappers
-│   └── tools/                 # Development extensions & tooling
+│   └── tools/                 # Development extensions & IDE tooling
 │       ├── blaise-devtools/   # Browser DevTools extension (Chrome, Firefox, Edge)
 │       ├── blaise-vscode/     # Official VS Code extension (.vsix packaging & snippets)
-│       └── blaise-lazarus/    # Official Lazarus IDE package (.lpk, .bv multi-syntax, wizards)
-├── vendor/                    # Embedded compiler & backend engines
-│   ├── pas2js/                # Multi-platform pas2js transpiler & RTL
+│       └── blaise-lazarus/    # Official Lazarus IDE package (.lpk design-time integration)
+├── vendor/                    # Pre-bundled compilers & native frameworks
+│   ├── pas2js/                # Official multi-platform Pas2JS transpiler & RTL binaries
 │   └── mormot2/               # High-throughput Synopse mORMot 2.4 framework
-├── doc/
-│   ├── Architecture/          # Core compiler pipeline & framework internals
-│   ├── Documentation/         # 53 comprehensive technical manuals + API Reference
-│   └── Course/                # 13-module practical course from beginner to ninja
-└── demo-app/                  # Enterprise showcase application (v3.0)
+├── doc/                       # Architecture, manuals & educational courses
+│   ├── Architecture/          # Core compiler pipeline, reactivity engine & internals
+│   ├── Documentation/         # 54 comprehensive technical manuals + API Reference
+│   ├── Course/                # 13-module practical course from beginner to ninja
+│   └── brand/                 # Official vector logos, icons & banner assets
+└── demo-app/                  # Enterprise showcase application (v4.4.0 Full-Stack)
+    ├── src/                   # Reactive frontend SPA (views, components, services)
+    ├── server/                # High-throughput native mORMot 2 backend server
+    ├── mobile/                # Native Capacitor Android (APK/AAB) & iOS projects
+    ├── desktop/               # Native WebUI desktop app with Lazarus project
+    └── tests/                 # 4-tier automated test suites with Vitest
 ```
 
 ---
