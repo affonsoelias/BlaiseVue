@@ -110,52 +110,105 @@ BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern softwa
 ## 🛠️ CLI Quick Reference
 
 ```bash
-# === Development & Build ===
-bv check [file]            # Runs compile-time template AST type-checking and typo verification
-bv dev                     # Builds project in development mode & launches dev server with HMR on http://localhost:8080
-bv build                   # Compiles frontend in development/debug mode (Lazarus & watchers)
-bv build --release         # Builds optimized production bundle with hashes in dist/
-bv ssg                     # Pre-renders static HTML for all routes (SSG)
-bv preview                 # Local HTTP preview of production build (port 5000)
-
-# === Scaffolding & Packages ===
-bv create <app-name>       # Scaffolds a complete project with 4-tier testing hierarchy & domain services
-bv create <name> --lib     # Scaffolds a standalone library package with license and playground
-bv new c <Name>            # Scaffolds a component (.bv) & test in tests/components/ (alias: bv g c)
-bv new v <Name>            # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv g v)
-bv new s <Name>            # Scaffolds a domain service & test in tests/services/ (alias: bv g s)
-bv new t <Name>            # Scaffolds a test (smart detection: c, v, services) (alias: bv g t)
+# === Scaffolding & Generators ===
+bv create <name>           # Scaffolds a new project with 4-tier testing hierarchy & domain services
+bv g c <Name>              # Scaffolds a component (.bv) & test in tests/components/ (alias: bv new c)
+bv g v <Name>              # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)
+bv g s <Name>              # Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)
+bv g t <Name>              # Scaffolds a Pascal test file (.test.pas) (alias: bv new t)
 bv remove <c|v|s|t> <Name> # Safely deletes a component, view, service, or test
 bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
 bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
-bv lib install <pkg|url>   # Installs an official package or local/remote archive into lib/
-bv lib pack [dir]          # Assembles & cryptographically verifies release artifact (.zip with SHA-256)
-bv license [list|show|set] # Manages project licenses (MIT, Apache, LGPL, GPL, BSD, Commercial)
-bv meta [show|get|set|bump]# Manages metadata & synchronizes SemVer with src/uAppVersion.pas
-bv reset [--bare] [--force]# Resets demo project to a clean slate (protected against demo-app)
 
-# === Full-Stack mORMot 2 ===
-bv mormot init [--db <eng>] # Scaffolds backend (sqlite, postgres, mysql, firebird)
-bv mormot crud <Model> [f:t...] # Scaffolds ORM model, REST endpoints, and DataGrid view
-bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from server interfaces
-bv mormot run              # Starts native mORMot 2 server on port 8090
-bv mormot docker           # Builds production multi-stage micro-container (<20 MB)
+# === Workspace & Project Cockpit ===
+bv enter                   # Enters interactive project Cockpit shell ([bv: my-app] >)
+bv use <project-name>      # Jumps into registered project Cockpit shell from anywhere
+bv project add             # Registers current project into global registry
+bv project list            # Lists registered projects (* active)
+bv project current         # Shows active project details
+bv project remove <name>   # Unregisters a project from global registry
 
-# === Compiler Search Paths & Legacy Migration ===
-bv path                    # Lists all active search paths (-Fu) categorized by type
-bv path add <dir|pas2js:p> # Adds directory or built-in Pas2JS package to app.cfg
-bv path remove <target>    # Removes search path from app.cfg
-bv path available          # Catalogs 30+ official Pas2JS packages with active indicator
+# === Development & Frontend Build ===
+bv dev                     # Builds project in dev mode & starts dev server with HMR on http://localhost:8080
+bv build                   # Compiles frontend in development/debug mode (Lazarus & watchers)
+bv build --release         # Builds optimized production bundle with hashes in dist/
+bv preview                 # Local HTTP preview of production build (port 5000)
+bv ssg                     # Pre-renders all routes into static HTML (SSG)
+bv wasm <info|benchmark>   # WebAssembly acceleration and performance benchmarks
+bv check [file]            # Validates component templates against script declarations (AST Type-Checker)
+bv clean                   # Cleans generated build files (generated/ and dist/)
 
-# === Mobile & Desktop ===
-bv mobile init [name] [id] # Scaffolds Capacitor mobile project
-bv mobile build android    # Compiles native Android Debug APK
-bv desktop init [name]     # Scaffolds WebUI & Lazarus desktop project
-bv desktop run             # Compiles and launches native desktop app
+# === Backend & Full-Stack (Synopse mORMot 2) ===
+bv mormot init             # Scaffolds mORMot 2 backend server in server/
+bv mormot run [--release] [--fresh] [--port <p>] # Starts native backend server (--fresh kills lingering instances)
+bv mormot build [--release] # Compiles native server binary with Free Pascal (-O2 debug / -O3 release)
+bv mormot kill [--port <p>] # Gracefully terminates server.exe, frees socket & verifies port release
+bv mormot status           # Queries running mORMot 2 health endpoint (/api/status)
+bv mormot deploy [--zip]   # Assembles standalone production bundle in deploy/
+bv mormot crud <Model>     # Scaffolds full-stack ORM model, REST API & reactive DataGrid
+bv mormot auth             # Scaffolds JWT authentication, AuthService, LoginView & route guards
+bv mormot docs | swagger   # Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)
+bv mormot docker [--build] # Scaffolds sub-20MB Alpine micro-container & docker-compose.yml
+bv mormot rpc              # Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
+
+# === Mobile (Android & iOS via Capacitor) ===
+bv mobile init [name] [id] [--version=<v>] # Scaffolds Capacitor & mobile/ native project
+bv mobile upgrade [--check] # Migrates Capacitor dependencies & updates Gradle
+bv mobile sync             # Syncs dist/ with native mobile assets
+bv mobile remove [-y]      # Safely deletes mobile/ and capacitor.config.json
+bv mobile build android    # Builds native Android Debug APK in mobile/bin/android/
+bv mobile build android --release # Builds optimized Release APK (R8/ProGuard)
+bv mobile build android --bundle # Builds Google Play Android App Bundle (.aab)
+bv mobile emulator list    # Lists installed Android Virtual Devices (AVD)
+bv mobile emulator start   # Boots Android emulator in background
+bv mobile emulator kill    # Terminates lingering emulator & QEMU processes (alias: bv mobile kill)
+bv mobile run android      # Installs and launches APK on connected USB device
+bv mobile run android --emulator [--release] [--fresh] # Boots emulator, compiles & launches app
+bv mobile open android     # Opens project in Android Studio
+
+# === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
+bv desktop init [name]     # Scaffolds Lazarus (.lpi, .lpr) & WebUI project
+bv desktop sync            # Syncs dist/ with desktop/assets/
+bv desktop remove [-y]     # Safely deletes desktop/ native project
+bv desktop build [target]  # Compiles Debug native binary (live console logging)
+bv desktop build [target] --release # Compiles Release native binary (pure GUI - NO console)
+bv desktop run [target]    # Launches desktop app in Debug mode (with console)
+bv desktop run [target] --release # Launches desktop app in Release mode (clean GUI)
 
 # === Testing & Docs ===
 bv test                    # Compiles and runs all unit tests (.test.pas) with Vitest
 bv test e2e                # Runs headless browser End-to-End integration test suite
 bv doc [--serve]           # Generates interactive component documentation & playground
 bv studio                  # Launches BlaiseVue Studio developer dashboard (port 9000)
+
+# === Package & Theme Management ===
+bv repo <list|add|remove|default|sync|search> # Manages package repositories & ecosystem sources
+bv lib install [<repo>:]<pkg[@ver]|url> # Installs package in project /lib or user cache
+bv lib remove <name>       # Removes package from lib/ or global cache
+bv lib update [[<repo>:]name] # Updates package(s) to latest version
+bv lib outdated            # Checks for available updates in installed packages
+bv lib list                # Lists installed libraries
+bv lib search [[<repo>:]term] # Searches packages in registered repositories
+bv lib pack [dir]          # Assembles & verifies release artifact (.zip with SHA-256)
+bv theme [list]            # Displays active and available themes in @blaise-themes
+bv theme add <name>        # Adds a theme to package.json for optimized bundling
+bv theme remove <name>     # Removes a theme from package.json
+bv theme use <name>        # Sets active default theme in package.json & index.html
+bv theme reset             # Resets theme filters (bundles all themes in compatibility mode)
+bv extension <list|install|remove|pack> [target] # Manages development extensions & tools
+
+# === Project Configuration & Search Paths ===
+bv license [list|show|set] # Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)
+bv meta [show|get|set|bump|sync] # Manages project metadata and syncs SemVer across monorepo
+bv path [list]             # Lists all active unit search paths (-Fu) in app.cfg
+bv path add <dir|pas2js:p> # Adds a folder or official Pas2JS package to app.cfg
+bv path remove <target>    # Removes a search path or Pas2JS package from app.cfg
+bv path available          # Lists all built-in Pas2JS packages available to link
+bv reset [--bare] [--force]# Resets project to a clean slate (protected against demo-app)
+
+# === Framework Diagnostics & Maintenance ===
+bv doctor                  # Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)
+bv self-update [--check] [--force] # Syncs & recompiles BlaiseVue directly from GitHub via Git
+bv channel [use <name>]    # Inspects or switches framework branch (main/develop)
+bv update [--dry-run]      # Surgically syncs project infrastructure with latest framework features
 ```

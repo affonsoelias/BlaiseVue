@@ -91,16 +91,6 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   ============================================================
   Usage: bv <command> [options]
 
-  # === Development & Frontend Build ===
-  bv dev                     Builds project in dev mode & starts dev server with HMR on http://localhost:8080
-  bv build                   Compiles frontend in development/debug mode (Lazarus & watchers)
-  bv build --release         Builds optimized production bundle with hashes in dist/
-  bv preview                 Local HTTP preview of production build (port 5000)
-  bv ssg                     Pre-renders all routes into static HTML (SSG)
-  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks
-  bv check [file]            Validates component templates against script declarations (AST Type-Checker)
-  bv clean                   Cleans generated build files (generated/ and dist/)
-
   # === Scaffolding & Generators ===
   bv create <name>           Scaffolds a new project with 4-tier testing hierarchy & domain services
   bv g c <Name>              Scaffolds a component (.bv) & test in tests/components/ (alias: bv new c)
@@ -110,6 +100,24 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv remove <c|v|s|t> <Name> Safely deletes a component, view, service, or test
   bv list <c|v|s|t|lib>      Lists project components, views, services, tests, or installed libs
   bv rename <c|v|s|p>        Smart rename for services, components, views, or project name
+
+  # === Workspace & Project Cockpit ===
+  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)
+  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere
+  bv project add             Registers current project into global registry
+  bv project list            Lists registered projects (* active)
+  bv project current         Shows active project details
+  bv project remove <name>   Unregisters a project from global registry
+
+  # === Development & Frontend Build ===
+  bv dev                     Builds project in dev mode & starts dev server with HMR on http://localhost:8080
+  bv build                   Compiles frontend in development/debug mode (Lazarus & watchers)
+  bv build --release         Builds optimized production bundle with hashes in dist/
+  bv preview                 Local HTTP preview of production build (port 5000)
+  bv ssg                     Pre-renders all routes into static HTML (SSG)
+  bv wasm <info|benchmark>   WebAssembly acceleration and performance benchmarks
+  bv check [file]            Validates component templates against script declarations (AST Type-Checker)
+  bv clean                   Cleans generated build files (generated/ and dist/)
 
   # === Backend & Full-Stack (Synopse mORMot 2) ===
   bv mormot init             Scaffolds mORMot 2 backend server in server/
@@ -170,30 +178,20 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv theme reset             Resets theme filters (bundles all themes in compatibility mode)
   bv extension <list|install|remove|pack> [target] Manages development extensions & tools
 
-  # === Project Metadata & Licensing ===
+  # === Project Configuration & Search Paths ===
   bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)
   bv meta [show|get|set|bump|sync] Manages project metadata and syncs SemVer across monorepo
-  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)
-
-  # === Compiler Search Paths & Legacy Migration ===
   bv path [list]             Lists all active unit search paths (-Fu) in app.cfg
   bv path add <dir|pas2js:p> Adds a folder or official Pas2JS package to app.cfg
   bv path remove <target>    Removes a search path or Pas2JS package from app.cfg
   bv path available          Lists all built-in Pas2JS packages available to link
+  bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)
 
-  # === Framework Diagnostics & Git Auto-Updater ===
+  # === Framework Diagnostics & Maintenance ===
   bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)
   bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git
   bv channel [use <name>]    Inspects or switches framework branch (main/develop)
   bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features
-
-  # === Cockpit & Multi-Project Management ===
-  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)
-  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere
-  bv project add             Registers current project into global registry
-  bv project list            Lists registered projects (* active)
-  bv project current         Shows active project details
-  bv project remove <name>   Unregisters a project from global registry
 ```
 
 ---

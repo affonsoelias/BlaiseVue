@@ -17,32 +17,37 @@ bv -v
 
 ---
 
-## 🏗️ Development and Build Commands
+---
 
-### 1. `bv dev` (Development Build & Server with Instant HMR)
-Compiles Single File Components (`.bv`) in development mode and boots the integrated development server with live Hot Module Replacement:
-- **Build & Serve**: Compiles all reactive templates (`BVDevTools` active) and launches the HMR development server on `http://localhost:8080`.
-- **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
-- **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and updates the browser in real time.
-- **Cache Busting (`v=123...`)**: Injects timestamps into script and link tags in `index.html` to prevent stale browser caches.
+## 1. 🏗️ Scaffolding & Generators (`bv create`, `bv g`, `bv new`, `bv remove`, `bv list`, `bv rename`)
 
-### 2. `bv build` (Development / Lazarus Compilation)
-Compiles Single File Components (`.bv`) in development/debug mode without launching the HTTP server:
-- Ideal for Lazarus IDE (`Ctrl+F9`), watchers, linters, and CI verification.
-- Injects diagnostic `BVDevTools` symbols and generates `dist/js/main.js`.
+### 1. Dedicated Project & Library Scaffolding (`bv create`)
 
-### 3. `bv build --release` (Optimized Production Build)
-Generates the production-ready distribution in `dist/` (`-dPRODUCTION`):
-- **Purge Artifacts**: Removes development scaffolding, `BVDevTools`, and debug hooks.
-- **Tree-Shaking & Optimization**: Links only the required runtime units from Pas2JS RTL.
-- **Static Assets & Hashing**: Bundles and hashes scripts (`main.<hash>.js`) for long-term caching.
+BlaiseVue enables creating, testing, and distributing modular component libraries:
 
-### 4. `bv preview` (Production Preview Server)
-Starts a local static HTTP server on `http://localhost:5000` to inspect the production build in `dist/`.
+### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
+Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
+```bash
+bv create my-ui-kit --lib
+```
+- Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
+- In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
+- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
+
+### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
+Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
+```bash
+bv lib pack
+# Alias:
+bv lib dist
+```
+- **Pre-flight Tests**: Runs `bv test` before packaging to guarantee zero regressions (bypass with `--skip-tests`).
+- **Production Filtering**: Packages only `src/`, `styles/`, `package.json`, `README.md`, `LICENSE`, and `setup.pas`.
+- **Integrity Hash**: Computes SHA-256 checksum and writes `dist/<name>-<version>.zip.sha256`.
 
 ---
 
-## 🏛️ Native Resource Scaffolding (`templates.res`)
+### 2. Native Resource Scaffolding (`templates.res`)
 
 The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded template strings:
 
@@ -61,7 +66,7 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 
 ---
 
-## 🏗️ Scaffolding Generators for Components, Views, and Tests (`bv new`)
+### 3. Component, View, Service & Test Generators (`bv g` / `bv new`)
 
 BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites:
 
@@ -160,9 +165,254 @@ bv rename p my-new-erp
 
 ---
 
-## 🧪 Testing & Docs (v test, v test e2e, v doc, v studio)
+---
 
-### 1. Unit & Integration Tests (v test)
+## 2. 🚀 Workspace & Project Cockpit (`bv enter`, `bv use`, `bv project`)
+
+BlaiseVue provides an interactive cockpit environment and global project registry for fast, error-free multi-project development without risk of modifying or deleting files in the wrong directory.
+
+### 1. Enter Project Cockpit: `bv enter`
+Opens the interactive cockpit shell locked to the current directory.
+> [!IMPORTANT]
+> **Safety Rule**: `bv enter` only executes if you are already inside a valid BlaiseVue project (`app.cfg`, `package.json`, `src/`). It refuses to run in arbitrary or non-project directories.
+
+```bash
+cd C:\Projects\my-erp
+bv enter
+```
+**Output:**
+```text
+========================================================================
+  [BlaiseVue Interactive Cockpit]
+  Active Project: my-erp (C:\Projects\my-erp)
+  Commands: new, remove, list, test, dev, build, project add, exit
+========================================================================
+
+[bv: my-erp] >
+```
+
+### 2. Register Current Project: `project add`
+Inside the cockpit (or via `bv project add`), register the current project into the global registry (`~/.blaisevue/projects.json`):
+```text
+[bv: my-erp] > project add
+
+  [SUCCESS] Project "my-erp" successfully registered in BlaiseVue registry!
+  Path:    C:\Projects\my-erp
+  Version: v1.0.0
+
+  You can now enter this project from anywhere using:
+    bv use my-erp
+```
+
+### 3. Jump to Registered Project from Anywhere: `bv use <project-name>`
+From any terminal directory on the machine, jump directly into a registered project:
+```bash
+C:\Users\Developer> bv use my-erp
+```
+The CLI validates the project's existence on disk, switches directory, and opens the cockpit locked to `my-erp`:
+```text
+[bv: my-erp] > 
+```
+
+### 4. Project Registry Management (`bv project` / `project`)
+Commands available both from the terminal and inside the interactive cockpit:
+* **`project list` (or `bv project list`)**: Lists all registered projects with an active marker `(*)`:
+  ```text
+  Registered BlaiseVue Projects:
+  ----------------------------------------------------------------------------
+  * my-erp            v1.0.0    C:\Projects\my-erp
+    customer-portal   v4.4.0    D:\Work\customer-portal
+  ----------------------------------------------------------------------------
+  Total: 2 project(s) registered (* active)
+  ```
+* **`project current` (or `bv project current`)**: Displays active project name, version, path, and disk health status.
+* **`project remove <name>` (or `bv project remove <name>`)**: Unregisters a project from the registry (keeps project files completely intact).
+* **`use <other-name>`**: Inside the cockpit, switch to another registered project on the fly without exiting the shell!
+
+### 5. Running Commands Inside the Cockpit
+Within the interactive cockpit (`[bv: <project>] > `), run commands directly without repeating `bv`:
+* `new s <Name> [--no-test]` — Scaffolds pure Pascal domain service and unit test.
+* `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
+* `new v <Name> [--no-test]` — Scaffolds `.bv` view and test.
+* `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
+* `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
+* `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
+* `test` — Runs full test suite (Pas2JS + Vitest).
+* `dev` — Builds in debug mode & starts dev server with instant HMR.
+* `build [--release]` — Compiles frontend distribution (debug or `--release` with hashes).
+* `preview` — Starts local HTTP preview server for `dist/`.
+* `check [file]` — Validates SFC templates with AST type-checker.
+* `clean` — Purges `generated/` and `dist/`.
+* `update` / `upgrade` — Surgically syncs project infrastructure and Lazarus IDE files (`.lpi` / `.lpr`) with latest framework features.
+* `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
+* `self-update` — Synchronizes and recompiles BlaiseVue engine directly from GitHub.
+* `channel [use <name>]` — Inspects or switches framework branches (main / develop).
+* `path [list|add|remove|available]` — Manages compiler search paths (-Fu) and official Pas2JS packages.
+* `exit` / `quit` — Exits the cockpit and returns to regular shell.
+
+> [!TIP]
+> **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
+> Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev` or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
+
+---
+
+---
+
+## 3. ⚡ Development & Frontend Build (`bv dev`, `bv build`, `bv preview`, `bv ssg`, `bv wasm`, `bv check`, `bv clean`)
+
+### 1. Core Development, Build & Live HMR Server
+
+### 1. `bv dev` (Development Build & Server with Instant HMR)
+Compiles Single File Components (`.bv`) in development mode and boots the integrated development server with live Hot Module Replacement:
+- **Build & Serve**: Compiles all reactive templates (`BVDevTools` active) and launches the HMR development server on `http://localhost:8080`.
+- **WebSocket Server**: Active at `ws://localhost:8081` to stream instant component updates.
+- **File Watcher**: Monitors `src/` and `lib/` directories. On file save, re-transpiles only the affected `.bv` file and updates the browser in real time.
+- **Cache Busting (`v=123...`)**: Injects timestamps into script and link tags in `index.html` to prevent stale browser caches.
+
+### 2. `bv build` (Development / Lazarus Compilation)
+Compiles Single File Components (`.bv`) in development/debug mode without launching the HTTP server:
+- Ideal for Lazarus IDE (`Ctrl+F9`), watchers, linters, and CI verification.
+- Injects diagnostic `BVDevTools` symbols and generates `dist/js/main.js`.
+
+### 3. `bv build --release` (Optimized Production Build)
+Generates the production-ready distribution in `dist/` (`-dPRODUCTION`):
+- **Purge Artifacts**: Removes development scaffolding, `BVDevTools`, and debug hooks.
+- **Tree-Shaking & Optimization**: Links only the required runtime units from Pas2JS RTL.
+- **Static Assets & Hashing**: Bundles and hashes scripts (`main.<hash>.js`) for long-term caching.
+
+### 4. `bv preview` (Production Preview Server)
+Starts a local static HTTP server on `http://localhost:5000` to inspect the production build in `dist/`.
+
+---
+
+### 5. Static Site Generation & WebAssembly Acceleration
+### 2. `bv wasm <info|benchmark>` (WebAssembly Acceleration)
+Manages WebAssembly modules in the project and executes performance benchmarks comparing Pascal compiled directly to JavaScript versus Pascal executing natively inside WebAssembly (Wasm).
+
+### 3. `bv run ssg` (Static Site Generation & Pre-rendering)
+Pre-renders all registered application routes into static, SEO-friendly HTML files with zero-flicker reactive client-side hydration.
+
+### `bv clean`
+Performs a complete purge of the build workspace:
+1. Purges the `generated/` directory.
+2. Purges compiled scripts in `dist/js/` and styles in `dist/css/`.
+3. Resets `dist/index.html` back to the template state.
+
+---
+
+---
+
+## 4. 🐘 Backend & Full-Stack Pascal with Synopse mORMot 2 (`bv mormot`)
+
+Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
+Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
+- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
+- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
+  - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
+  - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
+- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+  - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
+- **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
+- **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
+- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
+  - Compiles frontend in production mode (`bv build --release`).
+  - Compiles backend in release mode (`bv mormot build --release`).
+  - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
+  - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
+  - **Zero Server Prerequisites**: No Node.js, npm, Free Pascal, or Lazarus required on the target server!
+
+| mORMot Command | Subcommand / Flag | Action / Output |
+|---|---|---|
+| `bv mormot init` | - | Scaffolds native backend in `server/` |
+| `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
+| `bv mormot build` | `--release` | Compiles optimized Release server |
+| `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
+| `bv mormot kill` | `[--port <p>]` | Two-stage termination of `server.exe` and port release verification |
+| `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
+| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
+| `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
+
+See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
+
+---
+
+## 5. 📱 Hybrid Mobile Platform (`bv mobile` - Android & iOS via Capacitor)
+
+Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
+Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
+- **`bv mobile init [name] [id] [--version=<ver>]`**: Scaffolds the mobile directory structure inside `mobile/` (supports `--version=8` for v8 LTS, `--version=7`, `--version=latest`, or `--version=next`) (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
+- **`bv mobile upgrade [--check] [--target=<ver>]`**: Upgrades Capacitor packages and runs native platform migration (`npx cap migrate`) with Universal Self-Healing for Android Gradle. Use `--check` to audit available updates without modifying files.
+- **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
+- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
+- **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
+  - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
+  - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
+  - E.g.: `bv mobile build android --bundle` (Generates Google Play Android App Bundle `mobile/bin/android/<App>-release.aab` via Gradle `bundleRelease`)
+  - E.g.: `bv mobile build ios` (Prepares and synchronizes native Xcode project)
+  - E.g.: `bv mobile build all --release` (Compiles all mobile target platforms in release mode)
+- **`bv mobile emulator <list|start [name]|run [name]|kill>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
+  - E.g.: `bv mobile emulator list` (Lists all installed AVDs from Android Studio)
+  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background with `-no-snapshot-load`)
+  - E.g.: `bv mobile emulator kill` (Cleanly terminates all emulator and QEMU instances)
+- **`bv mobile run [target] [--emulator [name]] [--release] [--fresh] [--no-build]`**: Compiles, syncs, installs and launches the application on a connected device or emulator via ADB (`adb install -r` + `am start`).
+  - **Combinable Flags**: You can combine flags in any order, e.g. `bv mobile run android --emulator --release --fresh`.
+    - `--emulator` (`-e`): Boots and deploys to the Android Virtual Device emulator instead of physical USB device.
+    - `--release` (`-r`): Builds optimized Release APK (R8/ProGuard) before running.
+    - `--fresh` (`--restart`): Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
+    - `--no-build`: Runs the existing APK without recompiling frontend or Gradle.
+  - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv mobile run` auto-scaffolds it transparently!
+- **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
+
+> [!NOTE]
+> **BlaiseVue does NOT require Flutter.** The mobile toolchain only requires Node.js/npm, Android Studio (Android SDK, Build-Tools, and Platform-Tools `adb`), and Java JDK 17/21.
+
+| Mobile Command | Platform | Build Mode | Output / Action |
+|---|---|---|---|
+| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
+| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
+| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
+| `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
+| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
+| `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
+| `bv mobile emulator start` | Android | - | Boots emulator in background |
+| `bv mobile emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
+| `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
+| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
+| `bv mobile open android` | Android | - | Opens project in Android Studio |
+| `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
+
+---
+
+## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` - WebUI)
+
+Manages the native desktop development lifecycle with Free Pascal and WebUI:
+Manages the native desktop development lifecycle with Free Pascal and WebUI:
+- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
+- **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
+- **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries.
+- **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
+  - E.g.: `bv desktop build windows` (Debug mode on Windows with active logging console)
+  - E.g.: `bv desktop build linux --release` (Release mode for Linux in `desktop/bin/linux/`)
+  - E.g.: `bv desktop build all --release` (Cross-compiles for all platforms in Release mode)
+- **`bv desktop run [target] [--release]`**: Synchronizes assets, compiles, and launches the native desktop application.
+  - E.g.: `bv desktop run windows` (Launches on Windows with console window for live diagnostics)
+  - E.g.: `bv desktop run windows --release` (Launches in pure GUI mode without console window for end users)
+
+| Desktop Target / Mode | CLI Command | Lazarus IDE Mode | Window Behavior | Output Directory |
+|---|---|---|---|---|
+| **Debug (Windows)** | `bv desktop run windows` | `Debug` | GUI Window + Diagnostics Console | `desktop/bin/windows/` |
+| **Release (Windows)** | `bv desktop run windows --release` | `Release` | GUI Window Only (No Console) | `desktop/bin/windows/` |
+| **Debug (Linux)** | `bv desktop build linux` | `Debug` | Native ELF Binary with Logs | `desktop/bin/linux/` |
+| **Release (Linux)** | `bv desktop build linux --release` | `Release` | Optimized Native ELF Binary | `desktop/bin/linux/` |
+| **All Platforms** | `bv desktop build all --release` | - | Segregated Binaries for Win, Linux, Mac | `desktop/bin/<platform>/` |
+
+See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
+
+---
+
+## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
+
+### 1. Unit & Integration Tests (`bv test`)
 The v test command compiles and executes all unit and integration tests across the 4-tier hierarchy:
 `ash
 bv test
@@ -178,20 +428,20 @@ For continuous test-driven development:
 bv test --watch
 `
 
-### 2. End-to-End Integration Tests (v test e2e)
+### 2. End-to-End Integration Tests (`bv test e2e`)
 Runs headless browser End-to-End integration test suite across application views and workflows:
 `ash
 bv test e2e
 `
 
-### 3. Component Documentation & Playground (v doc [--serve])
+### 3. Component Documentation & Playground (`bv doc [--serve]`)
 Parses the AST of all .bv components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at dist/docs/index.html:
 `ash
 bv doc          # Generates documentation in dist/docs/
 bv doc --serve  # Generates and starts dedicated HTTP preview server
 `
 
-### 4. BlaiseVue Studio Dashboard (v studio)
+### 4. BlaiseVue Studio Dashboard (`bv studio`)
 Launches the visual developer cockpit and live telemetry hub on http://localhost:9000:
 `ash
 bv studio
@@ -200,33 +450,11 @@ See detailed documentation in **[40. BlaiseVue Studio Dashboard](40-blaise-studi
 
 ---
 
-## 📦 Standalone Library Scaffolding & Release Packager
-
-BlaiseVue enables creating, testing, and distributing modular component libraries:
-
-### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
-Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
-```bash
-bv create my-ui-kit --lib
-```
-- Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
-- In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
-- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
-
-### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
-Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
-```bash
-bv lib pack
-# Alias:
-bv lib dist
-```
-- **Pre-flight Tests**: Runs `bv test` before packaging to guarantee zero regressions (bypass with `--skip-tests`).
-- **Production Filtering**: Packages only `src/`, `styles/`, `package.json`, `README.md`, `LICENSE`, and `setup.pas`.
-- **Integrity Hash**: Computes SHA-256 checksum and writes `dist/<name>-<version>.zip.sha256`.
-
 ---
 
-## 📦 Package Management, Ecosystem & Registries
+## 8. 📦 Package, Theme & Extension Management (`bv repo`, `bv lib`, `bv theme`, `bv extension`)
+
+BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories:
 
 BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories.
 
@@ -332,17 +560,6 @@ bv lib remove test --global
 
 ---
 
-## ⚡ Next-Gen Enterprise & Universal Platform (Phases 1-4) Commands
-
-### 1. `bv doc [--serve]` (Interactive Documentation & Component Playground)
-Parses the AST of all `.bv` components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at `dist/docs/index.html`. Optionally boots a dedicated HTTP documentation server with `--serve`.
-
-### 2. `bv wasm <info|benchmark>` (WebAssembly Acceleration)
-Manages WebAssembly modules in the project and executes performance benchmarks comparing Pascal compiled directly to JavaScript versus Pascal executing natively inside WebAssembly (Wasm).
-
-### 3. `bv run ssg` (Static Site Generation & Pre-rendering)
-Pre-renders all registered application routes into static, SEO-friendly HTML files with zero-flicker reactive client-side hydration.
-
 ### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
 Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
 - `bv extension list`: Inspects available extensions (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and custom tools) and their installation status and versions.
@@ -354,103 +571,11 @@ Manages built-in framework developer tooling (`packages/tools/`) and user-level 
 - `bv extension remove <target>`: Uninstalls a specific extension (e.g. `bv extension remove blaise-vscode` or `bv extension remove <tool>`).
 - `bv extension pack [target]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
 
-### 5. `bv mobile` (Hybrid Mobile Platform Android / iOS & Capacitor)
-Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
-- **`bv mobile init [name] [id] [--version=<ver>]`**: Scaffolds the mobile directory structure inside `mobile/` (supports `--version=8` for v8 LTS, `--version=7`, `--version=latest`, or `--version=next`) (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
-- **`bv mobile upgrade [--check] [--target=<ver>]`**: Upgrades Capacitor packages and runs native platform migration (`npx cap migrate`) with Universal Self-Healing for Android Gradle. Use `--check` to audit available updates without modifying files.
-- **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
-- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
-- **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
-  - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
-  - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
-  - E.g.: `bv mobile build android --bundle` (Generates Google Play Android App Bundle `mobile/bin/android/<App>-release.aab` via Gradle `bundleRelease`)
-  - E.g.: `bv mobile build ios` (Prepares and synchronizes native Xcode project)
-  - E.g.: `bv mobile build all --release` (Compiles all mobile target platforms in release mode)
-- **`bv mobile emulator <list|start [name]|run [name]|kill>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
-  - E.g.: `bv mobile emulator list` (Lists all installed AVDs from Android Studio)
-  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background with `-no-snapshot-load`)
-  - E.g.: `bv mobile emulator kill` (Cleanly terminates all emulator and QEMU instances)
-- **`bv mobile run [target] [--emulator [name]] [--release] [--fresh] [--no-build]`**: Compiles, syncs, installs and launches the application on a connected device or emulator via ADB (`adb install -r` + `am start`).
-  - **Combinable Flags**: You can combine flags in any order, e.g. `bv mobile run android --emulator --release --fresh`.
-    - `--emulator` (`-e`): Boots and deploys to the Android Virtual Device emulator instead of physical USB device.
-    - `--release` (`-r`): Builds optimized Release APK (R8/ProGuard) before running.
-    - `--fresh` (`--restart`): Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
-    - `--no-build`: Runs the existing APK without recompiling frontend or Gradle.
-  - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv mobile run` auto-scaffolds it transparently!
-- **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
+---
 
-> [!NOTE]
-> **BlaiseVue does NOT require Flutter.** The mobile toolchain only requires Node.js/npm, Android Studio (Android SDK, Build-Tools, and Platform-Tools `adb`), and Java JDK 17/21.
+## 9. ⚙️ Project Configuration & Search Paths (`bv license`, `bv meta`, `bv path`, `bv reset`)
 
-| Mobile Command | Platform | Build Mode | Output / Action |
-|---|---|---|---|
-| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
-| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
-| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
-| `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
-| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
-| `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
-| `bv mobile emulator start` | Android | - | Boots emulator in background |
-| `bv mobile emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
-| `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
-| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
-| `bv mobile open android` | Android | - | Opens project in Android Studio |
-| `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
-
-### 6. `bv desktop` (Multiplatform Desktop WebUI & Lazarus IDE)
-Manages the native desktop development lifecycle with Free Pascal and WebUI:
-- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
-- **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
-- **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries.
-- **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
-  - E.g.: `bv desktop build windows` (Debug mode on Windows with active logging console)
-  - E.g.: `bv desktop build linux --release` (Release mode for Linux in `desktop/bin/linux/`)
-  - E.g.: `bv desktop build all --release` (Cross-compiles for all platforms in Release mode)
-- **`bv desktop run [target] [--release]`**: Synchronizes assets, compiles, and launches the native desktop application.
-  - E.g.: `bv desktop run windows` (Launches on Windows with console window for live diagnostics)
-  - E.g.: `bv desktop run windows --release` (Launches in pure GUI mode without console window for end users)
-
-| Desktop Target / Mode | CLI Command | Lazarus IDE Mode | Window Behavior | Output Directory |
-|---|---|---|---|---|
-| **Debug (Windows)** | `bv desktop run windows` | `Debug` | GUI Window + Diagnostics Console | `desktop/bin/windows/` |
-| **Release (Windows)** | `bv desktop run windows --release` | `Release` | GUI Window Only (No Console) | `desktop/bin/windows/` |
-| **Debug (Linux)** | `bv desktop build linux` | `Debug` | Native ELF Binary with Logs | `desktop/bin/linux/` |
-| **Release (Linux)** | `bv desktop build linux --release` | `Release` | Optimized Native ELF Binary | `desktop/bin/linux/` |
-| **All Platforms** | `bv desktop build all --release` | - | Segregated Binaries for Win, Linux, Mac | `desktop/bin/<platform>/` |
-
-See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-desktop-webui.md)**.
-
-### 7. `bv mormot` (Full-Stack Pascal with Synopse mORMot 2)
-Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
-- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
-  - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
-  - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
-- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
-  - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
-- **`bv mormot kill` (or `bv mormot stop`)**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
-- **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
-- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
-  - Compiles frontend in production mode (`bv build --release`).
-  - Compiles backend in release mode (`bv mormot build --release`).
-  - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
-  - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
-  - **Zero Server Prerequisites**: No Node.js, npm, Free Pascal, or Lazarus required on the target server!
-
-| mORMot Command | Subcommand / Flag | Action / Output |
-|---|---|---|
-| `bv mormot init` | - | Scaffolds native backend in `server/` |
-| `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
-| `bv mormot build` | `--release` | Compiles optimized Release server |
-| `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
-| `bv mormot kill` | `[--port <p>]` | Two-stage termination of `server.exe` and port release verification |
-| `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
-| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
-| `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
-
-See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
-
-### 8. `bv path` (Compiler Search Paths & Legacy Migration)
+### 1. Compiler Search Paths & Legacy Pascal Migration (`bv path`)
 Manages Pas2JS compiler search paths (`-Fu`) in `app.cfg`, linking official built-in Pas2JS packages and mapping legacy Lazarus/Delphi codebases:
 - **`bv path [list]`**: Displays all active search paths grouped by category (Core Framework, Official Pas2JS Packages, and Custom/Legacy Search Paths).
 - **`bv path add <dir | pas2js:<package>>`**: Appends a new search path (`-Fu`) to `app.cfg` with automatic path normalization and duplicate prevention.
@@ -470,104 +595,35 @@ See detailed documentation in **[53. Compiler Search Paths & Legacy Pascal Migra
 
 ---
 
-## 🚀 Interactive Cockpit & Project Registry (`bv enter`, `bv use`, `bv project`)
-
-BlaiseVue provides an interactive cockpit environment and global project registry for fast, error-free multi-project development without risk of modifying or deleting files in the wrong directory.
-
-### 1. Enter Project Cockpit: `bv enter`
-Opens the interactive cockpit shell locked to the current directory.
-> [!IMPORTANT]
-> **Safety Rule**: `bv enter` only executes if you are already inside a valid BlaiseVue project (`app.cfg`, `package.json`, `src/`). It refuses to run in arbitrary or non-project directories.
-
+### 2. Project Licensing (`bv license`)
+Manages project licenses across standards: MIT, Apache-2.0, LGPL-3.0, GPL-3.0, BSD-3-Clause, Commercial, or None.
 ```bash
-cd C:\Projects\my-erp
-bv enter
-```
-**Output:**
-```text
-========================================================================
-  [BlaiseVue Interactive Cockpit]
-  Active Project: my-erp (C:\Projects\my-erp)
-  Commands: new, remove, list, test, dev, build, project add, exit
-========================================================================
-
-[bv: my-erp] >
+bv license list            # Lists available license templates
+bv license show            # Displays active license in LICENSE file
+bv license set mit         # Applies MIT license with current author and year
 ```
 
-### 2. Register Current Project: `project add`
-Inside the cockpit (or via `bv project add`), register the current project into the global registry (`~/.blaisevue/projects.json`):
-```text
-[bv: my-erp] > project add
-
-  [SUCCESS] Project "my-erp" successfully registered in BlaiseVue registry!
-  Path:    C:\Projects\my-erp
-  Version: v1.0.0
-
-  You can now enter this project from anywhere using:
-    bv use my-erp
-```
-
-### 3. Jump to Registered Project from Anywhere: `bv use <project-name>`
-From any terminal directory on the machine, jump directly into a registered project:
+### 3. Project Metadata & SemVer Synchronization (`bv meta`)
+Inspects or updates project versioning across monorepo and synchronizes `src/uAppVersion.pas`:
 ```bash
-C:\Users\Developer> bv use my-erp
+bv meta show               # Displays name, version, author, and description
+bv meta bump patch         # Bumps patch version (e.g. 1.0.0 -> 1.0.1)
+bv meta bump minor         # Bumps minor version (e.g. 1.0.0 -> 1.1.0)
+bv meta bump major         # Bumps major version (e.g. 1.0.0 -> 2.0.0)
+bv meta sync               # Synchronizes SemVer into src/uAppVersion.pas
 ```
-The CLI validates the project's existence on disk, switches directory, and opens the cockpit locked to `my-erp`:
-```text
-[bv: my-erp] > 
+
+### 4. Project Clean Slate Reset (`bv reset`)
+Resets a project to a pristine clean state, sanitizing mobile configurations, removing stale artifacts, and safeguarding against template bleed:
+```bash
+bv reset                   # Interactive clean slate reset
+bv reset --bare            # Resets to ultra-minimal starter
+bv reset --force           # Resets non-interactively without prompt
 ```
-
-### 4. Project Registry Management (`bv project` / `project`)
-Commands available both from the terminal and inside the interactive cockpit:
-* **`project list` (or `bv project list`)**: Lists all registered projects with an active marker `(*)`:
-  ```text
-  Registered BlaiseVue Projects:
-  ----------------------------------------------------------------------------
-  * my-erp            v1.0.0    C:\Projects\my-erp
-    customer-portal   v4.4.0    D:\Work\customer-portal
-  ----------------------------------------------------------------------------
-  Total: 2 project(s) registered (* active)
-  ```
-* **`project current` (or `bv project current`)**: Displays active project name, version, path, and disk health status.
-* **`project remove <name>` (or `bv project remove <name>`)**: Unregisters a project from the registry (keeps project files completely intact).
-* **`use <other-name>`**: Inside the cockpit, switch to another registered project on the fly without exiting the shell!
-
-### 5. Running Commands Inside the Cockpit
-Within the interactive cockpit (`[bv: <project>] > `), run commands directly without repeating `bv`:
-* `new s <Name> [--no-test]` — Scaffolds pure Pascal domain service and unit test.
-* `new c <Name> [--no-test]` — Scaffolds `.bv` component and test.
-* `new v <Name> [--no-test]` — Scaffolds `.bv` view and test.
-* `remove <c|v|s|t> <Name>` — Safely deletes element and associated tests.
-* `rename <c|v|s|p> <Old> [New]` — Intelligently refactors components, views, services, or project.
-* `list <c|v|s|t|lib>` — Lists components, views, services, or tests.
-* `test` — Runs full test suite (Pas2JS + Vitest).
-* `dev` — Builds in debug mode & starts dev server with instant HMR.
-* `build [--release]` — Compiles frontend distribution (debug or `--release` with hashes).
-* `preview` — Starts local HTTP preview server for `dist/`.
-* `check [file]` — Validates SFC templates with AST type-checker.
-* `clean` — Purges `generated/` and `dist/`.
-* `update` / `upgrade` — Surgically syncs project infrastructure and Lazarus IDE files (`.lpi` / `.lpr`) with latest framework features.
-* `doctor` — Diagnoses development environment (Git, Lazarus, FPC, Pas2JS, Node.js).
-* `self-update` — Synchronizes and recompiles BlaiseVue engine directly from GitHub.
-* `channel [use <name>]` — Inspects or switches framework branches (main / develop).
-* `path [list|add|remove|available]` — Manages compiler search paths (-Fu) and official Pas2JS packages.
-* `exit` / `quit` — Exits the cockpit and returns to regular shell.
-
-> [!TIP]
-> **Resilient Cockpit Shell (`Ctrl+C` Handling)**:  
-> Inside the interactive cockpit (`[bv: my-app] >`), pressing `Ctrl + C` halts the currently running server or command (such as `dev` or `mormot run`) and immediately returns control to the `[bv: my-app] >` prompt without terminating your cockpit session. To quit the cockpit shell, use `exit` or `quit`.
 
 ---
 
-## 🧹 Maintenance & Upgrades
-
-### `bv clean`
-Performs a complete purge of the build workspace:
-1. Purges the `generated/` directory.
-2. Purges compiled scripts in `dist/js/` and styles in `dist/css/`.
-3. Resets `dist/index.html` back to the template state.
-
----
+## 10. 🧹 Framework Diagnostics & Maintenance (`bv doctor`, `bv self-update`, `bv channel`, `bv update`)
 
 ### `bv update` (alias: `bv upgrade`)
 Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, RTL assets, and **Lazarus IDE project files (`.lpi` / `.lpr` and `server/server.lpi`)**.
