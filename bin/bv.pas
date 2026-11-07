@@ -89,6 +89,12 @@ uses
 function ReadFileToString(const FileName: string): string; forward;
 function GetCliVersion: string; forward;
 function GetCliMajorMinor: string; forward;
+function IsDirectBlaiseVueProjectDir(const ADir: string): Boolean; forward;
+function FindBlaiseVueProjectRoot(const StartDir: string = ''): string; forward;
+function IsValidBlaiseVueProject(const ADir: string = ''): Boolean; forward;
+function RequireBlaiseVueProject(const CmdContext: string = ''): string; forward;
+procedure ClearScreen(const InCockpit: Boolean = False; const ActiveName: string = ''; const ActivePath: string = ''); forward;
+procedure CmdFiles(const TargetArg: string = ''; ShowAll: Boolean = False); forward;
 { Synchronizes SemVer version strings across all official core packages in packages/core/. }
 procedure SyncMonorepoVersions(const TargetVer: string); forward;
 function GetPas2JSPackagesRoot: string; forward;
@@ -650,6 +656,286 @@ begin
 
     SL.Free;
   end;
+end;
+
+{ Validates whether a single directory directly contains a valid BlaiseVue project root. }
+function IsDirectBlaiseVueProjectDir(const ADir: string): Boolean;
+var
+  TargetDir, PkgContent: string;
+begin
+  TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
+  Result := False;
+  if FileExists(TargetDir + 'app.cfg') then Exit(True);
+  if FileExists(TargetDir + 'src' + DirectorySeparator + 'app.bv') then Exit(True);
+  if DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'views') or
+     DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'components') then Exit(True);
+
+  if FileExists(TargetDir + 'package.json') then
+  begin
+    PkgContent := LowerCase(ReadFileToString(TargetDir + 'package.json'));
+    if Pos('blaise', PkgContent) > 0 then Exit(True);
+  end;
+end;
+
+{ Traverses up parent directories to locate the true BlaiseVue project root (Git/Cargo pattern). }
+function FindBlaiseVueProjectRoot(const StartDir: string = ''): string;
+var
+  Cur, Parent: string;
+begin
+  if StartDir = '' then
+    Cur := ExcludeTrailingPathDelimiter(GetCurrentDir)
+  else
+    Cur := ExcludeTrailingPathDelimiter(ExpandFileName(StartDir));
+
+  while Cur <> '' do
+  begin
+    if IsDirectBlaiseVueProjectDir(Cur) then
+      Exit(Cur);
+    Parent := ExcludeTrailingPathDelimiter(ExtractFileDir(Cur));
+    if (Parent = '') or (Parent = Cur) then
+      Break;
+    Cur := Parent;
+  end;
+  Result := '';
+end;
+
+{ Validates whether a directory (or any of its parents) contains a valid BlaiseVue project structure. }
+function IsValidBlaiseVueProject(const ADir: string = ''): Boolean;
+begin
+  Result := FindBlaiseVueProjectRoot(ADir) <> '';
+end;
+
+{ Enforces that the current context is inside a BlaiseVue project, switching working directory to root. }
+function RequireBlaiseVueProject(const CmdContext: string = ''): string;
+var
+  Root: string;
+  CmdName: string;
+begin
+  Root := FindBlaiseVueProjectRoot('');
+  if Root = '' then
+  begin
+    CmdName := CmdContext;
+    if CmdName = '' then CmdName := 'This command';
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [ERROR] "' + CmdName + '" can only be executed inside a BlaiseVue project.');
+    WriteLn('  Current directory: ', GetCurrentDir);
+    WriteLn('');
+    WriteLn('  To create a new BlaiseVue project:');
+    WriteLn('    bv create <project-name>');
+    WriteLn('');
+    WriteLn('  Or switch to an existing registered project:');
+    WriteLn('    bv use <project-name>');
+    WriteLn('========================================================================');
+    WriteLn('');
+    Halt(1);
+  end;
+  SetCurrentDir(Root);
+  Result := Root;
+end;
+
+{ Clears the console screen buffer in a clean cross-platform manner (Windows, Linux, macOS). }
+procedure ClearScreen(const InCockpit: Boolean = False; const ActiveName: string = ''; const ActivePath: string = '');
+begin
+  {$IFDEF MSWINDOWS}
+  ExecuteProcess('cmd.exe', '/c cls');
+  {$ELSE}
+  Write(#27 + '[2J' + #27 + '[H' + #27 + '[3J');
+  {$ENDIF}
+
+  if InCockpit and (ActiveName <> '') then
+  begin
+    WriteLn('');
+    WriteLn('========================================================================');
+    WriteLn('  [BlaiseVue Interactive Cockpit]');
+    WriteLn('  Active Project: ' + ActiveName + ' (' + ActivePath + ')');
+    WriteLn('  Full-Stack Pascal & Reactive CLI Environment');
+    WriteLn('  Type "help" for command list, or "exit" to quit.');
+    WriteLn('========================================================================');
+    WriteLn('');
+  end;
+end;
+
+{ Recursively renders project files and directories as a structured tree with BlaiseVue annotations. }
+procedure RenderProjectTree(const TargetDir: string; const Prefix: string; var TotalDirs, TotalFiles: Integer; ShowAll: Boolean; Depth: Integer = 1; MaxDepth: Integer = 3);
+var
+  SR: TSearchRec;
+  D: string;
+  DirList, FileList: TStringList;
+  i: Integer;
+  ItemName, LowName, FullItemPath, Ext, Annotation, Branch, SubPrefix: string;
+  IsLast: Boolean;
+begin
+  if not DirectoryExists(TargetDir) then Exit;
+  D := IncludeTrailingPathDelimiter(TargetDir);
+
+  DirList := TStringList.Create;
+  FileList := TStringList.Create;
+  try
+    if FindFirst(D + '*', faAnyFile, SR) = 0 then
+    begin
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') then
+        begin
+          ItemName := SR.Name;
+          LowName := LowerCase(ItemName);
+          if (SR.Attr and faDirectory) <> 0 then
+          begin
+            if not ShowAll then
+            begin
+              if (LowName = 'node_modules') or (LowName = '.git') or (LowName = '.vscode') or
+                 (LowName = '.idea') or (LowName = 'dist') or (LowName = 'generated') or
+                 (LowName = '.blaisevue') or (LowName = '.history') or (LowName = '__pycache__') or
+                 (LowName = 'packages') or (LowName = 'backup') or (LowName = 'units') or
+                 (LowName = 'bin') or (LowName = '.gradle') or (LowName = 'gradle') or
+                 (LowName = 'assets') or (LowName = 'fonts') or
+                 ((LowName = 'android') and (Pos('mobile', LowerCase(D)) > 0)) or
+                 ((LowName = 'ios') and (Pos('mobile', LowerCase(D)) > 0)) then
+                Continue;
+            end;
+            DirList.Add(ItemName);
+          end
+          else
+          begin
+            if not ShowAll then
+            begin
+              Ext := LowerCase(ExtractFileExt(ItemName));
+              if (LowName = '.ds_store') or (LowName = 'thumbs.db') or (LowName = 'package-lock.json') or
+                 (Ext = '.o') or (Ext = '.ppu') or (Ext = '.obj') or (Ext = '.dcu') or
+                 (Ext = '.tmp') or (Ext = '.bak') or (Ext = '.lps') or (Ext = '.exe') then
+                Continue;
+            end;
+            FileList.Add(ItemName);
+          end;
+        end;
+      until FindNext(SR) <> 0;
+      FindClose(SR);
+    end;
+
+    DirList.Sort;
+    FileList.Sort;
+
+    // Render directories first
+    for i := 0 to DirList.Count - 1 do
+    begin
+      ItemName := DirList[i];
+      FullItemPath := D + ItemName;
+      Inc(TotalDirs);
+      IsLast := (i = DirList.Count - 1) and (FileList.Count = 0);
+      if IsLast then
+      begin
+        Branch := '\-- ';
+        SubPrefix := Prefix + '    ';
+      end
+      else
+      begin
+        Branch := '+-- ';
+        SubPrefix := Prefix + '|   ';
+      end;
+
+      Annotation := '';
+      if ItemName = 'src' then Annotation := ' (Frontend Source)'
+      else if ItemName = 'components' then Annotation := ' (UI Components)'
+      else if ItemName = 'views' then Annotation := ' (Route Views)'
+      else if ItemName = 'services' then Annotation := ' (Domain Services)'
+      else if ItemName = 'tests' then Annotation := ' (Test Suites)'
+      else if ItemName = 'server' then Annotation := ' (mORMot 2 Backend)'
+      else if ItemName = 'mobile' then Annotation := ' (Capacitor Mobile)'
+      else if ItemName = 'desktop' then Annotation := ' (Lazarus Desktop)'
+      else if ItemName = 'public' then Annotation := ' (Static Assets)'
+      else if ItemName = 'lib' then Annotation := ' (Installed Libraries)'
+      else if ItemName = 'dist' then Annotation := ' (Compiled Distribution)'
+      else if ItemName = 'generated' then Annotation := ' (Transpiled Output)';
+
+      WriteLn(Prefix + Branch + '[DIR]  ' + ItemName + '/' + Annotation);
+      if (Depth < MaxDepth) or ShowAll then
+        RenderProjectTree(FullItemPath, SubPrefix, TotalDirs, TotalFiles, ShowAll, Depth + 1, MaxDepth);
+    end;
+
+    // Render files
+    for i := 0 to FileList.Count - 1 do
+    begin
+      ItemName := FileList[i];
+      Inc(TotalFiles);
+      IsLast := (i = FileList.Count - 1);
+      if IsLast then
+        Branch := '\-- '
+      else
+        Branch := '+-- ';
+
+      Annotation := '';
+      Ext := LowerCase(ExtractFileExt(ItemName));
+      if Ext = '.bv' then
+      begin
+        if ItemName = 'app.bv' then Annotation := ' (Root SFC App)'
+        else if Pos('components', LowerCase(D)) > 0 then Annotation := ' (Component)'
+        else if Pos('views', LowerCase(D)) > 0 then Annotation := ' (Route View)'
+        else Annotation := ' (SFC Template)';
+      end
+      else if Ext = '.pas' then
+      begin
+        if Pos('.test.pas', LowerCase(ItemName)) > 0 then Annotation := ' (Test Suite)'
+        else if Pos('services', LowerCase(D)) > 0 then Annotation := ' (Domain Service)'
+        else if Pos('models', LowerCase(D)) > 0 then Annotation := ' (ORM Model)'
+        else if ItemName = 'webui.pas' then Annotation := ' (WebUI Bridge)'
+        else Annotation := ' (Pascal Unit)';
+      end
+      else if ItemName = 'app.cfg' then Annotation := ' (Compiler Configuration)'
+      else if ItemName = 'package.json' then Annotation := ' (Project Manifest)'
+      else if ItemName = '.env' then Annotation := ' (Environment Configuration)'
+      else if Ext = '.lpr' then Annotation := ' (Lazarus Program Source)'
+      else if Ext = '.lpi' then Annotation := ' (Lazarus Project Info)'
+      else if ItemName = 'capacitor.config.json' then Annotation := ' (Mobile Configuration)'
+      else if (ItemName = 'Dockerfile') or (ItemName = 'docker-compose.yml') then Annotation := ' (Docker Container)'
+      else if ItemName = 'index.html' then Annotation := ' (HTML Entrypoint)';
+
+      WriteLn(Prefix + Branch + '[FILE] ' + ItemName + Annotation);
+    end;
+  finally
+    DirList.Free;
+    FileList.Free;
+  end;
+end;
+
+{ Displays structured project files tree with BlaiseVue domain categorization. }
+procedure CmdFiles(const TargetArg: string = ''; ShowAll: Boolean = False);
+var
+  ProjectRoot, StartDir, DisplayName: string;
+  TotalDirs, TotalFiles: Integer;
+begin
+  ProjectRoot := RequireBlaiseVueProject('bv files');
+  if (TargetArg <> '') and (TargetArg <> '--all') and (TargetArg <> '-a') then
+  begin
+    if (Length(TargetArg) > 1) and ((TargetArg[1] = '/') or (TargetArg[1] = '\') or (TargetArg[2] = ':')) then
+      StartDir := TargetArg
+    else
+      StartDir := ProjectRoot + DirectorySeparator + TargetArg;
+
+    if not DirectoryExists(StartDir) then
+    begin
+      WriteLn('  [ERROR] Directory not found in project: ' + TargetArg);
+      Exit;
+    end;
+    DisplayName := ExtractFileName(ExcludeTrailingPathDelimiter(StartDir));
+  end
+  else
+  begin
+    StartDir := ProjectRoot;
+    DisplayName := ExtractFileName(ExcludeTrailingPathDelimiter(ProjectRoot));
+  end;
+
+  TotalDirs := 0;
+  TotalFiles := 0;
+  WriteLn('');
+  WriteLn('  Project Files: ' + DisplayName + ' (' + StartDir + ')');
+  WriteLn('  ============================================================');
+  WriteLn('  [DIR]  ' + DisplayName + '/');
+  RenderProjectTree(StartDir, '  ', TotalDirs, TotalFiles, ShowAll);
+  WriteLn('  ============================================================');
+  WriteLn('  Summary: ' + IntToStr(TotalDirs) + ' directories, ' + IntToStr(TotalFiles) + ' files');
+  if not ShowAll then
+    WriteLn('  (Tip: run "files --all" to show build and system directories)');
+  WriteLn('');
 end;
 
 { Computes a fast hash/timestamp fingerprint for file change detection during builds. }
@@ -3784,6 +4070,7 @@ var
   Parsed: TBVParsed;
   i, TotalWarnings, FileWarnings: Integer;
 begin
+  RequireBlaiseVueProject('bv check');
   WriteLn('=== BlaiseVue Template AST Checker & Type-Verification ===');
   WriteLn('');
   BVFiles := TStringList.Create;
@@ -4274,7 +4561,7 @@ procedure CmdClean;
 var
   Base: string;
 begin
-  Base := GetCurrentDir + DirectorySeparator;
+  Base := RequireBlaiseVueProject('bv clean') + DirectorySeparator;
   WriteLn('=== BlaiseVue Clean ===');
   WriteLn('Cleaning generated files...');
   if DirectoryExists(Base + 'generated') then
@@ -4322,6 +4609,7 @@ var
   IsApp: Boolean;
   JSFiles: TStringList;
 begin
+  RequireBlaiseVueProject('bv build');
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator;
   DistPath := GetCurrentDir + DirectorySeparator + 'dist' + DirectorySeparator;
   PublicPath := GetCurrentDir + DirectorySeparator + 'public' + DirectorySeparator;
@@ -4598,6 +4886,7 @@ var
   CompPath, TargetPath, Content: string;
   TestPath, TestFile, TestContent, CompTag: string;
 begin
+  RequireBlaiseVueProject('bv g c');
   CompPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator;
   TargetPath := CompPath + CompName + '.bv';
   if FileExists(TargetPath) then
@@ -4682,6 +4971,7 @@ procedure CmdRemoveComponent(const CompName: string);
 var
   BVPath, PasPath, TestPath, GenPath: string;
 begin
+  RequireBlaiseVueProject('bv remove c');
   BVPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'components' + DirectorySeparator + CompName + '.bv';
   PasPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + CompName + '.pas';
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'components' + DirectorySeparator + CompName + '.test.pas';
@@ -4726,6 +5016,7 @@ var
   TestPath, TestFile, TestContent: string;
   ViewTag, ViewKebab: string;
 begin
+  RequireBlaiseVueProject('bv g v');
   ViewPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator;
   TargetPath := ViewPath + ViewName + '.bv';
   if FileExists(TargetPath) then
@@ -6400,6 +6691,7 @@ var
   i, FoundIdx: Integer;
   HasConfig: Boolean;
 begin
+  RequireBlaiseVueProject('bv theme');
   CleanCmd := LowerCase(Trim(SubCmd));
   CleanTheme := LowerCase(Trim(ThemeArg));
 
@@ -6675,6 +6967,7 @@ procedure CmdRemoveView(const ViewName: string);
 var
   BVPath, PasPath, TestPath, GenPath: string;
 begin
+  RequireBlaiseVueProject('bv remove v');
   BVPath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator + ViewName + '.bv';
   PasPath := GetCurrentDir + DirectorySeparator + 'generated' + DirectorySeparator + 'u' + ViewName + '.pas';
   TestPath := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator + 'views' + DirectorySeparator + ViewName + '.test.pas';
@@ -6709,6 +7002,7 @@ var
   NormName, ServicePath, TargetPath, Content: string;
   TestPath, TestFile, TestContent: string;
 begin
+  RequireBlaiseVueProject('bv g s');
   NormName := ServiceName;
   if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
     NormName := Copy(NormName, 2, Length(NormName) - 1);
@@ -6810,6 +7104,7 @@ procedure CmdRemoveService(const ServiceName: string);
 var
   NormName, TargetPath, TestPath: string;
 begin
+  RequireBlaiseVueProject('bv remove s');
   NormName := ServiceName;
   if (Length(NormName) > 1) and ((NormName[1] = 'u') or (NormName[1] = 'U')) and (NormName[2] in ['A'..'Z']) then
     NormName := Copy(NormName, 2, Length(NormName) - 1);
@@ -6854,6 +7149,7 @@ begin
 
   // Check if user passed an explicit directory, e.g. "framework/MyTest", "unit/MyTest", "services/MyTest"
 
+  RequireBlaiseVueProject('bv g t');
   IsExplicitPath := (Pos(DirectorySeparator, CleanName) > 0);
   if IsExplicitPath then
   begin
@@ -7152,6 +7448,7 @@ var
   AllTests: TStringList;
   i: Integer;
 begin
+  RequireBlaiseVueProject('bv remove t');
   CleanName := ExtractFileName(StringReplace(TestName, '/', DirectorySeparator, [rfReplaceAll]));
   CleanName := StringReplace(CleanName, '.test.pas', '', [rfIgnoreCase]);
   CleanName := StringReplace(CleanName, '.test', '', [rfIgnoreCase]);
@@ -8634,6 +8931,7 @@ procedure CmdPath;
 var
   SubCmd, TargetArg: string;
 begin
+  RequireBlaiseVueProject('bv path');
   SubCmd := '';
   TargetArg := '';
   if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
@@ -12135,6 +12433,9 @@ begin
     Inc(i);
   end;
 
+  if (SubCmd <> 'emulator') and (SubCmd <> 'kill') then
+    RequireBlaiseVueProject('bv mobile ' + SubCmd);
+
   MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
   BinDir := MobileDir + DirectorySeparator + 'bin';
   CapConfigFile := GetCurrentDir + DirectorySeparator + 'capacitor.config.json';
@@ -12914,6 +13215,7 @@ var
     end;
   end;
 begin
+  RequireBlaiseVueProject('bv desktop ' + SubCmd);
   WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Desktop (WebUI & Lazarus IDE) ===');
 
   {$IFDEF MSWINDOWS}
@@ -21171,13 +21473,7 @@ var
       IsFresh := True;
   end;
 begin
-  ProjectRoot := GetCurrentDir;
-  if not DirectoryExists(ProjectRoot + DirectorySeparator + 'server') and
-
-     FileExists(ProjectRoot + DirectorySeparator + 'server.lpr') then
-  begin
-    ProjectRoot := ExpandFileName(ProjectRoot + DirectorySeparator + '..');
-  end;
+  ProjectRoot := RequireBlaiseVueProject('bv mormot ' + SubCmd);
 
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
   BinDir := ServerDir + DirectorySeparator + 'bin';
@@ -22020,29 +22316,6 @@ procedure CmdUse(const ProjName: string); forward;
 procedure CmdEnter; forward;
 procedure RunCockpitShell(const InitialName, InitialPath: string); forward;
 
-{ Validates whether a directory contains a valid BlaiseVue project structure. }
-function IsValidBlaiseVueProject(const ADir: string = ''): Boolean;
-var
-  TargetDir, PkgContent: string;
-begin
-  if ADir = '' then
-    TargetDir := IncludeTrailingPathDelimiter(GetCurrentDir)
-  else
-    TargetDir := IncludeTrailingPathDelimiter(ExpandFileName(ADir));
-
-  Result := False;
-  if FileExists(TargetDir + 'app.cfg') then Exit(True);
-  if FileExists(TargetDir + 'src' + DirectorySeparator + 'app.bv') then Exit(True);
-  if DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'views') or
-     DirectoryExists(TargetDir + 'src' + DirectorySeparator + 'components') then Exit(True);
-
-  if FileExists(TargetDir + 'package.json') then
-  begin
-    PkgContent := LowerCase(ReadFileToString(TargetDir + 'package.json'));
-    if Pos('blaise', PkgContent) > 0 then Exit(True);
-  end;
-end;
-
 { Returns the path to the global registered projects database (~/.blaisevue/projects.json). }
 function GetProjectsConfigPath: string;
 var
@@ -22292,7 +22565,8 @@ begin
     Exit;
   end;
 
-  if not IsValidBlaiseVueProject then
+  CurDir := FindBlaiseVueProjectRoot('');
+  if CurDir = '' then
   begin
     WriteLn('');
     WriteLn('========================================================================');
@@ -22303,8 +22577,6 @@ begin
     WriteLn('');
     Exit;
   end;
-
-  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
   NormCurDir := LowerCase(CurDir);
   ProjName := GetProjectNameFromDir(CurDir);
   ProjVer := GetProjectVersionFromDir(CurDir);
@@ -23288,7 +23560,7 @@ begin
   Result.Add('exit');
   Result.Add('quit');
   Result.Add('clear');
-  Result.Add('cls');
+  Result.Add('files');
 end;
 
 { Returns all subcommands valid for a given parent command. }
@@ -24149,7 +24421,7 @@ begin
 
       // Phase 3: Subcommand Helper for incomplete parent commands
       if (Tokens.Count = 1) and (CmdName <> 'exit') and (CmdName <> 'quit') and (CmdName <> 'q') and
-         (CmdName <> 'cls') and (CmdName <> 'clear') and (CmdName <> 'enter') and (CmdName <> 'help') and
+         (CmdName <> 'clear') and (CmdName <> 'files') and (CmdName <> 'enter') and (CmdName <> 'help') and
          (CmdName <> 'dev') and (CmdName <> 'build') and (CmdName <> 'preview') and (CmdName <> 'test') and
          (CmdName <> 'clean') and (CmdName <> 'check') and (CmdName <> 'ssg') and (CmdName <> 'doctor') and
          (CmdName <> 'self-update') and (CmdName <> 'reset') and (CmdName <> 'update') and (CmdName <> 'upgrade') then
@@ -24193,9 +24465,22 @@ begin
       end
 
       // Clear screen
-      else if (CmdName = 'cls') or (CmdName = 'clear') then
+      else if CmdName = 'clear' then
       begin
-        for i := 1 to 40 do WriteLn('');
+        ClearScreen(True, ActiveName, ActivePath);
+      end
+
+      // Project files tree
+      else if CmdName = 'files' then
+      begin
+        if (Tokens.Count >= 2) and ((LowerCase(Tokens[1]) = '--all') or (LowerCase(Tokens[1]) = '-a')) then
+          CmdFiles('', True)
+        else if (Tokens.Count >= 3) and ((LowerCase(Tokens[2]) = '--all') or (LowerCase(Tokens[2]) = '-a')) then
+          CmdFiles(Tokens[1], True)
+        else if Tokens.Count >= 2 then
+          CmdFiles(Tokens[1], False)
+        else
+          CmdFiles('', False);
       end
 
       // Enter (already inside)
@@ -24312,7 +24597,8 @@ begin
         WriteLn('  update [--dry-run]         Updates project infrastructure non-destructively');
         WriteLn('');
         WriteLn('  # === Cockpit Session ===');
-        WriteLn('  cls / clear                Clears terminal screen');
+        WriteLn('  clear                      Clears terminal screen & refreshes header');
+        WriteLn('  files [path] [--all]       Displays structured project files tree');
         WriteLn('  exit / quit / q            Exits the cockpit shell');
         WriteLn('  <shell command>            Runs any system command (git, npm, dir, etc.)');
         WriteLn('  ============================================================');
@@ -24603,25 +24889,7 @@ procedure CmdEnter;
 var
   CurDir, ProjName, ProjVer: string;
 begin
-  // LOCAL ONLY RULE: Must be inside a recognized BlaiseVue project!
-  if not IsValidBlaiseVueProject then
-  begin
-    WriteLn('');
-    WriteLn('========================================================================');
-    WriteLn('  [ERROR] "bv enter" can only be executed inside a BlaiseVue project.');
-    WriteLn('  Current directory: ', GetCurrentDir);
-    WriteLn('');
-    WriteLn('  To enter an already registered project from anywhere, use:');
-    WriteLn('    bv use <project-name>');
-    WriteLn('');
-    WriteLn('  To view registered projects:');
-    WriteLn('    bv project list');
-    WriteLn('========================================================================');
-    WriteLn('');
-    Halt(1);
-  end;
-
-  CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
+  CurDir := RequireBlaiseVueProject('bv enter');
   ProjName := GetProjectNameFromDir(CurDir);
   ProjVer := GetProjectVersionFromDir(CurDir);
   RunCockpitShell(ProjName, CurDir);
@@ -25903,6 +26171,8 @@ begin
   WriteLn('  bv rename <c|v|s|p>        Smart rename for services, components, views, or project name');
   WriteLn('');
   WriteLn('  # === Workspace & Project Cockpit ===');
+  WriteLn('  bv files [path] [--all]    Displays structured project files tree');
+  WriteLn('  bv clear                   Clears terminal screen');
   WriteLn('  bv enter                   Enters interactive project Cockpit shell ([bv: my-app] >)');
   WriteLn('  bv use <project-name>      Jumps into registered project Cockpit shell from anywhere');
   WriteLn('  bv project add             Registers current project into global registry');
@@ -26406,6 +26676,23 @@ begin
   else if Cmd = 'studio' then
   begin
     CmdStudio;
+  end
+
+  else if Cmd = 'clear' then
+  begin
+    ClearScreen(False);
+  end
+
+  else if Cmd = 'files' then
+  begin
+    if (ParamCount >= 2) and ((LowerCase(ParamStr(2)) = '--all') or (LowerCase(ParamStr(2)) = '-a')) then
+      CmdFiles('', True)
+    else if (ParamCount >= 3) and ((LowerCase(ParamStr(3)) = '--all') or (LowerCase(ParamStr(3)) = '-a')) then
+      CmdFiles(ParamStr(2), True)
+    else if ParamCount >= 2 then
+      CmdFiles(ParamStr(2), False)
+    else
+      CmdFiles('', False);
   end
 
   else if Cmd = 'mormot' then
