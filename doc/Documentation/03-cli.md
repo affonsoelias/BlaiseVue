@@ -134,7 +134,7 @@ bv remove service PaymentProcessor  # or: bv remove s PaymentProcessor
 bv remove test SimpleBadge          # or: bv remove t SimpleBadge
 ```
 
-### 7. Rename Elements: `bv rename <component|view|service|project> <OldName> [NewName]`
+### 9. Rename Elements: `bv rename <component|view|service|project> <OldName> [NewName]`
 Intelligently refactors components, views, services, or the entire project, updating source files, internal Pascal declarations, unit names, test suites, router configurations, and global registry entries:
 
 ```bash

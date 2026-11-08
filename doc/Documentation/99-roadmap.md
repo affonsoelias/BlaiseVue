@@ -175,7 +175,7 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 
 | 5.0 Strategic Pillar | Target Milestone | Focus Subsystem | Primary Architecture |
 |---|:---:|---|---|
-| **Pillar 1: BlaiseX (`TBVStore 2.0` & State Machines)** | v5.0-alpha | `core/BVStore.pas` | Finite State Machines, time-travel history, action middleware |
+| **Pillar 1: BlaiseX (`TBVStore 2.0` & State Machines)** | ✅ Complete | `core/BVStore.pas`, `core/BVFSM.pas` | Modular slices, FSM engine, middleware pipeline, time-travel undo/redo, DevTools bridge, CLI scaffolding |
 | **Pillar 2: Full PWA Engine & Background Sync (`bv pwa`)** | v5.0-beta | `bin/bv.pas`, `core/BVDataSet.pas` | Service Worker caching, background sync with `ApplyUpdates` |
 | **Pillar 3: Node-Free Dynamic Server-Side Rendering (mORMot 2 SSR)** | v5.0-rc | `server/`, `core/BVCompiler.pas` | Native Pascal SSR executed in <3ms without Node.js |
 | **Pillar 4: BlaiseVue Studio 2.0 (Visual Modeler & Cockpit)** | v5.0-GA | `packages/core/blaise-studio/` | Drag-and-drop DB modeler, visual AST editor, live telemetry |
@@ -183,25 +183,47 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 
 ---
 
-### 🗄️ Pillar 1: BlaiseX — Advanced Global State & Finite State Machines (`TBVStore 2.0`)
-**Goal**: Evolve the existing `$store` (`core/BVStore.pas`) into an enterprise state management system inspired by Pinia, Redux Toolkit, and XState, written in 100% pure Object Pascal.
+### 🗄️ Pillar 1: BlaiseX — Advanced Global State & Finite State Machines (`TBVStore 2.0`) [✅ COMPLETE]
+**Goal**: Evolved the legacy `$store` (`core/BVStore.pas`) into an enterprise-grade state management system inspired by Pinia, Redux Toolkit, and XState, written in 100% pure Object Pascal.
 
-- **Motivation**: Large-scale financial, medical, and industrial systems require formal state machines (e.g. checkout workflows, claim approvals, multi-step wizards) with strict state transition guarantees and complete audit trails.
-- **Architectural Scope**:
-  1. **Finite State Machines (FSM)**:
-     - Declarative states (`idle`, `loading`, `success`, `error`) and allowed transitions preventing invalid state jumps:
-       ```pascal
-       Machine := TBVStateMachine.Create('Payment')
-         .Initial('idle')
-         .State('idle', ['SUBMIT' -> 'processing'])
-         .State('processing', ['RESOLVE' -> 'completed', 'REJECT' -> 'failed'])
-         .State('completed', [])
-         .State('failed', ['RETRY' -> 'processing']);
-       ```
-  2. **Action Middleware & Pipeline**:
-     - Pre/post action interceptors allowing centralized logging, performance metrics, and authorization validation before executing mutations.
-  3. **Time-Travel Debugging & State Snapshots**:
-     - Integrated state history buffer enabling *Undo*, *Redo*, and real-time state replay directly within BlaiseVue DevTools.
+- **Status**: **Fully implemented, tested, and documented (Chapters 15 & 55)**.
+- **Architectural Scope & Delivered Features**:
+  1. **Deterministic Finite State Machines (`core/BVFSM.pas`)**:
+     - Declarative states, initial state definition, and allowed transitions preventing illegal state jumps.
+     - Guard expressions (`TBVFSMGuardFunc`) enabling conditional transition gating.
+     - Lifecycle hooks: `OnEnter`, `OnExit`, and transition action callbacks (`TBVFSMActionProc`).
+     - Real-time event auditing history and observer subscriptions (`Subscribe` / `Unsubscribe`).
+     - Automatic reactive proxy mounting on store slices (`AttachMachine`).
+  2. **Modular Store Slices & BlaiseX Core (`core/BVStore.pas`)**:
+     - Modular domain slices via `DefineStore('sliceName', InitialState)`.
+     - Synchronous atomic mutations (`Mutation`) and asynchronous business logic actions (`Action`).
+     - Cached computed getters (`Getter`).
+     - Direct property patching (`Patch`) and reset capabilities (`Reset`).
+     - Backward compatibility with lightweight v4.x single-store expressions (`$store.state`).
+  3. **Enterprise Middleware & Interceptor Pipeline (`core/BVMiddleware.pas`)**:
+     - Pre/post action & mutation interceptors with rich context (`TBVMiddlewareContext`).
+     - Built-in `TBVLoggerMiddleware`: colorized execution timing and state inspection.
+     - Built-in `TBVAuthGuardMiddleware`: RBAC role and permission validation protecting sensitive actions.
+     - Built-in `TBVTelemetryMiddleware`: operation counters, average/max duration, and slow call alerts.
+     - Functional anonymous middleware (`Slice.Use(BeforeProc, AfterProc)`).
+  4. **Time-Travel Debugging & State Snapshots (`core/BVStoreHistory.pas`)**:
+     - High-performance, bounded snapshot ring buffer (`TBVStoreHistory`).
+     - Instant rollback and replay: `Undo`, `Redo`, `TimeTravel(index)`.
+     - JSON audit log export and state hydration (`ExportJSON`, `ImportJSON`).
+     - Browser DevTools global hook (`window.__BLAISEX_DEVTOOLS__`).
+  5. **Component (`.bv`), AST Compiler & Pascal DX Integration**:
+     - Direct template reactivity: `{{ $store.cart.count }}` and `{{ $store.order.flow.current }}`.
+     - Direct template event handlers: `@click="$blaisex.Commit('cart/increment')"` and `@click="$blaisex.Undo('cart')"`.
+     - AST checker whitelist update for `$blaisex` in `bin/bv.pas`.
+     - Pure Pascal Zero-ASM helpers in `core/BVPascalDX.pas`: `UseStore`, `UseFSM`, `StoreCommit`, `StoreDispatch`, `StoreGet`, `StoreUndo`, `StoreRedo`.
+  6. **Automated CLI Scaffolding & 4-Tier Testing**:
+     - `bv g store <Name>`: Scaffolds store slice in `src/stores/` and unit test in `tests/stores/`.
+     - `bv g fsm <Name>`: Scaffolds state machine in `src/machines/` and unit test in `tests/machines/`.
+     - `bv list store` & `bv list fsm`: Interactive project element listing.
+     - `bv remove store <Name>` & `bv remove fsm <Name>`: Safe deletion of units and tests.
+     - Automatic test runner integration (`bv test`) across all 4 testing tiers.
+  7. **Official Documentation**:
+     - Dedicated Chapter 55: `doc/Documentation/55-blaisex-state-machines.md`.
 
 ---
 

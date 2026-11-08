@@ -1,5 +1,9 @@
 # 🧠 B-Store (Global Store / $store)
 
+> [!NOTE]
+> **BlaiseX 2.0 (TBVStore 2.0)**: For enterprise applications requiring modular slices, synchronous mutations, asynchronous actions, deterministic Finite State Machines (FSM), middleware pipelines, and time-travel debugging, see **[Chapter 55. BlaiseX: Enterprise State Management & Finite State Machines](55-blaisex-state-machines.md)**.
+
+
 BlaiseVue resolves the "prop drilling" problem (passing data through multiple component levels) with **B-Store**: a reactive global state management system accessible from any point in the application.
 
 ---

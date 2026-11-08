@@ -115,9 +115,11 @@ bv create <name>           # Scaffolds a new project with 4-tier testing hierarc
 bv g c <Name>              # Scaffolds a component (.bv) & test in tests/components/ (alias: bv new c)
 bv g v <Name>              # Scaffolds a route view (.bv) & test in tests/views/ (alias: bv new v)
 bv g s <Name>              # Scaffolds a pure Pascal domain service in src/services/ (alias: bv new s)
+bv g store <Name>          # Scaffolds a BlaiseX store slice & test in src/stores/ (alias: bv new store)
+bv g fsm <Name>            # Scaffolds a finite state machine & test in src/machines/ (alias: bv new fsm)
 bv g t <Name>              # Scaffolds a Pascal test file (.test.pas) (alias: bv new t)
-bv remove <c|v|s|t> <Name> # Safely deletes a component, view, service, or test
-bv list <c|v|s|t|lib>      # Lists project components, views, services, tests, or installed libs
+bv remove <c|v|s|store|fsm|t> <Name> # Safely deletes a component, view, service, store, FSM, or test
+bv list <c|v|s|store|fsm|t|lib>      # Lists project components, views, services, stores, FSMs, tests, or libs
 bv rename <c|v|s|p>        # Smart rename for services, components, views, or project name
 
 # === Workspace & Project Cockpit ===

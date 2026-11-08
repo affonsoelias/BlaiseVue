@@ -228,7 +228,10 @@ BlaiseVue/
 │   ├── BVI18n.pas             # Internationalization & localization engine ($t)
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
 │   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
-│   ├── BVStore.pas            # Centralized state management ($store)
+│   ├── BVStore.pas            # BlaiseX 2.0 modular store (, )
+│   ├── BVFSM.pas              # Deterministic Finite State Machines (TBVStateMachine)
+│   ├── BVMiddleware.pas       # Action/mutation pipeline (Logger, AuthGuard, Telemetry)
+│   ├── BVStoreHistory.pas     # Time-travel debugging, snapshots & DevTools bridge
 │   ├── BVAuth.pas             # JWT authentication, session storage & route protection
 │   ├── BVClient.pas           # Reactive REST ($api) & WebSocket ($ws) client helpers
 │   ├── BVDataSet.pas          # LiveBindings, reactive TDataSet & offline delta sync
