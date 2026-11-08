@@ -11,7 +11,7 @@ unit BVStore;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity;
+uses JS, Web, SysUtils, BVReactivity, BVFSM;
 
 type
   { Represents the application global state container }
