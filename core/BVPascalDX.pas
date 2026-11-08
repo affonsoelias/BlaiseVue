@@ -12,7 +12,17 @@ unit BVPascalDX;
 
 interface
 
-uses JS, Web, SysUtils, BVDataSet, BVRpc, BlaiseReports;
+uses JS, Web, SysUtils, BVDataSet, BVRpc, BlaiseReports, BVStore, BVFSM;
+
+{ --- BlaiseX State & FSM Helpers (Zero-ASM DX) --- }
+function UseStore(const ASliceName: string = ''): JSValue;
+function UseFSM(const AMachineName: string): TBVStateMachine; overload;
+function UseFSM(const ASliceName, AMachineName: string): TBVStateMachine; overload;
+procedure StoreCommit(const ATarget: string; APayload: JSValue = nil);
+function StoreDispatch(const ATarget: string; APayload: JSValue = nil): JSValue;
+function StoreGet(const ATarget: string): JSValue;
+function StoreUndo(const ASliceName: string): Boolean;
+function StoreRedo(const ASliceName: string): Boolean;
 
 { --- UI Notification & Dialog Helpers --- }
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
@@ -158,6 +168,73 @@ function ReportPrintPreview(Report: JSValue; const ATargetElementId: string = ''
 function ReportComputeSummary(Report: JSValue; const AFieldName: string; const AAggregate: string = 'sum'): Double;
 
 implementation
+
+function UseStore(const ASliceName: string = ''): JSValue;
+begin
+  if Trim(ASliceName) = '' then
+    Result := GetStore
+  else
+    Result := GetStore.Slice(ASliceName);
+end;
+
+function UseFSM(const AMachineName: string): TBVStateMachine;
+var
+  Slices: TJSObject;
+  Keys: TJSStringDynArray;
+  i: Integer;
+  Sl: TBVStoreSlice;
+  M: TBVStateMachine;
+begin
+  Result := nil;
+  Slices := GetStore.Slices;
+  Keys := TJSObject.keys(Slices);
+  for i := 0 to Length(Keys) - 1 do
+  begin
+    Sl := TBVStoreSlice(Slices[Keys[i]]);
+    M := Sl.FSM(AMachineName);
+    if M <> nil then
+    begin
+      Result := M;
+      Exit;
+    end;
+  end;
+end;
+
+function UseFSM(const ASliceName, AMachineName: string): TBVStateMachine;
+var
+  Sl: TBVStoreSlice;
+begin
+  Sl := GetStore.Slice(ASliceName);
+  if Sl <> nil then
+    Result := Sl.FSM(AMachineName)
+  else
+    Result := nil;
+end;
+
+procedure StoreCommit(const ATarget: string; APayload: JSValue = nil);
+begin
+  GetStore.Commit(ATarget, APayload);
+end;
+
+function StoreDispatch(const ATarget: string; APayload: JSValue = nil): JSValue;
+begin
+  Result := GetStore.Dispatch(ATarget, APayload);
+end;
+
+function StoreGet(const ATarget: string): JSValue;
+begin
+  Result := GetStore.Get(ATarget);
+end;
+
+function StoreUndo(const ASliceName: string): Boolean;
+begin
+  Result := GetStore.Undo(ASliceName);
+end;
+
+function StoreRedo(const ASliceName: string): Boolean;
+begin
+  Result := GetStore.Redo(ASliceName);
+end;
 
 procedure ShowToast(const Msg: string; DurationMs: Integer = 2500);
 begin
@@ -1411,6 +1488,14 @@ begin
     ReportGenerateCSV(dummy);
     ReportPrintPreview(dummy, '');
     ReportComputeSummary(dummy, '', '');
+    UseStore('');
+    UseFSM('');
+    UseFSM('', '');
+    StoreCommit('', nil);
+    StoreDispatch('', nil);
+    StoreGet('');
+    StoreUndo('');
+    StoreRedo('');
   end;
 end;
 

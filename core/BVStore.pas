@@ -107,6 +107,9 @@ type
     { Global Namespaced Dispatches ('sliceName/mutation' or 'sliceName/action') }
     procedure Commit(const ATarget: string; APayload: JSValue = nil);
     function Dispatch(const ATarget: string; APayload: JSValue = nil): JSValue; reintroduce;
+    function Get(const ATarget: string): JSValue;
+    function Undo(const ASliceName: string): Boolean;
+    function Redo(const ASliceName: string): Boolean;
     function Use(AMiddleware: TBVMiddleware): TBVStore; overload;
     function Use(ABefore: TBVMiddlewareBeforeProc; AAfter: TBVMiddlewareAfterProc = nil): TBVStore; overload;
 
@@ -224,8 +227,13 @@ begin
 end;
 
 function TBVStoreSlice.AttachMachine(const AName: string; AMachine: TBVStateMachine): TBVStoreSlice;
+var
+  CleanName: string;
 begin
-  FMachines[Trim(AName)] := AMachine;
+  CleanName := Trim(AName);
+  FMachines[CleanName] := AMachine;
+  if (AMachine <> nil) and (FState <> nil) then
+    TJSObject(FState)[CleanName] := AMachine.Reactive;
   Result := Self;
 end;
 
@@ -578,6 +586,47 @@ begin
     raise Exception.Create('[BlaiseX] Unknown store slice "' + SliceName + '".');
 
   Result := Sl.Dispatch(ActName, APayload);
+end;
+
+function TBVStore.Get(const ATarget: string): JSValue;
+var
+  Idx: Integer;
+  SliceName, GetName: string;
+  Sl: TBVStoreSlice;
+begin
+  Idx := Pos('/', ATarget);
+  if Idx <= 0 then
+    raise Exception.Create('[BlaiseX] Get requires "sliceName/getterName" format, got "' + ATarget + '".');
+
+  SliceName := Trim(Copy(ATarget, 1, Idx - 1));
+  GetName := Trim(Copy(ATarget, Idx + 1, Length(ATarget)));
+  Sl := Slice(SliceName);
+  if Sl = nil then
+    raise Exception.Create('[BlaiseX] Unknown store slice "' + SliceName + '".');
+
+  Result := Sl.Get(GetName);
+end;
+
+function TBVStore.Undo(const ASliceName: string): Boolean;
+var
+  Sl: TBVStoreSlice;
+begin
+  Sl := Slice(ASliceName);
+  if Sl <> nil then
+    Result := Sl.Undo
+  else
+    Result := False;
+end;
+
+function TBVStore.Redo(const ASliceName: string): Boolean;
+var
+  Sl: TBVStoreSlice;
+begin
+  Sl := Slice(ASliceName);
+  if Sl <> nil then
+    Result := Sl.Redo
+  else
+    Result := False;
 end;
 
 { ============================================================================ }

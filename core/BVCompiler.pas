@@ -567,6 +567,7 @@ initialization
             Data.FData['$router'] = window.__BV_CORE__.router;
          }
          if (window.__BV_PRO_STORE__) Data.FData['$store'] = window.__BV_PRO_STORE__;
+         if (window.__BLAISEX_STORE__) Data.FData['$blaisex'] = window.__BLAISEX_STORE__;
          if (window.__BV_CORE__.i18n && !Data.FData['$t']) {
             Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
             Data.FData['$i18n'] = window.__BV_CORE__.i18n;
@@ -1925,6 +1926,7 @@ initialization
                pRef['$router'] = window.__BV_CORE__.router;
             }
             if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+            if (window['__BLAISEX_STORE__']) pRef['$blaisex'] = window['__BLAISEX_STORE__'];
             if (window.__BV_CORE__.i18n) {
                pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                pRef['$i18n'] = window.__BV_CORE__.i18n;

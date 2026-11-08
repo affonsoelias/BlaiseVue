@@ -12,7 +12,7 @@ unit BlaiseVue;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient, BVAuth, BlaiseIonic, BVPascalDX, BVDataSet, BVRpc, BVFSM, BVMiddleware, BVStoreHistory;
+uses JS, Web, SysUtils, BVReactivity, BVCompiler, BVRouting, BVComponents, BVValidation, BVI18n, BVTheme, BVWasm, BVMobile, BVDesktop, BVClient, BVAuth, BlaiseIonic, BVPascalDX, BVDataSet, BVRpc, BVFSM, BVMiddleware, BVStoreHistory, BVStore;
 
 type
   { 
@@ -109,6 +109,7 @@ begin
   { Bridge for Pro Features (Global Store integration) }
   asm
     if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__;
+    if (window.__BLAISEX_STORE__) d.FData.$blaisex = window.__BLAISEX_STORE__;
     if (window.__BV_CORE__.theme && !d.FData.$theme) d.FData.$theme = window.__BV_CORE__.theme;
     if (window.__BV_CORE__.wasm && !d.FData.$wasm) d.FData.$wasm = window.__BV_CORE__.wasm;
     if (window.__BV_CORE__.mobile && !d.FData.$mobile) d.FData.$mobile = window.__BV_CORE__.mobile;

@@ -374,6 +374,7 @@ begin
     pRef['$router'] = this;
     if (!pRef['$refs']) pRef['$refs'] = {};
     if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+    if (window['__BLAISEX_STORE__']) pRef['$blaisex'] = window['__BLAISEX_STORE__'];
     if (window.__BV_CORE__.i18n) {
        pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
        pRef['$i18n'] = window.__BV_CORE__.i18n;

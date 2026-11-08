@@ -90,6 +90,7 @@ begin
     // Global Store Integration
     if (this && this.FData) {
       if (window['__BV_PRO_STORE__']) this.FData['$store'] = window['__BV_PRO_STORE__'];
+      if (window['__BLAISEX_STORE__']) this.FData['$blaisex'] = window['__BLAISEX_STORE__'];
       if (window.__BV_CORE__.i18n) {
         this.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
         this.FData['$i18n'] = window.__BV_CORE__.i18n;

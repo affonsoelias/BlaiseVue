@@ -3888,7 +3888,7 @@ begin
     Symbols.Add('$theme'); Symbols.Add('$auth');
     Symbols.Add('$rpc'); Symbols.Add('$ws'); Symbols.Add('$api');
     Symbols.Add('$mobile'); Symbols.Add('$desktop'); Symbols.Add('$wasm'); Symbols.Add('$ionic');
-    Symbols.Add('$store'); Symbols.Add('Router'); Symbols.Add('$router'); Symbols.Add('$route');
+    Symbols.Add('$store'); Symbols.Add('$blaisex'); Symbols.Add('Router'); Symbols.Add('$router'); Symbols.Add('$route');
     Symbols.Add('$v'); Symbols.Add('$errors'); Symbols.Add('$validate');
     Symbols.Add('$event'); Symbols.Add('$refs'); Symbols.Add('$slots'); Symbols.Add('$attrs'); Symbols.Add('$index'); Symbols.Add('$emit');
     Symbols.Add('item'); Symbols.Add('idx'); Symbols.Add('index'); Symbols.Add('p');
