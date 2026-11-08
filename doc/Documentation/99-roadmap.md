@@ -18,6 +18,8 @@
 | **v4.3** | ✅ Delivered | **Type-Safe Pascal RPC with mORMot 2** | JSON-RPC 2.0, dual HTTP/WebSocket transport, shared `ICustomerService` interfaces, compile-time API validation. |
 | **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, unified extensions (`bv extension`). |
 | **v5.0** | 🚀 In Progress | **Cloud, PWA & Real-Time Era** | BlaiseX state machines (`TBVStore 2.0`), PWA Background Sync (`bv pwa`), Node-free dynamic SSR (<3ms), BlaiseStudio 2.0 visual modeler, Vue 3-style Fragments (Multi-Root Templates). |
+| **v5.2** | 🗺️ Planned | **Distributed Enterprise & Micro-Frontends** | Dynamic Module Federation (`RegisterRemoteModule`), remote `.bv` component and BlaiseX store slice loading at runtime. |
+| **v5.4** | 🗺️ Planned | **Serverless Edge Computing (BlaiseEdge)** | Native WebAssembly System Interface (`wasm32-wasi`) compilation, sub-2MB microservices with <0.2ms cold start for Cloudflare Workers & Fastly. |
 
 ---
 
@@ -301,6 +303,87 @@ ightarrow$ `OrderItems`) with foreign key constraints.
   5. **Verification & Quality Harness**:
      - Comprehensive test suite in `tests/framework/fragments.test.pas` validating sibling tags, dynamic table rows inside `<tbody>`, scoped styles, and nested fragment components.
 
+
+---
+
+## 🌐 5. Future Horizons within the 5.x Era (v5.2 – v5.4) — [Planned 🗺️]
+
+In strict adherence to the [Even/Odd Minor Version Parity rule defined in `VERSIONING.md`](../../VERSIONING.md), the 5.x cycle continues to evolve through stable even minor releases, expanding the framework into distributed corporate architectures and high-density edge computing without introducing breaking changes.
+
+```
+                                      BLAISEVUE 5.x EXTENDED HORIZON
+                                                    │
+                           ┌────────────────────────┴────────────────────────┐
+                           ▼                                                 ▼
+                     [v5.2 Release]                                    [v5.4 Release]
+                   Micro-Frontends &                                 BlaiseEdge & WASI
+               Dynamic Module Federation                           Serverless Computing
+           (Distributed Corporate Frontends)                      (Ultra-Fast Edge Microservices)
+```
+
+| Extended Milestone | Target Cycle | Focus Subsystem | Primary Architecture |
+|---|:---:|---|---|
+| **v5.2: Micro-Frontends & Module Federation** | Stable Minor | `core/BVRouting.pas`, `core/BVStore.pas` | Remote `.bv` component streaming, isolated CSS namespace, dynamic BlaiseX slice registration |
+| **v5.4: BlaiseEdge & WASI Serverless** | Stable Minor | `server/`, `core/BVWasm.pas` | `wasm32-wasi` target compilation, <0.2ms cold start, sub-2MB footprint for Cloudflare Workers & Fastly |
+
+---
+
+### 🧩 5.1 BlaiseVue 5.2: Micro-Frontends & Dynamic Module Federation
+**Goal**: Enable large enterprise teams (banking, telecom, global ERPs) to build, deploy, and scale independent frontend applications that compose seamlessly into a unified BlaiseVue shell at runtime without requiring full-application recompilation.
+
+- **Motivation**:
+  1. **Autonomous Team Velocity**: Domain teams (e.g., Billing, Inventory, Authentication) ship features and deploy bugfixes to independent endpoints independently.
+  2. **Zero-Downtime Hot Upgrades**: Remote modules update dynamically on remote CDN endpoints; client shells fetch the latest manifest upon route transition without user downtime.
+  3. **Shared Reactive Kernel**: All federated micro-frontends share the single global Pascal runtime instance (`rtl.js`, `BVReactivity`, and `BVStore`), eliminating duplicate bundle downloads.
+
+- **Architectural Scope**:
+  1. **Dynamic Module Registry (`RegisterRemoteModule`)**:
+     - Remote entry points expose a standardized manifest:
+       ```pascal
+       RegisterRemoteModule('billing', 'https://billing.company.com/remoteEntry.js');
+       ```
+     - Remote components load lazily on route activation:
+       ```pascal
+       Router.AddRoute('/billing', RemoteComponent('billing', 'BillingDashboard'));
+       ```
+  2. **Federated BlaiseX Store Slices**:
+     - Remote micro-frontends dynamically register domain store slices and FSMs directly into the host shell's active store:
+       ```pascal
+       // Inside remote billing module:
+       DefineStore('billing', InitialBillingState)
+         .AttachMachine('invoiceFlow', CreateInvoiceMachine);
+       ```
+     - Shell templates and child micro-frontends interact reactively via `$store.billing` with full time-travel debugging and telemetry support.
+  3. **Style & Asset Isolation**:
+     - Enforced `<style scoped>` encapsulation prevents CSS leakage between federated micro-apps and the host shell.
+  4. **CLI Module Federation Scaffolding**:
+     - `bv create <app> --mf-remote`: Scaffolds a standalone federated micro-frontend with export manifest.
+     - `bv create <app> --mf-host`: Scaffolds a federated shell container.
+
+---
+
+### ☁️ 5.2 BlaiseVue 5.4: BlaiseEdge & WASI Serverless Computing
+**Goal**: Compile Pascal business logic, mORMot 2 services, and backend endpoints into native WebAssembly System Interface (`wasm32-wasi`) binaries, delivering sub-millisecond cold starts and sub-2MB memory footprints for global edge cloud platforms.
+
+- **Motivation**:
+  1. **The Serverless Cold-Start Dilemma**: Traditional JavaScript, Python, and Java serverless functions incur 200ms–2000ms cold starts and require heavy 150MB–500MB runtime VMs.
+  2. **Deterministic Pascal Performance**: Free Pascal's direct compilation to WASI produces lean, deterministic binaries that execute instantly without garbage collection stalls or VM warmup.
+  3. **Global Edge Proximity**: Deploying Pascal endpoints to global edge networks (Cloudflare Workers, Fastly Compute@Edge, AWS Lambda Wasm, Wasmer) ensures <5ms API roundtrips globally.
+
+- **Architectural Scope**:
+  1. **`wasm32-wasi` Compilation Pipeline (`bv build --edge`)**:
+     - Free Pascal (FPC) cross-compilation pipeline targeting standard WASI:
+       ```bash
+       bv build --edge --target=wasi
+       ```
+     - Outputs standalone `dist/server.wasm` (<2 MB) with zero external operating system dependencies.
+  2. **Microsecond Cold-Start & Micro-Memory Footprint**:
+     - Cold start boot time: **<0.2 milliseconds**.
+     - Runtime memory consumption: **<5 MB RAM**.
+  3. **Native Edge Transport Adapters**:
+     - Streaming HTTP and WebSocket request/response adapters bridging mORMot 2 SOA interfaces directly with WASI stdio and socket streams.
+  4. **Cloudflare & Fastly Deployment Templates**:
+     - Automated scaffolding of `wrangler.toml` (Cloudflare Workers) and `fastly.toml` (Fastly Compute) for instant one-command deployment (`bv edge deploy`).
 
 ---
 
