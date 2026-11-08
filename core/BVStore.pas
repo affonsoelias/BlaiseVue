@@ -20,7 +20,7 @@ unit BVStore;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVFSM;
+uses JS, Web, SysUtils, BVReactivity, BVFSM, BVMiddleware;
 
 type
   TBVStore = class;
@@ -44,6 +44,7 @@ type
     FGetters: TJSObject;        { Registry of computed getter functions }
     FMachines: TJSObject;       { Registry of attached TBVStateMachine instances }
     FSubscribers: TJSArray;     { Array of TBVStoreSubscriberProc }
+    FPipeline: TBVMiddlewarePipeline;
     function BuildActionContext: TJSObject;
   public
     constructor Create(AStore: TBVStore; const AName: string; AInitialState: JSValue);
@@ -54,6 +55,8 @@ type
     function Action(const AName: string; AProc: TBVActionProc): TBVStoreSlice;
     function Getter(const AName: string; AFunc: TBVGetterFunc): TBVStoreSlice;
     function AttachMachine(const AName: string; AMachine: TBVStateMachine): TBVStoreSlice;
+    function Use(AMiddleware: TBVMiddleware): TBVStoreSlice; overload;
+    function Use(ABefore: TBVMiddlewareBeforeProc; AAfter: TBVMiddlewareAfterProc = nil): TBVStoreSlice; overload;
 
     { Execution & Queries }
     procedure Commit(const AMutationName: string; APayload: JSValue = nil);
@@ -73,6 +76,7 @@ type
     property Name: string read FName;
     property State: JSValue read FState;
     property Store: TBVStore read FStore;
+    property Pipeline: TBVMiddlewarePipeline read FPipeline;
   end;
 
   { Root State Store Container }
@@ -80,6 +84,7 @@ type
   private
     FState: JSValue;      { Legacy/Default root reactive state }
     FSlices: TJSObject;   { Map of named slices: Name -> TBVStoreSlice }
+    FPipeline: TBVMiddlewarePipeline;
   public
     constructor Create(AInitialState: JSValue = nil);
     destructor Destroy; override;
@@ -92,9 +97,12 @@ type
     { Global Namespaced Dispatches ('sliceName/mutation' or 'sliceName/action') }
     procedure Commit(const ATarget: string; APayload: JSValue = nil);
     function Dispatch(const ATarget: string; APayload: JSValue = nil): JSValue; reintroduce;
+    function Use(AMiddleware: TBVMiddleware): TBVStore; overload;
+    function Use(ABefore: TBVMiddlewareBeforeProc; AAfter: TBVMiddlewareAfterProc = nil): TBVStore; overload;
 
     property State: JSValue read FState; { Accessible default state for legacy bindings }
     property Slices: TJSObject read FSlices;
+    property Pipeline: TBVMiddlewarePipeline read FPipeline;
   end;
 
 { Factory functions }
@@ -151,6 +159,7 @@ begin
   FGetters := TJSObject.new;
   FMachines := TJSObject.new;
   FSubscribers := TJSArray.new;
+  FPipeline := TBVMiddlewarePipeline.Create;
 
   if AInitialState <> nil then
     InitVal := AInitialState
@@ -163,6 +172,7 @@ end;
 
 destructor TBVStoreSlice.Destroy;
 begin
+  FPipeline.Free;
   inherited Destroy;
 end;
 
@@ -181,6 +191,18 @@ end;
 function TBVStoreSlice.Getter(const AName: string; AFunc: TBVGetterFunc): TBVStoreSlice;
 begin
   FGetters[Trim(AName)] := AFunc;
+  Result := Self;
+end;
+
+function TBVStoreSlice.Use(AMiddleware: TBVMiddleware): TBVStoreSlice;
+begin
+  FPipeline.Add(AMiddleware);
+  Result := Self;
+end;
+
+function TBVStoreSlice.Use(ABefore: TBVMiddlewareBeforeProc; AAfter: TBVMiddlewareAfterProc): TBVStoreSlice;
+begin
+  FPipeline.Add(TBVFunctionalMiddleware.Create('Anonymous', ABefore, AAfter));
   Result := Self;
 end;
 
@@ -235,27 +257,49 @@ var
   i: Integer;
   SubItem: TJSObject;
   SubCb: TBVStoreSubscriberProc;
+  Ctx: TBVMiddlewareContext;
 begin
   CleanName := Trim(AMutationName);
   if not Boolean(FMutations.hasOwnProperty(CleanName)) then
     raise Exception.Create('[BlaiseX: ' + FName + '] Unknown mutation "' + CleanName + '".');
 
-  MutProc := TBVMutationProc(FMutations[CleanName]);
-  if Assigned(MutProc) then
-    MutProc(FState, APayload);
+  Ctx := TBVMiddlewareContext.Create(FName, CleanName, mkMutation, APayload, FState);
+  try
+    if (FStore <> nil) and (not FStore.Pipeline.ExecuteBefore(Ctx)) then
+      raise Exception.Create('[BlaiseX: ' + FName + '] Mutation "' + CleanName + '" blocked: ' + Ctx.CancelReason);
 
-  { Notify all slice observers }
-  for i := 0 to Integer(FSubscribers.length) - 1 do
-  begin
-    SubItem := TJSObject(FSubscribers[i]);
-    SubCb := TBVStoreSubscriberProc(SubItem['cb']);
-    if Assigned(SubCb) then
+    if not FPipeline.ExecuteBefore(Ctx) then
+      raise Exception.Create('[BlaiseX: ' + FName + '] Mutation "' + CleanName + '" blocked: ' + Ctx.CancelReason);
+
+    MutProc := TBVMutationProc(FMutations[CleanName]);
+    if Assigned(MutProc) then
+      MutProc(FState, Ctx.Payload);
+
+    Ctx.Complete(FState);
+    FPipeline.ExecuteAfter(Ctx);
+    if FStore <> nil then
+      FStore.Pipeline.ExecuteAfter(Ctx);
+
+    { Notify all slice observers }
+    for i := 0 to Integer(FSubscribers.length) - 1 do
     begin
-      try
-        SubCb(Self, CleanName, FState, APayload);
-      except
-        // Prevent observer faults from interrupting state flow
+      SubItem := TJSObject(FSubscribers[i]);
+      SubCb := TBVStoreSubscriberProc(SubItem['cb']);
+      if Assigned(SubCb) then
+      begin
+        try
+          SubCb(Self, CleanName, FState, Ctx.Payload);
+        except
+        end;
       end;
+    end;
+  except
+    on E: Exception do
+    begin
+      FPipeline.ExecuteError(Ctx, E);
+      if FStore <> nil then
+        FStore.Pipeline.ExecuteError(Ctx, E);
+      raise;
     end;
   end;
 end;
@@ -265,18 +309,41 @@ var
   CleanName: string;
   ActProc: TBVActionProc;
   ActionCtx: TJSObject;
+  Ctx: TBVMiddlewareContext;
 begin
   CleanName := Trim(AActionName);
   if not Boolean(FActions.hasOwnProperty(CleanName)) then
     raise Exception.Create('[BlaiseX: ' + FName + '] Unknown action "' + CleanName + '".');
 
-  ActProc := TBVActionProc(FActions[CleanName]);
-  ActionCtx := BuildActionContext;
+  Ctx := TBVMiddlewareContext.Create(FName, CleanName, mkAction, APayload, FState);
+  try
+    if (FStore <> nil) and (not FStore.Pipeline.ExecuteBefore(Ctx)) then
+      raise Exception.Create('[BlaiseX: ' + FName + '] Action "' + CleanName + '" blocked: ' + Ctx.CancelReason);
 
-  if Assigned(ActProc) then
-    Result := ActProc(ActionCtx, APayload)
-  else
-    Result := nil;
+    if not FPipeline.ExecuteBefore(Ctx) then
+      raise Exception.Create('[BlaiseX: ' + FName + '] Action "' + CleanName + '" blocked: ' + Ctx.CancelReason);
+
+    ActProc := TBVActionProc(FActions[CleanName]);
+    ActionCtx := BuildActionContext;
+
+    if Assigned(ActProc) then
+      Result := ActProc(ActionCtx, Ctx.Payload)
+    else
+      Result := nil;
+
+    Ctx.Complete(FState);
+    FPipeline.ExecuteAfter(Ctx);
+    if FStore <> nil then
+      FStore.Pipeline.ExecuteAfter(Ctx);
+  except
+    on E: Exception do
+    begin
+      FPipeline.ExecuteError(Ctx, E);
+      if FStore <> nil then
+        FStore.Pipeline.ExecuteError(Ctx, E);
+      raise;
+    end;
+  end;
 end;
 
 function TBVStoreSlice.Get(const AGetterName: string): JSValue;
@@ -355,6 +422,7 @@ var
 begin
   inherited Create;
   FSlices := TJSObject.new;
+  FPipeline := TBVMiddlewarePipeline.Create;
 
   if AInitialState <> nil then
     InitVal := AInitialState
@@ -376,7 +444,20 @@ begin
     SliceObj := TBVStoreSlice(FSlices[Keys[i]]);
     SliceObj.Free;
   end;
+  FPipeline.Free;
   inherited Destroy;
+end;
+
+function TBVStore.Use(AMiddleware: TBVMiddleware): TBVStore;
+begin
+  FPipeline.Add(AMiddleware);
+  Result := Self;
+end;
+
+function TBVStore.Use(ABefore: TBVMiddlewareBeforeProc; AAfter: TBVMiddlewareAfterProc): TBVStore;
+begin
+  FPipeline.Add(TBVFunctionalMiddleware.Create('GlobalAnonymous', ABefore, AAfter));
+  Result := Self;
 end;
 
 function TBVStore.DefineSlice(const AName: string; AInitialState: JSValue): TBVStoreSlice;
