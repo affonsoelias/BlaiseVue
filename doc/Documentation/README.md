@@ -14,18 +14,23 @@ Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, an
 
 ---
 
-## 🌟 The BlaiseVue 4.3 Architecture
+## 🌟 The BlaiseVue 4.4 Enterprise Universal Architecture
 
-BlaiseVue delivers a complete, unified Object Pascal ecosystem for modern software engineering:
+BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
 
-- 🛡️ **End-to-End Type-Safe Pascal RPC**: Shared service contracts (`ICustomerService`), automated client proxies (`bv mormot rpc`), dual HTTP/WebSocket transport, and compile-time API validation with Synopse mORMot 2.
-- 📊 **LiveBindings & Reactive `TBVDataSet`**: In-memory cursor navigation (`First`, `Next`, `Prior`, `Last`), transactional buffering (`Append`, `Edit`, `Post`, `Delete`), two-way `b-field` directive, delta tracking (`FDelta`), and native `<bv-datagrid :dataset="myDS">` integration.
-- 💎 **Idiomatic Zero-ASM Object Pascal DX**: Clean, modern Pascal view layer (`BVPascalDX.pas`) without inline `asm` blocks, featuring native dialogs, reactive form mutations, and typed API helpers.
-- 📱 **Universal Hybrid Mobile (Capacitor & Android .apk)**: Scaffolding and compilation of native Android applications (`bv mobile build android`) paired with the `@blaise-ui-mobile` Ionic component kit.
-- 🖥️ **Ultra-Lightweight Native Desktop (WebUI & Lazarus IDE)**: Standalone native desktop applications (<10 MB, 40 MB RAM) running identically across Windows, Linux, and macOS without Electron bloat.
-- ⚡ **WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Near-native binary execution for compute-intensive routines in the browser.
-- 🎨 **Master Component Catalog (53+ Widgets)**: Native suites for general UI (`@blaise-ui`), Bootswatch themes (`@blaise-themes`), 2,000+ vector icons (`@blaise-icons`), reactive Chart.js (`@blaise-charts`), and developer cockpit (`@blaise-studio`).
-- 🚀 **Full-Stack mORMot 2 Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) generating sub-20 MB Alpine containers with <15ms startup time.
+- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates (v4.4)**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
+- **💾 Offline-First `TBVDataSet` & Delta Sync (v4.4)**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
+- **🔗 Relational Master-Detail CRUD & Multi-Database ORM (v4.4)**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
+- **🏎️ High-Performance Virtual Scrolling (v4.4)**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
+- **📦 Standalone Library Scaffolding & Packaging (v4.4)**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
+- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset (v4.4)**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
+- **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
+- **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. In-memory cursor navigation (`First`, `Next`, `Prior`, `Last`), transactional buffering (`Append`, `Edit`, `Post`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), and two-way `b-field` directive.
+- **📱 Universal Hybrid Mobile Suite (Capacitor & `@blaise-ui-mobile`)**: 22+ adaptive Ionic components with Cupertino (iOS) and Material Design (Android) aesthetics, touch gestures, and safe-area notch handling.
+- **🖥️ Ultra-Lightweight Native Desktop (`bv desktop`)**: Standalone native desktop applications (<10 MB, 40 MB RAM) running across Windows, Linux, and macOS without Electron overhead.
+- **⚡ WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Near-native binary execution for compute-intensive routines in the browser.
+- **🎨 Master Component Catalog (60+ Production Widgets)**: Official packages for UI (`@blaise-ui`), Bootswatch themes (`@blaise-themes`), 2,000+ vector icons (`@blaise-icons`), reactive Chart.js (`@blaise-charts`), and vector PDF/Excel reports (`@blaise-reports`).
+- **🚀 Full-Stack mORMot 2 Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) generating sub-20 MB Alpine containers with <15ms startup time.
 
 ---
 
