@@ -2076,7 +2076,7 @@ function GenerateComponentUnit(const UnitName, TagName, BVFileName: string; cons
 var
   UsesLine: string;
 begin
-  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet';
+  UsesLine := 'JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet';
   if Parsed.HasRouter then
     UsesLine := UsesLine + ', BVRouting';
 
@@ -2195,7 +2195,7 @@ begin
   UniqueUnits := TStringList.Create;
   try
 
-    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet';
+    UsesLine := 'JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, BVPascalDX, BVDataSet';
     if Parsed.HasRouter then
       UsesLine := UsesLine + ', BVRouting';
 
