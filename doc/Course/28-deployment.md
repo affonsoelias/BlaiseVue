@@ -1,4 +1,4 @@
-# 🐳 Module 27: Micro-Containers, CI/CD & Deployment
+# 🐳 Module 28: Micro-Containers, CI/CD & Deployment
 **Deploy sub-20MB production micro-containers with multi-stage Docker builds and automated CI/CD.**
 
 In modern cloud environments (Kubernetes, AWS ECS, Google Cloud Run, DigitalOcean), container image size and startup latency directly dictate your cloud hosting bills and auto-scaling responsiveness.
@@ -167,4 +167,4 @@ jobs:
 
 ---
 
-[⬅️ Module 26: Unit & E2E Testing Automation](26-testing.md) | [🏠 Course Index](README.md) | [Module 28: Capstone Enterprise Challenge ➡️](28-capstone.md)
+[⬅️ Module 27: Unit & E2E Testing Automation](27-testing.md) | [🏠 Course Index](README.md) | [Module 29: Capstone Enterprise Challenge ➡️](29-capstone.md)

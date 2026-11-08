@@ -138,4 +138,4 @@ When publishing to Google Play:
 
 ---
 
-[⬅️ Module 20: Mobile UI Components & Touch Gestures](20-mobile-ui.md) | [🏠 Course Index](README.md) | [Module 22: Blaise UI Design System & Themes ➡️](22-themes.md)
+[⬅️ Module 20: Mobile UI Components & Touch Gestures](20-mobile-ui.md) | [🏠 Course Index](README.md) | [Module 22: Native Lightweight Desktop Applications ➡️](22-desktop-webui.md)

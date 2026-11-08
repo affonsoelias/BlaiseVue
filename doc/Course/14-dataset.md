@@ -208,9 +208,74 @@ end;
 
 ---
 
-## 💾 5. Offline Delta Sync & Change Tracking
+## ⚡ 5. Rendering 100,000+ Records at 60 FPS: Virtual Scrolling
 
-One of the greatest advantages of `TBVDataSet` is its built-in transactional delta tracking. Every time you call `Post` on an updated or newly inserted record, `TBVDataSet` does not overwrite the baseline original. Instead, it logs an entry in its internal **Delta Log**:
+In enterprise applications, datasets often contain tens of thousands of records (e.g., audit logs, historical ledgers, warehouse inventory). 
+
+If you attempt to render 100,000 table rows using standard `b-for`, the browser tab will freeze or crash due to DOM element exhaustion (allocating hundreds of thousands of HTML elements).
+
+BlaiseVue solves this with the **Virtual Scrolling Engine (`bv-virtual-scroll`)**:
+
+```html
+<template>
+  <div class="grid-container">
+    <h3>Enterprise Audit Log (100,000 Rows)</h3>
+    
+    <!-- Virtual Scroll Container: Recycles ~30 DOM elements with O(1) memory -->
+    <bv-virtual-scroll 
+      :dataset="auditDS" 
+      :row-height="36" 
+      viewport-height="400px">
+      <template #row="{ row, index }">
+        <div class="log-row" :class="{ selected: auditDS.RecNo = index }">
+          <span class="col-id">#{{ row.id }}</span>
+          <span class="col-user">{{ row.userName }}</span>
+          <span class="col-action">{{ row.action }}</span>
+          <span class="col-date">{{ row.timestamp }}</span>
+        </div>
+      </template>
+    </bv-virtual-scroll>
+  </div>
+</template>
+```
+
+### How Virtual Scrolling Works:
+1. **Constant $O(1)$ DOM Size**: The browser renders only the visible rows plus a small buffer of 5 rows above and below (~30 elements in total).
+2. **Hardware-Accelerated Recycling**: As the user scrolls, exiting elements are moved to new positions via `transform: translate3d(0, y, 0)` without destroying or creating DOM nodes.
+3. **Rock-Solid 60 FPS**: Zero garbage collection pauses, smooth scrolling on desktop and mobile touchscreens!
+
+---
+
+## 💾 6. Offline-First Persistence with IndexedDB
+
+When users lose internet connectivity (e.g., technicians in the field, mobile sales reps in remote warehouses), `TBVDataSet` continues functioning uninterrupted using **IndexedDB**:
+
+```pascal
+// 1. Save dataset and uncommitted deltas to browser storage
+procedure TOrderForm.SaveOffline;
+begin
+  ds.SaveToStorage('offline_orders');
+  ShowToast('Data saved locally for offline use.');
+end;
+
+// 2. Restore dataset when launching the app offline
+procedure TOrderForm.LoadOffline;
+begin
+  ds.LoadFromStorage('offline_orders', 
+    procedure(Success: Boolean)
+    begin
+      if Success then
+        ShowToast('Loaded ' + IntToStr(ds.RecordCount) + ' records from local cache!');
+    end
+  );
+end;
+```
+
+---
+
+## 🔄 7. Transactional Delta Log & Conflict Resolution
+
+Instead of sending full tables over the wire, `TBVDataSet` maintains an internal **Delta Log (`FDelta`)**:
 
 ```pascal
 var
@@ -219,25 +284,34 @@ begin
   // Generates a compact payload containing ONLY modified, added, and deleted rows!
   DeltaJSON := ds.GetDeltaJSON;
   
-  // Send the delta packet to your backend REST or RPC endpoint:
-  StoreDispatch('customers/syncDeltas', DeltaJSON);
-  
-  // Once the server confirms persistence, commit changes locally:
-  ds.AcceptChanges;
+  // Transmit delta packet to backend mORMot 2 server:
+  RpcClient.ApplyDeltas(DeltaJSON).Then(
+    procedure(Success: Boolean)
+    begin
+      if Success then
+      begin
+        // Commit local state once server confirms persistence:
+        ds.AcceptChanges;
+        ShowToast('Changes synchronized successfully!');
+      end;
+    end
+  );
 end;
 ```
 
-If the user goes offline or loses network connectivity, call `ds.SaveToStorage('customers_offline')` to serialize the entire dataset and its delta log into the browser's indexed storage!
+### Optimistic Concurrency Control:
+The delta packet contains both the `original` values and the `changes`. If another user modified the record on the server in the interim, the mORMot 2 backend detects the collision, rejects the conflicting update, and returns the current record state so the client can prompt the user to resolve the conflict gracefully.
 
 ---
 
 ## 🏋️ Practical Exercise
 
 1. Create a `TBVDataSet` in your project view with fields `sku` (string), `description` (string), `quantity` (integer), and `unitPrice` (float).
-2. Load seed data representing five warehouse items.
-3. Build a reactive UI with `b-field` inputs for editing the selected item.
-4. Add a computed property or Pascal function that computes the **Total Inventory Value** (`quantity * unitPrice`) summing across all records by iterating from `ds.First` to `ds.Next` until `ds.Eof`.
-5. Verify that editing any quantity immediately reflects in the live UI!
+2. Populate the dataset with 1,000 generated records in a loop.
+3. Render the dataset using `<bv-virtual-scroll>` and verify smooth 60 FPS scrolling.
+4. Build a reactive UI with `b-field` inputs for editing the selected item.
+5. Add a computed property or Pascal function that computes the **Total Inventory Value** (`quantity * unitPrice`) summing across all records by iterating from `ds.First` to `ds.Next` until `ds.Eof`.
+6. Inspect `ds.GetDeltaJSON` after editing three records to see the compact delta packet format!
 
 ---
 
@@ -245,6 +319,7 @@ If the user goes offline or loses network connectivity, call `ds.SaveToStorage('
 
 - **[LiveBindings & Reactive TDataSet Manual](../Documentation/42-livebindings-dataset.md)**: Complete API specification for `TBVDataSet`, typed fields (`AsInteger`, `AsFloat`, `AsDateTime`), and state transitions.
 - **[Offline TDataSet & Delta Synchronization](../Documentation/45-offline-dataset-delta-sync.md)**: Deep-dive into delta packets, optimistic concurrency, and local storage serialization.
+- **[Virtual Scrolling Architecture Guide](../Architecture/06-Virtual-DOM-and-Virtual-Scroll.md)**: Mathematical windowing algorithm and $O(1)$ memory DOM recycling.
 
 ---
 

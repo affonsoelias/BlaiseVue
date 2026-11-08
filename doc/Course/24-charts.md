@@ -1,4 +1,4 @@
-# 📊 Module 23: Data Visualization with Blaise Charts
+# 📊 Module 24: Data Visualization with Blaise Charts
 **Create hardware-accelerated, 60 FPS interactive charts and graphs using strongly-typed Object Pascal.**
 
 Modern executive dashboards, ERPs, and monitoring tools require clear, interactive visual analytics. Rendering complex datasets into responsive charts should not require writing thousands of lines of raw JavaScript canvas calls.
@@ -229,4 +229,4 @@ end;
 
 ---
 
-[⬅️ Module 22: Blaise UI Design System & Themes](22-themes.md) | [🏠 Course Index](README.md) | [Module 24: Enterprise Reporting with Blaise Reports ➡️](24-reports.md)
+[⬅️ Module 23: Blaise UI Design System & Themes](23-themes.md) | [🏠 Course Index](README.md) | [Module 25: Enterprise Reporting with Blaise Reports ➡️](25-reports.md)

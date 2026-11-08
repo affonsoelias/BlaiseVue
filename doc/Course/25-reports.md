@@ -1,4 +1,4 @@
-# 📑 Module 24: Enterprise Reporting with Blaise Reports
+# 📑 Module 25: Enterprise Reporting with Blaise Reports
 **Generate native Vector PDF documents, Excel spreadsheets, thermal receipts, and print layouts in 100% Object Pascal.**
 
 Every enterprise ERP, CRM, and accounting application eventually faces the same unavoidable requirement: generating professional invoices, billing statements, warehouse picking lists, and executive audit summaries.
@@ -180,4 +180,4 @@ mounted:
 
 ---
 
-[⬅️ Module 23: Data Visualization with Blaise Charts](23-charts.md) | [🏠 Course Index](README.md) | [Module 25: Visual Development with Blaise Studio ➡️](25-studio.md)
+[⬅️ Module 24: Data Visualization with Blaise Charts](24-charts.md) | [🏠 Course Index](README.md) | [Module 26: Visual Development with Blaise Studio ➡️](26-studio.md)

@@ -1,4 +1,4 @@
-# 🎨 Module 22: Blaise UI Design System & Themes
+# 🎨 Module 23: Blaise UI Design System & Themes
 **Build beautiful, responsive user interfaces with the official BlaiseUI component suite and Bootswatch themes.**
 
 A great enterprise application needs more than raw business logic: it needs polished visual presentation, coherent brand styling, responsive mobile-to-desktop layouts, and seamless Dark/Light mode switching.
@@ -277,4 +277,4 @@ When you execute `bv build --release`, BlaiseVue's build pipeline performs **Tre
 
 ---
 
-[⬅️ Module 21: Emulation, Live Debugging & Device Build](21-mobile-build.md) | [🏠 Course Index](README.md) | [Module 23: Data Visualization with Blaise Charts ➡️](23-charts.md)
+[⬅️ Module 22: Native Lightweight Desktop Applications](22-desktop-webui.md) | [🏠 Course Index](README.md) | [Module 24: Data Visualization with Blaise Charts ➡️](24-charts.md)

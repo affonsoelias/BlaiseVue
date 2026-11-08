@@ -156,7 +156,40 @@ bv clean
 
 ---
 
-## 🎨 4. Managing Extensions and Visual Themes
+## 🔒 4. Compile-Time Type Safety & CSP Security (`bv check` & `bv.fastEval`)
+
+One of the greatest hazards in traditional web development is discovering typo bugs at runtime — when an end-user clicks a button in production and nothing happens because of a misspelled variable in an HTML template (`{{ usreName }}`).
+
+BlaiseVue solves this at compile time using two enterprise-grade innovations:
+
+### 1. Compile-Time Template Type Checking (`bv check`)
+Before building or deploying, run:
+```bash
+bv check
+```
+The CLI parses your `.bv` files, extracts the Abstract Syntax Tree (AST) of every template expression, and compares every identifier and method call against the strongly typed Pascal declarations in your `<script>` block!
+
+```text
+[*] Scanning Single File Components for type consistency...
+[-] Checking src/views/UserProfile.bv...
+    ERROR at UserProfile.bv(14,22):
+    Template expression references unknown identifier 'usreSalary'.
+    Did you mean 'userSalary' (Double) declared at line 48?
+[!] Type check failed: 1 error found.
+```
+This guarantees that **zero template identifier errors slip into production**!
+
+### 2. Enterprise Banking Security: Zero-`with()` & Zero-`eval()` (`bv.fastEval`)
+Financial institutions, government agencies, and defense systems enforce strict **Content Security Policy (CSP)** rules that prohibit `unsafe-eval`.
+
+Historically, lightweight JavaScript frameworks relied on dynamic `eval()` or JavaScript's `with(this) { ... }` to evaluate template expressions. In BlaiseVue 4.4:
+- The compiler includes its own recursive descent **AST Fast Evaluator (`bv.fastEval`)**.
+- Expressions like `{{ user.salary * 1.15 >= bonusThreshold ? 'Eligible' : 'Standard' }}` are compiled into an AST tree and evaluated safely in memory.
+- **100% Strict CSP Compliance**: Zero dynamic string evaluation, zero `with()` de-optimizations in the V8 engine, and complete protection against template injection vulnerabilities!
+
+---
+
+## 🎨 5. Managing Extensions and Visual Themes
 
 The `bv` CLI also manages developer extensions and theme styling:
 
@@ -180,17 +213,18 @@ When you run `bv build`, only the themes registered with `bv theme add` are bund
 
 ---
 
-## 🎯 5. Practical Exercise: Module 10
+## 🎯 6. Practical Exercise: Module 10
 
 1. Open your terminal in your project directory.
 2. Run `bv doctor` and verify all green `[v]` status indicators.
-3. Scaffold a new component:
+3. Run `bv check` to verify that your existing templates pass static AST type verification.
+4. Scaffold a new component:
    ```bash
    bv g c StatCard
    ```
-4. Verify that `src/components/StatCard.bv` and `tests/components/StatCard.test.pas` were created.
-5. Run `bv list c` to verify `StatCard` is listed.
-6. Run `bv test` to watch your newly generated test pass cleanly with 100% green!
+5. Verify that `src/components/StatCard.bv` and `tests/components/StatCard.test.pas` were created.
+6. Run `bv list c` to verify `StatCard` is listed.
+7. Run `bv test` to watch your newly generated test pass cleanly with 100% green!
 
 ---
 
@@ -199,6 +233,7 @@ When you run `bv build`, only the themes registered with `bv theme add` are bund
 - How to scaffold components, route views, and domain services instantly with `bv g`.
 - How to list, delete, and rename elements safely with `bv list`, `bv remove`, and `bv rename`.
 - How to start live dev mode with `bv dev` and run diagnostics with `bv doctor`.
+- How to achieve compile-time template safety with `bv check` and bank-grade CSP compliance with `bv.fastEval`.
 - How to build production bundles with `bv build --release`.
 - How to manage and optimize application themes with `bv theme` (`list`, `add`, `use`).
 

@@ -1,4 +1,4 @@
-# 🧪 Module 26: Unit & E2E Testing Automation
+# 🧪 Module 27: Unit & E2E Testing Automation
 **Code with supreme confidence: automated Pascal unit tests and headless browser end-to-end testing.**
 
 Have you ever made a small tweak to a calculation or button handler, only to accidentally break a critical business workflow somewhere else in your application? In software engineering, this is known as a **Regression**.
@@ -182,4 +182,4 @@ my-app/
 
 ---
 
-[⬅️ Module 25: Visual Development with Blaise Studio](25-studio.md) | [🏠 Course Index](README.md) | [Module 27: Micro-Containers, CI/CD & Deployment ➡️](27-deployment.md)
+[⬅️ Module 26: Visual Development with Blaise Studio](26-studio.md) | [🏠 Course Index](README.md) | [Module 28: Micro-Containers, CI/CD & Deployment ➡️](28-deployment.md)

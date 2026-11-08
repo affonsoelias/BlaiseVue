@@ -1,9 +1,9 @@
-# 🏆 Module 28: The Capstone Enterprise Challenge
-**Consolidate all 28 modules: architect, build, test, and deploy a Universal Full-Stack ERP Operations Hub in 100% Object Pascal.**
+# 🏆 Module 29: The Capstone Enterprise Challenge
+**Consolidate all 29 modules: architect, build, test, and deploy a Universal Full-Stack ERP Operations Hub in 100% Object Pascal.**
 
 Congratulations, developer! 🎉
 
-You have completed an epic, 28-module journey through the modern Pascal web and mobile universe. You have learned:
+You have completed an epic, 29-module journey through the modern Pascal web, mobile, and desktop universe. You have learned:
 - Fundamental Pascal reactivity, directives (`b-if`, `b-for`, `b-model`), computed properties, and fragments.
 - Modular component architecture, props, custom events, and History API routing.
 - Declarative form validation (`b-validate`), DOM references (`b-ref`), and component patterns (slots, provide/inject, transitions).
@@ -337,4 +337,4 @@ Go forth and build remarkable systems with **BlaiseVue**! 🚀✨
 
 ---
 
-[⬅️ Module 27: Micro-Containers, CI/CD & Deployment](27-deployment.md) | [🏠 Course Index](README.md)
+[⬅️ Module 28: Micro-Containers, CI/CD & Deployment](28-deployment.md) | [🏠 Course Index](README.md)

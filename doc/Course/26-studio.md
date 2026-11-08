@@ -1,4 +1,4 @@
-# 🎛️ Module 25: Visual Development with Blaise Studio
+# 🎛️ Module 26: Visual Development with Blaise Studio
 **Supercharge your productivity with BlaiseVue Studio: visual AST inspection, WebSocket telemetry, and 1-click test runners.**
 
 One of Delphi and Lazarus's most beloved traits has always been **RAD (Rapid Application Development)**: having visual clarity over components, event handlers, and data flows.
@@ -115,4 +115,4 @@ end;
 
 ---
 
-[⬅️ Module 24: Enterprise Reporting with Blaise Reports](24-reports.md) | [🏠 Course Index](README.md) | [Module 26: Unit & E2E Testing Automation ➡️](26-testing.md)
+[⬅️ Module 25: Enterprise Reporting with Blaise Reports](25-reports.md) | [🏠 Course Index](README.md) | [Module 27: Unit & E2E Testing Automation ➡️](27-testing.md)
