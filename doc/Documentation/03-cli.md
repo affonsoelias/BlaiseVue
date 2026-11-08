@@ -117,25 +117,29 @@ bv new t SimpleBadge
 - **If it is a service in `src/services/`:** created in `tests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
 - **Otherwise:** created in `tests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
 
-### 5. List Elements: `bv list <c|v|s|t|lib>`
+### 5. List Elements: `bv list <c|v|s|store|fsm|t|lib>`
 Lists registered files across the project:
 - `bv list c`: Lists components in `src/components/`.
 - `bv list v`: Lists views in `src/views/`.
 - `bv list s`: Lists pure Pascal service units in `src/services/`.
+- `bv list store`: Lists all BlaiseX store slices in `src/stores/`.
+- `bv list fsm`: Lists all finite state machines in `src/machines/`.
 - `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
 - `bv list lib`: Lists installed libraries in `lib/`.
 
-### 6. Remove Elements: `bv remove <component|view|service|test> <Name>`
+### 6. Remove Elements: `bv remove <component|view|service|store|fsm|test> <Name>`
 Safely purges the source file, generated Pascal units in `generated/`, and associated test files across subfolders:
 ```bash
 bv remove component ProductCard     # or: bv remove c ProductCard
 bv remove view OrderHistory         # or: bv remove v OrderHistory
 bv remove service PaymentProcessor  # or: bv remove s PaymentProcessor
+bv remove store Cart                # or: bv remove store Cart
+bv remove fsm OrderFlow             # or: bv remove fsm OrderFlow
 bv remove test SimpleBadge          # or: bv remove t SimpleBadge
 ```
 
-### 9. Rename Elements: `bv rename <component|view|service|project> <OldName> [NewName]`
-Intelligently refactors components, views, services, or the entire project, updating source files, internal Pascal declarations, unit names, test suites, router configurations, and global registry entries:
+### 9. Rename Elements: `bv rename <component|view|service|store|fsm|project> <OldName> [NewName]`
+Intelligently refactors components, views, services, stores, state machines, or the entire project, updating source files, internal Pascal declarations, unit names, test suites, router configurations, and global registry entries:
 
 ```bash
 # Rename a pure Pascal service and its unit tests:
@@ -153,6 +157,12 @@ bv rename view OrderHistory MyOrders
 # Shorthand:
 bv rename v OrderHistory MyOrders
 
+# Rename a BlaiseX store slice and associated tests:
+bv rename store Cart ShoppingCart
+
+# Rename a Finite State Machine and associated tests:
+bv rename fsm OrderFlow CheckoutFlow
+
 # Rename the entire project across package.json, src/app.bv, uAppVersion.pas, index.html, and registry:
 bv rename project my-new-erp
 # Shorthand:
@@ -161,6 +171,8 @@ bv rename p my-new-erp
 * **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/services/<New>.test.pas`.
 * **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
 * **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
+* **Stores**: Renames `src/stores/u<Old>Store.pas` to `src/stores/u<New>Store.pas`, refactors `unit u<New>Store;`, updates `Init<New>Store` and `DefineStore('<new>', ...)`, and renames `tests/stores/<New>Store.test.pas`.
+* **FSMs**: Renames `src/machines/u<Old>Machine.pas` to `src/machines/u<New>Machine.pas`, refactors `unit u<New>Machine;`, updates `Create<New>Machine` and `TBVStateMachine.Create('<New>')`, and renames `tests/machines/<New>Machine.test.pas`.
 * **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
 
 ---

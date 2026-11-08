@@ -333,7 +333,7 @@ button {
 
 ---
 
-## 📋 6. Inspecting and Cleaning Slices via CLI
+## 📋 6. Inspecting, Renaming, and Cleaning Slices via CLI
 
 The BlaiseVue CLI gives you total clarity over all state slices and machines configured in your project:
 
@@ -344,11 +344,17 @@ bv list store
 # List all registered finite state machines
 bv list fsm
 
+# Smart rename a store slice across files and unit tests:
+bv rename store Cart ShoppingCart
+
+# Smart rename a finite state machine across files and unit tests:
+bv rename fsm OrderFlow CheckoutFlow
+
 # Safely remove a store slice and its companion test
-bv remove store Cart
+bv remove store ShoppingCart
 
 # Safely remove an FSM and its companion test
-bv remove fsm OrderFlow
+bv remove fsm CheckoutFlow
 ```
 
 ---

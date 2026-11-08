@@ -395,16 +395,20 @@ bv g fsm OrderFlow
 # Test created: tests/machines/OrderFlowMachine.test.pas
 ```
 
-### 8.3 List and Remove Commands
+### 8.3 List, Rename and Remove Commands
 
 ```bash
 # List all registered stores and machines
 bv list store
 bv list fsm
 
+# Smart rename a store slice or FSM across units and unit tests
+bv rename store Cart ShoppingCart
+bv rename fsm OrderFlow CheckoutFlow
+
 # Safely delete a store slice or FSM and its associated test
-bv remove store Cart
-bv remove fsm OrderFlow
+bv remove store ShoppingCart
+bv remove fsm CheckoutFlow
 ```
 
 ### 8.4 Running Tests

@@ -73,15 +73,41 @@ bv list v
 # List all domain services:
 bv list s
 
-# Safely remove a component AND its associated unit test file in one go:
+# List all BlaiseX store slices:
+bv list store
+
+# List all finite state machines:
+bv list fsm
+
+# List all test files:
+bv list t
+
+# Safely remove an entity AND its associated unit test file in one go:
 bv remove c UserBadge
+bv remove store Cart
+bv remove fsm OrderFlow
 ```
 
 ### 5. Smart Renaming Across the Codebase (`bv rename`)
-Renaming files manually can lead to broken references. `bv rename` updates filenames and internal Pascal unit names simultaneously:
+Renaming files manually can lead to broken references, stale units, and compilation errors. `bv rename` updates filenames, internal Pascal unit declarations, factory functions, and test files simultaneously:
 ```bash
 # Rename component UserBadge -> ProfileBadge across all files:
 bv rename c UserBadge ProfileBadge
+
+# Rename route view OrderHistory -> MyOrders (and syncs router in app.bv):
+bv rename v OrderHistory MyOrders
+
+# Rename pure domain service TaxCalculator -> FiscalEngine:
+bv rename s TaxCalculator FiscalEngine
+
+# Rename BlaiseX store slice Cart -> ShoppingCart:
+bv rename store Cart ShoppingCart
+
+# Rename Finite State Machine OrderFlow -> CheckoutFlow:
+bv rename fsm OrderFlow CheckoutFlow
+
+# Rename the entire project and sync configuration:
+bv rename project meu-novo-app
 ```
 
 ---
