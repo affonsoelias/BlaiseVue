@@ -20,7 +20,7 @@ unit BVStore;
 
 interface
 
-uses JS, Web, SysUtils, BVReactivity, BVFSM, BVMiddleware;
+uses JS, Web, SysUtils, BVReactivity, BVFSM, BVMiddleware, BVStoreHistory;
 
 type
   TBVStore = class;
@@ -45,6 +45,7 @@ type
     FMachines: TJSObject;       { Registry of attached TBVStateMachine instances }
     FSubscribers: TJSArray;     { Array of TBVStoreSubscriberProc }
     FPipeline: TBVMiddlewarePipeline;
+    FHistory: TBVStoreHistory;
     function BuildActionContext: TJSObject;
   public
     constructor Create(AStore: TBVStore; const AName: string; AInitialState: JSValue);
@@ -64,6 +65,14 @@ type
     function Get(const AGetterName: string): JSValue;
     function FSM(const AMachineName: string): TBVStateMachine;
 
+    { Time-Travel & History Controls }
+    function CanUndo: Boolean;
+    function CanRedo: Boolean;
+    function Undo: Boolean;
+    function Redo: Boolean;
+    function TimeTravel(Index: Integer): Boolean;
+    procedure EnableHistory(AMaxSnapshots: Integer = 50);
+
     { State Manipulation }
     procedure Patch(AChanges: JSValue);
     procedure Reset;
@@ -77,6 +86,7 @@ type
     property State: JSValue read FState;
     property Store: TBVStore read FStore;
     property Pipeline: TBVMiddlewarePipeline read FPipeline;
+    property History: TBVStoreHistory read FHistory;
   end;
 
   { Root State Store Container }
@@ -168,10 +178,17 @@ begin
 
   FInitialStateRaw := SnapshotToJSON(InitVal);
   FState := DefineReactive(InitVal);
+
+  FHistory := TBVStoreHistory.Create(50, procedure(const AStateJSON: string)
+    begin
+      Patch(JSONToSnapshot(AStateJSON));
+    end);
+  FHistory.RecordSnapshot('@@INIT', nil, FInitialStateRaw);
 end;
 
 destructor TBVStoreSlice.Destroy;
 begin
+  FHistory.Free;
   FPipeline.Free;
   inherited Destroy;
 end;
@@ -275,6 +292,9 @@ begin
     if Assigned(MutProc) then
       MutProc(FState, Ctx.Payload);
 
+    if not FHistory.IsRestoring then
+      FHistory.RecordSnapshot(CleanName, Ctx.Payload, SnapshotToJSON(FState));
+
     Ctx.Complete(FState);
     FPipeline.ExecuteAfter(Ctx);
     if FStore <> nil then
@@ -360,6 +380,37 @@ begin
     Result := GtrFunc(FState)
   else
     Result := nil;
+end;
+
+function TBVStoreSlice.CanUndo: Boolean;
+begin
+  Result := FHistory.CanUndo;
+end;
+
+function TBVStoreSlice.CanRedo: Boolean;
+begin
+  Result := FHistory.CanRedo;
+end;
+
+function TBVStoreSlice.Undo: Boolean;
+begin
+  Result := FHistory.Undo;
+end;
+
+function TBVStoreSlice.Redo: Boolean;
+begin
+  Result := FHistory.Redo;
+end;
+
+function TBVStoreSlice.TimeTravel(Index: Integer): Boolean;
+begin
+  Result := FHistory.JumpTo(Index);
+end;
+
+procedure TBVStoreSlice.EnableHistory(AMaxSnapshots: Integer);
+begin
+  FHistory.Enabled := True;
+  FHistory.MaxSnapshots := AMaxSnapshots;
 end;
 
 procedure TBVStoreSlice.Patch(AChanges: JSValue);
@@ -566,11 +617,39 @@ initialization
   if not Assigned(GStore) then
     GStore := TBVStore.Create(TJSObject.new);
 
-  { Register BlaiseX store in global browser window anchor }
+  { Register BlaiseX store and DevTools bridge in global browser window anchor }
   if (JS.isObject(window)) then
   begin
     TJSObject(window)['__BV_PRO_STORE__'] := GStore.State;
     TJSObject(window)['__BLAISEX_STORE__'] := GStore;
+
+    asm
+      window.__BLAISEX_DEVTOOLS__ = {
+        getSlices: function() {
+          return Object.keys(pas.BVStore.GetStore().FSlices);
+        },
+        getHistory: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.FHistory.FSnapshots : [];
+        },
+        undo: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.Undo() : false;
+        },
+        redo: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.Redo() : false;
+        },
+        timeTravel: function(sliceName, idx) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.TimeTravel(idx) : false;
+        },
+        exportAuditLog: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.FHistory.ExportJSON() : '{}';
+        }
+      };
+    end;
   end;
 
 end.
