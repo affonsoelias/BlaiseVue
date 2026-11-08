@@ -1,7 +1,7 @@
 # 🎓 BlaiseVue Complete Course: From Zero to Ninja
-**Build Modern, Reactive Web Applications with the Power and Clarity of Object Pascal.**
+**Build Modern, Reactive Web, Mobile, and Full-Stack Applications with the Power and Clarity of Object Pascal.**
 
-Welcome to the official **BlaiseVue** training course! This curriculum is designed for **anyone who wants to build web applications**, even if you have never programmed before or have only basic knowledge of Pascal or HTML.
+Welcome to the official **BlaiseVue** training course! This curriculum is designed for **anyone who wants to build web, mobile, and enterprise full-stack applications**, even if you have never programmed before or have only basic knowledge of Pascal or HTML.
 
 You do not need years of JavaScript study, complex build toolchains, or messy configurations. We build your knowledge step-by-step with simple explanations, everyday analogies, and practical, runnable examples! 🛡️✨🚀
 
@@ -13,7 +13,7 @@ Imagine you want to build a modern web application — the kind that updates on 
 
 Historically, doing this required mastering dozens of complex JavaScript libraries and build tools. **BlaiseVue changes that**:
 1. **You write in Object Pascal**: A globally trusted language known for its clean readability, strong typing, speed, and safety.
-2. **BlaiseVue compiles and connects everything for you**: It takes your Pascal code and produces an ultra-fast web application that runs natively in any modern browser (Chrome, Firefox, Edge, Safari) and on mobile devices!
+2. **BlaiseVue compiles and connects everything for you**: It takes your Pascal code and produces an ultra-fast web application that runs natively in any modern browser (Chrome, Firefox, Edge, Safari), on mobile devices (Android & iOS), and on native desktops!
 3. **Instant Reactivity**: When you update a variable in Pascal, the user interface updates automatically, just like a spreadsheet formula in Microsoft Excel!
 
 ---
@@ -37,42 +37,42 @@ The curriculum is organized into 6 progressive learning tracks that take you ste
 ### ⚡ Track 2: Advanced Component Architecture & State (Modules 09 - 13)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **09** | [DOM Access with $refs & Lifecycles](09-refs.md) | Autofocusing inputs, mounted/created lifecycle hooks, and direct element access. |
+| **09** | [DOM Access with $refs & Lifecycles](09-refs.md) | Autofocusing inputs, mounted/created lifecycle hooks, and direct element access via `b-ref`. |
 | **10** | [The CLI Scaffolding Maestro](10-cli.md) | Instant code generation: `bv g c`, `bv g v`, `bv g s`, `bv list`, `bv remove`, `bv rename`. |
 | **11** | [Pro Architectural Features](11-pro-features.md) | Flexible slots, scoped slots, FLIP list transitions, and provide/inject dependency injection. |
 | **12** | [Declarative Form Validation (b-validate)](12-validation.md) | Rules (`required`, `email`, `min:N`), reactive `$errors`, touch states (`$v`), and `$validate()`. |
 | **13** | [BlaiseX 2.0 & Finite State Machines](13-blaisex-fsm.md) | Domain slices (`bv g store`), FSM flows (`bv g fsm`), atomic mutations, and time-travel undo/redo. |
 
-### 🗄️ Track 3: Enterprise Data & Full-Stack Pascal (Modules 14 - 18)
+### 🗄️ Track 3: Enterprise Data & Full-Stack mORMot 2 (Modules 14 - 18)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
 | **14** | [In-Browser Database: TBVDataSet & LiveBindings](14-dataset.md) | `TDataSet` in the browser, cursor navigation, transactional buffering, and `b-field`. |
-| **15** | [Full-Stack Pascal: Native Backend with mORMot 2](15-mormot-core.md) | Standalone Pascal server: `bv mormot init`, `bv mormot run`, `bv mormot build`, `bv mormot status`, `bv mormot kill`. |
-| **16** | [The Full-Stack CRUD Generator](16-mormot-crud.md) | One-command full-stack generation: `bv mormot crud <Model>` (ORM model, REST API, reactive DataGrid). |
-| **17** | [Enterprise JWT Authentication & RBAC](17-mormot-auth.md) | Automated auth suite: `bv mormot auth` (JWT tokens, route guards `requiresAuth`, role control). |
-| **18** | [Type-Safe Pascal RPC & OpenAPI Swagger](18-mormot-rpc.md) | `bv mormot rpc` client proxies, compile-time API validation, and `bv mormot docs` Swagger UI. |
+| **15** | [Full-Stack mORMot 2 Setup & Architecture](15-mormot-init.md) | Standalone Pascal server: `bv mormot init`, `bv mormot run`, `bv mormot build`, `bv mormot status`, `bv mormot kill`. |
+| **16** | [Scaffolding Enterprise CRUD & Reactive DataGrid](16-mormot-crud.md) | One-command full-stack generation: `bv mormot crud <Model>` (ORM model, REST API, reactive DataGrid). |
+| **17** | [Full-Stack JWT Authentication & Route Guards](17-mormot-auth.md) | Automated auth suite: `bv mormot auth` (JWT tokens, route guards `requiresAuth`, role control). |
+| **18** | [High-Performance RPC & SOA Client Proxies](18-mormot-rpc.md) | `bv mormot rpc` client proxies, compile-time API validation, and `bv mormot docs` Swagger UI. |
 
-### 🎨 Track 4: Official Ecosystem Packages & Visual Cockpit (Modules 19 - 22)
+### 📱 Track 4: Mobile & Multi-Platform Development (Modules 19 - 21)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **19** | [Official Component Catalog & Themes](19-ui-themes.md) | 30+ `@blaise-ui` components and dynamic theme bundling (`bv theme list/add/use/reset`). |
-| **20** | [Reactive Data Visualization (@blaise-charts)](20-charts.md) | Bar, line, pie, doughnut charts bound reactively to datasets. |
-| **21** | [Enterprise Document Export (@blaise-reports)](21-reports.md) | Declarative reports with 1-click export to Vector PDF, native Excel, and CSV streaming. |
-| **22** | [Developer Cockpit & Telemetry (@blaise-studio)](22-studio.md) | Real-time WebSocket monitoring, reactive state inspection, and performance metrics (`bv studio`). |
+| **19** | [Mobile Architecture & Capacitor Setup](19-mobile-architecture.md) | Cross-platform mobile architecture: `bv mobile init`, `bv mobile sync`, native hardware APIs (Camera, Haptics). |
+| **20** | [Mobile UI Components & Touch Gestures](20-mobile-ui.md) | Official `@blaise-ui-mobile` suite, adaptive Material Design / Cupertino styling, safe areas, and `BlaiseIonic.pas`. |
+| **21** | [Emulation, Live Debugging & Device Build](21-mobile-build.md) | Android emulators (`bv mobile emulator`), device debugging via ADB, release APKs, and Google Play AAB bundles. |
 
-### 📱 Track 5: Universal Multiplatform: Mobile & Desktop (Modules 23 - 25)
+### 🎨 Track 5: Official Packages & Ecosystem (Modules 22 - 25)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **23** | [Hybrid Mobile Runtime with Capacitor](23-mobile-init.md) | Scaffolding mobile apps (`bv mobile init`, `bv mobile sync`, `bv mobile upgrade`). |
-| **24** | [Compiling Native Android APKs & Emulators](24-mobile-android.md) | Android emulators (`bv mobile emulator`), APK/Bundle compilation (`bv mobile build android`), and `$mobile` hardware APIs. |
-| **25** | [Native Desktop Applications with Lazarus & WebUI](25-desktop.md) | Lightweight desktop apps: `bv desktop init`, `bv desktop sync`, `bv desktop build`, `bv desktop run`. |
+| **22** | [Blaise UI Design System & Themes](22-themes.md) | Official `@blaise-ui` components, Bootswatch theme catalog (`@blaise-themes`), and CLI theme management. |
+| **23** | [Data Visualization with Blaise Charts](23-charts.md) | Hardware-accelerated 60 FPS charts (`@blaise-charts`): Bar, Line, Pie, Doughnut bound to Pascal datasets. |
+| **24** | [Enterprise Reporting with Blaise Reports](24-reports.md) | Native Vector PDF 1.4, Excel `.xlsx`, and thermal POS receipts in 100% Object Pascal (`@blaise-reports`). |
+| **25** | [Visual Development with Blaise Studio](25-studio.md) | Developer cockpit (`bv studio`): Component AST inspection, live WebSocket telemetry, and 1-click test runners. |
 
-### 🛡️ Track 6: Banking-Grade Testing, Auditing & Governance (Modules 26 - 28)
+### 🛡️ Track 6: Production Engineering, Quality Assurance & Capstone (Modules 26 - 28)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **26** | [4-Tier Unit Testing & Headless E2E Suites](26-testing.md) | Pure Pascal unit tests (`bv g t`, `bv test`) and headless browser integration tests (`bv test e2e`). |
-| **27** | [AST Type-Checking & Terminal Mastery](27-cli-tools.md) | Template audits (`bv check`), Cockpit shell (`bv enter`, `bv use`), project registry, licenses, and SemVer bumps (`bv meta bump`). |
-| **28** | [External Library Packaging & Capstone Universal ERP](28-libraries.md) | Creating libraries (`bv create --lib`), packaging (`bv lib pack`), decentralized repos (`bv repo`), and capstone project. |
+| **26** | [Unit & E2E Testing Automation](26-testing.md) | Pure Pascal unit tests (`Describe`, `It`, `Expect`, `Mount`) with `bv test` and headless browser tests with `bv test e2e`. |
+| **27** | [Micro-Containers, CI/CD & Deployment](27-deployment.md) | Ultra-lean sub-20MB Alpine micro-containers (`bv mormot docker`), multi-stage Dockerfiles, and GitHub Actions. |
+| **28** | [The Capstone Enterprise Challenge](28-capstone.md) | Build, test, and deploy a complete Universal Logistics ERP Hub connecting all 28 modules, bridging to the 55 Technical Manuals. |
 
 ---
 
