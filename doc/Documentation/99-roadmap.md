@@ -19,7 +19,7 @@
 | **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, unified extensions (`bv extension`). |
 | **v5.0** | 🚀 In Progress | **Cloud, PWA & Real-Time Era** | BlaiseX state machines (`TBVStore 2.0`), PWA Background Sync (`bv pwa`), Node-free dynamic SSR (<3ms), BlaiseStudio 2.0 visual modeler, Vue 3-style Fragments (Multi-Root Templates). |
 | **v5.2** | 🗺️ Planned | **Distributed Enterprise & Micro-Frontends** | Dynamic Module Federation (`RegisterRemoteModule`), remote `.bv` component and BlaiseX store slice loading at runtime. |
-| **v5.4** | 🗺️ Planned | **Serverless Edge Computing (BlaiseEdge)** | Native WebAssembly System Interface (`wasm32-wasi`) compilation, sub-2MB microservices with <0.2ms cold start for Cloudflare Workers & Fastly. |
+| **v5.4** | 🗺️ Planned | **Serverless Edge Computing (BlaiseEdge)** | Native WebAssembly System Interface (`wasm32-wasi`) compilation, dedicated `bv edge` CLI suite, sub-2MB microservices with <0.2ms cold start for Cloudflare Workers & Fastly. |
 
 ---
 
@@ -324,7 +324,7 @@ In strict adherence to the [Even/Odd Minor Version Parity rule defined in `VERSI
 | Extended Milestone | Target Cycle | Focus Subsystem | Primary Architecture |
 |---|:---:|---|---|
 | **v5.2: Micro-Frontends & Module Federation** | Stable Minor | `core/BVRouting.pas`, `core/BVStore.pas` | Remote `.bv` component streaming, isolated CSS namespace, dynamic BlaiseX slice registration |
-| **v5.4: BlaiseEdge & WASI Serverless** | Stable Minor | `server/`, `core/BVWasm.pas` | `wasm32-wasi` target compilation, <0.2ms cold start, sub-2MB footprint for Cloudflare Workers & Fastly |
+| **v5.4: BlaiseEdge & WASI Serverless** | Stable Minor | `bin/bv.pas`, `server/edge/` | Dedicated `bv edge` CLI suite, `wasm32-wasi` target, <0.2ms cold start, sub-2MB footprint for Cloudflare Workers & Fastly |
 
 ---
 
@@ -371,18 +371,24 @@ In strict adherence to the [Even/Odd Minor Version Parity rule defined in `VERSI
   3. **Global Edge Proximity**: Deploying Pascal endpoints to global edge networks (Cloudflare Workers, Fastly Compute@Edge, AWS Lambda Wasm, Wasmer) ensures <5ms API roundtrips globally.
 
 - **Architectural Scope**:
-  1. **`wasm32-wasi` Compilation Pipeline (`bv build --edge`)**:
+  1. **Dedicated CLI Command Architecture (`bv edge <init|build|deploy>`)**:
+     - Following BlaiseVue's clean target conventions (`bv mobile` for Capacitor/Android, `bv desktop` for Lazarus/WebUI, `bv mormot` for Linux server/Docker), all serverless edge capabilities are unified under `bv edge`:
+       - `bv edge init`: Scaffolds a standalone edge microservice in `server/edge/` with routing, handlers, and configuration.
+       - `bv edge build`: Cross-compiles the Pascal source directly to `dist/edge/server.wasm` via FPC (`wasm32-wasi`).
+       - `bv edge deploy`: Deploys the standalone Wasm bundle directly to Cloudflare Workers or Fastly Compute.
+     - **Zero Redundancy Guarantee**: Keeps `bv wasm <info|benchmark>` strictly dedicated to client-side in-browser numeric/cryptographic acceleration (`core/BVWasm.pas`), avoiding developer confusion.
+  2. **`wasm32-wasi` Compilation Pipeline**:
      - Free Pascal (FPC) cross-compilation pipeline targeting standard WASI:
        ```bash
-       bv build --edge --target=wasi
+       bv edge build
        ```
-     - Outputs standalone `dist/server.wasm` (<2 MB) with zero external operating system dependencies.
-  2. **Microsecond Cold-Start & Micro-Memory Footprint**:
+     - Produces a sub-2MB standalone binary (`dist/edge/server.wasm`) with zero external operating system dependencies and zero container overhead.
+  3. **Microsecond Cold-Start & Micro-Memory Footprint**:
      - Cold start boot time: **<0.2 milliseconds**.
      - Runtime memory consumption: **<5 MB RAM**.
-  3. **Native Edge Transport Adapters**:
+  4. **Native Edge Transport Adapters**:
      - Streaming HTTP and WebSocket request/response adapters bridging mORMot 2 SOA interfaces directly with WASI stdio and socket streams.
-  4. **Cloudflare & Fastly Deployment Templates**:
+  5. **Cloudflare & Fastly Deployment Templates**:
      - Automated scaffolding of `wrangler.toml` (Cloudflare Workers) and `fastly.toml` (Fastly Compute) for instant one-command deployment (`bv edge deploy`).
 
 ---
