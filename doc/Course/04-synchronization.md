@@ -50,6 +50,41 @@ The `b-model` directive works seamlessly with all standard HTML form controls:
 </select>
 ```
 
+### 💎 Modern Two-Way Controls with BlaiseUI (`@blaise-ui`)
+In professional applications, you do not need to manually style raw HTML form elements. The official `@blaise-ui` library provides rich, pre-styled widgets that connect seamlessly with `b-model`:
+
+#### 1. Toggle Switch (`<bv-switch>`):
+```html
+<!-- Instant boolean toggle with color variants -->
+<bv-switch label="Dark Mode" b-model="isDarkMode" color="success"></bv-switch>
+```
+
+#### 2. Enhanced Checkbox (`<bv-checkbox>`):
+```html
+<!-- Binds directly to boolean or multi-select array -->
+<bv-checkbox label="Subscribe to release newsletter" b-model="subscribed"></bv-checkbox>
+```
+
+#### 3. Grouped Radio Buttons (`<bv-radio>`):
+```html
+<!-- Mutually exclusive options sharing the same name -->
+<bv-radio name="tier" label="Standard ($10)" value="standard" b-model="selectedTier"></bv-radio>
+<bv-radio name="tier" label="Pro ($25)" value="pro" b-model="selectedTier"></bv-radio>
+<bv-radio name="tier" label="Enterprise ($99)" value="enterprise" b-model="selectedTier"></bv-radio>
+```
+
+#### 4. Range Slider (`<bv-slider>`):
+```html
+<!-- Numeric range slider with live badge counter -->
+<bv-slider label="Team Size" :min="1" :max="50" :step="1" :showValue="true" b-model="teamMembers"></bv-slider>
+```
+
+#### 5. Labelled Input & Select (`<bv-input>` & `<bv-form-select>`):
+```html
+<bv-input label="Contact Email" type="email" placeholder="user@domain.com" b-model="email"></bv-input>
+<bv-form-select label="Region" b-model="region" :options="regionOptions"></bv-form-select>
+```
+
 ---
 
 ## 🚀 3. Full Step-by-Step Example: Real-Time ID Badge Generator

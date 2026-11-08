@@ -23,7 +23,7 @@ bv lib install ui
 
 This installs:
 - 9 curated Bootswatch themes in `lib/themes/` (Light, Dark, and Cyber styles).
-- Pre-built responsive Pascal Single File Components (`<bv-button>`, `<bv-card>`, `<bv-modal>`, `<bv-alert>`, `<bv-badge>`, etc.).
+- 30+ responsive Pascal Single File Components (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, `<bv-switch>`, `<bv-slider>`, `<bv-dropdown>`, `<bv-skeleton>`, `<bv-datagrid>`, etc.).
 - Reactive theme switcher engine `core/BVTheme.pas`.
 
 ---
@@ -69,82 +69,170 @@ When you run `bv theme use darkly`:
 
 ---
 
-## ⚡ 4. Reactive Runtime Theme Switching (`$theme`)
+## 🧩 4. The Official BlaiseUI Component Kit (30+ Widgets)
+
+The `@blaise-ui` package replaces third-party CSS dependencies with clean, native `.bv` components. Every component automatically responds to the active Bootswatch theme:
+
+### 1. Actions, Overlays & Menus
+- **Buttons (`<bv-btn>`)**: Variants (`primary`, `success`, `danger`, `outline`), sizes (`sm`, `md`, `lg`), disabled state.
+- **Dropdown Menus (`<bv-dropdown>` & `<bv-dropdown-item>`)**: Contextual dropdown menus with split-button support, drop directions (`down`, `up`, `start`, `end`), and dividers.
+- **Modals (`<bv-modal>`)**: Teleported dialogs (`<teleport to="body">`) with backdrop dismiss and action buttons.
+
+### 2. Modern Form Controls
+- **Toggle Switches (`<bv-switch>`)**: Bootstrap 5 switches with color accents (`primary`, `success`, `danger`) and two-way `b-model`.
+- **Checkboxes & Radios (`<bv-checkbox>` & `<bv-radio>`)**: Native accessible selection controls with inline layout options.
+- **Range Sliders (`<bv-slider>`)**: Granular sliders with live numeric value badge counters.
+- **Inputs & Selects (`<bv-input>` & `<bv-form-select>`)**: Labelled form controls with feedback and two-way binding.
+
+### 3. Placeholders & Loading States
+- **Animated Skeletons (`<bv-skeleton>`)**: Reduces perceived wait times with animated wave or glow placeholders (`type="text" | "rect" | "circle" | "card"`).
+- **Spinners & Progress (`<bv-spinner>` & `<bv-progress>`)**: Standard circular loaders and dynamic percentage progress bars.
+
+### 4. Enterprise Tables & Layout
+- **Responsive 12-Column Grid (`<bv-container>`, `<bv-row>`, `<bv-col>`)**: Flexible layouts adapting from mobile screens to 4K monitors.
+- **High-Performance DataGrid (`<bv-datagrid>`)**: Enterprise tables with column sorting, keyword search, pagination, and scoped slot cell formatting.
+
+---
+
+## ⚡ 5. Reactive Runtime Theme Switching (`$theme`)
 
 In your Pascal components, you can switch themes on the fly or toggle between light and dark modes without reloading the page:
 
 ```html
 <template>
-  <div class="theme-showcase">
-    <!-- Theme Switcher Toolbar -->
-    <div class="toolbar">
-      <span>Current Theme: <strong>{{ $theme.current }}</strong></span>
+  <bv-container fluid="true">
+    
+    <!-- Top Theme & Action Toolbar -->
+    <bv-card>
+      <div class="toolbar-content">
+        <div>
+          <h3>Theme Showcase</h3>
+          <span>Active: <strong>{{ $theme.current }}</strong> ({{ $theme.isDark ? 'Dark Mode' : 'Light Mode' }})</span>
+        </div>
 
-      <button @click="$theme.toggle()" class="btn-toggle">
-        {{ $theme.isDark ? '☀️ Switch to Light' : '🌙 Switch to Dark' }}
-      </button>
+        <div class="toolbar-actions">
+          <!-- Toggle Light/Dark with bv-switch -->
+          <bv-switch 
+            label="Dark Mode" 
+            :checked="$theme.isDark" 
+            color="success" 
+            @change="handleThemeToggle">
+          </bv-switch>
 
-      <select @change="changeTheme($event.target.value)" :value="$theme.current">
-        <option value="flatly">Flatly (Light)</option>
-        <option value="darkly">Darkly (Dark)</option>
-        <option value="cosmo">Cosmo (Light)</option>
-        <option value="cyborg">Cyborg (Dark)</option>
-        <option value="vapor">Vapor (Synthwave)</option>
-      </select>
-    </div>
-
-    <!-- BlaiseUI Component Cards -->
-    <div class="cards-grid">
-      <div class="card">
-        <div class="card-header">System Metrics</div>
-        <div class="card-body">
-          <h5 class="card-title">Server Uptime</h5>
-          <p class="card-text">All microservices operational with 99.98% uptime.</p>
-          <span class="badge bg-success">Operational</span>
+          <!-- Theme Dropdown Picker -->
+          <bv-dropdown :text="'Theme: ' + $theme.current" variant="primary">
+            <bv-dropdown-item @click="setTheme('flatly')">Flatly (Light)</bv-dropdown-item>
+            <bv-dropdown-item @click="setTheme('cosmo')">Cosmo (Light)</bv-dropdown-item>
+            <bv-dropdown-item @click="setTheme('lux')">Lux (Luxury)</bv-dropdown-item>
+            <bv-dropdown-item divider="true"></bv-dropdown-item>
+            <bv-dropdown-item @click="setTheme('darkly')">Darkly (Dark)</bv-dropdown-item>
+            <bv-dropdown-item @click="setTheme('cyborg')">Cyborg (Jet Black)</bv-dropdown-item>
+            <bv-dropdown-item @click="setTheme('vapor')">Vapor (Synthwave)</bv-dropdown-item>
+          </bv-dropdown>
         </div>
       </div>
+    </bv-card>
 
-      <div class="card">
-        <div class="card-header">Audit Logs</div>
-        <div class="card-body">
-          <h5 class="card-title">Security Status</h5>
-          <p class="card-text">Zero penetration warnings detected in the last 24h.</p>
-          <span class="badge bg-primary">Secure</span>
-        </div>
-      </div>
-    </div>
-  </div>
+    <!-- Dashboard Content with New Form Controls -->
+    <bv-row gutter="md">
+      
+      <!-- Left Column: Controls & Configuration -->
+      <bv-col cols="12" md="6">
+        <bv-card title="System Preferences">
+          <bv-slider 
+            label="Notification Volume" 
+            :min="0" 
+            :max="100" 
+            :step="5" 
+            :showValue="true" 
+            b-model="volumeLevel">
+          </bv-slider>
+
+          <bv-switch 
+            label="Automatic Cloud Backup" 
+            b-model="cloudBackup" 
+            color="primary">
+          </bv-switch>
+
+          <div class="radio-group">
+            <label class="form-label">Backup Frequency:</label>
+            <bv-radio name="freq" label="Hourly" value="hourly" b-model="frequency" :inline="true"></bv-radio>
+            <bv-radio name="freq" label="Daily" value="daily" b-model="frequency" :inline="true"></bv-radio>
+            <bv-radio name="freq" label="Weekly" value="weekly" b-model="frequency" :inline="true"></bv-radio>
+          </div>
+        </bv-card>
+      </bv-col>
+
+      <!-- Right Column: Data Loading with Skeleton Placeholders -->
+      <bv-col cols="12" md="6">
+        <bv-card title="Live Telemetry">
+          <!-- When loading, show modern pulsating skeletons -->
+          <div b-if="isLoading">
+            <bv-skeleton type="text" animation="wave" :count="2"></bv-skeleton>
+            <bv-skeleton type="rect" height="80px" animation="glow"></bv-skeleton>
+          </div>
+
+          <!-- When loaded, show real data -->
+          <div b-if="!isLoading">
+            <bv-alert variant="success">All background workers operational.</bv-alert>
+            <p>Active cluster nodes: <strong>8</strong> | CPU Load: <strong>14%</strong></p>
+          </div>
+
+          <template b-slot:footer>
+            <bv-btn size="sm" variant="secondary" @click="simulateReload">Reload Data</bv-btn>
+          </template>
+        </bv-card>
+      </bv-col>
+
+    </bv-row>
+
+  </bv-container>
 </template>
 
 <script>
+data:
+  volumeLevel: 65;
+  cloudBackup: true;
+  frequency: 'daily';
+  isLoading: false;
+
 methods:
-  procedure changeTheme(const NewTheme: string);
+  procedure handleThemeToggle(isChecked: boolean);
   begin
-    $theme.setTheme(NewTheme);
+    $theme.toggle();
+  end;
+
+  procedure setTheme(newTheme: string);
+  begin
+    $theme.setTheme(newTheme);
+  end;
+
+  procedure simulateReload;
+  begin
+    this['isLoading'] := true;
+    asm
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 1500);
+    end;
   end;
 </script>
 
 <style>
-.theme-showcase { padding: 20px; font-family: sans-serif; }
-.toolbar {
+.toolbar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 25px;
-  padding: 12px 18px;
-  background: rgba(125, 125, 125, 0.1);
-  border-radius: 8px;
+  gap: 16px;
 }
-.btn-toggle {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+.radio-group {
+  margin-top: 12px;
 }
 </style>
 ```
@@ -152,10 +240,11 @@ methods:
 When `$theme.setTheme('darkly')` is called:
 - The `<link id="bv-theme">` tag dynamically points to the new CSS file.
 - The user's preference is saved to `localStorage('bv_theme')` so it persists across sessions!
+- All BlaiseUI widgets automatically adapt their text contrast, background surfaces, borders, and buttons.
 
 ---
 
-## 🌲 5. Production Build Tree-Shaking
+## 🌲 6. Production Build Tree-Shaking
 
 When deploying to production, bundling all 25+ Bootswatch themes would unnecessarily inflate your bundle size.
 
@@ -171,18 +260,20 @@ When you execute `bv build --release`, BlaiseVue's build pipeline performs **Tre
 
 ## 🏋️ Practical Exercise
 
-1. Install themes using `bv lib install themes`.
-2. Inspect `package.json` to see how the theme settings are registered.
-3. In your application header, implement a Dark Mode toggle button that switches between `flatly` and `darkly` using `$theme.toggle()`.
-4. Refresh the browser and verify that your selected theme preference was automatically restored from `localStorage`.
-5. Run `bv theme list` in your terminal to view the active theme configuration.
+1. Install themes using `bv lib install themes` and UI with `bv lib install ui`.
+2. Inspect `package.json` to verify the theme settings.
+3. In your dashboard, add a `<bv-switch>` that toggles between `flatly` and `darkly`.
+4. Add a `<bv-slider>` controlling an interactive value, and verify that the numeric badge updates smoothly.
+5. Add a `<bv-skeleton>` container that pulses while your dataset is loading.
+6. Refresh the browser and verify that your selected theme preference was automatically restored from `localStorage`.
 
 ---
 
 ## 📖 Deeper Technical Reference
 
 - **[Themes & Bootswatch Integration Manual](../Documentation/28-themes.md)**: Build-time tree-shaking algorithms, CSS custom property variables, and custom theme creation.
-- **[BlaiseUI Component Suite Manual](../Documentation/24-blaise-ui.md)**: Full API documentation for `<bv-button>`, `<bv-modal>`, `<bv-alert>`, and grid layouts.
+- **[BlaiseUI Component Suite Manual](../Documentation/24-blaise-ui.md)**: Full API documentation for all 30+ components.
+- **[Package Components Catalog](../Documentation/41-package-components-catalog.md)**: Detailed technical specifications, props, events, and slots.
 
 ---
 

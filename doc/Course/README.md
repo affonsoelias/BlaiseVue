@@ -28,7 +28,7 @@ The curriculum is organized into 6 progressive learning tracks that take you ste
 | **01** | [The Beginning of the Journey](01-introduction.md) | How the web works, anatomy of a `.bv` file, CLI first steps (`bv dev`, `bv doctor`). |
 | **02** | [The Reactive Engine](02-reactivity.md) | Pascal data types, reactive proxy tracking, and building an interactive counter. |
 | **03** | [Essential Directives](03-directives.md) | Conditional branching (`b-if`, `b-else-if`, `b-else`, `b-show`) and list rendering (`b-for`). |
-| **04** | [Synchronization with b-model](04-synchronization.md) | Two-way form data binding with text inputs, selects, and checkboxes. |
+| **04** | [Synchronization with b-model](04-synchronization.md) | Two-way form data binding with text inputs, selects, switches, checkboxes, radios, and sliders. |
 | **05** | [The Brain: Computed Properties](05-computed.md) | Derived data, cached computations, and real-time checkout calculations. |
 | **06** | [The Art of Components](06-components.md) | Component modularity, `props:` contracts, bound attributes (`:`), and Vue 3 fragments. |
 | **07** | [Events & Communication](07-events.md) | Event listeners (`@click`, `@input`), Pascal `methods:`, and parent notifications (`$emit`). |
@@ -56,13 +56,13 @@ The curriculum is organized into 6 progressive learning tracks that take you ste
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
 | **19** | [Mobile Architecture & Capacitor Setup](19-mobile-architecture.md) | Cross-platform mobile architecture: `bv mobile init`, `bv mobile sync`, native hardware APIs (Camera, Haptics). |
-| **20** | [Mobile UI Components & Touch Gestures](20-mobile-ui.md) | Official `@blaise-ui-mobile` suite, adaptive Material Design / Cupertino styling, safe areas, and `BlaiseIonic.pas`. |
+| **20** | [Mobile UI Components & Touch Gestures](20-mobile-ui.md) | Official `@blaise-ui-mobile` suite (inputs, toggles, checkboxes, selects, pull-to-refresh, searchbars, FABs, back buttons), adaptive Material Design / Cupertino styling, safe areas, and `BlaiseIonic.pas`. |
 | **21** | [Emulation, Live Debugging & Device Build](21-mobile-build.md) | Android emulators (`bv mobile emulator`), device debugging via ADB, release APKs, and Google Play AAB bundles. |
 
 ### 🎨 Track 5: Official Packages & Ecosystem (Modules 22 - 25)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **22** | [Blaise UI Design System & Themes](22-themes.md) | Official `@blaise-ui` components, Bootswatch theme catalog (`@blaise-themes`), and CLI theme management. |
+| **22** | [Blaise UI Design System & Themes](22-themes.md) | Official `@blaise-ui` 30+ component suite (switches, sliders, dropdowns, skeletons, datagrid), Bootswatch theme catalog (`@blaise-themes`), and CLI theme management. |
 | **23** | [Data Visualization with Blaise Charts](23-charts.md) | Hardware-accelerated 60 FPS charts (`@blaise-charts`): Bar, Line, Pie, Doughnut bound to Pascal datasets. |
 | **24** | [Enterprise Reporting with Blaise Reports](24-reports.md) | Native Vector PDF 1.4, Excel `.xlsx`, and thermal POS receipts in 100% Object Pascal (`@blaise-reports`). |
 | **25** | [Visual Development with Blaise Studio](25-studio.md) | Developer cockpit (`bv studio`): Component AST inspection, live WebSocket telemetry, and 1-click test runners. |
