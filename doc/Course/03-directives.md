@@ -234,4 +234,14 @@ Copy and paste this code into your view file (e.g. `src/views/Home.bv`):
 - When to use `b-show` for elements that toggle frequently.
 - How to iterate and render arrays dynamically with `b-for`.
 
+
+---
+
+## 📖 Deeper Technical Reference
+To explore compiler AST generation and conditional directive performance:
+- **[Chapter 02: Template Syntax & Data Binding](../Documentation/02-templates.md)** — Comprehensive specification of expressions, text interpolation, and attribute binding.
+- **[Chapter 39: Conditional Directives (b-if, b-else-if, b-else, v-if)](../Documentation/39-conditional-directives.md)** — Architectural design of conditional comment boundary markers, AST branch optimization, and DOM node recycling.
+
+---
+
 **Want to capture user input from forms and text boxes? Proceed to [Module 04: Synchronization with b-model](04-synchronization.md)!** ⚔️🛡️✨

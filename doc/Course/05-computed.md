@@ -249,4 +249,13 @@ Replace your view component (e.g. `src/views/Home.bv`) with:
 - How to declare functions in Pascal using `Result := ...`.
 - How smart caching ensures calculations run only when underlying reactive state changes.
 
+
+---
+
+## 📖 Deeper Technical Reference
+To learn how the dependency graph caches and recalculates computed functions:
+- **[Chapter 07: Computed Properties & Watchers](../Documentation/07-computed-watch.md)** — Architectural details of getter dependency caching, dirty flags, and active effect subscriber invalidation.
+
+---
+
 **Ready to split your app into modular LEGO pieces? Let's explore [Module 06: Components (.bv)](06-components.md)!** ⚔️🛡️✨

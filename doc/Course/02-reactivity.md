@@ -184,4 +184,14 @@ Now it's your turn to experiment:
 - How to declare reactive variables in `data:` and actions in `methods:`.
 - How to connect button clicks to Pascal methods using `@click`.
 
+
+---
+
+## 📖 Deeper Technical Reference
+For advanced architectural deep-dives into BlaiseVue's reactive core:
+- **[Chapter 06: Reactivity Engine & Dependency Tracking](../Documentation/06-reactivity.md)** — Learn how ES6 `Proxy`, `track()`, `trigger()`, and microtask batching provide $O(1)$ fine-grained DOM patching without virtual DOM diffing overhead.
+- **[Chapter 29: Zero-ASM Object Pascal DX Patterns](../Documentation/29-zero-asm-dx.md)** — Writing 100% clean Pascal without inline `asm ... end;` blocks using pure DX wrappers.
+
+---
+
 **Next up: teaching our screen to make smart decisions with Directives! Proceed to [Module 03: Essential Directives](03-directives.md)!** ⚔️🛡️✨

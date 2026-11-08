@@ -187,4 +187,11 @@ Open your main application layout file (e.g. `App.bv`) and set up the layout:
 - How to navigate using standard links `href="#/..."` or programmatically via `$router.push`.
 - The role of the `<router-view>` outlet for hosting dynamic screens.
 
+---
+
+## 📖 Deeper Technical Reference
+For advanced routing architecture, navigation guards, and history modes:
+- **[Chapter 04: SPA Routing & Navigation](../Documentation/04-routing.md)** — Core router configuration, nested child routes, and route transition hooks.
+- **[Chapter 32: Advanced SPA Routing & HTML5 History API](../Documentation/32-spa-routing-history.md)** — Clean URLs without `#` hashes (`mode: 'history'`), server fallback configurations, and dynamic route matching.
+
 **Need to execute code right when a component mounts or focus an input? Let's dive into [Module 09: $refs and Lifecycle](09-refs.md)!** ⚔️🛡️✨

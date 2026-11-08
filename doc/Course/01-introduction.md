@@ -134,7 +134,17 @@ To solidify what you have learned:
 ## 🏆 What You Learned Today
 - How HTML, CSS, and Object Pascal work together seamlessly.
 - The structure of a `.bv` component (`<template>`, `<script>`, `<style>`).
-- How to start the dev server with `bv run dev`.
+- How to start the dev server with `bv dev` and run diagnostics with `bv doctor`.
 - How BlaiseVue delivers instant live updates as soon as you save.
+
+
+---
+
+## 📖 Deeper Technical Reference
+When you are ready to explore the underlying compiler pipelines and architectural manuals:
+- **[Chapter 01: Single File Components (.bv)](../Documentation/01-components.md)** — In-depth compiler AST transformation, scoped CSS isolation, and script preprocessing.
+- **[Chapter 03: The BlaiseVue CLI Tool](../Documentation/03-cli.md)** — Complete reference manual for all CLI development commands and flag options.
+
+---
 
 **Ready to give life to your data? Let's move on to [Module 02: The Reactive Engine](02-reactivity.md)!** ⚔️🛡️✨

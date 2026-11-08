@@ -245,4 +245,10 @@ Open `src/views/Home.bv` and assemble the master scoreboard:
 - How to structure business procedures within the `methods:` section.
 - How child components communicate with parent components cleanly via `$emit`.
 
+---
+
+## 📖 Deeper Technical Reference
+To explore DOM event dispatching and custom event payloads:
+- **[Chapter 05: Event Handling & Custom Events](../Documentation/05-events.md)** — Event modifiers (`.prevent`, `.stop`, `.self`), keyboard keycodes, and typed payload arguments.
+
 **Now that components communicate, how do we build multi-page apps without refreshing? Let's explore [Module 08: Flicker-Free Navigation (SPA Router)](08-routing.md)!** ⚔️🛡️✨

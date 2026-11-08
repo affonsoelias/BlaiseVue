@@ -213,5 +213,14 @@ Now open `src/views/Home.bv` and consume your `<product-card>`:
 - How the BlaiseVue compiler registers `.bv` files into HTML tags automatically.
 - How to pass data from parent to child components using `props:`.
 - How the bound attribute prefix `:` evaluates expressions and numbers.
+- How BlaiseVue natively supports Multi-Root Fragments without requiring unnecessary wrapping `<div>` elements.
+
+---
+
+## 📖 Deeper Technical Reference
+For advanced component mechanics, slots composition, and fragment compilation:
+- **[Chapter 01: Component Architecture & Props](../Documentation/01-components.md)** — Exhaustive props type system (`string`, `integer`, `real`, `boolean`, `TJSObject`), default values, and validator functions.
+- **[Chapter 16: Scoped Slots & Composition](../Documentation/16-scoped-slots.md)** — Passing template fragments and child slot properties back to parent containers.
+- **[Chapter 48: Vue 3-Style Component Fragments](../Documentation/48-vue3-fragments.md)** — Multi-root template architecture, comment anchor boundaries, and automatic attribute fallthrough.
 
 **Now that components know how to look good, how do they talk to each other? Let's find out in [Module 07: Communication & Events ($emit)](07-events.md)!** ⚔️🛡️✨

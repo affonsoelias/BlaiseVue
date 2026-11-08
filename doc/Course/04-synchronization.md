@@ -278,4 +278,14 @@ Replace your view component (e.g. `src/views/Home.bv`) with:
 - How form elements (`<input>`, `<select>`, `<input type="checkbox">`) stay synchronized with Pascal state.
 - How assigning variables in Pascal immediately updates input elements on screen without manual event listeners.
 
+
+---
+
+## 📖 Deeper Technical Reference
+For advanced form controls, modifiers, and custom component bindings:
+- **[Chapter 08: Form Inputs & Two-Way Binding (b-model)](../Documentation/08-forms-model.md)** — Complete specification of `b-model` / `v-model`, modifiers (`.trim`, `.number`, `.lazy`), and text synchronization.
+- **[Chapter 38: Enhanced Form Controls (Select, Radio, Focused)](../Documentation/38-enhanced-form-controls.md)** — Binding radio button groups, dynamic multi-select arrays, and input focus states.
+
+---
+
 **What if we need to perform calculations or compute derived values automatically? Let's move to [Module 05: The Brain (Computed Properties)](05-computed.md)!** ⚔️🛡️✨
