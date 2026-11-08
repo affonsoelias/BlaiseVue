@@ -118,6 +118,11 @@ Engineered around an adaptive 12-column grid system supporting any display resol
   ```html
   <bv-spinner variant="primary" :small="true"></bv-spinner>
   ```
+- **`<bv-skeleton>`**: Animated placeholder loading element with configurable shape (`text`, `rect`, `circle`, `card`) and animation style (`glow`, `wave`, `none`).
+  ```html
+  <bv-skeleton type="text" animation="wave" :count="3"></bv-skeleton>
+  <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>
+  ```
 
 ---
 
@@ -164,6 +169,14 @@ Engineered around an adaptive 12-column grid system supporting any display resol
     <bv-list-group-item badge="3" badgeVariant="danger">Inbox</bv-list-group-item>
   </bv-list-group>
   ```
+- **`<bv-dropdown>` & `<bv-dropdown-item>`**: Contextual dropdown menu supporting standard and split button layouts, directional drops (`down`, `up`, `start`, `end`), sizes, and item dividers/headers.
+  ```html
+  <bv-dropdown text="Actions" variant="primary">
+    <bv-dropdown-item href="#/edit">Edit Record</bv-dropdown-item>
+    <bv-dropdown-item divider="true"></bv-dropdown-item>
+    <bv-dropdown-item href="#/delete">Delete</bv-dropdown-item>
+  </bv-dropdown>
+  ```
 - **`<bv-icon>`**: Embedded vector SVG icon set (`check-circle`, `warning`, `gear-fill`, `heart-fill`, `weather`, `code-slash`, `cpu`).
   ```html
   <bv-icon name="check-circle" size="24" class="text-success" />
@@ -183,6 +196,23 @@ Engineered around an adaptive 12-column grid system supporting any display resol
 - **`<bv-input-group>`**: Input field with prepend and append visual adornments.
   ```html
   <bv-input-group label="Price" prepend="$" append=".00" b-model="price"></bv-input-group>
+  ```
+- **`<bv-switch>`**: Bootstrap 5 toggle switch supporting sizes (`sm`, `md`, `lg`), semantic colors (`primary`, `success`, `danger`, `warning`, `info`), and two-way binding.
+  ```html
+  <bv-switch label="Dark Mode" b-model="darkMode" color="success"></bv-switch>
+  ```
+- **`<bv-checkbox>`**: Custom checkbox with inline display options and boolean/array v-model binding.
+  ```html
+  <bv-checkbox label="I accept terms and conditions" b-model="accepted"></bv-checkbox>
+  ```
+- **`<bv-radio>`**: Custom radio button with grouped `name` attribute and reactive value binding.
+  ```html
+  <bv-radio name="gender" label="Female" value="F" b-model="gender"></bv-radio>
+  <bv-radio name="gender" label="Male" value="M" b-model="gender"></bv-radio>
+  ```
+- **`<bv-slider>`**: Interactive range input slider with configurable step, min/max limits, and dynamic value badge.
+  ```html
+  <bv-slider label="Volume" :min="0" :max="100" :step="5" :showValue="true" b-model="volume"></bv-slider>
   ```
 
 ---

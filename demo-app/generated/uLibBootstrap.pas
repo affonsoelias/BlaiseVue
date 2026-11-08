@@ -4,7 +4,7 @@ unit uLibBootstrap;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet, BVRouting;
+uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet, BVRouting;
 
 procedure Register_uLibBootstrap;
 

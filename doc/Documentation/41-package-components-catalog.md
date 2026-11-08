@@ -347,6 +347,21 @@ Reactive indicators for loading states and task completion percentages.
 
 ---
 
+### 3.5 `<bv-skeleton>`
+Animated loading placeholder elements that reduce perceived latency during async operations.
+
+- **Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `type` | `string` | `'text'` | Placeholder shape: `'text'`, `'rect'`, `'circle'`, `'card'`. |
+  | `animation` | `string` | `'glow'` | Animation effect: `'glow'`, `'wave'`, `'none'`. |
+  | `width` | `string` | `''` | Custom CSS width (e.g. `'120px'`, `'100%'`). |
+  | `height` | `string` | `''` | Custom CSS height (e.g. `'48px'`, `'2rem'`). |
+  | `count` | `integer` | `1` | Number of placeholder items to repeat. |
+  | `bg` | `string` | `'secondary'` | Bootstrap background color variant. |
+
+---
+
 ## 4. Navigation & Collapsible Panels
 
 ### 4.1 `<bv-navbar>` & `<bv-nav-item>`
@@ -455,6 +470,30 @@ Mobile-first bottom navigation bar with automatic route tracking.
 
 ---
 
+### 4.7 `<bv-dropdown>` & `<bv-dropdown-item>`
+Contextual dropdown menu supporting standard buttons, split-button layouts, and custom alignments.
+
+- **`<bv-dropdown>` Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `text` | `string` | `'Dropdown'` | Main button label text. |
+  | `variant` | `string` | `'primary'` | Semantic variant (`'primary'`, `'secondary'`, `'success'`, `'danger'`). |
+  | `size` | `string` | `'md'` | Button size (`'sm'`, `'md'`, `'lg'`). |
+  | `split` | `boolean` | `false` | When `true`, renders a split button layout with dedicated toggle arrow. |
+  | `direction` | `string` | `'down'` | Dropdown orientation: `'down'`, `'up'`, `'start'`, `'end'`. |
+  | `disabled` | `boolean` | `false` | Disables the button and prevents opening the menu. |
+
+- **`<bv-dropdown-item>` Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `href` | `string` | `''` | Navigation link target URL or hash. |
+  | `disabled` | `boolean` | `false` | Disables interaction and styles the item as disabled. |
+  | `active` | `boolean` | `false` | Highlights item as current selection. |
+  | `divider` | `boolean` | `false` | When `true`, renders a horizontal divider (`<hr class="dropdown-divider">`). |
+  | `header` | `boolean` | `false` | When `true`, renders as an unclickable menu section header. |
+
+---
+
 ## 5. Form Controls & Inputs
 
 ### 5.1 `<bv-input>`
@@ -505,6 +544,99 @@ Reactive selection dropdown bound to array options.
   |---|---|---|
   | `@input` | `string` | Emitted on selection. |
   | `@change` | `string` | Emitted on change. |
+
+---
+
+### 5.4 `<bv-switch>`
+Bootstrap 5 toggle switch supporting custom colors, sizes, and two-way data binding.
+
+- **Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `id` | `string` | `''` | Element identifier (auto-generated if omitted). |
+  | `label` | `string` | `''` | Label text displayed alongside the switch. |
+  | `value` | `any` | `false` | Direct bound boolean or value. |
+  | `checked` | `boolean` | `false` | Initial checked status. |
+  | `modelValue` | `any` | `false` | Two-way binding value for `b-model`. |
+  | `disabled` | `boolean` | `false` | Disables user toggling. |
+  | `size` | `string` | `'md'` | Size variant: `'sm'`, `'md'`, `'lg'`. |
+  | `color` | `string` | `'primary'` | Semantic color variant: `'primary'`, `'success'`, `'danger'`, `'warning'`, `'info'`. |
+
+- **Events**:
+  | Event | Payload | Description |
+  |---|---|---|
+  | `@change` | `boolean` | Emitted when the switch state changes. |
+  | `@input` | `boolean` | Emitted on switch interaction. |
+  | `@update:modelValue` | `boolean` | Emitted to update two-way bound model. |
+
+---
+
+### 5.5 `<bv-checkbox>`
+Bootstrap 5 checkbox supporting boolean or array two-way binding and inline layout.
+
+- **Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `id` | `string` | `''` | Element identifier (auto-generated if omitted). |
+  | `label` | `string` | `''` | Label text displayed beside checkbox. |
+  | `value` | `any` | `true` | Value represented by this checkbox when part of an array. |
+  | `checked` | `boolean` | `false` | Direct checked state. |
+  | `modelValue` | `any` | `false` | Two-way binding for `b-model` (accepts boolean or array). |
+  | `inline` | `boolean` | `false` | When `true`, styles as an inline form check (`form-check-inline`). |
+  | `disabled` | `boolean` | `false` | Disables user interaction. |
+
+- **Events**:
+  | Event | Payload | Description |
+  |---|---|---|
+  | `@change` | `boolean | array` | Emitted when checkbox selection changes. |
+  | `@input` | `boolean | array` | Emitted on input change. |
+
+---
+
+### 5.6 `<bv-radio>`
+Bootstrap 5 radio button with grouped `name` attribute and reactive value selection.
+
+- **Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `id` | `string` | `''` | Element identifier (auto-generated if omitted). |
+  | `name` | `string` | `''` | Radio group name attribute. |
+  | `label` | `string` | `''` | Label text displayed beside radio option. |
+  | `value` | `any` | `''` | Value associated with this radio button. |
+  | `checked` | `boolean` | `false` | Initial checked status. |
+  | `modelValue` | `any` | `''` | Two-way binding for `b-model`. |
+  | `inline` | `boolean` | `false` | When `true`, renders as inline radio (`form-check-inline`). |
+  | `disabled` | `boolean` | `false` | Disables user interaction. |
+
+- **Events**:
+  | Event | Payload | Description |
+  |---|---|---|
+  | `@change` | `any` | Emitted when this radio button is selected. |
+  | `@input` | `any` | Emitted on selection. |
+
+---
+
+### 5.7 `<bv-slider>`
+Range slider input control with customizable limits, step intervals, and dynamic badge display.
+
+- **Props**:
+  | Prop | Type | Default | Description |
+  |---|---|---|---|
+  | `id` | `string` | `''` | Element identifier (auto-generated if omitted). |
+  | `label` | `string` | `''` | Header label above the slider. |
+  | `min` | `number` | `0` | Minimum slider value. |
+  | `max` | `number` | `100` | Maximum slider value. |
+  | `step` | `number` | `1` | Granular step interval. |
+  | `value` | `number` | `0` | Current slider value. |
+  | `modelValue` | `number` | `0` | Two-way bound model value. |
+  | `disabled` | `boolean` | `false` | Disables the range slider. |
+  | `showValue` | `boolean` | `false` | When `true`, renders a real-time badge displaying current value. |
+
+- **Events**:
+  | Event | Payload | Description |
+  |---|---|---|
+  | `@input` | `number` | Emitted continuously as the slider is dragged. |
+  | `@change` | `number` | Emitted when slider handle is released. |
 
 ---
 

@@ -1,0 +1,109 @@
+<template>
+  <div class="bui-skeleton-container" :class="animationClass">
+    <!-- Circle Skeleton -->
+    <div 
+      b-if="type = 'circle'" 
+      class="placeholder bui-skeleton bui-skeleton-circle" 
+      :style="circleStyle">
+    </div>
+
+    <!-- Rectangular Skeleton (Image / Banner) -->
+    <div 
+      b-if="type = 'rect'" 
+      class="placeholder bui-skeleton bui-skeleton-rect" 
+      :style="rectStyle">
+    </div>
+
+    <!-- Card Composite Skeleton -->
+    <div b-if="type = 'card'" class="card bui-skeleton-card" aria-hidden="true">
+      <div class="placeholder bui-skeleton bui-skeleton-rect" style="height: 140px; width: 100%;"></div>
+      <div class="card-body">
+        <h5 class="card-title placeholder-glow">
+          <span class="placeholder col-6"></span>
+        </h5>
+        <p class="card-text placeholder-glow">
+          <span class="placeholder col-7"></span>
+          <span class="placeholder col-4"></span>
+          <span class="placeholder col-4"></span>
+          <span class="placeholder col-6"></span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Text Rows Skeleton (Default) -->
+    <div b-if="type = 'text'" class="bui-skeleton-text-group">
+      <div 
+        b-for="n in countArr" 
+        class="placeholder bui-skeleton bui-skeleton-text" 
+        :style="textStyle">
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVSkeleton - Animated Loading Placeholder Component (Bootstrap 5 Placeholder)
+    ----------------------------------------------------------------------------
+    Props:
+    - type: String ('text', 'rect', 'circle', 'card')
+    - animation: String ('glow', 'wave', 'none')
+    - width: String (e.g. '100%', '50%', '200px')
+    - height: String (e.g. '16px', '120px')
+    - count: Integer (number of text lines to repeat)
+  }
+
+  props:
+    type: string = 'text';
+    animation: string = 'glow';
+    width: string = '100%';
+    height: string = '';
+    count: integer = 1;
+
+  computed:
+    function animationClass: string;
+    begin
+      asm
+        var anim = this.animation || 'glow';
+        if (anim === 'wave') return 'placeholder-wave';
+        if (anim === 'none') return '';
+        return 'placeholder-glow';
+      end;
+    end;
+
+    function countArr: JSValue;
+    begin
+      asm
+        var cnt = Math.max(1, parseInt(this.count, 10) || 1);
+        var arr = [];
+        for (var i = 1; i <= cnt; i++) arr.push(i);
+        return arr;
+      end;
+    end;
+
+    function circleStyle: string;
+    begin
+      asm
+        var size = this.height || this.width || '48px';
+        return 'width: ' + size + '; height: ' + size + '; border-radius: 50%; display: inline-block;';
+      end;
+    end;
+
+    function rectStyle: string;
+    begin
+      asm
+        var w = this.width || '100%';
+        var h = this.height || '120px';
+        return 'width: ' + w + '; height: ' + h + '; border-radius: 6px; display: block;';
+      end;
+    end;
+
+    function textStyle: string;
+    begin
+      asm
+        var w = this.width || '100%';
+        var h = this.height || '1em';
+        return 'width: ' + w + '; height: ' + h + '; border-radius: 4px; display: block; margin-bottom: 0.5em;';
+      end;
+    end;
+</script>

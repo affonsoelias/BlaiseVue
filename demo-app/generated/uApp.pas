@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCounter, uFormHeader, uInfoCard, uMemberBodies, uStatPills, uTableCells, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uFragmentsView, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRow, uBVSpinner, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCommentQuotes, uCounter, uFormHeader, uInfoCard, uMemberBodies, uStatPills, uTableCells, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uFragmentsView, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCheckbox, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVDropdown, uBVDropdownItem, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRadio, uBVRow, uBVSkeleton, uBVSlider, uBVSpinner, uBVSwitch, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -38,6 +38,8 @@ begin
   document.head.appendChild(_styleEl);
   asm console.log("[Init] Registering uCard..."); end;
   Register_uCard;
+  asm console.log("[Init] Registering uCommentQuotes..."); end;
+  Register_uCommentQuotes;
   asm console.log("[Init] Registering uCounter..."); end;
   Register_uCounter;
   asm console.log("[Init] Registering uFormHeader..."); end;
@@ -118,6 +120,8 @@ begin
   Register_uBVBtn;
   asm console.log("[Init] Registering uBVCard..."); end;
   Register_uBVCard;
+  asm console.log("[Init] Registering uBVCheckbox..."); end;
+  Register_uBVCheckbox;
   asm console.log("[Init] Registering uBVCol..."); end;
   Register_uBVCol;
   asm console.log("[Init] Registering uBVContainer..."); end;
@@ -126,6 +130,10 @@ begin
   Register_uBVDataGrid;
   asm console.log("[Init] Registering uBVDrawer..."); end;
   Register_uBVDrawer;
+  asm console.log("[Init] Registering uBVDropdown..."); end;
+  Register_uBVDropdown;
+  asm console.log("[Init] Registering uBVDropdownItem..."); end;
+  Register_uBVDropdownItem;
   asm console.log("[Init] Registering uBVFormSelect..."); end;
   Register_uBVFormSelect;
   asm console.log("[Init] Registering uBVIcon..."); end;
@@ -148,10 +156,18 @@ begin
   Register_uBVPagination;
   asm console.log("[Init] Registering uBVProgress..."); end;
   Register_uBVProgress;
+  asm console.log("[Init] Registering uBVRadio..."); end;
+  Register_uBVRadio;
   asm console.log("[Init] Registering uBVRow..."); end;
   Register_uBVRow;
+  asm console.log("[Init] Registering uBVSkeleton..."); end;
+  Register_uBVSkeleton;
+  asm console.log("[Init] Registering uBVSlider..."); end;
+  Register_uBVSlider;
   asm console.log("[Init] Registering uBVSpinner..."); end;
   Register_uBVSpinner;
+  asm console.log("[Init] Registering uBVSwitch..."); end;
+  Register_uBVSwitch;
   asm console.log("[Init] Registering uBVTab..."); end;
   Register_uBVTab;
   asm console.log("[Init] Registering uBVTabs..."); end;

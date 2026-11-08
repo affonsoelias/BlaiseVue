@@ -1515,6 +1515,7 @@ rtl.module("BVReactivity",["System","JS","Web","SysUtils"],function () {
       // Global Store Integration
       if (this && this.FData) {
         if (window['__BV_PRO_STORE__']) this.FData['$store'] = window['__BV_PRO_STORE__'];
+        if (window['__BLAISEX_STORE__']) this.FData['$blaisex'] = window['__BLAISEX_STORE__'];
         if (window.__BV_CORE__.i18n) {
           this.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
           this.FData['$i18n'] = window.__BV_CORE__.i18n;
@@ -1806,26 +1807,603 @@ rtl.module("BVComponents",["System","JS","Web","SysUtils"],function () {
     window.__BV_CORE__.getComponent = (n) => window.__BV_CORE__.components[n.toLowerCase()];
   };
 });
-rtl.module("BVStore",["System","JS","Web","SysUtils","BVReactivity"],function () {
+rtl.module("BVFSM",["System","JS","Web","SysUtils","BVReactivity"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVFSMTransition",pas.System.TObject,function () {
+  });
+  rtl.createClass(this,"TBVFSMState",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FTransitions = null;
+    };
+    this.$final = function () {
+      this.FTransitions = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Destroy = function () {
+      var i = 0;
+      var Tr = null;
+      for (var $l = 0, $end = (this.FTransitions.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        Tr = rtl.getObject(this.FTransitions[i]);
+        Tr = rtl.freeLoc(Tr);
+      };
+      pas.System.TObject.Destroy.call(this);
+    };
+  });
+  rtl.createClass(this,"TBVStateMachine",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FStates = null;
+    };
+    this.$final = function () {
+      this.FStates = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Destroy = function () {
+      var i = 0;
+      var St = null;
+      for (var $l = 0, $end = (this.FStates.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        St = rtl.getObject(this.FStates[i]);
+        St = rtl.freeLoc(St);
+      };
+      pas.System.TObject.Destroy.call(this);
+    };
+  });
+});
+rtl.module("BVMiddleware",["System","JS","Web","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.TBVMiddlewareKind = {"0": "mkMutation", mkMutation: 0, "1": "mkAction", mkAction: 1, "2": "mkTransition", mkTransition: 2};
+  rtl.createClass(this,"TBVMiddlewareContext",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FSliceName = "";
+      this.FTargetName = "";
+      this.FKind = 0;
+      this.FPayload = undefined;
+      this.FStateBefore = undefined;
+      this.FStateAfter = undefined;
+      this.FStartTime = 0.0;
+      this.FDurationMs = 0.0;
+      this.FCancelled = false;
+      this.FCancelReason = "";
+      this.FMetadata = null;
+    };
+    this.$final = function () {
+      this.FMetadata = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (ASliceName, ATargetName, AKind, APayload, AStateBefore) {
+      pas.System.TObject.Create.call(this);
+      this.FSliceName = ASliceName;
+      this.FTargetName = ATargetName;
+      this.FKind = AKind;
+      this.FPayload = APayload;
+      this.FStateBefore = AStateBefore;
+      this.FStateAfter = null;
+      this.FStartTime = Date.now();
+      this.FDurationMs = 0.0;
+      this.FCancelled = false;
+      this.FCancelReason = "";
+      this.FMetadata = new Object();
+      return this;
+    };
+    this.Cancel = function (AReason) {
+      this.FCancelled = true;
+      this.FCancelReason = AReason;
+    };
+    this.Complete = function (AStateAfter) {
+      this.FStateAfter = AStateAfter;
+      this.FDurationMs = Date.now() - this.FStartTime;
+    };
+  });
+  rtl.createClass(this,"TBVMiddleware",pas.System.TObject,function () {
+    this.Name = function () {
+      var Result = "";
+      Result = "BaseMiddleware";
+      return Result;
+    };
+    this.Before = function (Context) {
+    };
+    this.After = function (Context) {
+    };
+    this.OnError = function (Context, E) {
+    };
+  });
+  rtl.createClass(this,"TBVMiddlewarePipeline",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FItems = null;
+    };
+    this.$final = function () {
+      this.FItems = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function () {
+      pas.System.TObject.Create.call(this);
+      this.FItems = new Array();
+      return this;
+    };
+    this.Destroy = function () {
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.ExecuteBefore = function (Context) {
+      var Result = false;
+      var i = 0;
+      var M = null;
+      Result = true;
+      for (var $l = 0, $end = (this.FItems.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        M = rtl.getObject(this.FItems[i]);
+        try {
+          M.Before(Context);
+          if (Context.FCancelled) return false;
+        } catch ($e) {
+          if (pas.SysUtils.Exception.isPrototypeOf($e)) {
+            var E = $e;
+            Context.Cancel('Middleware "' + M.Name() + '" failed: ' + E.fMessage);
+            return false;
+          } else throw $e
+        };
+      };
+      return Result;
+    };
+    this.ExecuteAfter = function (Context) {
+      var i = 0;
+      var M = null;
+      for (var $l = 0, $end = (this.FItems.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        M = rtl.getObject(this.FItems[i]);
+        try {
+          M.After(Context);
+        } catch ($e) {
+        };
+      };
+    };
+    this.ExecuteError = function (Context, E) {
+      var i = 0;
+      var M = null;
+      for (var $l = 0, $end = (this.FItems.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        M = rtl.getObject(this.FItems[i]);
+        try {
+          M.OnError(Context,E);
+        } catch ($e) {
+        };
+      };
+    };
+  });
+});
+rtl.module("BVStoreHistory",["System","JS","Web","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  rtl.createClass(this,"TBVStoreSnapshot",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.Index = 0;
+      this.Mutation = "";
+      this.Payload = undefined;
+      this.Timestamp = 0.0;
+      this.StateJSON = "";
+    };
+    this.Create$1 = function (AIndex, AMutation, APayload, AStateJSON) {
+      pas.System.TObject.Create.call(this);
+      this.Index = AIndex;
+      this.Mutation = AMutation;
+      this.Payload = APayload;
+      this.Timestamp = Date.now();
+      this.StateJSON = AStateJSON;
+      return this;
+    };
+  });
+  rtl.createClass(this,"TBVStoreHistory",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FMaxSnapshots = 0;
+      this.FSnapshots = null;
+      this.FCursor = 0;
+      this.FOnRestore = null;
+      this.FIsRestoring = false;
+      this.FEnabled = false;
+    };
+    this.$final = function () {
+      this.FSnapshots = undefined;
+      this.FOnRestore = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Destroy = function () {
+      var i = 0;
+      var Sn = null;
+      for (var $l = 0, $end = (this.FSnapshots.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+        i = $l;
+        Sn = rtl.getObject(this.FSnapshots[i]);
+        Sn = rtl.freeLoc(Sn);
+      };
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.RecordSnapshot = function (AMutation, APayload, ACurrentStateJSON) {
+      var Sn = null;
+      var i = 0;
+      var OldSn = null;
+      if (!this.FEnabled || this.FIsRestoring) return;
+      if ((this.FCursor >= 0) && (this.FCursor < ((this.FSnapshots.length & 0xFFFFFFFF) - 1))) {
+        for (var $l = this.FCursor + 1, $end = (this.FSnapshots.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+          i = $l;
+          OldSn = rtl.getObject(this.FSnapshots[i]);
+          OldSn = rtl.freeLoc(OldSn);
+        };
+        this.FSnapshots.splice(this.FCursor + 1,(this.FSnapshots.length & 0xFFFFFFFF) - (this.FCursor + 1));
+      };
+      if ((this.FSnapshots.length & 0xFFFFFFFF) >= this.FMaxSnapshots) {
+        OldSn = rtl.getObject(this.FSnapshots[0]);
+        OldSn = rtl.freeLoc(OldSn);
+        this.FSnapshots.splice(0,1);
+        if (this.FCursor > 0) this.FCursor -= 1;
+      };
+      Sn = $mod.TBVStoreSnapshot.$create("Create$1",[this.FSnapshots.length & 0xFFFFFFFF,AMutation,APayload,ACurrentStateJSON]);
+      this.FSnapshots.push(Sn);
+      this.FCursor = (this.FSnapshots.length & 0xFFFFFFFF) - 1;
+    };
+    this.CanUndo = function () {
+      var Result = false;
+      Result = this.FCursor > 0;
+      return Result;
+    };
+    this.CanRedo = function () {
+      var Result = false;
+      Result = (this.FCursor >= 0) && (this.FCursor < ((this.FSnapshots.length & 0xFFFFFFFF) - 1));
+      return Result;
+    };
+    this.Undo = function () {
+      var Result = false;
+      if (!this.CanUndo()) return false;
+      this.FCursor -= 1;
+      Result = this.JumpTo(this.FCursor);
+      return Result;
+    };
+    this.Redo = function () {
+      var Result = false;
+      if (!this.CanRedo()) return false;
+      this.FCursor += 1;
+      Result = this.JumpTo(this.FCursor);
+      return Result;
+    };
+    this.JumpTo = function (Index) {
+      var Result = false;
+      var TargetSn = null;
+      Result = false;
+      if ((Index < 0) || (Index >= (this.FSnapshots.length & 0xFFFFFFFF))) return Result;
+      TargetSn = rtl.getObject(this.FSnapshots[Index]);
+      if (TargetSn === null) return Result;
+      this.FCursor = Index;
+      if (this.FOnRestore != null) {
+        this.FIsRestoring = true;
+        try {
+          this.FOnRestore(TargetSn.StateJSON);
+          Result = true;
+        } finally {
+          this.FIsRestoring = false;
+        };
+      };
+      return Result;
+    };
+  });
+});
+rtl.module("BVStore",["System","JS","Web","SysUtils","BVReactivity","BVFSM","BVMiddleware","BVStoreHistory"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  rtl.createClass(this,"TBVStoreSlice",pas.System.TObject,function () {
+    this.$init = function () {
+      pas.System.TObject.$init.call(this);
+      this.FStore = null;
+      this.FName = "";
+      this.FState = undefined;
+      this.FMutations = null;
+      this.FActions = null;
+      this.FGetters = null;
+      this.FMachines = null;
+      this.FSubscribers = null;
+      this.FPipeline = null;
+      this.FHistory = null;
+    };
+    this.$final = function () {
+      this.FStore = undefined;
+      this.FMutations = undefined;
+      this.FActions = undefined;
+      this.FGetters = undefined;
+      this.FMachines = undefined;
+      this.FSubscribers = undefined;
+      this.FPipeline = undefined;
+      this.FHistory = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.BuildActionContext = function () {
+      var Result = null;
+      var Ctx = null;
+      var SelfSlice = null;
+      SelfSlice = this;
+      Ctx = new Object();
+      Ctx["state"] = this.FState;
+      Ctx["slice"] = this;
+      if (this.FStore !== null) {
+        Ctx["rootState"] = this.FStore.FState}
+       else Ctx["rootState"] = this.FState;
+      Ctx.commit = function(mutName, payload) {
+        SelfSlice.Commit(mutName, payload);
+      };
+      Ctx.dispatch = function(actName, payload) {
+        return SelfSlice.Dispatch(actName, payload);
+      };
+      Result = Ctx;
+      return Result;
+    };
+    this.Destroy = function () {
+      rtl.free(this,"FHistory");
+      rtl.free(this,"FPipeline");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Commit = function (AMutationName, APayload) {
+      var CleanName = "";
+      var MutProc = null;
+      var i = 0;
+      var SubItem = null;
+      var SubCb = null;
+      var Ctx = null;
+      CleanName = pas.SysUtils.Trim(AMutationName);
+      if (!this.FMutations.hasOwnProperty(CleanName)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Unknown mutation "' + CleanName + '".']);
+      Ctx = pas.BVMiddleware.TBVMiddlewareContext.$create("Create$1",[this.FName,CleanName,pas.BVMiddleware.TBVMiddlewareKind.mkMutation,APayload,this.FState]);
+      try {
+        if ((this.FStore !== null) && !this.FStore.FPipeline.ExecuteBefore(Ctx)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Mutation "' + CleanName + '" blocked: ' + Ctx.FCancelReason]);
+        if (!this.FPipeline.ExecuteBefore(Ctx)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Mutation "' + CleanName + '" blocked: ' + Ctx.FCancelReason]);
+        MutProc = this.FMutations[CleanName];
+        if (MutProc != null) MutProc(this.FState,Ctx.FPayload);
+        if (!this.FHistory.FIsRestoring) this.FHistory.RecordSnapshot(CleanName,Ctx.FPayload,$impl.SnapshotToJSON(this.FState));
+        Ctx.Complete(this.FState);
+        this.FPipeline.ExecuteAfter(Ctx);
+        if (this.FStore !== null) this.FStore.FPipeline.ExecuteAfter(Ctx);
+        for (var $l = 0, $end = (this.FSubscribers.length & 0xFFFFFFFF) - 1; $l <= $end; $l++) {
+          i = $l;
+          SubItem = this.FSubscribers[i];
+          SubCb = SubItem["cb"];
+          if (SubCb != null) {
+            try {
+              SubCb(this,CleanName,this.FState,Ctx.FPayload);
+            } catch ($e) {
+            };
+          };
+        };
+      } catch ($e) {
+        if (pas.SysUtils.Exception.isPrototypeOf($e)) {
+          var E = $e;
+          this.FPipeline.ExecuteError(Ctx,E);
+          if (this.FStore !== null) this.FStore.FPipeline.ExecuteError(Ctx,E);
+          throw $e;
+        } else throw $e
+      };
+    };
+    this.Dispatch$1 = function (AActionName, APayload) {
+      var Result = undefined;
+      var CleanName = "";
+      var ActProc = null;
+      var ActionCtx = null;
+      var Ctx = null;
+      CleanName = pas.SysUtils.Trim(AActionName);
+      if (!this.FActions.hasOwnProperty(CleanName)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Unknown action "' + CleanName + '".']);
+      Ctx = pas.BVMiddleware.TBVMiddlewareContext.$create("Create$1",[this.FName,CleanName,pas.BVMiddleware.TBVMiddlewareKind.mkAction,APayload,this.FState]);
+      try {
+        if ((this.FStore !== null) && !this.FStore.FPipeline.ExecuteBefore(Ctx)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Action "' + CleanName + '" blocked: ' + Ctx.FCancelReason]);
+        if (!this.FPipeline.ExecuteBefore(Ctx)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Action "' + CleanName + '" blocked: ' + Ctx.FCancelReason]);
+        ActProc = this.FActions[CleanName];
+        ActionCtx = this.BuildActionContext();
+        if (ActProc != null) {
+          Result = ActProc(ActionCtx,Ctx.FPayload)}
+         else Result = null;
+        Ctx.Complete(this.FState);
+        this.FPipeline.ExecuteAfter(Ctx);
+        if (this.FStore !== null) this.FStore.FPipeline.ExecuteAfter(Ctx);
+      } catch ($e) {
+        if (pas.SysUtils.Exception.isPrototypeOf($e)) {
+          var E = $e;
+          this.FPipeline.ExecuteError(Ctx,E);
+          if (this.FStore !== null) this.FStore.FPipeline.ExecuteError(Ctx,E);
+          throw $e;
+        } else throw $e
+      };
+      return Result;
+    };
+    this.Get = function (AGetterName) {
+      var Result = undefined;
+      var CleanName = "";
+      var GtrFunc = null;
+      CleanName = pas.SysUtils.Trim(AGetterName);
+      if (!this.FGetters.hasOwnProperty(CleanName)) throw pas.SysUtils.Exception.$create("Create$1",["[BlaiseX: " + this.FName + '] Unknown getter "' + CleanName + '".']);
+      GtrFunc = this.FGetters[CleanName];
+      if (GtrFunc != null) {
+        Result = GtrFunc(this.FState)}
+       else Result = null;
+      return Result;
+    };
+    this.FSM = function (AMachineName) {
+      var Result = null;
+      var M = undefined;
+      M = this.FMachines[pas.SysUtils.Trim(AMachineName)];
+      if (M != null) {
+        Result = rtl.getObject(M)}
+       else Result = null;
+      return Result;
+    };
+    this.Undo = function () {
+      var Result = false;
+      Result = this.FHistory.Undo();
+      return Result;
+    };
+    this.Redo = function () {
+      var Result = false;
+      Result = this.FHistory.Redo();
+      return Result;
+    };
+  });
   rtl.createClass(this,"TBVStore",pas.System.TObject,function () {
     this.$init = function () {
       pas.System.TObject.$init.call(this);
       this.FState = undefined;
+      this.FSlices = null;
+      this.FPipeline = null;
     };
-    this.Create$1 = function (initialState) {
-      this.FState = pas.BVReactivity.DefineReactive(initialState);
+    this.$final = function () {
+      this.FSlices = undefined;
+      this.FPipeline = undefined;
+      pas.System.TObject.$final.call(this);
+    };
+    this.Create$1 = function (AInitialState) {
+      var InitVal = undefined;
+      pas.System.TObject.Create.call(this);
+      this.FSlices = new Object();
+      this.FPipeline = pas.BVMiddleware.TBVMiddlewarePipeline.$create("Create$1");
+      if (AInitialState != null) {
+        InitVal = AInitialState}
+       else InitVal = new Object();
+      this.FState = pas.BVReactivity.DefineReactive(InitVal);
       return this;
     };
+    this.Destroy = function () {
+      var Keys = [];
+      var i = 0;
+      var SliceObj = null;
+      Keys = Object.keys(this.FSlices);
+      for (var $l = 0, $end = rtl.length(Keys) - 1; $l <= $end; $l++) {
+        i = $l;
+        SliceObj = rtl.getObject(this.FSlices[Keys[i]]);
+        SliceObj = rtl.freeLoc(SliceObj);
+      };
+      rtl.free(this,"FPipeline");
+      pas.System.TObject.Destroy.call(this);
+    };
+    this.Slice = function (AName) {
+      var Result = null;
+      var CleanName = "";
+      CleanName = pas.SysUtils.Trim(AName);
+      if (this.FSlices.hasOwnProperty(CleanName)) {
+        Result = rtl.getObject(this.FSlices[CleanName])}
+       else Result = null;
+      return Result;
+    };
+    this.Commit = function (ATarget, APayload) {
+      var Idx = 0;
+      var SliceName = "";
+      var MutName = "";
+      var Sl = null;
+      Idx = pas.System.Pos("/",ATarget);
+      if (Idx <= 0) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Commit requires "sliceName/mutationName" format, got "' + ATarget + '".']);
+      SliceName = pas.SysUtils.Trim(pas.System.Copy(ATarget,1,Idx - 1));
+      MutName = pas.SysUtils.Trim(pas.System.Copy(ATarget,Idx + 1,ATarget.length));
+      Sl = this.Slice(SliceName);
+      if (Sl === null) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Unknown store slice "' + SliceName + '".']);
+      Sl.Commit(MutName,APayload);
+    };
+    this.Dispatch$1 = function (ATarget, APayload) {
+      var Result = undefined;
+      var Idx = 0;
+      var SliceName = "";
+      var ActName = "";
+      var Sl = null;
+      Idx = pas.System.Pos("/",ATarget);
+      if (Idx <= 0) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Dispatch requires "sliceName/actionName" format, got "' + ATarget + '".']);
+      SliceName = pas.SysUtils.Trim(pas.System.Copy(ATarget,1,Idx - 1));
+      ActName = pas.SysUtils.Trim(pas.System.Copy(ATarget,Idx + 1,ATarget.length));
+      Sl = this.Slice(SliceName);
+      if (Sl === null) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Unknown store slice "' + SliceName + '".']);
+      Result = Sl.Dispatch$1(ActName,APayload);
+      return Result;
+    };
+    this.Get = function (ATarget) {
+      var Result = undefined;
+      var Idx = 0;
+      var SliceName = "";
+      var GetName = "";
+      var Sl = null;
+      Idx = pas.System.Pos("/",ATarget);
+      if (Idx <= 0) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Get requires "sliceName/getterName" format, got "' + ATarget + '".']);
+      SliceName = pas.SysUtils.Trim(pas.System.Copy(ATarget,1,Idx - 1));
+      GetName = pas.SysUtils.Trim(pas.System.Copy(ATarget,Idx + 1,ATarget.length));
+      Sl = this.Slice(SliceName);
+      if (Sl === null) throw pas.SysUtils.Exception.$create("Create$1",['[BlaiseX] Unknown store slice "' + SliceName + '".']);
+      Result = Sl.Get(GetName);
+      return Result;
+    };
+    this.Undo = function (ASliceName) {
+      var Result = false;
+      var Sl = null;
+      Sl = this.Slice(ASliceName);
+      if (Sl !== null) {
+        Result = Sl.Undo()}
+       else Result = false;
+      return Result;
+    };
+    this.Redo = function (ASliceName) {
+      var Result = false;
+      var Sl = null;
+      Sl = this.Slice(ASliceName);
+      if (Sl !== null) {
+        Result = Sl.Redo()}
+       else Result = false;
+      return Result;
+    };
   });
+  this.GetStore = function () {
+    var Result = null;
+    if (!($impl.GStore != null)) $impl.GStore = $mod.TBVStore.$create("Create$1",[new Object()]);
+    Result = $impl.GStore;
+    return Result;
+  };
   $mod.$implcode = function () {
     $impl.GStore = null;
+    $impl.SnapshotToJSON = function (AObj) {
+      var Result = "";
+      if (AObj == null) return "{}";
+      try {
+        return JSON.stringify(AObj);
+      } catch(e) {
+        return '{}';
+      };
+      return Result;
+    };
   };
   $mod.$init = function () {
     if (!($impl.GStore != null)) $impl.GStore = $mod.TBVStore.$create("Create$1",[new Object()]);
-    window["__BV_PRO_STORE__"] = $impl.GStore.FState;
+    if (rtl.isObject(window)) {
+      window["__BV_PRO_STORE__"] = $impl.GStore.FState;
+      window["__BLAISEX_STORE__"] = $impl.GStore;
+      window.__BLAISEX_DEVTOOLS__ = {
+        getSlices: function() {
+          return Object.keys(pas.BVStore.GetStore().FSlices);
+        },
+        getHistory: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.FHistory.FSnapshots : [];
+        },
+        undo: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.Undo() : false;
+        },
+        redo: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.Redo() : false;
+        },
+        timeTravel: function(sliceName, idx) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.TimeTravel(idx) : false;
+        },
+        exportAuditLog: function(sliceName) {
+          var sl = pas.BVStore.GetStore().Slice(sliceName);
+          return sl ? sl.FHistory.ExportJSON() : '{}';
+        }
+      };
+    };
   };
 },[]);
 rtl.module("BVValidation",["System","JS","Web","SysUtils","BVReactivity"],function () {
@@ -3322,6 +3900,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                 Data.FData['$router'] = window.__BV_CORE__.router;
              }
              if (window.__BV_PRO_STORE__) Data.FData['$store'] = window.__BV_PRO_STORE__;
+             if (window.__BLAISEX_STORE__) Data.FData['$blaisex'] = window.__BLAISEX_STORE__;
              if (window.__BV_CORE__.i18n && !Data.FData['$t']) {
                 Data.FData['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                 Data.FData['$i18n'] = window.__BV_CORE__.i18n;
@@ -4680,6 +5259,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    pRef['$router'] = window.__BV_CORE__.router;
                 }
                 if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+                if (window['__BLAISEX_STORE__']) pRef['$blaisex'] = window['__BLAISEX_STORE__'];
                 if (window.__BV_CORE__.i18n) {
                    pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
                    pRef['$i18n'] = window.__BV_CORE__.i18n;
@@ -5526,6 +6106,7 @@ rtl.module("BVRouting",["System","JS","Web","SysUtils","BVComponents","BVCompile
           pRef['$router'] = this;
           if (!pRef['$refs']) pRef['$refs'] = {};
           if (window['__BV_PRO_STORE__']) pRef['$store'] = window['__BV_PRO_STORE__'];
+          if (window['__BLAISEX_STORE__']) pRef['$blaisex'] = window['__BLAISEX_STORE__'];
           if (window.__BV_CORE__.i18n) {
              pRef['$t'] = function(k, p) { return window.__BV_CORE__.t(k, p); };
              pRef['$i18n'] = window.__BV_CORE__.i18n;
@@ -9537,10 +10118,70 @@ rtl.module("BlaiseReports",["System","JS","Web","SysUtils","Classes","BVDataSet"
     };
   };
 },[]);
-rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","BlaiseReports"],function () {
+rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","BlaiseReports","BVStore","BVFSM"],function () {
   "use strict";
   var $mod = this;
   var $impl = $mod.$impl;
+  this.UseStore = function (ASliceName) {
+    var Result = undefined;
+    if (pas.SysUtils.Trim(ASliceName) === "") {
+      Result = pas.BVStore.GetStore()}
+     else Result = pas.BVStore.GetStore().Slice(ASliceName);
+    return Result;
+  };
+  this.UseFSM = function (AMachineName) {
+    var Result = null;
+    var Slices = null;
+    var Keys = [];
+    var i = 0;
+    var Sl = null;
+    var M = null;
+    Result = null;
+    Slices = pas.BVStore.GetStore().FSlices;
+    Keys = Object.keys(Slices);
+    for (var $l = 0, $end = rtl.length(Keys) - 1; $l <= $end; $l++) {
+      i = $l;
+      Sl = rtl.getObject(Slices[Keys[i]]);
+      M = Sl.FSM(AMachineName);
+      if (M !== null) {
+        Result = M;
+        return Result;
+      };
+    };
+    return Result;
+  };
+  this.UseFSM$1 = function (ASliceName, AMachineName) {
+    var Result = null;
+    var Sl = null;
+    Sl = pas.BVStore.GetStore().Slice(ASliceName);
+    if (Sl !== null) {
+      Result = Sl.FSM(AMachineName)}
+     else Result = null;
+    return Result;
+  };
+  this.StoreCommit = function (ATarget, APayload) {
+    pas.BVStore.GetStore().Commit(ATarget,APayload);
+  };
+  this.StoreDispatch = function (ATarget, APayload) {
+    var Result = undefined;
+    Result = pas.BVStore.GetStore().Dispatch$1(ATarget,APayload);
+    return Result;
+  };
+  this.StoreGet = function (ATarget) {
+    var Result = undefined;
+    Result = pas.BVStore.GetStore().Get(ATarget);
+    return Result;
+  };
+  this.StoreUndo = function (ASliceName) {
+    var Result = false;
+    Result = pas.BVStore.GetStore().Undo(ASliceName);
+    return Result;
+  };
+  this.StoreRedo = function (ASliceName) {
+    var Result = false;
+    Result = pas.BVStore.GetStore().Redo(ASliceName);
+    return Result;
+  };
   this.ShowToast = function (Msg, DurationMs) {
     try {
       if (window.__BV_CORE__ && window.__BV_CORE__.ionic && window.__BV_CORE__.ionic.toast) {
@@ -10360,6 +11001,14 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
         $mod.ReportGenerateCSV(dummy);
         $mod.ReportPrintPreview(dummy,"");
         $mod.ReportComputeSummary(dummy,"","");
+        $mod.UseStore("");
+        $mod.UseFSM("");
+        $mod.UseFSM$1("","");
+        $mod.StoreCommit("",null);
+        $mod.StoreDispatch("",null);
+        $mod.StoreGet("");
+        $mod.StoreUndo("");
+        $mod.StoreRedo("");
       };
     };
   };
@@ -10367,7 +11016,7 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
     $impl.RetainDXDataSetSymbols();
   };
 },[]);
-rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet","BVRpc"],function () {
+rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompiler","BVRouting","BVComponents","BVValidation","BVI18n","BVTheme","BVWasm","BVMobile","BVDesktop","BVClient","BVAuth","BlaiseIonic","BVPascalDX","BVDataSet","BVRpc","BVFSM","BVMiddleware","BVStoreHistory","BVStore"],function () {
   "use strict";
   var $mod = this;
   rtl.createClass(this,"TBlaiseVue",pas.System.TObject,function () {
@@ -10441,6 +11090,7 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
       window.__BV_CORE__.initApp(d, m, c);
       window.__BV_CORE__.rootData = d.FData;
       if (window.__BV_PRO_STORE__) d.FData.$store = window.__BV_PRO_STORE__;
+      if (window.__BLAISEX_STORE__) d.FData.$blaisex = window.__BLAISEX_STORE__;
       if (window.__BV_CORE__.theme && !d.FData.$theme) d.FData.$theme = window.__BV_CORE__.theme;
       if (window.__BV_CORE__.wasm && !d.FData.$wasm) d.FData.$wasm = window.__BV_CORE__.wasm;
       if (window.__BV_CORE__.mobile && !d.FData.$mobile) d.FData.$mobile = window.__BV_CORE__.mobile;
@@ -10515,12 +11165,233 @@ rtl.module("BlaiseVue",["System","JS","Web","SysUtils","BVReactivity","BVCompile
     };
   };
 });
+rtl.module("BVDevTools",["System","JS","Web","SysUtils"],function () {
+  "use strict";
+  var $mod = this;
+  this.InitDevTools = function () {
+    let ver = (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? ('v' + pas.uAppVersion.APP_VERSION) : 'v4.4.0';
+        console.log("%c BlaiseVue DevTools " + ver + " ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", ver + "-enterprise");
+    
+        // Initialize global DevTools Hook for browser extensions and external inspectors
+        if (!window.__BV_DEVTOOLS_HOOK__) {
+          window.__BV_DEVTOOLS_HOOK__ = {
+            version: (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? pas.uAppVersion.APP_VERSION : "4.4.0",
+            listeners: {},
+            events: [],
+            snapshots: [],
+            on: function(event, fn) {
+              if (!this.listeners[event]) this.listeners[event] = [];
+              this.listeners[event].push(fn);
+            },
+            emit: function(event, data) {
+              let entry = { time: new Date().toLocaleTimeString(), type: event, data: data };
+              this.events.push(entry);
+              if (this.events.length > 200) this.events.shift();
+              if (this.listeners[event]) {
+                this.listeners[event].forEach(function(fn) { try { fn(entry); } catch(e){} });
+              }
+              if (this.listeners['*']) {
+                this.listeners['*'].forEach(function(fn) { try { fn(entry); } catch(e){} });
+              }
+            },
+            getComponentTree: function() {
+              let roots = [];
+              let els = document.querySelectorAll('[data-bv-component]');
+              els.forEach(function(el) {
+                roots.push({
+                  tag: el.getAttribute('data-bv-component'),
+                  state: el['__bv_instance_data__'] ? Object.assign({}, el['__bv_instance_data__']) : {}
+                });
+              });
+              return roots;
+            },
+            recordSnapshot: function(label) {
+              let snap = { label: label || ('Snapshot ' + (this.snapshots.length + 1)), time: Date.now(), tree: this.getComponentTree() };
+              this.snapshots.push(snap);
+              return snap;
+            }
+          };
+        }
+        
+        // Inject the visual overlay styles
+        let s = document.createElement('style');
+        s.innerHTML = `
+          .bv-devtools-panel {
+            position: fixed;
+            bottom: 45px;
+            right: 20px;
+            z-index: 9999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1e293b;
+            color: #f8fafc;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            width: 260px;
+            font-size: 12px;
+            border: 1px solid #334155;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+          }
+          @media (max-width: 768px) {
+            .bv-devtools-panel {
+              bottom: 74px;
+              right: 12px;
+              max-width: calc(100vw - 24px);
+              width: 250px;
+            }
+          }
+          .bv-devtools-panel.bv-dt-collapsed {
+            width: auto !important;
+            padding: 6px 12px !important;
+            border-radius: 20px !important;
+            cursor: pointer;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+          }
+          .bv-devtools-panel.bv-dt-collapsed .bv-dt-body {
+            display: none !important;
+          }
+          .bv-devtools-panel.bv-dt-collapsed .bv-dt-header {
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+            gap: 8px;
+          }
+          .bv-devtools-panel.bv-dt-collapsed .bv-dt-collapse-btn {
+            display: none;
+          }
+          .bv-dt-header {
+            font-weight: bold;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+          }
+          .bv-dt-header-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .bv-dt-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .bv-dt-tag { background: #10b981; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+          .bv-dt-collapse-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0 4px;
+            line-height: 1;
+            border-radius: 3px;
+          }
+          .bv-dt-collapse-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+          .bv-dt-stat { margin-top: 5px; display: flex; justify-content: space-between; color: #cbd5e1; }
+          .bv-dt-live-blob { width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: bvdt-pulse 1s infinite; vertical-align: middle; }
+          .bv-dt-timeline { max-height: 80px; overflow-y: auto; margin-top: 8px; border-top: 1px solid #334155; padding-top: 5px; font-family: monospace; font-size: 10px; color: #94a3b8; }
+          @keyframes bvdt-pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+        `;
+        document.head.appendChild(s);
+    
+        // Create the Panel UI
+        let p = document.createElement('div');
+        p.id = 'bv-devtools';
+        p.className = 'bv-devtools-panel';
+        p.innerHTML = `
+           <div class="bv-dt-header" id="bv-dt-toggle" title="Clique para minimizar ou expandir o DevTools">
+             <div class="bv-dt-header-left">
+               <span>BlaiseVue 🛡️</span>
+               <i class="bv-dt-live-blob"></i>
+             </div>
+             <div class="bv-dt-header-actions">
+               <span class="bv-dt-tag">` + ver + `</span>
+               <button class="bv-dt-collapse-btn" id="bv-dt-btn" title="Minimizar">—</button>
+             </div>
+           </div>
+           <div class="bv-dt-body" id="bv-dt-body">
+             <div class="bv-dt-stat">
+               <span>Reactivity:</span>
+               <span>Active <i class="bv-dt-live-blob"></i></span>
+             </div>
+             <div class="bv-dt-stat" id="bv-com-count">
+               <span>Components:</span>
+               <span>0</span>
+             </div>
+             <div class="bv-dt-stat" id="bv-hoisted-count">
+               <span>Static Hoisted:</span>
+               <span>0</span>
+             </div>
+             <div class="bv-dt-timeline" id="bv-dt-events">
+               <div>[Ready] DevTools hook listening</div>
+             </div>
+           </div>
+        `;
+        document.body.appendChild(p);
+    
+        let isMobile = (window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 800) <= 768;
+        let savedState = null;
+        try { savedState = sessionStorage.getItem('bv_dt_collapsed'); } catch(e){}
+        let isCollapsed = savedState !== null ? (savedState === 'true') : isMobile;
+    
+        function updatePanelState() {
+          let b = document.getElementById('bv-dt-btn');
+          if (isCollapsed) {
+            p.classList.add('bv-dt-collapsed');
+            if (b) b.innerText = '▲';
+          } else {
+            p.classList.remove('bv-dt-collapsed');
+            if (b) b.innerText = '—';
+          }
+          try { sessionStorage.setItem('bv_dt_collapsed', isCollapsed ? 'true' : 'false'); } catch(e){}
+        }
+        updatePanelState();
+    
+        let toggleHeader = document.getElementById('bv-dt-toggle');
+        if (toggleHeader) {
+          toggleHeader.addEventListener('click', function(e) {
+            isCollapsed = !isCollapsed;
+            updatePanelState();
+          });
+        }
+    
+        // Dynamic stats updater
+        setInterval(function(){
+           let count = Object.keys(window.__BV_CORE__.components || {}).length;
+           let el = document.getElementById('bv-com-count');
+           if (el) el.querySelector('span:last-child').innerText = count;
+           let hEl = document.getElementById('bv-hoisted-count');
+           if (hEl) hEl.querySelector('span:last-child').innerText = window.__BV_CORE__.hoistedCount || 0;
+        }, 1000);
+    
+        // Timeline event logger
+        window.__BV_DEVTOOLS_HOOK__.on('*', function(ev) {
+           let list = document.getElementById('bv-dt-events');
+           if (list) {
+              let line = document.createElement('div');
+              line.innerText = '[' + ev.time.split(' ')[0] + '] ' + ev.type;
+              list.prepend(line);
+              while (list.children.length > 8) list.removeChild(list.lastChild);
+           }
+        });
+  };
+  $mod.$init = function () {
+    $mod.InitDevTools();
+  };
+});
 rtl.module("uAppVersion",["System"],function () {
   "use strict";
   var $mod = this;
   this.APP_VERSION = "4.4.0";
 });
-rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCard = function () {
@@ -10547,7 +11418,67 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("card",comp);
   };
 });
-rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uCommentQuotes",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uCommentQuotes = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="comment-quotes">' + '    <span class="log">{{ log }}</span>' + '    <button class="run" @click="runAll">Run</button>' + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["log"] = "";
+      Result = d;
+      return Result;
+    };
+    m = new Object();
+    m["mark"] = function (_this, What) {
+      _this["log"] = "" + _this["log"] + What + ";";
+    };
+    m["jsLineComment"] = function (_this) {
+      // the chart's choice
+      var x = 1;
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["1"]);
+    };
+    m["jsBlockComment"] = function (_this) {
+      /* a block */
+      var x = 2;
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["2"]);
+    };
+    m["jsDoubleQuoted"] = function (_this) {
+      var x = "it's";
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["3"]);
+    };
+    m["jsEscapedQuote"] = function (_this) {
+      var x = 'it\'s';
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["4"]);
+    };
+    m["pascalLineComment"] = function (_this) {
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["5"]);
+    };
+    m["pascalBraceComment"] = function (_this) {
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["6"]);
+    };
+    m["pascalStarComment"] = function (_this) {
+      pas.BVPascalDX.CallMethod$1(_this,"mark",["7"]);
+    };
+    m["runAll"] = function (_this) {
+      pas.BVPascalDX.CallMethod(_this,"jsLineComment");
+      pas.BVPascalDX.CallMethod(_this,"jsBlockComment");
+      pas.BVPascalDX.CallMethod(_this,"jsDoubleQuoted");
+      pas.BVPascalDX.CallMethod(_this,"jsEscapedQuote");
+      pas.BVPascalDX.CallMethod(_this,"pascalLineComment");
+      pas.BVPascalDX.CallMethod(_this,"pascalBraceComment");
+      pas.BVPascalDX.CallMethod(_this,"pascalStarComment");
+    };
+    comp["methods"] = m;
+    pas.BVComponents.RegisterComponent("comment-quotes",comp);
+  };
+});
+rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCounter = function () {
@@ -10582,7 +11513,7 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("counter",comp);
   };
 });
-rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormHeader = function () {
@@ -10615,7 +11546,7 @@ rtl.module("uFormHeader",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("form-header",comp);
   };
 });
-rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uInfoCard = function () {
@@ -10641,7 +11572,7 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("info-card",comp);
   };
 });
-rtl.module("uMemberBodies",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uMemberBodies",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uMemberBodies = function () {
@@ -10684,7 +11615,7 @@ rtl.module("uMemberBodies",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("member-bodies",comp);
   };
 });
-rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uStatPills = function () {
@@ -10714,7 +11645,7 @@ rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("stat-pills",comp);
   };
 });
-rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uTableCells = function () {
@@ -10746,7 +11677,7 @@ rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("table-cells",comp);
   };
 });
-rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","uAppVersion"],function () {
+rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","uAppVersion"],function () {
   "use strict";
   var $mod = this;
   this.Register_uAbout = function () {
@@ -11259,7 +12190,7 @@ rtl.module("BlaiseCharts",["System","JS","Web","SysUtils"],function () {
         };
   };
 });
-rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
+rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","BlaiseCharts"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCharts = function () {
@@ -11511,7 +12442,7 @@ rtl.module("ClientProxies",["System","JS","Web","SysUtils","Services","BVRpc"],f
     $mod.SystemService();
   };
 },[]);
-rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
+rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","Services","ClientProxies"],function () {
   "use strict";
   var $mod = this;
   this.Register_uCustomerView = function () {
@@ -11612,7 +12543,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("customer-view-page",comp);
   };
 });
-rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uDatasetView = function () {
@@ -11910,7 +12841,7 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("data-set-view-page",comp);
   };
 });
-rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFormulario = function () {
@@ -11976,7 +12907,7 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("formulario-page",comp);
   };
 });
-rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uFragmentsView = function () {
@@ -12125,7 +13056,7 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("fragments-view-page",comp);
   };
 });
-rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uHome = function () {
@@ -12155,7 +13086,7 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("home-page",comp);
   };
 });
-rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
+rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","BVRouting"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLibBootstrap = function () {
@@ -12258,7 +13189,7 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("lib-bootstrap-page",comp);
   };
 });
-rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uLoginView = function () {
@@ -12303,7 +13234,7 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("login-view-page",comp);
   };
 });
-rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uMobileView = function () {
@@ -12374,7 +13305,7 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
   };
 });
-rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProductView = function () {
@@ -12467,7 +13398,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("product-view-page",comp);
   };
 });
-rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uProFeatures = function () {
@@ -12622,7 +13553,7 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("pro-features-page",comp);
   };
 });
-rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uReportsView = function () {
@@ -12757,7 +13688,7 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("reports-view-page",comp);
   };
 });
-rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uShowcase = function () {
@@ -12795,7 +13726,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("showcase-page",comp);
   };
 });
-rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uUserProfile = function () {
@@ -12831,7 +13762,7 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("user-profile-page",comp);
   };
 });
-rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBarChart = function () {
@@ -12866,7 +13797,7 @@ rtl.module("uBVBarChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-bar-chart",comp);
   };
 });
-rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBubbleChart = function () {
@@ -12901,7 +13832,7 @@ rtl.module("uBVBubbleChart",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-bubble-chart",comp);
   };
 });
-rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVChart = function () {
@@ -13128,7 +14059,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-chart",comp);
   };
 });
-rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDoughnutChart = function () {
@@ -13163,7 +14094,7 @@ rtl.module("uBVDoughnutChart",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-doughnut-chart",comp);
   };
 });
-rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVLineChart = function () {
@@ -13198,7 +14129,7 @@ rtl.module("uBVLineChart",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-line-chart",comp);
   };
 });
-rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPieChart = function () {
@@ -13233,7 +14164,7 @@ rtl.module("uBVPieChart",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-pie-chart",comp);
   };
 });
-rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPolarAreaChart = function () {
@@ -13268,7 +14199,7 @@ rtl.module("uBVPolarAreaChart",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-polar-area-chart",comp);
   };
 });
-rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRadarChart = function () {
@@ -13303,7 +14234,7 @@ rtl.module("uBVRadarChart",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-radar-chart",comp);
   };
 });
-rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVScatterChart = function () {
@@ -13338,7 +14269,7 @@ rtl.module("uBVScatterChart",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-scatter-chart",comp);
   };
 });
-rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVReportViewer = function () {
@@ -13646,7 +14577,7 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-report-viewer",comp);
   };
 });
-rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAccordion = function () {
@@ -13686,7 +14617,7 @@ rtl.module("uBVAccordion",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-accordion",comp);
   };
 });
-rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVAlert = function () {
@@ -13723,7 +14654,7 @@ rtl.module("uBVAlert",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-alert",comp);
   };
 });
-rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBadge = function () {
@@ -13757,7 +14688,7 @@ rtl.module("uBVBadge",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-badge",comp);
   };
 });
-rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNav = function () {
@@ -13770,7 +14701,7 @@ rtl.module("uBVBottomNav",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-bottom-nav",comp);
   };
 });
-rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBottomNavItem = function () {
@@ -13837,7 +14768,7 @@ rtl.module("uBVBottomNavItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-bottom-nav-item",comp);
   };
 });
-rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumb = function () {
@@ -13850,7 +14781,7 @@ rtl.module("uBVBreadcrumb",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-breadcrumb",comp);
   };
 });
-rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBreadcrumbItem = function () {
@@ -13879,7 +14810,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     pas.BVComponents.RegisterComponent("bv-breadcrumb-item",comp);
   };
 });
-rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVBtn = function () {
@@ -13928,7 +14859,7 @@ rtl.module("uBVBtn",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-btn",comp);
   };
 });
-rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCard = function () {
@@ -13954,7 +14885,86 @@ rtl.module("uBVCard",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-card",comp);
   };
 });
-rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVCheckbox",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVCheckbox = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="form-check bui-checkbox" :class="{ \'form-check-inline\': isInline }">' + "    <input " + '      class="form-check-input bui-checkbox-input" ' + '      type="checkbox" ' + '      :id="computedId"' + '      :checked="isChecked"' + '      :disabled="isDisabled"' + '      @change="handleChange"' + "    />" + '    <label class="form-check-label bui-checkbox-label" :for="computedId" b-if="label">' + "      <slot>{{ label }}</slot>" + "    </label>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = null;
+    comp["props"].push("checked");
+    comp["defaultProps"]["checked"] = false;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = null;
+    comp["props"].push("inline");
+    comp["defaultProps"]["inline"] = false;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleChange"] = function (_this, ev) {
+      var chk = (ev && ev.target) ? Boolean(ev.target.checked) : false;
+      var outVal;
+      if (Array.isArray(this.modelValue)) {
+        var arr = this.modelValue.slice();
+        var idx = arr.indexOf(this.value);
+        if (chk && idx === -1) arr.push(this.value);
+        else if (!chk && idx !== -1) arr.splice(idx, 1);
+        outVal = arr;
+      } else {
+        outVal = this.value !== undefined && this.value !== null ? (chk ? this.value : false) : chk;
+      }
+      this.$emit('input', outVal);
+      this.$emit('change', outVal);
+      this.$emit('update:modelValue', outVal);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["computedId"] = function (_this) {
+      var Result = undefined;
+      return this.id || ('bui-chk-' + Math.floor(Math.random() * 1000000));
+      return Result;
+    };
+    comp["computed"]["isChecked"] = function (_this) {
+      var Result = undefined;
+      if (this.checked === true || this.checked === 'true') return true;
+      if (this.modelValue === true || this.modelValue === 'true') return true;
+      if (Array.isArray(this.modelValue)) {
+        return this.modelValue.indexOf(this.value) !== -1;
+      }
+      if (this.value === true || this.value === 'true') return true;
+      return false;
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isInline"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.inline === true || this.inline === 'true');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-checkbox",comp);
+  };
+});
+rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVCol = function () {
@@ -14002,7 +15012,7 @@ rtl.module("uBVCol",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-col",comp);
   };
 });
-rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVContainer = function () {
@@ -14026,7 +15036,7 @@ rtl.module("uBVContainer",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-container",comp);
   };
 });
-rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDataGrid = function () {
@@ -14251,7 +15261,7 @@ rtl.module("uBVDataGrid",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-datagrid",comp);
   };
 });
-rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVDrawer = function () {
@@ -14316,7 +15326,159 @@ rtl.module("uBVDrawer",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-drawer",comp);
   };
 });
-rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVDropdown",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDropdown = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="dropdown bui-dropdown" :class="dropdownClass">' + "    <!-- Standard Single Dropdown Button -->" + "    <button " + '      b-if="!isSplit"' + '      class="btn dropdown-toggle bui-btn" ' + '      :class="btnClass" ' + '      type="button" ' + '      :disabled="isDisabled"' + '      @click="toggle">' + '      <slot name="button-content">{{ text }}</slot>' + "    </button>" + "" + "    <!-- Split Dropdown Button Group -->" + '    <div b-if="isSplit" class="btn-group">' + '      <button class="btn bui-btn" :class="btnClass" type="button" :disabled="isDisabled" @click="handleMainClick">' + '        <slot name="button-content">{{ text }}</slot>' + "      </button>" + "      <button " + '        class="btn dropdown-toggle dropdown-toggle-split bui-btn" ' + '        :class="btnClass" ' + '        type="button" ' + '        :disabled="isDisabled" ' + '        @click="toggle">' + '        <span class="visually-hidden">Toggle</span>' + "      </button>" + "    </div>" + "" + "    <!-- Dropdown Menu items container -->" + '    <ul class="dropdown-menu bui-dropdown-menu" :class="{ show: isOpen }">' + "      <slot></slot>" + "    </ul>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isOpen"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("text");
+    comp["defaultProps"]["text"] = "";
+    comp["props"].push("variant");
+    comp["defaultProps"]["variant"] = "primary";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
+    comp["props"].push("split");
+    comp["defaultProps"]["split"] = false;
+    comp["props"].push("direction");
+    comp["defaultProps"]["direction"] = "down";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["toggle"] = function (_this) {
+      if (!this.isDisabled) {
+        this.isOpen = !this.isOpen;
+        this.$emit('toggle', this.isOpen);
+      };
+    };
+    m["close"] = function (_this) {
+      this.isOpen = false;
+      this.$emit('toggle', false);
+    };
+    m["handleMainClick"] = function (_this, ev) {
+      if (!this.isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isSplit"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.split === true || this.split === 'true');
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.variant || 'primary';
+      var isOut = v.startsWith('outline-');
+      var cleanV = v.replace('outline-', '');
+      var s = this.size && this.size !== 'md' ? (' btn-' + this.size) : '';
+      var variantClass = isOut ? ('btn-outline-' + cleanV + ' bui-btn-outline-' + cleanV) : ('btn-' + cleanV + ' bui-btn-' + cleanV);
+      return variantClass + s;
+      return Result;
+    };
+    comp["computed"]["dropdownClass"] = function (_this) {
+      var Result = undefined;
+      var d = this.direction || 'down';
+      var dirClass = '';
+      if (d === 'up') dirClass = ' dropup';
+      else if (d === 'start') dirClass = ' dropstart';
+      else if (d === 'end') dirClass = ' dropend';
+      return (this.isOpen ? 'show' : '') + dirClass;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-dropdown",comp);
+  };
+});
+rtl.module("uBVDropdownItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVDropdownItem = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <li>" + '    <hr b-if="isDivider" class="dropdown-divider bui-dropdown-divider" />' + '    <h6 b-if="isHeader" class="dropdown-header bui-dropdown-header">' + "      <slot>{{ text }}</slot>" + "    </h6>" + "    <a " + '      b-if="!isDivider && !isHeader" ' + '      class="dropdown-item bui-dropdown-item" ' + '      :class="{ disabled: isDisabled, active: isActive }" ' + '      :href="href || \'#\'" ' + '      @click="handleClick">' + "      <slot>{{ text }}</slot>" + "    </a>" + "  </li>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("text");
+    comp["defaultProps"]["text"] = "";
+    comp["props"].push("href");
+    comp["defaultProps"]["href"] = "";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("active");
+    comp["defaultProps"]["active"] = false;
+    comp["props"].push("divider");
+    comp["defaultProps"]["divider"] = false;
+    comp["props"].push("header");
+    comp["defaultProps"]["header"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (this.isDisabled) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        return;
+      }
+      this.$emit('click', ev);
+      // Find parent dropdown if possible and close it
+      var parent = this.$parent;
+      while (parent) {
+        if (typeof parent.close === 'function') {
+          parent.close();
+          break;
+        }
+        parent = parent.$parent;
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isDivider"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.divider === true || this.divider === 'true');
+      return Result;
+    };
+    comp["computed"]["isHeader"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.header === true || this.header === 'true');
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isActive"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.active === true || this.active === 'true');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-dropdown-item",comp);
+  };
+});
+rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVFormSelect = function () {
@@ -14349,14 +15511,14 @@ rtl.module("uBVFormSelect",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-form-select",comp);
   };
 });
-rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIcon = function () {
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\'">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "  </span>";
+    comp["template"] = '  <span class="bui-icon-wrapper" :style="\'display: inline-flex; align-items: center; justify-content: center; width: \' + size + \'px; height: \' + size + \'px;\' + (color ? \' color: \' + color + \';\' : \'\')">' + '    <svg v-if="name == \'check-circle\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'warning\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'gear-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.168-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'heart-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'weather\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M8 5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM12.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zM12.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0v-1a.5.5 0 0 1 .5-.5zm.025-5.975a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0zM10.732 14.268a.5.5 0 0 1 0 .707l-.707.708a.5.5 0 0 1-.708-.708l.707-.707a.5.5 0 0 1 .707 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'code-slash\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'cpu\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 .5-.5h.5V2h1.5a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5H14v1.5a.5.5 0 0 1-.5.5h-1V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-.5.5h-.5V14H2.5a.5.5 0 0 1-.5-.5V2h-1.5a.5.5 0 0 1-.5-.5h.5V1h1.5a.5.5 0 0 1 .5-.5V0zm1 10h4V6H6v4z"/>' + "    </svg>" + "" + '    <svg v-if="name == \'bootstrap-fill\'" xmlns="http://www.w3.org/2000/svg" :width="size" :height="size" fill="currentColor" viewBox="0 0 16 16">' + '      <path d="M6.35 10.5c0 .73.73 1.23 1.58 1.23.83 0 1.55-.53 1.55-1.23 0-.64-.52-1.13-1.55-1.13-.85 0-1.58.49-1.58 1.13zm-.12-3.15c0 .63.74 1.12 1.6 1.12.83 0 1.53-.49 1.53-1.12 0-.67-.7-1.2-1.53-1.2-.86 0-1.6.53-1.6 1.2z"/>' + '      <path d="M10.1 0H5.9C5 0 4 .5 3.3 1.3 2.5 2.1 2 3 2 3.9v8.2c0 .9.5 1.8 1.3 2.6.8.8 1.7 1.3 2.6 1.3h4.2c.9 0 1.8-.5 2.6-1.3.8-.8 1.3-1.7 1.3-2.6V3.9c0-.9-.5-1.8-1.3-2.6C12 .5 11.1 0 10.1 0zM7.9 12.6c-1.6 0-2.9-1.1-2.9-2.5 0-1 .6-1.8 1.5-2.2-.7-.4-1.2-1.1-1.2-2 0-1.3 1.1-2.4 2.6-2.4 1.5 0 2.6 1.1 2.6 2.4 0 .9-.5 1.6-1.2 2 1 .4 1.5 1.2 1.5 2.2 0 1.4-1.3 2.5-2.9 2.5z"/>' + "    </svg>" + "" + "    <!-- Bootstrap Icon font fallback for 1800+ icons -->" + '    <i v-if="name != \'check-circle\' && name != \'warning\' && name != \'gear-fill\' && name != \'heart-fill\' && name != \'weather\' && name != \'code-slash\' && name != \'cpu\' && name != \'bootstrap-fill\'" :class="\'bi bi-\' + name" :style="\'font-size: \' + size + \'px; line-height: 1;\'"></i>' + "  </span>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -14370,12 +15532,14 @@ rtl.module("uBVIcon",["System","JS","Web","BVComponents","BVReactivity","BVStore
     comp["defaultProps"]["name"] = "check-circle";
     comp["props"].push("size");
     comp["defaultProps"]["size"] = "16";
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "";
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-icon",comp);
   };
 });
-rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInput = function () {
@@ -14412,7 +15576,7 @@ rtl.module("uBVInput",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-input",comp);
   };
 });
-rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVInputGroup = function () {
@@ -14448,7 +15612,7 @@ rtl.module("uBVInputGroup",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-input-group",comp);
   };
 });
-rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroup = function () {
@@ -14461,7 +15625,7 @@ rtl.module("uBVListGroup",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-list-group",comp);
   };
 });
-rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVListGroupItem = function () {
@@ -14500,7 +15664,7 @@ rtl.module("uBVListGroupItem",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-list-group-item",comp);
   };
 });
-rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVModal = function () {
@@ -14584,7 +15748,7 @@ rtl.module("uBVModal",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-modal",comp);
   };
 });
-rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavbar = function () {
@@ -14608,7 +15772,7 @@ rtl.module("uBVNavbar",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-navbar",comp);
   };
 });
-rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVNavItem = function () {
@@ -14646,7 +15810,7 @@ rtl.module("uBVNavItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-nav-item",comp);
   };
 });
-rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVPagination = function () {
@@ -14686,7 +15850,7 @@ rtl.module("uBVPagination",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-pagination",comp);
   };
 });
-rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVProgress = function () {
@@ -14732,7 +15896,76 @@ rtl.module("uBVProgress",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-progress",comp);
   };
 });
-rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVRadio",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVRadio = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="form-check bui-radio" :class="{ \'form-check-inline\': isInline }">' + "    <input " + '      class="form-check-input bui-radio-input" ' + '      type="radio" ' + '      :id="computedId"' + '      :name="name"' + '      :checked="isChecked"' + '      :disabled="isDisabled"' + '      @change="handleChange"' + "    />" + '    <label class="form-check-label bui-radio-label" :for="computedId" b-if="label">' + "      <slot>{{ label }}</slot>" + "    </label>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("name");
+    comp["defaultProps"]["name"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = null;
+    comp["props"].push("checked");
+    comp["defaultProps"]["checked"] = false;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = null;
+    comp["props"].push("inline");
+    comp["defaultProps"]["inline"] = false;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleChange"] = function (_this, ev) {
+      var val = this.value;
+      this.$emit('input', val);
+      this.$emit('change', val);
+      this.$emit('update:modelValue', val);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["computedId"] = function (_this) {
+      var Result = undefined;
+      return this.id || ('bui-rad-' + Math.floor(Math.random() * 1000000));
+      return Result;
+    };
+    comp["computed"]["isChecked"] = function (_this) {
+      var Result = undefined;
+      if (this.checked === true || this.checked === 'true') return true;
+      if (this.modelValue !== undefined && this.modelValue !== null && this.value !== undefined && this.value !== null) {
+        return String(this.modelValue) === String(this.value);
+      }
+      return false;
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isInline"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.inline === true || this.inline === 'true');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-radio",comp);
+  };
+});
+rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVRow = function () {
@@ -14782,7 +16015,152 @@ rtl.module("uBVRow",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-row",comp);
   };
 });
-rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVSkeleton",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSkeleton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-skeleton-container" :class="animationClass">' + "    <!-- Circle Skeleton -->" + "    <div " + '      b-if="type = \'circle\'" ' + '      class="placeholder bui-skeleton bui-skeleton-circle" ' + '      :style="circleStyle">' + "    </div>" + "" + "    <!-- Rectangular Skeleton (Image / Banner) -->" + "    <div " + '      b-if="type = \'rect\'" ' + '      class="placeholder bui-skeleton bui-skeleton-rect" ' + '      :style="rectStyle">' + "    </div>" + "" + "    <!-- Card Composite Skeleton -->" + '    <div b-if="type = \'card\'" class="card bui-skeleton-card" aria-hidden="true">' + '      <div class="placeholder bui-skeleton bui-skeleton-rect" style="height: 140px; width: 100%;"></div>' + '      <div class="card-body">' + '        <h5 class="card-title placeholder-glow">' + '          <span class="placeholder col-6"></span>' + "        </h5>" + '        <p class="card-text placeholder-glow">' + '          <span class="placeholder col-7"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-6"></span>' + "        </p>" + "      </div>" + "    </div>" + "" + "    <!-- Text Rows Skeleton (Default) -->" + '    <div b-if="type = \'text\'" class="bui-skeleton-text-group">' + "      <div " + '        b-for="n in countArr" ' + '        class="placeholder bui-skeleton bui-skeleton-text" ' + '        :style="textStyle">' + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
+    comp["props"].push("animation");
+    comp["defaultProps"]["animation"] = "glow";
+    comp["props"].push("width");
+    comp["defaultProps"]["width"] = "100%";
+    comp["props"].push("height");
+    comp["defaultProps"]["height"] = "";
+    comp["props"].push("count");
+    comp["defaultProps"]["count"] = 1;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["animationClass"] = function (_this) {
+      var Result = undefined;
+      var anim = this.animation || 'glow';
+      if (anim === 'wave') return 'placeholder-wave';
+      if (anim === 'none') return '';
+      return 'placeholder-glow';
+      return Result;
+    };
+    comp["computed"]["countArr"] = function (_this) {
+      var Result = undefined;
+      var cnt = Math.max(1, parseInt(this.count, 10) || 1);
+      var arr = [];
+      for (var i = 1; i <= cnt; i++) arr.push(i);
+      return arr;
+      return Result;
+    };
+    comp["computed"]["circleStyle"] = function (_this) {
+      var Result = undefined;
+      var size = this.height || this.width || '48px';
+      return 'width: ' + size + '; height: ' + size + '; border-radius: 50%; display: inline-block;';
+      return Result;
+    };
+    comp["computed"]["rectStyle"] = function (_this) {
+      var Result = undefined;
+      var w = this.width || '100%';
+      var h = this.height || '120px';
+      return 'width: ' + w + '; height: ' + h + '; border-radius: 6px; display: block;';
+      return Result;
+    };
+    comp["computed"]["textStyle"] = function (_this) {
+      var Result = undefined;
+      var w = this.width || '100%';
+      var h = this.height || '1em';
+      return 'width: ' + w + '; height: ' + h + '; border-radius: 4px; display: block; margin-bottom: 0.5em;';
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-skeleton",comp);
+  };
+});
+rtl.module("uBVSlider",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSlider = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-slider-group">' + '    <div class="bui-slider-header" b-if="label || isShowValue">' + '      <label class="form-label bui-slider-label" :for="computedId" b-if="label">{{ label }}</label>' + '      <span class="badge bg-primary bui-slider-badge" b-if="isShowValue">{{ currentValue }}</span>' + "    </div>" + "    <input " + '      type="range" ' + '      class="form-range bui-slider-input" ' + '      :id="computedId"' + '      :min="min" ' + '      :max="max" ' + '      :step="step"' + '      :value="currentValue" ' + '      :disabled="isDisabled"' + '      @input="handleInput"' + '      @change="handleChange"' + "    />" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("min");
+    comp["defaultProps"]["min"] = 0;
+    comp["props"].push("max");
+    comp["defaultProps"]["max"] = 100;
+    comp["props"].push("step");
+    comp["defaultProps"]["step"] = 1;
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = 0;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = 0;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("showValue");
+    comp["defaultProps"]["showValue"] = false;
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      var val = (ev && ev.target) ? Number(ev.target.value) : 0;
+      this.value = val;
+      this.$emit('input', val);
+      this.$emit('update:modelValue', val);
+    };
+    m["handleChange"] = function (_this, ev) {
+      var val = (ev && ev.target) ? Number(ev.target.value) : 0;
+      this.value = val;
+      this.$emit('change', val);
+      this.$emit('update:modelValue', val);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["computedId"] = function (_this) {
+      var Result = undefined;
+      return this.id || ('bui-slider-' + Math.floor(Math.random() * 1000000));
+      return Result;
+    };
+    comp["computed"]["currentValue"] = function (_this) {
+      var Result = undefined;
+      var v = this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== 0 
+        ? this.modelValue 
+        : this.value;
+      return Number(v) || 0;
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isShowValue"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.showValue === true || this.showValue === 'true');
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-slider",comp);
+  };
+});
+rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVSpinner = function () {
@@ -14808,7 +16186,76 @@ rtl.module("uBVSpinner",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-spinner",comp);
   };
 });
-rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVSwitch",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVSwitch = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="form-check form-switch bui-switch" :class="wrapperClass">' + "    <input " + '      class="form-check-input bui-switch-input" ' + '      type="checkbox" ' + '      role="switch" ' + '      :id="computedId"' + '      :checked="isChecked"' + '      :disabled="isDisabled"' + '      @change="handleChange"' + "    />" + '    <label class="form-check-label bui-switch-label" :for="computedId" b-if="label">' + "      <slot>{{ label }}</slot>" + "    </label>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("id");
+    comp["defaultProps"]["id"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = false;
+    comp["props"].push("checked");
+    comp["defaultProps"]["checked"] = false;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = false;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    m = new Object();
+    m["handleChange"] = function (_this, ev) {
+      var val = (ev && ev.target) ? Boolean(ev.target.checked) : false;
+      this.$emit('input', val);
+      this.$emit('change', val);
+      this.$emit('update:modelValue', val);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["computedId"] = function (_this) {
+      var Result = undefined;
+      return this.id || ('bui-switch-' + Math.floor(Math.random() * 1000000));
+      return Result;
+    };
+    comp["computed"]["isChecked"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.value === true || this.value === 'true' || 
+      this.checked === true || this.checked === 'true' || 
+      this.modelValue === true || this.modelValue === 'true');
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var s = this.size ? (' bui-switch-' + this.size) : '';
+      var c = this.color ? (' bui-switch-' + this.color) : ' bui-switch-primary';
+      return 'form-check form-switch bui-switch' + s + c;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-switch",comp);
+  };
+});
+rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTab = function () {
@@ -14862,7 +16309,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     pas.BVComponents.RegisterComponent("bv-tab",comp);
   };
 });
-rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVTabs = function () {
@@ -14922,7 +16369,7 @@ rtl.module("uBVTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore
     pas.BVComponents.RegisterComponent("bv-tabs",comp);
   };
 });
-rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVToast = function () {
@@ -14978,7 +16425,7 @@ rtl.module("uBVToast",["System","JS","Web","BVComponents","BVReactivity","BVStor
     pas.BVComponents.RegisterComponent("bv-toast",comp);
   };
 });
-rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVVirtualScroll = function () {
@@ -15081,7 +16528,7 @@ rtl.module("uBVVirtualScroll",["System","JS","Web","BVComponents","BVReactivity"
     pas.BVComponents.RegisterComponent("bv-virtualscroll",comp);
   };
 });
-rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonApp = function () {
@@ -15112,7 +16559,7 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-ion-app",comp);
   };
 });
-rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonBadge = function () {
@@ -15138,7 +16585,7 @@ rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-badge",comp);
   };
 });
-rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonButton = function () {
@@ -15185,7 +16632,7 @@ rtl.module("uBVIonButton",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-button",comp);
   };
 });
-rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonCard = function () {
@@ -15211,7 +16658,7 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
   };
 });
-rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonContent = function () {
@@ -15235,7 +16682,7 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
   };
 });
-rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonHeader = function () {
@@ -15248,7 +16695,7 @@ rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-header",comp);
   };
 });
-rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonItem = function () {
@@ -15324,7 +16771,7 @@ rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-item",comp);
   };
 });
-rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonList = function () {
@@ -15348,7 +16795,7 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
   };
 });
-rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabBar = function () {
@@ -15361,7 +16808,7 @@ rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BV
     pas.BVComponents.RegisterComponent("bv-ion-tab-bar",comp);
   };
 });
-rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabButton = function () {
@@ -15392,7 +16839,7 @@ rtl.module("uBVIonTabButton",["System","JS","Web","BVComponents","BVReactivity",
     pas.BVComponents.RegisterComponent("bv-ion-tab-button",comp);
   };
 });
-rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTabs = function () {
@@ -15405,7 +16852,7 @@ rtl.module("uBVIonTabs",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-tabs",comp);
   };
 });
-rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonTitle = function () {
@@ -15429,7 +16876,7 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
   };
 });
-rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVIonToolbar = function () {
@@ -15442,7 +16889,7 @@ rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-toolbar",comp);
   };
 });
-rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeSelect = function () {
@@ -15464,7 +16911,7 @@ rtl.module("uBVThemeSelect",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-select",comp);
   };
 });
-rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","SysUtils","BVPascalDX","BVDataSet"],function () {
+rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uBVThemeToggle = function () {
@@ -15482,7 +16929,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVCompiler","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRow","uBVSpinner","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVFSM","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCommentQuotes","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCheckbox","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVDropdown","uBVDropdownItem","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRadio","uBVRow","uBVSkeleton","uBVSlider","uBVSpinner","uBVSwitch","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -15511,6 +16958,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     document.head.appendChild(_styleEl);
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
+    console.log("[Init] Registering uCommentQuotes...");
+    pas.uCommentQuotes.Register_uCommentQuotes();
     console.log("[Init] Registering uCounter...");
     pas.uCounter.Register_uCounter();
     console.log("[Init] Registering uFormHeader...");
@@ -15591,6 +17040,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVBtn.Register_uBVBtn();
     console.log("[Init] Registering uBVCard...");
     pas.uBVCard.Register_uBVCard();
+    console.log("[Init] Registering uBVCheckbox...");
+    pas.uBVCheckbox.Register_uBVCheckbox();
     console.log("[Init] Registering uBVCol...");
     pas.uBVCol.Register_uBVCol();
     console.log("[Init] Registering uBVContainer...");
@@ -15599,6 +17050,10 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVDataGrid.Register_uBVDataGrid();
     console.log("[Init] Registering uBVDrawer...");
     pas.uBVDrawer.Register_uBVDrawer();
+    console.log("[Init] Registering uBVDropdown...");
+    pas.uBVDropdown.Register_uBVDropdown();
+    console.log("[Init] Registering uBVDropdownItem...");
+    pas.uBVDropdownItem.Register_uBVDropdownItem();
     console.log("[Init] Registering uBVFormSelect...");
     pas.uBVFormSelect.Register_uBVFormSelect();
     console.log("[Init] Registering uBVIcon...");
@@ -15621,10 +17076,18 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVC
     pas.uBVPagination.Register_uBVPagination();
     console.log("[Init] Registering uBVProgress...");
     pas.uBVProgress.Register_uBVProgress();
+    console.log("[Init] Registering uBVRadio...");
+    pas.uBVRadio.Register_uBVRadio();
     console.log("[Init] Registering uBVRow...");
     pas.uBVRow.Register_uBVRow();
+    console.log("[Init] Registering uBVSkeleton...");
+    pas.uBVSkeleton.Register_uBVSkeleton();
+    console.log("[Init] Registering uBVSlider...");
+    pas.uBVSlider.Register_uBVSlider();
     console.log("[Init] Registering uBVSpinner...");
     pas.uBVSpinner.Register_uBVSpinner();
+    console.log("[Init] Registering uBVSwitch...");
+    pas.uBVSwitch.Register_uBVSwitch();
     console.log("[Init] Registering uBVTab...");
     pas.uBVTab.Register_uBVTab();
     console.log("[Init] Registering uBVTabs...");

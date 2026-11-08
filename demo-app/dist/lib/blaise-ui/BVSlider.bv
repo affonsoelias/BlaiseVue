@@ -1,0 +1,101 @@
+<template>
+  <div class="bui-slider-group">
+    <div class="bui-slider-header" b-if="label || isShowValue">
+      <label class="form-label bui-slider-label" :for="computedId" b-if="label">{{ label }}</label>
+      <span class="badge bg-primary bui-slider-badge" b-if="isShowValue">{{ currentValue }}</span>
+    </div>
+    <input 
+      type="range" 
+      class="form-range bui-slider-input" 
+      :id="computedId"
+      :min="min" 
+      :max="max" 
+      :step="step"
+      :value="currentValue" 
+      :disabled="isDisabled"
+      @input="handleInput"
+      @change="handleChange"
+    />
+  </div>
+</template>
+
+<script>
+  {
+    BVSlider - Range Slider Input Component (Bootstrap 5 Range)
+    ----------------------------------------------------------
+    Props:
+    - id: String
+    - label: String
+    - min: Double (default 0)
+    - max: Double (default 100)
+    - step: Double (default 1)
+    - value: Double (current value / b-model)
+    - modelValue: Double
+    - disabled: Boolean
+    - showValue: Boolean (displays badge with current numeric value)
+  }
+
+  props:
+    id: string = '';
+    label: string = '';
+    min: double = 0;
+    max: double = 100;
+    step: double = 1;
+    value: double = 0;
+    modelValue: double = 0;
+    disabled: boolean = false;
+    showValue: boolean = false;
+
+  computed:
+    function computedId: string;
+    begin
+      asm
+        return this.id || ('bui-slider-' + Math.floor(Math.random() * 1000000));
+      end;
+    end;
+
+    function currentValue: double;
+    begin
+      asm
+        var v = this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== 0 
+          ? this.modelValue 
+          : this.value;
+        return Number(v) || 0;
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isShowValue: boolean;
+    begin
+      asm
+        return Boolean(this.showValue === true || this.showValue === 'true');
+      end;
+    end;
+
+  methods:
+    procedure handleInput(ev: JSValue);
+    begin
+      asm
+        var val = (ev && ev.target) ? Number(ev.target.value) : 0;
+        this.value = val;
+        this.$emit('input', val);
+        this.$emit('update:modelValue', val);
+      end;
+    end;
+
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var val = (ev && ev.target) ? Number(ev.target.value) : 0;
+        this.value = val;
+        this.$emit('change', val);
+        this.$emit('update:modelValue', val);
+      end;
+    end;
+</script>

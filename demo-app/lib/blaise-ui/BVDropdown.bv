@@ -1,0 +1,126 @@
+<template>
+  <div class="dropdown bui-dropdown" :class="dropdownClass">
+    <!-- Standard Single Dropdown Button -->
+    <button 
+      b-if="!isSplit"
+      class="btn dropdown-toggle bui-btn" 
+      :class="btnClass" 
+      type="button" 
+      :disabled="isDisabled"
+      @click="toggle">
+      <slot name="button-content">{{ text }}</slot>
+    </button>
+
+    <!-- Split Dropdown Button Group -->
+    <div b-if="isSplit" class="btn-group">
+      <button class="btn bui-btn" :class="btnClass" type="button" :disabled="isDisabled" @click="handleMainClick">
+        <slot name="button-content">{{ text }}</slot>
+      </button>
+      <button 
+        class="btn dropdown-toggle dropdown-toggle-split bui-btn" 
+        :class="btnClass" 
+        type="button" 
+        :disabled="isDisabled" 
+        @click="toggle">
+        <span class="visually-hidden">Toggle</span>
+      </button>
+    </div>
+
+    <!-- Dropdown Menu items container -->
+    <ul class="dropdown-menu bui-dropdown-menu" :class="{ show: isOpen }">
+      <slot></slot>
+    </ul>
+  </div>
+</template>
+
+<script>
+  {
+    BVDropdown - Contextual Dropdown Menu Component (Bootstrap 5 Dropdown)
+    --------------------------------------------------------------------
+    Props:
+    - text: String (button label)
+    - variant: String ('primary', 'secondary', 'success', 'danger', etc.)
+    - size: String ('sm', 'md', 'lg')
+    - split: Boolean (renders split button with independent caret toggle)
+    - direction: String ('down', 'up', 'start', 'end')
+    - disabled: Boolean
+  }
+
+  props:
+    text: string = '';
+    variant: string = 'primary';
+    size: string = 'md';
+    split: boolean = false;
+    direction: string = 'down';
+    disabled: boolean = false;
+
+  data:
+    isOpen: boolean = false;
+
+  computed:
+    function isSplit: boolean;
+    begin
+      asm
+        return Boolean(this.split === true || this.split === 'true');
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function btnClass: string;
+    begin
+      asm
+        var v = this.variant || 'primary';
+        var isOut = v.startsWith('outline-');
+        var cleanV = v.replace('outline-', '');
+        var s = this.size && this.size !== 'md' ? (' btn-' + this.size) : '';
+        var variantClass = isOut ? ('btn-outline-' + cleanV + ' bui-btn-outline-' + cleanV) : ('btn-' + cleanV + ' bui-btn-' + cleanV);
+        return variantClass + s;
+      end;
+    end;
+
+    function dropdownClass: string;
+    begin
+      asm
+        var d = this.direction || 'down';
+        var dirClass = '';
+        if (d === 'up') dirClass = ' dropup';
+        else if (d === 'start') dirClass = ' dropstart';
+        else if (d === 'end') dirClass = ' dropend';
+        return (this.isOpen ? 'show' : '') + dirClass;
+      end;
+    end;
+
+  methods:
+    procedure toggle;
+    begin
+      asm
+        if (!this.isDisabled) {
+          this.isOpen = !this.isOpen;
+          this.$emit('toggle', this.isOpen);
+        }
+      end;
+    end;
+
+    procedure close;
+    begin
+      asm
+        this.isOpen = false;
+        this.$emit('toggle', false);
+      end;
+    end;
+
+    procedure handleMainClick(ev: JSValue);
+    begin
+      asm
+        if (!this.isDisabled) {
+          this.$emit('click', ev);
+        }
+      end;
+    end;
+</script>

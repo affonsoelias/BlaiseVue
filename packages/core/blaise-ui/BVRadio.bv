@@ -1,0 +1,86 @@
+<template>
+  <div class="form-check bui-radio" :class="{ 'form-check-inline': isInline }">
+    <input 
+      class="form-check-input bui-radio-input" 
+      type="radio" 
+      :id="computedId"
+      :name="name"
+      :checked="isChecked"
+      :disabled="isDisabled"
+      @change="handleChange"
+    />
+    <label class="form-check-label bui-radio-label" :for="computedId" b-if="label">
+      <slot>{{ label }}</slot>
+    </label>
+  </div>
+</template>
+
+<script>
+  {
+    BVRadio - Single Selection Radio Button Component (Bootstrap 5 Radio)
+    -------------------------------------------------------------------
+    Props:
+    - id: String
+    - name: String (radio group name)
+    - label: String
+    - value: JSValue (value when selected)
+    - checked: Boolean
+    - modelValue: JSValue (current selected group value)
+    - inline: Boolean
+    - disabled: Boolean
+  }
+
+  props:
+    id: string = '';
+    name: string = '';
+    label: string = '';
+    value: JSValue = nil;
+    checked: boolean = false;
+    modelValue: JSValue = nil;
+    inline: boolean = false;
+    disabled: boolean = false;
+
+  computed:
+    function computedId: string;
+    begin
+      asm
+        return this.id || ('bui-rad-' + Math.floor(Math.random() * 1000000));
+      end;
+    end;
+
+    function isChecked: boolean;
+    begin
+      asm
+        if (this.checked === true || this.checked === 'true') return true;
+        if (this.modelValue !== undefined && this.modelValue !== null && this.value !== undefined && this.value !== null) {
+          return String(this.modelValue) === String(this.value);
+        }
+        return false;
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isInline: boolean;
+    begin
+      asm
+        return Boolean(this.inline === true || this.inline === 'true');
+      end;
+    end;
+
+  methods:
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var val = this.value;
+        this.$emit('input', val);
+        this.$emit('change', val);
+        this.$emit('update:modelValue', val);
+      end;
+    end;
+</script>

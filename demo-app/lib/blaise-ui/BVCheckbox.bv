@@ -1,0 +1,95 @@
+<template>
+  <div class="form-check bui-checkbox" :class="{ 'form-check-inline': isInline }">
+    <input 
+      class="form-check-input bui-checkbox-input" 
+      type="checkbox" 
+      :id="computedId"
+      :checked="isChecked"
+      :disabled="isDisabled"
+      @change="handleChange"
+    />
+    <label class="form-check-label bui-checkbox-label" :for="computedId" b-if="label">
+      <slot>{{ label }}</slot>
+    </label>
+  </div>
+</template>
+
+<script>
+  {
+    BVCheckbox - Selection Checkbox Component (Bootstrap 5 Checkbox)
+    ----------------------------------------------------------------
+    Props:
+    - id: String
+    - label: String
+    - value: JSValue
+    - checked: Boolean
+    - modelValue: JSValue
+    - inline: Boolean
+    - disabled: Boolean
+  }
+
+  props:
+    id: string = '';
+    label: string = '';
+    value: JSValue = nil;
+    checked: boolean = false;
+    modelValue: JSValue = nil;
+    inline: boolean = false;
+    disabled: boolean = false;
+
+  computed:
+    function computedId: string;
+    begin
+      asm
+        return this.id || ('bui-chk-' + Math.floor(Math.random() * 1000000));
+      end;
+    end;
+
+    function isChecked: boolean;
+    begin
+      asm
+        if (this.checked === true || this.checked === 'true') return true;
+        if (this.modelValue === true || this.modelValue === 'true') return true;
+        if (Array.isArray(this.modelValue)) {
+          return this.modelValue.indexOf(this.value) !== -1;
+        }
+        if (this.value === true || this.value === 'true') return true;
+        return false;
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isInline: boolean;
+    begin
+      asm
+        return Boolean(this.inline === true || this.inline === 'true');
+      end;
+    end;
+
+  methods:
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var chk = (ev && ev.target) ? Boolean(ev.target.checked) : false;
+        var outVal;
+        if (Array.isArray(this.modelValue)) {
+          var arr = this.modelValue.slice();
+          var idx = arr.indexOf(this.value);
+          if (chk && idx === -1) arr.push(this.value);
+          else if (!chk && idx !== -1) arr.splice(idx, 1);
+          outVal = arr;
+        } else {
+          outVal = this.value !== undefined && this.value !== null ? (chk ? this.value : false) : chk;
+        }
+        this.$emit('input', outVal);
+        this.$emit('change', outVal);
+        this.$emit('update:modelValue', outVal);
+      end;
+    end;
+</script>

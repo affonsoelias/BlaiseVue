@@ -1,0 +1,88 @@
+<template>
+  <li>
+    <hr b-if="isDivider" class="dropdown-divider bui-dropdown-divider" />
+    <h6 b-if="isHeader" class="dropdown-header bui-dropdown-header">
+      <slot>{{ text }}</slot>
+    </h6>
+    <a 
+      b-if="!isDivider && !isHeader" 
+      class="dropdown-item bui-dropdown-item" 
+      :class="{ disabled: isDisabled, active: isActive }" 
+      :href="href || '#'" 
+      @click="handleClick">
+      <slot>{{ text }}</slot>
+    </a>
+  </li>
+</template>
+
+<script>
+  {
+    BVDropdownItem - Menu Item for BVDropdown
+    -----------------------------------------
+    Props:
+    - text: String
+    - href: String
+    - disabled: Boolean
+    - active: Boolean
+    - divider: Boolean (renders horizontal divider line)
+    - header: Boolean (renders non-clickable category header)
+  }
+
+  props:
+    text: string = '';
+    href: string = '';
+    disabled: boolean = false;
+    active: boolean = false;
+    divider: boolean = false;
+    header: boolean = false;
+
+  computed:
+    function isDivider: boolean;
+    begin
+      asm
+        return Boolean(this.divider === true || this.divider === 'true');
+      end;
+    end;
+
+    function isHeader: boolean;
+    begin
+      asm
+        return Boolean(this.header === true || this.header === 'true');
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isActive: boolean;
+    begin
+      asm
+        return Boolean(this.active === true || this.active === 'true');
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        if (this.isDisabled) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          return;
+        }
+        this.$emit('click', ev);
+        // Find parent dropdown if possible and close it
+        var parent = this.$parent;
+        while (parent) {
+          if (typeof parent.close === 'function') {
+            parent.close();
+            break;
+          }
+          parent = parent.$parent;
+        }
+      end;
+    end;
+</script>

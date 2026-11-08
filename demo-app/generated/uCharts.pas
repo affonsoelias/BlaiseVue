@@ -4,7 +4,7 @@ unit uCharts;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet, BlaiseCharts;
+uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet, BlaiseCharts;
 
 procedure Register_uCharts;
 

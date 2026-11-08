@@ -4,7 +4,7 @@ unit uAbout;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, SysUtils, BVPascalDX, BVDataSet, uAppVersion;
+uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet, uAppVersion;
 
 procedure Register_uAbout;
 

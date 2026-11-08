@@ -2,11 +2,11 @@ program blaise_ui_test;
 
 {$mode objfpc}
 
-uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVInput, uBVPagination, uBVListGroup, uBVListGroupItem, uBVAccordion;
+uses JS, Web, BVTestUtils, BVComponents, uBVBtn, uBVCard, uBVModal, uBVDataGrid, uBVBadge, uBVAlert, uBVProgress, uBVSpinner, uBVInput, uBVPagination, uBVListGroup, uBVListGroupItem, uBVAccordion, uBVSwitch, uBVCheckbox, uBVRadio, uBVDropdown, uBVDropdownItem, uBVSkeleton, uBVSlider;
 
 var
   Wrapper: TWrapper;
-  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, InputProps, PagProps, ItemProps, AccordionProps: TJSObject;
+  BtnProps, CardProps, ModalProps, AlertProps, BadgeProps, ProgressProps, InputProps, PagProps, ItemProps, AccordionProps, SwitchProps, CheckboxProps, RadioProps, DropdownProps, SkeletonProps, SliderProps: TJSObject;
 
 begin
   Register_uBVBtn;
@@ -23,6 +23,13 @@ begin
   Register_uBVListGroup;
   Register_uBVListGroupItem;
   Register_uBVAccordion;
+  Register_uBVSwitch;
+  Register_uBVCheckbox;
+  Register_uBVRadio;
+  Register_uBVDropdown;
+  Register_uBVDropdownItem;
+  Register_uBVSkeleton;
+  Register_uBVSlider;
 
   Describe('BlaiseUI Official Component Kit', procedure
     begin
@@ -177,6 +184,100 @@ begin
             TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[1]).click;
             Expect(TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[1]).className).ToContain('active');
             Expect(TJSHTMLElement(Wrapper.FindAll('.bui-accordion-button')[0]).className).NotToContain('active');
+         end);
+
+       It('deve renderizar bv-switch com role switch e label', procedure
+         begin
+            SwitchProps := TJSObject.new;
+            SwitchProps['label'] := 'Dark Mode';
+            SwitchProps['color'] := 'success';
+            Wrapper := Mount('bv-switch', SwitchProps);
+            Expect(Wrapper.Find('.bui-switch')).toBeDefined;
+            Expect(Wrapper.Find('input[type="checkbox"]')).toBeDefined;
+            Expect(Wrapper.Find('input').getAttribute('role')).toBe('switch');
+            Expect(Wrapper.Find('.bui-switch-label').textContent).ToContain('Dark Mode');
+            Expect(Wrapper.Find('.bui-switch').className).ToContain('bui-switch-success');
+         end);
+
+       It('deve renderizar bv-checkbox com label e estado checked', procedure
+         begin
+            CheckboxProps := TJSObject.new;
+            CheckboxProps['label'] := 'Accept Terms';
+            CheckboxProps['checked'] := true;
+            Wrapper := Mount('bv-checkbox', CheckboxProps);
+            Expect(Wrapper.Find('.bui-checkbox')).toBeDefined;
+            Expect(Wrapper.Find('input[type="checkbox"]')).toBeDefined;
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).checked).toBe(True);
+            Expect(Wrapper.Find('.bui-checkbox-label').textContent).ToContain('Accept Terms');
+         end);
+
+       It('deve renderizar bv-radio com name e estado checked', procedure
+         begin
+            RadioProps := TJSObject.new;
+            RadioProps['name'] := 'options';
+            RadioProps['label'] := 'Option A';
+            RadioProps['value'] := 'A';
+            RadioProps['checked'] := true;
+            Wrapper := Mount('bv-radio', RadioProps);
+            Expect(Wrapper.Find('.bui-radio')).toBeDefined;
+            Expect(Wrapper.Find('input[type="radio"]')).toBeDefined;
+            Expect(Wrapper.Find('input').getAttribute('name')).toBe('options');
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).checked).toBe(True);
+            Expect(Wrapper.Find('.bui-radio-label').textContent).ToContain('Option A');
+         end);
+
+       It('deve renderizar bv-dropdown e alternar menu aberto no clique', procedure
+         begin
+            DropdownProps := TJSObject.new;
+            DropdownProps['text'] := 'Options';
+            DropdownProps['variant'] := 'secondary';
+            Wrapper := Mount('bv-dropdown', DropdownProps);
+            Expect(Wrapper.Find('.bui-dropdown')).toBeDefined;
+            Expect(Wrapper.Find('button').textContent).ToContain('Options');
+            Expect(Wrapper.Find('.dropdown-menu').className).NotToContain('show');
+            Wrapper.Find('button').click;
+            Expect(Wrapper.Find('.dropdown-menu').className).ToContain('show');
+         end);
+
+       It('deve renderizar bv-dropdown-item como link de menu', procedure
+         begin
+            ItemProps := TJSObject.new;
+            ItemProps['href'] := '#/profile';
+            Wrapper := Mount('bv-dropdown-item', ItemProps);
+            Expect(Wrapper.Find('.dropdown-item')).toBeDefined;
+            Expect(Wrapper.Find('.dropdown-item').getAttribute('href')).toBe('#/profile');
+         end);
+
+       It('deve renderizar bv-skeleton com tipo e animacao', procedure
+         begin
+            SkeletonProps := TJSObject.new;
+            SkeletonProps['type'] := 'circle';
+            SkeletonProps['animation'] := 'wave';
+            SkeletonProps['width'] := '48px';
+            SkeletonProps['height'] := '48px';
+            Wrapper := Mount('bv-skeleton', SkeletonProps);
+            Expect(Wrapper.Find('.bui-skeleton-wrapper')).toBeDefined;
+            Expect(Wrapper.Find('.bui-skeleton-circle')).toBeDefined;
+            Expect(Wrapper.Find('.placeholder-wave')).toBeDefined;
+         end);
+
+       It('deve renderizar bv-slider com min, max, step e badge de valor', procedure
+         begin
+            SliderProps := TJSObject.new;
+            SliderProps['label'] := 'Volume';
+            SliderProps['min'] := 0;
+            SliderProps['max'] := 100;
+            SliderProps['step'] := 5;
+            SliderProps['value'] := 50;
+            SliderProps['showValue'] := true;
+            Wrapper := Mount('bv-slider', SliderProps);
+            Expect(Wrapper.Find('.bui-slider')).toBeDefined;
+            Expect(Wrapper.Find('input[type="range"]')).toBeDefined;
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).min).toBe('0');
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).max).toBe('100');
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).step).toBe('5');
+            Expect(TJSHTMLInputElement(Wrapper.Find('input')).value).toBe('50');
+            Expect(Wrapper.Find('.bui-slider-badge').textContent).ToContain('50');
          end);
     end);
 end.
