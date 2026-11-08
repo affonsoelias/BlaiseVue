@@ -163,4 +163,14 @@ inject:
 - How to polish visual interfaces with `<transition>`.
 - How to pass configuration data down deep component hierarchies cleanly with `provide` / `inject`.
 
-**Want to guarantee that your code will never break unexpectedly? Let's master [Module 12: Fearless Unit Testing](12-tests.md)!** ⚔️🛡️✨
+---
+
+## 📖 Deeper Technical Reference
+For advanced composition architectures and animation mechanics:
+- **[Chapter 10: Transitions & Animations](../Documentation/10-transitions.md)** — Transition lifecycle states, CSS hook classes, and JavaScript transition hooks.
+- **[Chapter 16: Scoped Slots & Composition](../Documentation/16-scoped-slots.md)** — Passing slot properties and custom data rows back from child to parent templates.
+- **[Chapter 17: Provide / Inject](../Documentation/17-provide-inject.md)** — Architectural patterns for dependency injection across deep component hierarchies.
+
+---
+
+**Next up: preventing bad data entry with declarative form validation! Advance to [Module 12: Declarative Form Validation (b-validate)](12-validation.md)!** ⚔️🛡️✨

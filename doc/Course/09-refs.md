@@ -188,4 +188,11 @@ Replace your view component (e.g. `src/views/Home.bv`) with:
 - How to tag an element using `b-ref="name"`.
 - How to call native browser methods directly via `this['$refs']['name'].focus()`.
 
+---
+
+## 📖 Deeper Technical Reference
+For deep-dive documentation on lifecycle timings and reference proxy caching:
+- **[Chapter 11: Component Lifecycle & Hooks](../Documentation/11-lifecycle-hooks.md)** — Detailed timeline of beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, beforeDestroy, and destroyed hooks.
+- **[Chapter 12: Template References ($refs)](../Documentation/12-template-refs.md)** — Resolving child component instances, direct DOM access, and nextTick synchronization.
+
 **Ready to master the developer command line? Proceed to [Module 10: The Terminal Maestro (CLI bv)](10-cli.md)!** ⚔️🛡️✨
