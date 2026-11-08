@@ -2,9 +2,15 @@ import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
 // Mock environment
-globalThis.window = globalThis;
-if (typeof document !== 'undefined') globalThis.document = document;
-if (typeof navigator !== 'undefined') globalThis.navigator = navigator;
+if (typeof globalThis.window === 'undefined') {
+  globalThis.window = globalThis;
+}
+if (typeof document !== 'undefined' && globalThis.document !== document) {
+  try { globalThis.document = document; } catch (_) {}
+}
+if (typeof navigator !== 'undefined' && globalThis.navigator !== navigator) {
+  try { globalThis.navigator = navigator; } catch (_) {}
+}
 
 // Find Pascal RTL
 let rtlPath = resolve(process.cwd(), 'rtl.js');
