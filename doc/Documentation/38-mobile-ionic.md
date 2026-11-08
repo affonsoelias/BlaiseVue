@@ -77,6 +77,15 @@ This installs `lib/blaise-ui-mobile/` containing:
 | `<bv-ion-tabs>` | Bottom-tabbed application shell | Manages view content and fixed bottom navigation bar. |
 | `<bv-ion-tab-bar>` | Fixed bottom navigation bar | Adheres to `safe-area-inset-bottom`. |
 | `<bv-ion-tab-button>` | Tab navigation button | `label`, `tab`, `:active="true"`. Emits `tab-click`. |
+| `<bv-ion-input>` | Mobile adaptive input | `label`, `labelPlacement` (`floating`, `stacked`, `fixed`), `type`, `placeholder`, `clearInput`, `disabled`, `readonly`. Events: `@ionInput`, `@ionChange`, `@ionBlur`, `@ionFocus`, `@clear`. |
+| `<bv-ion-toggle>` | Mobile native toggle | `label`, `checked`, `color` (`primary`, `success`, `warning`, `danger`), `disabled`. Cupertino/MD switch with `@ionChange`. |
+| `<bv-ion-checkbox>` | Mobile checkbox | `label`, `checked`, `value`, `color`, `disabled`, `alignment`. Multi/single check with `@ionChange`. |
+| `<bv-ion-select>` | Mobile dialog selector | `label`, `interface` (`alert`, `action-sheet`, `popover`), `placeholder`, `multiple`, `options`. Emits `@ionChange`. |
+| `<bv-ion-refresher>` | Pull-to-refresh gesture | `pullingText`, `refreshingSpinner` (`circular`, `lines`, `dots`), `refreshingText`. Emits `@ionRefresh` with `detail.complete()`. |
+| `<bv-ion-search-bar>`| Mobile search bar | `placeholder`, `showCancelButton` (`always`, `focus`, `never`), `cancelButtonText`, `debounce`. Emits `@ionInput`, `@ionChange`, `@ionCancel`. |
+| `<bv-ion-fab>` | Floating container | `vertical` (`bottom`, `top`, `center`), `horizontal` (`end`, `start`, `center`), `edge`. |
+| `<bv-ion-fab-button>` | Round FAB button | `color`, `size` (`sm`, `md`, `lg`), `icon`. Emits `@click`. |
+| `<bv-ion-back-button>`| Toolbar back navigation | `defaultHref`, `text`, `color`. Native history back navigation. |
 
 ---
 

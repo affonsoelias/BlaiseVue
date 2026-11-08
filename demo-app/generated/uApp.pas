@@ -4,7 +4,7 @@ unit uApp;
 
 interface
 
-uses JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCommentQuotes, uCounter, uFormHeader, uInfoCard, uMemberBodies, uStatPills, uTableCells, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uFragmentsView, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCheckbox, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVDropdown, uBVDropdownItem, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRadio, uBVRow, uBVSkeleton, uBVSlider, uBVSpinner, uBVSwitch, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonContent, uBVIonHeader, uBVIonItem, uBVIonList, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
+uses JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, BVPascalDX, BVDataSet, BVRouting, uAppVersion, uCard, uCommentQuotes, uCounter, uFormHeader, uInfoCard, uMemberBodies, uStatPills, uTableCells, uAbout, uCharts, uCustomerView, uDatasetView, uFormulario, uFragmentsView, uHome, uLibBootstrap, uLoginView, uMobileView, uProductView, uProFeatures, uReportsView, uShowcase, uUserProfile, uBVBarChart, uBVBubbleChart, uBVChart, uBVDoughnutChart, uBVLineChart, uBVPieChart, uBVPolarAreaChart, uBVRadarChart, uBVScatterChart, uBVReportViewer, uBVAccordion, uBVAlert, uBVBadge, uBVBottomNav, uBVBottomNavItem, uBVBreadcrumb, uBVBreadcrumbItem, uBVBtn, uBVCard, uBVCheckbox, uBVCol, uBVContainer, uBVDataGrid, uBVDrawer, uBVDropdown, uBVDropdownItem, uBVFormSelect, uBVIcon, uBVInput, uBVInputGroup, uBVListGroup, uBVListGroupItem, uBVModal, uBVNavbar, uBVNavItem, uBVPagination, uBVProgress, uBVRadio, uBVRow, uBVSkeleton, uBVSlider, uBVSpinner, uBVSwitch, uBVTab, uBVTabs, uBVToast, uBVVirtualScroll, uBVIonApp, uBVIonBackButton, uBVIonBadge, uBVIonButton, uBVIonCard, uBVIonCheckbox, uBVIonContent, uBVIonFab, uBVIonFabButton, uBVIonHeader, uBVIonInput, uBVIonItem, uBVIonList, uBVIonRefresher, uBVIonSearchBar, uBVIonSelect, uBVIonTabBar, uBVIonTabButton, uBVIonTabs, uBVIonTitle, uBVIonToggle, uBVIonToolbar, uBVThemeSelect, uBVThemeToggle;
 
 procedure Init_App;
 
@@ -178,20 +178,36 @@ begin
   Register_uBVVirtualScroll;
   asm console.log("[Init] Registering uBVIonApp..."); end;
   Register_uBVIonApp;
+  asm console.log("[Init] Registering uBVIonBackButton..."); end;
+  Register_uBVIonBackButton;
   asm console.log("[Init] Registering uBVIonBadge..."); end;
   Register_uBVIonBadge;
   asm console.log("[Init] Registering uBVIonButton..."); end;
   Register_uBVIonButton;
   asm console.log("[Init] Registering uBVIonCard..."); end;
   Register_uBVIonCard;
+  asm console.log("[Init] Registering uBVIonCheckbox..."); end;
+  Register_uBVIonCheckbox;
   asm console.log("[Init] Registering uBVIonContent..."); end;
   Register_uBVIonContent;
+  asm console.log("[Init] Registering uBVIonFab..."); end;
+  Register_uBVIonFab;
+  asm console.log("[Init] Registering uBVIonFabButton..."); end;
+  Register_uBVIonFabButton;
   asm console.log("[Init] Registering uBVIonHeader..."); end;
   Register_uBVIonHeader;
+  asm console.log("[Init] Registering uBVIonInput..."); end;
+  Register_uBVIonInput;
   asm console.log("[Init] Registering uBVIonItem..."); end;
   Register_uBVIonItem;
   asm console.log("[Init] Registering uBVIonList..."); end;
   Register_uBVIonList;
+  asm console.log("[Init] Registering uBVIonRefresher..."); end;
+  Register_uBVIonRefresher;
+  asm console.log("[Init] Registering uBVIonSearchBar..."); end;
+  Register_uBVIonSearchBar;
+  asm console.log("[Init] Registering uBVIonSelect..."); end;
+  Register_uBVIonSelect;
   asm console.log("[Init] Registering uBVIonTabBar..."); end;
   Register_uBVIonTabBar;
   asm console.log("[Init] Registering uBVIonTabButton..."); end;
@@ -200,6 +216,8 @@ begin
   Register_uBVIonTabs;
   asm console.log("[Init] Registering uBVIonTitle..."); end;
   Register_uBVIonTitle;
+  asm console.log("[Init] Registering uBVIonToggle..."); end;
+  Register_uBVIonToggle;
   asm console.log("[Init] Registering uBVIonToolbar..."); end;
   Register_uBVIonToolbar;
   asm console.log("[Init] Registering uBVThemeSelect..."); end;

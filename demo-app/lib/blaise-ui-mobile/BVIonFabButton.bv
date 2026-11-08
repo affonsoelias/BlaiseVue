@@ -1,0 +1,57 @@
+<template>
+  <button
+    type="button"
+    class="bui-ion-fab-button"
+    :class="btnClass"
+    :disabled="isDisabled"
+    @click="handleClick">
+    <span class="bui-ion-fab-button-icon" b-if="icon">{{ icon }}</span>
+    <slot></slot>
+  </button>
+</template>
+
+<script>
+  {
+    BVIonFabButton - Round Floating Action Button
+    ---------------------------------------------
+    Props:
+    - color: string ('primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'dark')
+    - size: string ('sm' | 'md' | 'lg')
+    - disabled: boolean
+    - icon: string
+  }
+
+  props:
+    color: string = 'primary';
+    size: string = 'md';
+    disabled: boolean = false;
+    icon: string = '';
+
+  computed:
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function btnClass: string;
+    begin
+      asm
+        var c = this.color || 'primary';
+        var s = this.size || 'md';
+        var dis = this.isDisabled ? ' is-disabled' : '';
+        return 'bui-ion-fab-button bui-ion-fab-button-' + c + ' bui-ion-fab-button-' + s + dis;
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        if (!this.isDisabled) {
+          this.$emit('click', ev);
+        }
+      end;
+    end;
+</script>

@@ -1,0 +1,83 @@
+<template>
+  <div class="bui-ion-refresher" :class="wrapperClass" @click="triggerRefresh">
+    <div class="bui-ion-refresher-content">
+      <div class="bui-ion-refresher-spinner" b-if="isRefreshing">
+        <div class="bui-ion-spinner-circle" :class="'bui-spinner-' + refreshingSpinner"></div>
+      </div>
+      <div class="bui-ion-refresher-icon" b-if="!isRefreshing">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <polyline points="19 12 12 19 5 12"></polyline>
+        </svg>
+      </div>
+      <div class="bui-ion-refresher-text">
+        {{ isRefreshing ? refreshingText : pullingText }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonRefresher - Mobile Native Pull-to-Refresh Gesture Component
+    ----------------------------------------------------------------
+    Props:
+    - pullingText: string
+    - refreshingSpinner: string ('circular' | 'lines' | 'dots')
+    - refreshingText: string
+    - disabled: boolean
+  }
+
+  props:
+    pullingText: string = 'Pull to refresh';
+    refreshingSpinner: string = 'circular';
+    refreshingText: string = 'Refreshing...';
+    disabled: boolean = false;
+
+  data:
+    isRefreshing: boolean = false;
+
+  computed:
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var ref = this.isRefreshing ? ' is-refreshing' : '';
+        var dis = this.isDisabled ? ' is-disabled' : '';
+        return 'bui-ion-refresher' + ref + dis;
+      end;
+    end;
+
+  methods:
+    procedure complete;
+    begin
+      asm
+        this.isRefreshing = false;
+        this.$emit('refreshComplete', true);
+      end;
+    end;
+
+    procedure triggerRefresh;
+    begin
+      asm
+        if (this.isDisabled || this.isRefreshing) return;
+        this.isRefreshing = true;
+        var self = this;
+        var evt = {
+          detail: {
+            complete: function() {
+              self.complete();
+            }
+          }
+        };
+        this.$emit('ionRefresh', evt);
+        this.$emit('refresh', evt);
+      end;
+    end;
+</script>

@@ -1,0 +1,7 @@
+{
+  "name" : "blaise-ui-mobile",
+  "version" : "4.4.0",
+  "author" : "BlaiseVue Core Team",
+  "license" : "Modified GNU LGPL v2.1 with Static Linking Exception",
+  "description" : "Ionic Web Components suite with 22+ accessible mobile widgets and strongly typed Object Pascal controllers for BlaiseVue"
+}

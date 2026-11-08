@@ -16559,6 +16559,66 @@ rtl.module("uBVIonApp",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("bv-ion-app",comp);
   };
 });
+rtl.module("uBVIonBackButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonBackButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    type="button"' + '    class="bui-ion-back-button"' + '    :class="btnClass"' + '    :disabled="isDisabled"' + '    @click="handleClick">' + '    <span class="bui-ion-back-button-icon">‹</span>' + '    <span class="bui-ion-back-button-text" b-if="text">{{ text }}</span>' + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("defaultHref");
+    comp["defaultProps"]["defaultHref"] = "#/";
+    comp["props"].push("text");
+    comp["defaultProps"]["text"] = "Back";
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (this.isDisabled) return;
+      this.$emit('click', ev);
+      if (ev && ev.defaultPrevented) return;
+      if (typeof window !== 'undefined') {
+        if (window.history && window.history.length > 1) {
+          window.history.back();
+        } else {
+          var href = this.defaultHref || '#/';
+          if (href.indexOf('#') === 0) {
+            window.location.hash = href;
+          } else {
+            window.location.href = href;
+          }
+        }
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var dis = this.isDisabled ? ' is-disabled' : '';
+      return 'bui-ion-back-button bui-ion-back-button-' + c + dis;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-back-button",comp);
+  };
+});
 rtl.module("uBVIonBadge",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -16658,6 +16718,97 @@ rtl.module("uBVIonCard",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-card",comp);
   };
 });
+rtl.module("uBVIonCheckbox",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonCheckbox = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <label class="bui-ion-checkbox" :class="wrapperClass">' + "    <input" + '      type="checkbox"' + '      class="bui-ion-checkbox-native"' + '      :checked="currentChecked"' + '      :disabled="isDisabled"' + '      @change="handleChange"' + "    />" + '    <span class="bui-ion-checkbox-box">' + '      <svg viewBox="0 0 24 24" class="bui-ion-checkbox-check" b-if="currentChecked">' + '        <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />' + "      </svg>" + "    </span>" + '    <span class="bui-ion-checkbox-label" b-if="label">' + "      <slot>{{ label }}</slot>" + "    </span>" + "  </label>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["internalChecked"] = false;
+      d["hasInteracted"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("checked");
+    comp["defaultProps"]["checked"] = false;
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = true;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = false;
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("alignment");
+    comp["defaultProps"]["alignment"] = "start";
+    m = new Object();
+    m["handleChange"] = function (_this, ev) {
+      if (this.isDisabled) return;
+      var next = (ev && ev.target) ? Boolean(ev.target.checked) : !this.currentChecked;
+      this.hasInteracted = true;
+      this.internalChecked = next;
+      if (Array.isArray(this.modelValue)) {
+        var arr = this.modelValue.slice();
+        var targetVal = (this.value !== undefined && this.value !== null) ? this.value : true;
+        var idx = arr.indexOf(targetVal);
+        if (next && idx === -1) {
+          arr.push(targetVal);
+        } else if (!next && idx !== -1) {
+          arr.splice(idx, 1);
+        }
+        this.$emit('update:modelValue', arr);
+        this.$emit('change', arr);
+        this.$emit('ionChange', arr);
+      } else {
+        this.$emit('update:modelValue', next);
+        this.$emit('change', next);
+        this.$emit('ionChange', next);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["currentChecked"] = function (_this) {
+      var Result = undefined;
+      if (this.hasInteracted) {
+        return Boolean(this.internalChecked === true);
+      }
+      if (this.checked === true || this.checked === 'true') return true;
+      if (this.modelValue === true || this.modelValue === 'true') return true;
+      if (Array.isArray(this.modelValue)) {
+        var targetVal = (this.value !== undefined && this.value !== null) ? this.value : true;
+        return this.modelValue.indexOf(targetVal) !== -1;
+      }
+      if (this.value === true || this.value === 'true') return true;
+      return false;
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var chk = this.currentChecked ? ' is-checked' : '';
+      var dis = this.isDisabled ? ' is-disabled' : '';
+      var align = this.alignment ? (' bui-ion-align-' + this.alignment) : '';
+      return 'bui-ion-checkbox bui-ion-checkbox-' + c + chk + dis + align;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-checkbox",comp);
+  };
+});
 rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -16682,6 +16833,92 @@ rtl.module("uBVIonContent",["System","JS","Web","BVComponents","BVReactivity","B
     pas.BVComponents.RegisterComponent("bv-ion-content",comp);
   };
 });
+rtl.module("uBVIonFab",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonFab = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-fab" :class="wrapperClass">' + "    <slot></slot>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("vertical");
+    comp["defaultProps"]["vertical"] = "bottom";
+    comp["props"].push("horizontal");
+    comp["defaultProps"]["horizontal"] = "end";
+    comp["props"].push("edge");
+    comp["defaultProps"]["edge"] = false;
+    m = new Object();
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var v = this.vertical || 'bottom';
+      var h = this.horizontal || 'end';
+      var e = (this.edge === true || this.edge === 'true') ? ' bui-ion-fab-edge' : '';
+      return 'bui-ion-fab bui-ion-fab-vertical-' + v + ' bui-ion-fab-horizontal-' + h + e;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-fab",comp);
+  };
+});
+rtl.module("uBVIonFabButton",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonFabButton = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = "  <button" + '    type="button"' + '    class="bui-ion-fab-button"' + '    :class="btnClass"' + '    :disabled="isDisabled"' + '    @click="handleClick">' + '    <span class="bui-ion-fab-button-icon" b-if="icon">{{ icon }}</span>' + "    <slot></slot>" + "  </button>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("size");
+    comp["defaultProps"]["size"] = "md";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("icon");
+    comp["defaultProps"]["icon"] = "";
+    m = new Object();
+    m["handleClick"] = function (_this, ev) {
+      if (!this.isDisabled) {
+        this.$emit('click', ev);
+      };
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["btnClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var s = this.size || 'md';
+      var dis = this.isDisabled ? ' is-disabled' : '';
+      return 'bui-ion-fab-button bui-ion-fab-button-' + c + ' bui-ion-fab-button-' + s + dis;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-fab-button",comp);
+  };
+});
 rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -16693,6 +16930,123 @@ rtl.module("uBVIonHeader",["System","JS","Web","BVComponents","BVReactivity","BV
     m = new Object();
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("bv-ion-header",comp);
+  };
+});
+rtl.module("uBVIonInput",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonInput = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-input" :class="wrapperClass">' + '    <label class="bui-ion-input-label" b-if="label">{{ label }}</label>' + '    <div class="bui-ion-input-wrapper">' + '      <slot name="start"></slot>' + "      <input" + '        class="bui-ion-input-native"' + '        :type="type"' + '        :placeholder="placeholder"' + '        :value="inputValue"' + '        :disabled="isDisabled"' + '        :readonly="isReadonly"' + '        @input="handleInput"' + '        @change="handleChange"' + '        @focus="handleFocus"' + '        @blur="handleBlur"' + "      />" + "      <button" + '        type="button"' + '        class="bui-ion-input-clear"' + '        b-if="showClear"' + '        @click="handleClear"' + '        aria-label="Clear input">' + "        &times;" + "      </button>" + '      <slot name="end"></slot>' + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isFocused"] = false;
+      d["internalVal"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("labelPlacement");
+    comp["defaultProps"]["labelPlacement"] = "floating";
+    comp["props"].push("type");
+    comp["defaultProps"]["type"] = "text";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "";
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = "";
+    comp["props"].push("clearInput");
+    comp["defaultProps"]["clearInput"] = false;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    comp["props"].push("readonly");
+    comp["defaultProps"]["readonly"] = false;
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      var val = ev && ev.target ? ev.target.value : '';
+      this.internalVal = val;
+      this.$emit('update:modelValue', val);
+      this.$emit('input', val);
+      this.$emit('ionInput', val);
+    };
+    m["handleChange"] = function (_this, ev) {
+      var val = ev && ev.target ? ev.target.value : '';
+      this.internalVal = val;
+      this.$emit('change', val);
+      this.$emit('ionChange', val);
+    };
+    m["handleFocus"] = function (_this, ev) {
+      this.isFocused = true;
+      this.$emit('focus', ev);
+      this.$emit('ionFocus', ev);
+    };
+    m["handleBlur"] = function (_this, ev) {
+      this.isFocused = false;
+      this.$emit('blur', ev);
+      this.$emit('ionBlur', ev);
+    };
+    m["handleClear"] = function (_this, ev) {
+      this.internalVal = '';
+      this.$emit('update:modelValue', '');
+      this.$emit('input', '');
+      this.$emit('ionInput', '');
+      this.$emit('clear', ev);
+      this.$emit('ionClear', ev);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["inputValue"] = function (_this) {
+      var Result = undefined;
+      if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+        return String(this.modelValue);
+      }
+      if (this.value !== undefined && this.value !== null && this.value !== '') {
+        return String(this.value);
+      }
+      return this.internalVal || '';
+      return Result;
+    };
+    comp["computed"]["hasValue"] = function (_this) {
+      var Result = undefined;
+      var val = this.inputValue;
+      return Boolean(val !== undefined && val !== null && String(val).length > 0);
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isReadonly"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.readonly === true || this.readonly === 'true');
+      return Result;
+    };
+    comp["computed"]["showClear"] = function (_this) {
+      var Result = undefined;
+      var isClearable = (this.clearInput === true || this.clearInput === 'true');
+      return Boolean(isClearable && this.hasValue && !this.isDisabled && !this.isReadonly);
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var placement = this.labelPlacement || 'floating';
+      var f = this.isFocused ? ' is-focused' : '';
+      var v = this.hasValue ? ' has-value' : '';
+      var d = this.isDisabled ? ' is-disabled' : '';
+      var r = this.isReadonly ? ' is-readonly' : '';
+      return 'bui-ion-input label-placement-' + placement + f + v + d + r;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-input",comp);
   };
 });
 rtl.module("uBVIonItem",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
@@ -16795,6 +17149,321 @@ rtl.module("uBVIonList",["System","JS","Web","BVComponents","BVReactivity","BVSt
     pas.BVComponents.RegisterComponent("bv-ion-list",comp);
   };
 });
+rtl.module("uBVIonRefresher",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonRefresher = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-refresher" :class="wrapperClass" @click="triggerRefresh">' + '    <div class="bui-ion-refresher-content">' + '      <div class="bui-ion-refresher-spinner" b-if="isRefreshing">' + '        <div class="bui-ion-spinner-circle" :class="\'bui-spinner-\' + refreshingSpinner"></div>' + "      </div>" + '      <div class="bui-ion-refresher-icon" b-if="!isRefreshing">' + '        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' + '          <line x1="12" y1="5" x2="12" y2="19"></line>' + '          <polyline points="19 12 12 19 5 12"></polyline>' + "        </svg>" + "      </div>" + '      <div class="bui-ion-refresher-text">' + "        {{ isRefreshing ? refreshingText : pullingText }}" + "      </div>" + "    </div>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isRefreshing"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("pullingText");
+    comp["defaultProps"]["pullingText"] = "Pull to refresh";
+    comp["props"].push("refreshingSpinner");
+    comp["defaultProps"]["refreshingSpinner"] = "circular";
+    comp["props"].push("refreshingText");
+    comp["defaultProps"]["refreshingText"] = "Refreshing...";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["complete"] = function (_this) {
+      this.isRefreshing = false;
+      this.$emit('refreshComplete', true);
+    };
+    m["triggerRefresh"] = function (_this) {
+      if (this.isDisabled || this.isRefreshing) return;
+      this.isRefreshing = true;
+      var self = this;
+      var evt = {
+        detail: {
+          complete: function() {
+            self.complete();
+          }
+        }
+      };
+      this.$emit('ionRefresh', evt);
+      this.$emit('refresh', evt);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var ref = this.isRefreshing ? ' is-refreshing' : '';
+      var dis = this.isDisabled ? ' is-disabled' : '';
+      return 'bui-ion-refresher' + ref + dis;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-refresher",comp);
+  };
+});
+rtl.module("uBVIonSearchBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonSearchBar = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-searchbar" :class="wrapperClass">' + '    <div class="bui-ion-searchbar-container">' + '      <div class="bui-ion-searchbar-icon">' + '        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' + '          <circle cx="11" cy="11" r="8"></circle>' + '          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>' + "        </svg>" + "      </div>" + "      <input" + '        class="bui-ion-searchbar-native"' + '        type="search"' + '        :placeholder="placeholder"' + '        :value="queryValue"' + '        :disabled="isDisabled"' + '        @input="handleInput"' + '        @change="handleChange"' + '        @focus="handleFocus"' + '        @blur="handleBlur"' + "      />" + "      <button" + '        type="button"' + '        class="bui-ion-searchbar-clear"' + '        b-if="showClear"' + '        @click="handleClear"' + '        aria-label="Clear search">' + "        &times;" + "      </button>" + "    </div>" + "    <button" + '      type="button"' + '      class="bui-ion-searchbar-cancel"' + '      b-if="showCancel"' + '      @click="handleCancel">' + "      {{ cancelButtonText }}" + "    </button>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["isFocused"] = false;
+      d["internalQuery"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "Search";
+    comp["props"].push("showCancelButton");
+    comp["defaultProps"]["showCancelButton"] = "focus";
+    comp["props"].push("cancelButtonText");
+    comp["defaultProps"]["cancelButtonText"] = "Cancel";
+    comp["props"].push("debounce");
+    comp["defaultProps"]["debounce"] = 250;
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = "";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleInput"] = function (_this, ev) {
+      var val = ev && ev.target ? ev.target.value : '';
+      this.internalQuery = val;
+      this.$emit('update:modelValue', val);
+      this.$emit('input', val);
+      this.$emit('ionInput', val);
+    };
+    m["handleChange"] = function (_this, ev) {
+      var val = ev && ev.target ? ev.target.value : '';
+      this.internalQuery = val;
+      this.$emit('change', val);
+      this.$emit('ionChange', val);
+    };
+    m["handleFocus"] = function (_this, ev) {
+      this.isFocused = true;
+      this.$emit('focus', ev);
+      this.$emit('ionFocus', ev);
+    };
+    m["handleBlur"] = function (_this, ev) {
+      this.isFocused = false;
+      this.$emit('blur', ev);
+      this.$emit('ionBlur', ev);
+    };
+    m["handleClear"] = function (_this, ev) {
+      this.internalQuery = '';
+      this.$emit('update:modelValue', '');
+      this.$emit('input', '');
+      this.$emit('ionInput', '');
+      this.$emit('clear', ev);
+      this.$emit('ionClear', ev);
+    };
+    m["handleCancel"] = function (_this, ev) {
+      this.isFocused = false;
+      this.internalQuery = '';
+      this.$emit('update:modelValue', '');
+      this.$emit('input', '');
+      this.$emit('cancel', ev);
+      this.$emit('ionCancel', ev);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["queryValue"] = function (_this) {
+      var Result = undefined;
+      if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+        return String(this.modelValue);
+      }
+      if (this.value !== undefined && this.value !== null && this.value !== '') {
+        return String(this.value);
+      }
+      return this.internalQuery || '';
+      return Result;
+    };
+    comp["computed"]["hasQuery"] = function (_this) {
+      var Result = undefined;
+      var q = this.queryValue;
+      return Boolean(q !== undefined && q !== null && String(q).length > 0);
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["showClear"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.hasQuery && !this.isDisabled);
+      return Result;
+    };
+    comp["computed"]["showCancel"] = function (_this) {
+      var Result = undefined;
+      var mode = this.showCancelButton || 'focus';
+      if (mode === 'always') return true;
+      if (mode === 'focus') return Boolean(this.isFocused || this.hasQuery);
+      return false;
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var f = this.isFocused ? ' is-focused' : '';
+      var h = this.hasQuery ? ' has-query' : '';
+      var d = this.isDisabled ? ' is-disabled' : '';
+      var c = this.showCancel ? ' has-cancel' : '';
+      return 'bui-ion-searchbar' + f + h + d + c;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-search-bar",comp);
+  };
+});
+rtl.module("uBVIonSelect",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonSelect = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <div class="bui-ion-select" :class="wrapperClass">' + '    <label class="bui-ion-select-label" b-if="label">{{ label }}</label>' + '    <div class="bui-ion-select-display">' + '      <span class="bui-ion-select-text" :class="{ \'is-placeholder\': !hasSelection }">' + "        {{ displayText }}" + "      </span>" + '      <span class="bui-ion-select-icon">▼</span>' + "    </div>" + "    <select" + '      class="bui-ion-select-native"' + '      :disabled="isDisabled"' + '      :multiple="isMultiple"' + '      @change="handleChange">' + '      <option value="" disabled b-if="!hasSelection">{{ placeholder }}</option>' + "      <option" + '        b-for="opt in normalizedOptions"' + '        :key="opt.value"' + '        :value="opt.value"' + '        :selected="opt.selected">' + "        {{ opt.label }}" + "      </option>" + "    </select>" + "  </div>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["internalVal"] = "";
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("placeholder");
+    comp["defaultProps"]["placeholder"] = "Select option";
+    comp["props"].push("interface");
+    comp["defaultProps"]["interface"] = "alert";
+    comp["props"].push("multiple");
+    comp["defaultProps"]["multiple"] = false;
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = "";
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = "";
+    comp["props"].push("options");
+    comp["defaultProps"]["options"] = null;
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleChange"] = function (_this, ev) {
+      if (this.isDisabled) return;
+      var sel = ev && ev.target ? ev.target : null;
+      if (!sel) return;
+      var val;
+      if (this.isMultiple) {
+        val = [];
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].selected) val.push(sel.options[i].value);
+        }
+      } else {
+        val = sel.value;
+      }
+      this.internalVal = val;
+      this.$emit('update:modelValue', val);
+      this.$emit('change', val);
+      this.$emit('ionChange', val);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["currentValue"] = function (_this) {
+      var Result = undefined;
+      if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+        return this.modelValue;
+      }
+      if (this.value !== undefined && this.value !== null && this.value !== '') {
+        return this.value;
+      }
+      return this.internalVal;
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["isMultiple"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.multiple === true || this.multiple === 'true');
+      return Result;
+    };
+    comp["computed"]["normalizedOptions"] = function (_this) {
+      var Result = undefined;
+      var list = [];
+      var src = this.options;
+      if (!src) return list;
+      var curr = this.currentValue;
+      for (var i = 0; i < src.length; i++) {
+        var item = src[i];
+        var optVal, optLbl;
+        if (typeof item === 'object' && item !== null) {
+          optVal = item.value !== undefined ? item.value : item.id;
+          optLbl = item.label !== undefined ? item.label : (item.text || optVal);
+        } else {
+          optVal = item;
+          optLbl = item;
+        }
+        var isSel = false;
+        if (Array.isArray(curr)) {
+          isSel = curr.indexOf(optVal) !== -1;
+        } else {
+          isSel = String(curr) === String(optVal);
+        }
+        list.push({ value: optVal, label: optLbl, selected: isSel });
+      }
+      return list;
+      return Result;
+    };
+    comp["computed"]["hasSelection"] = function (_this) {
+      var Result = undefined;
+      var curr = this.currentValue;
+      if (Array.isArray(curr)) return curr.length > 0;
+      return Boolean(curr !== undefined && curr !== null && String(curr) !== '');
+      return Result;
+    };
+    comp["computed"]["displayText"] = function (_this) {
+      var Result = undefined;
+      var opts = this.normalizedOptions;
+      var labels = [];
+      for (var i = 0; i < opts.length; i++) {
+        if (opts[i].selected) labels.push(opts[i].label);
+      }
+      if (labels.length > 0) return labels.join(', ');
+      return this.placeholder || 'Select option';
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var d = this.isDisabled ? ' is-disabled' : '';
+      var m = this.isMultiple ? ' is-multiple' : '';
+      return 'bui-ion-select' + d + m;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-select",comp);
+  };
+});
 rtl.module("uBVIonTabBar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -16876,6 +17545,75 @@ rtl.module("uBVIonTitle",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("bv-ion-title",comp);
   };
 });
+rtl.module("uBVIonToggle",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
+  "use strict";
+  var $mod = this;
+  this.Register_uBVIonToggle = function () {
+    var comp = null;
+    var m = null;
+    comp = new Object();
+    comp["template"] = '  <label class="bui-ion-toggle" :class="wrapperClass">' + '    <span class="bui-ion-toggle-label" b-if="label">' + "      <slot>{{ label }}</slot>" + "    </span>" + "    <button" + '      type="button"' + '      role="switch"' + '      class="bui-ion-toggle-track"' + '      :aria-checked="currentChecked ? \'true\' : \'false\'"' + '      :disabled="isDisabled"' + '      @click="handleToggle">' + '      <span class="bui-ion-toggle-handle"></span>' + "    </button>" + "  </label>";
+    comp["data"] = function () {
+      var Result = null;
+      var d = null;
+      d = new Object();
+      d["internalChecked"] = false;
+      d["hasInteracted"] = false;
+      Result = d;
+      return Result;
+    };
+    comp["props"] = new Array();
+    comp["defaultProps"] = new Object();
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
+    comp["props"].push("checked");
+    comp["defaultProps"]["checked"] = false;
+    comp["props"].push("value");
+    comp["defaultProps"]["value"] = false;
+    comp["props"].push("modelValue");
+    comp["defaultProps"]["modelValue"] = false;
+    comp["props"].push("color");
+    comp["defaultProps"]["color"] = "primary";
+    comp["props"].push("disabled");
+    comp["defaultProps"]["disabled"] = false;
+    m = new Object();
+    m["handleToggle"] = function (_this, ev) {
+      if (this.isDisabled) return;
+      var next = !this.currentChecked;
+      this.hasInteracted = true;
+      this.internalChecked = next;
+      this.$emit('update:modelValue', next);
+      this.$emit('change', next);
+      this.$emit('ionChange', next);
+    };
+    comp["methods"] = m;
+    comp["computed"] = new Object();
+    comp["computed"]["currentChecked"] = function (_this) {
+      var Result = undefined;
+      if (this.hasInteracted) {
+        return Boolean(this.internalChecked === true);
+      }
+      return Boolean(this.checked === true || this.checked === 'true' ||
+                     this.modelValue === true || this.modelValue === 'true' ||
+                     this.value === true || this.value === 'true');
+      return Result;
+    };
+    comp["computed"]["isDisabled"] = function (_this) {
+      var Result = undefined;
+      return Boolean(this.disabled === true || this.disabled === 'true');
+      return Result;
+    };
+    comp["computed"]["wrapperClass"] = function (_this) {
+      var Result = undefined;
+      var c = this.color || 'primary';
+      var chk = this.currentChecked ? ' is-checked' : '';
+      var dis = this.isDisabled ? ' is-disabled' : '';
+      return 'bui-ion-toggle bui-ion-toggle-' + c + chk + dis;
+      return Result;
+    };
+    pas.BVComponents.RegisterComponent("bv-ion-toggle",comp);
+  };
+});
 rtl.module("uBVIonToolbar",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -16929,7 +17667,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVFSM","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCommentQuotes","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCheckbox","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVDropdown","uBVDropdownItem","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRadio","uBVRow","uBVSkeleton","uBVSlider","uBVSpinner","uBVSwitch","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonContent","uBVIonHeader","uBVIonItem","uBVIonList","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVFSM","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uCard","uCommentQuotes","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCheckbox","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVDropdown","uBVDropdownItem","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRadio","uBVRow","uBVSkeleton","uBVSlider","uBVSpinner","uBVSwitch","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBackButton","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonCheckbox","uBVIonContent","uBVIonFab","uBVIonFabButton","uBVIonHeader","uBVIonInput","uBVIonItem","uBVIonList","uBVIonRefresher","uBVIonSearchBar","uBVIonSelect","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToggle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -17098,20 +17836,36 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVF
     pas.uBVVirtualScroll.Register_uBVVirtualScroll();
     console.log("[Init] Registering uBVIonApp...");
     pas.uBVIonApp.Register_uBVIonApp();
+    console.log("[Init] Registering uBVIonBackButton...");
+    pas.uBVIonBackButton.Register_uBVIonBackButton();
     console.log("[Init] Registering uBVIonBadge...");
     pas.uBVIonBadge.Register_uBVIonBadge();
     console.log("[Init] Registering uBVIonButton...");
     pas.uBVIonButton.Register_uBVIonButton();
     console.log("[Init] Registering uBVIonCard...");
     pas.uBVIonCard.Register_uBVIonCard();
+    console.log("[Init] Registering uBVIonCheckbox...");
+    pas.uBVIonCheckbox.Register_uBVIonCheckbox();
     console.log("[Init] Registering uBVIonContent...");
     pas.uBVIonContent.Register_uBVIonContent();
+    console.log("[Init] Registering uBVIonFab...");
+    pas.uBVIonFab.Register_uBVIonFab();
+    console.log("[Init] Registering uBVIonFabButton...");
+    pas.uBVIonFabButton.Register_uBVIonFabButton();
     console.log("[Init] Registering uBVIonHeader...");
     pas.uBVIonHeader.Register_uBVIonHeader();
+    console.log("[Init] Registering uBVIonInput...");
+    pas.uBVIonInput.Register_uBVIonInput();
     console.log("[Init] Registering uBVIonItem...");
     pas.uBVIonItem.Register_uBVIonItem();
     console.log("[Init] Registering uBVIonList...");
     pas.uBVIonList.Register_uBVIonList();
+    console.log("[Init] Registering uBVIonRefresher...");
+    pas.uBVIonRefresher.Register_uBVIonRefresher();
+    console.log("[Init] Registering uBVIonSearchBar...");
+    pas.uBVIonSearchBar.Register_uBVIonSearchBar();
+    console.log("[Init] Registering uBVIonSelect...");
+    pas.uBVIonSelect.Register_uBVIonSelect();
     console.log("[Init] Registering uBVIonTabBar...");
     pas.uBVIonTabBar.Register_uBVIonTabBar();
     console.log("[Init] Registering uBVIonTabButton...");
@@ -17120,6 +17874,8 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVF
     pas.uBVIonTabs.Register_uBVIonTabs();
     console.log("[Init] Registering uBVIonTitle...");
     pas.uBVIonTitle.Register_uBVIonTitle();
+    console.log("[Init] Registering uBVIonToggle...");
+    pas.uBVIonToggle.Register_uBVIonToggle();
     console.log("[Init] Registering uBVIonToolbar...");
     pas.uBVIonToolbar.Register_uBVIonToolbar();
     console.log("[Init] Registering uBVThemeSelect...");

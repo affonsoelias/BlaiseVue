@@ -1,0 +1,68 @@
+<template>
+  <button
+    type="button"
+    class="bui-ion-back-button"
+    :class="btnClass"
+    :disabled="isDisabled"
+    @click="handleClick">
+    <span class="bui-ion-back-button-icon">‹</span>
+    <span class="bui-ion-back-button-text" b-if="text">{{ text }}</span>
+  </button>
+</template>
+
+<script>
+  {
+    BVIonBackButton - Mobile Native Toolbar Back Button
+    ---------------------------------------------------
+    Props:
+    - defaultHref: string
+    - text: string
+    - color: string
+    - disabled: boolean
+  }
+
+  props:
+    defaultHref: string = '#/';
+    text: string = 'Back';
+    color: string = 'primary';
+    disabled: boolean = false;
+
+  computed:
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function btnClass: string;
+    begin
+      asm
+        var c = this.color || 'primary';
+        var dis = this.isDisabled ? ' is-disabled' : '';
+        return 'bui-ion-back-button bui-ion-back-button-' + c + dis;
+      end;
+    end;
+
+  methods:
+    procedure handleClick(ev: JSValue);
+    begin
+      asm
+        if (this.isDisabled) return;
+        this.$emit('click', ev);
+        if (ev && ev.defaultPrevented) return;
+        if (typeof window !== 'undefined') {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+          } else {
+            var href = this.defaultHref || '#/';
+            if (href.indexOf('#') === 0) {
+              window.location.hash = href;
+            } else {
+              window.location.href = href;
+            }
+          }
+        }
+      end;
+    end;
+</script>

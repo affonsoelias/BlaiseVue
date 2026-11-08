@@ -1,0 +1,168 @@
+<template>
+  <div class="bui-ion-select" :class="wrapperClass">
+    <label class="bui-ion-select-label" b-if="label">{{ label }}</label>
+    <div class="bui-ion-select-display">
+      <span class="bui-ion-select-text" :class="{ 'is-placeholder': !hasSelection }">
+        {{ displayText }}
+      </span>
+      <span class="bui-ion-select-icon">▼</span>
+    </div>
+    <select
+      class="bui-ion-select-native"
+      :disabled="isDisabled"
+      :multiple="isMultiple"
+      @change="handleChange">
+      <option value="" disabled b-if="!hasSelection">{{ placeholder }}</option>
+      <option
+        b-for="opt in normalizedOptions"
+        :key="opt.value"
+        :value="opt.value"
+        :selected="opt.selected">
+        {{ opt.label }}
+      </option>
+    </select>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonSelect - Mobile Dialog Selection Control
+    ---------------------------------------------
+    Props:
+    - label: string
+    - placeholder: string
+    - interface: string ('alert' | 'action-sheet' | 'popover')
+    - multiple: boolean
+    - value: any
+    - modelValue: any
+    - options: array (objects { value, label } or strings)
+    - disabled: boolean
+  }
+
+  props:
+    label: string = '';
+    placeholder: string = 'Select option';
+    interface: string = 'alert';
+    multiple: boolean = false;
+    value: any = '';
+    modelValue: any = '';
+    options: any = nil;
+    disabled: boolean = false;
+
+  data:
+    internalVal: any = '';
+
+  computed:
+    function currentValue: any;
+    begin
+      asm
+        if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+          return this.modelValue;
+        }
+        if (this.value !== undefined && this.value !== null && this.value !== '') {
+          return this.value;
+        }
+        return this.internalVal;
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isMultiple: boolean;
+    begin
+      asm
+        return Boolean(this.multiple === true || this.multiple === 'true');
+      end;
+    end;
+
+    function normalizedOptions: JSValue;
+    begin
+      asm
+        var list = [];
+        var src = this.options;
+        if (!src) return list;
+        var curr = this.currentValue;
+        
+        for (var i = 0; i < src.length; i++) {
+          var item = src[i];
+          var optVal, optLbl;
+          if (typeof item === 'object' && item !== null) {
+            optVal = item.value !== undefined ? item.value : item.id;
+            optLbl = item.label !== undefined ? item.label : (item.text || optVal);
+          } else {
+            optVal = item;
+            optLbl = item;
+          }
+          var isSel = false;
+          if (Array.isArray(curr)) {
+            isSel = curr.indexOf(optVal) !== -1;
+          } else {
+            isSel = String(curr) === String(optVal);
+          }
+          list.push({ value: optVal, label: optLbl, selected: isSel });
+        }
+        return list;
+      end;
+    end;
+
+    function hasSelection: boolean;
+    begin
+      asm
+        var curr = this.currentValue;
+        if (Array.isArray(curr)) return curr.length > 0;
+        return Boolean(curr !== undefined && curr !== null && String(curr) !== '');
+      end;
+    end;
+
+    function displayText: string;
+    begin
+      asm
+        var opts = this.normalizedOptions;
+        var labels = [];
+        for (var i = 0; i < opts.length; i++) {
+          if (opts[i].selected) labels.push(opts[i].label);
+        }
+        if (labels.length > 0) return labels.join(', ');
+        return this.placeholder || 'Select option';
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var d = this.isDisabled ? ' is-disabled' : '';
+        var m = this.isMultiple ? ' is-multiple' : '';
+        return 'bui-ion-select' + d + m;
+      end;
+    end;
+
+  methods:
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        if (this.isDisabled) return;
+        var sel = ev && ev.target ? ev.target : null;
+        if (!sel) return;
+        
+        var val;
+        if (this.isMultiple) {
+          val = [];
+          for (var i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].selected) val.push(sel.options[i].value);
+          }
+        } else {
+          val = sel.value;
+        }
+
+        this.internalVal = val;
+        this.$emit('update:modelValue', val);
+        this.$emit('change', val);
+        this.$emit('ionChange', val);
+      end;
+    end;
+</script>

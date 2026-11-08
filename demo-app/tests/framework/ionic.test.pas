@@ -7,11 +7,15 @@ uses
   BVTestUtils, BVComponents, BVReactivity, BVCompiler, BlaiseIonic, BlaiseVue,
   uBVIonApp, uBVIonHeader, uBVIonToolbar, uBVIonTitle, uBVIonContent,
   uBVIonCard, uBVIonButton, uBVIonBadge, uBVIonList, uBVIonItem,
-  uBVIonTabs, uBVIonTabBar, uBVIonTabButton;
+  uBVIonTabs, uBVIonTabBar, uBVIonTabButton,
+  uBVIonInput, uBVIonToggle, uBVIonCheckbox, uBVIonSelect, uBVIonRefresher,
+  uBVIonSearchBar, uBVIonFab, uBVIonFabButton, uBVIonBackButton;
 
 var
   Wrapper: TWrapper;
-  BtnProps, CardProps, BadgeProps, ItemProps, ListProps, TabBtnProps: TJSObject;
+  BtnProps, CardProps, BadgeProps, ItemProps, ListProps, TabBtnProps,
+  IonInputProps, IonToggleProps, IonCheckboxProps, IonSelectProps,
+  IonRefresherProps, IonSearchProps, IonFabProps, IonFabBtnProps, IonBackBtnProps: TJSObject;
 
 begin
   // Register mobile components
@@ -28,6 +32,15 @@ begin
   Register_uBVIonTabs;
   Register_uBVIonTabBar;
   Register_uBVIonTabButton;
+  Register_uBVIonInput;
+  Register_uBVIonToggle;
+  Register_uBVIonCheckbox;
+  Register_uBVIonSelect;
+  Register_uBVIonRefresher;
+  Register_uBVIonSearchBar;
+  Register_uBVIonFab;
+  Register_uBVIonFabButton;
+  Register_uBVIonBackButton;
 
   Describe('BlaiseVue 4.0 Mobile-First Ecosystem (blaise-ui-mobile & BlaiseIonic)', procedure
     begin
@@ -267,6 +280,147 @@ begin
           Expect(Wrapper.Find('.bui-ion-tab-button')).toBeDefined;
           Expect(Wrapper.Find('.bui-ion-tab-button').className).ToContain('is-active');
           Expect(Wrapper.Find('.bui-ion-tab-label').textContent).ToContain('Dashboard');
+        end);
+
+      It('should render bv-ion-input with label, placeholder and input value', procedure
+        begin
+          IonInputProps := TJSObject.new;
+          IonInputProps['label'] := 'Customer Phone';
+          IonInputProps['placeholder'] := '+55 11 99999-9999';
+          IonInputProps['value'] := '11999998888';
+          IonInputProps['clearInput'] := true;
+
+          Wrapper := Mount('bv-ion-input', IonInputProps);
+          Expect(Wrapper.Find('.bui-ion-input')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-input-label').textContent).ToContain('Customer Phone');
+          Expect(TJSHTMLInputElement(Wrapper.Find('input')).placeholder).toBe('+55 11 99999-9999');
+          Expect(TJSHTMLInputElement(Wrapper.Find('input')).value).toBe('11999998888');
+          Expect(Wrapper.Find('.bui-ion-input-clear')).toBeDefined;
+        end);
+
+      It('should render bv-ion-toggle and toggle checked state on click', procedure
+        begin
+          IonToggleProps := TJSObject.new;
+          IonToggleProps['label'] := 'Biometric FaceID';
+          IonToggleProps['color'] := 'success';
+          IonToggleProps['checked'] := false;
+
+          Wrapper := Mount('bv-ion-toggle', IonToggleProps);
+          Expect(Wrapper.Find('.bui-ion-toggle')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-toggle-label').textContent).ToContain('Biometric FaceID');
+          Expect(Wrapper.Find('.bui-ion-toggle').className).NotToContain('is-checked');
+
+          // Click toggle track to activate
+          Wrapper.Find('.bui-ion-toggle-track').click();
+          Expect(Wrapper.Find('.bui-ion-toggle').className).ToContain('is-checked');
+        end);
+
+      It('should render bv-ion-checkbox with color and check icon', procedure
+        begin
+          IonCheckboxProps := TJSObject.new;
+          IonCheckboxProps['label'] := 'Sync SQLite Offline';
+          IonCheckboxProps['color'] := 'primary';
+          IonCheckboxProps['checked'] := true;
+
+          Wrapper := Mount('bv-ion-checkbox', IonCheckboxProps);
+          Expect(Wrapper.Find('.bui-ion-checkbox')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-checkbox').className).ToContain('is-checked');
+          Expect(Wrapper.Find('.bui-ion-checkbox-label').textContent).ToContain('Sync SQLite Offline');
+          Expect(Wrapper.Find('.bui-ion-checkbox-check')).toBeDefined;
+        end);
+
+      It('should render bv-ion-select with options and selected display text', procedure
+        begin
+          IonSelectProps := TJSObject.new;
+          IonSelectProps['label'] := 'Payment Method';
+          IonSelectProps['placeholder'] := 'Choose payment';
+          IonSelectProps['value'] := 'pix';
+          asm
+            $mod.IonSelectProps.options = [
+              { value: 'cc', label: 'Credit Card' },
+              { value: 'pix', label: 'Instant PIX' },
+              { value: 'cash', label: 'Cash on Delivery' }
+            ];
+          end;
+
+          Wrapper := Mount('bv-ion-select', IonSelectProps);
+          Expect(Wrapper.Find('.bui-ion-select')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-select-label').textContent).ToContain('Payment Method');
+          Expect(Wrapper.Find('.bui-ion-select-text').textContent).ToContain('Instant PIX');
+        end);
+
+      It('should render bv-ion-refresher and trigger refresh event with complete callback', procedure
+        var
+          RefreshTriggered: Boolean;
+        begin
+          RefreshTriggered := False;
+          IonRefresherProps := TJSObject.new;
+          IonRefresherProps['pullingText'] := 'Pull to refresh data';
+          IonRefresherProps['refreshingText'] := 'Loading latest orders...';
+
+          Wrapper := Mount('bv-ion-refresher', IonRefresherProps);
+          Expect(Wrapper.Find('.bui-ion-refresher')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-refresher-text').textContent).ToContain('Pull to refresh data');
+
+          // Click to simulate manual pull-to-refresh
+          Wrapper.Find('.bui-ion-refresher').click();
+          Expect(Wrapper.Find('.bui-ion-refresher').className).ToContain('is-refreshing');
+          Expect(Wrapper.Find('.bui-ion-refresher-text').textContent).ToContain('Loading latest orders...');
+        end);
+
+      It('should render bv-ion-search-bar with icon, placeholder and cancel button', procedure
+        begin
+          IonSearchProps := TJSObject.new;
+          IonSearchProps['placeholder'] := 'Search products...';
+          IonSearchProps['cancelButtonText'] := 'Dismiss';
+          IonSearchProps['showCancelButton'] := 'always';
+          IonSearchProps['value'] := 'Laptop';
+
+          Wrapper := Mount('bv-ion-search-bar', IonSearchProps);
+          Expect(Wrapper.Find('.bui-ion-searchbar')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-searchbar-icon')).toBeDefined;
+          Expect(TJSHTMLInputElement(Wrapper.Find('input')).placeholder).toBe('Search products...');
+          Expect(TJSHTMLInputElement(Wrapper.Find('input')).value).toBe('Laptop');
+          Expect(Wrapper.Find('.bui-ion-searchbar-cancel')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-searchbar-cancel').textContent).ToContain('Dismiss');
+        end);
+
+      It('should render bv-ion-fab container with vertical and horizontal positioning', procedure
+        begin
+          IonFabProps := TJSObject.new;
+          IonFabProps['vertical'] := 'bottom';
+          IonFabProps['horizontal'] := 'end';
+
+          Wrapper := Mount('bv-ion-fab', IonFabProps);
+          Expect(Wrapper.Find('.bui-ion-fab')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-fab').className).ToContain('bui-ion-fab-vertical-bottom');
+          Expect(Wrapper.Find('.bui-ion-fab').className).ToContain('bui-ion-fab-horizontal-end');
+        end);
+
+      It('should render bv-ion-fab-button with round shape, color and icon', procedure
+        begin
+          IonFabBtnProps := TJSObject.new;
+          IonFabBtnProps['color'] := 'success';
+          IonFabBtnProps['size'] := 'lg';
+          IonFabBtnProps['icon'] := '+';
+
+          Wrapper := Mount('bv-ion-fab-button', IonFabBtnProps);
+          Expect(Wrapper.Find('.bui-ion-fab-button')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-fab-button').className).ToContain('bui-ion-fab-button-success');
+          Expect(Wrapper.Find('.bui-ion-fab-button').className).ToContain('bui-ion-fab-button-lg');
+          Expect(Wrapper.Find('.bui-ion-fab-button-icon').textContent).ToContain('+');
+        end);
+
+      It('should render bv-ion-back-button with chevron icon and label', procedure
+        begin
+          IonBackBtnProps := TJSObject.new;
+          IonBackBtnProps['text'] := 'Return';
+          IonBackBtnProps['color'] := 'primary';
+
+          Wrapper := Mount('bv-ion-back-button', IonBackBtnProps);
+          Expect(Wrapper.Find('.bui-ion-back-button')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-back-button-icon')).toBeDefined;
+          Expect(Wrapper.Find('.bui-ion-back-button-text').textContent).ToContain('Return');
         end);
     end);
 end.
