@@ -1383,7 +1383,50 @@ end;
   - GenerateStyleInjection: Compiles scoped/global CSS for runtime DOM injection
 }
 
-{ Preprocesses template expressions and Pascal identifiers to ensure type-safe member access (e.g. converting "state.prop" and "this.prop" accesses) while preserving inline string literals and asm ... end blocks. }
+{ Returns the position after a comment that starts at I, or inside asm after a JS comment or JS string; returns I when none starts there. Apostrophes in these must not toggle the Pascal string state. }
+function SkipNonCode(const S: string; I: Integer; InAsm: Boolean): Integer;
+
+var
+  Q: Char;
+begin
+  Result := I;
+  if (I < Length(S)) and (S[I] = '/') and (S[I + 1] = '/') then
+  begin
+    Result := I + 2;
+    while (Result <= Length(S)) and not (S[Result] in [#10, #13]) do Inc(Result);
+  end
+  else if InAsm then
+  begin
+    if (I < Length(S)) and (S[I] = '/') and (S[I + 1] = '*') then
+    begin
+      Result := PosEx('*/', S, I + 2);
+      if Result = 0 then Result := Length(S) + 1 else Result := Result + 2;
+    end
+    else if S[I] in ['''', '"', '`'] then
+    begin
+      Q := S[I];
+      Result := I + 1;
+      while (Result <= Length(S)) and (S[Result] <> Q) and not ((Q <> '`') and (S[Result] in [#10, #13])) do
+      begin
+        if S[Result] = '\' then Inc(Result);
+        Inc(Result);
+      end;
+      if (Result <= Length(S)) and (S[Result] = Q) then Inc(Result);
+    end;
+  end
+  else if S[I] = '{' then
+  begin
+    Result := PosEx('}', S, I + 1);
+    if Result = 0 then Result := Length(S) + 1 else Inc(Result);
+  end
+  else if (I < Length(S)) and (S[I] = '(') and (S[I + 1] = '*') then
+  begin
+    Result := PosEx('*)', S, I + 2);
+    if Result = 0 then Result := Length(S) + 1 else Result := Result + 2;
+  end;
+end;
+
+{ Preprocesses template expressions and Pascal identifiers to ensure type-safe member access (e.g. converting "state.prop" and "this.prop" accesses) while preserving inline string literals, comments and asm ... end blocks. }
 function CleanPascalProps(const S: string): string;
 
 var
@@ -1398,6 +1441,15 @@ begin
   i := 1;
   while i <= Length(Res) - 4 do
   begin
+    if not InQuote then
+    begin
+       k := SkipNonCode(Res, i, InAsm);
+       if k > i then
+       begin
+          i := k;
+          Continue;
+       end;
+    end;
     if Res[i] = '''' then InQuote := not InQuote;
     if not InQuote then
     begin
