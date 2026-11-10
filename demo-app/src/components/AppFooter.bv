@@ -1,0 +1,54 @@
+<template>
+  <footer class="app-footer">
+    <div class="footer-left">
+      <span>BlaiseVue Framework &copy; 2026</span>
+      <span class="footer-dot">&bull;</span>
+      <span>100% Modern Object Pascal</span>
+    </div>
+    <div class="footer-right">
+      <span class="status-item">Locale: <strong>{{ $i18n.locale.toUpperCase() }}</strong></span>
+      <span class="footer-dot">&bull;</span>
+      <span class="status-item">Theme: <strong>{{ $theme.current.toUpperCase() }}</strong></span>
+      <span class="footer-dot">&bull;</span>
+      <span class="status-item">Engine: <strong>Pas2JS & FPC</strong></span>
+    </div>
+  </footer>
+</template>
+
+<script>
+  {
+    AppFooter.bv
+    -------------------------------------------------------------------------
+    Clean, non-intrusive status footer displaying runtime telemetry.
+  }
+</script>
+
+<style scoped>
+  .app-footer {
+    padding: 16px 24px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .footer-dot {
+    margin: 0 8px;
+    color: #cbd5e1;
+  }
+  .footer-right strong {
+    color: #0f172a;
+  }
+  html[data-bs-theme="dark"] .app-footer, body.theme-dark .app-footer {
+    background: #1e293b;
+    border-top-color: rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+  }
+  html[data-bs-theme="dark"] .footer-right strong, body.theme-dark .footer-right strong {
+    color: #f8fafc;
+  }
+</style>

@@ -1,0 +1,241 @@
+<template>
+  <header class="app-header">
+    <div class="header-left">
+      <button class="menu-toggle-btn" @click="toggleSidebar" title="Toggle Navigation Menu">
+        ☰
+      </button>
+      <div class="header-breadcrumb">
+        <span class="crumb-app">BlaiseVue</span>
+        <span class="crumb-separator">/</span>
+        <strong class="crumb-current">Enterprise Showcase</strong>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Language Switcher -->
+      <div class="header-control-group lang-group">
+        <button 
+          class="ctrl-btn lang-btn" 
+          :class="{ 'btn-active': $i18n.locale === 'en' }" 
+          @click="$setLocale('en')" 
+          title="Switch to English">
+          🇺🇸 EN
+        </button>
+        <button 
+          class="ctrl-btn lang-btn" 
+          :class="{ 'btn-active': $i18n.locale === 'pt' }" 
+          @click="$setLocale('pt')" 
+          title="Mudar para Português">
+          🇧🇷 PT
+        </button>
+      </div>
+
+      <!-- Quick Dark/Light Toggle -->
+      <button 
+        class="ctrl-btn theme-toggle-btn" 
+        @click="$theme.toggle()" 
+        :title="$theme.isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+        <span v-if="$theme.isDark">☀️ Light</span>
+        <span v-if="!$theme.isDark">🌙 Dark</span>
+      </button>
+
+      <!-- Bootswatch Theme Dropdown -->
+      <div class="header-control-group theme-select-wrapper">
+        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)" title="Choose Bootswatch Theme">
+          <option value="flatly">Flatly (Clean Light)</option>
+          <option value="darkly">Darkly (Modern Dark)</option>
+          <option value="cosmo">Cosmo</option>
+          <option value="lux">Lux</option>
+          <option value="zephyr">Zephyr</option>
+          <option value="cyborg">Cyborg</option>
+          <option value="solar">Solar</option>
+          <option value="vapor">Vapor</option>
+          <option value="pulse">Pulse</option>
+        </select>
+      </div>
+
+      <!-- User Auth Pill -->
+      <a href="#/login" class="user-pill" title="Authentication Status">
+        <span class="user-icon">👤</span>
+        <span class="user-name">{{ ($auth && $auth.isAuthenticated) ? $auth.user.name : 'Sign In' }}</span>
+      </a>
+    </div>
+  </header>
+</template>
+
+<script>
+  {
+    AppHeader.bv
+    -------------------------------------------------------------------------
+    Top header bar with breadcrumb navigation, theme toggle (Dark/Light),
+    Bootswatch theme selector, language switcher, and authentication indicator.
+  }
+
+  methods:
+    procedure toggleSidebar;
+    begin
+      $emit('toggle-sidebar');
+    end;
+
+    procedure onThemeSelect(e: JSValue);
+    var
+      sel: string;
+    begin
+      sel := string(TJSObject(TJSObject(e)['target'])['value']);
+      if sel <> '' then
+        ThemeSet(sel);
+    end;
+</script>
+
+<style scoped>
+  .app-header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .menu-toggle-btn {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-size: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .menu-toggle-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+  .header-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .crumb-app {
+    color: #64748b;
+    font-weight: 500;
+  }
+  .crumb-separator {
+    color: #94a3b8;
+  }
+  .crumb-current {
+    color: #0f172a;
+    font-weight: 600;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-control-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ctrl-btn {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .ctrl-btn:hover {
+    background: #e2e8f0;
+  }
+  .ctrl-btn.btn-active {
+    background: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+    font-weight: 600;
+  }
+  .theme-select {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+  }
+  .user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .user-pill:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+  }
+
+  /* Dark mode overrides */
+  html[data-bs-theme="dark"] .app-header, body.theme-dark .app-header {
+    background: #1e293b;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  html[data-bs-theme="dark"] .crumb-current, body.theme-dark .crumb-current {
+    color: #f8fafc;
+  }
+  html[data-bs-theme="dark"] .menu-toggle-btn, body.theme-dark .menu-toggle-btn {
+    background: #334155;
+    border-color: #475569;
+    color: #f8fafc;
+  }
+  html[data-bs-theme="dark"] .ctrl-btn, body.theme-dark .ctrl-btn {
+    background: #334155;
+    border-color: #475569;
+    color: #f8fafc;
+  }
+  html[data-bs-theme="dark"] .theme-select, body.theme-dark .theme-select {
+    background: #334155;
+    border-color: #475569;
+    color: #f8fafc;
+  }
+  html[data-bs-theme="dark"] .user-pill, body.theme-dark .user-pill {
+    background: #334155;
+    border-color: #475569;
+    color: #f8fafc;
+  }
+
+  @media (max-width: 768px) {
+    .theme-select-wrapper {
+      display: none;
+    }
+    .crumb-current {
+      display: none;
+    }
+  }
+</style>

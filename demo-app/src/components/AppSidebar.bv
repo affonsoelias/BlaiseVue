@@ -1,0 +1,283 @@
+<template>
+  <aside class="app-sidebar" :class="{ 'sidebar-open': isOpen }">
+    <div class="sidebar-backdrop" @click="closeSidebar"></div>
+    <div class="sidebar-container">
+      <div class="sidebar-brand">
+        <a href="#/" class="brand-link" @click="closeSidebar">
+          <img src="logo-transparent.png" alt="BlaiseVue" width="32" height="32" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-title">BlaiseVue</span>
+            <span class="brand-subtitle">Showcase & Lab</span>
+          </div>
+        </a>
+        <button class="close-btn" @click="closeSidebar" title="Close Menu">✕</button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <!-- 1. OVERVIEW & CORE -->
+        <div class="nav-section">
+          <span class="section-title">Overview & Core</span>
+          <a href="#/" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#/about" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">ℹ️</span>
+            <span class="nav-label">About Framework</span>
+          </a>
+          <a href="#/fragments" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">🧩</span>
+            <span class="nav-label">Fragments (Multi-Root)</span>
+          </a>
+          <a href="#/pro" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">Pro Features & FLIP</span>
+          </a>
+        </div>
+
+        <!-- 2. UI COMPONENT KITS -->
+        <div class="nav-section">
+          <span class="section-title">UI Component Kits</span>
+          <a href="#/bootstrap" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">🎨</span>
+            <span class="nav-label">BlaiseUI (Bootstrap 5)</span>
+          </a>
+          <a href="#/charts" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Charts & Graphs</span>
+          </a>
+          <a href="#/reports" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Vector PDF & Reports</span>
+          </a>
+          <a href="#/showcase" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">✨</span>
+            <span class="nav-label">Widget Showcase</span>
+          </a>
+        </div>
+
+        <!-- 3. ENTERPRISE DATA & FULL-STACK -->
+        <div class="nav-section">
+          <span class="section-title">Enterprise Data & SOA</span>
+          <a href="#/dataset" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">💾</span>
+            <span class="nav-label">TBVDataSet & LiveBindings</span>
+          </a>
+          <a href="#/customers" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">Type-Safe RPC (mORMot 2)</span>
+          </a>
+          <a href="#/products" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">📦</span>
+            <span class="nav-label">Product Catalog</span>
+          </a>
+          <a href="#/login" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">🔐</span>
+            <span class="nav-label">JWT Authentication</span>
+          </a>
+        </div>
+
+        <!-- 4. MULTIPLATFORM & DEVICES -->
+        <div class="nav-section">
+          <span class="section-title">Multiplatform</span>
+          <a href="#/mobile" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">📱</span>
+            <span class="nav-label">Mobile Kit (Ionic 8)</span>
+          </a>
+        </div>
+
+        <!-- 5. ARCHITECTURE & ADVANCED -->
+        <div class="nav-section">
+          <span class="section-title">Architecture & Tools</span>
+          <a href="#/form" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Form Validation</span>
+          </a>
+          <a href="docs/index.html" class="nav-item external-link" target="_blank" @click="closeSidebar">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Technical Manuals</span>
+            <span class="link-ext">↗</span>
+          </a>
+          <a href="/api/docs" class="nav-item external-link" target="_blank" @click="closeSidebar">
+            <span class="nav-icon">📜</span>
+            <span class="nav-label">Swagger API Explorer</span>
+            <span class="link-ext">↗</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="footer-powered">Powered by <strong>Object Pascal</strong></span>
+      </div>
+    </div>
+  </aside>
+</template>
+
+<script>
+  {
+    AppSidebar.bv
+    -------------------------------------------------------------------------
+    Collapsible, categorized responsive sidebar navigation in English.
+    Supports desktop pinned mode and mobile offcanvas drawer mode.
+  }
+
+  props:
+    isOpen: boolean = false;
+
+  methods:
+    procedure closeSidebar;
+    begin
+      $emit('close');
+    end;
+</script>
+
+<style scoped>
+  .app-sidebar {
+    position: relative;
+    z-index: 1040;
+  }
+  .sidebar-container {
+    width: 260px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: #1e293b;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    z-index: 1050;
+  }
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1045;
+  }
+  .sidebar-brand {
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0f172a;
+  }
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #ffffff;
+  }
+  .brand-logo {
+    display: block;
+  }
+  .brand-title {
+    display: block;
+    font-size: 17px;
+    font-weight: 700;
+    color: #42b883;
+    letter-spacing: -0.01em;
+  }
+  .brand-subtitle {
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .close-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .close-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+  }
+  .nav-section {
+    margin-bottom: 20px;
+  }
+  .section-title {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 12px 8px 12px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover {
+    background: rgba(66, 184, 131, 0.12);
+    color: #42b883;
+  }
+  .nav-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+  }
+  .nav-label {
+    flex: 1;
+  }
+  .link-ext {
+    font-size: 12px;
+    color: #64748b;
+  }
+  .sidebar-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0f172a;
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+  }
+  .sidebar-footer strong {
+    color: #94a3b8;
+  }
+
+  /* Responsive Mobile Offcanvas Drawer */
+  @media (max-width: 992px) {
+    .sidebar-container {
+      transform: translateX(-100%);
+    }
+    .app-sidebar.sidebar-open .sidebar-container {
+      transform: translateX(0);
+    }
+    .app-sidebar.sidebar-open .sidebar-backdrop {
+      display: block;
+    }
+    .close-btn {
+      display: block;
+    }
+  }
+</style>
