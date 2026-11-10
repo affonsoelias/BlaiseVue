@@ -5,7 +5,7 @@ unit uBVFileDescriptor;
 interface
 
 uses
-  Classes, SysUtils, ProjectIntf, NewItemIntf;
+  Classes, SysUtils, ProjectIntf, NewItemIntf, uBVStrings;
 
 type
   { TNewIDEItemCategoryBlaiseVue }
@@ -46,7 +46,7 @@ end;
 
 function TNewIDEItemCategoryBlaiseVue.Description: string;
 begin
-  Result := 'Componentes Reativos (.bv) e Páginas SPA para BlaiseVue';
+  Result := rsBVCategoryDescription;
 end;
 
 procedure RegisterFileDescriptors;
@@ -75,12 +75,12 @@ end;
 
 function TBVComponentFileDescriptor.GetLocalizedName: string;
 begin
-  Result := 'BlaiseVue Component (.bv)';
+  Result := rsBVComponentName;
 end;
 
 function TBVComponentFileDescriptor.GetLocalizedDescription: string;
 begin
-  Result := 'Create a new reactive BlaiseVue Single File Component (.bv) with template, Pascal script, and scoped CSS style.';
+  Result := rsBVComponentDescription;
 end;
 
 function TBVComponentFileDescriptor.CreateSource(const {%H-}aFilename, aSourceName, {%H-}aResourceName: string): string;
@@ -140,12 +140,12 @@ end;
 
 function TBVViewFileDescriptor.GetLocalizedName: string;
 begin
-  Result := 'BlaiseVue Page View (.bv)';
+  Result := rsBVViewName;
 end;
 
 function TBVViewFileDescriptor.GetLocalizedDescription: string;
 begin
-  Result := 'Create a new routed Page View (.bv) with layout template, page controller, and styles for BlaiseVue SPA router.';
+  Result := rsBVViewDescription;
 end;
 
 function TBVViewFileDescriptor.CreateSource(const {%H-}aFilename, aSourceName, {%H-}aResourceName: string): string;
