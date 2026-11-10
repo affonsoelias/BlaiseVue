@@ -23,6 +23,8 @@ Permite executar tarefas do CLI diretamente do Lazarus, enviando os resultados p
 * **Listar Search Paths do Compilador (bv path)**: Exibe os caminhos de unidades ativas e pacotes Pas2JS mapeados no `app.cfg`.
 * **Executar Suíte de Testes (bv test)**: Dispara a suíte de testes de componentes e serviços com relatório instantâneo.
 * **Sincronizar Projeto (bv lazarus init)**: Escaneia todas as camadas (`src/`, `tests/`, `server/`, `desktop/`, `generated/`) e organiza a árvore hierárquica no Inspetor de Projetos.
+* **Visualizar Componente Ativo no Navegador (bv dev)**: Salva o `.bv` ativo, inicia `bv dev` na pasta do app (a que contém `src/app.bv`) em segundo plano, com a saída na aba **Messages**, e abre o navegador na rota da view (ex.: `views/Documents.bv` → `<documents-page>` → `#/documents`, conforme o `router: routes:` do `app.bv`). Views sem rota e componentes abrem a página inicial. A cada salvamento de um `.bv` o servidor recompila e o navegador recarrega.
+* **Parar Servidor de Visualização (bv dev)**: Encerra o `bv dev` e o processo `node` dele. Ao fechar o Lazarus o servidor também é encerrado.
 
 ---
 
