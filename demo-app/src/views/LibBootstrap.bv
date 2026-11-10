@@ -1,6 +1,6 @@
 <template>
   <div class="lib-bootstrap-page">
-    <!-- INTERNAL NAVIGATION (DEMO) -->
+    <!-- INTERNAL DEMO NAVBAR -->
     <bv-navbar brand="BlaiseVue UI">
        <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>
        <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>
@@ -13,7 +13,7 @@
       <bv-row gutter="md" class="mb-5">
          <bv-col cols="12" md="7">
             <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>
-            <p class="text-muted mb-4">Demonstration of unified reactive components built 100% in Pascal with native responsive grid layout.</p>
+            <p class="text-muted mb-4">Enterprise reactive UI components based on Bootstrap 5 standards, built 100% in Object Pascal.</p>
             
             <bv-breadcrumb>
                <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>
@@ -30,65 +30,116 @@
       </bv-row>
 
       <bv-row gutter="md">
-         <!-- LEFT COLUMN: Feedback & Status (Responsive: 12 on mobile, 4 on desktop) -->
+         <!-- LEFT COLUMN: Feedback & Status -->
          <bv-col cols="12" md="4">
             <bv-card title="📊 System Status">
                <div class="mb-3">
-                  <small>Engine Load (Reactivity)</small>
+                  <small>Reactivity Engine Load</small>
                   <bv-progress :value="count" variant="success"></bv-progress>
                </div>
                <div class="mb-3">
-                  <small>Memory Usage ($Store)</small>
+                  <small>Memory Allocation ($Store)</small>
                   <bv-progress :value="35" variant="info"></bv-progress>
                </div>
                <div class="d-flex gap-2">
-                  <bv-btn label="Pulse (Count++)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>
+                  <bv-btn label="Increment Load (+10)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>
                   <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>
                </div>
             </bv-card>
 
             <bv-card title="📋 Notification Center" class="mt-4">
                <bv-list-group>
-                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif('New Emails')">📨 Inbox Messages</bv-list-group-item>
-                  <bv-list-group-item active="true" @click="clickNotif('Highlight')">🌟 Weekly Highlight</bv-list-group-item>
-                  <bv-list-group-item badge="ONLINE" badgeVariant="secondary" @click="clickNotif('BlaiseUI Kit')">💎 BlaiseUI v2.0</bv-list-group-item>
-                  <bv-list-group-item @click="clickNotif('Cloud Sync')">☁️ Cloud Synchronization</bv-list-group-item>
+                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif('Inbox Messages')">📨 Inbox Messages</bv-list-group-item>
+                  <bv-list-group-item active="true" @click="clickNotif('Weekly Digest')">🌟 Weekly Digest</bv-list-group-item>
+                  <bv-list-group-item badge="ONLINE" badgeVariant="success" @click="clickNotif('Service Healthy')">💎 Core Services Online</bv-list-group-item>
+                  <bv-list-group-item @click="clickNotif('Cloud Synchronization')">☁️ Cloud Synchronization</bv-list-group-item>
                </bv-list-group>
+            </bv-card>
+
+            <!-- SKELETON LOADERS SHOWCASE -->
+            <bv-card title="💀 Skeleton Loading States" class="mt-4">
+               <div class="mb-3">
+                  <bv-skeleton type="text" count="3"></bv-skeleton>
+               </div>
+               <div class="d-flex gap-3 align-items-center">
+                  <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>
+                  <div style="flex: 1;">
+                     <bv-skeleton type="rect" height="14px" width="80%"></bv-skeleton>
+                     <div style="margin-top: 6px;">
+                        <bv-skeleton type="rect" height="10px" width="50%"></bv-skeleton>
+                     </div>
+                  </div>
+               </div>
             </bv-card>
          </bv-col>
 
-         <!-- RIGHT COLUMN: Tabs / Forms / Navigation (Responsive: 12 on mobile, 8 on desktop) -->
+         <!-- RIGHT COLUMN: Tabs / Forms / Controls -->
          <bv-col cols="12" md="8">
             <bv-card style="height: 100%;">
                <bv-tabs @change="tabChanged">
-                  <bv-tab id="forms" title="📝 Forms" active="true">
+                  <bv-tab id="forms" title="📝 Form Controls" active="true">
                      <div class="p-4">
-                        <h4>Input Controls</h4>
+                        <h4>Text Inputs & Groups</h4>
                         <bv-row gutter="md" class="mt-4">
                            <bv-col cols="12" md="6">
-                              <bv-input label="UI Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>
-                              <bv-form-select label="Priority" b-model="category" :options="catOptions"></bv-form-select>
+                              <bv-input label="Component Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>
+                              <bv-form-select label="Execution Priority" b-model="category" :options="catOptions"></bv-form-select>
                            </bv-col>
                            <bv-col cols="12" md="6">
-                              <bv-input-group label="Operation Cost" prepend="$" append=".00" b-model="count"></bv-input-group>
-                              <bv-input-group label="API Key" append="Regenerate">
+                              <bv-input-group label="Unit Cost" prepend="$" append=".00" b-model="count"></bv-input-group>
+                              <bv-input-group label="API Access Key" append="Copy">
                                  <bv-input b-model="libName" readonly="true"></bv-input>
                               </bv-input-group>
                            </bv-col>
                         </bv-row>
-                        <div class="bui-alert bui-alert-info mt-3" style="border-radius: 8px;">
-                           <strong>Note:</strong> All fields above use <code>b-model</code> linked directly to the reactive Pascal state.
-                        </div>
+
+                        <h4 class="mt-4">Switches, Radios & Checkboxes</h4>
+                        <bv-row gutter="md" class="mt-3">
+                           <bv-col cols="12" md="4">
+                              <bv-switch label="Hardware Acceleration" v-model="hwAccel"></bv-switch>
+                              <div class="mt-2">
+                                 <bv-switch label="Offline Cache Sync" v-model="offlineCache"></bv-switch>
+                              </div>
+                           </bv-col>
+                           <bv-col cols="12" md="4">
+                              <bv-checkbox label="Enable Dark Palette" v-model="darkPalette"></bv-checkbox>
+                              <div class="mt-2">
+                                 <bv-checkbox label="Compress Network Payloads" v-model="compressPayloads"></bv-checkbox>
+                              </div>
+                           </bv-col>
+                           <bv-col cols="12" md="4">
+                              <bv-radio name="accessLevel" value="read" label="Read-Only Mode" v-model="accessMode"></bv-radio>
+                              <bv-radio name="accessLevel" value="write" label="Read/Write Mode" v-model="accessMode"></bv-radio>
+                              <bv-radio name="accessLevel" value="admin" label="Administrative Access" v-model="accessMode"></bv-radio>
+                           </bv-col>
+                        </bv-row>
+
+                        <h4 class="mt-4">Range Slider & Dropdowns</h4>
+                        <bv-row gutter="md" class="mt-3">
+                           <bv-col cols="12" md="6">
+                              <label class="form-label d-block">Volume / Threshold: <strong>{{ sliderValue }}%</strong></label>
+                              <bv-slider v-model="sliderValue" min="0" max="100" step="5"></bv-slider>
+                           </bv-col>
+                           <bv-col cols="12" md="6">
+                              <label class="form-label d-block">Context Actions</label>
+                              <bv-dropdown label="Quick Actions" variant="primary">
+                                 <bv-dropdown-item @click="clickNotif('Export Data triggered')">Export Dataset</bv-dropdown-item>
+                                 <bv-dropdown-item @click="clickNotif('Sync Schema triggered')">Sync Schema</bv-dropdown-item>
+                                 <bv-dropdown-item divider="true"></bv-dropdown-item>
+                                 <bv-dropdown-item @click="clickNotif('Purge Cache triggered')">Purge In-Memory Cache</bv-dropdown-item>
+                              </bv-dropdown>
+                           </bv-col>
+                        </bv-row>
                      </div>
                   </bv-tab>
 
-                  <bv-tab id="nav" title="📍 Pagination">
+                  <bv-tab id="nav" title="📍 Pagination & Alerts">
                      <div class="p-4 text-center">
-                        <h5 class="mb-4">Atomic Data Navigation</h5>
+                        <h5 class="mb-4">Data Pagination & Segments</h5>
                         <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>
                         <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>
                         <bv-alert variant="warning" dismissible="true" class="mt-4">
-                           Attention: Segment 7 contains simulated network instabilities.
+                           Notice: Real-time telemetry connection is running at optimal latency.
                         </bv-alert>
                      </div>
                   </bv-tab>
@@ -99,17 +150,17 @@
                      </div>
                   </bv-tab>
 
-                  <bv-tab id="icons" title="⭐ Icons & Themes">
+                  <bv-tab id="icons" title="⭐ Vector Icons">
                      <div class="p-4">
-                        <h5>Bootstrap Icons & Bootswatch Themes</h5>
-                        <p class="text-muted">Over 1,800+ vector icons powered by <code>blaise-icons</code> and reactive Bootswatch styling.</p>
+                        <h5>Vector Icon Engine (1,800+ Icons)</h5>
+                        <p class="text-muted">Resolution-independent vector icons with reactive color and sizing.</p>
                         <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#28a745"></bv-icon> <span>check-circle</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#ffc107"></bv-icon> <span>star-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#dc3545"></bv-icon> <span>heart-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#6c757d"></bv-icon> <span>gear-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#0d6efd"></bv-icon> <span>shield-check</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#fd7e14"></bv-icon> <span>lightning</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#10b981"></bv-icon> <span>check-circle</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#f59e0b"></bv-icon> <span>star-fill</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#ef4444"></bv-icon> <span>heart-fill</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#64748b"></bv-icon> <span>gear-fill</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#3b82f6"></bv-icon> <span>shield-check</span></div>
+                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#f97316"></bv-icon> <span>lightning</span></div>
                         </div>
                      </div>
                   </bv-tab>
@@ -121,46 +172,43 @@
 
     <!-- DRAWER: Programmatically triggered via $ref -->
     <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">
-       <p class="mb-3">This is the new <strong>bv-drawer</strong> component! On desktop or mobile it smoothly slides out.</p>
+       <p class="mb-3">This is the reactive <strong>bv-drawer</strong> component! Smoothly slides out on desktop and mobile.</p>
        <bv-list-group>
-          <bv-list-group-item active="true" @click="clickNotif('Drawer Menu 1')">🏠 Dashboard View</bv-list-group-item>
-          <bv-list-group-item @click="clickNotif('Drawer Menu 2')">⚙️ Component Config</bv-list-group-item>
-          <bv-list-group-item @click="clickNotif('Drawer Menu 3')">📱 Mobile Optimization</bv-list-group-item>
+          <bv-list-group-item active="true" @click="clickNotif('Dashboard View Selected')">🏠 Dashboard View</bv-list-group-item>
+          <bv-list-group-item @click="clickNotif('Component Configuration')">⚙️ Component Config</bv-list-group-item>
+          <bv-list-group-item @click="clickNotif('Mobile Optimization Selected')">📱 Mobile Optimization</bv-list-group-item>
        </bv-list-group>
        <div class="mt-4">
           <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>
        </div>
     </bv-drawer>
 
-    <!-- OVERLAYS: Programmatically triggered via $ref -->
+    <!-- CONFIRMATION MODAL -->
     <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">
-       <p>You are about to process a state update via Pascal.</p>
+       <p>You are about to execute a reactive state transaction via Object Pascal.</p>
        <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">
-          <p>Current Values:</p>
+          <p>Current Reactive Values:</p>
           <bv-badge variant="info">{{ libName }}</bv-badge>
           <bv-badge variant="success">{{ count }}%</bv-badge>
        </div>
     </bv-modal>
 
-    <!-- SETTINGS MODAL: Programmatically triggered via ⚙️ Settings -->
-    <bv-modal b-ref="settingsModal" title="⚙️ Configurações & Preferências" okLabel="Aplicar" cancelLabel="Fechar" @ok="applySettings">
+    <!-- SETTINGS MODAL -->
+    <bv-modal b-ref="settingsModal" title="⚙️ Configuration & Preferences" okLabel="Apply" cancelLabel="Close" @ok="applySettings">
        <div class="p-2">
           <div class="mb-3" style="margin-bottom: 14px;">
-             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Alternar Tema Visual</strong>
+             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Visual Theme Mode</strong>
              <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">
-                <span v-if="$theme.isDark">☀️ Mudar para Tema Claro</span>
-                <span v-if="!$theme.isDark">🌙 Mudar para Tema Escuro</span>
+                <span v-if="$theme.isDark">☀️ Switch to Light Mode</span>
+                <span v-if="!$theme.isDark">🌙 Switch to Dark Mode</span>
              </button>
           </div>
           <div class="mb-3" style="margin-bottom: 14px;">
-             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Idioma da Aplicação</strong>
+             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Application Language</strong>
              <div style="display: flex; gap: 8px;">
-                <button class="bui-btn bui-btn-sm" :class="{ 'bui-btn-primary': $i18n.locale === 'pt', 'bui-btn-secondary': $i18n.locale !== 'pt' }" type="button" @click="$setLocale('pt')">🇧🇷 Português</button>
                 <button class="bui-btn bui-btn-sm" :class="{ 'bui-btn-primary': $i18n.locale === 'en', 'bui-btn-secondary': $i18n.locale !== 'en' }" type="button" @click="$setLocale('en')">🇺🇸 English</button>
+                <button class="bui-btn bui-btn-sm" :class="{ 'bui-btn-primary': $i18n.locale === 'pt', 'bui-btn-secondary': $i18n.locale !== 'pt' }" type="button" @click="$setLocale('pt')">🇧🇷 Português</button>
              </div>
-          </div>
-          <div class="p-2 rounded" style="background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; margin-top: 10px;">
-             🛡️ <strong>BlaiseVue 4.0</strong> &bull; Reatividade Pascal + WebAssembly
           </div>
        </div>
     </bv-modal>
@@ -174,8 +222,10 @@
 <script uses="BVRouting">
   {
     LibBootstrap.bv - BlaiseUI Component Gallery
-    --------------------------------------------
-    Demonstrates the unified BlaiseUI component kit.
+    -------------------------------------------------------------------------
+    Comprehensive showcase of official BlaiseUI Bootstrap 5 components:
+    Buttons, Cards, Inputs, Form Controls, Modals, Drawers, Skeletons,
+    Dropdowns, Sliders, Switches, Radios, Checkboxes, and Pagination.
   }
 
   data:
@@ -186,6 +236,12 @@
     lastAction: string = 'System Ready';
     faqItems: JSValue;
     catOptions: JSValue;
+    hwAccel: boolean = true;
+    offlineCache: boolean = true;
+    darkPalette: boolean = false;
+    compressPayloads: boolean = true;
+    accessMode: string = 'write';
+    sliderValue: integer = 75;
 
   created:
     var
@@ -210,20 +266,17 @@
     end;
 
   methods:
-    { Updates the last action text and triggers the Toast via $refs in pure Pascal }
     procedure clickNotif(info: string);
     begin
       this.lastAction := info;
       TriggerRef(this, 'mainToast', 'show');
     end;
 
-    { Opens the modal using the component reference in pure Pascal }
     procedure showModal;
     begin
       TriggerRef(this, 'mainModal', 'show');
     end;
 
-    { Callback executed when the modal OK button is clicked }
     procedure modalConfirm;
     begin
       this.libName := 'SYNC_' + NowTimestampStr;
@@ -231,7 +284,6 @@
       TriggerRef(this, 'mainToast', 'show');
     end;
 
-    { Updates the current page index from the pagination component }
     procedure updatePage(p: integer);
     begin
       this.currentPage := p;
@@ -259,7 +311,7 @@
 
     procedure applySettings;
     begin
-      this.clickNotif('Configurações salvas!');
+      this.clickNotif('Settings applied successfully!');
     end;
 </script>
 
@@ -282,6 +334,7 @@
   .align-items-end { align-items: flex-end; }
   .justify-content-end { justify-content: flex-end; }
   .gap-2 { gap: 10px; }
+  .gap-3 { gap: 14px; }
   .text-muted { color: #64748b; }
   .p-4 { padding: 20px; }
   .text-center { text-align: center; }
