@@ -1,193 +1,235 @@
 <template>
   <div class="dataset-view-page">
-    <!-- HEADER SECTION -->
-    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">
-      💡 Conheça também o <strong>BlaiseVue 4.3 (Type-Safe RPC)</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Clique aqui para ir para Clientes (RPC)</a> ou clique no botão roxo <strong>⚡ RPC (v4.3)</strong> no menu superior!
+    <!-- TOP TIP -->
+    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">
+      💡 Explore also <strong>Type-Safe RPC</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Click here to navigate to Customers (RPC)</a> or select <strong>Customers</strong> in the sidebar!
     </div>
 
+    <!-- HEADER SECTION -->
     <div class="crud-header">
       <div>
-        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>
-        <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>
+        <h1 class="crud-title">💾 TBVDataSet Offline-First &amp; Delta Sync</h1>
+        <p class="crud-subtitle">Enterprise in-memory reactive dataset engine with IndexedDB persistence, offline/online auto-detection, delta tracking, and automated synchronization (<code>ApplyUpdates</code>) with mORMot 2.</p>
       </div>
       <div class="crud-header-btns">
-        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ Novo Produto</button>
-        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Salvar no IndexedDB</button>
-        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restaurar do IndexedDB</button>
-        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 PDF (v5.0)</button>
-        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Excel</button>
+        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ New Product</button>
+        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Save to IndexedDB</button>
+        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restore from IndexedDB</button>
+        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 Export PDF</button>
+        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Export Excel</button>
         <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">
-          <span v-if="isSyncing">⏳ Sincronizando...</span>
-          <span v-if="!isSyncing">🚀 Sincronizar (ApplyUpdates)</span>
+          <span v-if="isSyncing">⏳ Syncing...</span>
+          <span v-if="!isSyncing">🚀 Sync (ApplyUpdates)</span>
         </button>
       </div>
     </div>
 
-    <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->
-    <div class="offline-control-bar">
-      <div class="control-bar-item">
-        <span class="bar-label">Rede:</span>
-        <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>
-        <span v-if="!isOnline" class="status-pill status-offline">🔴 Modo Offline</span>
-        <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">
-          {{ isOnline ? 'Simular Queda de Rede' : 'Restabelecer Conexão' }}
-        </button>
-      </div>
-
-      <div class="control-bar-item">
-        <span class="bar-label">Storage:</span>
-        <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>
-      </div>
-
-      <div class="control-bar-item">
-        <span class="bar-label">AutoPersist:</span>
-        <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? 'bui-btn-success' : 'bui-btn-secondary'" @click="toggleAutoPersist">
-          {{ autoPersistActive ? '⚡ Ativado (IndexedDB)' : '⚪ Desativado' }}
-        </button>
-      </div>
-
-      <div class="control-bar-item">
-        <span class="bar-label">AutoSync:</span>
-        <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? 'bui-btn-info' : 'bui-btn-secondary'" @click="toggleAutoSync">
-          {{ autoSyncActive ? '🔄 Ativado na Reconexão' : '⚪ Desativado' }}
-        </button>
-      </div>
+    <!-- VIEW TABS: DATASET CRUD vs VIRTUAL SCROLL BENCHMARK -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button 
+        type="button" 
+        class="bui-btn bui-btn-sm" 
+        :style="activeTab === 'dataset' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" 
+        @click="activeTab = 'dataset'">
+        📋 Reactive DataSet &amp; LiveBindings
+      </button>
+      <button 
+        type="button" 
+        class="bui-btn bui-btn-sm" 
+        :style="activeTab === 'virtual' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" 
+        @click="activeTab = 'virtual'">
+        ⚡ Virtual Scrolling (10,000 Records Benchmark)
+      </button>
     </div>
 
-    <!-- DATASET LIVE STATUS BAR -->
-    <div class="dataset-status-bar" v-if="productsDS">
-      <div class="status-left">
-        <span class="badge" :class="stateBadgeClass">
-          Estado: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>
-        </span>
-        <span class="status-indicator">
-          Registro: <strong>{{ productsDS.RecNo }}</strong> de <strong>{{ productsDS.RecordCount }}</strong>
-        </span>
-        <span class="status-indicator" v-if="productsDS.ChangeCount > 0">
-          Deltas Pendentes: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Aguardando Sync)</strong>
-        </span>
-        <span class="status-indicator" v-if="productsDS.ChangeCount == 0">
-          Deltas Pendentes: <strong style="color: #27ae60;">0 (100% Sincronizado)</strong>
-        </span>
-      </div>
-      <div class="dataset-nav-controls">
-        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="Primeiro">⏮️</button>
-        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Anterior">◀️</button>
-        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Próximo">▶️</button>
-        <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Último">⏭️</button>
-      </div>
-    </div>
-
-    <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->
-    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="font-size: 18px; margin: 0;">📋 Grade Conectada ao DataSet (&lt;bv-datagrid&gt;)</h3>
-        <span style="font-size: 13px; color: #7f8c8d;">Clique em qualquer linha para sincronizar o cursor do dataset</span>
-      </div>
-      
-      <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />
-    </div>
-
-    <!-- LIVEBINDINGS FORM SECTION (b-field) -->
-    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">
-        <div>
-          <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ Formulário LiveBindings (`b-field`)</h3>
-          <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edite qualquer campo abaixo: o dataset entrará em modo <code>dsEdit</code> e salvará no IndexedDB automaticamente.</p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == 'browse'" @click="doPost">💾 Salvar (Post)</button>
-          <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == 'browse'" @click="doCancel">❌ Cancelar</button>
-          <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Excluir</button>
-        </div>
-      </div>
-
-      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-        <div class="form-group">
-          <label style="font-weight: 600; font-size: 13px; color: #34495e;">ID do Registro:</label>
-          <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />
-        </div>
-        <div class="form-group">
-          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Título do Produto:</label>
-          <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Título..." @input="onFieldInput" />
-        </div>
-        <div class="form-group">
-          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Categoria:</label>
-          <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Categoria..." @input="onFieldInput" />
-        </div>
-        <div class="form-group">
-          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Preço ($):</label>
-          <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />
-        </div>
-        <div class="form-group">
-          <label style="font-weight: 600; font-size: 13px; color: #34495e;">Estoque:</label>
-          <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />
-        </div>
-      </div>
-    </div>
-
-    <!-- OFFLINE DELTA TRACKER & CONSOLE -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-      <!-- DELTA JSON INSPECTOR -->
-      <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <div>
-            <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Inspetor de Deltas (`productsDS.GetDeltaJSON`)</h3>
-            <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Rastreia inserções, modificações e exclusões para envio ao backend mORMot 2.</p>
-          </div>
-          <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">
-            Limpar Delta
+    <!-- TAB 1: DATASET CRUD & OFFLINE-FIRST -->
+    <div v-show="activeTab === 'dataset'">
+      <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->
+      <div class="offline-control-bar">
+        <div class="control-bar-item">
+          <span class="bar-label">Network:</span>
+          <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>
+          <span v-if="!isOnline" class="status-pill status-offline">🔴 Offline Mode</span>
+          <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">
+            {{ isOnline ? 'Simulate Network Drop' : 'Restore Connection' }}
           </button>
         </div>
 
-        <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>
+        <div class="control-bar-item">
+          <span class="bar-label">Storage:</span>
+          <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>
+        </div>
+
+        <div class="control-bar-item">
+          <span class="bar-label">AutoPersist:</span>
+          <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? 'bui-btn-success' : 'bui-btn-secondary'" @click="toggleAutoPersist">
+            {{ autoPersistActive ? '⚡ Enabled (IndexedDB)' : '⚪ Disabled' }}
+          </button>
+        </div>
+
+        <div class="control-bar-item">
+          <span class="bar-label">AutoSync:</span>
+          <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? 'bui-btn-info' : 'bui-btn-secondary'" @click="toggleAutoSync">
+            {{ autoSyncActive ? '🔄 Enabled on Reconnect' : '⚪ Disabled' }}
+          </button>
+        </div>
       </div>
 
-      <!-- SYNC & PERSISTENCE CONSOLE -->
-      <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>
-          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>
+      <!-- DATASET LIVE STATUS BAR -->
+      <div class="dataset-status-bar" v-if="productsDS">
+        <div class="status-left">
+          <span class="badge" :class="stateBadgeClass">
+            State: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>
+          </span>
+          <span class="status-indicator">
+            Record: <strong>{{ productsDS.RecNo }}</strong> of <strong>{{ productsDS.RecordCount }}</strong>
+          </span>
+          <span class="status-indicator" v-if="productsDS.ChangeCount > 0">
+            Pending Deltas: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Awaiting Sync)</strong>
+          </span>
+          <span class="status-indicator" v-if="productsDS.ChangeCount == 0">
+            Pending Deltas: <strong style="color: #27ae60;">0 (100% Synced)</strong>
+          </span>
         </div>
-        <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">
-          <div>{{ syncStatusMsg }}</div>
-          <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">
-            Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Armazenamento: <code>IndexedDB (Persistente)</code>
+        <div class="dataset-nav-controls">
+          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="First">⏮️</button>
+          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Previous">◀️</button>
+          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Next">▶️</button>
+          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Last">⏭️</button>
+        </div>
+      </div>
+
+      <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->
+      <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <h3 style="font-size: 18px; margin: 0; color: #1e293b;">📋 DataSet DataGrid (&lt;bv-datagrid&gt;)</h3>
+          <span style="font-size: 13px; color: #7f8c8d;">Click any row to synchronize the dataset active cursor</span>
+        </div>
+        
+        <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />
+      </div>
+
+      <!-- LIVEBINDINGS FORM SECTION (b-field) -->
+      <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ LiveBindings Form (`b-field`)</h3>
+            <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edit any field below: the dataset transitions into <code>dsEdit</code> mode and persists automatically.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == 'browse'" @click="doPost">💾 Save (Post)</button>
+            <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == 'browse'" @click="doCancel">❌ Cancel</button>
+            <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Delete</button>
+          </div>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Record ID:</label>
+            <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />
+          </div>
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Product Title:</label>
+            <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Title..." @input="onFieldInput" />
+          </div>
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Category:</label>
+            <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Category..." @input="onFieldInput" />
+          </div>
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Price ($):</label>
+            <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />
+          </div>
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Stock:</label>
+            <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />
+          </div>
+        </div>
+      </div>
+
+      <!-- OFFLINE DELTA TRACKER & CONSOLE -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- DELTA JSON INSPECTOR -->
+        <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Delta Inspector (`productsDS.GetDeltaJSON`)</h3>
+              <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Tracks inserts, updates, and deletes for mORMot 2 backend dispatch.</p>
+            </div>
+            <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">
+              Clear Delta
+            </button>
+          </div>
+
+          <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>
+        </div>
+
+        <!-- SYNC & PERSISTENCE CONSOLE -->
+        <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Sync Console &amp; Logs</h3>
+            <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">mORMot 2 Integration</span>
+          </div>
+          <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">
+            <div>{{ syncStatusMsg }}</div>
+            <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">
+              Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Storage: <code>IndexedDB (Persistent)</code>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- MODAL DE CADASTRO DE NOVO PRODUTO -->
+    <!-- TAB 2: VIRTUAL SCROLLING BENCHMARK (10,000 RECORDS) -->
+    <div v-show="activeTab === 'virtual'">
+      <div class="card" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 style="font-size: 18px; margin: 0; color: #1e293b;">⚡ Virtual Scroll Recycler (`&lt;bv-virtual-scroll&gt;`)</h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Recycles only visible DOM elements at 60 FPS across massive arrays of data (10,000 records loaded in memory).</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 13px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 12px; border: 1px solid #a7f3d0;">
+              Active in memory: {{ virtualItems.length }} rows
+            </span>
+          </div>
+        </div>
+
+        <bv-virtual-scroll :items="virtualItems" :itemHeight="46" height="420px">
+        </bv-virtual-scroll>
+      </div>
+    </div>
+
+    <!-- MODAL FOR CREATING NEW PRODUCT -->
     <div class="crud-modal-backdrop" v-if="isModalOpen">
       <div class="crud-modal">
         <div class="modal-header">
-          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Cadastrar Novo Produto</h3>
+          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Create New Product</h3>
           <button class="modal-close-btn" @click="closeModal">✕</button>
         </div>
         <div class="modal-body">
           <div class="form-group" style="margin-bottom: 14px;">
-            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Título do Produto:</label>
-            <input type="text" class="bui-input" b-model="formTitle" placeholder="Ex: Teclado Mecânico Pascal" />
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Product Title:</label>
+            <input type="text" class="bui-input" b-model="formTitle" placeholder="e.g. Mechanical Pascal Keyboard" />
           </div>
           <div class="form-group" style="margin-bottom: 14px;">
-            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Categoria:</label>
-            <input type="text" class="bui-input" b-model="formCategory" placeholder="Ex: Hardware, Periféricos" />
+            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Category:</label>
+            <input type="text" class="bui-input" b-model="formCategory" placeholder="e.g. Hardware, Peripherals" />
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
             <div class="form-group">
-              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Preço ($):</label>
+              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Price ($):</label>
               <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />
             </div>
             <div class="form-group">
-              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Estoque Inicial:</label>
+              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Initial Stock:</label>
               <input type="text" class="bui-input" b-model="formStock" placeholder="10" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancelar</button>
-          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirmar e Inserir</button>
+          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>
+          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirm &amp; Insert</button>
         </div>
       </div>
     </div>
@@ -202,10 +244,12 @@
     isOnline: Boolean = True;
     autoPersistActive: Boolean = True;
     autoSyncActive: Boolean = True;
-    syncStatusMsg: string = 'DataSet pronto com suporte a IndexedDB.';
+    syncStatusMsg: string = 'DataSet ready with IndexedDB offline storage support.';
     isSyncing: Boolean = False;
     storageEngine: string = 'IndexedDB';
     isModalOpen: Boolean = False;
+    activeTab: string = 'dataset';
+    virtualItems: JSValue = [];
     formTitle: string = '';
     formCategory: string = 'Hardware';
     formPrice: string = '99.90';
@@ -228,6 +272,7 @@
   created:
     var
       mockData: string;
+      i: integer;
     begin
       this['productsDS'] := NewDataSet;
       
@@ -239,29 +284,47 @@
 
       mockData := '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' +
                   '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' +
-                  '{"id":3,"title":"Teclado Mecânico Pascal","category":"Peripherals","price":129.90,"stock":78},' +
-                  '{"id":4,"title":"Cadeira Ergonômica Pro","category":"Office","price":380.00,"stock":20},' +
-                  '{"id":5,"title":"Mouse Sem Fio Ultra","category":"Peripherals","price":49.99,"stock":120}]';
+                  '{"id":3,"title":"Mechanical Pascal Keyboard","category":"Peripherals","price":129.90,"stock":78},' +
+                  '{"id":4,"title":"Ergonomic Office Chair Pro","category":"Office","price":380.00,"stock":20},' +
+                  '{"id":5,"title":"Ultra Wireless Mouse","category":"Peripherals","price":49.99,"stock":120}]';
                   
       DataSetLoad(this['productsDS'], JsonParse(mockData));
       
       DataSetSetAutoPersist(this['productsDS'], True, 'demo_products_v44');
       DataSetSetAutoSync(this['productsDS'], True, '/api/dataset/apply');
-      
+
       this['autoPersistActive'] := True;
       this['autoSyncActive'] := True;
       this['isOnline'] := True;
       this['isSyncing'] := False;
       this['isModalOpen'] := False;
-      this['syncStatusMsg'] := 'DataSet inicializado com persistência IndexedDB e auto-sync configurados.';
+      this['activeTab'] := 'dataset';
+      this['syncStatusMsg'] := 'DataSet initialized with IndexedDB offline persistence and auto-sync.';
       this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
+
+      // Generate 10,000 items for virtual scroll demo
+      asm
+        var vList = [];
+        var categories = ['Hardware', 'Peripherals', 'Cloud Server', 'Security Key', 'Network Cable'];
+        for (var idx = 1; idx <= 10000; idx++) {
+          vList.push({
+            id: idx,
+            sku: 'SKU-' + (100000 + idx),
+            name: 'Inventory Item #' + idx,
+            category: categories[idx % categories.length],
+            price: (20 + (idx % 300) * 1.5).toFixed(2),
+            stock: (idx * 7) % 500
+          });
+        }
+        this.virtualItems = vList;
+      end;
 
       asm
         var self = this;
         if (typeof window !== 'undefined') {
           window.addEventListener('online', function() {
             self.isOnline = true;
-            self.syncStatusMsg = 'Rede restabelecida detectada pelo navegador.';
+            self.syncStatusMsg = 'Network reconnection detected by browser.';
             if (self.autoSyncActive) {
               var ds = self.productsDS;
               if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
@@ -271,7 +334,7 @@
           });
           window.addEventListener('offline', function() {
             self.isOnline = false;
-            self.syncStatusMsg = 'Dispositivo offline: deltas acumulados em cache IndexedDB.';
+            self.syncStatusMsg = 'Device offline: deltas safely queued in IndexedDB.';
           });
         }
       end;
@@ -309,7 +372,6 @@
 
     procedure doAppend;
     begin
-      // Abre a janela modal para o usuário preencher os dados
       this['formTitle'] := '';
       this['formCategory'] := 'Hardware';
       this['formPrice'] := '99.90';
@@ -333,7 +395,7 @@
       titleVal := Trim(String(this['formTitle']));
       if titleVal = '' then
       begin
-        ShowToast('Por favor, informe o título do produto.');
+        ShowToast('Please provide a product title.');
         Exit;
       end;
 
@@ -370,34 +432,34 @@
       DataSetPost(ds);
       this['deltaJSONStr'] := DataSetDeltaJSON(ds);
       this['isModalOpen'] := False;
-      this['syncStatusMsg'] := 'Novo produto cadastrado com sucesso no DataSet.';
-      ShowToast('Produto cadastrado com sucesso!');
+      this['syncStatusMsg'] := 'New product created and saved in DataSet.';
+      ShowToast('Product registered successfully!');
     end;
 
     procedure doPost;
     begin
       DataSetPost(this['productsDS']);
       this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
-      this['syncStatusMsg'] := 'Registro salvo no DataSet e persistido no IndexedDB.';
-      ShowToast('Alterações salvas com sucesso no DataSet!');
+      this['syncStatusMsg'] := 'Record saved to DataSet and persisted in IndexedDB.';
+      ShowToast('Changes saved successfully in DataSet!');
     end;
 
     procedure doCancel;
     begin
       DataSetCancel(this['productsDS']);
       this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
-      this['syncStatusMsg'] := 'Edição cancelada. Estado revertido para browse.';
-      ShowToast('Edição cancelada.');
+      this['syncStatusMsg'] := 'Edit cancelled. State reverted to browse.';
+      ShowToast('Edit cancelled.');
     end;
 
     procedure doDelete;
     begin
-      if Confirm('Deseja realmente excluir este produto?') then
+      if Confirm('Are you sure you want to delete this product?') then
       begin
         DataSetDelete(this['productsDS']);
         this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
-        this['syncStatusMsg'] := 'Registro removido. Operação de exclusão gravada no Delta.';
-        ShowToast('Registro excluído com sucesso.');
+        this['syncStatusMsg'] := 'Record deleted. Delete operation recorded in Delta.';
+        ShowToast('Record deleted successfully.');
       end;
     end;
 
@@ -414,8 +476,8 @@
     procedure doSaveIndexedDB;
     begin
       DataSetSaveIndexedDB(this['productsDS'], 'demo_products_v44', nil, nil);
-      this['syncStatusMsg'] := 'Snapshot completo salvo no IndexedDB (store: demo_products_v44).';
-      ShowToast('Dados salvos no IndexedDB com sucesso!');
+      this['syncStatusMsg'] := 'Full snapshot saved to IndexedDB (store: demo_products_v44).';
+      ShowToast('Data saved to IndexedDB successfully!');
     end;
 
     procedure doLoadIndexedDB;
@@ -428,11 +490,11 @@
           ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
             if (success) {
               self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-              self.syncStatusMsg = 'Restaurados ' + count + ' registros do IndexedDB.';
-              pas.BVPascalDX.ShowToast('Restaurados ' + count + ' registros do IndexedDB com sucesso!', 2500);
+              self.syncStatusMsg = 'Restored ' + count + ' records from IndexedDB.';
+              pas.BVPascalDX.ShowToast('Restored ' + count + ' records from IndexedDB successfully!', 2500);
             } else {
-              self.syncStatusMsg = 'Nenhum snapshot anterior encontrado no IndexedDB.';
-              pas.BVPascalDX.ShowToast('Nenhum dado encontrado no IndexedDB.', 2500);
+              self.syncStatusMsg = 'No prior snapshot found in IndexedDB.';
+              pas.BVPascalDX.ShowToast('No data found in IndexedDB.', 2500);
             }
           });
         }
@@ -448,13 +510,13 @@
       DataSetSetAutoPersist(this['productsDS'], newState, 'demo_products_v44');
       if newState then
       begin
-        this['syncStatusMsg'] := 'AutoPersist ativado: qualquer Post/Delete salva imediatamente no IndexedDB.';
-        ShowToast('AutoPersist ativado (IndexedDB)!');
+        this['syncStatusMsg'] := 'AutoPersist enabled: any Post/Delete persists to IndexedDB immediately.';
+        ShowToast('AutoPersist enabled (IndexedDB)!');
       end
       else
       begin
-        this['syncStatusMsg'] := 'AutoPersist desativado: os dados residem apenas na memória RAM.';
-        ShowToast('AutoPersist desativado.');
+        this['syncStatusMsg'] := 'AutoPersist disabled: data resides exclusively in RAM.';
+        ShowToast('AutoPersist disabled.');
       end;
     end;
 
@@ -467,13 +529,13 @@
       DataSetSetAutoSync(this['productsDS'], newState, '/api/dataset/apply');
       if newState then
       begin
-        this['syncStatusMsg'] := 'AutoSync ativado: sincronizará automaticamente com o mORMot 2 na reconexão.';
-        ShowToast('AutoSync na reconexão ativado!');
+        this['syncStatusMsg'] := 'AutoSync enabled: will automatically push to mORMot 2 upon reconnection.';
+        ShowToast('AutoSync on reconnect enabled!');
       end
       else
       begin
-        this['syncStatusMsg'] := 'AutoSync desativado.';
-        ShowToast('AutoSync desativado.');
+        this['syncStatusMsg'] := 'AutoSync disabled.';
+        ShowToast('AutoSync disabled.');
       end;
     end;
 
@@ -485,8 +547,8 @@
       this['isOnline'] := nextOnline;
       if nextOnline then
       begin
-        this['syncStatusMsg'] := 'Rede online restabelecida. Verificando deltas pendentes...';
-        ShowToast('Conexão restabelecida! (Online)');
+        this['syncStatusMsg'] := 'Online network restored. Checking pending deltas...';
+        ShowToast('Connection restored! (Online)');
         if Boolean(this['autoSyncActive']) then
         begin
           this.doApplyUpdates();
@@ -494,19 +556,19 @@
       end
       else
       begin
-        this['syncStatusMsg'] := 'Modo Offline ativado: novas edições acumulam no Delta e no IndexedDB.';
-        ShowToast('Modo Offline ativado (simulação)');
+        this['syncStatusMsg'] := 'Offline Mode enabled: new changes queue into Delta and IndexedDB.';
+        ShowToast('Offline Mode enabled (simulation)');
       end;
     end;
 
     procedure doClearDelta;
     begin
-      if Confirm('Deseja descartar as alterações do Delta sem enviar ao servidor?') then
+      if Confirm('Discard pending deltas without sending to server?') then
       begin
         DataSetClearDelta(this['productsDS']);
         this['deltaJSONStr'] := DataSetDeltaJSON(this['productsDS']);
-        this['syncStatusMsg'] := 'Deltas pendentes descartados pelo usuário.';
-        ShowToast('Deltas descartados.');
+        this['syncStatusMsg'] := 'Pending deltas discarded by user.';
+        ShowToast('Deltas cleared.');
       end;
     end;
 
@@ -518,37 +580,38 @@
         var ds = self.productsDS;
         if (!ds || ds.ChangeCount === 0) {
           self.isSyncing = false;
-          pas.BVPascalDX.ShowToast('Nenhuma alteração pendente para sincronizar.', 2500);
+          pas.BVPascalDX.ShowToast('No pending changes to synchronize.', 2500);
           return;
         }
-        self.syncStatusMsg = 'Enviando ' + ds.ChangeCount + ' deltas para mORMot 2 (/api/dataset/apply)...';
+        self.syncStatusMsg = 'Sending ' + ds.ChangeCount + ' deltas to mORMot 2 (/api/dataset/apply)...';
         if (typeof ds.ApplyUpdates === 'function') {
           ds.ApplyUpdates('/api/dataset/apply', function(resp) {
             self.isSyncing = false;
             self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
             var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-            self.syncStatusMsg = 'Sucesso! ' + count + ' alterações sincronizadas com o backend mORMot 2.';
-            pas.BVPascalDX.ShowToast('Sincronização concluída com sucesso (' + count + ' deltas)!', 2500);
+            self.syncStatusMsg = 'Success! ' + count + ' modifications synced to mORMot 2 backend.';
+            pas.BVPascalDX.ShowToast('Synchronization completed (' + count + ' deltas)!', 2500);
           }, function(err) {
             self.isSyncing = false;
-            self.syncStatusMsg = 'Backend mORMot offline. Deltas preservados no IndexedDB com segurança!';
-            pas.BVPascalDX.ShowToast('Backend offline. Deltas guardados no IndexedDB!', 2500);
+            self.syncStatusMsg = 'Backend mORMot offline. Deltas preserved securely in IndexedDB!';
+            pas.BVPascalDX.ShowToast('Backend offline. Deltas kept in IndexedDB!', 2500);
           });
         }
       end;
     end;
+
     procedure doExportDatasetPDF;
     var
       rep: JSValue;
     begin
       rep := NewReport(this['productsDS']);
-      ReportSetTitle(rep, 'Relatório de Produtos (TBVDataSet)', 'Exportado diretamente da View DataSet v4.4/v5.0');
-      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'BV-5.0');
-      ReportSetColumns(rep, ['id:ID:integer', 'title:Produto', 'category:Categoria', 'price:Preço Unit.:currency', 'stock:Estoque:integer']);
-      ReportAddSummary(rep, 'Soma Preços Unitários', 'price', 'sum', 'currency');
-      ReportAddSummary(rep, 'Total de Produtos', 'id', 'count', 'integer');
-      ReportExportPDF(rep, 'dataset_produtos.pdf');
-      ShowToast('PDF Vetorial (dataset_produtos.pdf) gerado com sucesso!');
+      ReportSetTitle(rep, 'Products Inventory Report (TBVDataSet)', 'Exported directly from DataSet View');
+      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'CORP');
+      ReportSetColumns(rep, ['id:ID:integer', 'title:Product Name', 'category:Category', 'price:Unit Price:currency', 'stock:Stock:integer']);
+      ReportAddSummary(rep, 'Unit Price Sum', 'price', 'sum', 'currency');
+      ReportAddSummary(rep, 'Total Products', 'id', 'count', 'integer');
+      ReportExportPDF(rep, 'products_inventory.pdf');
+      ShowToast('Vector PDF (products_inventory.pdf) generated successfully!');
     end;
 
     procedure doExportDatasetExcel;
@@ -556,14 +619,13 @@
       rep: JSValue;
     begin
       rep := NewReport(this['productsDS']);
-      ReportSetTitle(rep, 'Planilha de Produtos (TBVDataSet)', 'Exportado via BlaiseReports');
-      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'BV-5.0');
-      ReportSetColumns(rep, ['id:ID:integer', 'title:Produto', 'category:Categoria', 'price:Preço Unit.:currency', 'stock:Estoque:integer']);
-      ReportAddSummary(rep, 'Soma Preços Unitários', 'price', 'sum', 'currency');
-      ReportExportExcel(rep, 'dataset_produtos.xlsx');
-      ShowToast('Planilha Excel (dataset_produtos.xlsx) gerada com sucesso!');
+      ReportSetTitle(rep, 'Products Inventory Spreadsheet (TBVDataSet)', 'Exported via BlaiseReports');
+      ReportSetCompany(rep, 'BlaiseVue Enterprise', 'CORP');
+      ReportSetColumns(rep, ['id:ID:integer', 'title:Product Name', 'category:Category', 'price:Unit Price:currency', 'stock:Stock:integer']);
+      ReportAddSummary(rep, 'Unit Price Sum', 'price', 'sum', 'currency');
+      ReportExportExcel(rep, 'products_inventory.xlsx');
+      ShowToast('Excel Spreadsheet (products_inventory.xlsx) generated successfully!');
     end;
-
 </script>
 
 <style>

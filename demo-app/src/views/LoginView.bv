@@ -4,8 +4,8 @@
       <!-- HEADER -->
       <div class="login-header">
         <div class="login-icon">🔐</div>
-        <h2 class="login-title">Autenticação BlaiseVue</h2>
-        <p class="login-subtitle">Acesso seguro com tokens JWT nativos emitidos pelo mORMot 2</p>
+        <h2 class="login-title">Authentication &bull; Autenticação</h2>
+        <p class="login-subtitle">Secure access with native JWT tokens issued by mORMot 2</p>
       </div>
 
       <!-- ALREADY LOGGED IN BANNER -->
@@ -19,25 +19,25 @@
           <span class="role-badge" :class="'role-' + $auth.user.role">{{ $auth.user.role }}</span>
         </div>
         <div class="logged-actions">
-          <a href="#/" class="bui-btn bui-btn-primary">Ir para o Início 🏠</a>
-          <button class="bui-btn bui-btn-danger" @click="handleLogout">Encerrar Sessão 🚪</button>
+          <a href="#/" class="bui-btn bui-btn-primary">Return to Home 🏠</a>
+          <button class="bui-btn bui-btn-danger" @click="handleLogout">Sign Out 🚪</button>
         </div>
       </div>
 
       <!-- LOGIN FORM -->
       <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">
         <div class="form-group">
-          <label class="form-label">E-mail de Acesso:</label>
+          <label class="form-label">Email Address:</label>
           <input
             type="email"
             class="form-control"
-            placeholder="ex: admin@blaisevue.dev"
+            placeholder="e.g. admin@blaisevue.dev"
             b-model="email"
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Senha:</label>
+          <label class="form-label">Password:</label>
           <input
             type="password"
             class="form-control"
@@ -62,22 +62,22 @@
           :disabled="loading"
           @click="submitLogin"
         >
-          <span v-if="!loading">Entrar no Sistema 🚀</span>
-          <span v-if="loading">Autenticando no mORMot 2... ⏳</span>
+          <span v-if="!loading">Sign In 🚀</span>
+          <span v-if="loading">Authenticating with mORMot 2... ⏳</span>
         </button>
 
         <!-- QUICK DEMO LOGINS -->
         <div class="demo-logins-section">
-          <div class="demo-divider"><span>Acesso Rápido de Demonstração</span></div>
+          <div class="demo-divider"><span>Quick Demo Access</span></div>
           <div class="demo-buttons">
             <button class="demo-btn demo-admin" @click="quickLogin('admin@blaisevue.dev', 'admin123')">
               ⚡ Admin
             </button>
             <button class="demo-btn demo-manager" @click="quickLogin('manager@blaisevue.dev', 'manager123')">
-              👥 Gerente
+              👥 Manager
             </button>
             <button class="demo-btn demo-user" @click="quickLogin('user@blaisevue.dev', 'user123')">
-              👤 Usuário
+              👤 User
             </button>
           </div>
         </div>
@@ -114,7 +114,7 @@
     begin
       if (this.email = '') or (this.password = '') then
       begin
-        this.errorMessage := 'Por favor, informe o e-mail e a senha.';
+        this.errorMessage := 'Please enter your email and password (por favor, informe o e-mail e a senha).';
         Exit;
       end;
       AuthLogin(this, this.email, this.password, '#/');
@@ -148,22 +148,16 @@
   .demo-logins-section { margin-top: 24px; }
   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }
   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
-  .demo-divider span { padding: 0 10px; }
-  .demo-buttons { display: flex; gap: 8px; }
-  .demo-btn { flex: 1; padding: 8px 4px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; transition: all 0.2s; }
+  .demo-buttons { display: flex; gap: 8px; justify-content: center; }
+  .demo-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
   .demo-btn:hover { background: #e2e8f0; }
-  .demo-admin:hover { border-color: #8b5cf6; color: #7c3aed; }
-  .demo-manager:hover { border-color: #3b82f6; color: #2563eb; }
-  .demo-user:hover { border-color: #10b981; color: #059669; }
-  .logged-in-box { padding: 18px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-  .user-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-  .user-avatar { font-size: 32px; }
+  .logged-in-box { text-align: center; }
+  .user-info-row { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+  .user-avatar { font-size: 28px; }
   .user-email { font-size: 12px; color: #64748b; }
-  .role-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-left: auto; }
-  .role-admin { background: #ede9fe; color: #7c3aed; }
-  .role-manager { background: #dbeafe; color: #2563eb; }
-  .role-user { background: #e2e8f0; color: #475569; }
-  .logged-actions { display: flex; gap: 8px; }
-  .logged-actions .bui-btn { flex: 1; }
+  .role-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .role-admin { background: #fef3c7; color: #d97706; }
+  .role-manager { background: #e0f2fe; color: #0284c7; }
+  .role-user { background: #dcfce7; color: #16a34a; }
+  .logged-actions { display: flex; gap: 10px; justify-content: center; }
 </style>
-
