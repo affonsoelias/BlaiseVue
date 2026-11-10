@@ -102,6 +102,8 @@ procedure ThemeToggle;
 { --- I18n Internationalization Helpers --- }
 procedure I18nAddMessages(const Locale: string; const JsonStr: string);
 procedure I18nSetLocale(const Locale: string);
+function I18nGetLocale: string;
+function I18nT(const Key: string; Params: JSValue = nil): string;
 
 { --- Dynamic Field Accessors --- }
 function GetFieldStr(Obj: JSValue; const PropName: string; const DefaultVal: string = ''): string;
@@ -1268,6 +1270,34 @@ begin
       window.__BV_CORE__.i18n.setLocale(Locale);
     }
   end;
+end;
+
+function I18nGetLocale: string;
+var
+  LocStr: JSValue;
+begin
+  asm
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.getLocale === 'function') {
+      LocStr = window.__BV_CORE__.i18n.getLocale();
+    } else {
+      LocStr = 'en';
+    }
+  end;
+  Result := String(LocStr);
+end;
+
+function I18nT(const Key: string; Params: JSValue): string;
+var
+  ResVal: JSValue;
+begin
+  asm
+    if (window.__BV_CORE__ && window.__BV_CORE__.i18n && typeof window.__BV_CORE__.i18n.translate === 'function') {
+      ResVal = window.__BV_CORE__.i18n.translate(Key, Params);
+    } else {
+      ResVal = Key;
+    }
+  end;
+  Result := String(ResVal);
 end;
 
 procedure RpcSetBaseUrl(const Url: string);

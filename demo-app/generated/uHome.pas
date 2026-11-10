@@ -17,13 +17,16 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.home-page { padding: 20px; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      { Transition Classes: Managed by the BVCompiler transition engine }   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }';
+  _styleEl.textContent := '.home-page { padding: 0; }   .section { margin-top: 24px; padding: 20px; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }   .alert-box { margin-top: 10px; padding: 15px; background: #42b883; color: white; border-radius: 8px; }      /* Transition Classes: Managed by the BVCompiler transition engine */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
     '  <div class="home-page">' +
     '    <h2>🏠 Home: Control Panel (BlaiseVue Features)</h2>' +
     '    <p>{{ descricao }}</p>' +
+    '' +
+    '    <!-- DYNAMIC FRAMEWORK VERSION CARD (SINGLE POINT OF TRUTH) -->' +
+    '    <version-card></version-card>' +
     '' +
     '    { 1. Slots & Composition }' +
     '    <card>' +
@@ -41,8 +44,8 @@ begin
     '    { 3. Global Store (B-Store) }' +
     '    <div class="section">' +
     '      <h3>🌍 Global Store (B-Store)</h3>' +
-    '      <p>Framework Version: <badge-blue>{{ $store.appVersion }}</badge-blue></p>' +
-    '      <p>Current User: <b>{{ $store.user }}</b></p>' +
+    '      <p>Current Active Session: <b>{{ $store.user }}</b></p>' +
+    '      <p>Reactivity Layer: <b>ECMAScript Proxy & Microtask Scheduler</b></p>' +
     '    </div>' +
     '' +
     '    { 4. Transitions }' +
@@ -64,7 +67,7 @@ begin
     '' +
     '    { 6. Themes & Icons (Blaise-Themes & Blaise-Icons) }' +
     '    <div class="section">' +
-    '      <h3>🎨 Dynamic Themes & Vector Icons (v2.6)</h3>' +
+    '      <h3>🎨 Dynamic Themes & Vector Icons</h3>' +
     '      <p>Current Active Theme: <b>{{ $theme.current }}</b> (Dark Mode: <b>{{ $theme.isDark ? ''Active 🌙'' : ''Inactive ☀️'' }}</b>)</p>' +
     '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' +
     '        <bv-theme-toggle></bv-theme-toggle>' +

@@ -24,56 +24,55 @@ begin
     '  <div class="pro-features">' +
     '    <h2 class="section-title">{{ $t(''pro.title'') }}</h2>' +
     '    ' +
-    '    <!-- 1. Teste de Slots -->' +
-    '    <card titulo="Demonstração de Slot">' +
-    '      <template slot="header">Título Customizado via Slot 🎨</template>' +
-    '      <p>Este texto está vindo <strong>DA PÁGINA PAI</strong> e sendo injetado dentro do componente Card!</p>' +
-    '      <button class="btn-primary" @click="testarSlot">Clique para Ver o Log</button>' +
-    '      <template slot="footer">Rodapé customizado via Slot 🔗</template>' +
+    '    <!-- 1. Slot Demonstration -->' +
+    '    <card titulo="Slot Demonstration">' +
+    '      <template slot="header">Custom Title via Slot 🎨</template>' +
+    '      <p>This markup is transmitted <strong>FROM THE PARENT VIEW</strong> and injected inside the Card component slot.</p>' +
+    '      <button class="btn-primary" @click="testarSlot">Click to Inspect Console Log</button>' +
+    '      <template slot="footer">Custom Footer via Slot 🔗</template>' +
     '    </card>' +
     '' +
-    '    <!-- 2. Teste de Global Store -->' +
+    '    <!-- 2. Global Store ($store) -->' +
     '    <div class="section">' +
-    '       <h3>🧠 Memória Central ($store)</h3>' +
-    '       <p>Versão do App: <span class="badge badge-green">{{ $store.appVersion }}</span></p>' +
-    '       <p>Usuário Logado: <strong>{{ $store.user }}</strong></p>' +
-    '       <button class="btn-outline" @click="mudarVersao">Atualizar Versão Global</button>' +
+    '       <h3>🧠 Central Reactive Memory ($store)</h3>' +
+    '       <p>Active User: <strong>{{ $store.user }}</strong></p>' +
+    '       <button class="btn-outline" @click="mudarVersao">Update Global State</button>' +
     '    </div>' +
     '' +
-    '    <!-- 3. Teste de Provide/Inject -->' +
+    '    <!-- 3. Provide/Inject -->' +
     '    <div class="section">' +
-    '       <h3>🔗 Elo Sagrado (Inject)</h3>' +
-    '       <p>Dados injetados do App Root:</p>' +
+    '       <h3>🔗 Hierarchical Context (Inject)</h3>' +
+    '       <p>Injected context from Application Root:</p>' +
     '       <ul>' +
-    '          <li>Ambiente: <strong>{{ getAmbiente().status }}</strong></li>' +
-    '          <li>ID Interno: <strong>{{ getAmbiente().id }}</strong></li>' +
+    '          <li>Environment: <strong>{{ getAmbiente().status }}</strong></li>' +
+    '          <li>Internal Instance ID: <strong>{{ getAmbiente().id }}</strong></li>' +
     '       </ul>' +
     '    </div>' +
     '' +
-    '    <!-- 4. Teste de Lifecycle Updated -->' +
+    '    <!-- 4. Lifecycle Hook (Updated) -->' +
     '    <div class="section">' +
-    '       <h3>🔄 Batida do Motor (Updated)</h3>' +
-    '       <p>Contador de Reatividade: <strong>{{ contador }}</strong></p>' +
-    '       <button class="btn-primary" @click="incrementar">Pulsar Motor</button>' +
-    '       <p><small>(Veja o log no console para o hook ''updated'')</small></p>' +
+    '       <h3>🔄 Engine Pulse (Updated Lifecycle)</h3>' +
+    '       <p>Reactivity Counter: <strong>{{ contador }}</strong></p>' +
+    '       <button class="btn-primary" @click="incrementar">Pulse Engine</button>' +
+    '       <p><small>(Inspect console log to view ''updated'' hook telemetry)</small></p>' +
     '    </div>' +
     '' +
-    '    <!-- 5. Teste de Transições -->' +
+    '    <!-- 5. Transitions -->' +
     '    <div class="section">' +
-    '       <h3>✨ Magia Visual (Transitions)</h3>' +
-    '       <button class="btn-outline" @click="toggleShow">Alternar Elemento</button>' +
+    '       <h3>✨ Visual Polish (Transitions)</h3>' +
+    '       <button class="btn-outline" @click="toggleShow">Toggle Animated Element</button>' +
     '       <transition name="fade">' +
     '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' +
-    '             Surpresa! Eu apareço com suavidade. 🎭' +
+    '             Smoothly Animated Reactive Node 🎭' +
     '          </div>' +
     '       </transition>' +
     '    </div>' +
     '' +
-    '    <!-- 6. Teste de Transições de Lista (Transition-Group FLIP) -->' +
+    '    <!-- 6. List Transitions (Transition-Group FLIP) -->' +
     '    <div class="section">' +
     '       <h3>{{ $t(''pro.transitionTitle'') }}</h3>' +
     '       <p style="color: #64748b; margin-bottom: 12px;">' +
-    '         O algoritmo <strong>FLIP</strong> (<em>First, Last, Invert, Play</em>) calcula a diferença de coordenadas geométricas antes e depois de mutações de lista e anima suavemente via CSS Transforms.' +
+    '         The <strong>FLIP</strong> algorithm (<em>First, Last, Invert, Play</em>) computes coordinate diffs before and after list mutations and applies fluid hardware-accelerated CSS transforms.' +
     '       </p>' +
     '       <div style="margin-bottom: 14px;">' +
     '         <button class="btn-primary" @click="embaralhar">{{ $t(''pro.shuffle'') }}</button>' +
@@ -89,39 +88,39 @@ begin
     '       </transition-group>' +
     '    </div>' +
     '' +
-    '    <!-- 7. Aceleração WebAssembly & Benchmarking (BlaiseVue 3.0 Engine) -->' +
+    '    <!-- 7. WebAssembly Acceleration & Benchmarking -->' +
     '    <div class="section wasm-card">' +
     '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' +
-    '         <h3 style="color: #6366f1; margin: 0;">⚡ Aceleração WebAssembly ($wasm) - BlaiseVue 3.0</h3>' +
+    '         <h3 style="color: #6366f1; margin: 0;">⚡ WebAssembly Acceleration ($wasm)</h3>' +
     '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' +
     '       </div>' +
     '       <p style="color: #64748b; margin-bottom: 16px;">' +
-    '         O BlaiseVue 3.0 integra computação de alto desempenho via <strong>WebAssembly nativo</strong> diretamente do Pascal no navegador através do objeto injetado <code>$wasm</code>, executando com velocidade quase-nativa em relação ao JavaScript tradicional.' +
+    '         BlaiseVue integrates high-performance computing via <strong>native WebAssembly</strong> directly from Object Pascal through the injected <code>$wasm</code> bridge, achieving near-native execution speed.' +
     '       </p>' +
     '' +
     '       <div class="wasm-grid">' +
-    '         <!-- Teste 1: Fibonacci Wasm -->' +
+    '         <!-- Test 1: Fibonacci Wasm -->' +
     '         <div class="wasm-box">' +
-    '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Cálculo Fibonacci Acelerado</h4>' +
-    '           <p style="font-size: 13px; color: #64748b;">Calcule o N-ésimo número de Fibonacci via Wasm:</p>' +
+    '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Accelerated Fibonacci Computation</h4>' +
+    '           <p style="font-size: 13px; color: #64748b;">Compute the N-th Fibonacci term via Wasm:</p>' +
     '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' +
     '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' +
-    '             <button class="btn-primary" @click="calcularWasmFib">Calcular Wasm ⚡</button>' +
+    '             <button class="btn-primary" @click="calcularWasmFib">Compute Wasm ⚡</button>' +
     '           </div>' +
     '           <div class="wasm-result">' +
-    '             Resultado: <strong>{{ wasmFibResult }}</strong>' +
+    '             Result: <strong>{{ wasmFibResult }}</strong>' +
     '             <br />' +
-    '             <small>Tempo de execução: <strong>{{ wasmFibTime }} ms</strong></small>' +
+    '             <small>Execution Time: <strong>{{ wasmFibTime }} ms</strong></small>' +
     '           </div>' +
     '         </div>' +
     '' +
-    '         <!-- Teste 2: Teste de Primalidade Wasm -->' +
+    '         <!-- Test 2: Primality Test Wasm -->' +
     '         <div class="wasm-box">' +
-    '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Teste de Primalidade Wasm</h4>' +
-    '           <p style="font-size: 13px; color: #64748b;">Valide se um número grande é primo usando algoritmo compilado:</p>' +
+    '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Wasm Primality Benchmark</h4>' +
+    '           <p style="font-size: 13px; color: #64748b;">Verify large integer primality using compiled bytecode:</p>' +
     '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' +
     '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' +
-    '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verificar Primo 🔍</button>' +
+    '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verify Prime 🔍</button>' +
     '           </div>' +
     '           <div class="wasm-result">' +
     '             Status: <strong>{{ primeResult }}</strong>' +
@@ -129,40 +128,40 @@ begin
     '         </div>' +
     '       </div>' +
     '' +
-    '       <!-- Teste 3: Benchmark em Tempo Real -->' +
+    '       <!-- Test 3: Real-Time Benchmark -->' +
     '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' +
     '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' +
     '           <div>' +
-    '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Benchmark em Tempo Real: WebAssembly vs JavaScript</h4>' +
-    '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executa 1.000 iterações em paralelo comparando Wasm com JS Vanilla.</p>' +
+    '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Real-Time Benchmark: WebAssembly vs JavaScript</h4>' +
+    '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executes 1,000 parallel iterations comparing Wasm bytecode to vanilla JavaScript.</p>' +
     '           </div>' +
-    '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Executar Benchmark 🚀</button>' +
+    '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Run Benchmark 🚀</button>' +
     '         </div>' +
     '' +
     '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' +
     '           <div class="stat-badge">' +
-    '             <div class="stat-label">JavaScript Puro</div>' +
+    '             <div class="stat-label">Vanilla JavaScript</div>' +
     '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' +
     '           </div>' +
     '           <div class="stat-badge">' +
-    '             <div class="stat-label">WebAssembly Nativo</div>' +
+    '             <div class="stat-label">Native WebAssembly</div>' +
     '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' +
     '           </div>' +
     '           <div class="stat-badge">' +
-    '             <div class="stat-label">Aceleração Relativa</div>' +
+    '             <div class="stat-label">Speedup Factor</div>' +
     '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' +
     '           </div>' +
     '         </div>' +
     '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' +
-    '           Status do Benchmark: <em>{{ benchSummary }}</em>' +
+    '           Benchmark Telemetry: <em>{{ benchSummary }}</em>' +
     '         </p>' +
     '       </div>' +
     '' +
-    '       <!-- Teste 4: SSG / Hydration Engine Demo -->' +
+    '       <!-- Test 4: SSG / Hydration Engine Demo -->' +
     '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' +
-    '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 Motor SSG & Hidratação Reativa (BlaiseVue 3.0)</h4>' +
+    '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 SSG &amp; Client Rehydration Engine</h4>' +
     '         <p style="font-size: 13px; color: #047857; margin: 0;">' +
-    '           O BlaiseVue 3.0 detecta nós pré-renderizados estaticamente via <code>bv run ssg</code> e executa <strong>Rehydration</strong> reativa no cliente preservando a hierarquia DOM existente sem recriar os elementos do zero.' +
+    '           Pre-rendered static HTML via <code>bv run ssg</code> is seamlessly rehydrated on the client preserving existing DOM hierarchy without re-rendering nodes from scratch.' +
     '         </p>' +
     '       </div>' +
     '    </div>' +
@@ -179,12 +178,12 @@ begin
     d['wasmFibResult'] := 6765;
     d['wasmFibTime'] := '0.04';
     d['primeInput'] := 999983;
-    d['primeResult'] := '999983 é primo! 💎';
+    d['primeResult'] := '999983 is a PRIME NUMBER! 💎';
     d['benchIters'] := 1000;
     d['benchJsTime'] := '0.00';
     d['benchWasmTime'] := '0.00';
-    d['benchSpeedup'] := 'Calculando...';
-    d['benchSummary'] := 'Pronto para execução';
+    d['benchSpeedup'] := 'Calculating...';
+    d['benchSummary'] := 'Ready for execution';
     Result := d;
   end;
 
@@ -193,7 +192,7 @@ begin
   m['testarSlot'] := procedure(_this: TJSObject)
 
     begin
-      WriteLn('[Slot Test] O pai está falando!');
+      WriteLn('[Slot Test] Parent view slot active!');
     end;
     
   m['mudarVersao'] := procedure(_this: TJSObject)
@@ -202,25 +201,25 @@ begin
       currentVer: string;
       newVer, newUser: string;
     begin
-      currentVer := string(TJSObject(_this['$store'])['appVersion']);
-      if currentVer = '2.1.0-ULTRA-PRO' then
+      currentVer := string(TJSObject(_this['$store'])['user']);
+      if currentVer = 'Pascal King 👑' then
       begin
-        newVer := '3.0.0-TURBO-HYPER';
+        newVer := '3.0.0-PRO';
         newUser := 'Blaise Visionary 🚀';
       end
-      else if currentVer = '3.0.0-TURBO-HYPER' then
+      else if currentVer = 'Blaise Visionary 🚀' then
       begin
         newVer := '1.0.0-PRO';
         newUser := 'DevMaster 🏆';
       end
       else
       begin
-        newVer := '2.1.0-ULTRA-PRO';
+        newVer := '2.1.0-PRO';
         newUser := 'Pascal King 👑';
       end;
       TJSObject(_this['$store'])['appVersion'] := newVer;
       TJSObject(_this['$store'])['user'] := newUser;
-      WriteLn('[Store] Memória Central Atualizada! Versão: ' + newVer + ' | Usuário: ' + newUser);
+      WriteLn('[Store] Central Store Updated! User: ' + newUser);
     end;
     
   m['incrementar'] := procedure(_this: TJSObject)
@@ -310,9 +309,9 @@ begin
       n := StrToIntDef(String(_this['primeInput']), 2);
       isP := Integer(WasmCall(_this, 'math', 'isPrime', n));
       if isP = 1 then
-        _this['primeResult'] := IntToStr(n) + ' é um NÚMERO PRIMO! 💎'
+        _this['primeResult'] := IntToStr(n) + ' is a PRIME NUMBER! 💎'
       else
-        _this['primeResult'] := IntToStr(n) + ' NÃO é primo ❌';
+        _this['primeResult'] := IntToStr(n) + ' is NOT prime ❌';
     end;
     
   m['rodarBenchmark'] := procedure(_this: TJSObject)
@@ -327,8 +326,8 @@ begin
       begin
         _this['benchJsTime'] := GetFieldStr(rep, 'jsDurationMs');
         _this['benchWasmTime'] := GetFieldStr(rep, 'wasmDurationMs');
-        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Mais Rápido! 🚀';
-        _this['benchSummary'] := 'Executadas 1.000 iterações com sucesso no módulo math.';
+        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Faster! 🚀';
+        _this['benchSummary'] := '1,000 iterations completed successfully in math module.';
       end;
     end;
 
@@ -350,8 +349,8 @@ begin
       begin
         _this['benchJsTime'] := GetFieldStr(rep, 'jsDurationMs');
         _this['benchWasmTime'] := GetFieldStr(rep, 'wasmDurationMs');
-        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Mais Rápido! 🚀';
-        _this['benchSummary'] := 'Módulo WebAssembly math ativo e operacional.';
+        _this['benchSpeedup'] := GetFieldStr(rep, 'speedup') + ' Faster! 🚀';
+        _this['benchSummary'] := 'WebAssembly math module operational.';
       end;
     end;
 
@@ -360,7 +359,7 @@ begin
     begin
       asm if (!_this) _this = this; end;
 
-      WriteLn('[Lifecycle] Componente UPDATED! Pulso detectado.');
+      WriteLn('[Lifecycle] Component UPDATED! Pulse detected.');
     end;
 
     ;

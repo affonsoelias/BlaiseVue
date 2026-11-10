@@ -93,6 +93,10 @@
             <span class="nav-icon">📋</span>
             <span class="nav-label">Form Validation</span>
           </a>
+          <a href="#/i18n" class="nav-item" @click="closeSidebar">
+            <span class="nav-icon">🌐</span>
+            <span class="nav-label">i18n Laboratory</span>
+          </a>
           <a href="docs/index.html" class="nav-item external-link" target="_blank" @click="closeSidebar">
             <span class="nav-icon">📚</span>
             <span class="nav-label">Technical Manuals</span>
@@ -127,7 +131,9 @@
   methods:
     procedure closeSidebar;
     begin
-      $emit('close');
+      asm
+        if (typeof this.$emit === 'function') this.$emit('close');
+      end;
     end;
 </script>
 

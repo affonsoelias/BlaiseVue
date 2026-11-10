@@ -17,7 +17,7 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.chart-dashboard {     padding: 24px;     background: #f8fafc;     min-height: 100vh;     overflow-y: scroll;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
+  _styleEl.textContent := '.chart-dashboard {     padding: 24px 0;     background: transparent;     min-height: 100vh;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
@@ -26,38 +26,38 @@ begin
     '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' +
     '        <div style="text-align: left;">' +
     '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' +
-    '            📊 BlaiseCharts 4.0 - Data Visualization Suite' +
+    '            📊 BlaiseCharts - Data Visualization Suite' +
     '          </h1>' +
     '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' +
-    '            Suíte oficial e dedicada de gráficos reativos via HTML5 Canvas (Chart.js), com classes e registros fortemente tipados em Object Pascal (<strong>packages/blaise-charts</strong>).' +
+    '            Official hardware-accelerated reactive charting suite via HTML5 Canvas (Chart.js), with strongly-typed Object Pascal data models (<strong>packages/blaise-charts</strong>).' +
     '          </p>' +
     '        </div>' +
     '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' +
-    '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomizar Dados</bv-btn>' +
-    '          <bv-btn variant="secondary" @click="togglePalette">🎨 Alternar Paleta ({{ currentPalette }})</bv-btn>' +
-    '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? ''Modo Claro'' : ''Modo Escuro'' }}</bv-btn>' +
+    '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomize Data</bv-btn>' +
+    '          <bv-btn variant="secondary" @click="togglePalette">🎨 Cycle Palette ({{ currentPalette }})</bv-btn>' +
+    '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? ''Light Mode'' : ''Dark Mode'' }}</bv-btn>' +
     '        </div>' +
     '      </div>' +
     '' +
     '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' +
-    '        <strong>🎯 Ponto Selecionado / Status:</strong> {{ clickedPointInfo }}' +
+    '        <strong>🎯 Selected Data Point:</strong> {{ clickedPointInfo }}' +
     '      </div>' +
     '    </div>' +
     '' +
-    '    <!-- 1. DESTAQUE: Componente Universal <bv-chart> com Troca Dinâmica de Tipo -->' +
+    '    <!-- 1. FEATURED: Universal <bv-chart> with Dynamic Type Switching -->' +
     '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' +
     '      <div class="chart-header-row">' +
     '        <div>' +
-    '          <h3>🌟 &lt;bv-chart&gt; - Componente Universal com Tipo Dinâmico</h3>' +
+    '          <h3>🌟 &lt;bv-chart&gt; - Universal Chart Component</h3>' +
     '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' +
-    '            Um único componente reativo capaz de renderizar qualquer gráfico dinamicamente via prop <code>:type="{{ universalType }}"</code>:' +
+    '            A single reactive component capable of rendering any chart geometry dynamically via prop <code>:type="{{ universalType }}"</code>:' +
     '          </p>' +
     '        </div>' +
     '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' +
-    '          <button class="btn-type-pill" @click="setUniversalType(''bar'')">📊 Barras</button>' +
-    '          <button class="btn-type-pill" @click="setUniversalType(''line'')">📈 Linha</button>' +
-    '          <button class="btn-type-pill" @click="setUniversalType(''pie'')">🍕 Pizza</button>' +
-    '          <button class="btn-type-pill" @click="setUniversalType(''doughnut'')">🍩 Rosca</button>' +
+    '          <button class="btn-type-pill" @click="setUniversalType(''bar'')">📊 Bar</button>' +
+    '          <button class="btn-type-pill" @click="setUniversalType(''line'')">📈 Line</button>' +
+    '          <button class="btn-type-pill" @click="setUniversalType(''pie'')">🍕 Pie</button>' +
+    '          <button class="btn-type-pill" @click="setUniversalType(''doughnut'')">🍩 Doughnut</button>' +
     '          <button class="btn-type-pill" @click="setUniversalType(''radar'')">🕸️ Radar</button>' +
     '          <button class="btn-type-pill" @click="setUniversalType(''polarArea'')">❄️ Polar</button>' +
     '        </div>' +
@@ -65,57 +65,57 @@ begin
     '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' +
     '    </div>' +
     '' +
-    '    <!-- 2. GRID: Componentes Especializados do BlaiseCharts -->' +
+    '    <!-- 2. GRID: Specialized BlaiseCharts Components -->' +
     '    <div class="chart-grid">' +
-    '      <!-- 2.1 Barras (bv-bar-chart) -->' +
+    '      <!-- 2.1 Bar / Column (bv-bar-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>📊 Vendas Trimestrais (&lt;bv-bar-chart&gt;)</h3>' +
+    '          <h3>📊 Quarterly Revenue (&lt;bv-bar-chart&gt;)</h3>' +
     '          <span class="badge-type">Bar / Column</span>' +
     '        </div>' +
     '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2.2 Linhas & Tendências (bv-line-chart) -->' +
+    '      <!-- 2.2 Line & Spline Trends (bv-line-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>📈 Usuários &amp; Conexões WS (&lt;bv-line-chart&gt;)</h3>' +
+    '          <h3>📈 Active WebSocket Connections (&lt;bv-line-chart&gt;)</h3>' +
     '          <span class="badge-type">Spline Line</span>' +
     '        </div>' +
     '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2.3 Pizza Proporcional (bv-pie-chart) -->' +
+    '      <!-- 2.3 Proportional Pie (bv-pie-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>🍕 Distribuição de Tráfego (&lt;bv-pie-chart&gt;)</h3>' +
+    '          <h3>🍕 Traffic Distribution by Platform (&lt;bv-pie-chart&gt;)</h3>' +
     '          <span class="badge-type">Pie Chart</span>' +
     '        </div>' +
     '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2.4 Rosca / Doughnut (bv-doughnut-chart) -->' +
+    '      <!-- 2.4 Doughnut (bv-doughnut-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>🍩 Plataformas Suportadas (&lt;bv-doughnut-chart&gt;)</h3>' +
+    '          <h3>🍩 Supported Deployment Runtimes (&lt;bv-doughnut-chart&gt;)</h3>' +
     '          <span class="badge-type">Doughnut</span>' +
     '        </div>' +
     '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2.5 Área Polar (bv-polar-area-chart) -->' +
+    '      <!-- 2.5 Polar Area (bv-polar-area-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>❄️ Distribuição de Recursos (&lt;bv-polar-area-chart&gt;)</h3>' +
+    '          <h3>❄️ Resource Allocation Matrix (&lt;bv-polar-area-chart&gt;)</h3>' +
     '          <span class="badge-type">Polar Area</span>' +
     '        </div>' +
     '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' +
     '      </div>' +
     '' +
-    '      <!-- 2.6 Radar / Competências (bv-radar-chart) -->' +
+    '      <!-- 2.6 Radar Matrix (bv-radar-chart) -->' +
     '      <div class="chart-item">' +
     '        <div class="chart-header-row">' +
-    '          <h3>🕸️ Análise de Desempenho (&lt;bv-radar-chart&gt;)</h3>' +
+    '          <h3>🕸️ Framework Performance Benchmark (&lt;bv-radar-chart&gt;)</h3>' +
     '          <span class="badge-type">Radar Matrix</span>' +
     '        </div>' +
     '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' +
@@ -164,14 +164,14 @@ begin
       _this['pieOptions'] := PieOptsModel.ToJS;
       // 2. Bar Chart Data (Typed TBVChartData)
       BarModel := TBVChartData.Create;
-      BarModel.Labels(['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']);
-      BarModel.AddDataset('Vendas 2026', [14500, 21800, 18900, 27400, 31200, 42000], 'rgba(16, 185, 129, 0.6)', '#10b981');
-      BarModel.AddDataset('Metas 2026',  [12000, 18000, 20000, 25000, 30000, 38000], 'rgba(59, 130, 246, 0.5)', '#3b82f6');
+      BarModel.Labels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']);
+      BarModel.AddDataset('Revenue 2026', [14500, 21800, 18900, 27400, 31200, 42000], 'rgba(16, 185, 129, 0.6)', '#10b981');
+      BarModel.AddDataset('Target 2026',  [12000, 18000, 20000, 25000, 30000, 38000], 'rgba(59, 130, 246, 0.5)', '#3b82f6');
       _this['barData'] := BarModel.ToJS;
       // 3. Line Chart Data (Typed TBVChartData)
       LineModel := TBVChartData.Create;
       LineModel.Labels(['00:00', '04:00', '08:00', '12:00', '16:00', '20:00']);
-      LineModel.AddDataset('Conexões WebSocket', [320, 180, 840, 1920, 2450, 1880], 'rgba(99, 102, 241, 0.2)', '#6366f1')
+      LineModel.AddDataset('WebSocket Connections', [320, 180, 840, 1920, 2450, 1880], 'rgba(99, 102, 241, 0.2)', '#6366f1')
                .Fill(True)
                .Tension(0.35)
                .PointRadius(5);
@@ -179,17 +179,17 @@ begin
       // 4. Pie Chart Data (Typed Multi-Color)
       PieModel := TBVChartData.Create;
       PieModel.Labels(['Web (SPA)', 'Desktop (WebUI)', 'Mobile (Capacitor)', 'Backend REST']);
-      PieModel.AddMultiColorDataset('Requisições', [45, 25, 20, 10], ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']);
+      PieModel.AddMultiColorDataset('Requests', [45, 25, 20, 10], ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']);
       _this['pieData'] := PieModel.ToJS;
       // 5. Doughnut Chart Data
       DoughnutModel := TBVChartData.Create;
       DoughnutModel.Labels(['Windows x64', 'Linux ARM/x64', 'Android', 'macOS']);
-      DoughnutModel.AddMultiColorDataset('Instalações', [52, 28, 14, 6], ['#06b6d4', '#10b981', '#ec4899', '#f59e0b']);
+      DoughnutModel.AddMultiColorDataset('Installations', [52, 28, 14, 6], ['#06b6d4', '#10b981', '#ec4899', '#f59e0b']);
       _this['doughnutData'] := DoughnutModel.ToJS;
       // 6. Radar Chart Data
       RadarModel := TBVChartData.Create;
-      RadarModel.Labels(['Velocidade', 'Tipagem Pascal', 'Reatividade', 'Memória Baixa', 'Full-Stack', 'Multiplataforma']);
-      RadarModel.AddDataset('BlaiseVue 4.0', [98, 100, 95, 92, 97, 96], 'rgba(16, 185, 129, 0.3)', '#10b981')
+      RadarModel.Labels(['Speed', 'Pascal Typing', 'Reactivity', 'Low Memory', 'Full-Stack', 'Multiplatform']);
+      RadarModel.AddDataset('BlaiseVue Core', [98, 100, 95, 92, 97, 96], 'rgba(16, 185, 129, 0.3)', '#10b981')
                 .Fill(True);
       _this['radarData'] := RadarModel.ToJS;
     end;
@@ -198,7 +198,7 @@ begin
 
     begin
       _this['universalType'] := newType;
-      _this['clickedPointInfo'] := 'Tipo do <bv-chart> alterado para: ' + newType;
+      _this['clickedPointInfo'] := 'Chart type dynamically switched to: ' + newType;
     end;
     
   m['toggleDarkMode'] := procedure(_this: TJSObject)
@@ -213,9 +213,9 @@ begin
       _this['chartOptions'] := ObjectAssign(NewObject, _this['chartOptions']);
       _this['pieOptions'] := ObjectAssign(NewObject, _this['pieOptions']);
       if NewDark then
-        _this['clickedPointInfo'] := 'Modo escuro ativado com sucesso!'
+        _this['clickedPointInfo'] := 'Dark mode activated for charts!'
       else
-        _this['clickedPointInfo'] := 'Modo claro ativado com sucesso!';
+        _this['clickedPointInfo'] := 'Light mode activated for charts!';
     end;
     
   m['randomizeData'] := procedure(_this: TJSObject)
@@ -242,7 +242,7 @@ begin
           _this['barData'] := ObjectAssign(NewObject, _this['barData']);
         end;
       end;
-      _this['clickedPointInfo'] := 'Dados randomizados com sucesso!';
+      _this['clickedPointInfo'] := 'Dataset values randomized!';
     end;
     
   m['togglePalette'] := procedure(_this: TJSObject)
@@ -323,7 +323,7 @@ begin
           _this['radarData'] := ObjectAssign(NewObject, _this['radarData']);
         end;
       end;
-      _this['clickedPointInfo'] := 'Paleta alterada para ' + String(_this['currentPalette']) + '!';
+      _this['clickedPointInfo'] := 'Palette updated to: ' + String(_this['currentPalette']);
     end;
     
   m['onPointClick'] := procedure(_this: TJSObject; ev: JSValue)
@@ -336,7 +336,7 @@ begin
         Lbl := GetFieldStr(ev, 'label');
         Val := GetFieldStr(ev, 'value');
         DsIdx := IntToStr(GetFieldInt(ev, 'datasetIndex', 0) + 1);
-        _this['clickedPointInfo'] := 'Categoria: "' + Lbl + '", Valor: ' + Val + ' (Série #' + DsIdx + ')';
+        _this['clickedPointInfo'] := 'Category: "' + Lbl + '", Value: ' + Val + ' (Series #' + DsIdx + ')';
       end;
     end;
 

@@ -95,6 +95,7 @@
       '/login': 'login-view-page';
       '/mobile': 'mobile-view-page';
       '/form': 'formulario-page';
+      '/i18n': 'i18n-lab-view-page';
       '/user/:id': 'user-profile-page';
 </script>
 

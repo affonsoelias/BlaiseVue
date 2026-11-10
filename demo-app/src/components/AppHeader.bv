@@ -74,7 +74,9 @@
   methods:
     procedure toggleSidebar;
     begin
-      $emit('toggle-sidebar');
+      asm
+        if (typeof this.$emit === 'function') this.$emit('toggle-sidebar');
+      end;
     end;
 
     procedure onThemeSelect(e: JSValue);

@@ -12,69 +12,69 @@
 
       <bv-ion-content :padding="true">
         <!-- INTRO CARD -->
-        <bv-ion-card title="Componentes Universais (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">
+        <bv-ion-card title="Universal Components (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">
           <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">
-            Os componentes <strong>blaise-ui-mobile</strong> são 100% universais! Funcionam no <strong>Navegador Web</strong> (PWA), no <strong>Desktop nativo</strong> (via WebUI4Delphi) e no <strong>Dispositivo Móvel</strong> (via Capacitor/Android).
+            The <strong>blaise-ui-mobile</strong> components are 100% universal! Run on **Web Browser** (PWA), native **Desktop** (via WebUI4Delphi), and on **Mobile devices** (via Capacitor/Android).
           </p>
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <bv-ion-button label="🍎 Estilo iOS (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>
-            <bv-ion-button label="🤖 Estilo Android (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>
+            <bv-ion-button label="🍎 iOS Style (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>
+            <bv-ion-button label="🤖 Android Style (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>
           </div>
         </bv-ion-card>
 
         <!-- PASCAL CONTROLLERS CARD -->
-        <bv-ion-card title="Controladores Pascal Tipados (BlaiseIonic.pas)" subtitle="Feedback e Diálogos Nativos">
+        <bv-ion-card title="Typed Pascal Controllers (BlaiseIonic.pas)" subtitle="Native Feedback & Dialogs">
           <p style="margin-bottom: 12px; color: #4b5563;">
-            Dispare diálogos e notificações nativas diretamente do Object Pascal sem manipulação manual de DOM:
+            Trigger native dialogues and notifications directly from Object Pascal without manual DOM manipulation:
           </p>
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
             <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>
-            <bv-ion-button label="💬 Alerta" color="primary" @click="showAlert"></bv-ion-button>
-            <bv-ion-button label="❓ Confirmar" color="warning" @click="showConfirm"></bv-ion-button>
+            <bv-ion-button label="💬 Alert" color="primary" @click="showAlert"></bv-ion-button>
+            <bv-ion-button label="❓ Confirm" color="warning" @click="showConfirm"></bv-ion-button>
             <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>
             <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>
           </div>
 
           <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">
-            <strong>Última Ação:</strong> {{ lastAction }}
+            <strong>Last Action:</strong> {{ lastAction }}
           </div>
         </bv-ion-card>
 
         <!-- EXPANDABLE ACCORDION LIST -->
-        <bv-ion-card title="Listas com Expansão Interativa" subtitle="Clique no item ou na seta (›) para expandir detalhes">
+        <bv-ion-card title="Expandable Accordion Lists" subtitle="Click item or chevron (›) to expand details">
           <bv-ion-list :inset="true">
             <!-- ITEM 1 -->
-            <bv-ion-item title="mORMot 2 Native Server" subtitle="Conexão HTTP/WebSocket ativa na porta 8090" :expandable="true" :expanded="true">
+            <bv-ion-item title="mORMot 2 Native Server" subtitle="Active HTTP/WebSocket connection on port 8090" :expandable="true" :expanded="true">
               <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>
               <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
-                <div>⚡ <strong>Porta do Servidor:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>
-                <div>🚀 <strong>Latência Média:</strong> &lt; 2ms em processamento concorrente</div>
-                <div>💾 <strong>Consumo de Memória:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>
-                <div>🔒 <strong>Segurança:</strong> Autenticação RFC 7519 JWT com Argon2/SHA-256</div>
+                <div>⚡ <strong>Server Port:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>
+                <div>🚀 <strong>Average Latency:</strong> &lt; 2ms concurrent processing</div>
+                <div>💾 <strong>RAM Usage:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>
+                <div>🔒 <strong>Security:</strong> RFC 7519 JWT Auth with Argon2/SHA-256</div>
               </div>
             </bv-ion-item>
 
             <!-- ITEM 2 -->
-            <bv-ion-item title="Armazenamento Local & Cache" subtitle="Banco de dados SQLite / IndexedDB sincronizado" :expandable="true">
+            <bv-ion-item title="Local Storage & Cache" subtitle="Synchronized SQLite / IndexedDB database" :expandable="true">
               <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>
               <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
-                <div>📦 <strong>Motor ORM:</strong> Synopse mORMot 2 com SQLite3 embedded</div>
-                <div>🔄 <strong>Sincronização em Tempo Real:</strong> Notificações WebSocket automáticas</div>
-                <div>📱 <strong>Modo Offline:</strong> Funciona mesmo sem conexão com a internet</div>
-                <div>📊 <strong>Tabelas Mapeadas:</strong> Customers, Products, AuthUsers</div>
+                <div>📦 <strong>ORM Engine:</strong> Synopse mORMot 2 with SQLite3 embedded</div>
+                <div>🔄 <strong>Real-Time Sync:</strong> Automated WebSocket notifications</div>
+                <div>📱 <strong>Offline Mode:</strong> Full functionality without active internet</div>
+                <div>📊 <strong>Mapped Tables:</strong> Customers, Products, AuthUsers</div>
               </div>
             </bv-ion-item>
 
             <!-- ITEM 3 -->
-            <bv-ion-item title="Plataforma de Execução Universal" subtitle="Código Pascal compartilhado entre Web, Desktop e Android" :expandable="true">
+            <bv-ion-item title="Universal Execution Platform" subtitle="Pascal codebase shared across Web, Desktop and Android" :expandable="true">
               <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>
               <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">
-                <div>🌐 <strong>Web (PWA):</strong> Compatível com todos os navegadores modernos</div>
-                <div>🖥️ <strong>Desktop:</strong> Binário nativo ultraleve via WebUI4Delphi (&lt; 10 MB)</div>
-                <div>📱 <strong>Mobile:</strong> Aplicativo nativo Android APK empacotado via Capacitor</div>
-                <div>🎨 <strong>UI Adaptativa:</strong> Alterna entre temas Cupertino e Material Design</div>
+                <div>🌐 <strong>Web (PWA):</strong> Compatible with all modern browsers</div>
+                <div>🖥️ <strong>Desktop:</strong> Ultralightweight native binary via WebUI4Delphi (&lt; 10 MB)</div>
+                <div>📱 <strong>Mobile:</strong> Native Android APK packaged via Capacitor</div>
+                <div>🎨 <strong>Adaptive UI:</strong> Auto-toggles Cupertino and Material Design</div>
               </div>
             </bv-ion-item>
           </bv-ion-list>
@@ -105,61 +105,61 @@
     begin
       this.currentMode := 'ios';
       IonicSetMode('ios');
-      this.lastAction := 'Modo visual alterado para 🍎 iOS (Cupertino)';
+      this.lastAction := 'Visual mode switched to 🍎 iOS (Cupertino)';
     end;
 
     procedure setMdMode;
     begin
       this.currentMode := 'md';
       IonicSetMode('md');
-      this.lastAction := 'Modo visual alterado para 🤖 Android (Material Design)';
+      this.lastAction := 'Visual mode switched to 🤖 Android (Material Design)';
     end;
 
     procedure showToast;
     begin
-      IonicToast('Notificação rápida com estilo nativo!', 2500, 'bottom', 'success');
-      this.lastAction := '🔔 TIonicToast.Show disparado com sucesso!';
+      IonicToast('Fast notification with native look and feel!', 2500, 'bottom', 'success');
+      this.lastAction := '🔔 TIonicToast.Show triggered successfully!';
     end;
 
     procedure showAlert;
     begin
-      IonicAlert('BlaiseVue Mobile', 'Estes componentes funcionam igualmente na Web, no Desktop e no Celular!', 'Entendido');
-      this.lastAction := '💬 TIonicAlert.Alert exibido!';
+      IonicAlert('BlaiseVue Mobile', 'These components run identically on Web, Desktop, and Mobile!', 'Understood');
+      this.lastAction := '💬 TIonicAlert.Alert displayed!';
     end;
 
     procedure onConfirmOk;
     begin
-      this.lastAction := '✅ Confirmação aceita! Dados sincronizados!';
-      IonicToast('Dados sincronizados com sucesso!', 2000, 'bottom', 'primary');
+      this.lastAction := '✅ Confirmation accepted! Data synchronized!';
+      IonicToast('Data synced successfully!', 2000, 'bottom', 'primary');
     end;
 
     procedure onConfirmCancel;
     begin
-      this.lastAction := '❌ Operação cancelada pelo usuário.';
+      this.lastAction := '❌ Operation cancelled by user.';
     end;
 
     procedure showConfirm;
     begin
-      this.lastAction := '❓ TIonicAlert.Confirm aberto...';
-      IonicConfirm(this, 'Confirmar Operação', 'Deseja sincronizar os dados locais com o mORMot 2?', 'onConfirmOk', 'onConfirmCancel');
+      this.lastAction := '❓ TIonicAlert.Confirm opened...';
+      IonicConfirm(this, 'Confirm Operation', 'Do you want to sync local data with mORMot 2?', 'onConfirmOk', 'onConfirmCancel');
     end;
 
     procedure showLoading;
     begin
-      IonicLoading('Carregando registros...', 1800);
-      this.lastAction := '⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)';
+      IonicLoading('Loading records...', 1800);
+      this.lastAction := '⏳ TIonicLoading.Present displayed (auto-dismiss in 1.8s)';
     end;
 
     procedure onSheetSelect(opt, idx: JSValue);
     begin
-      this.lastAction := '👉 Opção selecionada no Action Sheet: ' + String(opt);
-      IonicToast('Selecionado: ' + String(opt), 1800, 'bottom', 'dark');
+      this.lastAction := '👉 Option selected in Action Sheet: ' + String(opt);
+      IonicToast('Selected: ' + String(opt), 1800, 'bottom', 'dark');
     end;
 
     procedure showActionSheet;
     begin
-      this.lastAction := '📑 TIonicActionSheet.Show aberto...';
-      IonicActionSheet(this, 'Ações do Registro', ['Compartilhar', 'Editar', 'Duplicar', 'Excluir'], 'onSheetSelect');
+      this.lastAction := '📑 TIonicActionSheet.Show opened...';
+      IonicActionSheet(this, 'Record Actions', ['Share', 'Edit', 'Duplicate', 'Delete'], 'onSheetSelect');
     end;
 </script>
 
