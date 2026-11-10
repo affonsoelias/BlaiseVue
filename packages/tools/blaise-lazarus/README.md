@@ -26,6 +26,13 @@ Permite executar tarefas do CLI diretamente do Lazarus, enviando os resultados p
 * **Visualizar Componente Ativo no Navegador (bv dev)**: Salva o `.bv` ativo, inicia `bv dev` na pasta do app (a que contém `src/app.bv`) em segundo plano, com a saída na aba **Messages**, e abre o navegador na rota da view (ex.: `views/Documents.bv` → `<documents-page>` → `#/documents`, conforme o `router: routes:` do `app.bv`). Views sem rota e componentes abrem a página inicial. A cada salvamento de um `.bv` o servidor recompila e o navegador recarrega.
 * **Parar Servidor de Visualização (bv dev)**: Encerra o `bv dev` e o processo `node` dele. Ao fechar o Lazarus o servidor também é encerrado.
 
+### 4. 🌐 Idiomas
+Os textos do pacote (menu, mensagens, assistente File -> New) ficam em `src/uBVStrings.pas` como `resourcestring`, em inglês. A IDE os traduz pelo idioma escolhido em **Tools -> Options -> Environment -> General -> Language** (ou o do sistema), a partir de `languages/uBVStrings.<idioma>.po`:
+* `uBVStrings.pt_BR.po` — Português (Brasil)
+* `uBVStrings.el.po` — Grego
+
+Para outro idioma, copie `languages/uBVStrings.pot` para `uBVStrings.<código>.po` (ex.: `es`, `de`), preencha os `msgstr` e reinstale o pacote. A IDE atualiza o `.pot` ao compilar o pacote.
+
 ---
 
 ## 🚀 Como Instalar no Lazarus IDE
@@ -71,10 +78,12 @@ packages/tools/blaise-lazarus/
 ├── blaisevue_ide.lpk           # Manifesto XML do pacote Lazarus
 ├── blaisevue_ide.pas           # Arquivo raiz gerado pelo Lazarus
 ├── README.md                   # Este guia de documentação
+├── languages/                  # Traduções: uBVStrings.pot e uBVStrings.<idioma>.po
 └── src/
     ├── uBVSynMultiSyn.pas      # Implementação do Multi-Highlighter (HTML + Pascal + CSS)
     ├── uBVFileDescriptor.pas   # Descritor do assistente File -> New...
     ├── uBVToolsMenu.pas        # Ações do menu Tools -> BlaiseVue
+    ├── uBVStrings.pas          # Textos do pacote (resourcestring, base em inglês)
     └── uBlaiseVueIDEReg.pas    # Procedure Register e hooks no SourceEditorManagerIntf
 ```
 

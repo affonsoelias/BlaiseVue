@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, Forms, Dialogs, Process, ExtCtrls, LCLIntf,
   MenuIntf, SrcEditorIntf, IDEMsgIntf, IDEExternToolIntf, LazIDEIntf,
-  uBVFormatter;
+  uBVFormatter, uBVStrings;
 
 type
   { TBVToolsManager }
@@ -153,14 +153,14 @@ begin
   ActiveEd := SourceEditorManagerIntf.ActiveEditor;
   if ActiveEd = nil then
   begin
-    ShowMessage('Nenhum arquivo ativo no editor do Lazarus.');
+    ShowMessage(rsBVNoActiveFile);
     Exit;
   end;
 
   FileName := ActiveEd.FileName;
   if LowerCase(ExtractFileExt(FileName)) <> '.bv' then
   begin
-    ShowMessage('O arquivo ativo (' + ExtractFileName(FileName) + ') não é um componente BlaiseVue (.bv).');
+    ShowMessage(Format(rsBVNotBVFile, [ExtractFileName(FileName)]));
     Exit;
   end;
 
@@ -168,7 +168,7 @@ begin
   BVExe := FindBVExecutable(ProjectDir);
 
   IDEMessagesWindow.Clear;
-  IDEMessagesWindow.AddCustomMessage(mluImportant, '=== [BlaiseVue AST Check] Verificando: ' + ExtractFileName(FileName) + ' ===', FileName, 0, 0);
+  IDEMessagesWindow.AddCustomMessage(mluImportant, Format(rsBVCheckHeader, [ExtractFileName(FileName)]), FileName, 0, 0);
 
   ExitCode := RunProcessCapture(BVExe, ['check', FileName], ProjectDir, OutputStr);
 
@@ -187,9 +187,9 @@ begin
   end;
 
   if ExitCode = 0 then
-    IDEMessagesWindow.AddCustomMessage(mluImportant, '✔ Sucesso: Sintaxe e AST do componente estão íntegras!', FileName, 0, 0)
+    IDEMessagesWindow.AddCustomMessage(mluImportant, '✔ ' + rsBVCheckOK, FileName, 0, 0)
   else
-    IDEMessagesWindow.AddCustomMessage(mluError, '✘ Falha: Encontrados erros de validação no componente.', FileName, 0, 0);
+    IDEMessagesWindow.AddCustomMessage(mluError, '✘ ' + rsBVCheckFailed, FileName, 0, 0);
 end;
 
 procedure TBVToolsManager.DoFormatActiveComponent({%H-}Sender: TObject);
@@ -202,14 +202,14 @@ begin
   ActiveEd := SourceEditorManagerIntf.ActiveEditor;
   if ActiveEd = nil then
   begin
-    ShowMessage('Nenhum arquivo ativo no editor do Lazarus.');
+    ShowMessage(rsBVNoActiveFile);
     Exit;
   end;
 
   FileName := ActiveEd.FileName;
   if LowerCase(ExtractFileExt(FileName)) <> '.bv' then
   begin
-    ShowMessage('O arquivo ativo (' + ExtractFileName(FileName) + ') não é um componente BlaiseVue (.bv).');
+    ShowMessage(Format(rsBVNotBVFile, [ExtractFileName(FileName)]));
     Exit;
   end;
 
@@ -223,11 +223,11 @@ begin
     finally
       ActiveEd.EndUndoBlock;
     end;
-    IDEMessagesWindow.AddCustomMessage(mluImportant, '✔ Componente formatado com sucesso: ' + ExtractFileName(FileName), FileName, 0, 0);
+    IDEMessagesWindow.AddCustomMessage(mluImportant, '✔ ' + Format(rsBVFormatDone, [ExtractFileName(FileName)]), FileName, 0, 0);
   end
   else
   begin
-    IDEMessagesWindow.AddCustomMessage(mluNone, 'Componente já está devidamente formatado: ' + ExtractFileName(FileName), FileName, 0, 0);
+    IDEMessagesWindow.AddCustomMessage(mluNone, Format(rsBVFormatUnchanged, [ExtractFileName(FileName)]), FileName, 0, 0);
   end;
 end;
 
@@ -246,7 +246,7 @@ begin
   BVExe := FindBVExecutable(ProjectDir);
 
   IDEMessagesWindow.Clear;
-  IDEMessagesWindow.AddCustomMessage(mluImportant, '=== [BlaiseVue Path] Unidades Mapeadas no Compilador ===', '', 0, 0);
+  IDEMessagesWindow.AddCustomMessage(mluImportant, rsBVPathsHeader, '', 0, 0);
 
   RunProcessCapture(BVExe, ['path'], ProjectDir, OutputStr);
 
@@ -276,7 +276,7 @@ begin
   BVExe := FindBVExecutable(ProjectDir);
 
   IDEMessagesWindow.Clear;
-  IDEMessagesWindow.AddCustomMessage(mluImportant, '=== [BlaiseVue Test] Executando Suíte de Testes ===', '', 0, 0);
+  IDEMessagesWindow.AddCustomMessage(mluImportant, rsBVTestsHeader, '', 0, 0);
 
   ExitCode := RunProcessCapture(BVExe, ['test'], ProjectDir, OutputStr);
 
@@ -310,7 +310,7 @@ begin
   BVExe := FindBVExecutable(ProjectDir);
 
   IDEMessagesWindow.Clear;
-  IDEMessagesWindow.AddCustomMessage(mluImportant, '=== [BlaiseVue Lazarus] Sincronizando Projeto (.lpi) ===', '', 0, 0);
+  IDEMessagesWindow.AddCustomMessage(mluImportant, rsBVSyncHeader, '', 0, 0);
 
   RunProcessCapture(BVExe, ['lazarus', 'init'], ProjectDir, OutputStr);
 
@@ -534,7 +534,7 @@ begin
   begin
     if FDevPartial <> '' then DevHandleLine(FDevPartial);
     IDEMessagesWindow.AddCustomMessage(mluImportant,
-      '[bv dev] O servidor de visualização terminou (código ' + IntToStr(FDevProc.ExitStatus) + ').', '', 0, 0);
+      '[bv dev] ' + Format(rsBVDevEnded, [FDevProc.ExitStatus]), '', 0, 0);
     FDevTimer.Enabled := False;
     FreeAndNil(FDevProc);
     FDevURL := '';
@@ -553,19 +553,19 @@ begin
   ActiveEd := SourceEditorManagerIntf.ActiveEditor;
   if ActiveEd = nil then
   begin
-    ShowMessage('Nenhum arquivo ativo no editor do Lazarus.');
+    ShowMessage(rsBVNoActiveFile);
     Exit;
   end;
   FileName := ActiveEd.FileName;
   if LowerCase(ExtractFileExt(FileName)) <> '.bv' then
   begin
-    ShowMessage('O arquivo ativo (' + ExtractFileName(FileName) + ') não é um componente BlaiseVue (.bv).');
+    ShowMessage(Format(rsBVNotBVFile, [ExtractFileName(FileName)]));
     Exit;
   end;
   Root := FindBVProjectRoot(FileName);
   if Root = '' then
   begin
-    ShowMessage('Não foi encontrado o projeto BlaiseVue (src/app.bv) acima de ' + ExtractFileName(FileName) + '.');
+    ShowMessage(Format(rsBVNoProjectRoot, [ExtractFileName(FileName)]));
     Exit;
   end;
 
@@ -575,8 +575,7 @@ begin
 
   Hash := FindBVRouteForFile(Root, FileName);
   if Hash = '' then
-    IDEMessagesWindow.AddCustomMessage(mluHint, '[bv dev] ' + ExtractFileName(FileName) +
-      ' não tem rota própria no router: abrindo a página inicial do app.', FileName, 0, 0);
+    IDEMessagesWindow.AddCustomMessage(mluHint, '[bv dev] ' + Format(rsBVNoRoute, [ExtractFileName(FileName)]), FileName, 0, 0);
 
   // a server of another app is replaced
   if Assigned(FDevProc) and not SameFileName(FDevRoot, Root) then
@@ -596,7 +595,7 @@ begin
 
   IDEMessagesWindow.Clear;
   IDEMessagesWindow.AddCustomMessage(mluImportant,
-    '=== [BlaiseVue Dev] Iniciando "bv dev" em ' + Root + ' (salve o .bv para atualizar o navegador) ===', '', 0, 0);
+    Format(rsBVDevStarting, [Root]), '', 0, 0);
   FDevProc := TProcess.Create(nil);
   FDevProc.Executable := FindBVExecutable(Root);
   FDevProc.Parameters.Add('dev');
@@ -630,11 +629,11 @@ procedure TBVToolsManager.DoStopPreview({%H-}Sender: TObject);
 begin
   if FDevProc = nil then
   begin
-    IDEMessagesWindow.AddCustomMessage(mluNone, '[bv dev] Nenhum servidor de visualização em execução.', '', 0, 0);
+    IDEMessagesWindow.AddCustomMessage(mluNone, '[bv dev] ' + rsBVNoDevServer, '', 0, 0);
     Exit;
   end;
   StopDevServer;
-  IDEMessagesWindow.AddCustomMessage(mluImportant, '[bv dev] Servidor de visualização parado.', '', 0, 0);
+  IDEMessagesWindow.AddCustomMessage(mluImportant, '[bv dev] ' + rsBVDevStopped, '', 0, 0);
 end;
 
 procedure RegisterToolsMenu;
@@ -647,13 +646,13 @@ begin
   // Register submenu under standard Lazarus Tools menu
   BVSubMenu := RegisterIDESubMenu(itmSecondaryTools, 'BlaiseVueSubMenu', 'BlaiseVue');
 
-  RegisterIDEMenuCommand(BVSubMenu, 'BVCheckComponent', 'Verificar Componente Ativo (.bv)', @Mgr.DoCheckActiveComponent);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVFormatComponent', 'Formatar Componente Ativo (.bv) (Ctrl+Shift+F)', @Mgr.DoFormatActiveComponent);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVLazarusSync', 'Sincronizar Projeto Lazarus (.lpi)', @Mgr.DoSyncLazarusProject);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVListPaths', 'Listar Search Paths do Compilador (bv path)', @Mgr.DoListSearchPaths);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVRunTests', 'Executar Suíte de Testes (bv test)', @Mgr.DoRunTestSuite);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVPreview', 'Visualizar Componente Ativo no Navegador (bv dev)', @Mgr.DoPreviewInBrowser);
-  RegisterIDEMenuCommand(BVSubMenu, 'BVStopPreview', 'Parar Servidor de Visualização (bv dev)', @Mgr.DoStopPreview);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVCheckComponent', rsBVCheckComponent, @Mgr.DoCheckActiveComponent);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVFormatComponent', rsBVFormatComponent, @Mgr.DoFormatActiveComponent);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVLazarusSync', rsBVSyncProject, @Mgr.DoSyncLazarusProject);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVListPaths', rsBVListPaths, @Mgr.DoListSearchPaths);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVRunTests', rsBVRunTests, @Mgr.DoRunTestSuite);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVPreview', rsBVPreview, @Mgr.DoPreviewInBrowser);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVStopPreview', rsBVStopPreview, @Mgr.DoStopPreview);
 end;
 
 initialization

@@ -9,7 +9,7 @@ interface
 
 uses
   uBVSynMultiSyn, uBVFileDescriptor, uBVFormatter, uBVAutoComplete, 
-  uBVToolsMenu, uBlaiseVueIDEReg, LazarusPackageIntf;
+  uBVToolsMenu, uBlaiseVueIDEReg, uBVStrings, LazarusPackageIntf;
 
 implementation
 

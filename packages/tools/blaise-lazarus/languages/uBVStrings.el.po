@@ -1,0 +1,127 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: BlaiseVue IDE Integration\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: el\n"
+
+#: ubvstrings.rsbvcategorydescription
+msgid "Reactive Components (.bv) and SPA Pages for BlaiseVue"
+msgstr "Αντιδραστικά συστατικά (.bv) και σελίδες SPA για το BlaiseVue"
+
+#: ubvstrings.rsbvcheckcomponent
+msgid "Check Active Component (.bv)"
+msgstr "Έλεγχος ενεργού συστατικού (.bv)"
+
+#: ubvstrings.rsbvcheckfailed
+msgid "Failure: validation errors found in the component."
+msgstr "Αποτυχία: βρέθηκαν λάθη στον έλεγχο του συστατικού."
+
+#: ubvstrings.rsbvcheckheader
+#, object-pascal-format
+msgid "=== [BlaiseVue AST Check] Checking: %s ==="
+msgstr "=== [BlaiseVue AST Check] Έλεγχος: %s ==="
+
+#: ubvstrings.rsbvcheckok
+msgid "Success: the syntax and AST of the component are sound!"
+msgstr "Επιτυχία: η σύνταξη και το AST του συστατικού είναι σωστά!"
+
+#: ubvstrings.rsbvcomponentdescription
+msgid "Create a new reactive BlaiseVue Single File Component (.bv) with template, Pascal script, and scoped CSS style."
+msgstr "Δημιουργεί νέο αντιδραστικό συστατικό BlaiseVue σε ένα αρχείο (.bv), με template, script σε Pascal και τοπικό στυλ CSS."
+
+#: ubvstrings.rsbvcomponentname
+msgid "BlaiseVue Component (.bv)"
+msgstr "Συστατικό BlaiseVue (.bv)"
+
+#: ubvstrings.rsbvdevended
+#, object-pascal-format
+msgid "The preview server has ended (code %d)."
+msgstr "Ο server προεπισκόπησης τερμάτισε (κωδικός %d)."
+
+#: ubvstrings.rsbvdevstarting
+#, object-pascal-format
+msgid "=== [BlaiseVue Dev] Starting \"bv dev\" in %s (save the .bv to refresh the browser) ==="
+msgstr "=== [BlaiseVue Dev] Εκκίνηση \"bv dev\" στο %s (σώστε το .bv για να ανανεωθεί ο browser) ==="
+
+#: ubvstrings.rsbvdevstopped
+msgid "Preview server stopped."
+msgstr "Ο server προεπισκόπησης σταμάτησε."
+
+#: ubvstrings.rsbvformatcomponent
+msgid "Format Active Component (.bv) (Ctrl+Shift+F)"
+msgstr "Μορφοποίηση ενεργού συστατικού (.bv) (Ctrl+Shift+F)"
+
+#: ubvstrings.rsbvformatdone
+#, object-pascal-format
+msgid "Component formatted: %s"
+msgstr "Το συστατικό μορφοποιήθηκε: %s"
+
+#: ubvstrings.rsbvformatunchanged
+#, object-pascal-format
+msgid "The component is already formatted: %s"
+msgstr "Το συστατικό είναι ήδη μορφοποιημένο: %s"
+
+#: ubvstrings.rsbvlistpaths
+msgid "List Compiler Search Paths (bv path)"
+msgstr "Διαδρομές αναζήτησης του μεταγλωττιστή (bv path)"
+
+#: ubvstrings.rsbvnoactivefile
+msgid "No active file in the Lazarus editor."
+msgstr "Δεν υπάρχει ενεργό αρχείο στον editor του Lazarus."
+
+#: ubvstrings.rsbvnodevserver
+msgid "No preview server is running."
+msgstr "Δεν τρέχει server προεπισκόπησης."
+
+#: ubvstrings.rsbvnoprojectroot
+#, object-pascal-format
+msgid "No BlaiseVue project (src/app.bv) was found above %s."
+msgstr "Δεν βρέθηκε έργο BlaiseVue (src/app.bv) πάνω από το %s."
+
+#: ubvstrings.rsbvnoroute
+#, object-pascal-format
+msgid "%s has no route of its own in the router: opening the home page of the app."
+msgstr "Το %s δεν έχει δική του διαδρομή στον router: ανοίγει η αρχική σελίδα της εφαρμογής."
+
+#: ubvstrings.rsbvnotbvfile
+#, object-pascal-format
+msgid "The active file (%s) is not a BlaiseVue component (.bv)."
+msgstr "Το ενεργό αρχείο (%s) δεν είναι συστατικό BlaiseVue (.bv)."
+
+#: ubvstrings.rsbvpathsheader
+msgid "=== [BlaiseVue Path] Units Mapped in the Compiler ==="
+msgstr "=== [BlaiseVue Path] Units που βλέπει ο μεταγλωττιστής ==="
+
+#: ubvstrings.rsbvpreview
+msgid "Preview Active Component in the Browser (bv dev)"
+msgstr "Προεπισκόπηση ενεργού συστατικού στον browser (bv dev)"
+
+#: ubvstrings.rsbvruntests
+msgid "Run Test Suite (bv test)"
+msgstr "Εκτέλεση των τεστ (bv test)"
+
+#: ubvstrings.rsbvstoppreview
+msgid "Stop Preview Server (bv dev)"
+msgstr "Διακοπή του server προεπισκόπησης (bv dev)"
+
+#: ubvstrings.rsbvsyncheader
+msgid "=== [BlaiseVue Lazarus] Syncing the Project (.lpi) ==="
+msgstr "=== [BlaiseVue Lazarus] Συγχρονισμός του έργου (.lpi) ==="
+
+#: ubvstrings.rsbvsyncproject
+msgid "Sync Lazarus Project (.lpi)"
+msgstr "Συγχρονισμός έργου Lazarus (.lpi)"
+
+#: ubvstrings.rsbvtestsheader
+msgid "=== [BlaiseVue Test] Running the Test Suite ==="
+msgstr "=== [BlaiseVue Test] Εκτέλεση των τεστ ==="
+
+#: ubvstrings.rsbvviewdescription
+msgid "Create a new routed Page View (.bv) with layout template, page controller, and styles for BlaiseVue SPA router."
+msgstr "Δημιουργεί νέα σελίδα (.bv) με διαδρομή, με template διάταξης, ελεγκτή σελίδας και στυλ για τον router SPA του BlaiseVue."
+
+#: ubvstrings.rsbvviewname
+msgid "BlaiseVue Page View (.bv)"
+msgstr "Σελίδα BlaiseVue (.bv)"
