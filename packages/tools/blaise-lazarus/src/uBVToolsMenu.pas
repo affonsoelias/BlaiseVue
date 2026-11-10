@@ -5,19 +5,35 @@ unit uBVToolsMenu;
 interface
 
 uses
-  Classes, SysUtils, Forms, Dialogs, Process,
+  Classes, SysUtils, Forms, Dialogs, Process, ExtCtrls, LCLIntf,
   MenuIntf, SrcEditorIntf, IDEMsgIntf, IDEExternToolIntf, LazIDEIntf,
   uBVFormatter;
 
 type
   { TBVToolsManager }
   TBVToolsManager = class(TComponent)
+  private
+    // Live preview: one "bv dev" per IDE session, its output read by a timer
+    FDevProc: TProcess;
+    FDevTimer: TTimer;
+    FDevRoot: string;
+    FDevPartial: string;
+    FDevURL: string;        // http://localhost:<port>/ once the server says so
+    FPendingHash: string;   // route to open as soon as the server is up
+    FPendingOpen: Boolean;
+    procedure DevTimerTick(Sender: TObject);
+    procedure DevHandleLine(const ALine: string);
+    procedure OpenPreview(const AHash: string);
   public
+    destructor Destroy; override;
+    procedure StopDevServer;
     procedure DoCheckActiveComponent(Sender: TObject);
     procedure DoFormatActiveComponent(Sender: TObject);
     procedure DoListSearchPaths(Sender: TObject);
     procedure DoRunTestSuite(Sender: TObject);
     procedure DoSyncLazarusProject(Sender: TObject);
+    procedure DoPreviewInBrowser(Sender: TObject);
+    procedure DoStopPreview(Sender: TObject);
   end;
 
 procedure RegisterToolsMenu;
@@ -308,6 +324,319 @@ begin
   end;
 end;
 
+{ Live preview in the browser }
+
+// The folder of the BlaiseVue app: the nearest one above the file with src/app.bv
+function FindBVProjectRoot(const AFileName: string): string;
+var
+  CurDir, ParentDir: string;
+begin
+  CurDir := ExtractFileDir(ExpandFileName(AFileName));
+  while CurDir <> '' do
+  begin
+    if FileExists(IncludeTrailingPathDelimiter(CurDir) + 'src' + DirectorySeparator + 'app.bv') then
+      Exit(CurDir);
+    ParentDir := ExtractFileDir(CurDir);
+    if ParentDir = CurDir then Break;
+    CurDir := ParentDir;
+  end;
+  Result := '';
+end;
+
+// Same rule as bv.pas PascalToKebab: ContactEdit -> contact-edit
+function BVPascalToKebab(const S: string): string;
+var
+  i: Integer;
+begin
+  if Copy(S, 1, 2) = 'BV' then
+  begin
+    Result := 'bv';
+    for i := 3 to Length(S) do
+    begin
+      if S[i] in ['A'..'Z'] then Result := Result + '-';
+      Result := Result + LowerCase(S[i]);
+    end;
+    Exit;
+  end;
+  Result := '';
+  for i := 1 to Length(S) do
+  begin
+    if (i > 1) and (S[i] in ['A'..'Z']) then Result := Result + '-';
+    Result := Result + LowerCase(S[i]);
+  end;
+end;
+
+// The hash route of a view: views/Documents.bv is <documents-page>, which the
+// router: routes: block of src/app.bv maps from '/documents'. '' when not routed.
+function FindBVRouteForFile(const ARoot, AFileName: string): string;
+var
+  AppLines: TStringList;
+  Tag, Line, Path, Target: string;
+  i, p1, p2, p3, p4: Integer;
+begin
+  Result := '';
+  if Pos(DirectorySeparator + 'src' + DirectorySeparator + 'views' + DirectorySeparator,
+         ExpandFileName(AFileName)) = 0 then
+    Exit;
+  Tag := BVPascalToKebab(ChangeFileExt(ExtractFileName(AFileName), '')) + '-page';
+  AppLines := TStringList.Create;
+  try
+    AppLines.LoadFromFile(IncludeTrailingPathDelimiter(ARoot) + 'src' + DirectorySeparator + 'app.bv');
+    for i := 0 to AppLines.Count - 1 do
+    begin
+      // '/path': 'tag-page';
+      Line := Trim(AppLines[i]);
+      if (Line = '') or (Line[1] <> '''') then Continue;
+      p1 := 1;
+      p2 := Pos('''', Copy(Line, p1 + 1, MaxInt)) + p1;
+      if p2 <= p1 then Continue;
+      Path := Copy(Line, p1 + 1, p2 - p1 - 1);
+      p3 := Pos('''', Copy(Line, p2 + 1, MaxInt)) + p2;
+      if p3 <= p2 then Continue;
+      p4 := Pos('''', Copy(Line, p3 + 1, MaxInt)) + p3;
+      if p4 <= p3 then Continue;
+      Target := Copy(Line, p3 + 1, p4 - p3 - 1);
+      if (Path <> '') and (Path[1] = '/') and SameText(Target, Tag) then
+        Exit(Path);
+    end;
+  finally
+    AppLines.Free;
+  end;
+end;
+
+function StripAnsi(const S: string): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  i := 1;
+  while i <= Length(S) do
+  begin
+    if (S[i] = #27) and (i < Length(S)) and (S[i + 1] = '[') then
+    begin
+      Inc(i, 2);
+      while (i <= Length(S)) and not (S[i] in ['A'..'Z', 'a'..'z']) do Inc(i);
+      Inc(i);
+    end
+    else
+    begin
+      if S[i] <> #13 then Result := Result + S[i];
+      Inc(i);
+    end;
+  end;
+end;
+
+destructor TBVToolsManager.Destroy;
+begin
+  StopDevServer;
+  inherited Destroy;
+end;
+
+procedure TBVToolsManager.StopDevServer;
+var
+  Killer: TProcess;
+begin
+  if Assigned(FDevTimer) then
+    FDevTimer.Enabled := False;
+  if Assigned(FDevProc) then
+  begin
+    if FDevProc.Running then
+    begin
+      {$IFDEF WINDOWS}
+      // bv dev starts node through cmd: end the whole tree, or node keeps the port
+      Killer := TProcess.Create(nil);
+      try
+        Killer.Executable := 'taskkill';
+        Killer.Parameters.Add('/T');
+        Killer.Parameters.Add('/F');
+        Killer.Parameters.Add('/PID');
+        Killer.Parameters.Add(IntToStr(FDevProc.ProcessID));
+        Killer.Options := [poNoConsole, poWaitOnExit];
+        try
+          Killer.Execute;
+        except
+        end;
+      finally
+        Killer.Free;
+      end;
+      {$ELSE}
+      Killer := nil;
+      {$ENDIF}
+      if FDevProc.Running then
+        FDevProc.Terminate(0);
+    end;
+    FreeAndNil(FDevProc);
+  end;
+  FDevURL := '';
+  FDevRoot := '';
+  FDevPartial := '';
+  FPendingOpen := False;
+end;
+
+procedure TBVToolsManager.OpenPreview(const AHash: string);
+begin
+  if AHash <> '' then
+    OpenURL(FDevURL + '#' + AHash)
+  else
+    OpenURL(FDevURL);
+end;
+
+procedure TBVToolsManager.DevHandleLine(const ALine: string);
+var
+  Line: string;
+  p, q: Integer;
+begin
+  Line := StripAnsi(ALine);
+  if Trim(Line) = '' then Exit;
+  if (Pos('rror', Line) > 0) or (Pos('[ERROR]', Line) > 0) then
+    IDEMessagesWindow.AddCustomMessage(mluError, '[bv dev] ' + Line, '', 0, 0)
+  else
+    IDEMessagesWindow.AddCustomMessage(mluNone, '[bv dev] ' + Line, '', 0, 0);
+
+  // "Dev Server running at http://localhost:8080/" (the port moves up when busy)
+  p := Pos('http://localhost:', Line);
+  if (FDevURL = '') and (Pos('running at', Line) > 0) and (p > 0) then
+  begin
+    q := p + Length('http://localhost:');
+    while (q <= Length(Line)) and (Line[q] in ['0'..'9']) do Inc(q);
+    FDevURL := Copy(Line, p, q - p) + '/';
+    if FPendingOpen then
+    begin
+      FPendingOpen := False;
+      OpenPreview(FPendingHash);
+    end;
+  end;
+end;
+
+procedure TBVToolsManager.DevTimerTick(Sender: TObject);
+var
+  Buffer: array[0..4095] of Char;
+  Chunk: string;
+  BytesRead, p: Integer;
+begin
+  if FDevProc = nil then Exit;
+  // keep the pipe drained, or node blocks on a full stdout
+  while FDevProc.Output.NumBytesAvailable > 0 do
+  begin
+    BytesRead := FDevProc.Output.Read(Buffer, SizeOf(Buffer));
+    if BytesRead <= 0 then Break;
+    SetString(Chunk, PChar(@Buffer[0]), BytesRead);
+    FDevPartial := FDevPartial + Chunk;
+  end;
+  p := Pos(#10, FDevPartial);
+  while p > 0 do
+  begin
+    DevHandleLine(Copy(FDevPartial, 1, p - 1));
+    Delete(FDevPartial, 1, p);
+    p := Pos(#10, FDevPartial);
+  end;
+  if not FDevProc.Running then
+  begin
+    if FDevPartial <> '' then DevHandleLine(FDevPartial);
+    IDEMessagesWindow.AddCustomMessage(mluImportant,
+      '[bv dev] O servidor de visualização terminou (código ' + IntToStr(FDevProc.ExitStatus) + ').', '', 0, 0);
+    FDevTimer.Enabled := False;
+    FreeAndNil(FDevProc);
+    FDevURL := '';
+    FDevRoot := '';
+    FDevPartial := '';
+    FPendingOpen := False;
+  end;
+end;
+
+procedure TBVToolsManager.DoPreviewInBrowser({%H-}Sender: TObject);
+var
+  ActiveEd: TSourceEditorInterface;
+  FileName, Root, Hash: string;
+begin
+  if SourceEditorManagerIntf = nil then Exit;
+  ActiveEd := SourceEditorManagerIntf.ActiveEditor;
+  if ActiveEd = nil then
+  begin
+    ShowMessage('Nenhum arquivo ativo no editor do Lazarus.');
+    Exit;
+  end;
+  FileName := ActiveEd.FileName;
+  if LowerCase(ExtractFileExt(FileName)) <> '.bv' then
+  begin
+    ShowMessage('O arquivo ativo (' + ExtractFileName(FileName) + ') não é um componente BlaiseVue (.bv).');
+    Exit;
+  end;
+  Root := FindBVProjectRoot(FileName);
+  if Root = '' then
+  begin
+    ShowMessage('Não foi encontrado o projeto BlaiseVue (src/app.bv) acima de ' + ExtractFileName(FileName) + '.');
+    Exit;
+  end;
+
+  // the dev server rebuilds from the files on disk
+  if ActiveEd.Modified then
+    LazarusIDE.DoSaveEditorFile(ActiveEd, []);
+
+  Hash := FindBVRouteForFile(Root, FileName);
+  if Hash = '' then
+    IDEMessagesWindow.AddCustomMessage(mluHint, '[bv dev] ' + ExtractFileName(FileName) +
+      ' não tem rota própria no router: abrindo a página inicial do app.', FileName, 0, 0);
+
+  // a server of another app is replaced
+  if Assigned(FDevProc) and not SameFileName(FDevRoot, Root) then
+    StopDevServer;
+
+  if Assigned(FDevProc) then
+  begin
+    if FDevURL <> '' then
+      OpenPreview(Hash)
+    else
+    begin
+      FPendingHash := Hash;
+      FPendingOpen := True;
+    end;
+    Exit;
+  end;
+
+  IDEMessagesWindow.Clear;
+  IDEMessagesWindow.AddCustomMessage(mluImportant,
+    '=== [BlaiseVue Dev] Iniciando "bv dev" em ' + Root + ' (salve o .bv para atualizar o navegador) ===', '', 0, 0);
+  FDevProc := TProcess.Create(nil);
+  FDevProc.Executable := FindBVExecutable(Root);
+  FDevProc.Parameters.Add('dev');
+  FDevProc.CurrentDirectory := Root;
+  FDevProc.Options := [poUsePipes, poStderrToOutPut, poNoConsole];
+  try
+    FDevProc.Execute;
+  except
+    on E: Exception do
+    begin
+      IDEMessagesWindow.AddCustomMessage(mluError, '[bv dev] ' + E.Message, '', 0, 0);
+      FreeAndNil(FDevProc);
+      Exit;
+    end;
+  end;
+  FDevRoot := Root;
+  FDevURL := '';
+  FDevPartial := '';
+  FPendingHash := Hash;
+  FPendingOpen := True;
+  if FDevTimer = nil then
+  begin
+    FDevTimer := TTimer.Create(Self);
+    FDevTimer.Interval := 200;
+    FDevTimer.OnTimer := @DevTimerTick;
+  end;
+  FDevTimer.Enabled := True;
+end;
+
+procedure TBVToolsManager.DoStopPreview({%H-}Sender: TObject);
+begin
+  if FDevProc = nil then
+  begin
+    IDEMessagesWindow.AddCustomMessage(mluNone, '[bv dev] Nenhum servidor de visualização em execução.', '', 0, 0);
+    Exit;
+  end;
+  StopDevServer;
+  IDEMessagesWindow.AddCustomMessage(mluImportant, '[bv dev] Servidor de visualização parado.', '', 0, 0);
+end;
+
 procedure RegisterToolsMenu;
 var
   BVSubMenu: TIDEMenuSection;
@@ -323,6 +652,8 @@ begin
   RegisterIDEMenuCommand(BVSubMenu, 'BVLazarusSync', 'Sincronizar Projeto Lazarus (.lpi)', @Mgr.DoSyncLazarusProject);
   RegisterIDEMenuCommand(BVSubMenu, 'BVListPaths', 'Listar Search Paths do Compilador (bv path)', @Mgr.DoListSearchPaths);
   RegisterIDEMenuCommand(BVSubMenu, 'BVRunTests', 'Executar Suíte de Testes (bv test)', @Mgr.DoRunTestSuite);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVPreview', 'Visualizar Componente Ativo no Navegador (bv dev)', @Mgr.DoPreviewInBrowser);
+  RegisterIDEMenuCommand(BVSubMenu, 'BVStopPreview', 'Parar Servidor de Visualização (bv dev)', @Mgr.DoStopPreview);
 end;
 
 initialization
