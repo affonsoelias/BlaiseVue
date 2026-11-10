@@ -23,7 +23,7 @@
   }
 </script>
 
-<style scoped>
+<style>
   .app-footer {
     padding: 16px 24px;
     background: #ffffff;

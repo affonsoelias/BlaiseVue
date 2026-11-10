@@ -1146,7 +1146,7 @@ begin
         Continue;
       end;
 
-      if Pos('<style>', LowerCase(Trimmed)) = 1 then
+      if Pos('<style', LowerCase(Trimmed)) = 1 then
       begin
         Section := 3;
         Continue;

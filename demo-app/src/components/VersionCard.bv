@@ -55,7 +55,7 @@
     author: string = APP_AUTHOR;
 </script>
 
-<style scoped>
+<style>
   .version-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: #f8fafc;

@@ -137,7 +137,7 @@
     end;
 </script>
 
-<style scoped>
+<style>
   .app-sidebar {
     position: relative;
     z-index: 1040;

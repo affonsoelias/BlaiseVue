@@ -89,7 +89,7 @@
     end;
 </script>
 
-<style scoped>
+<style>
   .app-header {
     height: 64px;
     background: #ffffff;
