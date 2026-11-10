@@ -1,5 +1,14 @@
 unit uFormatters;
 
+{
+  =============================================================================
+  🛠️ BlaiseVue Demo Application - Text & Data Formatters
+  =============================================================================
+  Common formatting helpers for currency, dates, postal codes, and identifiers
+  in 100% Object Pascal.
+  =============================================================================
+}
+
 {$mode objfpc}{$H+}
 
 interface
@@ -9,9 +18,11 @@ uses
 
 function PadLeft(const S: string; Len: Integer; C: Char = '0'): string;
 function FormatCurrency(AValue: Double): string;
+function FormatCurrencyUSD(AValue: Double): string;
 function FormatCPF(const AValue: string): string;
 function FormatPhone(const AValue: string): string;
 function FormatDateBR(AYear, AMonth, ADay: Integer): string;
+function FormatDateISO(AYear, AMonth, ADay: Integer): string;
 
 implementation
 
@@ -47,6 +58,33 @@ begin
   if Length(DecPart) > 2 then DecPart := Copy(DecPart, 1, 2);
 
   Result := 'R$ ' + IntPart + ',' + DecPart;
+end;
+
+function FormatCurrencyUSD(AValue: Double): string;
+var
+  S, IntPart, DecPart: string;
+  DotPos: Integer;
+begin
+  S := FloatToStrF(AValue, ffFixed, 15, 2);
+  DotPos := Pos('.', S);
+  if DotPos = 0 then
+    DotPos := Pos(',', S);
+
+  if DotPos > 0 then
+  begin
+    IntPart := Copy(S, 1, DotPos - 1);
+    DecPart := Copy(S, DotPos + 1, Length(S));
+  end
+  else
+  begin
+    IntPart := S;
+    DecPart := '00';
+  end;
+
+  while Length(DecPart) < 2 do DecPart := DecPart + '0';
+  if Length(DecPart) > 2 then DecPart := Copy(DecPart, 1, 2);
+
+  Result := '$' + IntPart + '.' + DecPart;
 end;
 
 function FormatCPF(const AValue: string): string;
@@ -91,6 +129,13 @@ begin
   Result := PadLeft(IntToStr(ADay), 2) + '/' +
             PadLeft(IntToStr(AMonth), 2) + '/' +
             PadLeft(IntToStr(AYear), 4);
+end;
+
+function FormatDateISO(AYear, AMonth, ADay: Integer): string;
+begin
+  Result := PadLeft(IntToStr(AYear), 4) + '-' +
+            PadLeft(IntToStr(AMonth), 2) + '-' +
+            PadLeft(IntToStr(ADay), 2);
 end;
 
 end.
