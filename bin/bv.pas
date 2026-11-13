@@ -1024,6 +1024,9 @@ procedure GetOrderedRepoNames(out RepoNames: TStringList); forward;
 function IsReservedCorePackageName(const Name: string): Boolean; forward;
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean; forward;
+function FindToolInEcosystem(const ToolName: string; const ReqVersion: string;
+  out FoundVersion, DownloadURL, Checksum, RepoName, FoundType: string; const TargetRepo: string = ''): Boolean; forward;
+procedure CmdTool(const Action: string = ''; const Target: string = ''; const ExtraArg: string = ''); forward;
 procedure CmdRepoSync; forward;
 { Lists all installed libraries and framework packages for the current project or globally (bv lib list). }
 procedure CmdLibList(IsGlobal: Boolean = False); forward;
@@ -5786,6 +5789,163 @@ begin
   finally
     if Assigned(RepoList) then RepoList.Free;
     FoundInOtherRepos.Free;
+  end;
+end;
+
+{ Searches for a developer tool / extension in registered ecosystem repositories. }
+function FindToolInEcosystem(const ToolName: string; const ReqVersion: string;
+  out FoundVersion, DownloadURL, Checksum, RepoName, FoundType: string;
+  const TargetRepo: string = ''): Boolean;
+var
+  CacheDir, CurrentRepo, CacheFile, RawJson, DesiredVer, CandidateVer, ToolKey, DeclaredType: string;
+  RepoList: TStringList;
+  rIdx, i, j: Integer;
+  Parser: TJSONParser;
+  Data: TJSONData;
+  RootObj, ToolsObj, ToolObj, VerObj: TJSONObject;
+  VersionsArr: TJSONArray;
+  CleanName: string;
+begin
+  Result := False;
+  FoundVersion := '';
+  DownloadURL := '';
+  Checksum := '';
+  RepoName := '';
+  FoundType := 'third-party';
+
+  CleanName := LowerCase(Trim(ToolName));
+  if StartsText('@blaise/', CleanName) then
+    CleanName := Copy(CleanName, 9, Length(CleanName) - 8);
+
+  CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
+  if not DirectoryExists(CacheDir) then
+    CmdRepoSync;
+
+  RepoList := TStringList.Create;
+  try
+    if TargetRepo <> '' then
+    begin
+      if FileExists(CacheDir + DirectorySeparator + TargetRepo + '-ecosystem.json') then
+        RepoList.Add(TargetRepo)
+      else if SameText(TargetRepo, 'official') or SameText(TargetRepo, 'blaisevue-ecosystem') then
+        RepoList.Add('official')
+      else
+        RepoList.Add(TargetRepo);
+    end
+    else
+      GetOrderedRepoNames(RepoList);
+
+    for rIdx := 0 to RepoList.Count - 1 do
+    begin
+      CurrentRepo := RepoList[rIdx];
+      CacheFile := CacheDir + DirectorySeparator + CurrentRepo + '-ecosystem.json';
+      if not FileExists(CacheFile) then
+        Continue;
+
+      RawJson := ReadFileToString(CacheFile);
+      if Trim(RawJson) = '' then
+        Continue;
+
+      Parser := TJSONParser.Create(RawJson, True);
+      try
+        try
+          Data := Parser.Parse;
+          if Assigned(Data) and (Data.JSONType = jtObject) then
+          begin
+            RootObj := TJSONObject(Data);
+
+            // 1. Check "tools" section
+            ToolsObj := RootObj.Get('tools', TJSONObject(nil));
+            // 2. If not found in "tools", check "packages" section
+            if not Assigned(ToolsObj) then
+              ToolsObj := RootObj.Get('packages', TJSONObject(nil));
+
+            if Assigned(ToolsObj) then
+            begin
+              for i := 0 to ToolsObj.Count - 1 do
+              begin
+                ToolKey := ToolsObj.Names[i];
+                if SameText(ToolKey, ToolName) or
+                   SameText(ToolKey, CleanName) or
+                   SameText('blaise-' + ToolKey, ToolName) or
+                   SameText(ToolKey, 'blaise-' + CleanName) or
+                   SameText(ToolKey, 'blaise-' + ToolName) then
+                begin
+                  ToolObj := TJSONObject(ToolsObj.Items[i]);
+
+                  DeclaredType := LowerCase(ToolObj.Get('type', ''));
+                  if DeclaredType <> '' then
+                    FoundType := DeclaredType
+                  else if SameText(CurrentRepo, 'official') or StartsText('blaise-', LowerCase(ToolKey)) then
+                    FoundType := 'co-official'
+                  else
+                    FoundType := 'third-party';
+
+                  DesiredVer := ReqVersion;
+                  if (DesiredVer = '') or SameText(DesiredVer, 'latest') then
+                    DesiredVer := ToolObj.Get('latest', '');
+
+                  VersionsArr := ToolObj.Get('versions', TJSONArray(nil));
+                  if Assigned(VersionsArr) then
+                  begin
+                    for j := 0 to VersionsArr.Count - 1 do
+                    begin
+                      if VersionsArr.Types[j] = jtObject then
+                      begin
+                        VerObj := TJSONObject(VersionsArr.Objects[j]);
+                        CandidateVer := VerObj.Get('version', '');
+                        if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                        begin
+                          FoundVersion := CandidateVer;
+                          DownloadURL := VerObj.Get('download_url', '');
+                          if DownloadURL = '' then DownloadURL := VerObj.Get('url', '');
+                          Checksum := VerObj.Get('checksum', '');
+                          RepoName := RootObj.Get('name', CurrentRepo);
+                          Result := True;
+                          Break;
+                        end;
+                      end
+                      else if VersionsArr.Types[j] = jtString then
+                      begin
+                        CandidateVer := VersionsArr.Strings[j];
+                        if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                        begin
+                          FoundVersion := CandidateVer;
+                          DownloadURL := ToolObj.Get('download', '');
+                          Checksum := ToolObj.Get('checksum', '');
+                          RepoName := RootObj.Get('name', CurrentRepo);
+                          Result := True;
+                          Break;
+                        end;
+                      end;
+                    end;
+                  end
+                  else
+                  begin
+                    FoundVersion := ToolObj.Get('version', ToolObj.Get('latest', '1.0.0'));
+                    DownloadURL := ToolObj.Get('download_url', ToolObj.Get('download', ''));
+                    Checksum := ToolObj.Get('checksum', '');
+                    RepoName := RootObj.Get('name', CurrentRepo);
+                    Result := (DownloadURL <> '');
+                  end;
+
+                  if Result then
+                    Break;
+                end;
+              end;
+            end;
+          end;
+        except
+        end;
+      finally
+        Parser.Free;
+      end;
+
+      if Result then
+        Break;
+    end;
+  finally
+    if Assigned(RepoList) then RepoList.Free;
   end;
 end;
 
@@ -11734,19 +11894,36 @@ begin
 end;
 
 type
+  TBVToolOrigin = (toBuiltIn, toCoOfficial, toThirdParty);
+
   TBVTool = record
     Name: string;
     Category: string;
     Description: string;
     Version: string;
+    Author: string;
+    Homepage: string;
+    ToolType: string;
     DirPath: string;
     StatusScript: string;
     InstallScript: string;
     RemoveScript: string;
+    UpdateScript: string;
     PackScript: string;
+    Origin: TBVToolOrigin;
     IsCustom: Boolean;
   end;
   TBVToolArray = array of TBVTool;
+
+function ToolOriginLabel(Origin: TBVToolOrigin): string;
+begin
+  case Origin of
+    toBuiltIn:    Result := '[Built-in]';
+    toCoOfficial: Result := '[Co-Official]';
+    toThirdParty: Result := '[Third-Party]';
+  end;
+end;
+
 { Dispatches execution to a developer extension lifecycle script (status.py, install.py). }
 function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
@@ -11851,7 +12028,7 @@ end;
 
 function LoadToolFromDir(const DirPath: string; IsCustom: Boolean; out Tool: TBVTool): Boolean;
 var
-  ManifestFile, Content: string;
+  ManifestFile, Content, TypeStr: string;
   Parser: TJSONParser;
   JsonData: TJSONData;
   Obj, ScriptsObj: TJSONObject;
@@ -11861,12 +12038,21 @@ begin
   Tool.Category := '';
   Tool.Description := '';
   Tool.Version := '';
+  Tool.Author := '';
+  Tool.Homepage := '';
+  Tool.ToolType := '';
   Tool.DirPath := DirPath;
   Tool.StatusScript := '';
   Tool.InstallScript := '';
   Tool.RemoveScript := '';
+  Tool.UpdateScript := '';
   Tool.PackScript := '';
   Tool.IsCustom := IsCustom;
+  if not IsCustom then
+    Tool.Origin := toBuiltIn
+  else
+    Tool.Origin := toThirdParty;
+
   ManifestFile := IncludeTrailingPathDelimiter(DirPath) + 'tool.json';
   if not FileExists(ManifestFile) then Exit;
   Content := ReadFileToString(ManifestFile);
@@ -11882,12 +12068,36 @@ begin
         Tool.Category := Obj.Get('category', 'Tool');
         Tool.Description := Obj.Get('description', '');
         Tool.Version := Obj.Get('version', '');
+        Tool.Author := Obj.Get('author', '');
+        Tool.Homepage := Obj.Get('homepage', '');
+        TypeStr := LowerCase(Obj.Get('type', ''));
+
+        if not IsCustom then
+        begin
+          Tool.Origin := toBuiltIn;
+          Tool.ToolType := 'builtin';
+        end
+        else
+        begin
+          if (TypeStr = 'co-official') or (TypeStr = 'official') or StartsText('blaise-', LowerCase(Tool.Name)) then
+          begin
+            Tool.Origin := toCoOfficial;
+            Tool.ToolType := 'co-official';
+          end
+          else
+          begin
+            Tool.Origin := toThirdParty;
+            Tool.ToolType := 'third-party';
+          end;
+        end;
+
         if Obj.Find('scripts') is TJSONObject then
         begin
           ScriptsObj := TJSONObject(Obj.Find('scripts'));
           Tool.StatusScript := ScriptsObj.Get('status', '');
           Tool.InstallScript := ScriptsObj.Get('install', '');
           Tool.RemoveScript := ScriptsObj.Get('remove', '');
+          Tool.UpdateScript := ScriptsObj.Get('update', '');
           Tool.PackScript := ScriptsObj.Get('pack', '');
         end;
         Result := True;
@@ -11908,7 +12118,7 @@ var
   BuiltinPath, UserPath, SubDir: string;
   SR: TSearchRec;
   Tool: TBVTool;
-  { Helper that scans a directory for extension manifests (tool.json). }
+
   procedure ScanDir(const BasePath: string; IsCustom: Boolean);
   begin
     if (BasePath <> '') and DirectoryExists(BasePath) then
@@ -11927,21 +12137,38 @@ var
             else if IsCustom then
             begin
               Tool.Name := SR.Name;
-              Tool.Category := 'User Custom Tool';
+              Tool.Category := 'User Tool';
               Tool.Description := 'Custom tool in ~/.blaisevue/tools';
-              Tool.Version := '';
+              Tool.Version := '1.0.0';
+              Tool.Author := '';
+              Tool.Homepage := '';
               Tool.DirPath := SubDir;
               Tool.IsCustom := True;
+              if StartsText('blaise-', LowerCase(SR.Name)) then
+              begin
+                Tool.Origin := toCoOfficial;
+                Tool.ToolType := 'co-official';
+              end
+              else
+              begin
+                Tool.Origin := toThirdParty;
+                Tool.ToolType := 'third-party';
+              end;
               Tool.StatusScript := '';
               Tool.InstallScript := '';
               Tool.RemoveScript := '';
+              Tool.UpdateScript := '';
               Tool.PackScript := '';
               if FileExists(SubDir + DirectorySeparator + 'status.py') then Tool.StatusScript := 'status.py'
               else if FileExists(SubDir + DirectorySeparator + 'status.pas') then Tool.StatusScript := 'status.pas';
               if FileExists(SubDir + DirectorySeparator + 'install.py') then Tool.InstallScript := 'install.py'
               else if FileExists(SubDir + DirectorySeparator + 'install.pas') then Tool.InstallScript := 'install.pas';
+              if FileExists(SubDir + DirectorySeparator + 'update.py') then Tool.UpdateScript := 'update.py'
+              else if FileExists(SubDir + DirectorySeparator + 'update.pas') then Tool.UpdateScript := 'update.pas';
               if FileExists(SubDir + DirectorySeparator + 'remove.py') then Tool.RemoveScript := 'remove.py'
               else if FileExists(SubDir + DirectorySeparator + 'remove.pas') then Tool.RemoveScript := 'remove.pas';
+              if FileExists(SubDir + DirectorySeparator + 'pack.py') then Tool.PackScript := 'pack.py'
+              else if FileExists(SubDir + DirectorySeparator + 'pack.pas') then Tool.PackScript := 'pack.pas';
               SetLength(ToolsList, Length(ToolsList) + 1);
               ToolsList[High(ToolsList)] := Tool;
             end;
@@ -11960,157 +12187,980 @@ begin
   Result := ToolsList;
 end;
 
-{ Manages developer ecosystem extensions (VS Code, Lazarus IDE, Chrome DevTools) (bv extension). }
-procedure CmdExtension(const Action: string = ''; const Target: string = '');
+{ Lists all installed tools (built-in and user tools) (bv tool list). }
+procedure CmdToolList;
 var
-  SubCmd, TargetLower, StatusText, Dummy: string;
+  AllTools: TBVToolArray;
+  I, BuiltInCount, CoOfficialCount, ThirdPartyCount: Integer;
+  StatusText, LocText, VerStr: string;
+begin
+  AllTools := DiscoverAllTools;
+  BuiltInCount := 0;
+  CoOfficialCount := 0;
+  ThirdPartyCount := 0;
+
+  WriteLn('');
+  WriteLn('=== BlaiseVue Development Tools & Extensions (bv tool) ===');
+  WriteLn(StringOfChar('-', 86));
+  WriteLn(PadRight('Tool Name', 20), PadRight('Category', 22), PadRight('Version', 12), PadRight('Type', 15), PadRight('Status / Location', 17));
+  WriteLn(StringOfChar('-', 86));
+
+  if Length(AllTools) = 0 then
+    WriteLn('No tools or extensions found.')
+  else
+  begin
+    for I := 0 to High(AllTools) do
+    begin
+      case AllTools[I].Origin of
+        toBuiltIn:    Inc(BuiltInCount);
+        toCoOfficial: Inc(CoOfficialCount);
+        toThirdParty: Inc(ThirdPartyCount);
+      end;
+
+      StatusText := '';
+      if AllTools[I].StatusScript <> '' then
+        RunToolScript(AllTools[I].DirPath, AllTools[I].StatusScript, StatusText, True);
+
+      if StatusText = '' then
+      begin
+        if AllTools[I].Origin = toBuiltIn then
+          LocText := 'Available (packages/tools)'
+        else
+          LocText := 'Installed (~/.blaisevue/tools)';
+      end
+      else
+        LocText := StatusText;
+
+      VerStr := AllTools[I].Version;
+      if (VerStr <> '') and (VerStr[1] <> 'v') then VerStr := 'v' + VerStr;
+      if VerStr = '' then VerStr := '-';
+
+      WriteLn(PadRight(AllTools[I].Name, 20),
+              PadRight(AllTools[I].Category, 22),
+              PadRight(VerStr, 12),
+              PadRight(ToolOriginLabel(AllTools[I].Origin), 15),
+              LocText);
+    end;
+  end;
+
+  WriteLn(StringOfChar('-', 86));
+  WriteLn('Total: ' + IntToStr(Length(AllTools)) + ' tool(s) found (Built-in: ' +
+          IntToStr(BuiltInCount) + ', Co-Official: ' + IntToStr(CoOfficialCount) +
+          ', Third-Party: ' + IntToStr(ThirdPartyCount) + ')');
+  WriteLn('User Tools Directory: ' + GetGlobalToolsPath);
+  WriteLn('Commands: bv tool <list|search|info|install|update|outdated|remove|pack|init>');
+  WriteLn('');
+end;
+
+{ Searches registered package repositories for tools matching a query (bv tool search). }
+procedure CmdToolSearch(const SearchTermArg: string);
+var
+  CacheDir, CacheFile, RawJson, SearchTerm, RepoName, ToolKey, ToolDesc, ToolLatest, ToolType: string;
+  SR: TSearchRec;
+  Parser: TJSONParser;
+  Data: TJSONData;
+  RootObj, ToolsObj, ToolObj: TJSONObject;
+  i, MatchCount: Integer;
+begin
+  SearchTerm := LowerCase(Trim(SearchTermArg));
+  WriteLn('');
+  WriteLn('=== Tool Search in BlaiseVue Ecosystem ===');
+  if SearchTerm <> '' then
+    WriteLn('Searching for "' + SearchTerm + '" in registered repositories:')
+  else
+    WriteLn('Listing all available ecosystem tools:');
+  WriteLn(StringOfChar('-', 86));
+  WriteLn(PadRight('Tool Name', 22), PadRight('Latest', 12), PadRight('Type', 15), PadRight('Repository', 15), 'Description');
+  WriteLn(StringOfChar('-', 86));
+
+  CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
+  if not DirectoryExists(CacheDir) then
+    CmdRepoSync;
+
+  MatchCount := 0;
+  if FindFirst(CacheDir + DirectorySeparator + '*-ecosystem.json', faAnyFile, SR) = 0 then
+  begin
+    repeat
+      if (SR.Name <> '.') and (SR.Name <> '..') then
+      begin
+        CacheFile := CacheDir + DirectorySeparator + SR.Name;
+        RawJson := ReadFileToString(CacheFile);
+        if Trim(RawJson) <> '' then
+        begin
+          Parser := TJSONParser.Create(RawJson, True);
+          try
+            try
+              Data := Parser.Parse;
+              if Assigned(Data) and (Data.JSONType = jtObject) then
+              begin
+                RootObj := TJSONObject(Data);
+                RepoName := RootObj.Get('name', StringReplace(SR.Name, '-ecosystem.json', '', [rfReplaceAll]));
+
+                ToolsObj := RootObj.Get('tools', TJSONObject(nil));
+                if not Assigned(ToolsObj) then
+                  ToolsObj := RootObj.Get('packages', TJSONObject(nil));
+
+                if Assigned(ToolsObj) then
+                begin
+                  for i := 0 to ToolsObj.Count - 1 do
+                  begin
+                    ToolKey := ToolsObj.Names[i];
+                    ToolObj := TJSONObject(ToolsObj.Items[i]);
+
+                    ToolType := LowerCase(ToolObj.Get('type', ''));
+                    if ToolType = '' then
+                    begin
+                      if SameText(RepoName, 'official') or StartsText('blaise-', LowerCase(ToolKey)) then
+                        ToolType := 'co-official'
+                      else
+                        ToolType := 'third-party';
+                    end;
+
+                    ToolDesc := ToolObj.Get('description', '');
+                    ToolLatest := ToolObj.Get('latest', ToolObj.Get('version', '1.0.0'));
+
+                    if (SearchTerm = '') or (Pos(SearchTerm, LowerCase(ToolKey)) > 0) or
+                       (Pos(SearchTerm, LowerCase(ToolDesc)) > 0) or
+                       (Pos(SearchTerm, LowerCase(ToolType)) > 0) then
+                    begin
+                      Inc(MatchCount);
+                      if (ToolLatest <> '') and (ToolLatest[1] <> 'v') then ToolLatest := 'v' + ToolLatest;
+                      WriteLn(PadRight(ToolKey, 22),
+                              PadRight(ToolLatest, 12),
+                              PadRight('[' + ToolType + ']', 15),
+                              PadRight(RepoName, 15),
+                              ToolDesc);
+                    end;
+                  end;
+                end;
+              end;
+              if Assigned(Data) then Data.Free;
+            except
+            end;
+          finally
+            Parser.Free;
+          end;
+        end;
+      end;
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end;
+
+  WriteLn(StringOfChar('-', 86));
+  if MatchCount = 0 then
+    WriteLn('No tools matching "' + SearchTerm + '" found in ecosystem repositories.')
+  else
+    WriteLn(IntToStr(MatchCount) + ' tool(s) found. To install, run: bv tool install [<repo>:]<name>');
+  WriteLn('');
+end;
+
+{ Displays detailed information about a tool (bv tool info). }
+procedure CmdToolInfo(const ToolNameArg: string);
+var
+  TargetLower, FoundVer, DownloadURL, Checksum, RepoName, FoundType, InstalledVer, TypeStr: string;
   AllTools: TBVToolArray;
   I, FoundIndex: Integer;
+  ScriptsList: string;
 begin
-  SubCmd := LowerCase(Trim(Action));
-  TargetLower := LowerCase(Trim(Target));
-  if SubCmd = '' then SubCmd := 'list';
+  TargetLower := LowerCase(Trim(ToolNameArg));
+  if TargetLower = '' then
+  begin
+    WriteLn('Error: Tool name required.');
+    WriteLn('Usage: bv tool info <tool-name>');
+    Exit;
+  end;
+
   AllTools := DiscoverAllTools;
-  if (SubCmd = 'list') or (SubCmd = 'ls') then
+  FoundIndex := -1;
+  for I := 0 to High(AllTools) do
   begin
-    WriteLn('');
-    WriteLn('=== BlaiseVue Development Extensions & Tools ===');
-    WriteLn(StringOfChar('-', 74));
-    WriteLn(PadRight('Extension', 22), PadRight('Category / Target', 26), PadRight('Status', 26));
-    WriteLn(StringOfChar('-', 74));
-    if Length(AllTools) = 0 then
-      WriteLn('No tools or extensions found.')
-    else
+    if (LowerCase(AllTools[I].Name) = TargetLower) or
+       (AllTools[I].Name = 'blaise-' + TargetLower) or
+       ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
+       ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
+       ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
     begin
-      for I := 0 to High(AllTools) do
-      begin
-        StatusText := '';
-        if AllTools[I].StatusScript <> '' then
-          RunToolScript(AllTools[I].DirPath, AllTools[I].StatusScript, StatusText, True);
-        if StatusText = '' then
-          StatusText := 'Available (Run: bv extension install ' + AllTools[I].Name + ')';
-        WriteLn(PadRight(AllTools[I].Name, 22), PadRight(AllTools[I].Category, 26), StatusText);
-      end;
+      FoundIndex := I;
+      Break;
     end;
+  end;
 
-    WriteLn(StringOfChar('-', 74));
-    WriteLn('Commands:');
-    WriteLn('  bv extension install <target>   Installs a tool package');
-    WriteLn('  bv extension remove <target>    Uninstalls a tool package');
-    WriteLn('  bv extension pack [target]      Packages extension into a standalone bundle');
-    WriteLn('');
+  InstalledVer := 'Not installed';
+  TypeStr := '';
+  if FoundIndex >= 0 then
+  begin
+    InstalledVer := AllTools[FoundIndex].Version;
+    if (InstalledVer <> '') and (InstalledVer[1] <> 'v') then InstalledVer := 'v' + InstalledVer;
+    TypeStr := ToolOriginLabel(AllTools[FoundIndex].Origin);
+  end;
+
+  if FindToolInEcosystem(TargetLower, 'latest', FoundVer, DownloadURL, Checksum, RepoName, FoundType) then
+  begin
+    if (FoundVer <> '') and (FoundVer[1] <> 'v') then FoundVer := 'v' + FoundVer;
+    if TypeStr = '' then TypeStr := '[' + FoundType + ']';
   end
-  else if (SubCmd = 'install') or (SubCmd = 'i') or (SubCmd = 'add') then
+  else
+    FoundVer := 'Not registered in catalog';
+
+  WriteLn('');
+  WriteLn('============================================================');
+  if FoundIndex >= 0 then
+    WriteLn('  [Tool Details] ' + AllTools[FoundIndex].Name)
+  else
+    WriteLn('  [Tool Details] ' + TargetLower);
+  WriteLn('============================================================');
+  if FoundIndex >= 0 then
   begin
-    if TargetLower = '' then
-    begin
-      WriteLn('Error: Target extension or tool name required.');
-      WriteLn('Usage: bv extension install <target>');
-      WriteLn('');
-      WriteLn('Available targets:');
-      for I := 0 to High(AllTools) do
-        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
-      Exit;
-    end;
+    WriteLn('  Category:        ' + AllTools[FoundIndex].Category);
+    WriteLn('  Type:            ' + TypeStr);
+    WriteLn('  Installed Ver:   ' + InstalledVer);
+    WriteLn('  Latest Ver:      ' + FoundVer);
+    if RepoName <> '' then
+      WriteLn('  Repository:      ' + RepoName);
+    WriteLn('  Directory:       ' + AllTools[FoundIndex].DirPath);
+    if AllTools[FoundIndex].Description <> '' then
+      WriteLn('  Description:     ' + AllTools[FoundIndex].Description);
+    if AllTools[FoundIndex].Author <> '' then
+      WriteLn('  Author:          ' + AllTools[FoundIndex].Author);
+    if AllTools[FoundIndex].Homepage <> '' then
+      WriteLn('  Homepage:        ' + AllTools[FoundIndex].Homepage);
 
-    FoundIndex := -1;
-    for I := 0 to High(AllTools) do
-    begin
-      if (LowerCase(AllTools[I].Name) = TargetLower) or
-         (AllTools[I].Name = 'blaise-' + TargetLower) or
-         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
-         ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
-         ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
-      begin
-        FoundIndex := I;
-        Break;
-      end;
-    end;
-
-    if FoundIndex = -1 then
-    begin
-      WriteLn('Error: Extension or tool "' + TargetLower + '" not found.');
-      WriteLn('');
-      WriteLn('Available targets:');
-      for I := 0 to High(AllTools) do
-        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
-      Exit;
-    end;
-
-    if AllTools[FoundIndex].InstallScript <> '' then
-      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].InstallScript, Dummy, False)
-    else
-      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define an install script.');
-  end
-  else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
-  begin
-    if TargetLower = '' then
-    begin
-      WriteLn('Error: Target extension or tool name required to remove.');
-      WriteLn('Usage: bv extension remove <target>');
-      WriteLn('');
-      WriteLn('Available targets:');
-      for I := 0 to High(AllTools) do
-        WriteLn('  ' + PadRight(AllTools[I].Name, 18) + ' - ' + AllTools[I].Description);
-      Exit;
-    end;
-
-    FoundIndex := -1;
-    for I := 0 to High(AllTools) do
-    begin
-      if (LowerCase(AllTools[I].Name) = TargetLower) or
-         (AllTools[I].Name = 'blaise-' + TargetLower) or
-         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
-         ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
-         ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
-      begin
-        FoundIndex := I;
-        Break;
-      end;
-    end;
-
-    if FoundIndex = -1 then
-    begin
-      WriteLn('Error: Extension or tool "' + TargetLower + '" not found to remove.');
-      Exit;
-    end;
-
-    if AllTools[FoundIndex].RemoveScript <> '' then
-      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].RemoveScript, Dummy, False)
-    else
-      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define a remove script.');
-  end
-  else if (SubCmd = 'pack') or (SubCmd = 'package') or (SubCmd = 'pkg') or (SubCmd = 'vsix') then
-  begin
-    if TargetLower = '' then TargetLower := 'blaise-vscode';
-    FoundIndex := -1;
-    for I := 0 to High(AllTools) do
-    begin
-      if (LowerCase(AllTools[I].Name) = TargetLower) or
-         (AllTools[I].Name = 'blaise-' + TargetLower) or
-         ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) then
-      begin
-        FoundIndex := I;
-        Break;
-      end;
-    end;
-
-    if FoundIndex = -1 then
-    begin
-      WriteLn('Error: Extension or tool "' + TargetLower + '" not found to pack.');
-      Exit;
-    end;
-
-    if AllTools[FoundIndex].PackScript <> '' then
-      RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].PackScript, Dummy, False)
-    else
-      WriteLn('Error: Tool "' + AllTools[FoundIndex].Name + '" does not define a pack script.');
+    ScriptsList := '';
+    if AllTools[FoundIndex].StatusScript <> '' then ScriptsList := ScriptsList + 'status ';
+    if AllTools[FoundIndex].InstallScript <> '' then ScriptsList := ScriptsList + 'install ';
+    if AllTools[FoundIndex].UpdateScript <> '' then ScriptsList := ScriptsList + 'update ';
+    if AllTools[FoundIndex].RemoveScript <> '' then ScriptsList := ScriptsList + 'remove ';
+    if AllTools[FoundIndex].PackScript <> '' then ScriptsList := ScriptsList + 'pack ';
+    if ScriptsList <> '' then
+      WriteLn('  Scripts:         ' + Trim(ScriptsList));
   end
   else
   begin
-    WriteLn('Unknown subcommand: bv extension ' + SubCmd);
-    WriteLn('Available subcommands: list, install, remove, pack');
+    WriteLn('  Type:            ' + TypeStr);
+    WriteLn('  Installed Ver:   ' + InstalledVer);
+    WriteLn('  Latest Ver:      ' + FoundVer);
+    if RepoName <> '' then
+      WriteLn('  Repository:      ' + RepoName);
+    if DownloadURL <> '' then
+      WriteLn('  Download URL:    ' + DownloadURL);
   end;
+  WriteLn('============================================================');
+  WriteLn('');
+end;
+
+{ Installs a tool from ecosystem, local zip, or URL into ~/.blaisevue/tools (bv tool install). }
+procedure CmdToolInstall(const TargetArg: string);
+var
+  RawArg, TargetRepo, ToolName, ReqVersion, RemainingArg: string;
+  FoundVer, DownloadURL, Checksum, RepoName, FoundType, TempZip, DestDir, Dummy: string;
+  AllTools: TBVToolArray;
+  ColonPos, AtPos, I, BuiltinIdx: Integer;
+  Client: TFPHTTPClient;
+  ToolRecord: TBVTool;
+begin
+  RawArg := Trim(TargetArg);
+  if RawArg = '' then
+  begin
+    WriteLn('Error: Target tool name, zip file, or URL required.');
+    WriteLn('Usage: bv tool install [<repo>:]<name[@version]>');
+    WriteLn('       bv tool install <url|archive.zip>');
+    Exit;
+  end;
+
+  // Case 1: Local ZIP Archive
+  if FileExists(RawArg) and (LowerCase(ExtractFileExt(RawArg)) = '.zip') then
+  begin
+    ToolName := ChangeFileExt(ExtractFileName(RawArg), '');
+    DestDir := GetGlobalToolsPath + ToolName;
+    WriteLn('Installing tool from local archive: ' + RawArg + ' ...');
+    if DirectoryExists(DestDir) then DeleteDir(DestDir);
+    ForceDir(DestDir);
+    ExtractZipSmart(RawArg, GetGlobalToolsPath, ToolName);
+    if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.InstallScript <> '') then
+    begin
+      WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
+      RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+    end;
+    WriteLn('Tool "' + ToolName + '" installed successfully in ~/.blaisevue/tools/' + ToolName + '/.');
+    Exit;
+  end;
+
+  // Case 2: URL download
+  if StartsText('http://', RawArg) or StartsText('https://', RawArg) then
+  begin
+    ToolName := ChangeFileExt(ExtractFileName(RawArg), '');
+    if ToolName = '' then ToolName := 'custom-tool';
+    TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + ToolName + '.zip';
+    ForceDir(ExtractFileDir(TempZip));
+    WriteLn('Downloading tool from URL: ' + RawArg + ' ...');
+    Client := TFPHTTPClient.Create(nil);
+    try
+      try
+        Client.AllowRedirect := True;
+        Client.Get(RawArg, TempZip);
+      except
+        on E: Exception do
+        begin
+          WriteLn('Error downloading tool: ' + E.Message);
+          Exit;
+        end;
+      end;
+    finally
+      Client.Free;
+    end;
+
+    DestDir := GetGlobalToolsPath + ToolName;
+    if DirectoryExists(DestDir) then DeleteDir(DestDir);
+    ForceDir(DestDir);
+    ExtractZipSmart(TempZip, GetGlobalToolsPath, ToolName);
+    if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.InstallScript <> '') then
+    begin
+      WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
+      RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+    end;
+    WriteLn('Tool "' + ToolName + '" installed successfully in ~/.blaisevue/tools/' + ToolName + '/.');
+    Exit;
+  end;
+
+  // Case 3: Package name with optional repo and version
+  TargetRepo := '';
+  ToolName := '';
+  ReqVersion := '';
+  ColonPos := Pos(':', RawArg);
+  if ColonPos > 0 then
+  begin
+    TargetRepo := Trim(Copy(RawArg, 1, ColonPos - 1));
+    RemainingArg := Trim(Copy(RawArg, ColonPos + 1, Length(RawArg) - ColonPos));
+  end
+  else
+    RemainingArg := RawArg;
+
+  AtPos := Pos('@', RemainingArg);
+  if AtPos > 0 then
+  begin
+    ToolName := Trim(Copy(RemainingArg, 1, AtPos - 1));
+    ReqVersion := Trim(Copy(RemainingArg, AtPos + 1, Length(RemainingArg) - AtPos));
+  end
+  else
+  begin
+    ToolName := Trim(RemainingArg);
+    ReqVersion := '';
+  end;
+
+  // Check if it's already a built-in framework tool in packages/tools/
+  AllTools := DiscoverAllTools;
+  BuiltinIdx := -1;
+  for I := 0 to High(AllTools) do
+  begin
+    if (AllTools[I].Origin = toBuiltIn) and
+       ((LowerCase(AllTools[I].Name) = LowerCase(ToolName)) or
+        (AllTools[I].Name = 'blaise-' + LowerCase(ToolName)) or
+        ((LowerCase(ToolName) = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
+        ((LowerCase(ToolName) = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
+        ((LowerCase(ToolName) = 'devtools') and (AllTools[I].Name = 'blaise-devtools'))) then
+    begin
+      BuiltinIdx := I;
+      Break;
+    end;
+  end;
+
+  if (BuiltinIdx >= 0) and (ReqVersion = '') and (TargetRepo = '') then
+  begin
+    WriteLn('Notice: Tool "' + AllTools[BuiltinIdx].Name + '" is a built-in framework tool in packages/tools/.');
+    if AllTools[BuiltinIdx].InstallScript <> '' then
+    begin
+      WriteLn('Executing built-in setup script (' + AllTools[BuiltinIdx].InstallScript + ')...');
+      RunToolScript(AllTools[BuiltinIdx].DirPath, AllTools[BuiltinIdx].InstallScript, Dummy, False);
+    end;
+    WriteLn('Built-in tool "' + AllTools[BuiltinIdx].Name + '" is ready.');
+    Exit;
+  end;
+
+  // Search in ecosystem
+  if TargetRepo <> '' then
+    WriteLn('Searching for tool "' + ToolName + '" in repository [' + TargetRepo + ']...')
+  else
+    WriteLn('Searching for tool "' + ToolName + '" in ecosystem repositories...');
+
+  if not FindToolInEcosystem(ToolName, ReqVersion, FoundVer, DownloadURL, Checksum, RepoName, FoundType, TargetRepo) then
+  begin
+    WriteLn('Error: Tool "' + ToolName + '" was not found in registered repositories.');
+    WriteLn('Hint: Run "bv repo sync" to update catalog or "bv tool search ' + ToolName + '" to look for available tools.');
+    Exit;
+  end;
+
+  WriteLn('Found in [' + RepoName + ']: ' + ToolName + ' v' + FoundVer + ' [' + FoundType + ']');
+  WriteLn('Downloading tool: ' + DownloadURL);
+  TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + ToolName + '-' + FoundVer + '.zip';
+  ForceDir(ExtractFileDir(TempZip));
+  Client := TFPHTTPClient.Create(nil);
+  try
+    try
+      Client.AllowRedirect := True;
+      Client.Get(DownloadURL, TempZip);
+    except
+      on E: Exception do
+      begin
+        WriteLn('Error downloading tool: ' + E.Message);
+        Exit;
+      end;
+    end;
+  finally
+    Client.Free;
+  end;
+
+  // Checksum validation
+  if Checksum <> '' then
+  begin
+    if not SameText(FileSHA256(TempZip), Checksum) and
+       not SameText('sha256:' + FileSHA256(TempZip), Checksum) then
+    begin
+      WriteLn('Error: Integrity check failed! Checksum mismatch for ' + ExtractFileName(TempZip));
+      Exit;
+    end;
+  end;
+
+  DestDir := GetGlobalToolsPath + ToolName;
+  WriteLn('Extracting to user tools directory (~/.blaisevue/tools/' + ToolName + ')...');
+  if DirectoryExists(DestDir) then DeleteDir(DestDir);
+  ForceDir(DestDir);
+  ExtractZipSmart(TempZip, GetGlobalToolsPath, ToolName);
+
+  if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.InstallScript <> '') then
+  begin
+    WriteLn('Executing installation script (' + ToolRecord.InstallScript + ')...');
+    RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+  end;
+
+  WriteLn('');
+  WriteLn('Tool "' + ToolName + '" (v' + FoundVer + ') installed successfully as [' + FoundType + ']!');
+  WriteLn('');
+end;
+
+{ Inspects installed tools against remote ecosystem catalog for available updates (bv tool outdated). }
+procedure CmdToolOutdated;
+var
+  AllTools: TBVToolArray;
+  I, OutdatedCount: Integer;
+  FoundVer, DownloadURL, Checksum, RepoName, FoundType, InstalledVer, RowStatus: string;
+begin
+  AllTools := DiscoverAllTools;
+  OutdatedCount := 0;
+
+  WriteLn('');
+  WriteLn('=== Tool Version Inspection (bv tool outdated) ===');
+  WriteLn(StringOfChar('-', 86));
+  WriteLn(PadRight('Tool Name', 20), PadRight('Installed', 14), PadRight('Latest', 16), PadRight('Type', 15), 'Status');
+  WriteLn(StringOfChar('-', 86));
+
+  if Length(AllTools) = 0 then
+    WriteLn('No tools or extensions installed.')
+  else
+  begin
+    for I := 0 to High(AllTools) do
+    begin
+      InstalledVer := AllTools[I].Version;
+      if InstalledVer = '' then InstalledVer := '1.0.0';
+
+      if AllTools[I].Origin = toBuiltIn then
+      begin
+        WriteLn(PadRight(AllTools[I].Name, 20),
+                PadRight('v' + InstalledVer, 14),
+                PadRight('v' + InstalledVer, 16),
+                PadRight('[Built-in]', 15),
+                'Built-in Framework (Up to date)');
+      end
+      else
+      begin
+        if FindToolInEcosystem(AllTools[I].Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName, FoundType) then
+        begin
+          if (FoundVer <> '') and (FoundVer <> InstalledVer) then
+          begin
+            Inc(OutdatedCount);
+            RowStatus := 'Update available -> v' + FoundVer;
+            WriteLn(PadRight(AllTools[I].Name, 20),
+                    PadRight('v' + InstalledVer, 14),
+                    PadRight('v' + FoundVer, 16),
+                    PadRight(ToolOriginLabel(AllTools[I].Origin), 15),
+                    RowStatus);
+          end
+          else
+          begin
+            WriteLn(PadRight(AllTools[I].Name, 20),
+                    PadRight('v' + InstalledVer, 14),
+                    PadRight('v' + InstalledVer, 16),
+                    PadRight(ToolOriginLabel(AllTools[I].Origin), 15),
+                    'Up to date');
+          end;
+        end
+        else
+        begin
+          WriteLn(PadRight(AllTools[I].Name, 20),
+                  PadRight('v' + InstalledVer, 14),
+                  PadRight('-', 16),
+                  PadRight(ToolOriginLabel(AllTools[I].Origin), 15),
+                  'Not registered in catalog');
+        end;
+      end;
+    end;
+  end;
+
+  WriteLn(StringOfChar('-', 86));
+  if OutdatedCount = 0 then
+    WriteLn('All installed tools are up to date!')
+  else
+  begin
+    WriteLn(IntToStr(OutdatedCount) + ' tool(s) have updates available.');
+    WriteLn('To update, run: bv tool update <name> (or "bv tool update" to update all user tools)');
+  end;
+  WriteLn('');
+end;
+
+{ Updates one or all tools in ~/.blaisevue/tools to latest ecosystem versions (bv tool update). }
+procedure CmdToolUpdate(const TargetNameArg: string = '');
+var
+  TargetLower, FoundVer, DownloadURL, Checksum, RepoName, FoundType, TempZip, DestDir, Dummy: string;
+  AllTools: TBVToolArray;
+  I, UpdatedCount: Integer;
+  Client: TFPHTTPClient;
+  ToolRecord: TBVTool;
+begin
+  TargetLower := LowerCase(Trim(TargetNameArg));
+  AllTools := DiscoverAllTools;
+
+  if TargetLower <> '' then
+  begin
+    for I := 0 to High(AllTools) do
+    begin
+      if (LowerCase(AllTools[I].Name) = TargetLower) or
+         (AllTools[I].Name = 'blaise-' + TargetLower) then
+      begin
+        if AllTools[I].Origin = toBuiltIn then
+        begin
+          WriteLn('');
+          WriteLn('Notice: Tool "' + AllTools[I].Name + '" is a built-in official tool in packages/tools/.');
+          WriteLn('Built-in framework tools are updated when updating BlaiseVue (run "bv self-update").');
+          Exit;
+        end;
+
+        WriteLn('Checking for updates for "' + AllTools[I].Name + '" in ecosystem...');
+        if not FindToolInEcosystem(AllTools[I].Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName, FoundType) then
+        begin
+          WriteLn('Error: Tool "' + AllTools[I].Name + '" was not found in registered repositories.');
+          Exit;
+        end;
+
+        if (AllTools[I].Version <> '') and (AllTools[I].Version = FoundVer) then
+        begin
+          WriteLn('Tool "' + AllTools[I].Name + '" is already up to date (v' + FoundVer + ').');
+          Exit;
+        end;
+
+        WriteLn('Updating "' + AllTools[I].Name + '" from v' + AllTools[I].Version + ' to v' + FoundVer + ' ...');
+        TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + AllTools[I].Name + '-' + FoundVer + '.zip';
+        ForceDir(ExtractFileDir(TempZip));
+        Client := TFPHTTPClient.Create(nil);
+        try
+          Client.AllowRedirect := True;
+          Client.Get(DownloadURL, TempZip);
+        finally
+          Client.Free;
+        end;
+
+        DestDir := GetGlobalToolsPath + AllTools[I].Name;
+        ExtractZipSmart(TempZip, GetGlobalToolsPath, AllTools[I].Name);
+        if LoadToolFromDir(DestDir, True, ToolRecord) then
+        begin
+          if ToolRecord.UpdateScript <> '' then
+            RunToolScript(DestDir, ToolRecord.UpdateScript, Dummy, False)
+          else if ToolRecord.InstallScript <> '' then
+            RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+        end;
+
+        WriteLn('Tool "' + AllTools[I].Name + '" updated successfully to v' + FoundVer + '!');
+        Exit;
+      end;
+    end;
+
+    WriteLn('Error: Tool "' + TargetLower + '" is not installed.');
+    Exit;
+  end;
+
+  // Update all user tools in ~/.blaisevue/tools
+  WriteLn('=== Updating All User Tools in ~/.blaisevue/tools ===');
+  UpdatedCount := 0;
+  for I := 0 to High(AllTools) do
+  begin
+    if AllTools[I].Origin <> toBuiltIn then
+    begin
+      if FindToolInEcosystem(AllTools[I].Name, 'latest', FoundVer, DownloadURL, Checksum, RepoName, FoundType) then
+      begin
+        if (FoundVer <> '') and (FoundVer <> AllTools[I].Version) then
+        begin
+          Write('  [+] Updating "' + AllTools[I].Name + '" (v' + AllTools[I].Version + ' -> v' + FoundVer + ') ... ');
+          TempZip := GetUserBlaiseVueDir + DirectorySeparator + 'cache' + DirectorySeparator + AllTools[I].Name + '-' + FoundVer + '.zip';
+          ForceDir(ExtractFileDir(TempZip));
+          Client := TFPHTTPClient.Create(nil);
+          try
+            try
+              Client.AllowRedirect := True;
+              Client.Get(DownloadURL, TempZip);
+              DestDir := GetGlobalToolsPath + AllTools[I].Name;
+              ExtractZipSmart(TempZip, GetGlobalToolsPath, AllTools[I].Name);
+              if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.UpdateScript <> '') then
+                RunToolScript(DestDir, ToolRecord.UpdateScript, Dummy, False);
+              WriteLn('OK');
+              Inc(UpdatedCount);
+            except
+              on E: Exception do WriteLn('FAILED (' + E.Message + ')');
+            end;
+          finally
+            Client.Free;
+          end;
+        end;
+      end;
+    end;
+  end;
+
+  if UpdatedCount = 0 then
+    WriteLn('All user tools are already up to date.')
+  else
+    WriteLn(IntToStr(UpdatedCount) + ' tool(s) updated successfully.');
+  WriteLn('');
+end;
+
+{ Uninstalls a tool from ~/.blaisevue/tools (bv tool remove). }
+procedure CmdToolRemove(const TargetNameArg: string);
+var
+  TargetLower, Dummy: string;
+  AllTools: TBVToolArray;
+  I, FoundIndex: Integer;
+begin
+  TargetLower := LowerCase(Trim(TargetNameArg));
+  if TargetLower = '' then
+  begin
+    WriteLn('Error: Target tool name required to remove.');
+    WriteLn('Usage: bv tool remove <tool-name>');
+    Exit;
+  end;
+
+  AllTools := DiscoverAllTools;
+  FoundIndex := -1;
+  for I := 0 to High(AllTools) do
+  begin
+    if (LowerCase(AllTools[I].Name) = TargetLower) or
+       (AllTools[I].Name = 'blaise-' + TargetLower) or
+       ((TargetLower = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) or
+       ((TargetLower = 'lazarus') and (AllTools[I].Name = 'blaise-lazarus')) or
+       ((TargetLower = 'devtools') and (AllTools[I].Name = 'blaise-devtools')) then
+    begin
+      FoundIndex := I;
+      Break;
+    end;
+  end;
+
+  if FoundIndex = -1 then
+  begin
+    WriteLn('Error: Tool "' + TargetLower + '" is not installed.');
+    Exit;
+  end;
+
+  // Protect Built-in official framework tools
+  if AllTools[FoundIndex].Origin = toBuiltIn then
+  begin
+    WriteLn('');
+    WriteLn('Error: Cannot remove tool "' + AllTools[FoundIndex].Name + '".');
+    WriteLn('This is a built-in official tool located in packages/tools/.');
+    WriteLn('Built-in framework tools cannot be uninstalled.');
+    Exit;
+  end;
+
+  WriteLn('Removing tool "' + AllTools[FoundIndex].Name + '" from ~/.blaisevue/tools/...');
+  if AllTools[FoundIndex].RemoveScript <> '' then
+  begin
+    WriteLn('Executing uninstall script (' + AllTools[FoundIndex].RemoveScript + ')...');
+    RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].RemoveScript, Dummy, False);
+  end;
+
+  if DirectoryExists(AllTools[FoundIndex].DirPath) then
+    DeleteDir(AllTools[FoundIndex].DirPath);
+
+  WriteLn('Tool "' + AllTools[FoundIndex].Name + '" removed successfully.');
+end;
+
+{ Packages a tool into a distributable release ZIP archive (bv tool pack). }
+procedure CmdToolPack(const TargetArg: string);
+var
+  BaseDir, ToolName, ToolVersion, DistDir, ZipFile, ChecksumFile, HashStr: string;
+  AllTools: TBVToolArray;
+  I, FoundIndex: Integer;
+  ToolRecord: TBVTool;
+  Zip: TZipper;
+  FS: TFileStream;
+  FileSizeKB: Double;
+  Dummy: string;
+
+  procedure AddDirToZip(const RootDir, SubDir: string);
+  var
+    SR: TSearchRec;
+    CurrentPath, EntryDisk, EntryArchive, Ext: string;
+  begin
+    CurrentPath := RootDir;
+    if SubDir <> '' then
+      CurrentPath := CurrentPath + StringReplace(SubDir, '/', DirectorySeparator, [rfReplaceAll]) + DirectorySeparator;
+    if FindFirst(CurrentPath + '*', faAnyFile, SR) = 0 then
+    begin
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and (SR.Name <> '.git') and (SR.Name <> 'node_modules') and (SR.Name <> 'dist') then
+        begin
+          if (SR.Attr and faDirectory) <> 0 then
+          begin
+            if SubDir = '' then
+              AddDirToZip(RootDir, SR.Name)
+            else
+              AddDirToZip(RootDir, SubDir + '/' + SR.Name);
+          end
+          else
+          begin
+            Ext := LowerCase(ExtractFileExt(SR.Name));
+            if (Ext <> '.o') and (Ext <> '.ppu') and (Ext <> '.tmp') and (Ext <> '.zip') then
+            begin
+              EntryDisk := CurrentPath + SR.Name;
+              if SubDir = '' then
+                EntryArchive := ToolName + '/' + SR.Name
+              else
+                EntryArchive := ToolName + '/' + SubDir + '/' + SR.Name;
+              Zip.Entries.AddFileEntry(EntryDisk, EntryArchive);
+            end;
+          end;
+        end;
+      until FindNext(SR) <> 0;
+      FindClose(SR);
+    end;
+  end;
+begin
+  BaseDir := '';
+  if TargetArg <> '' then
+  begin
+    if DirectoryExists(TargetArg) then
+      BaseDir := IncludeTrailingPathDelimiter(ExpandFileName(TargetArg))
+    else
+    begin
+      AllTools := DiscoverAllTools;
+      FoundIndex := -1;
+      for I := 0 to High(AllTools) do
+      begin
+        if (LowerCase(AllTools[I].Name) = LowerCase(TargetArg)) or
+           (AllTools[I].Name = 'blaise-' + LowerCase(TargetArg)) or
+           ((LowerCase(TargetArg) = 'vscode') and (AllTools[I].Name = 'blaise-vscode')) then
+        begin
+          FoundIndex := I;
+          Break;
+        end;
+      end;
+      if FoundIndex >= 0 then
+        BaseDir := IncludeTrailingPathDelimiter(AllTools[FoundIndex].DirPath);
+    end;
+  end;
+
+  if BaseDir = '' then
+    BaseDir := IncludeTrailingPathDelimiter(GetCurrentDir);
+
+  if not FileExists(BaseDir + 'tool.json') then
+  begin
+    WriteLn('Error: Manifest file tool.json not found in: ' + BaseDir);
+    Exit;
+  end;
+
+  if not LoadToolFromDir(BaseDir, True, ToolRecord) then
+  begin
+    WriteLn('Error: Failed to parse tool.json in: ' + BaseDir);
+    Exit;
+  end;
+
+  ToolName := ToolRecord.Name;
+  ToolVersion := ToolRecord.Version;
+  if ToolVersion = '' then ToolVersion := '1.0.0';
+
+  if ToolRecord.PackScript <> '' then
+  begin
+    WriteLn('Executing tool pack script (' + ToolRecord.PackScript + ')...');
+    RunToolScript(BaseDir, ToolRecord.PackScript, Dummy, False);
+    Exit;
+  end;
+
+  DistDir := BaseDir + 'dist' + DirectorySeparator;
+  ForceDir(DistDir);
+  ZipFile := DistDir + ToolName + '-' + ToolVersion + '.zip';
+  if FileExists(ZipFile) then DeleteFile(ZipFile);
+
+  WriteLn('Assembling release artifact: ' + ExtractFileName(ZipFile) + ' ...');
+  Zip := TZipper.Create;
+  try
+    Zip.FileName := ZipFile;
+    AddDirToZip(BaseDir, '');
+    Zip.ZipAllFiles;
+  finally
+    Zip.Free;
+  end;
+
+  if not FileExists(ZipFile) then
+  begin
+    WriteLn('Error: Failed to create tool archive: ' + ZipFile);
+    Exit;
+  end;
+
+  HashStr := FileSHA256(ZipFile);
+  ChecksumFile := ZipFile + '.sha256';
+  WriteStringToFile(ChecksumFile, HashStr + ' *' + ExtractFileName(ZipFile) + LineEnding);
+
+  FileSizeKB := 0.0;
+  FS := TFileStream.Create(ZipFile, fmOpenRead or fmShareDenyNone);
+  try
+    FileSizeKB := FS.Size / 1024.0;
+  finally
+    FS.Free;
+  end;
+
+  WriteLn('');
+  WriteLn('============================================================');
+  WriteLn('  [BlaiseVue Tool Packager]');
+  WriteLn('============================================================');
+  WriteLn('  Tool:        ' + ToolName + ' @ v' + ToolVersion);
+  WriteLn('  Type:        ' + ToolOriginLabel(ToolRecord.Origin));
+  WriteLn('  Archive:     dist/' + ExtractFileName(ZipFile));
+  WriteLn('  Size:        ' + FloatToStrF(FileSizeKB, ffFixed, 8, 2) + ' KB');
+  WriteLn('  SHA-256:     ' + HashStr);
+  WriteLn('  Checksum:    dist/' + ExtractFileName(ChecksumFile));
+  WriteLn('============================================================');
+  WriteLn('Tool successfully assembled and verified!');
+  WriteLn('');
+end;
+
+{ Creates a new tool project scaffold with tool.json and lifecycle scripts (bv tool init). }
+procedure CmdToolInit(const NameArg: string; IsLocal: Boolean = False);
+var
+  ToolName, ToolDir, ManifestFile, ReadmeFile: string;
+  StatusScript, InstallScript, UpdateScript, RemoveScript: string;
+begin
+  ToolName := LowerCase(Trim(NameArg));
+  if ToolName = '' then
+  begin
+    WriteLn('Error: Tool name is required.');
+    WriteLn('Usage: bv tool init <tool-name> [--local]');
+    Exit;
+  end;
+
+  if IsLocal then
+    ToolDir := IncludeTrailingPathDelimiter(GetCurrentDir) + ToolName + DirectorySeparator
+  else
+    ToolDir := GetGlobalToolsPath + ToolName + DirectorySeparator;
+
+  if DirectoryExists(ToolDir) then
+  begin
+    WriteLn('Error: Directory already exists: ' + ToolDir);
+    Exit;
+  end;
+
+  ForceDir(ToolDir);
+  ManifestFile := ToolDir + 'tool.json';
+  WriteStringToFile(ManifestFile,
+    '{' + LineEnding +
+    '  "name": "' + ToolName + '",' + LineEnding +
+    '  "version": "0.1.0",' + LineEnding +
+    '  "category": "Developer Tool",' + LineEnding +
+    '  "description": "Custom developer tool for BlaiseVue",' + LineEnding +
+    '  "author": "Developer",' + LineEnding +
+    '  "license": "MIT",' + LineEnding +
+    '  "type": "third-party",' + LineEnding +
+    '  "scripts": {' + LineEnding +
+    '    "status": "status.py",' + LineEnding +
+    '    "install": "install.py",' + LineEnding +
+    '    "update": "update.py",' + LineEnding +
+    '    "remove": "remove.py"' + LineEnding +
+    '  }' + LineEnding +
+    '}' + LineEnding);
+
+  ReadmeFile := ToolDir + 'README.md';
+  WriteStringToFile(ReadmeFile,
+    '# ' + ToolName + LineEnding + LineEnding +
+    'Custom developer tool for BlaiseVue.' + LineEnding + LineEnding +
+    '## Usage' + LineEnding +
+    '- Check status: `bv tool list`' + LineEnding +
+    '- Inspect details: `bv tool info ' + ToolName + '`' + LineEnding +
+    '- Package release: `bv tool pack ' + ToolName + '`' + LineEnding);
+
+  StatusScript := ToolDir + 'status.py';
+  WriteStringToFile(StatusScript,
+    '#!/usr/bin/env python3' + LineEnding +
+    'print("Active (v0.1.0)")' + LineEnding);
+
+  InstallScript := ToolDir + 'install.py';
+  WriteStringToFile(InstallScript,
+    '#!/usr/bin/env python3' + LineEnding +
+    'print("Setting up ' + ToolName + '...")' + LineEnding +
+    'print("Installed successfully.")' + LineEnding);
+
+  UpdateScript := ToolDir + 'update.py';
+  WriteStringToFile(UpdateScript,
+    '#!/usr/bin/env python3' + LineEnding +
+    'print("Updating ' + ToolName + '...")' + LineEnding);
+
+  RemoveScript := ToolDir + 'remove.py';
+  WriteStringToFile(RemoveScript,
+    '#!/usr/bin/env python3' + LineEnding +
+    'print("Cleaning up ' + ToolName + '...")' + LineEnding);
+
+  WriteLn('');
+  WriteLn('============================================================');
+  WriteLn('  [Tool Scaffold Initialized]');
+  WriteLn('============================================================');
+  WriteLn('  Tool:        ' + ToolName + ' (v0.1.0)');
+  WriteLn('  Location:    ' + ToolDir);
+  WriteLn('  Type:        [Third-Party]');
+  WriteLn('  Manifest:    tool.json');
+  WriteLn('============================================================');
+  WriteLn('To test your tool immediately, run:');
+  WriteLn('  bv tool list');
+  WriteLn('  bv tool info ' + ToolName);
+  WriteLn('');
+end;
+
+{ Unified developer tool manager (bv tool). }
+procedure CmdTool(const Action: string = ''; const Target: string = ''; const ExtraArg: string = '');
+var
+  SubCmd: string;
+begin
+  SubCmd := LowerCase(Trim(Action));
+  if (SubCmd = '') or (SubCmd = 'list') or (SubCmd = 'ls') then
+    CmdToolList
+  else if (SubCmd = 'search') or (SubCmd = 'find') then
+    CmdToolSearch(Target)
+  else if (SubCmd = 'info') or (SubCmd = 'show') or (SubCmd = 'view') then
+    CmdToolInfo(Target)
+  else if (SubCmd = 'install') or (SubCmd = 'i') or (SubCmd = 'add') then
+    CmdToolInstall(Target)
+  else if (SubCmd = 'outdated') or (SubCmd = 'check') then
+    CmdToolOutdated
+  else if (SubCmd = 'update') or (SubCmd = 'up') or (SubCmd = 'upgrade') then
+    CmdToolUpdate(Target)
+  else if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
+    CmdToolRemove(Target)
+  else if (SubCmd = 'pack') or (SubCmd = 'package') or (SubCmd = 'pkg') then
+    CmdToolPack(Target)
+  else if (SubCmd = 'init') or (SubCmd = 'create') or (SubCmd = 'new') then
+    CmdToolInit(Target, SameText(ExtraArg, '--local') or SameText(ParamStr(4), '--local'))
+  else
+  begin
+    WriteLn('Unknown subcommand: bv tool ' + SubCmd);
+    WriteLn('Usage: bv tool <list|search|info|install|update|outdated|remove|pack|init> [params]');
+  end;
+end;
+
+{ Backward-compatible alias for "bv tool" (bv extension). }
+procedure CmdExtension(const Action: string = ''; const Target: string = '');
+begin
+  CmdTool(Action, Target);
 end;
 
 { Ensures Android Gradle compatibility with Java 17 LTS and configures signingConfig for local release testing. }
@@ -23823,8 +24873,8 @@ var
   Resp: string;
   CatParser: TJSONParser;
   CatData: TJSONData;
-  PkgObj: TJSONObject;
-  PkgCount: Integer;
+  PkgObj, ToolsObj: TJSONObject;
+  PkgCount, ToolCount: Integer;
 begin
   if not LoadReposRegistry(RootObj) then Exit;
   CacheDir := ExtractFileDir(GetReposConfigPath) + DirectorySeparator + 'cache';
@@ -23858,6 +24908,7 @@ begin
             CacheFile := CacheDir + DirectorySeparator + RName + '-ecosystem.json';
             WriteStringToFile(CacheFile, Resp);
             PkgCount := 0;
+            ToolCount := 0;
             CatParser := TJSONParser.Create(Resp, True);
             try
               CatData := CatParser.Parse;
@@ -23865,13 +24916,18 @@ begin
               begin
                 PkgObj := TJSONObject(CatData).Get('packages', TJSONObject(nil));
                 if Assigned(PkgObj) then PkgCount := PkgObj.Count;
+                ToolsObj := TJSONObject(CatData).Get('tools', TJSONObject(nil));
+                if Assigned(ToolsObj) then ToolCount := ToolsObj.Count;
               end;
               if Assigned(CatData) then CatData.Free;
             finally
               CatParser.Free;
             end;
 
-            WriteLn('OK (' + IntToStr(PkgCount) + ' package(s) available)');
+            if ToolCount > 0 then
+              WriteLn('OK (' + IntToStr(PkgCount) + ' package(s), ' + IntToStr(ToolCount) + ' tool(s) available)')
+            else
+              WriteLn('OK (' + IntToStr(PkgCount) + ' package(s) available)');
           except
             on E: Exception do
               WriteLn('FAILED (' + E.Message + ')');
@@ -26818,7 +27874,17 @@ begin
   WriteLn('  bv theme remove <name>     Removes a theme from package.json');
   WriteLn('  bv theme use <name>        Sets active default theme in package.json & index.html');
   WriteLn('  bv theme reset             Resets theme filters (bundles all themes in compatibility mode)');
-  WriteLn('  bv extension <list|install|remove|pack> [target] Manages development extensions & tools');
+  WriteLn('  bv tool list               Lists all installed tools (built-in, co-official & user third-party)');
+  WriteLn('  bv tool search [term]      Searches tools in registered ecosystem repositories');
+  WriteLn('  bv tool info <name>        Displays detailed information, versions and scripts of a tool');
+  WriteLn('  bv tool install [<repo>:]<name[@ver]> Installs tool from ecosystem into user tools (~/.blaisevue/tools)');
+  WriteLn('  bv tool install <url|zip>  Installs tool from local archive or download URL');
+  WriteLn('  bv tool outdated           Checks for available updates across all installed tools');
+  WriteLn('  bv tool update [<name>]    Updates user tools to latest versions found in ecosystem');
+  WriteLn('  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)');
+  WriteLn('  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)');
+  WriteLn('  bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts');
+  WriteLn('  bv extension <subcommand>  Alias for "bv tool" (backward compatibility)');
   WriteLn('');
   WriteLn('  # === Project Configuration & Search Paths ===');
   WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
@@ -27211,19 +28277,22 @@ begin
       CmdWasm(LowerCase(ParamStr(2)));
   end
 
-  else if (Cmd = 'extension') or (Cmd = 'vsix') then
+  else if (Cmd = 'tool') or (Cmd = 'tools') or (Cmd = 'extension') or (Cmd = 'vsix') then
   begin
     if Cmd = 'vsix' then
-      CmdExtension('pack', 'vscode')
+      CmdTool('pack', 'blaise-vscode')
+
+    else if ParamCount >= 4 then
+      CmdTool(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4))
 
     else if ParamCount >= 3 then
-      CmdExtension(LowerCase(ParamStr(2)), ParamStr(3))
+      CmdTool(LowerCase(ParamStr(2)), ParamStr(3))
 
     else if ParamCount >= 2 then
-      CmdExtension(LowerCase(ParamStr(2)))
+      CmdTool(LowerCase(ParamStr(2)))
 
     else
-      CmdExtension('list');
+      CmdTool('list');
   end
 
   else if Cmd = 'mobile' then
