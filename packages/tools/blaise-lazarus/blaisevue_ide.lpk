@@ -30,7 +30,7 @@
     </CompilerOptions>
     <Description Value="BlaiseVue IDE Integration for Lazarus: Multi-Syntax Highlighting for .bv Single File Components (HTML + Pascal + CSS), File -> New Component Wizard, and IDE Tools menu."/>
     <License Value="MIT"/>
-    <Version Major="4" Minor="4" Release="0"/>
+    <Version Major="1" Minor="0" Release="0"/>
     <Files Count="7">
       <Item1>
         <Filename Value="src\uBVSynMultiSyn.pas"/>

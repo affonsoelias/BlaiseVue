@@ -2,7 +2,7 @@
   "name": "blaise-vscode",
   "category": "VS Code / VSCodium",
   "description": "Official BlaiseVue VS Code / VSCodium extension with syntax highlighting, autocomplete, and code formatter",
-  "version": "4.4.0",
+  "version": "1.0.0",
   "scripts": {
     "status": "status.py",
     "install": "install.py",

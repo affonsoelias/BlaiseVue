@@ -20,7 +20,7 @@ def check_status():
                 for entry in os.listdir(t):
                     if entry.startswith('blaisevue.blaisevue-vscode-'):
                         version = entry.replace('blaisevue.blaisevue-vscode-', '')
-                        print(f"Installed (v{version})")
+                        print("Installed (VS Code / IDE)")
                         return
                     elif entry == 'blaisevue-vscode':
                         print("Installed (IDE)")

@@ -2,7 +2,7 @@
   "name": "blaise-devtools",
   "category": "Browser DevTools (F12)",
   "description": "DevTools browser extension for Chromium (Chrome, Edge, Brave) and Firefox",
-  "version": "4.4.0",
+  "version": "1.0.0",
   "scripts": {
     "status": "status.py",
     "install": "install.py"

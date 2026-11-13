@@ -3,7 +3,7 @@
   "displayName": "BlaiseVue Official Support",
   "description": "Professional DX for BlaiseVue: syntax highlighting, snippets, BlaiseUI IntelliSense, and CLI tools for Single File Components (.bv).",
   "icon": "icon.png",
-  "version": "4.4.0",
+  "version": "1.0.0",
   "publisher": "blaisevue",
   "repository": {
     "type": "git",

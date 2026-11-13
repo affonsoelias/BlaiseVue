@@ -2,7 +2,7 @@
   "name": "blaise-lazarus",
   "category": "Lazarus IDE Package",
   "description": "Official Lazarus IDE package (blaisevue_ide.lpk) with syntax highlighting, browser preview, autocomplete, and IDE tools",
-  "version": "4.4.0",
+  "version": "1.0.0",
   "scripts": {
     "status": "status.py",
     "install": "install.py",
