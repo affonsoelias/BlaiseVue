@@ -537,11 +537,9 @@ See detailed documentation in **[40. BlaiseVue Studio Dashboard](40-blaise-studi
 
 ---
 
-## 8. 📦 Package, Theme & Extension Management (`bv repo`, `bv lib`, `bv theme`, `bv extension`)
+## 8. 📦 Package, Theme & Tool Management (`bv repo`, `bv lib`, `bv theme`, `bv tool`)
 
-BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories:
-
-BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories.
+BlaiseVue features a modern, multi-tier package and tool manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories:
 
 ### 1. Package Repositories (`bv repo`)
 Manages upstream catalog sources and multi-package ecosystem repositories configured in `~/.blaisevue/repos.json`:
@@ -645,16 +643,40 @@ bv lib remove test --global
 
 ---
 
-### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
-Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
-- `bv extension list`: Inspects available extensions (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and custom tools) and their installation status and versions.
-- `bv extension install <target>`: Installs a specific target extension:
-  - `bv extension install blaise-vscode` (alias: `vscode`): Deploys the official VS Code / Antigravity IDE / Cursor extension (`~/.vscode/extensions/`, `~/.antigravity/extensions/`). After running this command, reload the window via `Ctrl + Shift + P` $\rightarrow$ `Developer: Reload Window` (or restart the IDE). Alternatively, install the pre-packaged `.vsix` manually through the Extensions UI (*Install from VSIX...*) or via terminal (`code --install-extension packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix`).
-  - `bv extension install blaise-lazarus` (alias: `lazarus`): Compiles and validates the official Lazarus IDE package (`blaisevue_ide.lpk`) using `lazbuild`.
-  - `bv extension install blaise-devtools` (alias: `devtools`): Displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
-  - `bv extension install <tool>`: Executes the custom installer from `~/.blaisevue/tools/<name>/install.ps1` (or `install.sh`).
-- `bv extension remove <target>`: Uninstalls a specific extension (e.g. `bv extension remove blaise-vscode` or `bv extension remove <tool>`).
-- `bv extension pack [target]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
+### 4. `bv tool <list|search|info|install|outdated|update|remove|pack|init>` (Developer Tool Manager)
+Manages built-in framework developer tools (`packages/tools/`), co-official ecosystem tools, and third-party user extensions (`~/.blaisevue/tools/`):
+
+#### Tool Classification & Origin
+- **`[Built-in]`**: Native tools pre-bundled in `packages/tools/` (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`). These are protected core framework tools and cannot be accidentally uninstalled.
+- **`[Co-Official]`**: Official ecosystem tools curated by the BlaiseVue team with official prefix (`blaise-*`). Hosted on the ecosystem registry and installed cleanly into the user global directory (`~/.blaisevue/tools/`), keeping the base framework download lightweight.
+- **`[Third-Party]`**: Community-developed developer tools installed in `~/.blaisevue/tools/` from ecosystem registries, local archives, or remote URLs.
+
+#### Subcommands
+- **`bv tool list`**: Displays a formatted table of all installed tools across both built-in and user directories, showing name, category, version, classification, and runtime status.
+- **`bv tool search [term]`**: Searches the synchronized ecosystem catalog (`*-ecosystem.json`) for available tools matching a keyword or category.
+- **`bv tool info <name>`**: Displays a comprehensive technical card for a tool (installed version, latest ecosystem version, classification, repository, directory path, author, homepage, and configured lifecycle scripts).
+- **`bv tool install [<repo>:]<name[@version]>`**: Resolves the tool in registered ecosystem repositories, verifies integrity via SHA-256, extracts it into `~/.blaisevue/tools/<name>/`, and executes its `install` script. For built-in tools, it runs the official IDE setup hook.
+- **`bv tool install <url|archive.zip>`**: Directly installs a tool package from a local `.zip` file or download URL into `~/.blaisevue/tools/<name>/`.
+- **`bv tool outdated`**: Inspects all installed tools against registered ecosystem catalogs, reporting which tools have newer versions available.
+- **`bv tool update [<name>]`**: Updates a specific user tool (or all user tools in `~/.blaisevue/tools/`) to the latest version found in the ecosystem.
+- **`bv tool remove <name>`**: Executes the tool's uninstallation script (`remove.py`/`remove.pas`) and cleanly removes the directory from `~/.blaisevue/tools/`.
+- **`bv tool pack [dir]`**: Compiles and packages a tool directory into a distributable release archive (`dist/<name>-<version>.zip`) with an accompanying `.sha256` checksum file.
+- **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
+- **`bv extension <subcommand>`**: Full backward-compatible alias for `bv tool`.
+
+#### Folder Structure of a Tool Package
+Both libraries and tools can include documentation (`doc/`) and runnable examples (`examples/`):
+```
+my-tool/
+├── tool.json          # Manifest with version, category, and scripts
+├── README.md          # Tool documentation and usage guide
+├── doc/               # Extended architecture and technical manuals
+├── examples/          # Sample configurations, scripts, and demo code
+├── status.py          # Status reporting hook
+├── install.py         # Installation hook
+├── update.py          # Update hook
+└── remove.py          # Cleanup hook
+```
 
 ---
 

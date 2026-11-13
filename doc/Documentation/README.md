@@ -204,7 +204,17 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv theme remove <name>     Removes a theme from package.json
   bv theme use <name>        Sets active default theme in package.json & index.html
   bv theme reset             Resets theme filters (bundles all themes in compatibility mode)
-  bv extension <list|install|remove|pack> [target] Manages development extensions & tools
+  bv tool list               Lists all installed tools (built-in, co-official & user third-party)
+  bv tool search [term]      Searches tools in registered ecosystem repositories
+  bv tool info <name>        Displays detailed information, versions and scripts of a tool
+  bv tool install [<repo>:]<name[@ver]> Installs tool from ecosystem into user tools (~/.blaisevue/tools)
+  bv tool install <url|zip>  Installs tool from local archive or download URL
+  bv tool outdated           Checks for available updates across all installed tools
+  bv tool update [<name>]    Updates user tools to latest versions found in ecosystem
+  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)
+  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)
+  bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts
+  bv extension <subcommand>  Alias for "bv tool" (backward compatibility)
 
   # === Project Configuration & Search Paths ===
   bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)

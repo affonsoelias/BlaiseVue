@@ -256,3 +256,29 @@ Package authors are strongly encouraged to provide documentation and runnable ex
 - **Ecosystem Examples Directory (`examples/<package>/`)**: Authors can contribute complete, runnable BlaiseVue demo projects showcasing their package inside the `examples/<package>/` directory of the `blaisevue-ecosystem` repository.
 - **Dedicated Ecosystem Guides (`doc/packages/<package>.md`)**: Detailed API specifications, Pascal unit references, and architectural walk-throughs can be submitted directly into the `doc/packages/` folder of the ecosystem repository.
 
+### 6. Publishing Developer Tools & Extensions (`tools/` & `bv tool`)
+The BlaiseVue ecosystem repository supports both runtime libraries (`bv lib`) and developer tools, IDE plugins, and CLI extensions (`bv tool`):
+- **Ecosystem Manifest (`ecosystem.json`)**: Tools are declared under the `"tools"` section:
+  ```json
+  {
+    "packages": { ... },
+    "tools": {
+      "my-tool": {
+        "name": "my-tool",
+        "type": "co-official",
+        "category": "Developer Tool",
+        "description": "Verification and diagnostics tool for BlaiseVue",
+        "latest": "1.0.0",
+        "versions": [
+          {
+            "version": "1.0.0",
+            "download_url": "https://github.com/my-org/my-tool/releases/download/{tag}/{package}-{version}.zip"
+          }
+        ]
+      }
+    }
+  }
+  ```
+- **User Tools Isolation (`~/.blaisevue/tools/<name>/`)**: When installed with `bv tool install <name>`, tools are downloaded and extracted exclusively into the user global directory (`~/.blaisevue/tools/`), keeping the base framework download lightweight and avoiding project `/lib` clutter.
+- **Documentation (`doc/`) & Examples (`examples/`) in Tools**: Tool packages can include a `doc/` directory with detailed usage manuals, and an `examples/` directory containing configuration samples, test scripts, and reference workflows. Both are included when packaging with `bv tool pack`.
+
