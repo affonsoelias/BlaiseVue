@@ -1022,10 +1022,14 @@ function LoadReposRegistry(out RootObj: TJSONObject): Boolean; forward;
 procedure GetOrderedRepoNames(out RepoNames: TStringList); forward;
 { Checks if a package name is reserved to prevent namespace collision attacks. }
 function IsReservedCorePackageName(const Name: string): Boolean; forward;
+procedure ParseSemVerParts(const VerStr: string; out Major, Minor, Patch: Integer; out Prerelease: string); forward;
+function CompareSemVer(const V1, V2: string): Integer; forward;
+function MatchSemVerRange(const CandidateVer, RangeSpec: string): Boolean; forward;
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean; forward;
 function FindToolInEcosystem(const ToolName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName, FoundType: string; const TargetRepo: string = ''): Boolean; forward;
+procedure CmdToolRun(const TargetNameArg: string); forward;
 procedure CmdTool(const Action: string = ''; const Target: string = ''; const ExtraArg: string = ''); forward;
 procedure CmdRepoSync; forward;
 { Lists all installed libraries and framework packages for the current project or globally (bv lib list). }
@@ -5647,11 +5651,160 @@ begin
     RepoNames.Add('official');
 end;
 
+{ Parses a SemVer 2.0 version string into numeric major, minor, patch and prerelease suffix. }
+procedure ParseSemVerParts(const VerStr: string; out Major, Minor, Patch: Integer; out Prerelease: string);
+var
+  CleanStr, MainPart, ExtraPart: string;
+  Parts: TStringList;
+  DashPos: Integer;
+begin
+  Major := 0;
+  Minor := 0;
+  Patch := 0;
+  Prerelease := '';
+  CleanStr := Trim(VerStr);
+  if (CleanStr <> '') and ((CleanStr[1] = 'v') or (CleanStr[1] = 'V')) then
+    CleanStr := Copy(CleanStr, 2, Length(CleanStr) - 1);
+
+  DashPos := Pos('-', CleanStr);
+  if DashPos > 0 then
+  begin
+    MainPart := Copy(CleanStr, 1, DashPos - 1);
+    ExtraPart := Copy(CleanStr, DashPos + 1, Length(CleanStr) - DashPos);
+    Prerelease := ExtraPart;
+  end
+  else
+    MainPart := CleanStr;
+
+  Parts := TStringList.Create;
+  try
+    Parts.Delimiter := '.';
+    Parts.StrictDelimiter := True;
+    Parts.DelimitedText := MainPart;
+    if Parts.Count >= 1 then Major := StrToIntDef(Parts[0], 0);
+    if Parts.Count >= 2 then Minor := StrToIntDef(Parts[1], 0);
+    if Parts.Count >= 3 then Patch := StrToIntDef(Parts[2], 0);
+  finally
+    Parts.Free;
+  end;
+end;
+
+{ Compares two SemVer strings. Returns 1 if V1 > V2, -1 if V1 < V2, 0 if V1 = V2. }
+function CompareSemVer(const V1, V2: string): Integer;
+var
+  Maj1, Min1, Pat1, Maj2, Min2, Pat2: Integer;
+  Pre1, Pre2: string;
+begin
+  ParseSemVerParts(V1, Maj1, Min1, Pat1, Pre1);
+  ParseSemVerParts(V2, Maj2, Min2, Pat2, Pre2);
+
+  if Maj1 <> Maj2 then
+  begin
+    if Maj1 > Maj2 then Result := 1 else Result := -1;
+    Exit;
+  end;
+  if Min1 <> Min2 then
+  begin
+    if Min1 > Min2 then Result := 1 else Result := -1;
+    Exit;
+  end;
+  if Pat1 <> Pat2 then
+  begin
+    if Pat1 > Pat2 then Result := 1 else Result := -1;
+    Exit;
+  end;
+
+  if (Pre1 = '') and (Pre2 <> '') then
+    Result := 1
+  else if (Pre1 <> '') and (Pre2 = '') then
+    Result := -1
+  else if Pre1 <> Pre2 then
+    Result := CompareStr(Pre1, Pre2)
+  else
+    Result := 0;
+end;
+
+{ Checks whether a candidate SemVer satisfies a range specifier (^, ~, >=, <=, latest, *). }
+function MatchSemVerRange(const CandidateVer, RangeSpec: string): Boolean;
+var
+  CleanSpec, CleanCandidate, TargetVer: string;
+  MajC, MinC, PatC, MajS, MinS, PatS: Integer;
+  PreC, PreS: string;
+  Cmp: Integer;
+begin
+  CleanSpec := Trim(RangeSpec);
+  CleanCandidate := Trim(CandidateVer);
+
+  if (CleanSpec = '') or (CleanSpec = '*') or (CleanSpec = 'x') or (CleanSpec = 'X') or
+     SameText(CleanSpec, 'latest') or SameText(CleanSpec, 'any') then
+  begin
+    Result := True;
+    Exit;
+  end;
+
+  ParseSemVerParts(CleanCandidate, MajC, MinC, PatC, PreC);
+
+  if CleanSpec[1] = '^' then
+  begin
+    TargetVer := Copy(CleanSpec, 2, Length(CleanSpec) - 1);
+    ParseSemVerParts(TargetVer, MajS, MinS, PatS, PreS);
+    Cmp := CompareSemVer(CleanCandidate, TargetVer);
+    if Cmp < 0 then
+    begin
+      Result := False;
+      Exit;
+    end;
+    if MajS > 0 then
+      Result := (MajC = MajS)
+    else if MinS > 0 then
+      Result := (MajC = 0) and (MinC = MinS)
+    else
+      Result := (MajC = 0) and (MinC = 0) and (PatC = PatS);
+    Exit;
+  end;
+
+  if CleanSpec[1] = '~' then
+  begin
+    TargetVer := Copy(CleanSpec, 2, Length(CleanSpec) - 1);
+    ParseSemVerParts(TargetVer, MajS, MinS, PatS, PreS);
+    Cmp := CompareSemVer(CleanCandidate, TargetVer);
+    if Cmp < 0 then
+    begin
+      Result := False;
+      Exit;
+    end;
+    Result := (MajC = MajS) and (MinC = MinS);
+    Exit;
+  end;
+
+  if StartsText('>=', CleanSpec) then
+  begin
+    TargetVer := Trim(Copy(CleanSpec, 3, Length(CleanSpec) - 2));
+    Result := CompareSemVer(CleanCandidate, TargetVer) >= 0;
+    Exit;
+  end;
+
+  if StartsText('<=', CleanSpec) then
+  begin
+    TargetVer := Trim(Copy(CleanSpec, 3, Length(CleanSpec) - 2));
+    Result := CompareSemVer(CleanCandidate, TargetVer) <= 0;
+    Exit;
+  end;
+
+  if (CleanSpec <> '') and ((CleanSpec[1] = 'v') or (CleanSpec[1] = 'V')) then
+    CleanSpec := Copy(CleanSpec, 2, Length(CleanSpec) - 1);
+  if (CleanCandidate <> '') and ((CleanCandidate[1] = 'v') or (CleanCandidate[1] = 'V')) then
+    CleanCandidate := Copy(CleanCandidate, 2, Length(CleanCandidate) - 1);
+
+  Result := (CleanCandidate = CleanSpec);
+end;
+
 { Queries registered package repositories to locate a package satisfying a SemVer constraint. }
 function FindPackageInEcosystem(const PkgName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName: string; const TargetRepo: string = ''): Boolean;
 var
   CacheDir, CacheFile, RawJson, PkgKey, CandidateVer, DesiredVer, CurrentRepo: string;
+  BestVer, BestDownloadURL, BestChecksum: string;
   Parser: TJSONParser;
   Data: TJSONData;
   RootObj, PackagesObj, PkgObj, VerObj: TJSONObject;
@@ -5720,8 +5873,9 @@ begin
                     MatchedInThisRepo := False;
                     PkgObj := TJSONObject(PackagesObj.Items[i]);
                     DesiredVer := ReqVersion;
-                    if (DesiredVer = '') or SameText(DesiredVer, 'latest') then
-                      DesiredVer := PkgObj.Get('latest', '');
+                    BestVer := '';
+                    BestDownloadURL := '';
+                    BestChecksum := '';
 
                     VersionsArr := PkgObj.Get('versions', TJSONArray(nil));
                     if Assigned(VersionsArr) then
@@ -5732,49 +5886,61 @@ begin
                         begin
                           VerObj := TJSONObject(VersionsArr.Objects[j]);
                           CandidateVer := VerObj.Get('version', '');
-                          if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                          if MatchSemVerRange(CandidateVer, DesiredVer) then
                           begin
-                            if not Result then
+                            if (BestVer = '') or (CompareSemVer(CandidateVer, BestVer) > 0) then
                             begin
-                              FoundVersion := CandidateVer;
-                              DownloadURL := VerObj.Get('download_url', '');
-                              Checksum := VerObj.Get('checksum', '');
-                              RepoName := RootObj.Get('name', CurrentRepo);
-                              Result := True;
-                              MatchedInThisRepo := True;
-                            end
-                            else
-                            begin
-                              MatchedInThisRepo := True;
+                              BestVer := CandidateVer;
+                              BestDownloadURL := VerObj.Get('download_url', '');
+                              BestChecksum := VerObj.Get('checksum', '');
                             end;
-                            Break;
                           end;
                         end
                         else if VersionsArr.Types[j] = jtString then
                         begin
                           CandidateVer := VersionsArr.Strings[j];
-                          if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                          if MatchSemVerRange(CandidateVer, DesiredVer) then
                           begin
-                            if not Result then
+                            if (BestVer = '') or (CompareSemVer(CandidateVer, BestVer) > 0) then
                             begin
-                              FoundVersion := CandidateVer;
-                              DownloadURL := PkgObj.Get('download', '');
-                              DownloadURL := StringReplace(DownloadURL, '{tag}', PkgKey + '@' + CandidateVer, [rfReplaceAll]);
-                              DownloadURL := StringReplace(DownloadURL, '{package}', PkgKey, [rfReplaceAll]);
-                              DownloadURL := StringReplace(DownloadURL, '{version}', CandidateVer, [rfReplaceAll]);
-                              Checksum := '';
-                              RepoName := RootObj.Get('name', CurrentRepo);
-                              Result := True;
-                              MatchedInThisRepo := True;
-                            end
-                            else
-                            begin
-                              MatchedInThisRepo := True;
+                              BestVer := CandidateVer;
+                              BestDownloadURL := PkgObj.Get('download', '');
+                              BestDownloadURL := StringReplace(BestDownloadURL, '{tag}', PkgKey + '@' + CandidateVer, [rfReplaceAll]);
+                              BestDownloadURL := StringReplace(BestDownloadURL, '{package}', PkgKey, [rfReplaceAll]);
+                              BestDownloadURL := StringReplace(BestDownloadURL, '{version}', CandidateVer, [rfReplaceAll]);
+                              BestChecksum := '';
                             end;
-                            Break;
                           end;
                         end;
                       end;
+                    end;
+
+                    if (BestVer = '') and ((DesiredVer = '') or SameText(DesiredVer, 'latest')) then
+                    begin
+                      BestVer := PkgObj.Get('latest', '');
+                      if BestVer <> '' then
+                      begin
+                        BestDownloadURL := PkgObj.Get('download', '');
+                        BestDownloadURL := StringReplace(BestDownloadURL, '{tag}', PkgKey + '@' + BestVer, [rfReplaceAll]);
+                        BestDownloadURL := StringReplace(BestDownloadURL, '{package}', PkgKey, [rfReplaceAll]);
+                        BestDownloadURL := StringReplace(BestDownloadURL, '{version}', BestVer, [rfReplaceAll]);
+                        BestChecksum := PkgObj.Get('checksum', '');
+                      end;
+                    end;
+
+                    if BestVer <> '' then
+                    begin
+                      if not Result then
+                      begin
+                        FoundVersion := BestVer;
+                        DownloadURL := BestDownloadURL;
+                        Checksum := BestChecksum;
+                        RepoName := RootObj.Get('name', CurrentRepo);
+                        Result := True;
+                        MatchedInThisRepo := True;
+                      end
+                      else
+                        MatchedInThisRepo := True;
                     end;
 
                     if MatchedInThisRepo and Result and (not SameText(RepoName, CurrentRepo)) then
@@ -5816,6 +5982,7 @@ function FindToolInEcosystem(const ToolName: string; const ReqVersion: string;
   const TargetRepo: string = ''): Boolean;
 var
   CacheDir, CurrentRepo, CacheFile, RawJson, DesiredVer, CandidateVer, ToolKey, DeclaredType: string;
+  BestVer, BestDownloadURL, BestChecksum: string;
   RepoList: TStringList;
   rIdx, i, j: Integer;
   Parser: TJSONParser;
@@ -5900,8 +6067,9 @@ begin
                     FoundType := 'third-party';
 
                   DesiredVer := ReqVersion;
-                  if (DesiredVer = '') or SameText(DesiredVer, 'latest') then
-                    DesiredVer := ToolObj.Get('latest', '');
+                  BestVer := '';
+                  BestDownloadURL := '';
+                  BestChecksum := '';
 
                   VersionsArr := ToolObj.Get('versions', TJSONArray(nil));
                   if Assigned(VersionsArr) then
@@ -5912,39 +6080,62 @@ begin
                       begin
                         VerObj := TJSONObject(VersionsArr.Objects[j]);
                         CandidateVer := VerObj.Get('version', '');
-                        if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                        if MatchSemVerRange(CandidateVer, DesiredVer) then
                         begin
-                          FoundVersion := CandidateVer;
-                          DownloadURL := VerObj.Get('download_url', '');
-                          if DownloadURL = '' then DownloadURL := VerObj.Get('url', '');
-                          Checksum := VerObj.Get('checksum', '');
-                          RepoName := RootObj.Get('name', CurrentRepo);
-                          Result := True;
-                          Break;
+                          if (BestVer = '') or (CompareSemVer(CandidateVer, BestVer) > 0) then
+                          begin
+                            BestVer := CandidateVer;
+                            BestDownloadURL := VerObj.Get('download_url', '');
+                            if BestDownloadURL = '' then BestDownloadURL := VerObj.Get('url', '');
+                            BestChecksum := VerObj.Get('checksum', '');
+                          end;
                         end;
                       end
                       else if VersionsArr.Types[j] = jtString then
                       begin
                         CandidateVer := VersionsArr.Strings[j];
-                        if (DesiredVer = '') or (CandidateVer = DesiredVer) then
+                        if MatchSemVerRange(CandidateVer, DesiredVer) then
                         begin
-                          FoundVersion := CandidateVer;
-                          DownloadURL := ToolObj.Get('download', '');
-                          Checksum := ToolObj.Get('checksum', '');
-                          RepoName := RootObj.Get('name', CurrentRepo);
-                          Result := True;
-                          Break;
+                          if (BestVer = '') or (CompareSemVer(CandidateVer, BestVer) > 0) then
+                          begin
+                            BestVer := CandidateVer;
+                            BestDownloadURL := ToolObj.Get('download', '');
+                            BestChecksum := ToolObj.Get('checksum', '');
+                          end;
                         end;
                       end;
                     end;
-                  end
-                  else
+                  end;
+
+                  if (BestVer = '') and ((DesiredVer = '') or SameText(DesiredVer, 'latest')) then
                   begin
-                    FoundVersion := ToolObj.Get('version', ToolObj.Get('latest', '1.0.0'));
-                    DownloadURL := ToolObj.Get('download_url', ToolObj.Get('download', ''));
-                    Checksum := ToolObj.Get('checksum', '');
+                    BestVer := ToolObj.Get('latest', '');
+                    if BestVer <> '' then
+                    begin
+                      BestDownloadURL := ToolObj.Get('download_url', ToolObj.Get('download', ''));
+                      BestChecksum := ToolObj.Get('checksum', '');
+                    end;
+                  end;
+
+                  if BestVer <> '' then
+                  begin
+                    FoundVersion := BestVer;
+                    DownloadURL := BestDownloadURL;
+                    Checksum := BestChecksum;
                     RepoName := RootObj.Get('name', CurrentRepo);
-                    Result := (DownloadURL <> '');
+                    Result := True;
+                  end
+                  else if not Assigned(VersionsArr) then
+                  begin
+                    CandidateVer := ToolObj.Get('version', ToolObj.Get('latest', '1.0.0'));
+                    if MatchSemVerRange(CandidateVer, DesiredVer) then
+                    begin
+                      FoundVersion := CandidateVer;
+                      DownloadURL := ToolObj.Get('download_url', ToolObj.Get('download', ''));
+                      Checksum := ToolObj.Get('checksum', '');
+                      RepoName := RootObj.Get('name', CurrentRepo);
+                      Result := (DownloadURL <> '');
+                    end;
                   end;
 
                   if Result then
@@ -11932,6 +12123,7 @@ type
     Homepage: string;
     ToolType: string;
     DirPath: string;
+    BinPath: string;
     StatusScript: string;
     InstallScript: string;
     RemoveScript: string;
@@ -12069,6 +12261,7 @@ begin
   Tool.Homepage := '';
   Tool.ToolType := '';
   Tool.DirPath := DirPath;
+  Tool.BinPath := '';
   Tool.StatusScript := '';
   Tool.InstallScript := '';
   Tool.RemoveScript := '';
@@ -12097,6 +12290,7 @@ begin
         Tool.Version := Obj.Get('version', '');
         Tool.Author := Obj.Get('author', '');
         Tool.Homepage := Obj.Get('homepage', '');
+        Tool.BinPath := Obj.Get('bin', Obj.Get('exec', Obj.Get('main', '')));
         TypeStr := LowerCase(Obj.Get('type', ''));
 
         if not IsCustom then
@@ -12170,6 +12364,7 @@ var
               Tool.Author := '';
               Tool.Homepage := '';
               Tool.DirPath := SubDir;
+              Tool.BinPath := '';
               Tool.IsCustom := True;
               if StartsText('blaise-', LowerCase(SR.Name)) then
               begin
@@ -12275,7 +12470,7 @@ begin
           IntToStr(BuiltInCount) + ', Co-Official: ' + IntToStr(CoOfficialCount) +
           ', Third-Party: ' + IntToStr(ThirdPartyCount) + ')');
   WriteLn('User Tools Directory: ' + GetGlobalToolsPath);
-  WriteLn('Commands: bv tool <list|search|info|install|update|outdated|remove|pack|init>');
+  WriteLn('Commands: bv tool <list|search|info|install|run|update|outdated|remove|pack|init>');
   WriteLn('');
 end;
 
@@ -13087,11 +13282,147 @@ begin
   WriteLn('');
 end;
 
+{ Executes an installed developer tool CLI or script (bv tool run <name> [args...]). }
+procedure CmdToolRun(const TargetNameArg: string);
+var
+  TargetLower, Ext, ExePath, RunnerCmd, FullArgs, Arg, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
+  AllTools: TBVToolArray;
+  FoundIndex, I, ExitCode: Integer;
+  ToolRecord: TBVTool;
+  FullCmdLine: string;
+begin
+  TargetLower := LowerCase(Trim(TargetNameArg));
+  if TargetLower = '' then
+  begin
+    WriteLn('Error: Tool name is required.');
+    WriteLn('Usage: bv tool run <tool-name> [arguments...]');
+    Exit;
+  end;
+
+  AllTools := DiscoverAllTools;
+  FoundIndex := -1;
+  for I := 0 to High(AllTools) do
+  begin
+    if (LowerCase(AllTools[I].Name) = TargetLower) or
+       (LowerCase(AllTools[I].Name) = 'blaise-' + TargetLower) or
+       ('blaise-' + LowerCase(AllTools[I].Name) = TargetLower) then
+    begin
+      FoundIndex := I;
+      Break;
+    end;
+  end;
+
+  if FoundIndex < 0 then
+  begin
+    WriteLn('Error: Developer tool "' + TargetNameArg + '" is not installed.');
+    WriteLn('Hint: Run "bv tool list" to inspect installed tools, or "bv tool install ' + TargetNameArg + '" to download it.');
+    Exit;
+  end;
+
+  ToolRecord := AllTools[FoundIndex];
+  ExePath := '';
+
+  // 1. Explicit bin declared in tool.json
+  if ToolRecord.BinPath <> '' then
+  begin
+    if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.BinPath) then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.BinPath
+    else if FileExists(ToolRecord.BinPath) then
+      ExePath := ToolRecord.BinPath;
+  end;
+
+  // 2. Auto-detection heuristics
+  if ExePath = '' then
+  begin
+    if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.Name + '.exe') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.Name + '.exe'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.Name) then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + ToolRecord.Name
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'bin' + DirectorySeparator + ToolRecord.Name + '.exe') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'bin' + DirectorySeparator + ToolRecord.Name + '.exe'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'bin' + DirectorySeparator + ToolRecord.Name) then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'bin' + DirectorySeparator + ToolRecord.Name
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'run.py') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'run.py'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'main.py') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'main.py'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'run.pas') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'run.pas'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'cli.js') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'cli.js'
+    else if FileExists(IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'index.js') then
+      ExePath := IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'index.js';
+  end;
+
+  if ExePath = '' then
+  begin
+    WriteLn('Error: No executable or main entry script detected for tool "' + ToolRecord.Name + '".');
+    WriteLn('Hint: Specify a "bin" or "main" property in ' + IncludeTrailingPathDelimiter(ToolRecord.DirPath) + 'tool.json.');
+    Exit;
+  end;
+
+  Ext := LowerCase(ExtractFileExt(ExePath));
+  RunnerCmd := '';
+  if Ext = '.py' then
+  begin
+    if FindPythonExecutable(PyExe, PyVer, DummyDesc) then
+      RunnerCmd := PyExe
+    else
+      RunnerCmd := 'python';
+  end
+  else if Ext = '.pas' then
+  begin
+    if FindInstantFPCExecutable(IfpcExe, IfpcVer, DummyDesc) then
+      RunnerCmd := IfpcExe
+    else
+      RunnerCmd := 'instantfpc';
+  end
+  else if Ext = '.js' then
+    RunnerCmd := 'node';
+
+  // Collect arguments passed after "bv tool run <name>"
+  FullArgs := '';
+  for I := 4 to ParamCount do
+  begin
+    Arg := ParamStr(I);
+    if Pos(' ', Arg) > 0 then
+      Arg := '"' + Arg + '"';
+    if FullArgs = '' then
+      FullArgs := Arg
+    else
+      FullArgs := FullArgs + ' ' + Arg;
+  end;
+
+  if RunnerCmd <> '' then
+  begin
+    if FullArgs <> '' then
+      FullCmdLine := RunnerCmd + ' "' + ExePath + '" ' + FullArgs
+    else
+      FullCmdLine := RunnerCmd + ' "' + ExePath + '"';
+  end
+  else
+  begin
+    if FullArgs <> '' then
+      FullCmdLine := '"' + ExePath + '" ' + FullArgs
+    else
+      FullCmdLine := '"' + ExePath + '"';
+  end;
+
+  {$IFDEF WINDOWS}
+  ExitCode := ExecuteProcess('cmd', '/c ' + FullCmdLine);
+  {$ELSE}
+  ExitCode := ExecuteProcess('/bin/sh', '-c "' + StringReplace(FullCmdLine, '"', '\"', [rfReplaceAll]) + '"');
+  {$ENDIF}
+
+  if ExitCode <> 0 then
+    Halt(ExitCode);
+end;
+
 { Creates a new tool project scaffold with tool.json and lifecycle scripts (bv tool init). }
 procedure CmdToolInit(const NameArg: string; IsLocal: Boolean = False);
 var
   ToolName, ToolDir, ManifestFile, ReadmeFile: string;
-  StatusScript, InstallScript, UpdateScript, RemoveScript: string;
+  RunScript, StatusScript, InstallScript, UpdateScript, RemoveScript: string;
 begin
   ToolName := LowerCase(Trim(NameArg));
   if ToolName = '' then
@@ -13123,6 +13454,7 @@ begin
     '  "author": "Developer",' + LineEnding +
     '  "license": "MIT",' + LineEnding +
     '  "type": "third-party",' + LineEnding +
+    '  "bin": "run.py",' + LineEnding +
     '  "scripts": {' + LineEnding +
     '    "status": "status.py",' + LineEnding +
     '    "install": "install.py",' + LineEnding +
@@ -13138,7 +13470,16 @@ begin
     '## Usage' + LineEnding +
     '- Check status: `bv tool list`' + LineEnding +
     '- Inspect details: `bv tool info ' + ToolName + '`' + LineEnding +
+    '- Run tool CLI: `bv tool run ' + ToolName + ' [args...]`' + LineEnding +
     '- Package release: `bv tool pack ' + ToolName + '`' + LineEnding);
+
+  RunScript := ToolDir + 'run.py';
+  WriteStringToFile(RunScript,
+    '#!/usr/bin/env python3' + LineEnding +
+    'import sys' + LineEnding + LineEnding +
+    'print(f"[{' + '''' + ToolName + '''' + '}] Tool CLI running...")' + LineEnding +
+    'if len(sys.argv) > 1:' + LineEnding +
+    '    print("Arguments:", sys.argv[1:])' + LineEnding);
 
   StatusScript := ToolDir + 'status.py';
   WriteStringToFile(StatusScript,
@@ -13169,9 +13510,11 @@ begin
   WriteLn('  Location:    ' + ToolDir);
   WriteLn('  Type:        [Third-Party]');
   WriteLn('  Manifest:    tool.json');
+  WriteLn('  Entry Bin:   run.py (bv tool run ' + ToolName + ')');
   WriteLn('============================================================');
   WriteLn('To test your tool immediately, run:');
   WriteLn('  bv tool list');
+  WriteLn('  bv tool run ' + ToolName);
   WriteLn('  bv tool info ' + ToolName);
   WriteLn('');
 end;
@@ -13200,10 +13543,12 @@ begin
     CmdToolPack(Target)
   else if (SubCmd = 'init') or (SubCmd = 'create') or (SubCmd = 'new') then
     CmdToolInit(Target, SameText(ExtraArg, '--local') or SameText(ParamStr(4), '--local'))
+  else if (SubCmd = 'run') or (SubCmd = 'exec') then
+    CmdToolRun(Target)
   else
   begin
     WriteLn('Unknown subcommand: bv tool ' + SubCmd);
-    WriteLn('Usage: bv tool <list|search|info|install|update|outdated|remove|pack|init> [params]');
+    WriteLn('Usage: bv tool <list|search|info|install|run|update|outdated|remove|pack|init> [params]');
   end;
 end;
 
@@ -25478,6 +25823,18 @@ begin
       '   search <term>              Searches packages in registered repositories' + LineEnding +
       '   outdated [--global|-g]     Checks for available updates in installed packages' + LineEnding +
       '   pack [dir]                 Assembles & verifies release artifact (.zip with SHA-256)'
+  else if Cmd = 'tool' then
+    Result :=
+      '  [HINT] Available subcommands for ''tool'':' + LineEnding +
+      '   list                       Lists installed developer tools' + LineEnding +
+      '   search <term>              Searches tools in registered repositories' + LineEnding +
+      '   info <name>                Displays tool metadata, versions and scripts' + LineEnding +
+      '   install <name[@ver]>       Installs tool into ~/.blaisevue/tools' + LineEnding +
+      '   run <name> [args]          Executes installed tool CLI or entry script' + LineEnding +
+      '   update [<name>]            Updates tools to latest registered versions' + LineEnding +
+      '   remove <name>              Uninstalls a tool from ~/.blaisevue/tools' + LineEnding +
+      '   pack [dir]                 Packages tool into distributable .zip archive' + LineEnding +
+      '   init <name>                Creates a new tool project scaffold'
   else if Cmd = 'path' then
     Result :=
       '  [HINT] Available subcommands for ''path'':' + LineEnding +
@@ -27159,6 +27516,8 @@ var
   HasGit, HasFpc, HasPas2, HasMormot, HasNode, HasLazarus, HasPython, HasIfpc: Boolean;
   HasJava, HasAdb, HasEmulator: Boolean;
   MajorJava, AvdCount: Integer;
+  AllTools: TBVToolArray;
+  BuiltInCount, UserCount, ToolIdx: Integer;
   AllHealthy: Boolean;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -27303,6 +27662,21 @@ begin
     WriteLn('  [v] Docker CLI:           ', DockerVer, ' detected (bv mormot docker)')
   else
     WriteLn('  [!] Docker CLI:           Not detected (Optional: production micro-containers)');
+
+  // Developer Tools Ecosystem
+  AllTools := DiscoverAllTools;
+  BuiltInCount := 0;
+  UserCount := 0;
+  for ToolIdx := 0 to High(AllTools) do
+    if AllTools[ToolIdx].IsCustom then
+      Inc(UserCount)
+    else
+      Inc(BuiltInCount);
+
+  if Length(AllTools) > 0 then
+    WriteLn('  [v] Developer Tools:      ', Length(AllTools), ' tools active (', BuiltInCount, ' built-in, ', UserCount, ' user tools in ~/.blaisevue/tools)')
+  else
+    WriteLn('  [-] Developer Tools:      0 tools active (manage via "bv tool list")');
 
   WriteLn('');
   WriteLn('[3] Mobile & Cross-Platform Tooling (Android / Capacitor):');
@@ -27954,6 +28328,7 @@ begin
   WriteLn('  bv tool install [<repo>:]<name[@ver]> Installs tool from ecosystem into user tools (~/.blaisevue/tools)');
   WriteLn('  bv tool install <url|zip>  Installs tool from local archive or download URL');
   WriteLn('  bv tool outdated           Checks for available updates across all installed tools');
+  WriteLn('  bv tool run <name> [args]  Runs an installed developer tool CLI or script');
   WriteLn('  bv tool update [<name>]    Updates user tools to latest versions found in ecosystem');
   WriteLn('  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)');
   WriteLn('  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)');

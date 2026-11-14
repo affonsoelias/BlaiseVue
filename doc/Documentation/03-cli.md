@@ -644,7 +644,7 @@ bv lib remove test --global
 
 ---
 
-### 4. `bv tool <list|search|info|install|outdated|update|remove|pack|init>` (Developer Tool Manager)
+### 4. `bv tool <list|search|info|install|run|outdated|update|remove|pack|init>` (Developer Tool Manager)
 Manages built-in framework developer tools (`packages/tools/`), co-official ecosystem tools, and third-party user extensions (`~/.blaisevue/tools/`):
 
 #### Tool Classification & Origin
@@ -656,20 +656,22 @@ Manages built-in framework developer tools (`packages/tools/`), co-official ecos
 - **`bv tool list`**: Displays a formatted table of all installed tools across both built-in and user directories, showing name, category, version, classification, and runtime status.
 - **`bv tool search [term]`**: Searches the synchronized ecosystem catalog (`*-ecosystem.json`) for available tools matching a keyword or category.
 - **`bv tool info <name>`**: Displays a comprehensive technical card for a tool (installed version, latest ecosystem version, classification, repository, directory path, author, homepage, and configured lifecycle scripts).
-- **`bv tool install [<repo>:]<name[@version]>`**: Resolves the tool in registered ecosystem repositories, verifies integrity via SHA-256, extracts it into `~/.blaisevue/tools/<name>/`, and executes its `install` script. For built-in tools, it runs the official IDE setup hook.
+- **`bv tool install [<repo>:]<name[@version]>`**: Resolves the tool in registered ecosystem repositories supporting exact and flexible SemVer ranges (`^1.0.0`, `~1.2.0`, `latest`, `*`), verifies integrity via SHA-256, extracts it into `~/.blaisevue/tools/<name>/`, and executes its `install` script. For built-in tools, it runs the official IDE setup hook.
 - **`bv tool install <url|archive.zip>`**: Directly installs a tool package from a local `.zip` file or download URL into `~/.blaisevue/tools/<name>/`.
+- **`bv tool run <name> [args...]`** (or `bv tool exec`): Directly invokes an installed developer tool CLI, binary, or entry script (`bin` / `exec` / `main` in `tool.json`, native `.exe`, `run.py`, `run.pas`, or `cli.js`), seamlessly forwarding arguments.
 - **`bv tool outdated`**: Inspects all installed tools against registered ecosystem catalogs, reporting which tools have newer versions available.
 - **`bv tool update [<name>]`**: Updates a specific user tool (or all user tools in `~/.blaisevue/tools/`) to the latest version found in the ecosystem.
 - **`bv tool remove <name>`**: Executes the tool's uninstallation script (`remove.py`/`remove.pas`) and cleanly removes the directory from `~/.blaisevue/tools/`.
 - **`bv tool pack [dir]`**: Compiles and packages a tool directory into a distributable release archive (`dist/<name>-<version>.zip`) with an accompanying `.sha256` checksum file.
-- **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
+- **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, entry executable (`run.py`), and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
 
 #### Folder Structure of a Tool Package
 Both libraries and tools can include documentation (`doc/`) and runnable examples (`examples/`):
 ```
 my-tool/
-├── tool.json          # Manifest with version, category, and scripts
+├── tool.json          # Manifest with name, version, category, bin, and scripts
 ├── README.md          # Tool documentation and usage guide
+├── run.py             # Main CLI entry script (invoked via "bv tool run my-tool")
 ├── doc/               # Extended architecture and technical manuals
 ├── examples/          # Sample configurations, scripts, and demo code
 ├── status.py          # Status reporting hook
