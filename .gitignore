@@ -54,6 +54,7 @@ packagefiles.xml
 !vendor/**/*.o
 !vendor/**/*.obj
 !vendor/**/*.a
+vendor/mormot2/packages/lazarus/lib/
 
 # 📊 Local Logs & Trace
 compile_log.txt
