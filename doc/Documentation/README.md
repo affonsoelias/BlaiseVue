@@ -102,6 +102,7 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 53. [53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md) — Linking official Pas2JS built-in packages (chartjs, fcl-base, jspdf) and importing legacy Lazarus/Delphi business logic without rewriting.
 54. [54. Lazarus IDE Integration & Design-Time Package (blaisevue_ide.lpk)](54-lazarus-ide-package.md) — Official Lazarus design-time package with tri-syntax highlighting (`.bv`), File -> New wizards, Tools menu, and `bv lazarus init`.
 56. [56. Multi-Version SDK & Compiler Management (bv versions, bv pas2js)](56-multi-version-sdk-management.md) — Dynamic upstream release discovery (GitLab, GitHub, npm), project version pin (.pas2js-version), immutable factory baseline protection (vendor/), and interactive cleanup wizard (bv versions clean).
+57. [57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md) — Pluggable tooling engine, Cargo/Git-style dynamic CLI dispatch (bv <tool>), tool.json manifest specification, lifecycle hooks, and SHA-256 release packaging (bv tool pack).
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.

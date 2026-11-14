@@ -704,6 +704,8 @@ my-tool/
 └── remove.py          # Cleanup hook
 ```
 
+See detailed documentation in **[57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md)**.
+
 ---
 
 ## 9. ⚙️ Project Configuration & Search Paths (`bv license`, `bv meta`, `bv path`, `bv reset`)
