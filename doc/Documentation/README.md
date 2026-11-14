@@ -212,6 +212,7 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv tool install [<repo>:]<name[@ver]> Installs tool from ecosystem into user tools (~/.blaisevue/tools)
   bv tool install <url|zip>  Installs tool from local archive or download URL
   bv tool outdated           Checks for available updates across all installed tools
+  bv tool run <name> [args]  Runs an installed developer tool CLI or script
   bv tool update [<name>]    Updates user tools to latest versions found in ecosystem
   bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)
   bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)
@@ -230,5 +231,6 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)
   bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git
   bv channel [use <name>]    Inspects or switches framework branch (main/develop)
+  bv rollback                Restores previous CLI binary from backup (bv.bak)
   bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features
 ```
