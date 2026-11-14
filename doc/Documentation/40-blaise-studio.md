@@ -68,11 +68,11 @@ Output:
 ### 1. 📊 Cockpit / Project Overview
 - **Real-Time Project Stats**: Total `.bv` components analyzed, active SPA routes, lines of Pascal code compiled, and backend mORMot 2 health status.
 - **Fast Action Buttons**:
-  - `🔨 Executar Build de Desenvolvimento` (`bv run dev`).
-  - `🧪 Rodar Suíte Vitest` (`bv test`).
-  - `📱 Sincronizar Capacitor Android` (`bv mobile sync`).
-  - `🖥️ Sincronizar Desktop WebUI` (`bv desktop sync`).
-  - `📦 Scaffolding CRUD mORMot 2` (`bv mormot crud`).
+  - `🔨 Run Development Build` (`bv run dev`).
+  - `🧪 Run Vitest Test Suite` (`bv test`).
+  - `📱 Synchronize Capacitor Android` (`bv mobile sync`).
+  - `🖥️ Synchronize Desktop WebUI` (`bv desktop sync`).
+  - `📦 Scaffold mORMot 2 CRUD` (`bv mormot crud`).
 
 ---
 

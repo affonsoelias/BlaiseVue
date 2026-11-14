@@ -20,12 +20,12 @@ BlaiseVue delivers official design-time integration for the **Lazarus IDE**, bri
    - **BlaiseVue View (.bv)**: Scaffolds a full routed page view with standard layout.
 
 3. **Integrated Tools Menu (`Tools -> BlaiseVue`)**:
-   - **Formatar Componente Ativo (`Ctrl+Shift+F`)**: Formata instantaneamente o componente `.bv` ativo com indentação padronizada de 2 espaços no template HTML, 2/4/6 espaços no script Pascal e 2/4 espaços no CSS, com suporte total a desfazer (`Ctrl+Z`).
-   - **Autocomplete BlaiseVue (`Ctrl+Espaço`)**: Popup de autocompletar contextual para diretivas reativas (`b-model`, `b-for`, `b-if`, `@click`), componentes BlaiseUI (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, etc.) e blocos Pascal (`props:`, `data:`, `methods:`, `computed:`, etc.).
-   - **Verificar Componente Ativo (`bv check`)**: Analisa a árvore sintática (AST) do componente `.bv` aberto e exibe erros de validação na janela de Mensagens do Lazarus.
-   - **Listar Search Paths (`bv path`)**: Exibe as unidades de busca do compilador e bibliotecas Pas2JS mapeadas no `app.cfg`.
-   - **Executar Suíte de Testes (`bv test`)**: Dispara a suíte de testes com resultados exibidos diretamente na IDE.
-   - **Sincronizar Projeto (`bv lazarus init`)**: Sincroniza a árvore do Projeto (.lpi) com todos os arquivos do projeto.
+   - **Format Active Component (`Ctrl+Shift+F`)**: Instantly formats the active `.bv` component with standardized 2-space indentation in HTML templates, 2/4/6 spaces in Pascal scripts, and 2/4 spaces in CSS, with full undo support (`Ctrl+Z`).
+   - **BlaiseVue Autocomplete (`Ctrl+Space`)**: Contextual auto-completion popup for reactive directives (`b-model`, `b-for`, `b-if`, `@click`), BlaiseUI components (`<bv-btn>`, `<bv-card>`, `<bv-modal>`, etc.), and Pascal blocks (`props:`, `data:`, `methods:`, `computed:`, etc.).
+   - **Verify Active Component (`bv check`)**: Parses the Abstract Syntax Tree (AST) of the open `.bv` component and displays validation errors directly in the Lazarus Messages window.
+   - **List Search Paths (`bv path`)**: Displays compiler search paths (-Fu) and Pas2JS libraries configured in `app.cfg`.
+   - **Run Test Suite (`bv test`)**: Triggers the test suite with results displayed directly inside the IDE.
+   - **Synchronize Project (`bv lazarus init`)**: Synchronizes the Lazarus project tree (.lpi) with all project files.
 
 4. **Project Generation & Full Architecture Sync (`bv lazarus init`)**:
    - Automatically generates a complete Lazarus Project (`.lpi` and `.lpr`) from any existing BlaiseVue project.

@@ -157,12 +157,12 @@ Here is a complete, friendly Single File Component demonstrating the full lifecy
 ```html
 <template>
   <div class="clock-card">
-    <h2>⏰ Relógio em Tempo Real</h2>
+    <h2>⏰ Real-Time Live Clock</h2>
     <p class="time-display">{{ currentTime }}</p>
     <p class="status-badge">Status: {{ statusText }}</p>
     
     <button class="bui-btn bui-btn-primary" @click="doPing">
-      🔔 Testar Ação
+      🔔 Test Action
     </button>
   </div>
 </template>
@@ -170,43 +170,43 @@ Here is a complete, friendly Single File Component demonstrating the full lifecy
 <script>
   data:
     currentTime: string = '--:--:--';
-    statusText: string = 'Iniciando...';
+    statusText: string = 'Initializing...';
     timerId: Integer = 0;
     pingCount: Integer = 0;
 
   created:
     begin
-      // 1. Momento de criação na memória: dados preparados
-      this['statusText'] := 'Componente carregado na memória!';
+      // 1. In-memory instantiation: reactive state initialized
+      this['statusText'] := 'Component loaded in memory!';
       ConsoleLog('LiveClock: created');
     end;
 
   mounted:
     begin
-      // 2. Momento de chegada na tela: inicia o relógio a cada 1 segundo
-      this['statusText'] := 'Relógio ativo na tela.';
-      ShowToast('Relógio iniciado!');
+      // 2. DOM mount: starts 1-second interval clock
+      this['statusText'] := 'Live clock active in DOM.';
+      ShowToast('Clock started!');
       ConsoleLog('LiveClock: mounted');
 
-      // Atualiza a hora imediatamente
-      this.atualizarHora();
+      // Update current time immediately
+      this.updateTime();
 
-      // Dispara atualização contínua a cada 1000ms (1 segundo)
+      // Dispatch continuous tick every 1000ms (1 second)
       this['timerId'] := StartInterval(procedure
       begin
-        this.atualizarHora();
+        this.updateTime();
       end, 1000);
     end;
 
   unmounted:
     begin
-      // 3. Momento de saída da tela: para o relógio e libera memória
-      ConsoleLog('LiveClock: unmounted - parando timer');
+      // 3. Unmount cleanup: cancel interval timer and free resources
+      ConsoleLog('LiveClock: unmounted - stopping timer');
       StopInterval(Integer(this['timerId']));
     end;
 
   methods:
-    procedure atualizarHora;
+    procedure updateTime;
     begin
       this['currentTime'] := NowTimestampStr;
     end;
@@ -214,7 +214,7 @@ Here is a complete, friendly Single File Component demonstrating the full lifecy
     procedure doPing;
     begin
       Inc(this['pingCount']);
-      ShowToast('Você clicou ' + String(this['pingCount']) + ' vez(es)!');
+      ShowToast('You clicked ' + String(this['pingCount']) + ' time(s)!');
     end;
 </script>
 

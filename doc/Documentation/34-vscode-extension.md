@@ -19,92 +19,92 @@ BlaiseVue delivers a first-class Developer Experience (DX) for modern Object Pas
 
 ---
 
-## 📦 Guia Completo de Instalação e Ativação (Passo a Passo)
+## 📦 Complete Installation & Activation Guide (Step-by-Step)
 
-A extensão oficial do BlaiseVue é compatível com **Visual Studio Code**, **Google Antigravity IDE**, **Cursor** e outros editores baseados em VS Code / VSCodium.
+The official BlaiseVue extension is compatible with **Visual Studio Code**, **Google Antigravity IDE**, **Cursor**, and other editors based on VS Code / VSCodium.
 
 ---
 
-### Método 1: Instalação Automática via BlaiseVue CLI (Recomendado)
+### Method 1: Automatic Installation via BlaiseVue CLI (Recommended)
 
-A forma mais rápida e recomendada de instalar ou atualizar a extensão em todas as suas IDEs compatíveis:
+The fastest and recommended way to install or update the extension across all your compatible IDEs:
 
 ```bash
-# Instala a extensão oficial do VS Code / Antigravity IDE / Cursor:
+# Installs official extension for VS Code / Antigravity IDE / Cursor:
 bv tool install blaise-vscode
 
-# (alias curto também suportado: bv tool install vscode)
+# (short alias also supported: bv tool install vscode)
 ```
 
-**O que este comando faz nos bastidores:**
-1. Localiza o pacote da extensão em `packages/tools/blaise-vscode/` e seu manifesto `tool.json`.
-2. Executa o script multiplataforma de instalação (`install.py`, ou `install.pas` via InstantFPC) com o Python detectado pelo CLI (`bv doctor`).
-3. Detecta automaticamente os diretórios de extensões ativos no seu perfil de usuário (`~/.vscode/extensions`, `~/.antigravity-ide/extensions`, `~/.antigravity/extensions`).
-4. Faz o deploy limpo dos grammars de sintaxe, schemas de autocompletion, catálogo de componentes e provedor de formatação.
+**What this command does behind the scenes:**
+1. Locates the extension package in `packages/tools/blaise-vscode/` and its `tool.json` manifest.
+2. Executes the cross-platform installation script (`install.py`, or `install.pas` via InstantFPC) with the Python environment detected by the CLI (`bv doctor`).
+3. Automatically detects active extension directories in your user profile (`~/.vscode/extensions`, `~/.antigravity-ide/extensions`, `~/.antigravity/extensions`).
+4. Performs a clean deployment of syntax grammars, auto-completion schemas, component catalogs, and the formatting provider.
 
 > [!IMPORTANT]
-> **Passo Obrigatório de Ativação**: Após executar a instalação, você **DEVE recarregar a janela da IDE** para que o editor carregue a nova versão da extensão:
-> 1. Pressione **`Ctrl + Shift + P`** (ou `Cmd + Shift + P` no macOS) para abrir a Paleta de Comandos (*Command Palette*).
-> 2. Digite e selecione: **`Developer: Reload Window`** (Recarregar Janela).
-> 3. *Alternativa*: Você também pode simplesmente fechar e reabrir o VS Code / Antigravity IDE.
+> **Mandatory Activation Step**: After running the installation, you **MUST reload the IDE window** so that the editor loads the new version of the extension:
+> 1. Press **`Ctrl + Shift + P`** (or `Cmd + Shift + P` on macOS) to open the Command Palette.
+> 2. Type and select: **`Developer: Reload Window`**.
+> 3. *Alternative*: You can also simply close and reopen VS Code / Antigravity IDE.
 
 ---
 
-### Método 2: Instalação Manual via Interface da IDE (Install from VSIX...)
+### Method 2: Manual Installation via IDE Graphical Interface (Install from VSIX...)
 
-Se você preferir instalar diretamente pela interface gráfica do VS Code ou Antigravity IDE sem precisar abrir o terminal:
+If you prefer to install directly through the VS Code or Antigravity IDE user interface without opening a terminal:
 
-1. Abra o painel lateral de **Extensões** pressionando **`Ctrl + Shift + X`** (ou clicando no ícone de blocos de extensões na barra lateral esquerda).
-2. Clique no menu de três pontinhos (**`...`**) localizado no canto superior direito do painel de extensões (*Views and More Actions* / Visualizações e Mais Ações).
-3. Selecione a opção **"Install from VSIX..."** (*Instalar a partir do VSIX...*).
-4. No gerenciador de arquivos que se abrir, navegue até a raiz do projeto e selecione o pacote compilado:
+1. Open the **Extensions** side panel by pressing **`Ctrl + Shift + X`** (or clicking the extensions block icon on the left activity bar).
+2. Click the three-dots menu (**`...`**) located in the top-right corner of the Extensions panel (*Views and More Actions*).
+3. Select **"Install from VSIX..."**.
+4. In the file picker that opens, navigate to the project root and select the compiled package:
    ```text
-   packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix
+   packages/tools/blaise-vscode/blaisevue-vscode-1.0.0.vsix
    ```
-5. Clique em **Install**. Uma notificação de sucesso aparecerá no canto inferior direito confirmando a instalação (*Completed installing BlaiseVue extension*).
-6. Pressione **`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`** para ativar.
+5. Click **Install**. A success notification will appear in the bottom-right corner confirming the installation (*Completed installing BlaiseVue extension*).
+6. Press **`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`** to activate.
 
 ---
 
-### Método 3: Instalação via Terminal com o comando `code`
+### Method 3: Installation via Terminal with the `code` CLI
 
-Se você possui o utilitário de linha de comando `code` (ou `cursor`) configurado no seu sistema:
+If you have the `code` (or `cursor`) command-line utility configured in your system `PATH`:
 
 ```bash
-# Para Visual Studio Code:
-code --install-extension packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix
+# For Visual Studio Code:
+code --install-extension packages/tools/blaise-vscode/blaisevue-vscode-1.0.0.vsix
 
-# Para Cursor:
-cursor --install-extension packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix
+# For Cursor:
+cursor --install-extension packages/tools/blaise-vscode/blaisevue-vscode-1.0.0.vsix
 ```
 
-Após a conclusão no terminal, recarregue a janela da IDE (**`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`**).
+After terminal installation completes, reload the IDE window (**`Ctrl + Shift + P`** $\rightarrow$ **`Developer: Reload Window`**).
 
 ---
 
-### Método 4: Script PowerShell Automatizado (Windows)
+### Method 4: Automated PowerShell Script (Windows)
 
-No Windows, você também pode executar o instalador PowerShell oficial:
+On Windows, you can also execute the official PowerShell installer:
 
 ```powershell
 cd packages/tools/blaise-vscode
 .\install_extension.ps1
 ```
 
-O script empacota automaticamente o bundle `.vsix` mais recente, remove versões antigas, distribui os arquivos para o VS Code e Antigravity IDE e exibe o status de conclusão na tela.
+The script automatically packages the latest `.vsix` bundle, removes stale versions, distributes files to VS Code and Antigravity IDE, and displays the completion status.
 
 ---
 
-### 🛠️ Comandos Adicionais do CLI `bv tool`
+### 🛠️ Additional `bv tool` CLI Commands
 
 ```bash
-# Listar status de instalação das ferramentas (VS Code, DevTools, Lazarus, etc.)
+# List installation status of developer tools (VS Code, DevTools, Lazarus, etc.)
 bv tool list
 
-# Empacotar uma nova versão standalone .vsix
+# Package a new standalone .vsix release
 bv tool pack blaise-vscode
 
-# Desinstalar a extensão do ambiente local
+# Uninstall the extension from the local environment
 bv tool remove blaise-vscode
 ```
 
@@ -151,14 +151,14 @@ Typing `<bv-` triggers a complete list of official components with typed propert
 
 ### 4. Code Formatting (`Format Document` & Format on Save)
 
-A extensão registra um provedor nativo de formatação para arquivos `.bv`:
-- **Atalho padrão do VS Code**: `Shift + Alt + F` (ou `Cmd + Shift + I` no macOS).
-- **Format on Save**: Suporta formatação automática ao salvar (`"editor.formatOnSave": true`).
-- **Paleta de Comandos**: `Ctrl + Shift + P` $\rightarrow$ `BlaiseVue: Format Component (.bv)`.
-- **Regras de Indentação**:
-  - Bloco `<template>`: Indentação de 2 espaços com cálculo automático de balanço de tags HTML abertas/fechadas.
-  - Bloco `<script>`: Indentação Pascal (2 espaços para seções `props:`, `data:`, `methods:`; 4 espaços para `procedure`, `begin`, `end;`; 6 espaços para comandos no corpo dos métodos).
-  - Bloco `<style>`: Indentação CSS (2 espaços para seletores, 4 espaços para propriedades).
+The extension registers a native formatting provider for `.bv` files:
+- **Default VS Code Shortcut**: `Shift + Alt + F` (or `Cmd + Shift + I` on macOS).
+- **Format on Save**: Supports automatic formatting on save (`"editor.formatOnSave": true`).
+- **Command Palette**: `Ctrl + Shift + P` $\rightarrow$ `BlaiseVue: Format Component (.bv)`.
+- **Indentation Rules**:
+  - `<template>` block: 2-space indentation with automatic calculation of open/closed HTML tag balance.
+  - `<script>` block: Pascal indentation (2 spaces for `props:`, `data:`, `methods:` sections; 4 spaces for `procedure`, `begin`, `end;`; 6 spaces for statements inside method bodies).
+  - `<style>` block: CSS indentation (2 spaces for selectors, 4 spaces for properties).
 
 ### 5. Productivity Snippets
 
