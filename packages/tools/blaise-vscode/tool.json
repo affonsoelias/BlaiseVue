@@ -6,6 +6,7 @@
   "scripts": {
     "status": "status.py",
     "install": "install.py",
+    "update": "install.py",
     "remove": "remove.py",
     "pack": "pack.py"
   }

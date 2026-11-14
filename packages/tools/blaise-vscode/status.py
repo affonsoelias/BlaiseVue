@@ -28,7 +28,7 @@ def check_status():
             except OSError:
                 pass
                 
-    print("Available (Run: bv extension install blaise-vscode)")
+    print("Available (Run: bv tool install blaise-vscode)")
 
 if __name__ == '__main__':
     check_status()
