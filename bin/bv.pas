@@ -15141,7 +15141,10 @@ begin
     if (RequestedCapVersion = '') and (not IsCheckOnly) then
     begin
       WriteLn('  Available Capacitor Target Versions:');
-      WriteLn('  [1] v8 LTS    (Latest stable - Recommended)');
+      if LatestCapVer <> '' then
+        WriteLn('  [1] Latest    (v' + LatestCapVer + ' - Recommended)')
+      else
+        WriteLn('  [1] v8 LTS    (Latest stable - Recommended)');
       WriteLn('  [2] v7 Legacy (Maintenance)');
       WriteLn('  [3] v6 Legacy (Maintenance)');
       WriteLn('  [4] @next     (Preview / Beta)');
@@ -15155,7 +15158,13 @@ begin
         WriteLn('Upgrade cancelled.');
         Exit;
       end;
-      if UserChoice = '1' then RequestedCapVersion := '8'
+      if UserChoice = '1' then
+      begin
+        if LatestCapVer <> '' then
+          RequestedCapVersion := LatestCapVer
+        else
+          RequestedCapVersion := '8';
+      end
       else if UserChoice = '2' then RequestedCapVersion := '7'
       else if UserChoice = '3' then RequestedCapVersion := '6'
       else if UserChoice = '4' then RequestedCapVersion := 'next'
@@ -23899,47 +23908,111 @@ end;
 { Upgrades or installs an upstream version of Synopse mORMot 2 into ~/.blaisevue/versions/mormot/<tag>. }
 procedure CmdMormotUpgrade(TargetTag: string);
 var
-  VersionsDir, DestDir, UserChoice, GitCmd: string;
-  GitAvail: Boolean;
-  HasBasePas: Boolean;
-  ProjectRoot: string;
+  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot: string;
+  GitAvail, HasBasePas: Boolean;
+  RemoteOut, Line, TagName: string;
+  TagLines, AvailableTags: TStringList;
+  i, PosRef, ChoiceIdx, MaxDisp: Integer;
 begin
   VersionsDir := GetGlobalVersionsPath('mormot');
   TargetTag := Trim(TargetTag);
+  GitAvail := HasCommand('git');
+
+  if StartsText('--tag=', TargetTag) then
+    TargetTag := Copy(TargetTag, 7, Length(TargetTag))
+  else if StartsText('--version=', TargetTag) then
+    TargetTag := Copy(TargetTag, 11, Length(TargetTag));
 
   if TargetTag = '' then
   begin
-    WriteLn('================================================================');
-    WriteLn('  Available Synopse mORMot 2 Upstream Versions');
-    WriteLn('================================================================');
-    WriteLn('  [1] latest   (Main branch - bleeding edge from GitHub)');
-    WriteLn('  [2] v2.2     (Official Release)');
-    WriteLn('  [3] v2.1     (Stable LTS)');
-    WriteLn('  [4] v2.0     (Initial v2 Release)');
-    WriteLn('  [5] Custom   (Specify custom Git tag, branch or commit)');
-    WriteLn('================================================================');
-    Write('Select version to install/upgrade [1-5] or [C]ancel: ');
-    ReadLn(UserChoice);
-    UserChoice := Trim(UserChoice);
-    if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
-    begin
-      WriteLn('Operation cancelled.');
-      Exit;
-    end;
+    AvailableTags := TStringList.Create;
+    try
+      if GitAvail then
+      begin
+        WriteLn('  [*] Querying available releases from Synopse GitHub ...');
+        if ExecCmdCapture('git ls-remote --tags --refs https://github.com/synopse/mORMot2.git', RemoteOut) and (RemoteOut <> '') then
+        begin
+          TagLines := TStringList.Create;
+          try
+            TagLines.Text := RemoteOut;
+            for i := TagLines.Count - 1 downto 0 do
+            begin
+              Line := Trim(TagLines[i]);
+              PosRef := Pos('refs/tags/', Line);
+              if PosRef > 0 then
+              begin
+                TagName := Copy(Line, PosRef + 10, Length(Line));
+                if (Pos('stable', LowerCase(TagName)) > 0) or (Pos('2.', TagName) = 1) then
+                begin
+                  if AvailableTags.IndexOf(TagName) < 0 then
+                    AvailableTags.Add(TagName);
+                end;
+              end;
+            end;
+          finally
+            TagLines.Free;
+          end;
+        end;
+      end;
 
-    if UserChoice = '1' then TargetTag := 'latest'
-    else if UserChoice = '2' then TargetTag := 'v2.2'
-    else if UserChoice = '3' then TargetTag := 'v2.1'
-    else if UserChoice = '4' then TargetTag := 'v2.0'
-    else if UserChoice = '5' then
-    begin
-      Write('Enter custom tag or branch: ');
-      ReadLn(TargetTag);
-      TargetTag := Trim(TargetTag);
-      if TargetTag = '' then Exit;
-    end
-    else
-      TargetTag := UserChoice;
+      if AvailableTags.Count = 0 then
+      begin
+        AvailableTags.Add('2.4-stable');
+        AvailableTags.Add('2.3.stable');
+        AvailableTags.Add('2.2.stable');
+        AvailableTags.Add('2.1.stable');
+      end;
+
+      MaxDisp := AvailableTags.Count;
+      if MaxDisp > 5 then MaxDisp := 5;
+
+      WriteLn('================================================================');
+      WriteLn('  Available Synopse mORMot 2 Upstream Releases');
+      WriteLn('================================================================');
+      for i := 0 to MaxDisp - 1 do
+      begin
+        if i = 0 then
+          WriteLn('    [' + IntToStr(i + 1) + '] ' + PadRight(AvailableTags[i], 12) + ' (Latest Official Release)')
+        else
+          WriteLn('    [' + IntToStr(i + 1) + '] ' + PadRight(AvailableTags[i], 12) + ' (Official Release)');
+      end;
+      WriteLn('    [L] latest       (Main branch - bleeding edge from GitHub)');
+      WriteLn('    [C] Custom       (Specify custom Git tag, branch or commit)');
+      WriteLn('================================================================');
+      Write('Select version to install/upgrade [1-' + IntToStr(MaxDisp) + ', L, C] or [Q]uit: ');
+      ReadLn(UserChoice);
+      UserChoice := Trim(UserChoice);
+
+      if (UserChoice = '') or (LowerCase(UserChoice) = 'q') or (LowerCase(UserChoice) = 'quit') or (LowerCase(UserChoice) = 'cancel') then
+      begin
+        WriteLn('Operation cancelled.');
+        Exit;
+      end
+      else if (LowerCase(UserChoice) = 'l') or (LowerCase(UserChoice) = 'latest') or (LowerCase(UserChoice) = 'main') then
+      begin
+        TargetTag := 'latest';
+      end
+      else if (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'custom') then
+      begin
+        Write('Enter custom tag or branch: ');
+        ReadLn(TargetTag);
+        TargetTag := Trim(TargetTag);
+        if TargetTag = '' then Exit;
+      end
+      else
+      begin
+        ChoiceIdx := StrToIntDef(UserChoice, -1);
+        if (ChoiceIdx >= 1) and (ChoiceIdx <= MaxDisp) then
+          TargetTag := AvailableTags[ChoiceIdx - 1]
+        else
+        begin
+          WriteLn('Invalid selection.');
+          Exit;
+        end;
+      end;
+    finally
+      AvailableTags.Free;
+    end;
   end;
 
   DestDir := ExcludeTrailingPathDelimiter(VersionsDir + TargetTag);
