@@ -101,6 +101,7 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
 53. [53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md) — Linking official Pas2JS built-in packages (chartjs, fcl-base, jspdf) and importing legacy Lazarus/Delphi business logic without rewriting.
 54. [54. Lazarus IDE Integration & Design-Time Package (blaisevue_ide.lpk)](54-lazarus-ide-package.md) — Official Lazarus design-time package with tri-syntax highlighting (`.bv`), File -> New wizards, Tools menu, and `bv lazarus init`.
+56. [56. Multi-Version SDK & Compiler Management (bv versions, bv pas2js)](56-multi-version-sdk-management.md) — Dynamic upstream release discovery (GitLab, GitHub, npm), project version pin (.pas2js-version), immutable factory baseline protection (vendor/), and interactive cleanup wizard (bv versions clean).
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
@@ -147,7 +148,7 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv check [file]            Validates component templates against script declarations (AST Type-Checker)
   bv clean                   Cleans generated build files (generated/ and dist/)
 
-  # === Backend & Full-Stack (Synopse mORMot 2) ===
+  # === Backend & Full-Stack (mORMot 2) ===
   bv mormot init             Scaffolds mORMot 2 backend server in server/
   bv mormot versions         Lists active, bundled and cached user mORMot versions
   bv mormot upgrade [--tag]  Interactively selects and downloads mORMot release
@@ -165,24 +166,7 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
   bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries
 
-  # === Alternative Backend: Horse ===
-  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)
-  bv horse versions          Lists installed and active Horse versions
-  bv horse upgrade           Interactively selects and downloads Horse release
-  bv horse use <version>     Switches active Horse version (.horse-version)
-  bv horse remove-version    Interactively removes a cached user version
-
-  # === Compiler (Pas2JS) ===
-  bv pas2js versions         Lists active, factory baseline and installed compiler versions
-  bv pas2js upgrade          Interactively selects and downloads Pas2JS distribution
-  bv pas2js use <version>    Switches active compiler for project (.pas2js-version)
-  bv pas2js remove-version   Interactively removes a cached compiler version
-
-  # === Multi-Version SDK Management ===
-  bv versions                Consolidated dashboard of active dependencies & SDK caches
-  bv versions clean          Interactive cross-module disk cleanup wizard (or bv versions remove)
-
-  # === Mobile (Android & iOS via Capacitor: bv capacitor / bv mobile) ===
+  # === Mobile (Android & iOS via Capacitor) ===
   bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
   bv capacitor upgrade [--check] Migrates Capacitor dependencies & updates Gradle
   bv capacitor versions      Lists installed and active Capacitor runtime versions
@@ -251,6 +235,16 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv path remove <target>    Removes a search path or Pas2JS package from app.cfg
   bv path available          Lists all built-in Pas2JS packages available to link
   bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)
+
+  # === Compiler (Pas2JS) ===
+  bv pas2js versions         Lists active, factory baseline and installed compiler versions
+  bv pas2js upgrade          Interactively selects and downloads Pas2JS distribution
+  bv pas2js use <version>    Switches active compiler for project (.pas2js-version)
+  bv pas2js remove-version   Interactively removes a cached compiler version
+
+  # === Multi-Version SDK Management ===
+  bv versions                Consolidated dashboard of active dependencies & SDK caches
+  bv versions clean          Interactive cross-module disk cleanup wizard (or bv versions remove)
 
   # === Framework Diagnostics & Maintenance ===
   bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)

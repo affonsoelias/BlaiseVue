@@ -17,8 +17,6 @@ bv -v
 
 ---
 
----
-
 ## 1. 🏗️ Scaffolding & Generators (`bv create`, `bv g`, `bv new`, `bv remove`, `bv list`, `bv rename`)
 
 ### 1. Dedicated Project & Library Scaffolding (`bv create`)
@@ -32,7 +30,7 @@ bv create my-ui-kit --lib
 ```
 - Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
 - In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
-- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
+- Scaffolds `src/`, `styles/`, `demo/`, `ttests/`, `package.json`, `LICENSE`, and `README.md`.
 
 ### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
 Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
@@ -62,7 +60,7 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
    - Embedded directly into the `bv.exe` executable at compile-time.
 3. **Standalone Binary & 4-Tier Scaffolding**:
    - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
-   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/services/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
+   - Automatically establishes the **4-Tier Testing Architecture** (`ttests/components/`, `ttests/views/`, `ttests/services/`, `ttests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
 
 ---
 
@@ -78,7 +76,7 @@ bv new component ProductCard
 bv new c ProductCard
 ```
 - Creates: `src/components/ProductCard.bv`
-- Automatically generates: `tests/components/ProductCard.test.pas`
+- Automatically generates: `ttests/components/ProductCard.test.pas`
 - Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
 ### 2. Create View / Page: `bv new view <Name> [--no-test]`
@@ -89,7 +87,7 @@ bv new view OrderHistory
 bv new v OrderHistory
 ```
 - Creates: `src/views/OrderHistory.bv`
-- Automatically generates: `tests/views/OrderHistory.test.pas`
+- Automatically generates: `ttests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
 ### 3. Create Service Unit: `bv new service <Name> [--no-test]`
@@ -102,7 +100,7 @@ bv new s PaymentProcessor
 bv g s PaymentProcessor
 ```
 - Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
-- Automatically generates: `tests/services/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
+- Automatically generates: `ttests/services/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
 - Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
 
 ### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
@@ -112,10 +110,10 @@ bv new test SimpleBadge
 # Shorthand:
 bv new t SimpleBadge
 ```
-- **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
-- **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
-- **If it is a service in `src/services/`:** created in `tests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
-- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
+- **If `SimpleBadge.bv` is a component:** created in `ttests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
+- **If it is a view:** created in `ttests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If it is a service in `src/services/`:** created in `ttests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
+- **Otherwise:** created in `ttests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
 
 ### 5. List Elements: `bv list <c|v|s|store|fsm|t|lib>`
 Lists registered files across the project:
@@ -124,7 +122,7 @@ Lists registered files across the project:
 - `bv list s`: Lists pure Pascal service units in `src/services/`.
 - `bv list store`: Lists all BlaiseX store slices in `src/stores/`.
 - `bv list fsm`: Lists all finite state machines in `src/machines/`.
-- `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
+- `bv list t`: Lists all test suites recursively across the 4 tiers of `ttests/`.
 - `bv list lib`: Lists installed libraries in `lib/`.
 
 ### 6. Remove Elements: `bv remove <component|view|service|store|fsm|test> <Name>`
@@ -168,14 +166,12 @@ bv rename project my-new-erp
 # Shorthand:
 bv rename p my-new-erp
 ```
-* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/services/<New>.test.pas`.
+* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `ttests/services/<New>.test.pas`.
 * **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
 * **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
-* **Stores**: Renames `src/stores/u<Old>Store.pas` to `src/stores/u<New>Store.pas`, refactors `unit u<New>Store;`, updates `Init<New>Store` and `DefineStore('<new>', ...)`, and renames `tests/stores/<New>Store.test.pas`.
-* **FSMs**: Renames `src/machines/u<Old>Machine.pas` to `src/machines/u<New>Machine.pas`, refactors `unit u<New>Machine;`, updates `Create<New>Machine` and `TBVStateMachine.Create('<New>')`, and renames `tests/machines/<New>Machine.test.pas`.
+* **Stores**: Renames `src/stores/u<Old>Store.pas` to `src/stores/u<New>Store.pas`, refactors `unit u<New>Store;`, updates `Init<New>Store` and `DefineStore('<new>', ...)`, and renames `ttests/stores/<New>Store.test.pas`.
+* **FSMs**: Renames `src/machines/u<Old>Machine.pas` to `src/machines/u<New>Machine.pas`, refactors `unit u<New>Machine;`, updates `Create<New>Machine` and `TBVStateMachine.Create('<New>')`, and renames `ttests/machines/<New>Machine.test.pas`.
 * **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
-
----
 
 ---
 
@@ -265,7 +261,7 @@ bv clear
 
 ### 7. Hierarchical Project Root Resolution & Safety Guard
 All platform scaffolding commands (`bv mobile init`, `bv desktop init`, `bv mormot init`) and generators (`bv g c`, `bv g v`, `bv g s`, `bv g t`, etc.) feature intelligent upward directory traversal:
-- **Run from Anywhere Inside Project**: Execute commands at root or inside any nested directory (`src/`, `src/components/`, `tests/services/`); the CLI traverses upwards to discover the project root (`app.cfg`, `package.json`, `src/app.bv`) and places generated files in the canonical root-relative paths (preventing duplicate nested paths like `src/src/...`).
+- **Run from Anywhere Inside Project**: Execute commands at root or inside any nested directory (`src/`, `src/components/`, `ttests/services/`); the CLI traverses upwards to discover the project root (`app.cfg`, `package.json`, `src/app.bv`) and places generated files in the canonical root-relative paths (preventing duplicate nested paths like `src/src/...`).
 - **Safety Guard**: If executed outside a BlaiseVue project (e.g. in arbitrary system folders or the Desktop), the CLI refuses to execute and creates zero files or directories.
 
 ### 8. Running Commands Inside the Cockpit
@@ -385,8 +381,6 @@ Performs a complete purge of the build workspace:
 
 ---
 
----
-
 ## 4. 🐘 Backend & Full-Stack Pascal with Synopse mORMot 2 (`bv mormot`)
 
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
@@ -489,39 +483,7 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 
 ---
 
-## 6. ⚡ Pas2JS Compiler Multi-Version Manager (`bv pas2js` / `bv compiler`)
-
-BlaiseVue projects compile Pascal Single-File Components (`.bv`) into high-performance JavaScript via the native **Pas2JS** compiler. BlaiseVue includes an immutable factory baseline in `vendor/pas2js` (protected from deletion), and allows developers to download, manage, and switch between multiple compiler versions:
-
-- **`bv pas2js versions`**: Lists the active compiler in the current project (or `.pas2js-version`), the bundled baseline (`vendor/pas2js`), and all user-installed compilers in `~/.blaisevue/versions/pas2js/` with disk sizes and executable paths.
-- **`bv pas2js upgrade [--version=<ver>]`**: Interactively selects and downloads a Pas2JS compiler distribution from official GitLab / FPC sources into user storage (`~/.blaisevue/versions/pas2js/<ver>/`).
-- **`bv pas2js use <version|bundled>`**: Configures the current project to bind to a specific compiler version (via `.pas2js-version`) or reverts to the factory bundled compiler.
-- **`bv pas2js remove-version [ver] [-y]`**: Interactively lists and safely deletes a cached compiler version from user storage to reclaim disk space (the factory bundled baseline is protected and cannot be deleted).
-
-| Pas2JS Command | Flags / Arguments | Description / Action |
-|---|---|---|
-| `bv pas2js versions` | - | Displays active compiler, binary paths, system RTL units and disk usage |
-| `bv pas2js upgrade` | `[--version=<ver>]` | Interactively selects and installs a Pas2JS compiler distribution |
-| `bv pas2js use` | `<version\|bundled>` | Switches active Pas2JS compiler for the current project |
-| `bv pas2js remove-version` | `[version] [-y]` | Interactively selects and deletes a cached compiler version |
-
----
-
-## 7. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`)
-
-BlaiseVue features unified, cross-module SDK version management across all supported platforms (Capacitor, mORMot 2, Pas2JS, and Horse):
-
-- **`bv versions`** (or `bv sdk`): Prints a consolidated dashboard summarizing active project dependencies, immutable factory baselines (`vendor/`), and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
-- **`bv versions clean`** (or `bv versions remove` / `bv versions prune`): Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Immutable factory baselines in `vendor/` are always protected from deletion.
-
-| Versions Command | Flags / Arguments | Description / Action |
-|---|---|---|
-| `bv versions` | - | Displays active project dependencies, factory baselines & cached user SDKs |
-| `bv versions clean` | - | Interactive cross-module cleanup wizard to delete user-installed SDKs |
-
----
-
-## 8. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
+## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
 
 Manages native desktop applications with Free Pascal and WebUI, and synchronizes Lazarus IDE project integration:
 - **`bv lazarus init`**: Scaffolds and synchronizes the root Lazarus project (`<project_name>.lpi` and `<project_name>.lpr`) for opening the reactive project directly inside Lazarus IDE with full component indexing and F9 live dev server execution.
@@ -549,46 +511,43 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 
 ---
 
-## 9. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
+## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
 
 ### 1. Unit & Integration Tests (`bv test`)
-The v test command compiles and executes all unit and integration tests across the 4-tier hierarchy:
-`ash
+The `bv test` command compiles and executes all unit and integration tests across the 4-tier hierarchy:
+```bash
 bv test
-`
-1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in generated/tests/ to prevent orphan test execution.
-2. **Recursive Discovery:** Finds all *.test.pas files across 	ests/components/, 	ests/views/, 	ests/services/, and 	ests/framework/.
-3. **Component Transpilation:** Transpiles all .bv Single File Components into generated/.
-4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. generated/tests/views/Home.test.js).
+```
+1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
+2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/services/`, and `tests/framework/`.
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
+4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
 5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
 
 For continuous test-driven development:
-`ash
+```bash
 bv test --watch
-`
+```
 
 ### 2. End-to-End Integration Tests (`bv test e2e`)
 Runs headless browser End-to-End integration test suite across application views and workflows:
-`ash
+```bash
 bv test e2e
-`
+```
 
 ### 3. Component Documentation & Playground (`bv doc [--serve]`)
-Parses the AST of all .bv components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at dist/docs/index.html:
-`ash
+Parses the AST of all `.bv` components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at `dist/docs/index.html`:
+```bash
 bv doc          # Generates documentation in dist/docs/
 bv doc --serve  # Generates and starts dedicated HTTP preview server
-`
+```
 
 ### 4. BlaiseVue Studio Dashboard (`bv studio`)
-Launches the visual developer cockpit and live telemetry hub on http://localhost:9000:
-`ash
+Launches the visual developer cockpit and live telemetry hub on `http://localhost:9000`:
+```bash
 bv studio
-`
+```
 See detailed documentation in **[40. BlaiseVue Studio Dashboard](40-blaise-studio.md)**.
-
----
-
 ---
 
 ## 8. 📦 Package, Theme & Tool Management (`bv repo`, `bv lib`, `bv theme`, `bv tool`)
@@ -797,7 +756,52 @@ bv reset --force           # Resets non-interactively without prompt
 
 ---
 
-## 10. 🧹 Framework Diagnostics & Maintenance (`bv doctor`, `bv self-update`, `bv channel`, `bv update`)
+## 10. ⚡ Pas2JS Compiler Multi-Version Manager (`bv pas2js` / `bv compiler`)
+
+BlaiseVue projects compile Pascal Single-File Components (`.bv`) into high-performance JavaScript via the native **Pas2JS** compiler. BlaiseVue includes an immutable factory baseline in `vendor/pas2js` (protected from deletion), and allows developers to download, manage, and switch between multiple compiler versions:
+
+- **`bv pas2js versions`** (alias: `bv compiler versions`):
+  Lists the active compiler for the current project (from `.pas2js-version` or system default), the immutable bundled baseline (`vendor/pas2js`), and all user-installed compilers in `~/.blaisevue/versions/pas2js/` with disk sizes and executable paths.
+- **`bv pas2js upgrade [--version=<ver>]`**:
+  Dynamically queries the official Free Pascal GitLab repository (`https://gitlab.com/freepascal.org/fpc/pas2js.git`) and presents an interactive menu to download and build compiler distributions into `~/.blaisevue/versions/pas2js/<version>/`:
+  - Official stable releases (e.g., `3.2.0`, `3.0.1`, `2.2.0`).
+  - Active development builds (`3.4.0` from GitLab `main`).
+  - Custom Git tags or commit hashes.
+- **`bv pas2js use <version|bundled>`**:
+  Binds the current project to a specific compiler version by creating or updating `.pas2js-version` in the project root. Pass `bundled` to revert to the factory-protected baseline.
+- **`bv pas2js remove-version [ver] [-y]`**:
+  Interactively selects and safely deletes a cached compiler version from `~/.blaisevue/versions/pas2js/` to free disk space. The bundled factory baseline in `vendor/pas2js` is protected and cannot be deleted.
+
+| Pas2JS Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv pas2js versions` | - | Displays active compiler, binary paths, system RTL units and disk usage |
+| `bv pas2js upgrade` | `[--version=<ver>]` | Interactively selects and installs a Pas2JS compiler distribution |
+| `bv pas2js use` | `<version\|bundled>` | Switches active Pas2JS compiler for the current project (`.pas2js-version`) |
+| `bv pas2js remove-version` | `[version] [-y]` | Interactively selects and deletes a cached compiler version |
+
+See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56-multi-version-sdk-management.md)**.
+
+---
+
+## 11. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`)
+
+BlaiseVue features unified, cross-module SDK version management across all supported platforms (Capacitor, mORMot 2, Pas2JS, and Horse):
+
+- **`bv versions`** (or `bv sdk`):
+  Prints a consolidated bird's-eye dashboard summarizing active project dependencies, immutable factory baselines (`vendor/`), and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
+- **`bv versions clean`** (or `bv versions remove` / `bv versions prune`):
+  Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Immutable factory baselines in `vendor/` are always protected from deletion.
+
+| Versions Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv versions` | - | Displays active project dependencies, factory baselines & cached user SDKs |
+| `bv versions clean` | - | Interactive cross-module cleanup wizard to delete user-installed SDKs |
+
+See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56-multi-version-sdk-management.md)**.
+
+---
+
+## 12. 🧹 Framework Diagnostics & Maintenance (`bv doctor`, `bv self-update`, `bv channel`, `bv update`)
 
 ### `bv update` (alias: `bv upgrade`)
 Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, RTL assets, and **Lazarus IDE project files (`.lpi` / `.lpr` and `server/server.lpi`)**.
