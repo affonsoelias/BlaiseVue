@@ -33,6 +33,16 @@ If this dilemma sounds familiar to you, **then you should consider BlaiseVue.**
 
 ---
 
+## 🧩 Architectural Freedom: Frontend-Only or Full-Stack
+
+BlaiseVue is decoupled by design, giving teams complete architectural freedom:
+
+- **Frontend-Only Mode (Zero Backend)**: Build pure reactive Web SPAs, Jamstack sites, or native mobile apps that consume existing corporate REST / GraphQL APIs (Node.js, Go, Python, C#, Java, PHP, or Delphi). If a project includes a `server/` folder and you don't need it, simply run `bv mormot remove -y`.
+- **Default Full-Stack: Synopse mORMot 2 (`server/`)**: High-throughput (100k+ req/sec) native Pascal SOA backend with shared interface contracts (`common/contracts.pas`), zero serialization drift, and sub-millisecond response times.
+- **Alternative Microframework: Horse (`server-horse/`)**: Express.js-style lightweight REST microservices via the co-official **`blaise-horse`** ecosystem tool, completely isolated in `server-horse/` (`bv horse init`, `bv horse run`, `bv horse remove`).
+
+---
+
 ## 📦 Official Packages Ecosystem
 
 BlaiseVue features a modular package architecture located in `/packages`:

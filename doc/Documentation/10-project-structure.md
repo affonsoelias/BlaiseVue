@@ -70,6 +70,36 @@ my-app/
 
 ---
 
+### Backend Architecture: Optional & Modular (`server/` vs. `server-horse/` vs. Frontend-Only)
+
+BlaiseVue is architectured with complete decoupling between frontend and backend. You have total freedom to choose your architecture:
+
+1. **Frontend-Only Mode (Static SPA / Jamstack)**:
+   - If you only want the reactive Object Pascal frontend, you do not need any backend directory.
+   - Your compiled frontend (`dist/`) can be hosted on any static provider (Netlify, Vercel, S3, Nginx, Apache, Cloudflare Pages).
+   - In-app communication uses the built-in `$api` (REST) and `$ws` (WebSocket) clients to consume any existing API written in Node.js, Go, Python, C#, Java, PHP, or Delphi.
+   - If a project already has a `server/` folder and you wish to use only the frontend, remove it cleanly with:
+     ```bash
+     bv mormot remove -y
+     ```
+
+2. **Default Full-Stack: Synopse mORMot 2 (`server/`)**:
+   - The default, enterprise-grade backend recommended for maximum throughput (100k+ req/sec), zero-latency WebSockets, and end-to-end type-safe Pascal RPC contracts.
+   - Initialized via `bv mormot init`, built with `bv mormot build`, and launched via `bv mormot run`.
+
+3. **Alternative Microframework: Horse (`server-horse/`)**:
+   - For lightweight REST microservices inspired by Express.js, BlaiseVue supports the co-official tool **`blaise-horse`**.
+   - Lives in its own isolated directory: `server-horse/` (preventing any file collisions with mORMot's `server/`).
+   - Managed via symmetric CLI commands:
+     ```bash
+     bv tool install blaise-horse   # Install tool from ecosystem
+     bv horse init                  # Scaffold isolated server-horse/
+     bv horse run                   # Compile and launch on http://localhost:9000
+     bv horse remove -y             # Cleanly purge server-horse/ when switching
+     ```
+
+---
+
 ### `tests/` — 4-Tier Automated Testing Architecture
 
 The BlaiseVue CLI (`bv create`) scaffolds an enterprise-ready 4-tier testing hierarchy in every new project:

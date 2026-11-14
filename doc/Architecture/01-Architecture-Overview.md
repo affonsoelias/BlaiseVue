@@ -71,11 +71,20 @@ For Pascal developers migrating desktop Delphi/Lazarus applications, BlaiseVue p
 - **Delta Tracking (`FDelta`)**: Tracks all record state changes (`dsBrowse`, `dsEdit`, `dsInsert`) in an append-only transaction log without mutating historical data prematurely.
 - **Offline Storage**: Seamless integration with the browser's `IndexedDB` engine for robust offline-first functionality.
 
-### Tier 4: Enterprise Full-Stack SOA Tier (mORMot 2)
-BlaiseVue eliminates the boundary between frontend and backend via shared Object Pascal source contracts:
-- **Shared Interface Contracts (`common/contracts.pas`)**: A single pure Pascal interface (inheriting from `IInvokable`) defines service methods, parameters, and return types.
-- **End-to-End Type Safety**: The server (compiled with FPC and mORMot 2) implements the interface; the browser client (compiled with Pas2JS) invokes the interface transparently through `TBVRpcClient`.
-- **Zero Serialization Glue**: No manual REST endpoints, no Swagger synchronization drift, and no fragile string-based endpoint URLs.
+### Tier 4: Pluggable Backend Tier (mORMot 2, Horse, or Frontend-Only)
+BlaiseVue is architectured to give developers complete freedom over their backend layer:
+- **Default: Enterprise SOA with Synopse mORMot 2 (`server/`)**:
+  - Eliminates the boundary between frontend and backend via shared Object Pascal source contracts (`common/contracts.pas`).
+  - Implements `IInvokable` interfaces for compile-time verified type-safe RPC (`TBVRpcClient`).
+  - Handles tens of thousands of requests per second with microsecond latency.
+  - Can be cleanly removed at any time via `bv mormot remove -y` if you want a frontend-only project.
+- **Alternative: Lightweight Microframework with Horse (`server-horse/`)**:
+  - Provided via the co-official developer tool `blaise-horse` (`bv tool install blaise-horse`).
+  - Offers an Express.js-style microframework in pure Free Pascal, isolated in `server-horse/`.
+  - Zero external C dependencies; fast FPC compilation (< 0.5s); and symmetric commands (`bv horse init/run/remove`).
+- **Decoupled / Frontend-Only Mode (Zero Backend)**:
+  - BlaiseVue compiles into a pure client-side SPA (`dist/`) that can be hosted on any static CDN.
+  - Built-in `$api` (REST) and `$ws` (WebSocket) clients allow consuming any external API (Node.js, Go, Python, C#, Java, PHP, etc.).
 
 ---
 
@@ -88,7 +97,8 @@ BlaiseVue delivers a single codebase across four enterprise deployment targets:
 | **Web SPA / SSG** | Standalone static bundle (`index.html`, `app.js`, `app.css`). | Zero backend dependency; deployable to Nginx, AWS S3, Cloudflare Pages, or Docker. Sub-second initial load. |
 | **Desktop WebUI** | Native C/Pascal host with embedded lightweight WebUI engine. | **< 10 MB** standalone binary. Zero Chromium/Electron bloat. Direct access to native OS file systems, system tray, native menus, and multi-window. |
 | **Mobile (Capacitor 7+)** | Native Android (APK/AAB) and iOS (IPA) wrappers with bridge runtime. | Native hardware access (Camera, Biometrics, Geolocation, SQLite, Local Notifications). Deep integration with Ionic 8 components. |
-| **Enterprise Server (mORMot 2)** | Native compiled microservice or monolith daemon. | Multi-threaded SOA server capable of handling tens of thousands of requests per second with microsecond latency. |
+| **Enterprise Server (mORMot 2)** | Native compiled microservice or monolith daemon (`server/`). | Multi-threaded SOA server capable of handling tens of thousands of requests per second with microsecond latency. |
+| **Microframework Server (Horse)** | Lightweight REST microservice (`server-horse/`). | Express-style simplicity in Object Pascal via `blaise-horse` with zero external dependencies and fast FPC compilation. |
 
 ---
 

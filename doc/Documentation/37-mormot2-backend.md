@@ -61,7 +61,48 @@ bv mormot status --port 8080           # Queries custom port
 bv mormot deploy                       # Generates standalone deploy/ directory
 bv mormot deploy --zip                 # Generates deploy/ and packages into deploy.zip
 bv mormot deploy --zip --port 80       # Customizes startup port in start.bat/start.sh
+
+# 7. Safely remove mORMot 2 backend from project:
+bv mormot remove                       # Asks confirmation before deleting server/
+bv mormot remove -y                    # Deletes server/ without confirmation prompt
 ```
+
+---
+
+## 🧩 Architectural Flexibility: Frontend-Only & Alternative Backends
+
+While mORMot 2 is the official enterprise default, **BlaiseVue is fully decoupled**:
+
+### 1. Using Only the Frontend (Frontend-Only Mode)
+You do not have to use a Pascal backend. If you want to use BlaiseVue purely as a modern reactive frontend:
+- Compile your SPA with `bv build` or `bv build --release`.
+- Host `dist/` on any static provider (Netlify, Vercel, AWS S3, Cloudflare Pages, Nginx, Apache).
+- Connect to your existing REST, GraphQL, or gRPC backend (written in Node.js, Go, Python, C#, Java, etc.) using BlaiseVue's built-in `$api` (`fetch`) or `$ws` (WebSocket) clients.
+- If your project has a `server/` directory and you want to purge it, run:
+  ```bash
+  bv mormot remove -y
+  ```
+
+### 2. Using the Alternative Horse Microframework (`server-horse/`)
+If you want a lightweight, Express.js-style Pascal microframework instead of enterprise mORMot 2:
+- Install the co-official `blaise-horse` developer tool:
+  ```bash
+  bv tool install blaise-horse
+  ```
+- Scaffold the isolated Horse backend:
+  ```bash
+  bv horse init
+  ```
+  This creates `server-horse/` (completely isolated from `server/`).
+- Run and build:
+  ```bash
+  bv horse run
+  bv horse build --release
+  ```
+- If you later choose to remove it:
+  ```bash
+  bv horse remove -y
+  ```
 
 ---
 
