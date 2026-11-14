@@ -1086,6 +1086,8 @@ procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
 { Removes native mORMot 2 backend server scaffolding (bv mormot remove). }
 procedure CmdRemoveMormot(ForceFlag: Boolean); forward;
+{ Dynamically dispatches commands to installed developer tools (e.g. bv horse -> blaise-horse). }
+function TryDispatchExternalTool(const ACmd: string; StartParamIdx: Integer): Boolean; forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
 function CockpitReadLine(const Prompt: string; out S: string): Boolean; forward;
@@ -13484,6 +13486,102 @@ begin
   ExecuteToolInstance(AllTools[FoundIndex], 4);
 end;
 
+{ Dynamically resolves and dispatches commands to installed developer tools (e.g. "bv horse" -> blaise-horse).
+  Supports exact name, "blaise-" prefix, and aliases declared in tool.json ("command" or "aliases"). }
+function TryDispatchExternalTool(const ACmd: string; StartParamIdx: Integer): Boolean;
+var
+  AllToolsList: TBVToolArray;
+  I, MatchedIdx, J: Integer;
+  ToolNameLower, CmdLower, TargetJson, ManifestContent, AliasVal: string;
+  JsonData: TJSONData;
+  JsonObj: TJSONObject;
+  AliasesArr: TJSONArray;
+begin
+  Result := False;
+  CmdLower := LowerCase(Trim(ACmd));
+  if CmdLower = '' then Exit;
+
+  AllToolsList := DiscoverAllTools;
+  MatchedIdx := -1;
+
+  for I := 0 to High(AllToolsList) do
+  begin
+    ToolNameLower := LowerCase(AllToolsList[I].Name);
+
+    // 1. Direct name match or prefixed (e.g. tool "blaise-horse", user typed "horse")
+    if (ToolNameLower = CmdLower) or
+       (ToolNameLower = 'blaise-' + CmdLower) or
+       ('blaise-' + ToolNameLower = CmdLower) then
+    begin
+      MatchedIdx := I;
+      Break;
+    end;
+
+    // 2. Check tool.json for "command", "alias", or "aliases"
+    TargetJson := IncludeTrailingPathDelimiter(AllToolsList[I].DirPath) + 'tool.json';
+    if FileExists(TargetJson) then
+    begin
+      try
+        ManifestContent := ReadFileToString(TargetJson);
+        if ManifestContent <> '' then
+        begin
+          JsonData := GetJSON(ManifestContent);
+          try
+            if JsonData is TJSONObject then
+            begin
+              JsonObj := TJSONObject(JsonData);
+              if JsonObj.Find('command') <> nil then
+              begin
+                AliasVal := LowerCase(JsonObj.Get('command', ''));
+                if AliasVal = CmdLower then
+                begin
+                  MatchedIdx := I;
+                  Break;
+                end;
+              end;
+              if JsonObj.Find('alias') <> nil then
+              begin
+                AliasVal := LowerCase(JsonObj.Get('alias', ''));
+                if AliasVal = CmdLower then
+                begin
+                  MatchedIdx := I;
+                  Break;
+                end;
+              end;
+              if JsonObj.Find('aliases') <> nil then
+              begin
+                if JsonObj.Types['aliases'] = jtArray then
+                begin
+                  AliasesArr := JsonObj.Arrays['aliases'];
+                  for J := 0 to AliasesArr.Count - 1 do
+                  begin
+                    if LowerCase(AliasesArr.Strings[J]) = CmdLower then
+                    begin
+                      MatchedIdx := I;
+                      Break;
+                    end;
+                  end;
+                  if MatchedIdx >= 0 then Break;
+                end;
+              end;
+            end;
+          finally
+            JsonData.Free;
+          end;
+        end;
+      except
+        // Ignore JSON parsing errors for faulty external tools
+      end;
+    end;
+  end;
+
+  if MatchedIdx >= 0 then
+  begin
+    ExecuteToolInstance(AllToolsList[MatchedIdx], StartParamIdx);
+    Result := True;
+  end;
+end;
+
 { Creates a new tool project scaffold with tool.json and lifecycle scripts (bv tool init). }
 procedure CmdToolInit(const NameArg: string; IsLocal: Boolean = False);
 var
@@ -25628,9 +25726,8 @@ begin
   Result.Add('clean');
   Result.Add('wasm');
   Result.Add('doc');
-  // Full-Stack Backend (mORMot 2 & Horse)
+  // Full-Stack Backend (mORMot 2)
   Result.Add('mormot');
-  Result.Add('horse');
   // Mobile (Capacitor)
   Result.Add('mobile');
   // Desktop (WebUI & Lazarus IDE)
@@ -25683,17 +25780,6 @@ begin
     Result.Add('status');
     Result.Add('kill');
     Result.Add('init');
-    Result.Add('deploy');
-    Result.Add('remove');
-  end
-  else if Cmd = 'horse' then
-  begin
-    Result.Add('init');
-    Result.Add('run');
-    Result.Add('build');
-    Result.Add('status');
-    Result.Add('kill');
-    Result.Add('docker');
     Result.Add('deploy');
     Result.Add('remove');
   end
@@ -25829,17 +25915,6 @@ begin
       '   init                       Scaffolds mORMot 2 server structure in server/' + LineEnding +
       '   deploy [--zip]             Assembles standalone production bundle in deploy/' + LineEnding +
       '   remove [-y]                Safely deletes server/ directory and mORMot binaries'
-  else if Cmd = 'horse' then
-    Result :=
-      '  [HINT] Available subcommands for ''horse'' (via blaise-horse tool):' + LineEnding +
-      '   init                       Scaffolds Horse server in server-horse/' + LineEnding +
-      '   run [--port <p>]           Compiles and runs Horse server (Default Port 9000)' + LineEnding +
-      '   build [--release]          Compiles native server with Free Pascal' + LineEnding +
-      '   status [--port <p>]        Checks Horse health endpoint (/api/health)' + LineEnding +
-      '   kill                       Terminates active Horse server processes' + LineEnding +
-      '   docker [--build]           Generates lightweight Alpine Docker container' + LineEnding +
-      '   deploy [--zip]             Assembles standalone production bundle' + LineEnding +
-      '   remove [-y]                Safely deletes server-horse/ directory'
   else if Cmd = 'mobile' then
     Result :=
       '  [HINT] Available subcommands for ''mobile'':' + LineEnding +
@@ -28312,8 +28387,7 @@ end;
 var
   Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP: string;
   SkipTest, SkipTestsArg, IsGlobalArg: Boolean;
-  AllToolsList: TBVToolArray;
-  HorseFoundIdx, i: Integer;
+  i: Integer;
 begin
   if (ParamCount = 1) and ((ParamStr(1) = '--version') or (ParamStr(1) = '-v') or (ParamStr(1) = 'version')) then
   begin
@@ -28361,7 +28435,7 @@ begin
   WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
   WriteLn('  bv clean                   Cleans generated build files (generated/ and dist/)');
   WriteLn('');
-  WriteLn('  # === Backend & Full-Stack (mORMot 2 & Horse) ===');
+  WriteLn('  # === Backend & Full-Stack (mORMot 2) ===');
   WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
   WriteLn('  bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh auto-terminates lingering instances)');
   WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
@@ -28374,7 +28448,6 @@ begin
   WriteLn('  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
   WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
   WriteLn('  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries');
-  WriteLn('  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)');
   WriteLn('');
   WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
   WriteLn('  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
@@ -28433,6 +28506,7 @@ begin
   WriteLn('  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)');
   WriteLn('  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)');
   WriteLn('  bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts');
+  WriteLn('  Note: Installed developer tools can also be invoked directly: "bv <tool> [args]".');
   WriteLn('');
   WriteLn('  # === Project Configuration & Search Paths ===');
   WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
@@ -28900,30 +28974,6 @@ begin
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
 
-  else if (Cmd = 'horse') then
-  begin
-    AllToolsList := DiscoverAllTools;
-    HorseFoundIdx := -1;
-    for i := 0 to High(AllToolsList) do
-    begin
-      if (LowerCase(AllToolsList[i].Name) = 'blaise-horse') or (LowerCase(AllToolsList[i].Name) = 'horse') then
-      begin
-        HorseFoundIdx := i;
-        Break;
-      end;
-    end;
-
-    if HorseFoundIdx < 0 then
-    begin
-      WriteLn('Error: Horse backend tool ("blaise-horse") is not installed.');
-      WriteLn('To install it from the ecosystem, run:');
-      WriteLn('  bv tool install blaise-horse');
-      Halt(1);
-    end;
-
-    ExecuteToolInstance(AllToolsList[HorseFoundIdx], 2);
-  end
-
   else if (Cmd = 'format') or (Cmd = 'fmt') then
   begin
     CmdFormat(ParamStr(2), (LowerCase(ParamStr(2)) = '--check') or (LowerCase(ParamStr(3)) = '--check'));
@@ -29041,6 +29091,9 @@ begin
   end
   else
   begin
+    if TryDispatchExternalTool(Cmd, 2) then
+      Halt(0);
+
     WriteLn('Unknown command: ', Cmd);
     WriteLn('Use "bv" without arguments for help.');
     Halt(1);

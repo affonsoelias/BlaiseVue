@@ -420,11 +420,12 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
 
-### Alternative Backend: Horse Framework (`bv horse` / `server-horse/`)
+### Alternative Backend: Horse Framework (via `blaise-horse` tool)
 For projects preferring a lightweight microframework (Express.js-style in Pascal), BlaiseVue supports the co-official tool **`blaise-horse`**:
+- Install from ecosystem: `bv tool install blaise-horse`.
 - Isolated directory: `server-horse/` (preventing collision with `server/`).
-- Quick delegation: `bv horse <init|run|build|status|docker|deploy|remove>` transparently invokes `bv tool run blaise-horse <cmd>`.
-- To enable it, install via the ecosystem: `bv tool install blaise-horse`.
+- Dynamic CLI resolution: Once installed, `bv horse <cmd>` (or `bv tool run blaise-horse <cmd>`) is dynamically dispatched to the tool.
+- Clean removal: `bv horse remove -y` or `bv tool remove blaise-horse`.
 
 ---
 
@@ -671,6 +672,18 @@ Manages built-in framework developer tools (`packages/tools/`), co-official ecos
 - **`bv tool remove <name>`**: Executes the tool's uninstallation script (`remove.py`/`remove.pas`) and cleanly removes the directory from `~/.blaisevue/tools/`.
 - **`bv tool pack [dir]`**: Compiles and packages a tool directory into a distributable release archive (`dist/<name>-<version>.zip`) with an accompanying `.sha256` checksum file.
 - **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, entry executable (`run.py`), and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
+
+#### 🚀 Direct Execution via Dynamic Tool Resolution (Cargo/Git Pattern)
+In addition to `bv tool run <name> [args]`, BlaiseVue dynamically resolves installed developer tools when their name or alias is typed directly as a top-level command:
+```bash
+# If blaise-horse is installed in ~/.blaisevue/tools/:
+bv horse init              # Dynamically resolves and invokes blaise-horse
+bv horse run
+
+# Or invoke by full tool name:
+bv blaise-horse status
+```
+This guarantees that the core framework CLI (`bv.pas`) remains 100% clean and unpolluted by external tools, while developers enjoy short, ergonomic commands. If a tool is not installed, the command is treated as unknown.
 
 #### Folder Structure of a Tool Package
 Both libraries and tools can include documentation (`doc/`) and runnable examples (`examples/`):
