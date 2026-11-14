@@ -24493,6 +24493,264 @@ begin
   end;
 end;
 
+{ Scans ~/.blaisevue/versions/<module> and returns a list of items and total bytes }
+procedure ScanModuleVersions(const ModuleName: string; OutList: TStringList; var TotalBytes: Int64);
+var
+  ModDir, ItemPath: string;
+  SR: TSearchRec;
+  Sz: Int64;
+begin
+  ModDir := GetGlobalVersionsPath(ModuleName);
+  if FindFirst(ModDir + '*', faDirectory, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+        begin
+          ItemPath := ModDir + SR.Name;
+          Sz := GetDirSizeBytes(ItemPath);
+          TotalBytes := TotalBytes + Sz;
+          OutList.Add(ModuleName + '|' + SR.Name + '|' + ItemPath + '|' + IntToStr(Sz));
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+end;
+
+{ Displays centralized dashboard of all SDK dependencies across project and system. }
+procedure CmdGlobalVersions;
+var
+  CapVer, MormotVer, Pas2jsVer, HorseVer: string;
+  Root, PkgFile, CapCfg, PkgContent, HPathFile, MPath: string;
+  AllItems: TStringList;
+  TotalBytes: Int64;
+  i: Integer;
+  Line, ModName, VerName, ModPath, SzStr: string;
+  Parts: TStringList;
+begin
+  Root := FindBlaiseVueProjectRoot('');
+  if Root = '' then Root := GetCurrentDir;
+
+  // 1. Resolve Active Project Versions
+  // Capacitor
+  CapVer := '(not initialized)';
+  PkgFile := IncludeTrailingPathDelimiter(Root) + 'package.json';
+  CapCfg := IncludeTrailingPathDelimiter(Root) + 'capacitor.config.json';
+  if FileExists(PkgFile) and (FileExists(CapCfg) or DirectoryExists(IncludeTrailingPathDelimiter(Root) + 'mobile')) then
+  begin
+    PkgContent := ReadFileToString(PkgFile);
+    if Pos('"@capacitor/core": "', PkgContent) > 0 then
+    begin
+      CapVer := Copy(PkgContent, Pos('"@capacitor/core": "', PkgContent) + 20, 20);
+      if Pos('"', CapVer) > 0 then CapVer := Copy(CapVer, 1, Pos('"', CapVer) - 1);
+    end;
+  end;
+
+  // mORMot 2
+  MPath := FindMormot2Path;
+  if MPath <> '' then
+  begin
+    if Pos('vendor' + DirectorySeparator + 'mormot2', MPath) > 0 then
+      MormotVer := 'bundled (vendor/mormot2)'
+    else
+      MormotVer := ExtractFileName(ExcludeTrailingPathDelimiter(MPath)) + ' (' + MPath + ')';
+  end
+  else
+    MormotVer := '(not initialized)';
+
+  // Pas2JS
+  Pas2jsVer := GetActivePas2JSVersion;
+  if Pas2jsVer = 'bundled' then
+    Pas2jsVer := 'bundled (vendor/pas2js)'
+  else
+    Pas2jsVer := Pas2jsVer + ' (.pas2js-version)';
+
+  // Horse
+  HorseVer := '(not initialized)';
+  if DirectoryExists(IncludeTrailingPathDelimiter(Root) + 'server-horse') then
+  begin
+    HPathFile := IncludeTrailingPathDelimiter(Root) + 'server-horse' + DirectorySeparator + 'horse.path';
+    if FileExists(HPathFile) then
+      HorseVer := Trim(ReadFileToString(HPathFile))
+    else
+      HorseVer := 'local (server-horse/lib/horse)';
+  end;
+
+  WriteLn('================================================================');
+  WriteLn('  BlaiseVue SDK & Multi-Version Global Dashboard');
+  WriteLn('================================================================');
+  WriteLn('  Active Project Dependencies:');
+  WriteLn('    * Capacitor: ' + CapVer);
+  WriteLn('    * mORMot 2:  ' + MormotVer);
+  WriteLn('    * Pas2JS:    ' + Pas2jsVer);
+  WriteLn('    * Horse:     ' + HorseVer);
+  WriteLn('----------------------------------------------------------------');
+  WriteLn('  Factory Protected Baselines:');
+  WriteLn('    [x] vendor/mormot2  Synopse mORMot 2 Core (Immutable Baseline)');
+  WriteLn('    [x] vendor/pas2js   Free Pascal Pas2JS Compiler (Immutable Baseline)');
+  WriteLn('----------------------------------------------------------------');
+  WriteLn('  Cached User SDK Distributions (~/.blaisevue/versions/):');
+
+  AllItems := TStringList.Create;
+  Parts := TStringList.Create;
+  TotalBytes := 0;
+  try
+    ScanModuleVersions('capacitor', AllItems, TotalBytes);
+    ScanModuleVersions('mormot', AllItems, TotalBytes);
+    ScanModuleVersions('pas2js', AllItems, TotalBytes);
+    ScanModuleVersions('horse', AllItems, TotalBytes);
+
+    if AllItems.Count = 0 then
+      WriteLn('    (no user versions cached on disk)')
+    else
+    begin
+      for i := 0 to AllItems.Count - 1 do
+      begin
+        Line := AllItems[i];
+        Parts.Clear;
+        ExtractStrings(['|'], [], PChar(Line), Parts);
+        if Parts.Count >= 4 then
+        begin
+          ModName := Parts[0];
+          VerName := Parts[1];
+          ModPath := Parts[2];
+          SzStr := FormatFileSizeMB(StrToInt64Def(Parts[3], 0));
+          WriteLn('    [' + ModName + '] ' + PadRight(VerName, 14) + ' (' + SzStr + ') -> ' + ModPath);
+        end;
+      end;
+      WriteLn('----------------------------------------------------------------');
+      WriteLn('  Total Disk Usage: ' + FormatFileSizeMB(TotalBytes));
+    end;
+  finally
+    Parts.Free;
+    AllItems.Free;
+  end;
+
+  WriteLn('================================================================');
+  WriteLn('To switch version:   bv <capacitor|mormot|pas2js|horse> use <version>');
+  WriteLn('To download version: bv <capacitor|mormot|pas2js|horse> upgrade');
+  WriteLn('To clean versions:   bv versions clean (or bv versions remove)');
+  WriteLn('================================================================');
+end;
+
+{ Interactive cleanup wizard across all cached SDK versions. }
+procedure CmdGlobalVersionsClean(const Arg: string);
+var
+  AllItems, Parts: TStringList;
+  TotalBytes: Int64;
+  i, ChoiceIdx: Integer;
+  UserChoice, Line, ModName, VerName, ItemPath: string;
+  SzBytes: Int64;
+begin
+  AllItems := TStringList.Create;
+  Parts := TStringList.Create;
+  TotalBytes := 0;
+  try
+    ScanModuleVersions('capacitor', AllItems, TotalBytes);
+    ScanModuleVersions('mormot', AllItems, TotalBytes);
+    ScanModuleVersions('pas2js', AllItems, TotalBytes);
+    ScanModuleVersions('horse', AllItems, TotalBytes);
+
+    if AllItems.Count = 0 then
+    begin
+      WriteLn('No cached user versions found to clean in ' + GetGlobalVersionsPath(''));
+      Exit;
+    end;
+
+    WriteLn('================================================================');
+    WriteLn('  BlaiseVue SDK Multi-Version Disk Cleanup Wizard');
+    WriteLn('================================================================');
+    WriteLn('  Select a cached user version to permanently remove:');
+    WriteLn('');
+    for i := 0 to AllItems.Count - 1 do
+    begin
+      Line := AllItems[i];
+      Parts.Clear;
+      ExtractStrings(['|'], [], PChar(Line), Parts);
+      if Parts.Count >= 4 then
+      begin
+        ModName := Parts[0];
+        VerName := Parts[1];
+        SzBytes := StrToInt64Def(Parts[3], 0);
+        WriteLn('  [' + IntToStr(i + 1) + '] [' + PadRight(ModName, 9) + '] ' + PadRight(VerName, 12) + ' (' + FormatFileSizeMB(SzBytes) + ')');
+      end;
+    end;
+    WriteLn('  [A] Remove ALL cached user versions (' + FormatFileSizeMB(TotalBytes) + ')');
+    WriteLn('================================================================');
+    Write('Select item to remove [1-' + IntToStr(AllItems.Count) + ', A, or C to Cancel]: ');
+    ReadLn(UserChoice);
+    UserChoice := Trim(UserChoice);
+
+    if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end;
+
+    if (LowerCase(UserChoice) = 'a') or (LowerCase(UserChoice) = 'all') then
+    begin
+      Write('Are you sure you want to permanently delete ALL cached versions (' + FormatFileSizeMB(TotalBytes) + ')? [y/N]: ');
+      ReadLn(UserChoice);
+      UserChoice := LowerCase(Trim(UserChoice));
+      if (UserChoice = 'y') or (UserChoice = 'yes') or (UserChoice = 's') or (UserChoice = 'sim') then
+      begin
+        for i := 0 to AllItems.Count - 1 do
+        begin
+          Line := AllItems[i];
+          Parts.Clear;
+          ExtractStrings(['|'], [], PChar(Line), Parts);
+          if Parts.Count >= 4 then
+          begin
+            ItemPath := Parts[2];
+            if DirectoryExists(ItemPath) then
+            begin
+              WriteLn('  [-] Removing ' + ItemPath + ' ...');
+              DeleteDir(ItemPath);
+            end;
+          end;
+        end;
+        WriteLn('  [SUCCESS] All cached user SDK versions removed successfully! (' + FormatFileSizeMB(TotalBytes) + ' freed)');
+      end
+      else
+        WriteLn('Operation cancelled.');
+      Exit;
+    end;
+
+    ChoiceIdx := StrToIntDef(UserChoice, -1);
+    if (ChoiceIdx < 1) or (ChoiceIdx > AllItems.Count) then
+    begin
+      WriteLn('Invalid selection.');
+      Exit;
+    end;
+
+    Line := AllItems[ChoiceIdx - 1];
+    Parts.Clear;
+    ExtractStrings(['|'], [], PChar(Line), Parts);
+    ModName := Parts[0];
+    VerName := Parts[1];
+    ItemPath := Parts[2];
+    SzBytes := StrToInt64Def(Parts[3], 0);
+
+    Write('Are you sure you want to permanently delete [' + ModName + '] "' + VerName + '" (' + FormatFileSizeMB(SzBytes) + ')? [y/N]: ');
+    ReadLn(UserChoice);
+    UserChoice := LowerCase(Trim(UserChoice));
+    if (UserChoice = 'y') or (UserChoice = 'yes') or (UserChoice = 's') or (UserChoice = 'sim') then
+    begin
+      WriteLn('  [-] Removing ' + ItemPath + ' ...');
+      DeleteDir(ItemPath);
+      WriteLn('  [SUCCESS] Version "' + VerName + '" removed successfully! (' + FormatFileSizeMB(SzBytes) + ' freed)');
+    end
+    else
+      WriteLn('Operation cancelled.');
+
+  finally
+    Parts.Free;
+    AllItems.Free;
+  end;
+end;
+
 { Central CLI orchestrator for the full-stack Synopse mORMot 2 backend engine (bv mormot). }
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
@@ -26806,6 +27064,8 @@ begin
   Result.Add('upgrade');
   Result.Add('self-update');
   Result.Add('channel');
+  Result.Add('versions');
+  Result.Add('sdk');
   // Cockpit Builtins
   Result.Add('help');
   Result.Add('exit');
@@ -26959,6 +27219,12 @@ begin
   begin
     Result.Add('info');
     Result.Add('benchmark');
+  end
+  else if (Cmd = 'versions') or (Cmd = 'sdk') or (Cmd = 'sdks') then
+  begin
+    Result.Add('clean');
+    Result.Add('list');
+    Result.Add('prune');
   end;
 end;
 
@@ -27857,6 +28123,10 @@ begin
         WriteLn('  pas2js use <v|bundled>     Switches active Pas2JS compiler for current project');
         WriteLn('  pas2js remove-version [v]  Removes a cached Pas2JS compiler version');
         WriteLn('');
+        WriteLn('  # === Multi-Version SDK Management ===');
+        WriteLn('  versions                   Displays global dashboard of active, bundled and cached versions');
+        WriteLn('  versions clean             Interactive cleanup wizard across all cached SDK versions');
+        WriteLn('');
         WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
         WriteLn('  capacitor init [name] [id] Scaffolds Capacitor & mobile/ native project');
         WriteLn('  capacitor upgrade [--target=<v>] Migrates Capacitor dependencies & updates Gradle');
@@ -28025,6 +28295,12 @@ begin
 
       // `pas2js` compiler commands
       else if (CmdName = 'pas2js') or (CmdName = 'compiler') then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `versions` global dashboard
+      else if (CmdName = 'versions') or (CmdName = 'sdk') or (CmdName = 'sdks') then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
@@ -29561,6 +29837,10 @@ begin
   WriteLn('  bv pas2js use <v|bundled>  Switches active Pas2JS compiler for current project');
   WriteLn('  bv pas2js remove-version [v] Removes a cached Pas2JS compiler version');
   WriteLn('');
+  WriteLn('  # === Multi-Version SDK Management ===');
+  WriteLn('  bv versions                Displays global dashboard of active, bundled and cached versions');
+  WriteLn('  bv versions clean          Interactive cleanup wizard across all cached SDK versions');
+  WriteLn('');
   WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
   WriteLn('  bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
   WriteLn('  bv capacitor upgrade [--target=<v>] Migrates Capacitor dependencies & updates Gradle');
@@ -30101,6 +30381,14 @@ begin
       Halt(1);
     end;
     CmdPas2js(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+
+  else if (Cmd = 'versions') or (Cmd = 'sdk') or (Cmd = 'sdks') then
+  begin
+    if (ParamCount >= 2) and ((LowerCase(ParamStr(2)) = 'clean') or (LowerCase(ParamStr(2)) = 'prune') or (LowerCase(ParamStr(2)) = 'remove') or (LowerCase(ParamStr(2)) = 'rm')) then
+      CmdGlobalVersionsClean(ParamStr(3))
+    else
+      CmdGlobalVersions;
   end
 
   else if (Cmd = 'format') or (Cmd = 'fmt') then

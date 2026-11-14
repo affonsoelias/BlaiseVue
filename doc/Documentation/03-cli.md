@@ -504,7 +504,21 @@ BlaiseVue projects compile Pascal Single-File Components (`.bv`) into high-perfo
 
 ---
 
-## 7. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
+## 7. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`)
+
+BlaiseVue features unified, cross-module SDK version management across all supported platforms (Capacitor, mORMot 2, Pas2JS, and Horse):
+
+- **`bv versions`** (or `bv sdk`): Prints a consolidated dashboard summarizing active project dependencies, immutable factory baselines (`vendor/`), and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
+- **`bv versions clean`** (or `bv versions remove` / `bv versions prune`): Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Immutable factory baselines in `vendor/` are always protected from deletion.
+
+| Versions Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv versions` | - | Displays active project dependencies, factory baselines & cached user SDKs |
+| `bv versions clean` | - | Interactive cross-module cleanup wizard to delete user-installed SDKs |
+
+---
+
+## 8. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
 
 Manages native desktop applications with Free Pascal and WebUI, and synchronizes Lazarus IDE project integration:
 - **`bv lazarus init`**: Scaffolds and synchronizes the root Lazarus project (`<project_name>.lpi` and `<project_name>.lpr`) for opening the reactive project directly inside Lazarus IDE with full component indexing and F9 live dev server execution.
@@ -532,7 +546,7 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 
 ---
 
-## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
+## 9. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
 
 ### 1. Unit & Integration Tests (`bv test`)
 The v test command compiles and executes all unit and integration tests across the 4-tier hierarchy:
