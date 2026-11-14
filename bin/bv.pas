@@ -24236,9 +24236,13 @@ procedure CmdPas2jsUpgrade(TargetVer: string);
 var
   VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot: string;
   GitAvail: Boolean;
+  RemoteOut, Line, TagName, DisplayVer: string;
+  TagLines, AvailableVersions: TStringList;
+  i, PosRef, ChoiceIdx, MaxDisp: Integer;
 begin
   VersionsDir := GetGlobalVersionsPath('pas2js');
   TargetVer := Trim(TargetVer);
+  GitAvail := HasCommand('git');
 
   if StartsText('--version=', TargetVer) then
     TargetVer := Copy(TargetVer, 11, Length(TargetVer))
@@ -24248,50 +24252,101 @@ begin
   // Interactive menu if empty
   if TargetVer = '' then
   begin
-    WriteLn('================================================================');
-    WriteLn('  Pas2JS Compiler Upgrade & Version Manager');
-    WriteLn('================================================================');
-    WriteLn('  Select target Pas2JS compiler distribution to install:');
-    WriteLn('    [1] 3.2.0 (Official Stable Release)');
-    WriteLn('    [2] 3.4.0 (Development / GitLab main)');
-    WriteLn('    [3] 3.1.1 (Legacy Release)');
-    WriteLn('    [4] Custom version tag or repository');
-    WriteLn('================================================================');
-    Write('Select option [1-4] or [C]ancel: ');
-    ReadLn(UserChoice);
-    UserChoice := Trim(UserChoice);
-
-    if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
-    begin
-      WriteLn('Operation cancelled.');
-      Exit;
-    end
-    else if UserChoice = '1' then
-      TargetVer := '3.2.0'
-    else if UserChoice = '2' then
-      TargetVer := '3.4.0'
-    else if UserChoice = '3' then
-      TargetVer := '3.1.1'
-    else if UserChoice = '4' then
-    begin
-      Write('Enter version tag (e.g. 3.2.0, main): ');
-      ReadLn(TargetVer);
-      TargetVer := Trim(TargetVer);
-      if TargetVer = '' then
+    AvailableVersions := TStringList.Create;
+    try
+      // Attempt dynamic discovery of releases from GitLab
+      if GitAvail then
       begin
-        WriteLn('Invalid version.');
-        Exit;
+        WriteLn('  [*] Querying available releases from GitLab ...');
+        if ExecCmdCapture('git ls-remote --tags --refs https://gitlab.com/freepascal.org/fpc/pas2js.git', RemoteOut) and (RemoteOut <> '') then
+        begin
+          TagLines := TStringList.Create;
+          try
+            TagLines.Text := RemoteOut;
+            for i := TagLines.Count - 1 downto 0 do
+            begin
+              Line := Trim(TagLines[i]);
+              PosRef := Pos('refs/tags/release_', Line);
+              if PosRef > 0 then
+              begin
+                TagName := Copy(Line, PosRef + 18, Length(Line));
+                DisplayVer := StringReplace(TagName, '_', '.', [rfReplaceAll]);
+                if (AvailableVersions.IndexOf(DisplayVer) < 0) and (Pos('rc', LowerCase(DisplayVer)) = 0) then
+                  AvailableVersions.Add(DisplayVer);
+              end;
+            end;
+          finally
+            TagLines.Free;
+          end;
+        end;
       end;
-    end
-    else
-    begin
-      WriteLn('Invalid selection.');
-      Exit;
+
+      // Fallback baseline versions if offline or discovery failed
+      if AvailableVersions.Count = 0 then
+      begin
+        AvailableVersions.Add('3.2.0');
+        AvailableVersions.Add('3.0.1');
+        AvailableVersions.Add('2.2.0');
+      end;
+
+      MaxDisp := AvailableVersions.Count;
+      if MaxDisp > 5 then MaxDisp := 5;
+
+      WriteLn('================================================================');
+      WriteLn('  Pas2JS Compiler Upgrade & Version Manager');
+      WriteLn('================================================================');
+      WriteLn('  Select target Pas2JS compiler distribution to install:');
+      for i := 0 to MaxDisp - 1 do
+      begin
+        if i = 0 then
+          WriteLn('    [' + IntToStr(i + 1) + '] ' + PadRight(AvailableVersions[i], 8) + ' (Latest Official Release)')
+        else
+          WriteLn('    [' + IntToStr(i + 1) + '] ' + PadRight(AvailableVersions[i], 8) + ' (Stable Release)');
+      end;
+      WriteLn('    [D] main     (Active Development / GitLab branch)');
+      WriteLn('    [C] Custom   (Specify custom version tag or repository)');
+      WriteLn('================================================================');
+      Write('Select option [1-' + IntToStr(MaxDisp) + ', D, C] or [Q]uit: ');
+      ReadLn(UserChoice);
+      UserChoice := Trim(UserChoice);
+
+      if (UserChoice = '') or (LowerCase(UserChoice) = 'q') or (LowerCase(UserChoice) = 'quit') or (LowerCase(UserChoice) = 'cancel') then
+      begin
+        WriteLn('Operation cancelled.');
+        Exit;
+      end
+      else if (LowerCase(UserChoice) = 'd') or (LowerCase(UserChoice) = 'dev') or (LowerCase(UserChoice) = 'main') then
+      begin
+        TargetVer := 'main';
+      end
+      else if (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'custom') then
+      begin
+        Write('Enter version tag (e.g. 3.5.0, release_3_2_0, main): ');
+        ReadLn(TargetVer);
+        TargetVer := Trim(TargetVer);
+        if TargetVer = '' then
+        begin
+          WriteLn('Invalid version.');
+          Exit;
+        end;
+      end
+      else
+      begin
+        ChoiceIdx := StrToIntDef(UserChoice, -1);
+        if (ChoiceIdx >= 1) and (ChoiceIdx <= MaxDisp) then
+          TargetVer := AvailableVersions[ChoiceIdx - 1]
+        else
+        begin
+          WriteLn('Invalid selection.');
+          Exit;
+        end;
+      end;
+    finally
+      AvailableVersions.Free;
     end;
   end;
 
   DestDir := ExcludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(VersionsDir) + TargetVer);
-  GitAvail := HasCommand('git');
 
   WriteLn('================================================================');
   WriteLn('  Target Distribution: Pas2JS ' + TargetVer);
@@ -24317,8 +24372,10 @@ begin
     begin
       if (TargetVer = 'main') or (TargetVer = 'master') or (TargetVer = 'latest') then
         GitCmd := 'git clone --depth 1 https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"'
+      else if StartsText('release_', TargetVer) or StartsText('fixes_', TargetVer) then
+        GitCmd := 'git clone --depth 1 --branch ' + TargetVer + ' https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"'
       else
-        GitCmd := 'git clone --depth 1 --branch pas2js_' + StringReplace(TargetVer, '.', '_', [rfReplaceAll]) + ' https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"';
+        GitCmd := 'git clone --depth 1 --branch release_' + StringReplace(TargetVer, '.', '_', [rfReplaceAll]) + ' https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"';
 
       WriteLn('  [*] Cloning from https://gitlab.com/freepascal.org/fpc/pas2js.git ...');
       {$IFDEF WINDOWS}
