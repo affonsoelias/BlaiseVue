@@ -24659,6 +24659,7 @@ var
   i: Integer;
   Line, ModName, VerName, ModPath, SzStr: string;
   Parts: TStringList;
+  HasHorseTool, HasHorseServer: Boolean;
 begin
   Root := FindBlaiseVueProjectRoot('');
   if Root = '' then Root := GetCurrentDir;
@@ -24697,15 +24698,22 @@ begin
   else
     Pas2jsVer := Pas2jsVer + ' (.pas2js-version)';
 
-  // Horse
-  HorseVer := '(not initialized)';
-  if DirectoryExists(IncludeTrailingPathDelimiter(Root) + 'server-horse') then
+  // Horse (Optional ecosystem tool: blaise-horse)
+  HasHorseTool := DirectoryExists(GetGlobalToolsPath + 'blaise-horse') or
+                  DirectoryExists(GetBuiltinToolsPath + 'blaise-horse');
+  HasHorseServer := DirectoryExists(IncludeTrailingPathDelimiter(Root) + 'server-horse');
+  HorseVer := '';
+  if HasHorseServer then
   begin
     HPathFile := IncludeTrailingPathDelimiter(Root) + 'server-horse' + DirectorySeparator + 'horse.path';
     if FileExists(HPathFile) then
       HorseVer := Trim(ReadFileToString(HPathFile))
     else
       HorseVer := 'local (server-horse/lib/horse)';
+  end
+  else if HasHorseTool then
+  begin
+    HorseVer := '(not initialized - run "bv horse init")';
   end;
 
   WriteLn('================================================================');
@@ -24715,7 +24723,8 @@ begin
   WriteLn('    * Capacitor: ' + CapVer);
   WriteLn('    * mORMot 2:  ' + MormotVer);
   WriteLn('    * Pas2JS:    ' + Pas2jsVer);
-  WriteLn('    * Horse:     ' + HorseVer);
+  if HasHorseServer or HasHorseTool then
+    WriteLn('    * Horse:     ' + HorseVer);
   WriteLn('----------------------------------------------------------------');
   WriteLn('  Factory Protected Baselines:');
   WriteLn('    [x] vendor/mormot2  Synopse mORMot 2 Core (Immutable Baseline)');
@@ -24759,8 +24768,16 @@ begin
   end;
 
   WriteLn('================================================================');
-  WriteLn('To switch version:   bv <capacitor|mormot|pas2js|horse> use <version>');
-  WriteLn('To download version: bv <capacitor|mormot|pas2js|horse> upgrade');
+  if HasHorseServer or HasHorseTool then
+  begin
+    WriteLn('To switch version:   bv <capacitor|mormot|pas2js|horse> use <version>');
+    WriteLn('To download version: bv <capacitor|mormot|pas2js|horse> upgrade');
+  end
+  else
+  begin
+    WriteLn('To switch version:   bv <capacitor|mormot|pas2js> use <version>');
+    WriteLn('To download version: bv <capacitor|mormot|pas2js> upgrade');
+  end;
   WriteLn('To clean versions:   bv versions clean (or bv versions remove)');
   WriteLn('================================================================');
 end;
