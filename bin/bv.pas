@@ -5356,38 +5356,55 @@ procedure ExtractZipSmart(const ZipFile, DestBaseDir, PkgName: string);
 var
   UnZipper: TUnZipper;
   HasTopFolder: Boolean;
-  i: Integer;
-  EntryName, FinalDest: string;
+  i, SlashPos: Integer;
+  EntryName, FinalDest, TopFolder, Candidate, ExtractedTop: string;
 begin
   ForceDir(DestBaseDir);
   UnZipper := TUnZipper.Create;
   try
     UnZipper.FileName := ZipFile;
     UnZipper.Examine;
-    HasTopFolder := True;
+    HasTopFolder := (UnZipper.Entries.Count > 0);
+    TopFolder := '';
     for i := 0 to UnZipper.Entries.Count - 1 do
     begin
       EntryName := UnZipper.Entries[i].ArchiveFileName;
-      if (not StartsText(PkgName + '/', EntryName)) and 
-         (not StartsText(PkgName + '\', EntryName)) then
+      SlashPos := Pos('/', EntryName);
+      if SlashPos = 0 then SlashPos := Pos('\', EntryName);
+      if SlashPos <= 0 then
+      begin
+        HasTopFolder := False;
+        Break;
+      end;
+      Candidate := Copy(EntryName, 1, SlashPos - 1);
+      if TopFolder = '' then
+        TopFolder := Candidate
+      else if not SameText(TopFolder, Candidate) then
       begin
         HasTopFolder := False;
         Break;
       end;
     end;
     
-    if HasTopFolder then
+    if HasTopFolder and (TopFolder <> '') then
     begin
       UnZipper.OutputPath := DestBaseDir;
+      UnZipper.UnZipAllFiles;
+      ExtractedTop := IncludeTrailingPathDelimiter(DestBaseDir) + TopFolder;
+      FinalDest := IncludeTrailingPathDelimiter(DestBaseDir) + PkgName;
+      if (PkgName <> '') and not SameText(TopFolder, PkgName) and DirectoryExists(ExtractedTop) then
+      begin
+        if DirectoryExists(FinalDest) then DeleteDir(FinalDest);
+        RenameFile(ExtractedTop, FinalDest);
+      end;
     end
     else
     begin
       FinalDest := IncludeTrailingPathDelimiter(DestBaseDir) + PkgName + DirectorySeparator;
       ForceDir(FinalDest);
       UnZipper.OutputPath := FinalDest;
+      UnZipper.UnZipAllFiles;
     end;
-    
-    UnZipper.UnZipAllFiles;
   finally
     UnZipper.Free;
   end;
@@ -12462,7 +12479,7 @@ end;
 procedure CmdToolInstall(const TargetArg: string);
 var
   RawArg, TargetRepo, ToolName, ReqVersion, RemainingArg: string;
-  FoundVer, DownloadURL, Checksum, RepoName, FoundType, TempZip, DestDir, Dummy: string;
+  FoundVer, DownloadURL, Checksum, RepoName, FoundType, TempZip, DestDir, Dummy, NewDestDir: string;
   AllTools: TBVToolArray;
   ColonPos, AtPos, I, BuiltinIdx: Integer;
   Client: TFPHTTPClient;
@@ -12486,10 +12503,21 @@ begin
     if DirectoryExists(DestDir) then DeleteDir(DestDir);
     ForceDir(DestDir);
     ExtractZipSmart(RawArg, GetGlobalToolsPath, ToolName);
-    if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.InstallScript <> '') then
+    if LoadToolFromDir(DestDir, True, ToolRecord) then
     begin
-      WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
-      RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+      if (ToolRecord.Name <> '') and (ToolRecord.Name <> ToolName) then
+      begin
+        NewDestDir := GetGlobalToolsPath + ToolRecord.Name;
+        if DirectoryExists(NewDestDir) then DeleteDir(NewDestDir);
+        RenameFile(DestDir, NewDestDir);
+        DestDir := NewDestDir;
+        ToolName := ToolRecord.Name;
+      end;
+      if (ToolRecord.InstallScript <> '') then
+      begin
+        WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
+        RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+      end;
     end;
     WriteLn('Tool "' + ToolName + '" installed successfully in ~/.blaisevue/tools/' + ToolName + '/.');
     Exit;
@@ -12523,10 +12551,21 @@ begin
     if DirectoryExists(DestDir) then DeleteDir(DestDir);
     ForceDir(DestDir);
     ExtractZipSmart(TempZip, GetGlobalToolsPath, ToolName);
-    if LoadToolFromDir(DestDir, True, ToolRecord) and (ToolRecord.InstallScript <> '') then
+    if LoadToolFromDir(DestDir, True, ToolRecord) then
     begin
-      WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
-      RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+      if (ToolRecord.Name <> '') and (ToolRecord.Name <> ToolName) then
+      begin
+        NewDestDir := GetGlobalToolsPath + ToolRecord.Name;
+        if DirectoryExists(NewDestDir) then DeleteDir(NewDestDir);
+        RenameFile(DestDir, NewDestDir);
+        DestDir := NewDestDir;
+        ToolName := ToolRecord.Name;
+      end;
+      if (ToolRecord.InstallScript <> '') then
+      begin
+        WriteLn('Running installation script (' + ToolRecord.InstallScript + ')...');
+        RunToolScript(DestDir, ToolRecord.InstallScript, Dummy, False);
+      end;
     end;
     WriteLn('Tool "' + ToolName + '" installed successfully in ~/.blaisevue/tools/' + ToolName + '/.');
     Exit;
@@ -12886,7 +12925,8 @@ begin
   end;
 
   WriteLn('Removing tool "' + AllTools[FoundIndex].Name + '" from ~/.blaisevue/tools/...');
-  if AllTools[FoundIndex].RemoveScript <> '' then
+  if (AllTools[FoundIndex].RemoveScript <> '') and
+     FileExists(IncludeTrailingPathDelimiter(AllTools[FoundIndex].DirPath) + AllTools[FoundIndex].RemoveScript) then
   begin
     WriteLn('Executing uninstall script (' + AllTools[FoundIndex].RemoveScript + ')...');
     RunToolScript(AllTools[FoundIndex].DirPath, AllTools[FoundIndex].RemoveScript, Dummy, False);

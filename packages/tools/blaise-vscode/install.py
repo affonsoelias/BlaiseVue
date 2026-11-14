@@ -37,8 +37,10 @@ def main():
     # Optional: package vsix if npx vsce is available
     print("Packaging standalone .vsix (if npx vsce available)...")
     try:
-        subprocess.run(['npx', '@vscode/vsce', 'package', '--no-git-tag-version', '--allow-missing-repository'],
-                       cwd=source_dir, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        npx_cmd = shutil.which('npx') or 'npx'
+        subprocess.run([npx_cmd, '@vscode/vsce', 'package', '--no-git-tag-version', '--allow-missing-repository'],
+                       cwd=source_dir, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       shell=sys.platform.startswith('win'))
     except Exception:
         pass
 
