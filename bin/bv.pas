@@ -17034,14 +17034,42 @@ var
 begin
   Result := '';
 
-  // 1. Embedded vendor in BlaiseVue SDK: vendor/mormot2
+  // 1. Project or server configuration file: server/mormot.path or mormot.path
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if (LowerCase(Candidate) = 'bundled') or (LowerCase(Candidate) = 'default') then
+      Candidate := ''
+    else if DirectoryExists(GetGlobalVersionsPath('mormot') + Candidate) then
+      Candidate := GetGlobalVersionsPath('mormot') + Candidate;
+    if (Candidate <> '') and IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
 
+  ConfigFile := GetCurrentDir + DirectorySeparator + 'mormot.path';
+  if FileExists(ConfigFile) then
+  begin
+    Candidate := Trim(ReadFileToString(ConfigFile));
+    if (LowerCase(Candidate) = 'bundled') or (LowerCase(Candidate) = 'default') then
+      Candidate := ''
+    else if DirectoryExists(GetGlobalVersionsPath('mormot') + Candidate) then
+      Candidate := GetGlobalVersionsPath('mormot') + Candidate;
+    if (Candidate <> '') and IsValidMormot(Candidate) then
+      Exit(ExcludeTrailingPathDelimiter(Candidate));
+  end;
+
+  // 2. Environment variable MORMOT2_PATH
+  Candidate := GetEnvironmentVariable('MORMOT2_PATH');
+  if IsValidMormot(Candidate) then
+    Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  // 3. Embedded vendor in BlaiseVue SDK: vendor/mormot2
   Candidate := GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
   if IsValidMormot(Candidate) then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
 
-  // 2. Relative to current project or workspace: vendor/mormot2 or ../vendor/mormot2
-
+  // 4. Relative to current project or workspace: vendor/mormot2 or ../vendor/mormot2
   Candidate := GetCurrentDir + DirectorySeparator + 'vendor' + DirectorySeparator + 'mormot2';
   if IsValidMormot(Candidate) then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
@@ -17054,29 +17082,10 @@ begin
   if IsValidMormot(Candidate) then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
 
-  // 3. Environment variable MORMOT2_PATH
-
-  Candidate := GetEnvironmentVariable('MORMOT2_PATH');
+  // 5. User global version: ~/.blaisevue/versions/mormot/latest
+  Candidate := GetGlobalVersionsPath('mormot') + 'latest';
   if IsValidMormot(Candidate) then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
-
-  // 4. Project or server configuration file: server/mormot.path or mormot.path
-
-  ConfigFile := GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path';
-  if FileExists(ConfigFile) then
-  begin
-    Candidate := Trim(ReadFileToString(ConfigFile));
-    if IsValidMormot(Candidate) then
-      Exit(ExcludeTrailingPathDelimiter(Candidate));
-  end;
-
-  ConfigFile := GetCurrentDir + DirectorySeparator + 'mormot.path';
-  if FileExists(ConfigFile) then
-  begin
-    Candidate := Trim(ReadFileToString(ConfigFile));
-    if IsValidMormot(Candidate) then
-      Exit(ExcludeTrailingPathDelimiter(Candidate));
-  end;
 
   // 5. User local installation path on Windows (fallback)
 
@@ -23712,6 +23721,363 @@ begin
   Result := PortReleased;
 end;
 
+{ Displays mORMot 2 versions, including active in project, bundled, and user-cached versions. }
+procedure CmdMormotVersions;
+var
+  ActivePath, BundledPath, VersionsDir, ItemPath: string;
+  SR: TSearchRec;
+  Count: Integer;
+  SizeBytes: Int64;
+  IsBundledActive: Boolean;
+begin
+  WriteLn('================================================================');
+  WriteLn('  Synopse mORMot 2 Framework Versions & Status');
+  WriteLn('================================================================');
+
+  ActivePath := FindMormot2Path;
+  BundledPath := ExcludeTrailingPathDelimiter(GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2');
+  IsBundledActive := (ActivePath <> '') and (LowerCase(ActivePath) = LowerCase(BundledPath));
+
+  if ActivePath <> '' then
+  begin
+    if IsBundledActive then
+      WriteLn('  [*] Active in Project:   bundled (vendor/mormot2 - Framework Default)')
+    else
+      WriteLn('  [*] Active in Project:   ' + ActivePath);
+  end
+  else
+    WriteLn('  [-] Active in Project:   (not detected / no valid mORMot 2 found)');
+
+  WriteLn('----------------------------------------------------------------');
+  WriteLn('  Available Framework Distributions:');
+
+  // Bundled baseline
+  if DirectoryExists(BundledPath) then
+  begin
+    if IsBundledActive then
+      WriteLn('    [*] bundled    ' + BundledPath + ' (ACTIVE, Protected)')
+    else
+      WriteLn('    [ ] bundled    ' + BundledPath + ' (Protected Baseline)');
+  end
+  else
+    WriteLn('    [!] bundled    Not found in vendor/mormot2');
+
+  // User versions in ~/.blaisevue/versions/mormot/
+  VersionsDir := GetGlobalVersionsPath('mormot');
+  Count := 0;
+  if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+        begin
+          Inc(Count);
+          ItemPath := ExcludeTrailingPathDelimiter(VersionsDir + SR.Name);
+          SizeBytes := GetDirSizeBytes(ItemPath);
+          if (ActivePath <> '') and (LowerCase(ActivePath) = LowerCase(ItemPath)) then
+            WriteLn('    [*] ' + PadRight(SR.Name, 10) + ' ' + ItemPath + ' (ACTIVE | ' + FormatFileSizeMB(SizeBytes) + ')')
+          else
+            WriteLn('    [ ] ' + PadRight(SR.Name, 10) + ' ' + ItemPath + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+
+  if Count = 0 then
+    WriteLn('    (no user versions installed - run "bv mormot upgrade" to install)');
+
+  WriteLn('================================================================');
+  WriteLn('To switch version in project: bv mormot use <bundled | latest | tag>');
+  WriteLn('To install/upgrade version:   bv mormot upgrade [tag]');
+  WriteLn('To remove user version:       bv mormot remove-version [tag]');
+  WriteLn('================================================================');
+end;
+
+{ Sets the active mORMot 2 version for the current project by updating server/mormot.path. }
+procedure CmdMormotUse(TargetVer: string);
+var
+  ProjectRoot, ServerDir, MPathFile, ResolvedPath: string;
+begin
+  TargetVer := Trim(TargetVer);
+  if TargetVer = '' then
+  begin
+    WriteLn('Usage: bv mormot use <bundled | latest | <tag> | <custom_path>>');
+    Exit;
+  end;
+
+  ProjectRoot := RequireBlaiseVueProject('bv mormot use');
+  ServerDir := ProjectRoot + DirectorySeparator + 'server';
+  ForceDir(ServerDir);
+  MPathFile := ServerDir + DirectorySeparator + 'mormot.path';
+
+  if (LowerCase(TargetVer) = 'bundled') or (LowerCase(TargetVer) = 'default') or (LowerCase(TargetVer) = 'reset') then
+  begin
+    if FileExists(MPathFile) then
+      DeleteFile(MPathFile);
+    WriteLn('  [SUCCESS] Project configured to use bundled mORMot 2 (vendor/mormot2).');
+    Exit;
+  end;
+
+  // Check if target is an installed user version in ~/.blaisevue/versions/mormot/<tag>
+  ResolvedPath := GetGlobalVersionsPath('mormot') + TargetVer;
+  if DirectoryExists(ResolvedPath) and
+     FileExists(ResolvedPath + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas') then
+  begin
+    WriteStringToFile(MPathFile, ResolvedPath);
+    WriteLn('  [SUCCESS] Project configured to use mORMot 2 (' + TargetVer + '):');
+    WriteLn('            ' + ResolvedPath);
+    Exit;
+  end;
+
+  // Check if target is a valid custom directory path
+  if DirectoryExists(TargetVer) and
+     FileExists(TargetVer + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas') then
+  begin
+    WriteStringToFile(MPathFile, TargetVer);
+    WriteLn('  [SUCCESS] Project configured to use custom mORMot 2:');
+    WriteLn('            ' + TargetVer);
+    Exit;
+  end;
+
+  WriteLn('  [ERROR] Version or path "' + TargetVer + '" is not installed or invalid.');
+  WriteLn('  Run "bv mormot upgrade" to install upstream versions, or check "bv mormot versions".');
+end;
+
+{ Upgrades or installs an upstream version of Synopse mORMot 2 into ~/.blaisevue/versions/mormot/<tag>. }
+procedure CmdMormotUpgrade(TargetTag: string);
+var
+  VersionsDir, DestDir, UserChoice, GitCmd: string;
+  GitAvail: Boolean;
+  HasBasePas: Boolean;
+  ProjectRoot: string;
+begin
+  VersionsDir := GetGlobalVersionsPath('mormot');
+  TargetTag := Trim(TargetTag);
+
+  if TargetTag = '' then
+  begin
+    WriteLn('================================================================');
+    WriteLn('  Available Synopse mORMot 2 Upstream Versions');
+    WriteLn('================================================================');
+    WriteLn('  [1] latest   (Main branch - bleeding edge from GitHub)');
+    WriteLn('  [2] v2.2     (Official Release)');
+    WriteLn('  [3] v2.1     (Stable LTS)');
+    WriteLn('  [4] v2.0     (Initial v2 Release)');
+    WriteLn('  [5] Custom   (Specify custom Git tag, branch or commit)');
+    WriteLn('================================================================');
+    Write('Select version to install/upgrade [1-5] or [C]ancel: ');
+    ReadLn(UserChoice);
+    UserChoice := Trim(UserChoice);
+    if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end;
+
+    if UserChoice = '1' then TargetTag := 'latest'
+    else if UserChoice = '2' then TargetTag := 'v2.2'
+    else if UserChoice = '3' then TargetTag := 'v2.1'
+    else if UserChoice = '4' then TargetTag := 'v2.0'
+    else if UserChoice = '5' then
+    begin
+      Write('Enter custom tag or branch: ');
+      ReadLn(TargetTag);
+      TargetTag := Trim(TargetTag);
+      if TargetTag = '' then Exit;
+    end
+    else
+      TargetTag := UserChoice;
+  end;
+
+  DestDir := ExcludeTrailingPathDelimiter(VersionsDir + TargetTag);
+  GitAvail := HasCommand('git');
+
+  WriteLn('  [*] Installing/Updating mORMot 2 (' + TargetTag + ') in:');
+  WriteLn('      ' + DestDir);
+
+  if DirectoryExists(DestDir + DirectorySeparator + '.git') and GitAvail then
+  begin
+    WriteLn('  [*] Updating existing repository via "git pull" ...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c git -C "' + DestDir + '" pull --ff-only');
+    {$ELSE}
+    ExecuteProcess('/bin/sh', '-c "git -C \"' + DestDir + '\" pull --ff-only"');
+    {$ENDIF}
+  end
+  else
+  begin
+    if DirectoryExists(DestDir) then
+      DeleteDir(DestDir);
+    ForceDirectories(DestDir);
+
+    if GitAvail then
+    begin
+      if (TargetTag = 'latest') or (TargetTag = 'main') or (TargetTag = 'master') then
+        GitCmd := 'git clone --depth 1 https://github.com/synopse/mORMot2.git "' + DestDir + '"'
+      else
+        GitCmd := 'git clone --depth 1 --branch ' + TargetTag + ' https://github.com/synopse/mORMot2.git "' + DestDir + '"';
+
+      WriteLn('  [*] Cloning from https://github.com/synopse/mORMot2.git ...');
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c ' + GitCmd);
+      {$ELSE}
+      ExecuteProcess('/bin/sh', '-c "' + GitCmd + '"');
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('  [!] Git not detected on PATH. Please install Git or clone manually into: ' + DestDir);
+      Exit;
+    end;
+  end;
+
+  HasBasePas := FileExists(DestDir + DirectorySeparator + 'src' + DirectorySeparator + 'core' + DirectorySeparator + 'mormot.core.base.pas');
+  if HasBasePas then
+  begin
+    WriteLn('');
+    WriteLn('======================================================================');
+    WriteLn('  [SUCCESS] mORMot 2 (' + TargetTag + ') installed successfully!');
+    WriteLn('  Location: ' + DestDir);
+    WriteLn('======================================================================');
+
+    // If inside a project, offer to activate immediately
+    try
+      ProjectRoot := GetCurrentDir;
+      if FileExists(ProjectRoot + DirectorySeparator + 'app.cfg') or DirectoryExists(ProjectRoot + DirectorySeparator + 'server') then
+      begin
+        Write('Do you want to activate version "' + TargetTag + '" in the current project now? [y/N]: ');
+        ReadLn(UserChoice);
+        UserChoice := LowerCase(Trim(UserChoice));
+        if (UserChoice = 'y') or (UserChoice = 'yes') or (UserChoice = 's') or (UserChoice = 'sim') then
+          CmdMormotUse(TargetTag);
+      end;
+    except
+      // Ignore
+    end;
+  end
+  else
+  begin
+    WriteLn('  [ERROR] Could not verify mORMot 2 installation in ' + DestDir);
+  end;
+end;
+
+{ Removes an installed user version from ~/.blaisevue/versions/mormot/<tag>. }
+procedure CmdMormotRemoveVersion(TargetVer: string; Force: Boolean);
+var
+  VersionsDir, ItemPath, UserChoice, ActivePath: string;
+  SR: TSearchRec;
+  Names: TStringList;
+  i, ChoiceIdx: Integer;
+  SizeBytes: Int64;
+  IsActiveInProject: Boolean;
+begin
+  VersionsDir := GetGlobalVersionsPath('mormot');
+  TargetVer := Trim(TargetVer);
+
+  if (LowerCase(TargetVer) = 'bundled') or (LowerCase(TargetVer) = 'vendor') then
+  begin
+    WriteLn('  [ERROR] The "bundled" version (vendor/mormot2) is protected and cannot be deleted.');
+    Exit;
+  end;
+
+  // Interactive selection if empty
+  if TargetVer = '' then
+  begin
+    Names := TStringList.Create;
+    try
+      if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+      begin
+        try
+          repeat
+            if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+              Names.Add(SR.Name);
+          until FindNext(SR) <> 0;
+        finally
+          FindClose(SR);
+        end;
+      end;
+
+      if Names.Count = 0 then
+      begin
+        WriteLn('No user versions found in ' + VersionsDir);
+        Exit;
+      end;
+
+      WriteLn('================================================================');
+      WriteLn('  Installed mORMot 2 Versions (' + VersionsDir + ')');
+      WriteLn('================================================================');
+      for i := 0 to Names.Count - 1 do
+      begin
+        ItemPath := VersionsDir + Names[i];
+        SizeBytes := GetDirSizeBytes(ItemPath);
+        WriteLn('  [' + IntToStr(i + 1) + '] ' + PadRight(Names[i], 12) + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+      end;
+      WriteLn('================================================================');
+      Write('Select a version to remove [1-' + IntToStr(Names.Count) + '] or [C]ancel: ');
+      ReadLn(UserChoice);
+      UserChoice := Trim(UserChoice);
+      if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+      begin
+        WriteLn('Operation cancelled.');
+        Exit;
+      end;
+
+      ChoiceIdx := StrToIntDef(UserChoice, -1);
+      if (ChoiceIdx < 1) or (ChoiceIdx > Names.Count) then
+      begin
+        WriteLn('Invalid selection.');
+        Exit;
+      end;
+
+      TargetVer := Names[ChoiceIdx - 1];
+    finally
+      Names.Free;
+    end;
+  end;
+
+  ItemPath := ExcludeTrailingPathDelimiter(VersionsDir + TargetVer);
+  if not DirectoryExists(ItemPath) then
+  begin
+    WriteLn('[!] mORMot version "' + TargetVer + '" not found in ' + VersionsDir);
+    Exit;
+  end;
+
+  // Check if active in current project
+  ActivePath := FindMormot2Path;
+  IsActiveInProject := (ActivePath <> '') and (LowerCase(ActivePath) = LowerCase(ItemPath));
+  if IsActiveInProject then
+  begin
+    WriteLn('  [WARNING] Version "' + TargetVer + '" is currently active in this project!');
+    WriteLn('            If deleted, the project will automatically fall back to "bundled".');
+  end;
+
+  if not Force then
+  begin
+    Write('Are you sure you want to permanently delete mORMot version "' + TargetVer + '"? [y/N]: ');
+    ReadLn(UserChoice);
+    UserChoice := LowerCase(Trim(UserChoice));
+    if (UserChoice <> 'y') and (UserChoice <> 'yes') and (UserChoice <> 's') and (UserChoice <> 'sim') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end;
+  end;
+
+  // If was active, reset project config
+  if IsActiveInProject then
+  begin
+    if FileExists(GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path') then
+      DeleteFile(GetCurrentDir + DirectorySeparator + 'server' + DirectorySeparator + 'mormot.path');
+  end;
+
+  SizeBytes := GetDirSizeBytes(ItemPath);
+  WriteLn('  [-] Removing ' + ItemPath + ' ...');
+  DeleteDir(ItemPath);
+  WriteLn('  [SUCCESS] mORMot 2 version "' + TargetVer + '" removed successfully! (' + FormatFileSizeMB(SizeBytes) + ' freed)');
+end;
+
 { Central CLI orchestrator for the full-stack Synopse mORMot 2 backend engine (bv mormot). }
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
@@ -23748,6 +24114,30 @@ var
       IsFresh := True;
   end;
 begin
+  if (SubCmd = 'versions') or (SubCmd = 'version') or (SubCmd = 'list-versions') or (SubCmd = 'list') then
+  begin
+    CmdMormotVersions;
+    Exit;
+  end;
+
+  if (SubCmd = 'upgrade') or (SubCmd = 'install') then
+  begin
+    CmdMormotUpgrade(Arg1);
+    Exit;
+  end;
+
+  if (SubCmd = 'use') or (SubCmd = 'select') or (SubCmd = 'set') then
+  begin
+    CmdMormotUse(Arg1);
+    Exit;
+  end;
+
+  if (SubCmd = 'remove-version') or (SubCmd = 'delete-version') or (SubCmd = 'rm-version') then
+  begin
+    CmdMormotRemoveVersion(Arg1, (Arg1 = '-y') or (Arg1 = '--yes') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg1 = '-f') or (Arg2 = '-f'));
+    Exit;
+  end;
+
   ProjectRoot := RequireBlaiseVueProject('bv mormot ' + SubCmd);
 
   ServerDir := ProjectRoot + DirectorySeparator + 'server';
@@ -26030,6 +26420,10 @@ begin
     Result.Add('kill');
     Result.Add('init');
     Result.Add('deploy');
+    Result.Add('upgrade');
+    Result.Add('versions');
+    Result.Add('use');
+    Result.Add('remove-version');
     Result.Add('remove');
   end
   else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
@@ -26165,6 +26559,10 @@ begin
       '   kill                       Terminates lingering server instances' + LineEnding +
       '   init                       Scaffolds mORMot 2 server structure in server/' + LineEnding +
       '   deploy [--zip]             Assembles standalone production bundle in deploy/' + LineEnding +
+      '   upgrade [tag]              Installs or updates upstream mORMot 2 from GitHub' + LineEnding +
+      '   versions                   Lists active, bundled and user mORMot 2 versions' + LineEnding +
+      '   use <bundled|latest|tag>   Configures active mORMot 2 version in project' + LineEnding +
+      '   remove-version [tag]       Interactively removes an installed user version' + LineEnding +
       '   remove [-y]                Safely deletes server/ directory and mORMot binaries'
   else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
     Result :=
@@ -28693,6 +29091,10 @@ begin
   WriteLn('');
   WriteLn('  # === Backend & Full-Stack (mORMot 2) ===');
   WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
+  WriteLn('  bv mormot versions         Lists active, bundled and cached mORMot 2 versions');
+  WriteLn('  bv mormot upgrade [--tag=<v>] Downloads mORMot 2 release into ~/.blaisevue/versions/mormot/');
+  WriteLn('  bv mormot use <tag|bundled> Switches active mORMot 2 version for current project');
+  WriteLn('  bv mormot remove-version [tag] Removes a cached mORMot 2 version');
   WriteLn('  bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh auto-terminates lingering instances)');
   WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
   WriteLn('  bv mormot kill [--port <p>] Gracefully terminates server.exe, frees socket & verifies port release');

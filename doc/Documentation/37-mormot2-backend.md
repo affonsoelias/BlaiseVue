@@ -39,7 +39,16 @@ The BlaiseVue CLI provides end-to-end tooling to scaffold, build, run, and inspe
 # 1. Initialize the mORMot 2 backend inside a project:
 bv mormot init
 
-# 2. DEBUG Build Mode (includes debug symbols and diagnostic output):
+# 2. Multi-Version Management (Upgrade, Switch, List, Clean):
+bv mormot versions                      # Lists active, bundled and cached user versions with disk usage
+bv mormot upgrade                       # Interactive version picker fetching tags from Synopse GitHub
+bv mormot upgrade --tag=v2.2            # Downloads specific tag into ~/.blaisevue/versions/mormot/v2.2
+bv mormot use v2.2                      # Configures project to use specific mORMot 2 version
+bv mormot use bundled                   # Reverts project to factory bundled version (vendor/mormot2)
+bv mormot remove-version                # Interactively choose a cached version to delete (frees disk space)
+bv mormot remove-version v2.2 -y        # Deletes specific cached version without prompt
+
+# 3. DEBUG Build Mode (includes debug symbols and diagnostic output):
 bv mormot build
 
 # 3. RELEASE Build Mode (maximum compiler optimization -O3, stripped symbols):

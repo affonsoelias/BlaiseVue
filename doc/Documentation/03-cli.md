@@ -392,6 +392,10 @@ Performs a complete purge of the build workspace:
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
 - **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
+- **`bv mormot versions`**: Lists the active version in the current project, the immutable factory baseline (`vendor/mormot2`), and all cached user distributions in `~/.blaisevue/versions/mormot/` along with disk usage.
+- **`bv mormot upgrade [--tag=<v>]`**: Queries the official Synopse repository and presents an interactive version picker (or downloads the specified git tag) into user storage (`~/.blaisevue/versions/mormot/<tag>`), keeping the factory bundled baseline 100% intact.
+- **`bv mormot use <tag|bundled>`**: Configures the current project to bind to a specific user version or reverts to the factory baseline (`server/mormot.path`).
+- **`bv mormot remove-version [tag] [-y]`**: Lists cached user versions and interactively prompts for selection to safely delete and reclaim disk space (protected factory baseline cannot be deleted).
 - **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
   - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
@@ -409,6 +413,10 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | mORMot Command | Subcommand / Flag | Action / Output |
 |---|---|---|
 | `bv mormot init` | - | Scaffolds native backend in `server/` |
+| `bv mormot versions` | - | Lists active, bundled and cached user versions with disk usage |
+| `bv mormot upgrade` | `[--tag=<v>]` | Interactively chooses and downloads mORMot 2 release to `~/.blaisevue/versions/` |
+| `bv mormot use` | `<tag\|bundled>` | Switches active mORMot 2 version for current project |
+| `bv mormot remove-version` | `[tag] [-y]` | Interactively selects and deletes a cached user version |
 | `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
 | `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
