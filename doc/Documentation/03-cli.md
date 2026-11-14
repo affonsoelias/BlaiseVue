@@ -486,7 +486,25 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 
 ---
 
-## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
+## 6. ⚡ Pas2JS Compiler Multi-Version Manager (`bv pas2js` / `bv compiler`)
+
+BlaiseVue projects compile Pascal Single-File Components (`.bv`) into high-performance JavaScript via the native **Pas2JS** compiler. BlaiseVue includes an immutable factory baseline in `vendor/pas2js` (protected from deletion), and allows developers to download, manage, and switch between multiple compiler versions:
+
+- **`bv pas2js versions`**: Lists the active compiler in the current project (or `.pas2js-version`), the bundled baseline (`vendor/pas2js`), and all user-installed compilers in `~/.blaisevue/versions/pas2js/` with disk sizes and executable paths.
+- **`bv pas2js upgrade [--version=<ver>]`**: Interactively selects and downloads a Pas2JS compiler distribution from official GitLab / FPC sources into user storage (`~/.blaisevue/versions/pas2js/<ver>/`).
+- **`bv pas2js use <version|bundled>`**: Configures the current project to bind to a specific compiler version (via `.pas2js-version`) or reverts to the factory bundled compiler.
+- **`bv pas2js remove-version [ver] [-y]`**: Interactively lists and safely deletes a cached compiler version from user storage to reclaim disk space (the factory bundled baseline is protected and cannot be deleted).
+
+| Pas2JS Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv pas2js versions` | - | Displays active compiler, binary paths, system RTL units and disk usage |
+| `bv pas2js upgrade` | `[--version=<ver>]` | Interactively selects and installs a Pas2JS compiler distribution |
+| `bv pas2js use` | `<version\|bundled>` | Switches active Pas2JS compiler for the current project |
+| `bv pas2js remove-version` | `[version] [-y]` | Interactively selects and deletes a cached compiler version |
+
+---
+
+## 7. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
 
 Manages native desktop applications with Free Pascal and WebUI, and synchronizes Lazarus IDE project integration:
 - **`bv lazarus init`**: Scaffolds and synchronizes the root Lazarus project (`<project_name>.lpi` and `<project_name>.lpr`) for opening the reactive project directly inside Lazarus IDE with full component indexing and F9 live dev server execution.

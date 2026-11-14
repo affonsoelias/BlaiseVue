@@ -277,79 +277,117 @@ end;
 
 { Returns the base directory for pas2js, checking vendor/pas2js first then legacy pas2js/ }
 
-function GetPas2JSRoot: string;
+{ Returns the active Pas2JS version configured in project (.pas2js-version) or 'bundled' }
+function GetActivePas2JSVersion: string;
+var
+  ProjDir, VerFile: string;
 begin
+  Result := 'bundled';
+  ProjDir := FindBlaiseVueProjectRoot('');
+  if ProjDir = '' then ProjDir := GetCurrentDir;
+  VerFile := IncludeTrailingPathDelimiter(ProjDir) + '.pas2js-version';
+  if FileExists(VerFile) then
+  begin
+    Result := Trim(ReadFileToString(VerFile));
+    if Result = '' then Result := 'bundled';
+  end;
+end;
+
+{ Returns the base directory for pas2js, checking user version in ~/.blaisevue/versions/pas2js/ then vendor/pas2js }
+function GetPas2JSRoot: string;
+var
+  Ver, UserPath: string;
+begin
+  Ver := GetActivePas2JSVersion;
+  if (Ver <> '') and (LowerCase(Ver) <> 'bundled') and (LowerCase(Ver) <> 'vendor') then
+  begin
+    UserPath := IncludeTrailingPathDelimiter(GetGlobalVersionsPath('pas2js')) + Ver;
+    if DirectoryExists(UserPath) then
+      Exit(IncludeTrailingPathDelimiter(UserPath));
+    if DirectoryExists(Ver) then
+      Exit(IncludeTrailingPathDelimiter(Ver));
+  end;
+
   if DirectoryExists(GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js') then
     Result := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' + DirectorySeparator
-
   else
     Result := GetSDKPath + 'pas2js' + DirectorySeparator;
 end;
 
 { Returns the absolute path to the pas2js compiler executable based on OS }
-
 function GetPas2JSPath: string;
-
 var
-  OSFolder, Base: string;
+  OSFolder, Base, ExeName, Cand: string;
 begin
   Base := GetPas2JSRoot;
 
   {$IFDEF WINDOWS}
-
+    ExeName := 'pas2js.exe';
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
-    Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js.exe';
-
   {$ELSE}
-
+    ExeName := 'pas2js';
     {$IFDEF LINUX}
-
       OSFolder := 'pas2js-linux-x86_64-3.2.0'; // Default to x64
-
     {$ELSE}
-
       OSFolder := 'pas2js-darwin-x86_64-3.2.0'; // Default to x64
-
     {$ENDIF}
-
-    Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + 'pas2js';
-
   {$ENDIF}
+
+  // 1. Direct bin/pas2js[.exe] in Base
+  Cand := Base + 'bin' + DirectorySeparator + ExeName;
+  if FileExists(Cand) then Exit(Cand);
+
+  // 2. OS-specific subfolder in Base (bundled standard)
+  Cand := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + ExeName;
+  if FileExists(Cand) then Exit(Cand);
+
+  // 3. Directly in Base
+  Cand := Base + ExeName;
+  if FileExists(Cand) then Exit(Cand);
+
+  // Default fallback
+  Result := Base + OSFolder + DirectorySeparator + 'bin' + DirectorySeparator + ExeName;
 end;
 
 { Returns the library path for the pas2js system units }
-
 function GetPas2JSLibPath: string;
-
 var
-  OSFolder: string;
+  OSFolder, Base, Cand: string;
 begin
+  Base := GetPas2JSRoot;
+
   {$IFDEF WINDOWS}
-
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
-
   {$ELSE}
-
     {$IFDEF LINUX}
-
       OSFolder := 'pas2js-linux-x86_64-3.2.0';
-
     {$ELSE}
-
       OSFolder := 'pas2js-darwin-x86_64-3.2.0';
-
     {$ENDIF}
-
   {$ENDIF}
 
-  Result := GetPas2JSRoot + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+  // 1. packages/rtl/src directly in Base
+  Cand := Base + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  // 2. OSFolder/packages/rtl/src in Base
+  Cand := Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  // 3. Fallback to bundled vendor packages if user version only contains the compiler binary
+  Cand := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  Result := Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
 end;
 
 { Returns the packages root directory for pas2js packages }
 function GetPas2JSPackagesRoot: string;
 var
-  OSFolder: string;
+  OSFolder, Base, Cand: string;
 begin
+  Base := GetPas2JSRoot;
+
   {$IFDEF WINDOWS}
     OSFolder := 'pas2js-win64-x86_64-3.2.0';
   {$ELSE}
@@ -359,7 +397,20 @@ begin
       OSFolder := 'pas2js-darwin-x86_64-3.2.0';
     {$ENDIF}
   {$ENDIF}
-  Result := GetPas2JSRoot + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator;
+
+  // 1. packages directly in Base
+  Cand := Base + 'packages' + DirectorySeparator;
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  // 2. OSFolder/packages in Base
+  Cand := Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator;
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  // 3. Fallback to bundled vendor packages
+  Cand := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' + DirectorySeparator + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator;
+  if DirectoryExists(Cand) then Exit(Cand);
+
+  Result := Base + OSFolder + DirectorySeparator + 'packages' + DirectorySeparator;
 end;
 
 { Returns human-readable description for known Pas2JS built-in packages }
@@ -24078,6 +24129,370 @@ begin
   WriteLn('  [SUCCESS] mORMot 2 version "' + TargetVer + '" removed successfully! (' + FormatFileSizeMB(SizeBytes) + ' freed)');
 end;
 
+{ Lists active, bundled and cached Pas2JS compiler versions. }
+procedure CmdPas2jsVersions;
+var
+  VersionsDir, ActiveVer, CompilerPath, ItemPath: string;
+  SR: TSearchRec;
+  SizeBytes: Int64;
+  HasUserVersions, IsActive: Boolean;
+begin
+  VersionsDir := GetGlobalVersionsPath('pas2js');
+  ActiveVer := GetActivePas2JSVersion;
+  CompilerPath := GetPas2JSPath;
+
+  WriteLn('================================================================');
+  WriteLn('  Pas2JS Compiler Distributions & Status');
+  WriteLn('================================================================');
+  if ActiveVer = 'bundled' then
+    WriteLn('  [*] Active in Project:   bundled (vendor/pas2js - Framework Default)')
+  else
+    WriteLn('  [*] Active in Project:   ' + ActiveVer + ' (.pas2js-version)');
+
+  WriteLn('  [*] Active Executable:   ' + CompilerPath);
+  WriteLn('  [*] Active System Units: ' + GetPas2JSLibPath);
+  WriteLn('----------------------------------------------------------------');
+  WriteLn('  Available Compiler Distributions:');
+
+  // Bundled baseline
+  IsActive := (ActiveVer = 'bundled');
+  if IsActive then
+    WriteLn('    [*] bundled    ' + GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js (ACTIVE, Protected)')
+  else
+    WriteLn('    [ ] bundled    ' + GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js (Protected Baseline)');
+
+  // User versions in ~/.blaisevue/versions/pas2js/
+  HasUserVersions := False;
+  if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+        begin
+          HasUserVersions := True;
+          ItemPath := VersionsDir + SR.Name;
+          SizeBytes := GetDirSizeBytes(ItemPath);
+          IsActive := (LowerCase(ActiveVer) = LowerCase(SR.Name));
+          if IsActive then
+            WriteLn('    [*] ' + PadRight(SR.Name, 10) + ' ' + ItemPath + ' (ACTIVE | ' + FormatFileSizeMB(SizeBytes) + ')')
+          else
+            WriteLn('    [ ] ' + PadRight(SR.Name, 10) + ' ' + ItemPath + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+
+  if not HasUserVersions then
+    WriteLn('    (no user versions installed - run "bv pas2js upgrade" to install)');
+
+  WriteLn('================================================================');
+  WriteLn('To switch version in project: bv pas2js use <bundled | version>');
+  WriteLn('To install/upgrade version:   bv pas2js upgrade [--version=<ver>]');
+  WriteLn('To remove user version:       bv pas2js remove-version [version]');
+  WriteLn('================================================================');
+end;
+
+{ Configures the active Pas2JS compiler for the current project. }
+procedure CmdPas2jsUse(TargetVer: string);
+var
+  ProjectRoot, VerFile, UserPath: string;
+begin
+  TargetVer := Trim(TargetVer);
+  ProjectRoot := RequireBlaiseVueProject('bv pas2js use');
+  VerFile := IncludeTrailingPathDelimiter(ProjectRoot) + '.pas2js-version';
+
+  if TargetVer = '' then
+  begin
+    WriteLn('Usage: bv pas2js use <bundled | version>');
+    WriteLn('Run "bv pas2js versions" to view available distributions.');
+    Exit;
+  end;
+
+  if (LowerCase(TargetVer) = 'bundled') or (LowerCase(TargetVer) = 'vendor') or (LowerCase(TargetVer) = 'default') then
+  begin
+    if FileExists(VerFile) then
+      DeleteFile(VerFile);
+    WriteLn('  [SUCCESS] Project configured to use bundled Pas2JS compiler (vendor/pas2js).');
+    Exit;
+  end;
+
+  UserPath := IncludeTrailingPathDelimiter(GetGlobalVersionsPath('pas2js')) + TargetVer;
+  if not DirectoryExists(UserPath) and not DirectoryExists(TargetVer) then
+  begin
+    WriteLn('  [ERROR] Pas2JS version "' + TargetVer + '" is not installed.');
+    WriteLn('  Run "bv pas2js upgrade" to install versions, or check "bv pas2js versions".');
+    Exit;
+  end;
+
+  WriteStringToFile(VerFile, TargetVer);
+  WriteLn('  [SUCCESS] Project configured to use Pas2JS compiler (' + TargetVer + ').');
+  WriteLn('            Active compiler: ' + GetPas2JSPath);
+end;
+
+{ Downloads or clones a Pas2JS release into ~/.blaisevue/versions/pas2js/<ver>. }
+procedure CmdPas2jsUpgrade(TargetVer: string);
+var
+  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot: string;
+  GitAvail: Boolean;
+begin
+  VersionsDir := GetGlobalVersionsPath('pas2js');
+  TargetVer := Trim(TargetVer);
+
+  if StartsText('--version=', TargetVer) then
+    TargetVer := Copy(TargetVer, 11, Length(TargetVer))
+  else if StartsText('--tag=', TargetVer) then
+    TargetVer := Copy(TargetVer, 7, Length(TargetVer));
+
+  // Interactive menu if empty
+  if TargetVer = '' then
+  begin
+    WriteLn('================================================================');
+    WriteLn('  Pas2JS Compiler Upgrade & Version Manager');
+    WriteLn('================================================================');
+    WriteLn('  Select target Pas2JS compiler distribution to install:');
+    WriteLn('    [1] 3.2.0 (Official Stable Release)');
+    WriteLn('    [2] 3.4.0 (Development / GitLab main)');
+    WriteLn('    [3] 3.1.1 (Legacy Release)');
+    WriteLn('    [4] Custom version tag or repository');
+    WriteLn('================================================================');
+    Write('Select option [1-4] or [C]ancel: ');
+    ReadLn(UserChoice);
+    UserChoice := Trim(UserChoice);
+
+    if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end
+    else if UserChoice = '1' then
+      TargetVer := '3.2.0'
+    else if UserChoice = '2' then
+      TargetVer := '3.4.0'
+    else if UserChoice = '3' then
+      TargetVer := '3.1.1'
+    else if UserChoice = '4' then
+    begin
+      Write('Enter version tag (e.g. 3.2.0, main): ');
+      ReadLn(TargetVer);
+      TargetVer := Trim(TargetVer);
+      if TargetVer = '' then
+      begin
+        WriteLn('Invalid version.');
+        Exit;
+      end;
+    end
+    else
+    begin
+      WriteLn('Invalid selection.');
+      Exit;
+    end;
+  end;
+
+  DestDir := ExcludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(VersionsDir) + TargetVer);
+  GitAvail := HasCommand('git');
+
+  WriteLn('================================================================');
+  WriteLn('  Target Distribution: Pas2JS ' + TargetVer);
+  WriteLn('  Install Destination: ' + DestDir);
+  WriteLn('================================================================');
+
+  if DirectoryExists(DestDir + DirectorySeparator + '.git') and GitAvail then
+  begin
+    WriteLn('  [*] Updating existing repository via "git pull" ...');
+    {$IFDEF WINDOWS}
+    ExecuteProcess('cmd', '/c git -C "' + DestDir + '" pull --ff-only');
+    {$ELSE}
+    ExecuteProcess('/bin/sh', '-c "git -C \"' + DestDir + '\" pull --ff-only"');
+    {$ENDIF}
+  end
+  else
+  begin
+    if DirectoryExists(DestDir) then
+      DeleteDir(DestDir);
+    ForceDirectories(DestDir);
+
+    if GitAvail then
+    begin
+      if (TargetVer = 'main') or (TargetVer = 'master') or (TargetVer = 'latest') then
+        GitCmd := 'git clone --depth 1 https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"'
+      else
+        GitCmd := 'git clone --depth 1 --branch pas2js_' + StringReplace(TargetVer, '.', '_', [rfReplaceAll]) + ' https://gitlab.com/freepascal.org/fpc/pas2js.git "' + DestDir + '"';
+
+      WriteLn('  [*] Cloning from https://gitlab.com/freepascal.org/fpc/pas2js.git ...');
+      {$IFDEF WINDOWS}
+      ExecuteProcess('cmd', '/c ' + GitCmd);
+      {$ELSE}
+      ExecuteProcess('/bin/sh', '-c "' + GitCmd + '"');
+      {$ENDIF}
+    end
+    else
+    begin
+      WriteLn('  [!] Git not detected on PATH. Please install Git or clone manually into: ' + DestDir);
+      Exit;
+    end;
+  end;
+
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  [SUCCESS] Pas2JS compiler (' + TargetVer + ') installed successfully!');
+  WriteLn('  Location: ' + DestDir);
+  WriteLn('======================================================================');
+
+  try
+    ProjectRoot := FindBlaiseVueProjectRoot('');
+    if ProjectRoot <> '' then
+    begin
+      Write('Do you want to activate version "' + TargetVer + '" in the current project now? [y/N]: ');
+      ReadLn(UserChoice);
+      UserChoice := LowerCase(Trim(UserChoice));
+      if (UserChoice = 'y') or (UserChoice = 'yes') or (UserChoice = 's') or (UserChoice = 'sim') then
+        CmdPas2jsUse(TargetVer);
+    end;
+  except
+    // Ignore
+  end;
+end;
+
+{ Removes an installed user version from ~/.blaisevue/versions/pas2js/<ver>. }
+procedure CmdPas2jsRemoveVersion(TargetVer: string; Force: Boolean);
+var
+  VersionsDir, ItemPath, UserChoice, ActiveVer, ProjectRoot, VerFile: string;
+  SR: TSearchRec;
+  Names: TStringList;
+  i, ChoiceIdx: Integer;
+  SizeBytes: Int64;
+  IsActiveInProject: Boolean;
+begin
+  VersionsDir := GetGlobalVersionsPath('pas2js');
+  TargetVer := Trim(TargetVer);
+
+  if (LowerCase(TargetVer) = 'bundled') or (LowerCase(TargetVer) = 'vendor') then
+  begin
+    WriteLn('  [ERROR] The "bundled" version (vendor/pas2js) is protected and cannot be deleted.');
+    Exit;
+  end;
+
+  if TargetVer = '' then
+  begin
+    Names := TStringList.Create;
+    try
+      if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+      begin
+        try
+          repeat
+            if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+              Names.Add(SR.Name);
+          until FindNext(SR) <> 0;
+        finally
+          FindClose(SR);
+        end;
+      end;
+
+      if Names.Count = 0 then
+      begin
+        WriteLn('No user versions found in ' + VersionsDir);
+        Exit;
+      end;
+
+      WriteLn('================================================================');
+      WriteLn('  Installed Pas2JS Versions (' + VersionsDir + ')');
+      WriteLn('================================================================');
+      for i := 0 to Names.Count - 1 do
+      begin
+        ItemPath := VersionsDir + Names[i];
+        SizeBytes := GetDirSizeBytes(ItemPath);
+        WriteLn('  [' + IntToStr(i + 1) + '] ' + PadRight(Names[i], 12) + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+      end;
+      WriteLn('================================================================');
+      Write('Select a version to remove [1-' + IntToStr(Names.Count) + '] or [C]ancel: ');
+      ReadLn(UserChoice);
+      UserChoice := Trim(UserChoice);
+      if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+      begin
+        WriteLn('Operation cancelled.');
+        Exit;
+      end;
+
+      ChoiceIdx := StrToIntDef(UserChoice, -1);
+      if (ChoiceIdx < 1) or (ChoiceIdx > Names.Count) then
+      begin
+        WriteLn('Invalid selection.');
+        Exit;
+      end;
+
+      TargetVer := Names[ChoiceIdx - 1];
+    finally
+      Names.Free;
+    end;
+  end;
+
+  ItemPath := ExcludeTrailingPathDelimiter(VersionsDir + TargetVer);
+  if not DirectoryExists(ItemPath) then
+  begin
+    WriteLn('[!] Pas2JS version "' + TargetVer + '" not found in ' + VersionsDir);
+    Exit;
+  end;
+
+  ActiveVer := GetActivePas2JSVersion;
+  IsActiveInProject := (LowerCase(ActiveVer) = LowerCase(TargetVer));
+  if IsActiveInProject then
+  begin
+    WriteLn('  [WARNING] Version "' + TargetVer + '" is currently active in this project!');
+    WriteLn('            If deleted, the project will automatically fall back to "bundled".');
+  end;
+
+  if not Force then
+  begin
+    Write('Are you sure you want to permanently delete Pas2JS version "' + TargetVer + '"? [y/N]: ');
+    ReadLn(UserChoice);
+    UserChoice := LowerCase(Trim(UserChoice));
+    if (UserChoice <> 'y') and (UserChoice <> 'yes') and (UserChoice <> 's') and (UserChoice <> 'sim') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end;
+  end;
+
+  if IsActiveInProject then
+  begin
+    ProjectRoot := FindBlaiseVueProjectRoot('');
+    if ProjectRoot <> '' then
+    begin
+      VerFile := IncludeTrailingPathDelimiter(ProjectRoot) + '.pas2js-version';
+      if FileExists(VerFile) then
+        DeleteFile(VerFile);
+    end;
+  end;
+
+  SizeBytes := GetDirSizeBytes(ItemPath);
+  WriteLn('  [-] Removing ' + ItemPath + ' ...');
+  DeleteDir(ItemPath);
+  WriteLn('  [SUCCESS] Pas2JS version "' + TargetVer + '" removed successfully! (' + FormatFileSizeMB(SizeBytes) + ' freed)');
+end;
+
+{ Central CLI orchestrator for the Pas2JS compiler multi-version manager (bv pas2js). }
+procedure CmdPas2js(const SubCmd, Arg1, Arg2: string);
+var
+  SC: string;
+begin
+  SC := LowerCase(Trim(SubCmd));
+  if (SC = 'versions') or (SC = 'list') or (SC = 'ls') then
+    CmdPas2jsVersions
+  else if (SC = 'use') or (SC = 'switch') or (SC = 'set') then
+    CmdPas2jsUse(Arg1)
+  else if (SC = 'upgrade') or (SC = 'install') or (SC = 'update') or (SC = 'get') then
+    CmdPas2jsUpgrade(Arg1)
+  else if (SC = 'remove-version') or (SC = 'delete-version') or (SC = 'remove') or (SC = 'rm') then
+    CmdPas2jsRemoveVersion(Arg1, (LowerCase(Arg1) = '-y') or (LowerCase(Arg2) = '-y'))
+  else
+  begin
+    WriteLn('Usage: bv pas2js <versions|upgrade [--version=<v>]|use <v|bundled>|remove-version [v] [-y]>');
+    Halt(1);
+  end;
+end;
+
 { Central CLI orchestrator for the full-stack Synopse mORMot 2 backend engine (bv mormot). }
 procedure CmdServer(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
@@ -26366,6 +26781,9 @@ begin
   Result.Add('doc');
   // Full-Stack Backend (mORMot 2)
   Result.Add('mormot');
+  // Compiler (Pas2JS)
+  Result.Add('pas2js');
+  Result.Add('compiler');
   // Mobile (Capacitor)
   Result.Add('capacitor');
   Result.Add('mobile');
@@ -26425,6 +26843,13 @@ begin
     Result.Add('use');
     Result.Add('remove-version');
     Result.Add('remove');
+  end
+  else if (Cmd = 'pas2js') or (Cmd = 'compiler') then
+  begin
+    Result.Add('versions');
+    Result.Add('upgrade');
+    Result.Add('use');
+    Result.Add('remove-version');
   end
   else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
   begin
@@ -26564,6 +26989,13 @@ begin
       '   use <bundled|latest|tag>   Configures active mORMot 2 version in project' + LineEnding +
       '   remove-version [tag]       Interactively removes an installed user version' + LineEnding +
       '   remove [-y]                Safely deletes server/ directory and mORMot binaries'
+  else if (Cmd = 'pas2js') or (Cmd = 'compiler') then
+    Result :=
+      '  [HINT] Available subcommands for ''pas2js'':' + LineEnding +
+      '   versions                   Lists active, bundled and user Pas2JS compiler versions' + LineEnding +
+      '   upgrade [--version=<ver>]  Downloads/installs Pas2JS release into ~/.blaisevue/versions/pas2js/' + LineEnding +
+      '   use <version|bundled>      Configures active Pas2JS compiler for current project' + LineEnding +
+      '   remove-version [ver]       Interactively removes an installed user compiler version'
   else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
     Result :=
       '  [HINT] Available subcommands for ''capacitor'':' + LineEnding +
@@ -27404,6 +27836,10 @@ begin
         WriteLn('');
         WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
         WriteLn('  mormot init                Scaffolds mORMot 2 backend server in server/');
+        WriteLn('  mormot versions            Lists active, bundled and user mORMot 2 versions');
+        WriteLn('  mormot upgrade [--tag=<v>] Downloads mORMot 2 release into ~/.blaisevue/versions/mormot/');
+        WriteLn('  mormot use <tag|bundled>   Switches active mORMot 2 version for current project');
+        WriteLn('  mormot remove-version [tag] Removes a cached mORMot 2 version');
         WriteLn('  mormot run [--release] [--fresh] [--port <p>] Starts native backend server');
         WriteLn('  mormot build [--release]   Compiles native server binary with Free Pascal');
         WriteLn('  mormot kill [--port <p>]   Gracefully terminates server.exe & verifies port release');
@@ -27414,6 +27850,12 @@ begin
         WriteLn('  mormot docs | swagger      Generates interactive OpenAPI 3.0 & Swagger UI explorer');
         WriteLn('  mormot docker [--build]    Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
         WriteLn('  mormot rpc                 Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
+        WriteLn('');
+        WriteLn('  # === Compiler (Pas2JS) ===');
+        WriteLn('  pas2js versions            Lists active, bundled and user Pas2JS compiler versions');
+        WriteLn('  pas2js upgrade [--version=<v>] Downloads Pas2JS release into ~/.blaisevue/versions/pas2js/');
+        WriteLn('  pas2js use <v|bundled>     Switches active Pas2JS compiler for current project');
+        WriteLn('  pas2js remove-version [v]  Removes a cached Pas2JS compiler version');
         WriteLn('');
         WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
         WriteLn('  capacitor init [name] [id] Scaffolds Capacitor & mobile/ native project');
@@ -27577,6 +28019,12 @@ begin
 
       // `mormot` backend commands
       else if CmdName = 'mormot' then
+      begin
+        ExecInCockpit(BvExePath, ActivePath, InputLine);
+      end
+
+      // `pas2js` compiler commands
+      else if (CmdName = 'pas2js') or (CmdName = 'compiler') then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
@@ -29107,6 +29555,12 @@ begin
   WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
   WriteLn('  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries');
   WriteLn('');
+  WriteLn('  # === Compiler (Pas2JS) ===');
+  WriteLn('  bv pas2js versions         Lists active, bundled and cached Pas2JS compiler versions');
+  WriteLn('  bv pas2js upgrade [--version=<v>] Downloads Pas2JS release into ~/.blaisevue/versions/pas2js/');
+  WriteLn('  bv pas2js use <v|bundled>  Switches active Pas2JS compiler for current project');
+  WriteLn('  bv pas2js remove-version [v] Removes a cached Pas2JS compiler version');
+  WriteLn('');
   WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
   WriteLn('  bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
   WriteLn('  bv capacitor upgrade [--target=<v>] Migrates Capacitor dependencies & updates Gradle');
@@ -29637,6 +30091,16 @@ begin
     end;
 
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+
+  else if (Cmd = 'pas2js') or (Cmd = 'compiler') then
+  begin
+    if ParamCount < 2 then
+    begin
+      WriteLn('Usage: bv pas2js <versions|upgrade [--version=<v>]|use <v|bundled>|remove-version [v] [-y]>');
+      Halt(1);
+    end;
+    CmdPas2js(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
 
   else if (Cmd = 'format') or (Cmd = 'fmt') then
