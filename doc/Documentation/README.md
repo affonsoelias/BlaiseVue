@@ -74,8 +74,8 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 51. [51. BlaiseReports: Native Vector PDF, Excel & Print Engine](51-blaise-reports.md) — Declarative enterprise reporting and multi-format document export engine in pure Object Pascal with `TBVReport` and print optimization.
 52. [52. Global Mixins and Global Plugins in BlaiseVue](52-mixins-and-plugins.md) — Extending framework functionality, global option injection, and cross-cutting plugin architecture.
 
-### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
-37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
+### ⚙️ 5. Full-Stack Backend Architecture & Cloud
+37. [37. Full-Stack Pascal with mORMot 2 & Alternative Backends](37-mormot2-backend.md) — Enterprise SOA (mORMot 2), lightweight microframeworks (Horse), and frontend-only decoupled architecture.
 43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md) — Shared Pascal service contracts, automated proxy scaffolding (`bv mormot rpc`), and compile-time API validation.
 46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
 
