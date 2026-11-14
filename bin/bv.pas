@@ -254,6 +254,16 @@ begin
   ForceDirectories(Result);
 end;
 
+{ Returns the user-level global SDK / versions directory (~/.blaisevue/versions/) }
+function GetGlobalVersionsPath(const ModuleName: string = ''): string;
+begin
+  if ModuleName <> '' then
+    Result := GetUserBlaiseVueDir + DirectorySeparator + 'versions' + DirectorySeparator + ModuleName + DirectorySeparator
+  else
+    Result := GetUserBlaiseVueDir + DirectorySeparator + 'versions' + DirectorySeparator;
+  ForceDirectories(Result);
+end;
+
 { Returns the framework built-in tools directory (packages/tools/) }
 function GetBuiltinToolsPath: string;
 begin
@@ -617,6 +627,45 @@ begin
   end;
 
   RemoveDir(Path);
+end;
+
+{ Recursively computes total directory size in bytes. }
+function GetDirSizeBytes(const DirPath: string): Int64;
+var
+  SR: TSearchRec;
+  P: string;
+begin
+  Result := 0;
+  P := IncludeTrailingPathDelimiter(DirPath);
+  if FindFirst(P + '*', faAnyFile, SR) = 0 then
+  begin
+    try
+      repeat
+        if (SR.Name <> '.') and (SR.Name <> '..') then
+        begin
+          if (SR.Attr and faDirectory) <> 0 then
+            Inc(Result, GetDirSizeBytes(P + SR.Name))
+          else
+            Inc(Result, SR.Size);
+        end;
+      until FindNext(SR) <> 0;
+    finally
+      FindClose(SR);
+    end;
+  end;
+end;
+
+{ Formats a byte count into a human-readable string (KB, MB, GB). }
+function FormatFileSizeMB(Bytes: Int64): string;
+begin
+  if Bytes < 1024 then
+    Result := IntToStr(Bytes) + ' B'
+  else if Bytes < 1024 * 1024 then
+    Result := Format('%.1f KB', [Bytes / 1024.0])
+  else if Bytes < 1024 * 1024 * 1024 then
+    Result := Format('%.1f MB', [Bytes / (1024.0 * 1024.0)])
+  else
+    Result := Format('%.2f GB', [Bytes / (1024.0 * 1024.0 * 1024.0)]);
 end;
 
 { Reads and returns the entire contents of a text file as an Object Pascal string. }
@@ -13879,8 +13928,8 @@ begin
   end;
 end;
 
-{ Mobile application compiler and device orchestrator targeting Android and iOS (bv mobile). }
-procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
+{ Mobile application compiler and device orchestrator targeting Android and iOS (bv capacitor). }
+procedure CmdCapacitor(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
 
 var
   MobileDir, BinDir, AndroidDir, IOSDir: string;
@@ -13889,6 +13938,10 @@ var
   ExistingConfig, CleanName, TargetPlatform, SelectedAVD, EmulatorAction: string;
   RequestedCapVersion, CapTag, CapVerDisplay: string;
   PkgJsonFile, PkgContent, CurrentCapVer, LatestCapVer, ExtraPkgs: string;
+  VersionsDir, ItemPath, UserChoice, VersionCacheDir: string;
+  ChoiceIdx, Count: Integer;
+  SizeBytes: Int64;
+  SR: TSearchRec;
   IsRelease, IsAllTargets, UseEmulator, IsBundle, IsCheckOnly, IsFreshEmulator, IsNoBuild, IsForceInit, NeedsAndroidRecreate: Boolean;
   GradleText: string;
   AvdList: TStringList;
@@ -14391,7 +14444,7 @@ var
     end;
   end;
 begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Mobile (Capacitor Engine) ===');
+  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Capacitor Engine ===');
   IsRelease := False;
   IsBundle := False;
   IsAllTargets := False;
@@ -14435,8 +14488,9 @@ begin
     Inc(i);
   end;
 
-  if (SubCmd <> 'emulator') and (SubCmd <> 'kill') then
-    RequireBlaiseVueProject('bv mobile ' + SubCmd);
+  if (SubCmd <> 'emulator') and (SubCmd <> 'kill') and (SubCmd <> 'versions') and (SubCmd <> 'version') and
+     (SubCmd <> 'remove-version') and (SubCmd <> 'delete-version') and (SubCmd <> 'rm-version') then
+    RequireBlaiseVueProject('bv capacitor ' + SubCmd);
 
   MobileDir := GetCurrentDir + DirectorySeparator + 'mobile';
   BinDir := MobileDir + DirectorySeparator + 'bin';
@@ -14582,7 +14636,7 @@ begin
        ((TargetPlatform = 'android') and not DirectoryExists(AndroidDir)) then
     begin
       WriteLn('  [+] Mobile platform not yet initialized. Auto-scaffolding for project: ' + ActualAppName + ' ...');
-      CmdMobile('init', ActualAppName, ActualAppId);
+      CmdCapacitor('init', ActualAppName, ActualAppId);
     end;
   end;
 
@@ -14594,6 +14648,149 @@ begin
   else if SubCmd = 'kill' then
   begin
     KillAndroidEmulator;
+    Exit;
+  end
+  else if (SubCmd = 'versions') or (SubCmd = 'version') or (SubCmd = 'list-versions') or (SubCmd = 'list') then
+  begin
+    WriteLn('================================================================');
+    WriteLn('  Capacitor Mobile Runtimes & Versions');
+    WriteLn('================================================================');
+
+    // 1. Current Project Version
+    CurrentCapVer := '';
+    if FileExists(PkgJsonFile) then
+    begin
+      PkgContent := ReadFileToString(PkgJsonFile);
+      CurrentCapVer := ExtractJsonField(PkgContent, '@capacitor/core');
+      if CurrentCapVer = '' then CurrentCapVer := ExtractJsonField(PkgContent, '@capacitor/cli');
+      if (Length(CurrentCapVer) > 0) and ((CurrentCapVer[1] = '^') or (CurrentCapVer[1] = '~')) then
+        CurrentCapVer := Copy(CurrentCapVer, 2, MaxInt);
+    end;
+
+    if CurrentCapVer <> '' then
+      WriteLn('  [*] Active in Project:   v' + CurrentCapVer + ' (@capacitor/core)')
+    else if FileExists(PkgJsonFile) then
+      WriteLn('  [-] Project Status:      Capacitor not yet configured in package.json')
+    else
+      WriteLn('  [-] Project Status:      Not inside a BlaiseVue project root');
+
+    WriteLn('----------------------------------------------------------------');
+    WriteLn('  User Cached Versions (~/.blaisevue/versions/capacitor/):');
+
+    VersionsDir := GetGlobalVersionsPath('capacitor');
+    Count := 0;
+    if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+    begin
+      try
+        repeat
+          if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+          begin
+            Inc(Count);
+            ItemPath := VersionsDir + SR.Name;
+            SizeBytes := GetDirSizeBytes(ItemPath);
+            WriteLn('    [' + IntToStr(Count) + '] ' + PadRight(SR.Name, 12) + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+          end;
+        until FindNext(SR) <> 0;
+      finally
+        FindClose(SR);
+      end;
+    end;
+
+    if Count = 0 then
+      WriteLn('    (none cached - run "bv capacitor upgrade" to cache versions)');
+
+    WriteLn('================================================================');
+    Exit;
+  end
+
+  else if (SubCmd = 'remove-version') or (SubCmd = 'delete-version') or (SubCmd = 'rm-version') then
+  begin
+    VersionsDir := GetGlobalVersionsPath('capacitor');
+    TargetPlatform := Trim(Arg1);
+    if (TargetPlatform = '') or (TargetPlatform[1] = '-') then
+      TargetPlatform := Trim(Arg2);
+    if (Length(TargetPlatform) > 0) and (TargetPlatform[1] = '-') then
+      TargetPlatform := '';
+
+    // If target is empty, show interactive selection menu
+    if TargetPlatform = '' then
+    begin
+      AvdList := TStringList.Create;
+      try
+        if FindFirst(VersionsDir + '*', faDirectory, SR) = 0 then
+        begin
+          try
+            repeat
+              if (SR.Name <> '.') and (SR.Name <> '..') and ((SR.Attr and faDirectory) <> 0) then
+                AvdList.Add(SR.Name);
+            until FindNext(SR) <> 0;
+          finally
+            FindClose(SR);
+          end;
+        end;
+
+        if AvdList.Count = 0 then
+        begin
+          WriteLn('No cached Capacitor versions found in ' + VersionsDir);
+          Exit;
+        end;
+
+        WriteLn('================================================================');
+        WriteLn('  Installed Capacitor Versions (' + VersionsDir + ')');
+        WriteLn('================================================================');
+        for i := 0 to AvdList.Count - 1 do
+        begin
+          ItemPath := VersionsDir + AvdList[i];
+          SizeBytes := GetDirSizeBytes(ItemPath);
+          WriteLn('  [' + IntToStr(i + 1) + '] ' + PadRight(AvdList[i], 12) + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+        end;
+        WriteLn('================================================================');
+        Write('Select a version to remove [1-' + IntToStr(AvdList.Count) + '] or [C]ancel: ');
+        ReadLn(UserChoice);
+        UserChoice := Trim(UserChoice);
+        if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+        begin
+          WriteLn('Operation cancelled.');
+          Exit;
+        end;
+
+        ChoiceIdx := StrToIntDef(UserChoice, -1);
+        if (ChoiceIdx < 1) or (ChoiceIdx > AvdList.Count) then
+        begin
+          WriteLn('Invalid selection.');
+          Exit;
+        end;
+
+        TargetPlatform := AvdList[ChoiceIdx - 1];
+      finally
+        AvdList.Free;
+      end;
+    end;
+
+    ItemPath := VersionsDir + TargetPlatform;
+    if not DirectoryExists(ItemPath) then
+    begin
+      WriteLn('[!] Version "' + TargetPlatform + '" not found in ' + VersionsDir);
+      Exit;
+    end;
+
+    if not (IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or
+            (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force')) then
+    begin
+      Write('Are you sure you want to permanently delete "' + TargetPlatform + '"? [y/N]: ');
+      ReadLn(UserChoice);
+      UserChoice := LowerCase(Trim(UserChoice));
+      if (UserChoice <> 'y') and (UserChoice <> 'yes') and (UserChoice <> 's') and (UserChoice <> 'sim') then
+      begin
+        WriteLn('Operation cancelled.');
+        Exit;
+      end;
+    end;
+
+    SizeBytes := GetDirSizeBytes(ItemPath);
+    WriteLn('  [-] Removing ' + ItemPath + ' ...');
+    DeleteDir(ItemPath);
+    WriteLn('  [SUCCESS] Capacitor version "' + TargetPlatform + '" removed successfully! (' + FormatFileSizeMB(SizeBytes) + ' freed)');
     Exit;
   end
   else if (SubCmd = 'init') then
@@ -14875,11 +15072,11 @@ begin
         else
         begin
           WriteLn('  [*] An update is available (v' + CurrentCapVer + ' -> v' + LatestCapVer + ').');
-          WriteLn('      Run "bv mobile upgrade" to upgrade dependencies and migrate native platforms.');
+          WriteLn('      Run "bv capacitor upgrade" to upgrade dependencies and migrate native platforms.');
         end;
       end
       else
-        WriteLn('  Run "bv mobile upgrade" to upgrade Capacitor dependencies.');
+        WriteLn('  Run "bv capacitor upgrade" to upgrade Capacitor dependencies.');
       Exit;
     end;
 
@@ -14888,6 +15085,39 @@ begin
     WriteLn('======================================================================');
     WriteLn('  Starting Native Capacitor Upgrade & Migration Workflow');
     WriteLn('======================================================================');
+
+    // Interactive Version Picker if not passed via command line
+    if (RequestedCapVersion = '') and (not IsCheckOnly) then
+    begin
+      WriteLn('  Available Capacitor Target Versions:');
+      WriteLn('  [1] v8 LTS    (Latest stable - Recommended)');
+      WriteLn('  [2] v7 Legacy (Maintenance)');
+      WriteLn('  [3] v6 Legacy (Maintenance)');
+      WriteLn('  [4] @next     (Preview / Beta)');
+      WriteLn('  [5] Custom    (Specify npm tag or exact semver)');
+      WriteLn('----------------------------------------------------------------------');
+      Write('Select target version to upgrade [1-5] or [C]ancel: ');
+      ReadLn(UserChoice);
+      UserChoice := Trim(UserChoice);
+      if (UserChoice = '') or (LowerCase(UserChoice) = 'c') or (LowerCase(UserChoice) = 'cancel') then
+      begin
+        WriteLn('Upgrade cancelled.');
+        Exit;
+      end;
+      if UserChoice = '1' then RequestedCapVersion := '8'
+      else if UserChoice = '2' then RequestedCapVersion := '7'
+      else if UserChoice = '3' then RequestedCapVersion := '6'
+      else if UserChoice = '4' then RequestedCapVersion := 'next'
+      else if UserChoice = '5' then
+      begin
+        Write('Enter custom version/tag (e.g. 7.1.0 or @beta): ');
+        ReadLn(RequestedCapVersion);
+        RequestedCapVersion := Trim(RequestedCapVersion);
+        if RequestedCapVersion = '' then Exit;
+      end
+      else
+        RequestedCapVersion := UserChoice;
+    end;
 
     // 1. Resolve Target Version Tag
     CapTag := '';
@@ -14966,13 +15196,23 @@ begin
 
     // 5. Capacitor Sync
     WriteLn('  [4/4] Synchronizing build artifacts with native platforms...');
-    CmdMobile('sync', TargetPlatform);
+    CmdCapacitor('sync', TargetPlatform);
+
+    // Cache version entry in ~/.blaisevue/versions/capacitor/
+    VersionCacheDir := GetGlobalVersionsPath('capacitor') + 'v' + Copy(CapVerDisplay, 1, 2);
+    if (Length(VersionCacheDir) > 0) and (VersionCacheDir[Length(VersionCacheDir)] in [' ', '.']) then
+      Delete(VersionCacheDir, Length(VersionCacheDir), 1);
+    ForceDirectories(VersionCacheDir);
+    WriteStringToFile(VersionCacheDir + DirectorySeparator + 'version.info',
+      'version=' + CapVerDisplay + LineEnding +
+      'updated=' + DateTimeToStr(Now) + LineEnding +
+      'installed_via=bv capacitor upgrade' + LineEnding);
 
     WriteLn('');
     WriteLn('======================================================================');
     WriteLn('  [v] Capacitor upgraded successfully to ' + CapVerDisplay + '!');
     WriteLn('======================================================================');
-    WriteLn('Run "bv mobile build android" to compile the upgraded native APK.');
+    WriteLn('Run "bv capacitor build android" to compile the upgraded native APK.');
   end
 
   else if (SubCmd = 'sync') then
@@ -15008,7 +15248,7 @@ begin
   else if (SubCmd = 'build') then
   begin
     WriteLn('Building native Mobile application with Capacitor...');
-    CmdMobile('sync', TargetPlatform);
+    CmdCapacitor('sync', TargetPlatform);
     if IsAllTargets or (TargetPlatform = 'all') then
     begin
       WriteLn('Building native Mobile application for ALL platforms (android, ios)...');
@@ -15027,7 +15267,7 @@ begin
     if not IsNoBuild then
     begin
       WriteLn('Building and synchronizing native Mobile application...');
-      CmdMobile('sync', TargetPlatform);
+      CmdCapacitor('sync', TargetPlatform);
       BuildSingleTarget(TargetPlatform, IsRelease, IsBundle);
     end;
     RunTarget(TargetPlatform);
@@ -15058,8 +15298,8 @@ begin
             WriteLn('  [' + IntToStr(i + 1) + '] ' + AvdList[i]);
 
           WriteLn('');
-          WriteLn('To start an emulator: bv mobile emulator start ' + AvdList[0]);
-          WriteLn('To build and run:     bv mobile run android --emulator');
+          WriteLn('To start an emulator: bv capacitor emulator start ' + AvdList[0]);
+          WriteLn('To build and run:     bv capacitor run android --emulator');
         end;
 
       finally
@@ -15086,15 +15326,23 @@ begin
 
     else
     begin
-      WriteLn('Usage: bv mobile emulator <list|start [name]|run [name]|kill>');
+      WriteLn('Usage: bv capacitor emulator <list|start [name]|run [name]|kill>');
     end;
   end
 
   else
   begin
-    WriteLn('Usage: bv mobile <init [name] [id] [--version=<v>]|upgrade [--check]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
+    WriteLn('Usage: bv capacitor <init [name] [id] [--version=<v>]|upgrade [--check]|versions|remove-version|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
     WriteLn('       Targets: android | ios | all (default: android)');
+    WriteLn('       Note: "bv mobile" is supported as an alias for all capacitor commands.');
   end;
+end;
+
+{ Backward-compatible alias for "bv capacitor" }
+procedure CmdMobile(const SubCmd: string; const Arg1: string = ''; const Arg2: string = '');
+begin
+  WriteLn('  [HINT] "bv mobile" is an alias for "bv capacitor". Using "bv capacitor" going forward.');
+  CmdCapacitor(SubCmd, Arg1, Arg2);
 end;
 
 { Native desktop application compiler using ultra-lightweight WebUI (bv desktop). }
@@ -25729,6 +25977,7 @@ begin
   // Full-Stack Backend (mORMot 2)
   Result.Add('mormot');
   // Mobile (Capacitor)
+  Result.Add('capacitor');
   Result.Add('mobile');
   // Desktop (WebUI & Lazarus IDE)
   Result.Add('desktop');
@@ -25783,7 +26032,7 @@ begin
     Result.Add('deploy');
     Result.Add('remove');
   end
-  else if Cmd = 'mobile' then
+  else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
   begin
     Result.Add('run');
     Result.Add('build');
@@ -25791,6 +26040,8 @@ begin
     Result.Add('sync');
     Result.Add('init');
     Result.Add('upgrade');
+    Result.Add('versions');
+    Result.Add('remove-version');
     Result.Add('doctor');
     Result.Add('kill');
     Result.Add('remove');
@@ -25915,15 +26166,17 @@ begin
       '   init                       Scaffolds mORMot 2 server structure in server/' + LineEnding +
       '   deploy [--zip]             Assembles standalone production bundle in deploy/' + LineEnding +
       '   remove [-y]                Safely deletes server/ directory and mORMot binaries'
-  else if Cmd = 'mobile' then
+  else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
     Result :=
-      '  [HINT] Available subcommands for ''mobile'':' + LineEnding +
+      '  [HINT] Available subcommands for ''capacitor'':' + LineEnding +
       '   run android [--emulator]   Builds and launches app on Android emulator/device' + LineEnding +
       '   build android              Compiles native Android Debug/Release APK or AAB' + LineEnding +
       '   open android               Opens native Android project in Android Studio' + LineEnding +
       '   sync                       Synchronizes dist/ web assets with native mobile/' + LineEnding +
       '   init [name] [id]           Scaffolds Capacitor configuration and mobile runtime' + LineEnding +
-      '   upgrade [--check]          Migrates Capacitor dependencies & updates Gradle' + LineEnding +
+      '   upgrade [--target=<v>]     Migrates Capacitor dependencies & updates Gradle' + LineEnding +
+      '   versions                   Lists active and cached Capacitor versions' + LineEnding +
+      '   remove-version [ver]       Interactively removes a cached Capacitor version' + LineEnding +
       '   doctor                     Validates Android SDK, JDK, ADB and emulators' + LineEnding +
       '   kill                       Terminates lingering emulator & QEMU processes' + LineEnding +
       '   remove [-y]                Safely deletes mobile/ and capacitor.config.json'
@@ -26765,17 +27018,20 @@ begin
         WriteLn('  mormot rpc                 Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
         WriteLn('');
         WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
-        WriteLn('  mobile init [name] [id]    Scaffolds Capacitor & mobile/ native project');
-        WriteLn('  mobile upgrade [--check]   Migrates Capacitor dependencies & updates Gradle');
-        WriteLn('  mobile sync                Syncs dist/ with native mobile assets');
-        WriteLn('  mobile remove [-y]         Safely deletes mobile/ and capacitor.config.json');
-        WriteLn('  mobile build android       Builds native Android Debug/Release APK in mobile/bin/android/');
-        WriteLn('  mobile emulator list       Lists installed Android Virtual Devices (AVD)');
-        WriteLn('  mobile emulator start      Boots Android emulator in background');
-        WriteLn('  mobile emulator kill       Terminates lingering emulator & QEMU processes');
-        WriteLn('  mobile run android         Installs and launches APK on connected USB device');
-        WriteLn('  mobile run android [--emulator] [--release] [--fresh] Compiles, deploys and launches app');
-        WriteLn('  mobile open android        Opens project in Android Studio');
+        WriteLn('  capacitor init [name] [id] Scaffolds Capacitor & mobile/ native project');
+        WriteLn('  capacitor upgrade [--target=<v>] Migrates Capacitor dependencies & updates Gradle');
+        WriteLn('  capacitor versions         Lists active and cached Capacitor versions');
+        WriteLn('  capacitor remove-version [ver] Interactively removes a cached Capacitor version');
+        WriteLn('  capacitor sync             Syncs dist/ with native mobile assets');
+        WriteLn('  capacitor remove [-y]      Safely deletes mobile/ and capacitor.config.json');
+        WriteLn('  capacitor build android    Builds native Android Debug/Release APK in mobile/bin/android/');
+        WriteLn('  capacitor emulator list    Lists installed Android Virtual Devices (AVD)');
+        WriteLn('  capacitor emulator start   Boots Android emulator in background');
+        WriteLn('  capacitor emulator kill    Terminates lingering emulator & QEMU processes');
+        WriteLn('  capacitor run android      Installs and launches APK on connected USB device');
+        WriteLn('  capacitor run android [--emulator] [--release] [--fresh] Compiles, deploys and launches app');
+        WriteLn('  capacitor open android     Opens project in Android Studio');
+        WriteLn('  Note: "mobile" can be used as an alias for all capacitor commands.');
         WriteLn('');
         WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
         WriteLn('  lazarus init               Scaffolds & syncs root Lazarus project (.lpi, .lpr)');
@@ -26981,8 +27237,8 @@ begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
 
-      // `mobile`
-      else if CmdName = 'mobile' then
+      // `capacitor` & `mobile`
+      else if (CmdName = 'capacitor') or (CmdName = 'mobile') then
       begin
         ExecInCockpit(BvExePath, ActivePath, InputLine);
       end
@@ -27898,18 +28154,18 @@ begin
   begin
     CapVer := Trim(CapVer);
     if Copy(CapVer, 1, 2) = '8.' then
-      WriteLn('  [v] Capacitor Runtime:    v', CapVer, ' (v8 LTS active - run "bv mobile upgrade --check" to inspect updates)')
+      WriteLn('  [v] Capacitor Runtime:    v', CapVer, ' (v8 LTS active - run "bv capacitor upgrade --check" to inspect updates)')
     else if Copy(CapVer, 1, 2) = '7.' then
-      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v7 Legacy - run "bv mobile upgrade" to migrate to latest)')
+      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v7 Legacy - run "bv capacitor upgrade" to migrate to latest)')
     else if Copy(CapVer, 1, 2) = '6.' then
-      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v6 Legacy - run "bv mobile upgrade" to migrate to latest)')
+      WriteLn('  [!] Capacitor Runtime:    v', CapVer, ' (v6 Legacy - run "bv capacitor upgrade" to migrate to latest)')
     else
       WriteLn('  [v] Capacitor Runtime:    v', CapVer, ' (installed in project)');
   end
   else if ExecCmdCapture('cap --version 2>&1', CapVer) and (CapVer <> '') and (Pos('error', LowerCase(CapVer)) = 0) then
     WriteLn('  [v] Capacitor CLI:        v', Trim(CapVer), ' (global PATH)')
   else
-    WriteLn('  [!] Capacitor CLI:        Not detected (scaffold mobile project via bv mobile init)');
+    WriteLn('  [!] Capacitor CLI:        Not detected (scaffold mobile project via bv capacitor init)');
 
   WriteLn('');
   WriteLn('======================================================================');
@@ -28450,19 +28706,22 @@ begin
   WriteLn('  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries');
   WriteLn('');
   WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
-  WriteLn('  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
-  WriteLn('  bv mobile upgrade [--check] Migrates Capacitor dependencies & updates Gradle');
-  WriteLn('  bv mobile sync             Syncs dist/ with native mobile assets');
-  WriteLn('  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json');
-  WriteLn('  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/');
-  WriteLn('  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)');
-  WriteLn('  bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)');
-  WriteLn('  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)');
-  WriteLn('  bv mobile emulator start   Boots Android emulator in background');
-  WriteLn('  bv mobile emulator kill    Terminates lingering emulator & QEMU processes');
-  WriteLn('  bv mobile run android      Installs and launches APK on connected USB device');
-  WriteLn('  bv mobile run android [--emulator] [--release] [--fresh] Compiles, deploys and launches app (flags can be combined)');
-  WriteLn('  bv mobile open android     Opens project in Android Studio');
+  WriteLn('  bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
+  WriteLn('  bv capacitor upgrade [--target=<v>] Migrates Capacitor dependencies & updates Gradle');
+  WriteLn('  bv capacitor versions      Lists active and cached Capacitor versions');
+  WriteLn('  bv capacitor remove-version [ver] Interactively removes a cached Capacitor version');
+  WriteLn('  bv capacitor sync          Syncs dist/ with native mobile assets');
+  WriteLn('  bv capacitor remove [-y]   Safely deletes mobile/ and capacitor.config.json');
+  WriteLn('  bv capacitor build android Builds native Android Debug APK in mobile/bin/android/');
+  WriteLn('  bv capacitor build android --release Builds optimized Release APK (R8/ProGuard)');
+  WriteLn('  bv capacitor build android --bundle Builds Google Play Android App Bundle (.aab)');
+  WriteLn('  bv capacitor emulator list Lists installed Android Virtual Devices (AVD)');
+  WriteLn('  bv capacitor emulator start Boots Android emulator in background');
+  WriteLn('  bv capacitor emulator kill Terminates lingering emulator & QEMU processes');
+  WriteLn('  bv capacitor run android   Installs and launches APK on connected USB device');
+  WriteLn('  bv capacitor run android [--emulator] [--release] [--fresh] Compiles, deploys and launches app (flags can be combined)');
+  WriteLn('  bv capacitor open android  Opens project in Android Studio');
+  WriteLn('  Note: "bv mobile" is fully supported as an alias for all capacitor commands.');
   WriteLn('');
   WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
   WriteLn('  bv lazarus init            Scaffolds & syncs root Lazarus project (.lpi, .lpr) for IDE development');
@@ -28917,16 +29176,20 @@ begin
       CmdTool('list');
   end
 
-  else if Cmd = 'mobile' then
+  else if (Cmd = 'capacitor') or (Cmd = 'mobile') then
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mobile <init [name] [id] [--version=<v>]|upgrade [--check]|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
+      WriteLn('Usage: bv capacitor <init [name] [id] [--version=<v>]|upgrade [--check]|versions|remove-version|sync [target]|build [target] [--release]|run [target] [--emulator [name]]|open [target]|emulator <list|start|run>>');
       WriteLn('       Targets: android | ios | all (default: android)');
+      WriteLn('       Note: "bv mobile" is supported as an alias for all capacitor commands.');
       Halt(1);
     end;
 
-    CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+    if Cmd = 'mobile' then
+      CmdMobile(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4))
+    else
+      CmdCapacitor(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
   end
 
   else if Cmd = 'desktop' then
