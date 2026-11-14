@@ -237,6 +237,36 @@ bv capacitor remove-version
 
 ---
 
+## 🩺 Project-Aware Diagnostics (`bv doctor`)
+
+When collaborating across different machines or onboarding a new developer, a cloned project might declare pinned SDK versions (via `.pas2js-version`, `server/mormot.path`, or `package.json`) that are not yet downloaded in the local user cache (`~/.blaisevue/versions/`).
+
+Running `bv doctor` inside a project root automatically cross-examines the project's dependency manifest against local disk installations:
+
+```
+[4] Active Project Alignment (my-app):
+  [!] Pas2JS Compiler:      v3.4.0 requested in .pas2js-version, but NOT installed!
+      -> Active fallback:   v3.2.0 (factory baseline at vendor/pas2js)
+      -> Run to install:    bv pas2js upgrade --version=3.4.0
+  [v] mORMot 2 Framework:   bundled (using factory baseline at vendor/mormot2)
+  [v] Capacitor Mobile:     v8.5.3 (installed in node_modules, ready)
+
+----------------------------------------------------------------------
+  [!] Project Dependency Notice:
+      The project specifies SDK/tool versions not cached on this machine.
+      Safe factory fallback baselines are currently active to prevent build breakage.
+      To align your environment with exact project pinned versions:
+        * Pas2JS compiler v3.4.0 is missing -> Run: bv pas2js upgrade --version=3.4.0
+----------------------------------------------------------------------
+```
+
+### Self-Healing & Factory Fallback Guarantees:
+- **Builds Never Break**: If a requested SDK version is absent, BlaiseVue seamlessly engages the factory protected baseline (`vendor/pas2js` or `vendor/mormot2`), keeping compilation operational.
+- **Clear Actionable Path**: `bv doctor` lists the exact one-liner commands needed to satisfy the project's pinned requirements without guesswork.
+- **Outside Project Isolation**: When executed outside a project, `bv doctor` informs the developer that project alignment audits will activate as soon as it is run within any BlaiseVue project directory.
+
+---
+
 ## 📋 Command Summary Table
 
 | Command | Subcommand | Purpose |

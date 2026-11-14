@@ -830,21 +830,22 @@ bv update --no-backup  # Skip creating automatic backup snapshot
 ---
 
 ### `bv doctor`
-Diagnoses your system environment, verifying that essential tools and bundled assets are correctly configured and accessible.
+Diagnoses your system environment and active project workspace, verifying that essential tools, bundled assets, and project-pinned SDK versions are correctly configured and accessible.
 
 ```bash
 bv doctor
 ```
 
 **What it verifies:**
-1. **Git CLI**: Required for framework updates and channel switching.
-2. **Free Pascal (FPC) & Lazarus IDE**: Automatically detects FPC either in the system PATH or bundled within standard Lazarus paths (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
-3. **InstantFPC**: Automatically detects InstantFPC in system PATH or inside the Lazarus FPC directory (`instantfpc.exe`), enabling direct Pascal script execution for developer tools.
-4. **Python 3**: Verifies Python in PATH, recommended for dynamic extension lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`).
-5. **Pas2JS (Bundled)**: Verifies the built-in Object Pascal to JavaScript transpiler in `vendor/pas2js/`.
-6. **Synopse mORMot 2 (Bundled)**: Confirms presence of the embedded mORMot 2 full-stack framework in `vendor/mormot2/`.
-7. **Node.js & npm**: Checks for Vitest testing suite and live development HMR support.
-8. **Docker & Optional Tools**: Checks micro-container tools and Android SDK for cross-platform workflows.
+1. **Core Framework Tooling**: Git CLI, Free Pascal (FPC), InstantFPC, Lazarus IDE, Pas2JS (bundled baseline), and Synopse mORMot 2 (bundled baseline).
+2. **Ecosystem & Testing**: Python 3 (tool packaging), Node.js & npm (HMR & Vitest), Docker CLI (micro-containers), and active developer tools.
+3. **Mobile & Cross-Platform**: Java Runtime (JDK 17/21 LTS), Android SDK (`ANDROID_HOME`), ADB, Android Emulator & AVDs, and Capacitor CLI.
+4. **Active Project Alignment (when executed inside a BlaiseVue project)**:
+   - **Pas2JS Compiler**: Audits `.pas2js-version`. If a pinned version is not installed in `~/.blaisevue/versions/pas2js/`, alerts the developer and indicates that the safe factory fallback baseline (`vendor/pas2js`) is active.
+   - **mORMot 2 Framework**: Audits `server/mormot.path` / `.mormot-version`. If a custom version is missing from `~/.blaisevue/versions/mormot/`, falls back gracefully to `vendor/mormot2`.
+   - **Capacitor Mobile**: Checks whether `@capacitor/core` declared in `package.json` is physically installed in `node_modules/@capacitor/core`.
+   - **Horse Backend**: Checks if `server-horse/` is configured and verifies that the `blaise-horse` tool is installed.
+   - **Project Dependency Notice**: Generates an actionable summary banner listing exact commands (e.g. `bv pas2js upgrade --version=<v>`, `npm install`) to align all project dependencies.
 
 ---
 

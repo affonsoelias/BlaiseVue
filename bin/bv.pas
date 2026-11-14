@@ -29217,9 +29217,18 @@ var
   AllTools: TBVToolArray;
   BuiltInCount, UserCount, ToolIdx: Integer;
   AllHealthy: Boolean;
+  ProjRoot, ProjName, VerFile, ReqPas2, UserPas2Dir: string;
+  HasServerDir, HasMobile, HasHorseServer, HasHorseTool: Boolean;
+  MormotConf, ReqMormot, UserMormotDir: string;
+  PkgFile, PkgContent, ReqCapVer, CapCorePath, InstalledCapVer: string;
+  HPathFile, ReqHorse: string;
+  ProjectNotices: TStringList;
+  NoticeIdx: Integer;
 begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
   AllHealthy := True;
+  ProjectNotices := TStringList.Create;
+  try
 
   {$IFDEF WINDOWS}
   OSName := 'Windows (x86_64)';
@@ -29437,14 +29446,182 @@ begin
   else
     WriteLn('  [!] Capacitor CLI:        Not detected (scaffold mobile project via bv capacitor init)');
 
+  // 4. Active Project Alignment
+  WriteLn('');
+  ProjRoot := FindBlaiseVueProjectRoot('');
+  if ProjRoot <> '' then
+  begin
+    ProjName := ExtractFileName(ExcludeTrailingPathDelimiter(ProjRoot));
+    if SameText(ProjName, 'BlaiseVue') and DirectoryExists(ProjRoot + DirectorySeparator + 'core') then
+      ProjName := ProjName + ' (Framework Core)';
+    WriteLn('[4] Active Project Alignment (' + ProjName + '):');
+
+    // A. Pas2JS Compiler
+    VerFile := IncludeTrailingPathDelimiter(ProjRoot) + '.pas2js-version';
+    ReqPas2 := '';
+    if FileExists(VerFile) then
+      ReqPas2 := Trim(ReadFileToString(VerFile));
+
+    if (ReqPas2 = '') or (LowerCase(ReqPas2) = 'bundled') or (LowerCase(ReqPas2) = 'vendor') or (LowerCase(ReqPas2) = 'default') then
+    begin
+      WriteLn('  [v] Pas2JS Compiler:      v' + Pas2Ver + ' (using factory baseline at vendor/pas2js)');
+    end
+    else
+    begin
+      UserPas2Dir := IncludeTrailingPathDelimiter(GetGlobalVersionsPath('pas2js')) + ReqPas2;
+      if DirectoryExists(UserPas2Dir) then
+        WriteLn('  [v] Pas2JS Compiler:      v' + ReqPas2 + ' (active in .pas2js-version, installed in ~/.blaisevue/versions/pas2js/' + ReqPas2 + ')')
+      else
+      begin
+        WriteLn('  [!] Pas2JS Compiler:      v' + ReqPas2 + ' requested in .pas2js-version, but NOT installed!');
+        WriteLn('      -> Active fallback:   v' + Pas2Ver + ' (factory baseline at vendor/pas2js)');
+        WriteLn('      -> Run to install:    bv pas2js upgrade --version=' + ReqPas2);
+        ProjectNotices.Add('Pas2JS compiler v' + ReqPas2 + ' is missing -> Run: bv pas2js upgrade --version=' + ReqPas2);
+      end;
+    end;
+
+    // B. mORMot 2 Backend
+    HasServerDir := DirectoryExists(IncludeTrailingPathDelimiter(ProjRoot) + 'server');
+    if not HasServerDir then
+    begin
+      WriteLn('  [-] mORMot 2 Framework:   Not initialized in this project (optional, run "bv mormot init")');
+    end
+    else
+    begin
+      MormotConf := IncludeTrailingPathDelimiter(ProjRoot) + 'server' + DirectorySeparator + 'mormot.path';
+      if not FileExists(MormotConf) then
+        MormotConf := IncludeTrailingPathDelimiter(ProjRoot) + 'mormot.path';
+      if not FileExists(MormotConf) then
+        MormotConf := IncludeTrailingPathDelimiter(ProjRoot) + '.mormot-version';
+
+      ReqMormot := '';
+      if FileExists(MormotConf) then
+        ReqMormot := Trim(ReadFileToString(MormotConf));
+
+      if (ReqMormot = '') or (LowerCase(ReqMormot) = 'bundled') or (LowerCase(ReqMormot) = 'default') or (LowerCase(ReqMormot) = 'vendor') then
+      begin
+        WriteLn('  [v] mORMot 2 Framework:   bundled (using factory baseline at vendor/mormot2)');
+      end
+      else
+      begin
+        UserMormotDir := IncludeTrailingPathDelimiter(GetGlobalVersionsPath('mormot')) + ReqMormot;
+        if DirectoryExists(UserMormotDir) or (DirectoryExists(ReqMormot) and (Pos('src', ReqMormot) > 0)) then
+        begin
+          WriteLn('  [v] mORMot 2 Framework:   ' + ReqMormot + ' (active in server/mormot.path)');
+        end
+        else
+        begin
+          WriteLn('  [!] mORMot 2 Framework:   "' + ReqMormot + '" requested in server/mormot.path, but NOT found!');
+          WriteLn('      -> Active fallback:   bundled (factory baseline at vendor/mormot2)');
+          WriteLn('      -> Run to install:    bv mormot upgrade --tag=' + ReqMormot);
+          ProjectNotices.Add('mORMot 2 framework "' + ReqMormot + '" is missing -> Run: bv mormot upgrade --tag=' + ReqMormot);
+        end;
+      end;
+    end;
+
+    // C. Capacitor Mobile
+    HasMobile := DirectoryExists(IncludeTrailingPathDelimiter(ProjRoot) + 'mobile') or
+                 FileExists(IncludeTrailingPathDelimiter(ProjRoot) + 'capacitor.config.json');
+    if not HasMobile then
+    begin
+      WriteLn('  [-] Capacitor Mobile:     Not initialized in this project (optional, run "bv capacitor init")');
+    end
+    else
+    begin
+      ReqCapVer := '';
+      PkgFile := IncludeTrailingPathDelimiter(ProjRoot) + 'package.json';
+      if FileExists(PkgFile) then
+      begin
+        PkgContent := ReadFileToString(PkgFile);
+        if Pos('"@capacitor/core": "', PkgContent) > 0 then
+        begin
+          ReqCapVer := Copy(PkgContent, Pos('"@capacitor/core": "', PkgContent) + 20, 20);
+          if Pos('"', ReqCapVer) > 0 then ReqCapVer := Copy(ReqCapVer, 1, Pos('"', ReqCapVer) - 1);
+        end;
+      end;
+
+      CapCorePath := IncludeTrailingPathDelimiter(ProjRoot) + 'node_modules' + DirectorySeparator + '@capacitor' + DirectorySeparator + 'core';
+      if not DirectoryExists(CapCorePath) then
+        CapCorePath := IncludeTrailingPathDelimiter(ProjRoot) + 'mobile' + DirectorySeparator + 'node_modules' + DirectorySeparator + '@capacitor' + DirectorySeparator + 'core';
+
+      if DirectoryExists(CapCorePath) then
+      begin
+        InstalledCapVer := GetPackageVersionFromFolder(CapCorePath);
+        if InstalledCapVer = '' then InstalledCapVer := ReqCapVer;
+        if InstalledCapVer = '' then InstalledCapVer := 'installed';
+        WriteLn('  [v] Capacitor Mobile:     v' + InstalledCapVer + ' (installed in node_modules, ready)');
+      end
+      else
+      begin
+        if ReqCapVer <> '' then
+          WriteLn('  [!] Capacitor Mobile:     v' + ReqCapVer + ' requested in package.json, but node_modules/@capacitor/core is missing!')
+        else
+          WriteLn('  [!] Capacitor Mobile:     Configured, but node_modules/@capacitor/core is missing!');
+        WriteLn('      -> Run to install:    npm install');
+        ProjectNotices.Add('Capacitor packages missing in node_modules -> Run: npm install');
+      end;
+    end;
+
+    // D. Alternative Backend (Horse)
+    HasHorseServer := DirectoryExists(IncludeTrailingPathDelimiter(ProjRoot) + 'server-horse');
+    if HasHorseServer then
+    begin
+      HasHorseTool := DirectoryExists(GetGlobalToolsPath + 'blaise-horse') or
+                      DirectoryExists(GetBuiltinToolsPath + 'blaise-horse');
+      if HasHorseTool then
+      begin
+        HPathFile := IncludeTrailingPathDelimiter(ProjRoot) + 'server-horse' + DirectorySeparator + 'horse.path';
+        if FileExists(HPathFile) then
+          ReqHorse := Trim(ReadFileToString(HPathFile))
+        else
+          ReqHorse := 'server-horse/lib/horse';
+        WriteLn('  [v] Horse Backend:        ' + ReqHorse + ' (blaise-horse tool active)');
+      end
+      else
+      begin
+        WriteLn('  [!] Horse Backend:        server-horse/ detected, but "blaise-horse" tool is NOT installed!');
+        WriteLn('      -> Run to install:    bv tool install blaise-horse');
+        ProjectNotices.Add('Tool "blaise-horse" is missing -> Run: bv tool install blaise-horse');
+      end;
+    end;
+  end
+  else
+  begin
+    WriteLn('[4] Active Project Alignment:');
+    WriteLn('  [-] No active BlaiseVue project detected in current directory.');
+    WriteLn('      Run "bv doctor" inside a project to inspect project-specific');
+    WriteLn('      SDK versions, dependencies, and fallback baseline status.');
+  end;
+
+  if ProjectNotices.Count > 0 then
+  begin
+    WriteLn('');
+    WriteLn('----------------------------------------------------------------------');
+    WriteLn('  [!] Project Dependency Notice:');
+    WriteLn('      The project specifies SDK/tool versions not cached on this machine.');
+    WriteLn('      Safe factory fallback baselines are currently active to prevent build breakage.');
+    WriteLn('      To align your environment with exact project pinned versions:');
+    for NoticeIdx := 0 to ProjectNotices.Count - 1 do
+      WriteLn('        * ' + ProjectNotices[NoticeIdx]);
+    WriteLn('----------------------------------------------------------------------');
+  end;
+
   WriteLn('');
   WriteLn('======================================================================');
-  if AllHealthy then
-    WriteLn('  [v] Diagnostics complete: Your environment is 100% healthy and ready!')
+  if AllHealthy and (ProjectNotices.Count = 0) then
+    WriteLn('  [v] Diagnostics complete: Your environment & project are 100% healthy and ready!')
+  else if AllHealthy and (ProjectNotices.Count > 0) then
+  begin
+    WriteLn('  [!] Diagnostics complete: Environment is healthy, but project has missing pinned versions.');
+    WriteLn('      Safe factory fallback baselines are currently active.');
+  end
   else
     WriteLn('  [!] Issues found with required tools listed above with [X].');
   WriteLn('======================================================================');
   WriteLn('');
+  finally
+    ProjectNotices.Free;
+  end;
 end;
 
 // =====================================================================
