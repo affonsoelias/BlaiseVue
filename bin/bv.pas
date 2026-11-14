@@ -1084,6 +1084,8 @@ function EnsureAndroidGradleCompatibility(const AAndroidDir: string): Boolean; f
 procedure CmdRemoveMobile(ForceFlag: Boolean); forward;
 { Removes native desktop platform scaffolding and WebUI bindings (bv desktop remove). }
 procedure CmdRemoveDesktop(ForceFlag: Boolean); forward;
+{ Removes native mORMot 2 backend server scaffolding (bv mormot remove). }
+procedure CmdRemoveMormot(ForceFlag: Boolean); forward;
 procedure CmdRepo; forward;
 function CockpitReadLine(out S: string): Boolean; forward;
 function CockpitReadLine(const Prompt: string; out S: string): Boolean; forward;
@@ -8347,6 +8349,64 @@ begin
   end;
 end;
 
+{ Removes native mORMot 2 backend server scaffolding (bv mormot remove). }
+procedure CmdRemoveMormot(ForceFlag: Boolean);
+var
+  ServerDir, BinServerDir, DeployServerDir: string;
+  Ans: string;
+  DeletedAny: Boolean;
+begin
+  ServerDir := GetCurrentDir + DirectorySeparator + 'server';
+  BinServerDir := GetCurrentDir + DirectorySeparator + 'bin' + DirectorySeparator + 'server';
+  DeployServerDir := GetCurrentDir + DirectorySeparator + 'deploy' + DirectorySeparator + 'server';
+  if not DirectoryExists(ServerDir) and not DirectoryExists(BinServerDir) and not DirectoryExists(DeployServerDir) then
+  begin
+    WriteLn('mORMot 2 backend not found in current project (server/ directory does not exist).');
+    Exit;
+  end;
+
+  if not ForceFlag then
+  begin
+    Write('Are you sure you want to remove the mORMot 2 backend (server/ directory)? [y/N]: ');
+    ReadLn(Ans);
+    Ans := LowerCase(Trim(Ans));
+    if (Ans <> 's') and (Ans <> 'y') and (Ans <> 'sim') and (Ans <> 'yes') then
+    begin
+      WriteLn('Operation cancelled.');
+      Exit;
+    end;
+  end;
+
+  DeletedAny := False;
+  if DirectoryExists(ServerDir) then
+  begin
+    WriteLn('  [-] Deleting server/ directory ...');
+    DeleteDir(ServerDir);
+    DeletedAny := True;
+  end;
+
+  if DirectoryExists(BinServerDir) then
+  begin
+    WriteLn('  [-] Deleting binaries in bin/server/ ...');
+    DeleteDir(BinServerDir);
+    DeletedAny := True;
+  end;
+
+  if DirectoryExists(DeployServerDir) then
+  begin
+    WriteLn('  [-] Deleting deploy artifacts in deploy/server/ ...');
+    DeleteDir(DeployServerDir);
+    DeletedAny := True;
+  end;
+
+  if DeletedAny then
+  begin
+    WriteLn('  [SUCCESS] mORMot 2 backend removed successfully!');
+    WriteLn('  [INFO] To re-enable it in the future, simply run:');
+    WriteLn('         bv mormot init');
+  end;
+end;
+
 // =====================================================================
 
 //  COMANDO: LIST
@@ -13282,44 +13342,12 @@ begin
   WriteLn('');
 end;
 
-{ Executes an installed developer tool CLI or script (bv tool run <name> [args...]). }
-procedure CmdToolRun(const TargetNameArg: string);
+procedure ExecuteToolInstance(const ToolRecord: TBVTool; StartParamIdx: Integer);
 var
-  TargetLower, Ext, ExePath, RunnerCmd, FullArgs, Arg, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
-  AllTools: TBVToolArray;
-  FoundIndex, I, ExitCode: Integer;
-  ToolRecord: TBVTool;
+  Ext, ExePath, RunnerCmd, FullArgs, Arg, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
+  I, ExitCode: Integer;
   FullCmdLine: string;
 begin
-  TargetLower := LowerCase(Trim(TargetNameArg));
-  if TargetLower = '' then
-  begin
-    WriteLn('Error: Tool name is required.');
-    WriteLn('Usage: bv tool run <tool-name> [arguments...]');
-    Exit;
-  end;
-
-  AllTools := DiscoverAllTools;
-  FoundIndex := -1;
-  for I := 0 to High(AllTools) do
-  begin
-    if (LowerCase(AllTools[I].Name) = TargetLower) or
-       (LowerCase(AllTools[I].Name) = 'blaise-' + TargetLower) or
-       ('blaise-' + LowerCase(AllTools[I].Name) = TargetLower) then
-    begin
-      FoundIndex := I;
-      Break;
-    end;
-  end;
-
-  if FoundIndex < 0 then
-  begin
-    WriteLn('Error: Developer tool "' + TargetNameArg + '" is not installed.');
-    WriteLn('Hint: Run "bv tool list" to inspect installed tools, or "bv tool install ' + TargetNameArg + '" to download it.');
-    Exit;
-  end;
-
-  ToolRecord := AllTools[FoundIndex];
   ExePath := '';
 
   // 1. Explicit bin declared in tool.json
@@ -13380,9 +13408,9 @@ begin
   else if Ext = '.js' then
     RunnerCmd := 'node';
 
-  // Collect arguments passed after "bv tool run <name>"
+  // Collect arguments passed starting from StartParamIdx
   FullArgs := '';
-  for I := 4 to ParamCount do
+  for I := StartParamIdx to ParamCount do
   begin
     Arg := ParamStr(I);
     if Pos(' ', Arg) > 0 then
@@ -13416,6 +13444,44 @@ begin
 
   if ExitCode <> 0 then
     Halt(ExitCode);
+end;
+
+{ Executes an installed developer tool CLI or script (bv tool run <name> [args...]). }
+procedure CmdToolRun(const TargetNameArg: string);
+var
+  TargetLower: string;
+  AllTools: TBVToolArray;
+  FoundIndex, I: Integer;
+begin
+  TargetLower := LowerCase(Trim(TargetNameArg));
+  if TargetLower = '' then
+  begin
+    WriteLn('Error: Tool name is required.');
+    WriteLn('Usage: bv tool run <tool-name> [arguments...]');
+    Exit;
+  end;
+
+  AllTools := DiscoverAllTools;
+  FoundIndex := -1;
+  for I := 0 to High(AllTools) do
+  begin
+    if (LowerCase(AllTools[I].Name) = TargetLower) or
+       (LowerCase(AllTools[I].Name) = 'blaise-' + TargetLower) or
+       ('blaise-' + LowerCase(AllTools[I].Name) = TargetLower) then
+    begin
+      FoundIndex := I;
+      Break;
+    end;
+  end;
+
+  if FoundIndex < 0 then
+  begin
+    WriteLn('Error: Developer tool "' + TargetNameArg + '" is not installed.');
+    WriteLn('Hint: Run "bv tool list" to inspect installed tools, or "bv tool install ' + TargetNameArg + '" to download it.');
+    Exit;
+  end;
+
+  ExecuteToolInstance(AllTools[FoundIndex], 4);
 end;
 
 { Creates a new tool project scaffold with tool.json and lifecycle scripts (bv tool init). }
@@ -23379,7 +23445,12 @@ begin
 
   ParseArg(Arg1);
   ParseArg(Arg2);
-  if (SubCmd = 'crud') then
+  if (SubCmd = 'remove') or (SubCmd = 'rm') or (SubCmd = 'uninstall') then
+  begin
+    CmdRemoveMormot(IsRelease or (Arg1 = '-y') or (Arg1 = '--yes') or (Arg1 = '-f') or (Arg1 = '--force') or (Arg2 = '-y') or (Arg2 = '--yes') or (Arg2 = '-f') or (Arg2 = '--force'));
+    Exit;
+  end
+  else if (SubCmd = 'crud') then
   begin
     CmdMormotCrud(ProjectRoot);
     Exit;
@@ -23952,13 +24023,14 @@ begin
 
   else
   begin
-    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+    WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker|remove [-y]>');
     WriteLn('  init                  Scaffolds mORMot 2 backend server in server/');
     WriteLn('  build [--release]     Compiles native server with Free Pascal');
     WriteLn('  run [--release] [--port <port>] Launches native server (debug or release)');
     WriteLn('  status [--port <p>]   Queries running server health endpoint (/api/status)');
     WriteLn('  deploy [--zip]        Packages standalone production bundle (deploy/ and deploy.zip)');
     WriteLn('  crud <Model> [f:t...] Scaffolds full-stack ORM model, REST API & reactive DataGrid');
+    WriteLn('  remove [-y]           Safely deletes server/ directory and mORMot binaries');
   end;
 end;
 
@@ -25556,8 +25628,9 @@ begin
   Result.Add('clean');
   Result.Add('wasm');
   Result.Add('doc');
-  // Full-Stack Backend (mORMot 2)
+  // Full-Stack Backend (mORMot 2 & Horse)
   Result.Add('mormot');
+  Result.Add('horse');
   // Mobile (Capacitor)
   Result.Add('mobile');
   // Desktop (WebUI & Lazarus IDE)
@@ -25611,6 +25684,18 @@ begin
     Result.Add('kill');
     Result.Add('init');
     Result.Add('deploy');
+    Result.Add('remove');
+  end
+  else if Cmd = 'horse' then
+  begin
+    Result.Add('init');
+    Result.Add('run');
+    Result.Add('build');
+    Result.Add('status');
+    Result.Add('kill');
+    Result.Add('docker');
+    Result.Add('deploy');
+    Result.Add('remove');
   end
   else if Cmd = 'mobile' then
   begin
@@ -25742,7 +25827,19 @@ begin
       '   status                     Queries running mORMot 2 health endpoint' + LineEnding +
       '   kill                       Terminates lingering server instances' + LineEnding +
       '   init                       Scaffolds mORMot 2 server structure in server/' + LineEnding +
-      '   deploy [--zip]             Assembles standalone production bundle in deploy/'
+      '   deploy [--zip]             Assembles standalone production bundle in deploy/' + LineEnding +
+      '   remove [-y]                Safely deletes server/ directory and mORMot binaries'
+  else if Cmd = 'horse' then
+    Result :=
+      '  [HINT] Available subcommands for ''horse'' (via blaise-horse tool):' + LineEnding +
+      '   init                       Scaffolds Horse server in server-horse/' + LineEnding +
+      '   run [--port <p>]           Compiles and runs Horse server (Default Port 9000)' + LineEnding +
+      '   build [--release]          Compiles native server with Free Pascal' + LineEnding +
+      '   status [--port <p>]        Checks Horse health endpoint (/api/health)' + LineEnding +
+      '   kill                       Terminates active Horse server processes' + LineEnding +
+      '   docker [--build]           Generates lightweight Alpine Docker container' + LineEnding +
+      '   deploy [--zip]             Assembles standalone production bundle' + LineEnding +
+      '   remove [-y]                Safely deletes server-horse/ directory'
   else if Cmd = 'mobile' then
     Result :=
       '  [HINT] Available subcommands for ''mobile'':' + LineEnding +
@@ -28215,7 +28312,8 @@ end;
 var
   Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP: string;
   SkipTest, SkipTestsArg, IsGlobalArg: Boolean;
-  i: Integer;
+  AllToolsList: TBVToolArray;
+  HorseFoundIdx, i: Integer;
 begin
   if (ParamCount = 1) and ((ParamStr(1) = '--version') or (ParamStr(1) = '-v') or (ParamStr(1) = 'version')) then
   begin
@@ -28263,7 +28361,7 @@ begin
   WriteLn('  bv check [file]            Validates component templates against script declarations (AST Type-Checker)');
   WriteLn('  bv clean                   Cleans generated build files (generated/ and dist/)');
   WriteLn('');
-  WriteLn('  # === Backend & Full-Stack (Synopse mORMot 2) ===');
+  WriteLn('  # === Backend & Full-Stack (mORMot 2 & Horse) ===');
   WriteLn('  bv mormot init             Scaffolds mORMot 2 backend server in server/');
   WriteLn('  bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh auto-terminates lingering instances)');
   WriteLn('  bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)');
@@ -28275,6 +28373,8 @@ begin
   WriteLn('  bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)');
   WriteLn('  bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml');
   WriteLn('  bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces');
+  WriteLn('  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries');
+  WriteLn('  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)');
   WriteLn('');
   WriteLn('  # === Mobile (Android & iOS via Capacitor) ===');
   WriteLn('  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project');
@@ -28793,11 +28893,35 @@ begin
   begin
     if ParamCount < 2 then
     begin
-      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker>');
+      WriteLn('Usage: bv mormot <init|build [--release]|run [--release] [--port <p>]|status [--port <p>]|deploy [--zip] [--port <p>]|crud <Model> [field:type...]|auth|docs|docker|remove [-y]>');
       Halt(1);
     end;
 
     CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+  end
+
+  else if (Cmd = 'horse') then
+  begin
+    AllToolsList := DiscoverAllTools;
+    HorseFoundIdx := -1;
+    for i := 0 to High(AllToolsList) do
+    begin
+      if (LowerCase(AllToolsList[i].Name) = 'blaise-horse') or (LowerCase(AllToolsList[i].Name) = 'horse') then
+      begin
+        HorseFoundIdx := i;
+        Break;
+      end;
+    end;
+
+    if HorseFoundIdx < 0 then
+    begin
+      WriteLn('Error: Horse backend tool ("blaise-horse") is not installed.');
+      WriteLn('To install it from the ecosystem, run:');
+      WriteLn('  bv tool install blaise-horse');
+      Halt(1);
+    end;
+
+    ExecuteToolInstance(AllToolsList[HorseFoundIdx], 2);
   end
 
   else if (Cmd = 'format') or (Cmd = 'fmt') then

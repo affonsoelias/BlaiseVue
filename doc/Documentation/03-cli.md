@@ -416,8 +416,15 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 | `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
 | `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
+| `bv mormot remove` | `[-y\|--yes]` | Safely deletes `server/` directory and mORMot binaries |
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
+
+### Alternative Backend: Horse Framework (`bv horse` / `server-horse/`)
+For projects preferring a lightweight microframework (Express.js-style in Pascal), BlaiseVue supports the co-official tool **`blaise-horse`**:
+- Isolated directory: `server-horse/` (preventing collision with `server/`).
+- Quick delegation: `bv horse <init|run|build|status|docker|deploy|remove>` transparently invokes `bv tool run blaise-horse <cmd>`.
+- To enable it, install via the ecosystem: `bv tool install blaise-horse`.
 
 ---
 

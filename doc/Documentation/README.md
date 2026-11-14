@@ -159,6 +159,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)
   bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml
   bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
+  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries
+  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)
 
   # === Mobile (Android & iOS via Capacitor) ===
   bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
