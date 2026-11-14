@@ -103,6 +103,7 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 54. [54. Lazarus IDE Integration & Design-Time Package (blaisevue_ide.lpk)](54-lazarus-ide-package.md) — Official Lazarus design-time package with tri-syntax highlighting (`.bv`), File -> New wizards, Tools menu, and `bv lazarus init`.
 56. [56. Multi-Version SDK & Compiler Management (bv versions, bv pas2js)](56-multi-version-sdk-management.md) — Dynamic upstream release discovery (GitLab, GitHub, npm), project version pin (.pas2js-version), immutable factory baseline protection (vendor/), and interactive cleanup wizard (bv versions clean).
 57. [57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md) — Pluggable tooling engine, Cargo/Git-style dynamic CLI dispatch (bv <tool>), tool.json manifest specification, lifecycle hooks, and SHA-256 release packaging (bv tool pack).
+58. [58. Framework & Project Diagnostics (bv doctor)](58-framework-diagnostics-and-doctor.md) — Automated host environment verification, contextual project SDK alignment, immutable factory fallbacks, and actionable dependency notices.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
