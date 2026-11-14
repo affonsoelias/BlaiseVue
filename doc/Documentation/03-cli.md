@@ -433,6 +433,7 @@ For projects preferring a lightweight microframework (Express.js-style in Pascal
 - Install from ecosystem: `bv tool install blaise-horse`.
 - Isolated directory: `server-horse/` (preventing collision with `server/`).
 - Dynamic CLI resolution: Once installed, `bv horse <cmd>` (or `bv tool run blaise-horse <cmd>`) is dynamically dispatched to the tool.
+- Multi-version management: Supports `bv horse versions`, `bv horse upgrade`, `bv horse use <version>`, and `bv horse remove-version`.
 - Clean removal: `bv horse remove -y` or `bv tool remove blaise-horse`.
 
 ---
@@ -469,20 +470,22 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 > [!NOTE]
 > **BlaiseVue does NOT require Flutter.** The mobile toolchain only requires Node.js/npm, Android Studio (Android SDK, Build-Tools, and Platform-Tools `adb`), and Java JDK 17/21.
 
-| Mobile Command | Platform | Build Mode | Output / Action |
+| Mobile Command (`bv capacitor` / `bv mobile`) | Platform | Build Mode | Output / Action |
 |---|---|---|---|
-| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
-| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
-| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
-| `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
-| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
-| `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
-| `bv mobile emulator start` | Android | - | Boots emulator in background |
-| `bv mobile emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
-| `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
-| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
-| `bv mobile open android` | Android | - | Opens project in Android Studio |
-| `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
+| `bv capacitor init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
+| `bv capacitor upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
+| `bv capacitor versions` | Universal | - | Displays active project and cached Capacitor SDK versions |
+| `bv capacitor remove-version [ver]` | Universal | - | Interactively deletes a cached user Capacitor version |
+| `bv capacitor build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
+| `bv capacitor build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
+| `bv capacitor build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
+| `bv capacitor emulator list` | Android | - | Lists installed AVD emulators |
+| `bv capacitor emulator start` | Android | - | Boots emulator in background |
+| `bv capacitor emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
+| `bv capacitor run android` | Android | Debug | Installs & launches on USB-connected device |
+| `bv capacitor run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
+| `bv capacitor open android` | Android | - | Opens project in Android Studio |
+| `bv capacitor open ios` | iOS | - | Opens project in Xcode (macOS) |
 
 ---
 

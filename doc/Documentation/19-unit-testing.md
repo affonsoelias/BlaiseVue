@@ -38,7 +38,7 @@ my-app/
     │   └── CustomerView.test.pas
     │
     ├── services/            <- Created via "bv new s <Name>" or "bv new t <Name>" (business rules, services)
-    │   ├── CalculadoraFrete.test.pas
+    │   ├── ShippingCalculator.test.pas
     │   └── Formatters.test.pas
     │
     └── framework/           <- BlaiseVue core verification tests (Reactivity, Routing, DataSet, etc.)
@@ -120,7 +120,7 @@ bv g s PaymentProcessor
 
 You can also target a specific subfolder directly:
 ```bash
-bv new t services/CalculadoraFrete
+bv new t services/ShippingCalculator
 bv new t framework/CustomReactivity
 ```
 
@@ -150,7 +150,7 @@ begin
          begin
             Wrapper := Mount('form-header');
             Expect(Wrapper.Element <> nil).ToBe(True);
-            Expect(Wrapper.Find('.form-header-title').textContent).ToContain('Formulário do Sistema');
+            Expect(Wrapper.Find('.form-header-title').textContent).ToContain('System Form');
          end);
 
        It('should accept custom prop overrides', procedure
@@ -222,30 +222,30 @@ end.
 Service and domain unit tests reside in `tests/services/` and import units from `src/services/` (configured in `app.cfg` via `-Fusrc/services`):
 
 ```pascal
-program calculadorafrete_unit_test;
+program shippingcalculator_unit_test;
 
 {$mode objfpc}
 
-uses JS, Web, BVTestUtils, uCalculadoraFrete;
+uses JS, Web, BVTestUtils, uShippingCalculator;
 
 begin
-  Describe('Unit: CalculadoraFrete (Domain Calculations)', procedure
+  Describe('Unit: ShippingCalculator (Domain Calculations)', procedure
     begin
        It('should apply free shipping for orders exceeding $250.00', procedure
          begin
-            Expect(CalcularFrete('01001-000', 5.0, 300.0)).ToBe(0.0);
-            Expect(CalcularFrete('40000-000', 10.0, 250.0)).ToBe(0.0);
+            Expect(CalculateShipping('01001-000', 5.0, 300.0)).ToBe(0.0);
+            Expect(CalculateShipping('40000-000', 10.0, 250.0)).ToBe(0.0);
          end);
 
        It('should calculate base fee for Southeast region under 1kg', procedure
          begin
-            Expect(CalcularFrete('01001-000', 0.5, 100.0)).toBe(15.0);
+            Expect(CalculateShipping('01001-000', 0.5, 100.0)).toBe(15.0);
          end);
 
        It('should identify correct delivery region and estimated timeframe', procedure
          begin
-            Expect(RegiaoPorCEP('01310-100')).toBe('Sudeste - SP');
-            Expect(PrazoEntregaDias('01310-100')).toBe(2);
+            Expect(RegionByZipCode('01310-100')).toBe('Southeast - SP');
+            Expect(DeliveryEstimateDays('01310-100')).toBe(2);
          end);
     end);
 end.

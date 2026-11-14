@@ -55,9 +55,9 @@ The curriculum is organized into 6 progressive learning tracks that take you ste
 ### 📱 Track 4: Cross-Platform Mobile & Desktop (Modules 19 - 22)
 | Module | Title | Core Competencies |
 | :--- | :--- | :--- |
-| **19** | [Mobile Architecture & Capacitor Setup](19-mobile-architecture.md) | Cross-platform mobile architecture: `bv mobile init`, `bv mobile sync`, native hardware APIs (Camera, Haptics). |
+| **19** | [Mobile Architecture & Capacitor Setup](19-mobile-architecture.md) | Cross-platform mobile architecture: `bv capacitor init`, `bv capacitor sync` (alias: `bv mobile`), native hardware APIs (Camera, Haptics). |
 | **20** | [Mobile UI Components & Touch Gestures](20-mobile-ui.md) | Official `@blaise-ui-mobile` suite (inputs, toggles, checkboxes, selects, pull-to-refresh, searchbars, FABs, back buttons), adaptive Material Design / Cupertino styling, safe areas, and `BlaiseIonic.pas`. |
-| **21** | [Emulation, Live Debugging & Device Build](21-mobile-build.md) | Android emulators (`bv mobile emulator`), device debugging via ADB, release APKs, and Google Play AAB bundles. |
+| **21** | [Emulation, Live Debugging & Device Build](21-mobile-build.md) | Android emulators (`bv capacitor emulator`), device debugging via ADB, release APKs, and Google Play AAB bundles. |
 | **22** | [Native Lightweight Desktop Applications](22-desktop-webui.md) | Standalone `< 10MB` native desktop executables via WebUI (`bv desktop init`, `bv desktop dev`, `bv desktop build`), window controls (`$desktop`), system tray, and native file dialogs. |
 
 ### 🎨 Track 5: Official Packages & Ecosystem (Modules 23 - 26)

@@ -5,7 +5,7 @@ If you have ever developed desktop software in **Delphi** or **Lazarus**, you al
 - When the form appears on your monitor, Delphi runs `OnShow`.
 - When the form is closed and destroyed, Delphi runs `OnDestroy` or `OnClose`.
 
-In **BlaiseVue**, components live a very similar life! From the moment a component is summoned to the browser screen until the moment the user navigates away, it goes through a well-defined **Lifecycle** (Ciclo de Vida).
+In **BlaiseVue**, components live a very similar life! From the moment a component is summoned to the browser screen until the moment the user navigates away, it goes through a well-defined **Lifecycle**.
 
 Lifecycle hooks allow you to execute pure **Object Pascal** code automatically at these key moments.
 
@@ -52,10 +52,10 @@ This hook runs the instant BlaiseVue initializes your component and its `data:` 
 created:
 begin
   ConsoleLog('Component created in memory!');
-  this['status'] := 'Carregando produtos...';
+  this['status'] := 'Loading products...';
   
   // Call your Pascal method to fetch data from the server
-  CarregarDadosIniciais();
+  LoadInitialData();
 end;
 ```
 
@@ -73,12 +73,12 @@ This hook runs when the HTML template has been compiled, attached to the browser
 mounted:
 begin
   ConsoleLog('Component is now live on screen!');
-  ShowToast('Tela carregada com sucesso!');
+  ShowToast('Screen loaded successfully!');
 
   // Start a timer to refresh data every 5 seconds (Pure Pascal!)
   this['timerId'] := StartInterval(procedure
   begin
-    AtualizarStatus();
+    UpdateStatus();
   end, 5000);
 end;
 ```
@@ -95,7 +95,7 @@ Every time a reactive variable in your `data:` changes, BlaiseVue's reactive eng
 ```pascal
 updated:
 begin
-  ConsoleLog('A tela foi atualizada com novos dados reativos!');
+  ConsoleLog('Screen updated with new reactive data!');
 end;
 ```
 

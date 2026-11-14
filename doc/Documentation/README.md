@@ -80,7 +80,7 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
 
 ### 📱 6. Universal Multiplatform (Mobile & Desktop)
-35. [35. Hybrid Mobile Platform & Capacitor (bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
+35. [35. Hybrid Mobile Platform & Capacitor (bv capacitor / bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
 36. [36. Multiplatform Desktop & Lazarus IDE (bv desktop)](36-desktop-webui.md) — Ultra-lightweight native desktop apps (<10 MB) via WebUI with dual Debug and Release GUI modes.
 
 ### 🛠️ 7. Tooling, Optimization & Developer Experience
@@ -149,6 +149,10 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
 
   # === Backend & Full-Stack (Synopse mORMot 2) ===
   bv mormot init             Scaffolds mORMot 2 backend server in server/
+  bv mormot versions         Lists active, bundled and cached user mORMot versions
+  bv mormot upgrade [--tag]  Interactively selects and downloads mORMot release
+  bv mormot use <version>    Switches active mORMot version (.mormot-version)
+  bv mormot remove-version   Interactively removes a cached user version
   bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh kills lingering instances)
   bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)
   bv mormot kill [--port <p>] Terminates lingering server.exe instances & verifies port release
@@ -160,22 +164,41 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml
   bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
   bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries
-  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)
 
-  # === Mobile (Android & iOS via Capacitor) ===
-  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
-  bv mobile upgrade [--check] Migrates Capacitor dependencies & updates Gradle
-  bv mobile sync             Syncs dist/ with native mobile assets
-  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json
-  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/
-  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)
-  bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)
-  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)
-  bv mobile emulator start   Boots Android emulator in background
-  bv mobile emulator kill    Terminates lingering emulator & QEMU processes (alias: bv mobile kill)
-  bv mobile run android      Installs and launches APK on connected USB device
-  bv mobile run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
-  bv mobile open android     Opens project in Android Studio
+  # === Alternative Backend: Horse ===
+  bv horse <cmd>             Lightweight Horse backend in server-horse/ (requires blaise-horse)
+  bv horse versions          Lists installed and active Horse versions
+  bv horse upgrade           Interactively selects and downloads Horse release
+  bv horse use <version>     Switches active Horse version (.horse-version)
+  bv horse remove-version    Interactively removes a cached user version
+
+  # === Compiler (Pas2JS) ===
+  bv pas2js versions         Lists active, factory baseline and installed compiler versions
+  bv pas2js upgrade          Interactively selects and downloads Pas2JS distribution
+  bv pas2js use <version>    Switches active compiler for project (.pas2js-version)
+  bv pas2js remove-version   Interactively removes a cached compiler version
+
+  # === Multi-Version SDK Management ===
+  bv versions                Consolidated dashboard of active dependencies & SDK caches
+  bv versions clean          Interactive cross-module disk cleanup wizard (or bv versions remove)
+
+  # === Mobile (Android & iOS via Capacitor: bv capacitor / bv mobile) ===
+  bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
+  bv capacitor upgrade [--check] Migrates Capacitor dependencies & updates Gradle
+  bv capacitor versions      Lists installed and active Capacitor runtime versions
+  bv capacitor remove-version Interactively removes an installed Capacitor version
+  bv capacitor sync          Syncs dist/ with native mobile assets
+  bv capacitor remove [-y]   Safely deletes mobile/ and capacitor.config.json
+  bv capacitor build android Builds native Android Debug APK in mobile/bin/android/
+  bv capacitor build android --release Builds optimized Release APK (R8/ProGuard)
+  bv capacitor build android --bundle Builds Google Play Android App Bundle (.aab)
+  bv capacitor emulator list Lists installed Android Virtual Devices (AVD)
+  bv capacitor emulator start Boots Android emulator in background
+  bv capacitor emulator kill Terminates lingering emulator & QEMU processes (alias: bv capacitor kill)
+  bv capacitor run android   Installs and launches APK on connected USB device
+  bv capacitor run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
+  bv capacitor open android  Opens project in Android Studio
+  # Note: bv mobile is fully supported as an identical alias for all bv capacitor commands.
 
   # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
   bv lazarus init            Scaffolds & syncs root Lazarus project (.lpi, .lpr) for IDE development

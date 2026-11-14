@@ -21,7 +21,7 @@ my-app/
 │   │   ├── Home.bv
 │   │   └── About.bv
 │   └── services/          # Pure Pascal business logic, rules & models (.pas)
-│       ├── uCalculadoraFrete.pas
+│       ├── uShippingCalculator.pas
 │       └── uFormatters.pas
 │
 ├── lib/                   # Component Libraries & Add-ons
@@ -34,7 +34,7 @@ my-app/
 │   │   ├── Home.test.pas
 │   │   └── DatasetView.test.pas
 │   ├── services/          # Pure Pascal domain service tests (business logic, calculations)
-│   │   ├── CalculadoraFrete.test.pas
+│   │   ├── ShippingCalculator.test.pas
 │   │   └── Formatters.test.pas
 │   ├── framework/         # Internal framework verification tests
 │   │   ├── reactivity.test.pas
@@ -144,8 +144,8 @@ Optimized output ready for web servers, Docker containers, or Electron/WebUI des
 
 ```bash
 # 1. Create a new project (scaffolds 4-tier tests & services natively)
-bv create MeuProjeto
-cd MeuProjeto
+bv create my-app
+cd my-app
 
 # 2. Run automated test suite
 bv test

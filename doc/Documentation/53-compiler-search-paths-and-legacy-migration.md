@@ -15,7 +15,7 @@ During compilation (`bv run dev` or `bv build`), the Pas2JS compiler reads `@app
 ```
 ┌────────────────────────────────────────────────────────┐
 │                   Component (.bv)                      │
-│   <script uses="uRegraTributaria, chartjs, jspdf">     │
+│   <script uses="uTaxRules, chartjs, jspdf">            │
 └───────────────────────────┬────────────────────────────┘
                             │ (Compiler Unit Resolution)
                             ▼
@@ -97,11 +97,11 @@ To reuse existing Pascal units from an on-disk folder:
 
 ```bash
 # Relative paths:
-bv path add ../meu-sistema-legado/models
-bv path add ./legacy/regras-de-negocio
+bv path add ../my-legacy-system/models
+bv path add ./legacy/business-rules
 
 # Absolute paths:
-bv path add C:\ProjetosLazarus\SharedUnits
+bv path add C:\LazarusProjects\SharedUnits
 ```
 
 > [!NOTE]
@@ -117,7 +117,7 @@ Removes a search path or Pas2JS package from `app.cfg`:
 bv path remove pas2js:chartjs
 
 # Remove by directory path:
-bv path remove ../meu-sistema-legado/models
+bv path remove ../my-legacy-system/models
 ```
 
 **Output:**
