@@ -8,6 +8,15 @@
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.
 
+> [!NOTE]
+> ### 🚀 Project Status: Active Development & Upcoming Official v1.0.0 Release
+>
+> BlaiseVue is currently in active pre-release development. The platform is **fully functional, battle-tested, and ready for developers to clone, test, build prototypes, explore reactive Pascal, and evaluate full-stack architectures**.
+>
+> Current version tags or numbers appearing in the CLI and documentation are **internal development milestones** used to track architectural iterations. An official, production-ready **v1.0.0 Release** is being finalized and will be officially launched very soon.
+>
+> We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
+
 ---
 
 ## 🌟 The BlaiseVue 4.4 Enterprise Universal Architecture

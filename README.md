@@ -15,6 +15,15 @@
 
 **BlaiseVue** is a high-performance, enterprise-grade universal reactive framework for **Object Pascal**. It combines the type safety, architectural robustness, and raw compilation speed of Pascal with the elegance, ergonomics, and reactivity of **Vue.js**, enabling seamless multiplatform deployment across Web, Mobile, and Desktop from a single codebase.
 
+> [!NOTE]
+> ### 🚀 Project Status: Active Development & Upcoming Official v1.0.0 Release
+>
+> BlaiseVue is currently in active pre-release development. The platform is **fully functional, battle-tested, and ready for developers to clone, test, build prototypes, explore reactive Pascal, and evaluate full-stack architectures**.
+>
+> Current version tags or numbers appearing in the CLI and repository are **internal development milestones** used to track architectural iterations. An official, production-ready **v1.0.0 Release** is being finalized and will be officially launched very soon.
+>
+> We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
+
 ---
 
 ## 💡 Why BlaiseVue?
