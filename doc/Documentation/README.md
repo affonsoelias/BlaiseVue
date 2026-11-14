@@ -176,6 +176,8 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mobile open android     Opens project in Android Studio
 
   # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
+  bv lazarus init            Scaffolds & syncs root Lazarus project (.lpi, .lpr) for IDE development
+  bv lazarus sync            Synchronizes all .bv components and Pascal units in Lazarus project tree
   bv desktop init [name]     Scaffolds Lazarus (.lpi, .lpr) & WebUI project
   bv desktop sync            Syncs dist/ with desktop/assets/
   bv desktop remove [-y]     Safely deletes desktop/ native project
@@ -214,7 +216,6 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)
   bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)
   bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts
-  bv extension <subcommand>  Alias for "bv tool" (backward compatibility)
 
   # === Project Configuration & Search Paths ===
   bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)

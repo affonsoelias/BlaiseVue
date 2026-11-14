@@ -468,11 +468,12 @@ Manages the complete mobile development lifecycle using Capacitor within a unifi
 
 ---
 
-## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` - WebUI)
+## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
 
-Manages the native desktop development lifecycle with Free Pascal and WebUI:
-Manages the native desktop development lifecycle with Free Pascal and WebUI:
-- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
+Manages native desktop applications with Free Pascal and WebUI, and synchronizes Lazarus IDE project integration:
+- **`bv lazarus init`**: Scaffolds and synchronizes the root Lazarus project (`<project_name>.lpi` and `<project_name>.lpr`) for opening the reactive project directly inside Lazarus IDE with full component indexing and F9 live dev server execution.
+- **`bv lazarus sync`**: Re-indexes all `.bv` components and Pascal units in the project tree inside `<project_name>.lpi`.
+- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`, and automatically ensures root Lazarus project files exist if missing.
 - **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
 - **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries.
 - **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
@@ -662,7 +663,6 @@ Manages built-in framework developer tools (`packages/tools/`), co-official ecos
 - **`bv tool remove <name>`**: Executes the tool's uninstallation script (`remove.py`/`remove.pas`) and cleanly removes the directory from `~/.blaisevue/tools/`.
 - **`bv tool pack [dir]`**: Compiles and packages a tool directory into a distributable release archive (`dist/<name>-<version>.zip`) with an accompanying `.sha256` checksum file.
 - **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
-- **`bv extension <subcommand>`**: Full backward-compatible alias for `bv tool`.
 
 #### Folder Structure of a Tool Package
 Both libraries and tools can include documentation (`doc/`) and runnable examples (`examples/`):

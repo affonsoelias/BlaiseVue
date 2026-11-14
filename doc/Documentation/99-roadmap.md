@@ -16,7 +16,7 @@
 | **v4.1** | ✅ Delivered | **Component Catalog & Documentation** | 52 technical manuals, full props/events/slots specification tables, zero-ASM application patterns. |
 | **v4.2** | ✅ Delivered | **LiveBindings & Reactive `TBVDataSet`** | Delphi/Lazarus data-aware state machine, cursor navigation (`First`, `Next`), transactional buffering, `b-field` directive. |
 | **v4.3** | ✅ Delivered | **Type-Safe Pascal RPC with mORMot 2** | JSON-RPC 2.0, dual HTTP/WebSocket transport, shared `ICustomerService` interfaces, compile-time API validation. |
-| **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, unified extensions (`bv extension`). |
+| **v4.4** | ✅ Delivered | **Resilience, Packaging & Ecosystem** | AST Type-Checker (`bv check`), IndexedDB offline delta sync, Virtual Scroll, Relational CRUD, `bv create --lib`, `bv lib pack`, decentralized registries (`bv repo`, `bv lib`), `blaise-reports`, developer tools manager (`bv tool`). |
 | **v5.0** | 🚀 In Progress | **Cloud, PWA & Real-Time Era** | BlaiseX state machines (`TBVStore 2.0`), PWA Background Sync (`bv pwa`), Node-free dynamic SSR (<3ms), BlaiseStudio 2.0 visual modeler, Vue 3-style Fragments (Multi-Root Templates). |
 | **v5.2** | 🗺️ Planned | **Distributed Enterprise & Micro-Frontends** | Dynamic Module Federation (`RegisterRemoteModule`), remote `.bv` component and BlaiseX store slice loading at runtime. |
 | **v5.4** | 🗺️ Planned | **Serverless Edge Computing (BlaiseEdge)** | Native WebAssembly System Interface (`wasm32-wasi`) compilation, dedicated `bv edge` CLI suite, sub-2MB microservices with <0.2ms cold start for Cloudflare Workers & Fastly. |
@@ -154,10 +154,10 @@ ightarrow$ `OrderItems`) with foreign key constraints.
 - **Multi-Format Export Targets**: Client and server-side Vector PDF (`ExportPDF`), native Excel spreadsheets (`ExportExcel`), and clean CSV streaming (`ExportCSV`).
 - **Print Optimization**: Tailored CSS `@media print` rules for A4, Letter, and thermal POS receipt printers (80mm/58mm).
 
-#### 🛠️ Pillar 10: Unified Development Extensions & Tools Architecture (`packages/tools/`, `bv extension`)
-- **Centralized Extension Tooling (`bv extension`)**: Unified management (`list`, `install`, `remove`, `pack`) for IDE and browser extensions.
-- **VS Code Extension Packaging (`bv extension pack vscode`)**: Directly invokes `@vscode/vsce` to package production `.vsix` bundles from `packages/tools/blaise-vscode/`.
-- **Browser DevTools Deployment (`bv extension install devtools`)**: Automated deployment guides and installation bridges for Chrome, Edge, and Firefox DevTools extensions from `packages/tools/blaise-devtools/`.
+#### 🛠️ Pillar 10: Unified Development Tools & Extensions Architecture (`packages/tools/`, `bv tool`)
+- **Centralized Developer Tooling (`bv tool`)**: Unified management (`list`, `search`, `info`, `install`, `update`, `outdated`, `remove`, `pack`, `init`) for IDE and browser extensions.
+- **VS Code Extension Packaging (`bv tool pack blaise-vscode`)**: Directly invokes `@vscode/vsce` to package production `.vsix` bundles from `packages/tools/blaise-vscode/`.
+- **Browser DevTools Deployment (`bv tool install blaise-devtools`)**: Automated deployment guides and installation bridges for Chrome, Edge, and Firefox DevTools extensions from `packages/tools/blaise-devtools/`.
 - **User Global Tools (`~/.blaisevue/tools/`)**: Isolated user directory protecting custom community tools from framework `bv self-update` operations.
 
 ---

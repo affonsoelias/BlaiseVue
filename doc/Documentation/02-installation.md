@@ -24,9 +24,9 @@ Before installing BlaiseVue, ensure the following core tools are installed on yo
    - Manages mobile dependencies and synchronization (`bv mobile init`, `bv mobile sync`).
    - Download: [https://nodejs.org](https://nodejs.org) (LTS version recommended; must be on your system `PATH`).
 
-4. **Python (v3.8+)** *(Recommended for Tool Packages & Extensions)*:
-   - Recommended for executing cross-platform lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`) for built-in and user-created development tools (`bv extension`).
-   - Powers extensions like `blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and third-party tools in `~/.blaisevue/tools/`.
+4. **Python (v3.8+)** *(Recommended for Developer Tool Packages)*:
+   - Recommended for executing cross-platform lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`) for built-in and user-created development tools (`bv tool`).
+   - Powers developer tools like `blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and third-party tools in `~/.blaisevue/tools/`.
    - Download: [https://www.python.org](https://www.python.org).
    - *Note*: InstantFPC (bundled with Lazarus / Free Pascal) is also supported as a pure Pascal scripting alternative.
 

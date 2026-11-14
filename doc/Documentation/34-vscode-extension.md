@@ -31,9 +31,9 @@ A forma mais rápida e recomendada de instalar ou atualizar a extensão em todas
 
 ```bash
 # Instala a extensão oficial do VS Code / Antigravity IDE / Cursor:
-bv extension install blaise-vscode
+bv tool install blaise-vscode
 
-# (alias curto também suportado: bv extension install vscode)
+# (alias curto também suportado: bv tool install vscode)
 ```
 
 **O que este comando faz nos bastidores:**
@@ -95,17 +95,17 @@ O script empacota automaticamente o bundle `.vsix` mais recente, remove versões
 
 ---
 
-### 🛠️ Comandos Adicionais do CLI `bv extension`
+### 🛠️ Comandos Adicionais do CLI `bv tool`
 
 ```bash
-# Listar status de instalação das extensões (VS Code, DevTools, etc.)
-bv extension list
+# Listar status de instalação das ferramentas (VS Code, DevTools, Lazarus, etc.)
+bv tool list
 
 # Empacotar uma nova versão standalone .vsix
-bv extension pack vscode
+bv tool pack blaise-vscode
 
 # Desinstalar a extensão do ambiente local
-bv extension remove vscode
+bv tool remove blaise-vscode
 ```
 
 ---

@@ -59,7 +59,7 @@ program bv;
   • Developer Cockpit & Tooling Ecosystem:
     - Interactive REPL & Project Registry (bv project, ~/.blaisevue/projects.json)
     - Decentralized Package Ecosystem & Registries (bv repo, bv lib)
-    - VS Code & Lazarus IDE Extension Suite (bv extension, bv lazarus)
+    - VS Code & Lazarus IDE Developer Tools Suite (bv tool, bv lazarus)
     - System Health & Dependency Diagnostics (bv doctor)
     - Automated Git Framework Self-Updater (bv self-update, bv channel)
   =============================================================================
@@ -1064,6 +1064,7 @@ procedure CmdLicense; forward;
 procedure CmdMeta; forward;
 { Unit search path command dispatcher (bv path). }
 procedure CmdPath; forward;
+procedure DoLazarusInitOrSync(const AAction: string = 'init'); forward;
 procedure CmdLazarus; forward;
 procedure CmdReset; forward;
 procedure CmdUpdate; forward;
@@ -5792,7 +5793,7 @@ begin
   end;
 end;
 
-{ Searches for a developer tool / extension in registered ecosystem repositories. }
+{ Searches for a developer tool in registered ecosystem repositories. }
 function FindToolInEcosystem(const ToolName: string; const ReqVersion: string;
   out FoundVersion, DownloadURL, Checksum, RepoName, FoundType: string;
   const TargetRepo: string = ''): Boolean;
@@ -9861,7 +9862,7 @@ begin
 end;
 
 { Generates and updates Lazarus IDE project files (.lpi, .lpr) for native IDE integration (bv lazarus). }
-procedure CmdLazarus;
+procedure DoLazarusInitOrSync(const AAction: string = 'init');
 var
   SubCmd: string;
   CurDir, ProjName, CleanName, LprFile, LpiFile: string;
@@ -9869,8 +9870,8 @@ var
   UnitsList: TStringList;
   i: Integer;
 begin
-  SubCmd := 'init';
-  if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
+  SubCmd := LowerCase(AAction);
+  if (SubCmd = '') then SubCmd := 'init';
   if (SubCmd <> 'init') and (SubCmd <> 'sync') and (SubCmd <> 'update') then
   begin
     WriteLn('Usage: bv lazarus [init|sync]');
@@ -10011,6 +10012,15 @@ begin
   finally
     UnitsList.Free;
   end;
+end;
+
+procedure CmdLazarus;
+var
+  SubCmd: string;
+begin
+  SubCmd := 'init';
+  if ParamCount >= 2 then SubCmd := LowerCase(ParamStr(2));
+  DoLazarusInitOrSync(SubCmd);
 end;
 
 { Performs a clean-slate project reset with double-layered safety guards (bv reset). }
@@ -11924,7 +11934,7 @@ begin
   end;
 end;
 
-{ Dispatches execution to a developer extension lifecycle script (status.py, install.py). }
+{ Dispatches execution to a developer tool lifecycle script (status.py, install.py). }
 function RunToolScript(const ToolDir, ScriptName: string; out ScriptOutput: string; CaptureOutput: Boolean = False): Integer;
 var
   Ext, ScriptPath, RunnerCmd, CmdLine, PyExe, PyVer, IfpcExe, IfpcVer, DummyDesc: string;
@@ -12111,7 +12121,7 @@ begin
   end;
 end;
 
-{ Enumerates all installed tools and extensions across system and user directories. }
+{ Enumerates all installed tools across system and user directories. }
 function DiscoverAllTools: TBVToolArray;
 var
   ToolsList: TBVToolArray;
@@ -12200,13 +12210,13 @@ begin
   ThirdPartyCount := 0;
 
   WriteLn('');
-  WriteLn('=== BlaiseVue Development Tools & Extensions (bv tool) ===');
+  WriteLn('=== BlaiseVue Development Tools (bv tool) ===');
   WriteLn(StringOfChar('-', 86));
   WriteLn(PadRight('Tool Name', 20), PadRight('Category', 22), PadRight('Version', 12), PadRight('Type', 15), PadRight('Status / Location', 17));
   WriteLn(StringOfChar('-', 86));
 
   if Length(AllTools) = 0 then
-    WriteLn('No tools or extensions found.')
+    WriteLn('No tools found.')
   else
   begin
     for I := 0 to High(AllTools) do
@@ -12654,7 +12664,7 @@ begin
   WriteLn(StringOfChar('-', 86));
 
   if Length(AllTools) = 0 then
-    WriteLn('No tools or extensions installed.')
+    WriteLn('No tools installed.')
   else
   begin
     for I := 0 to High(AllTools) do
@@ -13155,12 +13165,6 @@ begin
     WriteLn('Unknown subcommand: bv tool ' + SubCmd);
     WriteLn('Usage: bv tool <list|search|info|install|update|outdated|remove|pack|init> [params]');
   end;
-end;
-
-{ Backward-compatible alias for "bv tool" (bv extension). }
-procedure CmdExtension(const Action: string = ''; const Target: string = '');
-begin
-  CmdTool(Action, Target);
 end;
 
 { Ensures Android Gradle compatibility with Java 17 LTS and configures signingConfig for local release testing. }
@@ -14557,7 +14561,7 @@ var
   SearchRec: TSearchRec;
   FoundLpr: string;
   TargetExe, TargetBin, TargetExt: string;
-  IsRelease, IsAllTargets: Boolean;
+  IsRelease, IsAllTargets, RootHasLpi: Boolean;
   { Parses an individual command line option flag or positional parameter. }
   procedure ParseArg(const A: string);
   var
@@ -14700,7 +14704,12 @@ begin
   if TargetPlatform = '' then
     TargetPlatform := HostPlatform;
 
-  if DisplayName = '' then DisplayName := 'BlaiseVue Desktop';
+  if DisplayName = '' then
+  begin
+    DisplayName := ExtractFileName(ExcludeTrailingPathDelimiter(GetCurrentDir));
+    if (DisplayName = '') or (DisplayName = 'desktop') then
+      DisplayName := 'BlaiseVue Desktop';
+  end;
   CleanName := '';
   for i := 1 to Length(DisplayName) do
   begin
@@ -16036,6 +16045,19 @@ begin
       WriteLn('  [+] Created desktop/README.md');
     end;
 
+    // 6. Ensure root project Lazarus files (.lpi, .lpr) exist
+    RootHasLpi := False;
+    if FindFirst(GetCurrentDir + DirectorySeparator + '*.lpi', faAnyFile, SearchRec) = 0 then
+    begin
+      RootHasLpi := True;
+      FindClose(SearchRec);
+    end;
+    if not RootHasLpi then
+    begin
+      WriteLn('  [+] Project Lazarus IDE files missing in root. Initializing Lazarus project (.lpi, .lpr)...');
+      DoLazarusInitOrSync('init');
+    end;
+
     WriteLn('');
     WriteLn('Desktop project scaffolded successfully!');
     WriteLn('Next steps:');
@@ -16172,10 +16194,17 @@ begin
     end;
   end
 
+  else if (SubCmd = 'lazarus') or (SubCmd = 'ide') then
+  begin
+    DoLazarusInitOrSync('init');
+    Exit;
+  end
+
   else
   begin
     WriteLn('Usage: bv desktop <init [name]|sync|build [target] [--release]|run [target] [--release]>');
     WriteLn('       Targets: windows | linux | macos | all (default: host OS)');
+    WriteLn('       Lazarus: bv lazarus init (or bv desktop lazarus)');
   end;
 end;
 
@@ -25146,13 +25175,14 @@ begin
   Result.Add('mormot');
   // Mobile (Capacitor)
   Result.Add('mobile');
-  // Desktop (WebUI)
+  // Desktop (WebUI & Lazarus IDE)
   Result.Add('desktop');
+  Result.Add('lazarus');
   // Package & Theme Management
   Result.Add('lib');
   Result.Add('theme');
   Result.Add('repo');
-  Result.Add('extension');
+  Result.Add('tool');
   // Project Configuration & Paths
   Result.Add('path');
   Result.Add('meta');
@@ -26179,6 +26209,8 @@ begin
         WriteLn('  mobile open android        Opens project in Android Studio');
         WriteLn('');
         WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
+        WriteLn('  lazarus init               Scaffolds & syncs root Lazarus project (.lpi, .lpr)');
+        WriteLn('  lazarus sync               Syncs components and units in Lazarus project tree');
         WriteLn('  desktop init [name]        Scaffolds Lazarus (.lpi, .lpr) & WebUI project');
         WriteLn('  desktop sync               Syncs dist/ with desktop/assets/');
         WriteLn('  desktop remove [-y]        Safely deletes desktop/ native project');
@@ -26205,7 +26237,7 @@ begin
         WriteLn('  theme add <name>           Adds a theme for optimized bundling');
         WriteLn('  theme remove <name>        Removes a theme from package.json');
         WriteLn('  theme reset                Resets theme filters (bundles all themes)');
-        WriteLn('  extension <list|...>       Manages development extensions & tools');
+        WriteLn('  tool <list|search|...>     Manages development tools & packages');
         WriteLn('');
         WriteLn('  # === Project Configuration & Search Paths ===');
         WriteLn('  license [list|show|set]    Manages project license (MIT, Apache, LGPL, etc.)');
@@ -27209,7 +27241,7 @@ begin
     WriteLn('  [v] Python 3:             v', PyVer, ' (', PySource, ', recommended for tool packages)')
   else
   begin
-    WriteLn('  [!] Python 3:             Not detected in PATH (Recommended for tool packages & extensions)');
+    WriteLn('  [!] Python 3:             Not detected in PATH (Recommended for tool packages)');
     WriteLn('      -> Download from: https://www.python.org/');
   end;
 
@@ -27846,6 +27878,8 @@ begin
   WriteLn('  bv mobile open android     Opens project in Android Studio');
   WriteLn('');
   WriteLn('  # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===');
+  WriteLn('  bv lazarus init            Scaffolds & syncs root Lazarus project (.lpi, .lpr) for IDE development');
+  WriteLn('  bv lazarus sync            Synchronizes all .bv components and Pascal units in Lazarus project tree');
   WriteLn('  bv desktop init [name]     Scaffolds Lazarus (.lpi, .lpr) & WebUI project');
   WriteLn('  bv desktop sync            Syncs dist/ with desktop/assets/');
   WriteLn('  bv desktop remove [-y]     Safely deletes desktop/ native project');
@@ -27884,7 +27918,6 @@ begin
   WriteLn('  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)');
   WriteLn('  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)');
   WriteLn('  bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts');
-  WriteLn('  bv extension <subcommand>  Alias for "bv tool" (backward compatibility)');
   WriteLn('');
   WriteLn('  # === Project Configuration & Search Paths ===');
   WriteLn('  bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)');
@@ -28277,7 +28310,7 @@ begin
       CmdWasm(LowerCase(ParamStr(2)));
   end
 
-  else if (Cmd = 'tool') or (Cmd = 'tools') or (Cmd = 'extension') or (Cmd = 'vsix') then
+  else if (Cmd = 'tool') or (Cmd = 'tools') or (Cmd = 'vsix') then
   begin
     if Cmd = 'vsix' then
       CmdTool('pack', 'blaise-vscode')
