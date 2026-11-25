@@ -1,0 +1,128 @@
+module zephyr_test;
+
+import Zephyr;
+import ZephyrSecurity;
+import ZephyrWs;
+import ZephyrHttp;
+
+type
+    [derive(JSON, Equals)]
+    TestOrder = record
+        sku: String;
+        qty: Int32;
+        price: Float64;
+    end record;
+
+function ValidatedTotal(qty: Int32; price: Float64) return Float64 is
+contract
+    require
+        qty > 0;
+        price > 0.0;
+    ensure
+        result > 0.0;
+begin
+    return Float64(qty) * price;
+end ValidatedTotal;
+
+function HandleTestHealth(req: Request) return Response is
+begin
+    return OkJson("{\"status\":\"ok\",\"engine\":\"Zephyr\"}");
+end HandleTestHealth;
+
+function HandleTestOrder(req: Request) return Response is
+var
+    ord: TestOrder;
+    tot: Float64;
+begin
+    ord := TestOrder.FromJSON(borrow req.body);
+    if (Length(borrow ord.sku) = 0) or (ord.qty <= 0) or (ord.price <= 0.0) then
+        return BadRequest("invalid order");
+    end if;
+    tot := ValidatedTotal(ord.qty, ord.price);
+    return CreatedJson("{\"sku\":\"" + ord.sku + "\",\"total\":" + FloatToStr(tot) + "}");
+end HandleTestOrder;
+
+program Main;
+var
+    accept_key, frame_hex, hdrs, raw_resp: String;
+    rl: RateLimiter;
+    cfg: ZephyrConfig;
+    srv: ZephyrServer;
+    r_ok, r_post, r_bad, r_rate, r_opt, r_trav, r_404, r_405: Request;
+    res: Response;
+begin
+    // 1. RFC 6455 SHA-1 + Base64 Accept Key Vector
+    accept_key := ComputeAcceptKey("dGhlIHNhbXBsZSBub25jZQ==");
+    Assert(accept_key = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
+
+    // 2. WebSocket frame encode / decode
+    frame_hex := EncodeTextFrameHex("Hello Zephyr");
+    Assert(DecodeClientFrameOpcode(borrow frame_hex) = 1);
+    Assert(DecodeClientFramePayload(borrow frame_hex) = "Hello Zephyr");
+
+    // 3. Rate Limiter DoS sliding window
+    rl := NewRateLimiter(2, 60000);
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 1000));
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 2000));
+    Assert(not CheckRateLimitAt(mut borrow rl, "10.0.0.1", 3000));
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 62000));
+
+    // 4. Route dispatch, Keep-Alive, CORS, OWASP Security Headers & Contracts
+    cfg := DefaultConfig(18099);
+    cfg.rate_limit_max := 2;
+    srv := NewServerWithConfig(cfg);
+    srv.Get("/api/health", HandleTestHealth);
+    srv.Post("/api/orders", HandleTestOrder);
+
+    r_ok := Request("GET", "/api/health", "", "HTTP/1.1", "Host: localhost", "", "127.0.0.1", "", true, false, "", 0);
+    res := DispatchRequest(mut borrow srv, borrow r_ok);
+    Assert(res.status = 200);
+
+    r_post := Request("POST", "/api/orders", "", "HTTP/1.1", "", "{\"sku\":\"BV-1\",\"qty\":4,\"price\":25.0}", "127.0.0.1", "", true, false, "", 40);
+    res := DispatchRequest(mut borrow srv, borrow r_post);
+    Assert(res.status = 201);
+    Assert(Contains(res.body, "BV-1"));
+
+    // 3rd request from same IP hits rate limit
+    res := DispatchRequest(mut borrow srv, borrow r_ok);
+    Assert(res.status = 429);
+
+    // Distinct token gets its own quota; invalid payload returns 400
+    r_bad := Request("POST", "/api/orders", "", "HTTP/1.1", "", "{\"sku\":\"\",\"qty\":0,\"price\":10.0}", "127.0.0.1", "Bearer t2", true, false, "", 35);
+    res := DispatchRequest(mut borrow srv, borrow r_bad);
+    Assert(res.status = 400);
+
+    r_opt := Request("OPTIONS", "/api/orders", "", "HTTP/1.1", "", "", "127.0.0.2", "", true, false, "", 0);
+    res := DispatchRequest(mut borrow srv, borrow r_opt);
+    Assert(res.status = 204);
+
+    r_trav := Request("GET", "/../secret", "", "HTTP/1.1", "", "", "127.0.0.2", "", true, false, "", 0);
+    res := DispatchRequest(mut borrow srv, borrow r_trav);
+    Assert(res.status = 400);
+
+    r_405 := Request("DELETE", "/api/orders", "", "HTTP/1.1", "", "", "127.0.0.3", "", true, false, "", 0);
+    res := DispatchRequest(mut borrow srv, borrow r_405);
+    Assert(res.status = 405);
+
+    r_404 := Request("GET", "/missing", "", "HTTP/1.1", "", "", "127.0.0.3", "", true, false, "", 0);
+    res := DispatchRequest(mut borrow srv, borrow r_404);
+    Assert(res.status = 404);
+
+    hdrs := BuildSecurityAndCorsHeaders("*", "GET, POST", "Content-Type", true);
+    raw_resp := FormatHttpResponse(200, "application/json", "{\"ok\":true}", "", hdrs, true);
+    Assert(Contains(raw_resp, "X-Frame-Options: DENY"));
+    Assert(Contains(raw_resp, "script-src 'self' 'unsafe-inline'"));
+    Assert(Contains(raw_resp, "frame-ancestors 'none'"));
+    Assert(Contains(raw_resp, "Connection: keep-alive"));
+
+    // 5. Static MIME types and SPA serving
+    Assert(DetectMimeType("/js/main.js") = "application/javascript; charset=utf-8");
+    Assert(DetectMimeType("/index.html") = "text/html; charset=utf-8");
+    Assert(DetectMimeType("/app.wasm") = "application/wasm");
+    srv.ServeStatic("../fixtures_static");
+    Assert(srv.static_dir = "../fixtures_static");
+    res := DispatchRequest(mut borrow srv, borrow Request("GET", "/api/unknown", "", "HTTP/1.1", "", "", "127.0.0.9", "", true, false, "", 0));
+    Assert(res.status = 404);
+
+    PrintLn("ZEPHYR_PROJECT_TEST_PASSED");
+end zephyr_test.

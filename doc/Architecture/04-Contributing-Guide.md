@@ -90,21 +90,35 @@ BlaiseVue enforces a **100% test pass requirement**. No Pull Request will be mer
 
 The framework currently runs **66 test suites containing 357 automated tests**:
 
+### Running Tests:
 ```bash
-# Run the entire test suite
+# Inside a user project (runs tests/**/*.test.pas via Vitest and tests/**/*.test.aeth natively)
 bv test
+
+# Inside the BlaiseVue SDK repository root (runs SDK suites under tests/)
+bv test --sdk
+bv test --sdk sfc
+bv test --sdk compile_fail
 
 # Run End-to-End (E2E) browser verification
 bv test e2e
-
-# Run performance and memory benchmarks
-bv test bench
 ```
 
+### SDK Test Hierarchy (`tests/` at SDK Root):
+Framework-level regression suites are organized at the repository root (separate from `demo-app/`):
+- `tests/core/` — reactivity, direct DOM, virtual DOM, components
+- `tests/state/` — stores, FSM, validation, forms, datasets
+- `tests/routing_i18n/` — router v2, middleware, i18n, themes
+- `tests/sfc_compiler/` — SFC parser, `<script lang="aether">`, member bodies, template checker
+- `tests/fullstack/` — mORMot RPC, dataset sync, swagger, lib packager
+- `tests/platforms/` — Capacitor mobile, WebUI desktop, Docker
+- `tests/compile_fail/` — expected compile-time error suites (`bad_aether_type.bv`, `bad_template_binding.bv`)
+
 ### Adding a New Test Suite:
-Use the CLI to scaffold a new test:
+Use the CLI inside a project to scaffold a new test:
 ```bash
-bv new t TestFeatureName
+bv g t TestFeatureName
+bv g t FeatureCheck --aether
 ```
 This generates a test unit in `tests/` utilizing `TBVTestContext`:
 

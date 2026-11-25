@@ -21,16 +21,27 @@ bv -v
 
 ### 1. Dedicated Project & Library Scaffolding (`bv create`)
 
-BlaiseVue enables creating, testing, and distributing modular component libraries:
+```bash
+bv create my-app
+bv create my-app --demo
+bv create my-app --aether
+bv create my-app --backend=mormot
+bv create my-app --backend=zephyr
+bv create my-app --backend=horse   # Any installed external backend tool
+```
 
-### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
+- **`--demo`**: Includes the full enterprise component/chart/dataset/mobile showcase.
+- **`--aether`**: Generates an Aether-first frontend where all `.bv` files use `<script lang="aether">`, paired with `src/services/pricing.aeth` and `src/services/uFormatters.pas` demonstrating Aether + Object Pascal interoperability.
+- **`--backend=<name>`**: Initializes a built-in backend (`mormot` in `server-mormot/`, `zephyr` in `server-zephyr/`) or dynamically discovers installed external backend tools in `~/.blaisevue/tools/` (such as `horse` in `server-horse/`).
+
+### 1b. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
 Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
 ```bash
 bv create my-ui-kit --lib
 ```
 - Prompts for license selection interactively: **MIT**, **Apache-2.0**, **LGPL-3.0**, **Commercial**, or **None**.
 - In CI pipelines, specify `--license <type>` non-interactively (e.g. `bv create my-ui-kit --lib --license mit`).
-- Scaffolds `src/`, `styles/`, `demo/`, `ttests/`, `package.json`, `LICENSE`, and `README.md`.
+- Scaffolds `src/`, `styles/`, `demo/`, `tests/`, `package.json`, `LICENSE`, and `README.md`.
 
 ### 2. Assemble Release Artifact: `bv lib pack [dir] [--skip-tests]`
 Prepares a production release package in `dist/<name>-<version>.zip` with SHA-256 verification:
@@ -58,62 +69,57 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 2. **Resource Embedding (`{$R templates.res}`)**:
    - Templates are compiled into a binary resource file (`templates.res`) via `windres` / FPC.
    - Embedded directly into the `bv.exe` executable at compile-time.
-3. **Standalone Binary & 4-Tier Scaffolding**:
-   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
-   - Automatically establishes the **4-Tier Testing Architecture** (`ttests/components/`, `ttests/views/`, `ttests/services/`, `ttests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
+3. **Standalone Binary & 3-Tier App Scaffolding**:
+   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the clean project directory tree.
+   - Automatically establishes the **3-Tier App Testing Architecture** (`tests/components/`, `tests/views/`, `tests/services/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery. Framework-level SDK regression tests live at the SDK root (`tests/`) and run via `bv test --sdk`.
 
 ---
 
 ### 3. Component, View, Service & Test Generators (`bv g` / `bv new`)
 
-BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites:
+BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites. Pass **`--aether`** (or `-a`) to scaffold Aether `.aeth`/`.test.aeth` files or `<script lang="aether">` `.bv` components:
 
-### 1. Create Component: `bv new component <Name> [--no-test]`
+### 1. Create Component: `bv g c <Name> [--aether] [--no-test]`
 Creates the visual Single File Component (`.bv`) and its companion test file:
 ```bash
-bv new component ProductCard
-# Shorthand:
-bv new c ProductCard
+bv g c ProductCard
+bv g c MetricCard --aether
 ```
-- Creates: `src/components/ProductCard.bv`
-- Automatically generates: `ttests/components/ProductCard.test.pas`
+- Creates: `src/components/ProductCard.bv` (or `<script lang="aether">` when `--aether` is passed)
+- Automatically generates: `tests/components/ProductCard.test.pas`
 - Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
-### 2. Create View / Page: `bv new view <Name> [--no-test]`
+### 2. Create View / Page: `bv g v <Name> [--aether] [--no-test]`
 Creates an application page view and its mount verification test:
 ```bash
-bv new view OrderHistory
-# Shorthand:
-bv new v OrderHistory
+bv g v OrderHistory
+bv g v Reports --aether
 ```
-- Creates: `src/views/OrderHistory.bv`
-- Automatically generates: `ttests/views/OrderHistory.test.pas`
+- Creates: `src/views/OrderHistory.bv` (or `<script lang="aether">` when `--aether` is passed)
+- Automatically generates: `tests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
-### 3. Create Service Unit: `bv new service <Name> [--no-test]`
-Creates a pure Pascal business service unit and its corresponding domain unit test:
+### 3. Create Service Unit: `bv g s <Name> [--aether] [--no-test]`
+Creates a pure Object Pascal unit or Aether module in `src/services/` along with its unit test:
 ```bash
-bv new service PaymentProcessor
-# Shorthand:
-bv new s PaymentProcessor
-# Generator alias:
-bv g s PaymentProcessor
+bv g s PaymentProcessor            # Creates src/services/uPaymentProcessor.pas + PaymentProcessor.test.pas
+bv g s Billing --aether            # Creates src/services/Billing.aeth + tests/services/Billing.test.aeth
 ```
-- Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
-- Automatically generates: `ttests/services/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
-- Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
+- Creates: `src/services/u<Name>.pas` (or `src/services/<Name>.aeth` with `--aether`)
+- Automatically generates: `tests/services/<Name>.test.pas` (or `<Name>.test.aeth` with `--aether`)
+- Pass `--no-test` (or `-nt`) to create only the service file without a test file.
 
-### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv g t <Name> [--aether]`
 Creates test suites on demand with automatic directory resolution:
 ```bash
-bv new test SimpleBadge
-# Shorthand:
-bv new t SimpleBadge
+bv g t SimpleBadge
+bv g t QuickCheck --aether
 ```
-- **If `SimpleBadge.bv` is a component:** created in `ttests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
-- **If it is a view:** created in `ttests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
-- **If it is a service in `src/services/`:** created in `ttests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
-- **Otherwise:** created in `ttests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
+- **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
+- **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
+- **If `uSimpleBadge.pas` exists in `src/services/`:** created in `tests/services/SimpleBadge.test.pas`.
+- **If `SimpleBadge.aeth` exists in `src/services/` (or `--aether` is passed):** created as `.test.aeth` in `tests/services/`.
+- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` (or `.test.aeth` with `--aether`).
 
 ### 5. List Elements: `bv list <c|v|s|store|fsm|t|lib>`
 Lists registered files across the project:
@@ -381,52 +387,68 @@ Performs a complete purge of the build workspace:
 
 ---
 
-## 4. 🐘 Backend & Full-Stack Pascal with Synopse mORMot 2 (`bv mormot`)
+## 4. 🐘 Backends (`bv mormot`, `bv zephyr`, External Tools)
 
+Each backend uses an isolated project subdirectory so multiple backends can coexist cleanly in the same workspace:
+- **mORMot 2**: `server-mormot/` (default port `8090`; legacy `server/` folders continue to work automatically)
+- **Zephyr (Aether)**: `server-zephyr/` (default port `8091`)
+- **Horse (via `blaise-horse` tool)**: `server-horse/` (default port `9000`)
+
+### Synopse mORMot 2 (`bv mormot`)
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
+- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server-mormot/`.
 - **`bv mormot versions`**: Lists the active version in the current project, the immutable factory baseline (`vendor/mormot2`), and all cached user distributions in `~/.blaisevue/versions/mormot/` along with disk usage.
 - **`bv mormot upgrade [--tag=<v>]`**: Queries the official Synopse repository and presents an interactive version picker (or downloads the specified git tag) into user storage (`~/.blaisevue/versions/mormot/<tag>`), keeping the factory bundled baseline 100% intact.
-- **`bv mormot use <tag|bundled>`**: Configures the current project to bind to a specific user version or reverts to the factory baseline (`server/mormot.path`).
+- **`bv mormot use <tag|bundled>`**: Configures the current project to bind to a specific user version or reverts to the factory baseline (`server-mormot/mormot.path`).
 - **`bv mormot remove-version [tag] [-y]`**: Lists cached user versions and interactively prompts for selection to safely delete and reclaim disk space (protected factory baseline cannot be deleted).
-- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
+- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal (`server-mormot/bin/server.exe`).
   - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
-- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port.
   - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
 - **`bv mormot kill`**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
 - **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
-- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
+- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle into `deploy/server-mormot/`:
   - Compiles frontend in production mode (`bv build --release`).
   - Compiles backend in release mode (`bv mormot build --release`).
-  - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
+  - Assembles `deploy/server-mormot/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
   - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
   - **Zero Server Prerequisites**: No Node.js, npm, Free Pascal, or Lazarus required on the target server!
 
 | mORMot Command | Subcommand / Flag | Action / Output |
 |---|---|---|
-| `bv mormot init` | - | Scaffolds native backend in `server/` |
+| `bv mormot init` | - | Scaffolds native backend in `server-mormot/` |
 | `bv mormot versions` | - | Lists active, bundled and cached user versions with disk usage |
 | `bv mormot upgrade` | `[--tag=<v>]` | Interactively chooses and downloads mORMot 2 release to `~/.blaisevue/versions/` |
 | `bv mormot use` | `<tag\|bundled>` | Switches active mORMot 2 version for current project |
 | `bv mormot remove-version` | `[tag] [-y]` | Interactively selects and deletes a cached user version |
-| `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
+| `bv mormot build` | - | Compiles Debug server (`server-mormot/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
 | `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
 | `bv mormot kill` | `[--port <p>]` | Two-stage termination of `server.exe` and port release verification |
 | `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
-| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
+| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/server-mormot/` folder |
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
-| `bv mormot remove` | `[-y\|--yes]` | Safely deletes `server/` directory and mORMot binaries |
+| `bv mormot remove` | `[-y\|--yes]` | Safely deletes `server-mormot/` directory and mORMot binaries |
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
+
+### Zephyr Native Aether Backend (`bv zephyr`)
+Manages the native Aether HTTP/1.1 + WebSocket server (`vendor/zephyr`) in an isolated **`server-zephyr/`** directory on port **`8091`**:
+- **`bv zephyr init`**: Creates `server-zephyr/zephyr_server.aeth`, `server-zephyr/models.aeth`, `server-zephyr/aether.json`, and `server-zephyr/.env` (`PORT=8091`).
+- **`bv zephyr build [--target=c|pascal] [--release|--debug]`**: Compiles `server-zephyr/bin/zephyr_server[.exe]` via `aetherc`.
+- **`bv zephyr run [--port <p>]`**: Auto-builds `dist/` if missing, compiles & launches Zephyr serving the static SPA (`../dist`), REST (`/api/health`, `/api/items`), and WebSocket (`/ws`), printing clickable URLs on startup.
+- **`bv zephyr deploy [--zip] [--port <p>] [--out <dir>]`**: Packages `dist/` and the release binary into `deploy/server-zephyr/` (plus `deploy-zephyr.zip` when `--zip` is passed).
+- **`bv zephyr status`**: Displays Zephyr SDK, `aetherc`, entry file, binary, and port info.
+- **`bv zephyr remove [-y]`**: Removes `server-zephyr/`, `bin/server-zephyr/`, and `deploy/server-zephyr/`.
+
+See detailed documentation in **[59. Aether Language Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md)**.
 
 ### Alternative Backend: Horse Framework (via `blaise-horse` tool)
 For projects preferring a lightweight microframework (Express.js-style in Pascal), BlaiseVue supports the co-official tool **`blaise-horse`**:
 - Install from ecosystem: `bv tool install blaise-horse`.
-- Isolated directory: `server-horse/` (preventing collision with `server/`).
-- Dynamic CLI resolution: Once installed, `bv horse <cmd>` (or `bv tool run blaise-horse <cmd>`) is dynamically dispatched to the tool.
+- Isolated directory: `server-horse/` (preventing collision with `server-mormot/` and `server-zephyr/`).
+- Dynamic CLI resolution: Once installed, `bv horse <cmd>` (or `bv tool run blaise-horse <cmd>`) is dynamically dispatched to the tool, or initialized at project creation via `bv create my-app --backend=horse`.
 - Multi-version management: Supports `bv horse versions`, `bv horse upgrade`, `bv horse use <version>`, and `bv horse remove-version`.
 - Clean removal: `bv horse remove -y` or `bv tool remove blaise-horse`.
 
@@ -514,15 +536,15 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 ## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
 
 ### 1. Unit & Integration Tests (`bv test`)
-The `bv test` command compiles and executes all unit and integration tests across the 4-tier hierarchy:
+The `bv test` command compiles and executes both Object Pascal tests (`*.test.pas` via Pas2JS + Vitest) and native Aether tests (`*.test.aeth` via `aetherc`):
 ```bash
-bv test
+bv test [filter] [--no-cache|--fresh]
+bv test --sdk [suite|filter]    # Runs SDK-level suites at the BlaiseVue repo root
 ```
-1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in `generated/tests/` to prevent orphan test execution.
-2. **Recursive Discovery:** Finds all `*.test.pas` files across `tests/components/`, `tests/views/`, `tests/services/`, and `tests/framework/`.
-3. **Component Transpilation:** Transpiles all `.bv` Single File Components into `generated/`.
-4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. `generated/tests/views/Home.test.js`).
-5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
+1. **Pre-flight Cleaning:** Cleans stale artifacts in `generated/tests/` while preserving incremental hash caches.
+2. **Recursive Discovery:** Finds `*.test.pas` and `*.test.aeth` across `tests/components/`, `tests/views/`, and `tests/services/` (or SDK `tests/` when running `--sdk`).
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components (including `<script lang="aether">` and `.aeth` services) into `generated/`.
+4. **Dual Test Execution:** Compiles `.test.pas` files to `generated/tests/*.test.js` for **Vitest** / JSDOM, and compiles `.test.aeth` files via `aetherc --target=c` into `generated/tests/.cache/` for native execution.
 
 For continuous test-driven development:
 ```bash
@@ -718,6 +740,7 @@ Manages Pas2JS compiler search paths (`-Fu`) in `app.cfg`, linking official buil
   - E.g.: `bv path add ../legacy/business_logic` (Imports legacy Lazarus/Delphi units)
 - **`bv path remove <target>`**: Safely removes a search path from `app.cfg`.
 - **`bv path available`**: Discovers and catalogs all 30+ pre-bundled Pas2JS packages (`vendor/pas2js/.../packages`) with real-time `[active]` status markers.
+- **Declarative JSON paths**: Projects can also declare extra directories via `"paths": { "pascal": [...], "aether": [...] }` in `blaisevue.json` or under `"blaisevue"` in `package.json`, injected automatically across `bv build`, `bv build --release`, `bv dev`, `bv test`, and displayed in `bv path`.
 
 | Path Command | Arguments | Action / Output |
 |---|---|---|

@@ -1,0 +1,11 @@
+<!-- EXPECT_ERROR: Unknown property -->
+<template>
+  <div>
+    <span>{{ nonExistentReactiveProp }}</span>
+  </div>
+</template>
+
+<script>
+  data:
+    count: integer = 0;
+</script>

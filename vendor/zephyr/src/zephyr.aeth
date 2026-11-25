@@ -1,0 +1,719 @@
+module Zephyr;
+
+import ZephyrSecurity;
+import ZephyrWs;
+import ZephyrHttp;
+
+interface
+
+type
+    ZephyrConfig = record
+        port: UInt32;
+        backlog: Int32;
+        read_timeout_ms: Int32;
+        write_timeout_ms: Int32;
+        idle_timeout_ms: Int32;
+        max_header_bytes: Int32;
+        max_body_bytes: Int32;
+        max_keepalive_requests: Int32;
+        cors_origin: String;
+        cors_methods: String;
+        cors_headers: String;
+        enable_security_headers: Bool;
+        rate_limit_max: Int32;
+        rate_limit_window_ms: Int32;
+    end record;
+
+    Request = record
+        method: String;
+        path: String;
+        query: String;
+        http_version: String;
+        headers_raw: String;
+        body: String;
+        client_ip: String;
+        auth_token: String;
+        keep_alive: Bool;
+        is_websocket: Bool;
+        ws_key: String;
+        content_length: Int32;
+    end record;
+
+    Response = record
+        status: Int32;
+        content_type: String;
+        body: String;
+        extra_headers: String;
+        close_connection: Bool;
+    end record;
+
+    RouteHandler = function(Request) return Response;
+    WsHandler = function(String) return String;
+
+    Route = record
+        method: String;
+        path: String;
+        handler: RouteHandler;
+    end record;
+
+    WsRoute = record
+        path: String;
+        handler: WsHandler;
+    end record;
+
+    ZephyrServer = record
+        config: ZephyrConfig;
+        routes: array of Route;
+        ws_routes: array of WsRoute;
+        rate_limiter: RateLimiter;
+        listen_fd: Int32;
+        is_running: Bool;
+        requests_served: Int64;
+        static_dir: String;
+    end record;
+
+function DefaultConfig(port: UInt32) return ZephyrConfig;
+function NewServer(port: UInt32) return ZephyrServer;
+function NewServerWithConfig(cfg: ZephyrConfig) return ZephyrServer;
+
+procedure AddGet(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler);
+procedure AddPost(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler);
+procedure AddPut(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler);
+procedure AddDelete(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler);
+procedure AddPatch(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler);
+procedure AddWs(mut borrow srv: ZephyrServer; borrow path: String; handler: WsHandler);
+procedure SetStaticDir(mut borrow srv: ZephyrServer; borrow dir: String);
+function DetectMimeType(borrow path: String) return String;
+
+function OkJson(borrow json_body: String) return Response;
+function OkText(borrow text_body: String) return Response;
+function CreatedJson(borrow json_body: String) return Response;
+function NoContent() return Response;
+function ErrorJson(status_code: Int32; borrow msg: String) return Response;
+function BadRequest(borrow msg: String) return Response;
+function Unauthorized(borrow msg: String) return Response;
+function NotFound(borrow msg: String) return Response;
+function PayloadTooLarge(borrow msg: String) return Response;
+function HeaderTooLarge(borrow msg: String) return Response;
+function TooManyRequests(borrow msg: String) return Response;
+
+function GetHeader(borrow req: Request; borrow name: String) return String;
+function DispatchRequest(mut borrow srv: ZephyrServer; borrow req: Request) return Response;
+function ServeN(mut borrow srv: ZephyrServer; max_conns: Int32) return Bool;
+procedure ListenAndServe(mut borrow srv: ZephyrServer);
+
+implementation
+
+function DefaultConfig(port: UInt32) return ZephyrConfig is
+begin
+    return ZephyrConfig(
+        port: port,
+        backlog: 128,
+        read_timeout_ms: 5000,
+        write_timeout_ms: 5000,
+        idle_timeout_ms: 15000,
+        max_header_bytes: 8192,
+        max_body_bytes: 1048576,
+        max_keepalive_requests: 100,
+        cors_origin: "*",
+        cors_methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        cors_headers: "Content-Type, Authorization, X-Requested-With",
+        enable_security_headers: true,
+        rate_limit_max: 120,
+        rate_limit_window_ms: 60000
+    );
+end DefaultConfig;
+
+function NewServerWithConfig(cfg: ZephyrConfig) return ZephyrServer is
+var
+    empty_routes: array of Route;
+    empty_ws: array of WsRoute;
+    rl: RateLimiter;
+begin
+    SetLength(empty_routes, 0);
+    SetLength(empty_ws, 0);
+    rl := NewRateLimiter(cfg.rate_limit_max, cfg.rate_limit_window_ms);
+    return ZephyrServer(
+        config: cfg,
+        routes: empty_routes,
+        ws_routes: empty_ws,
+        rate_limiter: rl,
+        listen_fd: -1,
+        is_running: false,
+        requests_served: 0,
+        static_dir: ""
+    );
+end NewServerWithConfig;
+
+function NewServer(port: UInt32) return ZephyrServer is
+var
+    cfg: ZephyrConfig;
+begin
+    cfg := DefaultConfig(port);
+    return NewServerWithConfig(cfg);
+end NewServer;
+
+procedure AddRouteInternal(mut borrow srv: ZephyrServer; borrow method, path: String; handler: RouteHandler) is
+begin
+    srv.routes.Push(Route(method: UpperCase(Trim(method)), path: Trim(path), handler: handler));
+end AddRouteInternal;
+
+procedure AddGet(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler) is
+begin
+    AddRouteInternal(mut borrow srv, "GET", borrow path, handler);
+end AddGet;
+
+procedure AddPost(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler) is
+begin
+    AddRouteInternal(mut borrow srv, "POST", borrow path, handler);
+end AddPost;
+
+procedure AddPut(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler) is
+begin
+    AddRouteInternal(mut borrow srv, "PUT", borrow path, handler);
+end AddPut;
+
+procedure AddDelete(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler) is
+begin
+    AddRouteInternal(mut borrow srv, "DELETE", borrow path, handler);
+end AddDelete;
+
+procedure AddPatch(mut borrow srv: ZephyrServer; borrow path: String; handler: RouteHandler) is
+begin
+    AddRouteInternal(mut borrow srv, "PATCH", borrow path, handler);
+end AddPatch;
+
+procedure AddWs(mut borrow srv: ZephyrServer; borrow path: String; handler: WsHandler) is
+begin
+    srv.ws_routes.Push(WsRoute(path: Trim(path), handler: handler));
+end AddWs;
+
+procedure SetStaticDir(mut borrow srv: ZephyrServer; borrow dir: String) is
+var
+    clean_dir: String;
+begin
+    clean_dir := Trim(dir);
+    if (Int32(Length(borrow clean_dir)) > 1) and (EndsWith(clean_dir, "/") or EndsWith(clean_dir, "\\")) then
+        clean_dir := Substring(borrow clean_dir, 0, UInt32(Int32(Length(borrow clean_dir)) - 1));
+    end if;
+    srv.static_dir := clean_dir;
+end SetStaticDir;
+
+function DetectMimeType(borrow path: String) return String is
+var
+    low: String;
+begin
+    low := LowerCase(path);
+    if EndsWith(low, ".html") or EndsWith(low, ".htm") then
+        return "text/html; charset=utf-8";
+    else if EndsWith(low, ".js") or EndsWith(low, ".mjs") then
+        return "application/javascript; charset=utf-8";
+    else if EndsWith(low, ".css") then
+        return "text/css; charset=utf-8";
+    else if EndsWith(low, ".json") then
+        return "application/json; charset=utf-8";
+    else if EndsWith(low, ".svg") then
+        return "image/svg+xml";
+    else if EndsWith(low, ".wasm") then
+        return "application/wasm";
+    else if EndsWith(low, ".png") then
+        return "image/png";
+    else if EndsWith(low, ".jpg") or EndsWith(low, ".jpeg") then
+        return "image/jpeg";
+    else if EndsWith(low, ".ico") then
+        return "image/x-icon";
+    else if EndsWith(low, ".txt") then
+        return "text/plain; charset=utf-8";
+    end if;
+    return "application/octet-stream";
+end DetectMimeType;
+
+impl ZephyrServer
+    procedure Get(mut borrow self; borrow path: String; handler: RouteHandler) is
+    begin
+        AddGet(mut borrow self, borrow path, handler);
+    end Get;
+
+    procedure Post(mut borrow self; borrow path: String; handler: RouteHandler) is
+    begin
+        AddPost(mut borrow self, borrow path, handler);
+    end Post;
+
+    procedure Put(mut borrow self; borrow path: String; handler: RouteHandler) is
+    begin
+        AddPut(mut borrow self, borrow path, handler);
+    end Put;
+
+    procedure Delete(mut borrow self; borrow path: String; handler: RouteHandler) is
+    begin
+        AddDelete(mut borrow self, borrow path, handler);
+    end Delete;
+
+    procedure Patch(mut borrow self; borrow path: String; handler: RouteHandler) is
+    begin
+        AddPatch(mut borrow self, borrow path, handler);
+    end Patch;
+
+    procedure Ws(mut borrow self; borrow path: String; handler: WsHandler) is
+    begin
+        AddWs(mut borrow self, borrow path, handler);
+    end Ws;
+
+    procedure ServeStatic(mut borrow self; borrow dir: String) is
+    begin
+        SetStaticDir(mut borrow self, borrow dir);
+    end ServeStatic;
+end impl;
+
+function OkJson(borrow json_body: String) return Response is
+begin
+    return Response(status: 200, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false);
+end OkJson;
+
+function OkText(borrow text_body: String) return Response is
+begin
+    return Response(status: 200, content_type: "text/plain; charset=utf-8", body: text_body, extra_headers: "", close_connection: false);
+end OkText;
+
+function CreatedJson(borrow json_body: String) return Response is
+begin
+    return Response(status: 201, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false);
+end CreatedJson;
+
+function NoContent() return Response is
+begin
+    return Response(status: 204, content_type: "text/plain", body: "", extra_headers: "", close_connection: false);
+end NoContent;
+
+function ErrorJson(status_code: Int32; borrow msg: String) return Response is
+var
+    clean: String;
+begin
+    clean := Replace(msg, "\"", "'");
+    return Response(
+        status: status_code,
+        content_type: "application/json; charset=utf-8",
+        body: "{\"error\":\"" + clean + "\",\"status\":" + IntToStr(status_code) + "}",
+        extra_headers: "",
+        close_connection: status_code >= 413
+    );
+end ErrorJson;
+
+function BadRequest(borrow msg: String) return Response is
+begin
+    return ErrorJson(400, borrow msg);
+end BadRequest;
+
+function Unauthorized(borrow msg: String) return Response is
+begin
+    return ErrorJson(401, borrow msg);
+end Unauthorized;
+
+function NotFound(borrow msg: String) return Response is
+begin
+    return ErrorJson(404, borrow msg);
+end NotFound;
+
+function PayloadTooLarge(borrow msg: String) return Response is
+begin
+    return ErrorJson(413, borrow msg);
+end PayloadTooLarge;
+
+function HeaderTooLarge(borrow msg: String) return Response is
+begin
+    return ErrorJson(431, borrow msg);
+end HeaderTooLarge;
+
+function TooManyRequests(borrow msg: String) return Response is
+begin
+    return ErrorJson(429, borrow msg);
+end TooManyRequests;
+
+function GetHeader(borrow req: Request; borrow name: String) return String is
+begin
+    return GetHeaderRaw(borrow req.headers_raw, borrow name);
+end GetHeader;
+
+function DispatchRequest(mut borrow srv: ZephyrServer; borrow req: Request) return Response is
+var
+    rate_key, cand_path, index_path, content: String;
+    i, n: Int32;
+    method_matched: Bool;
+    h: RouteHandler;
+begin
+    if not IsSafePath(borrow req.path) then
+        return BadRequest("Invalid or unsafe request path");
+    end if;
+
+    if Length(borrow req.auth_token) > 0 then
+        rate_key := "tok:" + req.auth_token;
+    else
+        rate_key := "ip:" + req.client_ip;
+    end if;
+
+    if not CheckRateLimit(mut borrow srv.rate_limiter, borrow rate_key) then
+        return TooManyRequests("Rate limit exceeded");
+    end if;
+
+    if req.method = "OPTIONS" then
+        return NoContent();
+    end if;
+
+    method_matched := false;
+    n := Int32(Length(srv.routes));
+    i := 0;
+    while i < n do
+        if srv.routes[i].path = req.path then
+            method_matched := true;
+            if srv.routes[i].method = req.method then
+                srv.requests_served := srv.requests_served + 1;
+                h := srv.routes[i].handler;
+                return h(req);
+            end if;
+        end if;
+        i := i + 1;
+    end while;
+
+    if method_matched then
+        return ErrorJson(405, "Method not allowed");
+    end if;
+
+    if (req.method = "GET") and (Length(borrow srv.static_dir) > 0) and (not StartsWith(req.path, "/api/")) and (req.path <> "/api") then
+        index_path := srv.static_dir + "/index.html";
+        if req.path = "/" then
+            cand_path := index_path;
+        else
+            cand_path := srv.static_dir + req.path;
+        end if;
+
+        if FileExists(cand_path) then
+            content := ReadFile(cand_path);
+            srv.requests_served := srv.requests_served + 1;
+            return Response(
+                status: 200,
+                content_type: DetectMimeType(borrow cand_path),
+                body: content,
+                extra_headers: "",
+                close_connection: false
+            );
+        end if;
+
+        if (IndexOf(req.path, ".") < 0) and FileExists(index_path) then
+            content := ReadFile(index_path);
+            srv.requests_served := srv.requests_served + 1;
+            return Response(
+                status: 200,
+                content_type: "text/html; charset=utf-8",
+                body: content,
+                extra_headers: "",
+                close_connection: false
+            );
+        end if;
+    end if;
+
+    return NotFound("Route not found: " + req.path);
+end DispatchRequest;
+
+function FindWsHandlerIdx(borrow srv: ZephyrServer; borrow path: String) return Int32 is
+var
+    i, n: Int32;
+begin
+    n := Int32(Length(srv.ws_routes));
+    i := 0;
+    while i < n do
+        if srv.ws_routes[i].path = path then
+            return i;
+        end if;
+        i := i + 1;
+    end while;
+    return -1;
+end FindWsHandlerIdx;
+
+function ParseHeaderBlock(
+    borrow hdr_text: String;
+    borrow body_init: String;
+    borrow peer_ip: String;
+    mut borrow out_req: Request
+) return Bool is
+var
+    first_crlf: Int32;
+    req_line, target, path_only, query_only, version: String;
+    sp1, sp2, qidx: Int32;
+    headers_only, upgrade_hdr, ws_key, auth_hdr: String;
+    cl: Int32;
+begin
+    first_crlf := IndexOf(hdr_text, "\r\n");
+    if first_crlf <= 0 then
+        return false;
+    end if;
+
+    req_line := Trim(Substring(borrow hdr_text, 0, UInt32(first_crlf)));
+    headers_only := Substring(borrow hdr_text, UInt32(first_crlf + 2), UInt32(Int32(Length(borrow hdr_text)) - first_crlf - 2));
+
+    sp1 := IndexOf(req_line, " ");
+    if sp1 <= 0 then
+        return false;
+    end if;
+    sp2 := IndexOf(Substring(borrow req_line, UInt32(sp1 + 1), UInt32(Int32(Length(borrow req_line)) - sp1 - 1)), " ");
+    if sp2 <= 0 then
+        target := Trim(Substring(borrow req_line, UInt32(sp1 + 1), UInt32(Int32(Length(borrow req_line)) - sp1 - 1)));
+        version := "HTTP/1.1";
+    else
+        sp2 := sp1 + 1 + sp2;
+        target := Substring(borrow req_line, UInt32(sp1 + 1), UInt32(sp2 - sp1 - 1));
+        version := Trim(Substring(borrow req_line, UInt32(sp2 + 1), UInt32(Int32(Length(borrow req_line)) - sp2 - 1)));
+    end if;
+
+    qidx := IndexOf(target, "?");
+    if qidx >= 0 then
+        path_only := Substring(borrow target, 0, UInt32(qidx));
+        query_only := Substring(borrow target, UInt32(qidx + 1), UInt32(Int32(Length(borrow target)) - qidx - 1));
+    else
+        path_only := target;
+        query_only := "";
+    end if;
+
+    cl := ParseContentLengthFromHeaders(borrow headers_only);
+    upgrade_hdr := LowerCase(GetHeaderRaw(borrow headers_only, "Upgrade"));
+    ws_key := GetHeaderRaw(borrow headers_only, "Sec-WebSocket-Key");
+    auth_hdr := GetHeaderRaw(borrow headers_only, "Authorization");
+
+    out_req := Request(
+        method: UpperCase(Trim(Substring(borrow req_line, 0, UInt32(sp1)))),
+        path: path_only,
+        query: query_only,
+        http_version: version,
+        headers_raw: headers_only,
+        body: body_init,
+        client_ip: peer_ip,
+        auth_token: auth_hdr,
+        keep_alive: ParseConnectionKeepAlive(borrow version, borrow headers_only),
+        is_websocket: (upgrade_hdr = "websocket") and (Length(borrow ws_key) > 0),
+        ws_key: ws_key,
+        content_length: cl
+    );
+    return true;
+end ParseHeaderBlock;
+
+procedure HandleWsSession(mut borrow srv: ZephyrServer; client_fd: Int32; ws_idx: Int32; borrow ws_key: String) is
+var
+    upgrade_raw, hex_buf, chunk_hex, reply_text, frame_hex: String;
+    consumed, opcode, total_bytes: Int32;
+    handler: WsHandler;
+    active: Bool;
+begin
+    upgrade_raw := BuildUpgradeResponse(borrow ws_key);
+    SocketSend(client_fd, upgrade_raw);
+    SocketSetTimeout(client_fd, srv.config.idle_timeout_ms, srv.config.write_timeout_ms);
+
+    handler := srv.ws_routes[ws_idx].handler;
+    hex_buf := "";
+    active := true;
+    while active do
+        chunk_hex := SocketRecvHex(client_fd, 4096);
+        if Length(borrow chunk_hex) = 0 then
+            active := false;
+            break;
+        end if;
+        hex_buf := hex_buf + chunk_hex;
+        while active do
+            consumed := DecodeClientFrameConsumedBytes(borrow hex_buf);
+            if consumed <= 0 then
+                break;
+            end if;
+            opcode := DecodeClientFrameOpcode(borrow hex_buf);
+            if opcode = 8 then
+                frame_hex := EncodeCloseFrameHex(1000);
+                SocketSendHex(client_fd, frame_hex);
+                active := false;
+                break;
+            else if opcode = 9 then
+                reply_text := DecodeClientFramePayload(borrow hex_buf);
+                frame_hex := EncodePongFrameHex(borrow reply_text);
+                SocketSendHex(client_fd, frame_hex);
+            else if (opcode = 1) or (opcode = 2) then
+                reply_text := handler(DecodeClientFramePayload(borrow hex_buf));
+                if Length(borrow reply_text) > 0 then
+                    frame_hex := EncodeTextFrameHex(borrow reply_text);
+                    SocketSendHex(client_fd, frame_hex);
+                end if;
+            end if;
+
+            total_bytes := Int32(Length(borrow hex_buf)) div 2;
+            if consumed < total_bytes then
+                hex_buf := Substring(borrow hex_buf, UInt32(consumed * 2), UInt32((total_bytes - consumed) * 2));
+            else
+                hex_buf := "";
+            end if;
+        end while;
+    end while;
+end HandleWsSession;
+
+procedure HandleClientConnection(mut borrow srv: ZephyrServer; client_fd: Int32) is
+var
+    peer_ip, sec_cors, buf, chunk, hdr_text, rest_buf, body_part, raw_resp: String;
+    req: Request;
+    resp: Response;
+    hdr_end, keep_count, need_bytes, want_chunk, ws_idx: Int32;
+    keep_running, want_keep_alive: Bool;
+begin
+    peer_ip := SocketPeerIP(client_fd);
+    sec_cors := BuildSecurityAndCorsHeaders(
+        borrow srv.config.cors_origin,
+        borrow srv.config.cors_methods,
+        borrow srv.config.cors_headers,
+        srv.config.enable_security_headers
+    );
+    SocketSetTimeout(client_fd, srv.config.read_timeout_ms, srv.config.write_timeout_ms);
+
+    buf := "";
+    keep_count := 0;
+    keep_running := true;
+
+    while keep_running and (keep_count < srv.config.max_keepalive_requests) do
+        if keep_count > 0 then
+            SocketSetTimeout(client_fd, srv.config.idle_timeout_ms, srv.config.write_timeout_ms);
+        end if;
+
+        // Read until full HTTP header block or max_header_bytes limit
+        hdr_end := FindHeaderEnd(borrow buf);
+        while hdr_end < 0 do
+            if Int32(Length(borrow buf)) > srv.config.max_header_bytes then
+                resp := HeaderTooLarge("HTTP headers exceed maximum allowed size");
+                raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, false);
+                SocketSend(client_fd, raw_resp);
+                keep_running := false;
+                break;
+            end if;
+            chunk := SocketRecv(client_fd, 4096);
+            if Length(borrow chunk) = 0 then
+                keep_running := false;
+                break;
+            end if;
+            buf := buf + chunk;
+            hdr_end := FindHeaderEnd(borrow buf);
+        end while;
+
+        if not keep_running then
+            break;
+        end if;
+
+        if hdr_end > srv.config.max_header_bytes then
+            resp := HeaderTooLarge("HTTP headers exceed maximum allowed size");
+            raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, resp.extra_headers, borrow sec_cors, false);
+            SocketSend(client_fd, raw_resp);
+            break;
+        end if;
+
+        hdr_text := Substring(borrow buf, 0, UInt32(hdr_end));
+        rest_buf := Substring(borrow buf, UInt32(hdr_end + 4), UInt32(Int32(Length(borrow buf)) - hdr_end - 4));
+
+        if not ParseHeaderBlock(borrow hdr_text, borrow rest_buf, borrow peer_ip, mut borrow req) then
+            resp := BadRequest("Malformed HTTP request line");
+            raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, false);
+            SocketSend(client_fd, raw_resp);
+            break;
+        end if;
+
+        if req.content_length < 0 then
+            resp := BadRequest("Invalid Content-Length header");
+            raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, false);
+            SocketSend(client_fd, raw_resp);
+            break;
+        end if;
+
+        if req.content_length > srv.config.max_body_bytes then
+            resp := PayloadTooLarge("Request body exceeds max_body_bytes limit");
+            raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, false);
+            SocketSend(client_fd, raw_resp);
+            break;
+        end if;
+
+        // Read remaining request body if needed (supporting Slowloris read timeout)
+        if req.content_length > 0 then
+            SocketSetTimeout(client_fd, srv.config.read_timeout_ms, srv.config.write_timeout_ms);
+            while Int32(Length(borrow rest_buf)) < req.content_length do
+                need_bytes := req.content_length - Int32(Length(borrow rest_buf));
+                want_chunk := need_bytes;
+                if want_chunk > 4096 then
+                    want_chunk := 4096;
+                end if;
+                chunk := SocketRecv(client_fd, want_chunk);
+                if Length(borrow chunk) = 0 then
+                    keep_running := false;
+                    break;
+                end if;
+                rest_buf := rest_buf + chunk;
+            end while;
+            if not keep_running then
+                break;
+            end if;
+            body_part := Substring(borrow rest_buf, 0, UInt32(req.content_length));
+            if Int32(Length(borrow rest_buf)) > req.content_length then
+                buf := Substring(borrow rest_buf, UInt32(req.content_length), UInt32(Int32(Length(borrow rest_buf)) - req.content_length));
+            else
+                buf := "";
+            end if;
+            req.body := body_part;
+        else
+            buf := rest_buf;
+            req.body := "";
+        end if;
+
+        if req.is_websocket then
+            ws_idx := FindWsHandlerIdx(borrow srv, borrow req.path);
+            if ws_idx >= 0 then
+                HandleWsSession(mut borrow srv, client_fd, ws_idx, borrow req.ws_key);
+            else
+                resp := NotFound("WebSocket endpoint not found");
+                raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, resp.extra_headers, borrow sec_cors, false);
+                SocketSend(client_fd, raw_resp);
+            end if;
+            break;
+        end if;
+
+        resp := DispatchRequest(mut borrow srv, borrow req);
+        want_keep_alive := req.keep_alive and (not resp.close_connection) and ((keep_count + 1) < srv.config.max_keepalive_requests);
+        raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, want_keep_alive);
+        SocketSend(client_fd, raw_resp);
+
+        keep_count := keep_count + 1;
+        if not want_keep_alive then
+            keep_running := false;
+        end if;
+    end while;
+end HandleClientConnection;
+
+function ServeN(mut borrow srv: ZephyrServer; max_conns: Int32) return Bool is
+var
+    listen_fd, client_fd, served: Int32;
+begin
+    listen_fd := SocketListen(srv.config.port, srv.config.backlog);
+    if listen_fd < 0 then
+        return false;
+    end if;
+    srv.listen_fd := listen_fd;
+    srv.is_running := true;
+    served := 0;
+
+    while srv.is_running and ((max_conns < 0) or (served < max_conns)) do
+        client_fd := SocketAccept(listen_fd);
+        if client_fd < 0 then
+            continue;
+        end if;
+        HandleClientConnection(mut borrow srv, client_fd);
+        SocketClose(client_fd);
+        served := served + 1;
+    end while;
+
+    SocketClose(listen_fd);
+    srv.is_running := false;
+    return true;
+end ServeN;
+
+procedure ListenAndServe(mut borrow srv: ZephyrServer) is
+begin
+    ServeN(mut borrow srv, -1);
+end ListenAndServe;
+
+end Zephyr.

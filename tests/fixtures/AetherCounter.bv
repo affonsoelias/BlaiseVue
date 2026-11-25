@@ -1,0 +1,16 @@
+<template>
+  <div class="aether-counter">
+    <span class="aether-val">{{ stepValue(base) }}</span>
+  </div>
+</template>
+
+<script lang="aether">
+  data:
+    base: integer = 5;
+
+  methods:
+    function stepValue(n: Int32) return Int32 is
+    begin
+      return n * 2 + 1;
+    end stepValue;
+</script>

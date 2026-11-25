@@ -245,3 +245,34 @@ bv path add C:\SharedPascal\models
 bv path remove pas2js:chartjs
 bv path remove ../legacy/business-rules
 ```
+
+---
+
+## 🔷 Declarative JSON Search Paths (`blaisevue.json` & `package.json`)
+
+In addition to `app.cfg` (`bv path add`), BlaiseVue supports declaring extra **Object Pascal** (`-Fu`) and **Aether** (`-I`) search directories declaratively in **`blaisevue.json`** or inside **`package.json`**:
+
+```json
+{
+  "paths": {
+    "pascal": ["extra_pas", "../legacy/models"],
+    "aether": ["extra_aeth", "../shared-aether"]
+  }
+}
+```
+
+Or nested under `"blaisevue"` inside `package.json`:
+
+```json
+{
+  "blaisevue": {
+    "paths": {
+      "pascal": ["extra_pas"],
+      "aether": ["extra_aeth"]
+    }
+  }
+}
+```
+
+- **`paths.pascal`**: Automatically injected as `-Fu<dir>` into `bv build`, `bv build --release`, `bv dev`, `bv test`, Aether `<script lang="aether" uses="...">` service wrapper resolution, and shown in `bv path`.
+- **`paths.aether`**: Automatically scanned and passed via `-I <dir>` into `bv transpile`, `bv build`, `bv test` (`.test.aeth`), and `bv zephyr` (with `src/services/` always scanned by default).

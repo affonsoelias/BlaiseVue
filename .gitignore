@@ -16,6 +16,8 @@ bin/bv_old*
 bin/lib/
 **/server/bin/
 **/server/lib/
+**/server-mormot/bin/
+**/server-mormot/lib/
 **/desktop/bin/
 **/desktop/units/
 
@@ -74,6 +76,7 @@ deploy/
 **/deploy/
 .bv_backup/
 **/.bv_backup/
+.blaisevue/
 *.zip
 **/desktop/assets/js/main.*.js
 

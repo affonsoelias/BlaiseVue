@@ -1,6 +1,8 @@
 unit uHome;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,13 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uHome;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    descricao: string;
+    userName: string;
+    isVisible: Boolean;
+  end;
 
 procedure Register_uHome;
 var
@@ -86,7 +95,7 @@ begin
     d := TJSObject.new;
     d['descricao'] := 'Welcome to the Framework test center. Below are the main features.';
     d['userName'] := 'Pascal Developer';
-    d['isVisible'] := true;
+    d['isVisible'] := True;
     Result := d;
   end;
 

@@ -55,6 +55,27 @@ Imports additional **Custom Pascal Units** that are not part of the core framewo
 > [!NOTE]
 > **Automatic Units**: BlaiseVue automatically includes core units like `JS`, `Web`, `BVComponents`, `BVReactivity`, `BVStore`, `SysUtils`, and `BVRouting` (when local routes are detected). You only need the `uses` attribute for your own external `.pas` files.
 
+### `<script lang="aether">` (Optional Aether Mode)
+
+BlaiseVue SFCs also support writing component methods and computed helpers in **Aether** (`<script lang="aether">` or `<script lang="aether" uses="pricing, uFormatters">`):
+
+```html
+<script lang="aether" uses="pricing, uFormatters">
+  data:
+    unitPrice: double = 49.90;
+    qty: integer = 3;
+
+  methods:
+    function computeTotal(p: Float64; q: Int32) return Float64 is
+    begin
+      return pricing.calculateTotal(p, q);
+    end computeTotal;
+</script>
+```
+
+- References in `uses="..."` automatically import `.aeth` modules from `src/services/` (or configured `paths.aether`) and generate typed wrappers for Object Pascal `.pas` services.
+- See **[59. Aether Language Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md)** for complete details.
+
 ### `data:` Sub-section
 
 Defines reactive data. Format: `name: type = defaultValue;`

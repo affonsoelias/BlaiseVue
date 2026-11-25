@@ -11719,7 +11719,7 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       };
     };
     m["toggleLogin"] = function (_this) {
-      _this["logado"] = !!(_this["logado"] == false);
+      _this.logado = !_this.logado;
     };
     m["addTec"] = function (_this) {
       var o = null;
@@ -12479,24 +12479,24 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
       f["phone"] = "";
       f["active"] = true;
       _this["form"] = f;
-      _this["formError"] = "";
+      _this.formError = "";
     };
     m["openCreateModal"] = function (_this) {
       pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
+      _this.isEditing = false;
+      _this.currentEditId = 0;
+      _this.isModalOpen = true;
     };
     m["openEditModal"] = function (_this, item) {
       _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
+      _this.currentEditId = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this.isEditing = true;
+      _this.formError = "";
+      _this.isModalOpen = true;
     };
     m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
+      _this.isModalOpen = false;
+      _this.formError = "";
     };
     m["fetchViaRpc"] = function (_this) {
       pas.ClientProxies.CustomerService().GetAll$1(function (Items) {
@@ -12507,7 +12507,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
       });
     };
     m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + _this.apiEndpoint,"items");
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
@@ -12519,13 +12519,13 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
           }
         }
       };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+      pas.BVPascalDX.ApiSave(_this,"/api/" + _this.apiEndpoint,_this.currentEditId,_this.isEditing,_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + _this.apiEndpoint,id,"Are you sure you want to delete this " + _this.modelTitle + "?","fetchItems");
     };
     m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase(_this.modelTitle),"fetchItems");
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
@@ -12537,7 +12537,7 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     comp["computed"] = new Object();
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this.searchQuery);
       return Result;
     };
     pas.BVComponents.RegisterComponent("customer-view-page",comp);
@@ -13114,19 +13114,19 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m = new Object();
     m["clickNotif"] = function (_this, info) {
-      _this["lastAction"] = info;
+      _this.lastAction = info;
       pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
     };
     m["showModal"] = function (_this) {
       pas.BVPascalDX.TriggerRef(_this,"mainModal","show");
     };
     m["modalConfirm"] = function (_this) {
-      _this["libName"] = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
-      _this["lastAction"] = "Modal Confirmed";
+      _this.libName = "SYNC_" + pas.BVPascalDX.NowTimestampStr();
+      _this.lastAction = "Modal Confirmed";
       pas.BVPascalDX.TriggerRef(_this,"mainToast","show");
     };
     m["updatePage"] = function (_this, p) {
-      _this["currentPage"] = p;
+      _this.currentPage = p;
     };
     m["tabChanged"] = function (_this, id) {
       pas.System.Writeln("Tab changed to: ",id);
@@ -13215,17 +13215,17 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     };
     m = new Object();
     m["quickLogin"] = function (_this, e, p) {
-      _this["email"] = e;
-      _this["password"] = p;
-      _this["errorMessage"] = "";
+      _this.email = e;
+      _this.password = p;
+      _this.errorMessage = "";
       pas.BVPascalDX.CallMethod(_this,"submitLogin");
     };
     m["submitLogin"] = function (_this) {
-      if ((_this["email"] == "") || (_this["password"] == "")) {
-        _this["errorMessage"] = "Por favor, informe o e-mail e a senha.";
+      if ((_this.email === "") || (_this.password === "")) {
+        _this.errorMessage = "Por favor, informe o e-mail e a senha.";
         return;
       };
-      pas.BVPascalDX.AuthLogin(_this,_this["email"],_this["password"],"#/");
+      pas.BVPascalDX.AuthLogin(_this,_this.email,_this.password,"#/");
     };
     m["handleLogout"] = function (_this) {
       pas.BVPascalDX.AuthLogout(_this);
@@ -13257,50 +13257,50 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     m = new Object();
     m["setIosMode"] = function (_this) {
-      _this["currentMode"] = "ios";
+      _this.currentMode = "ios";
       pas.BVPascalDX.IonicSetMode("ios");
-      _this["lastAction"] = "Modo visual alterado para 🍎 iOS (Cupertino)";
+      _this.lastAction = "Modo visual alterado para 🍎 iOS (Cupertino)";
     };
     m["setMdMode"] = function (_this) {
-      _this["currentMode"] = "md";
+      _this.currentMode = "md";
       pas.BVPascalDX.IonicSetMode("md");
-      _this["lastAction"] = "Modo visual alterado para 🤖 Android (Material Design)";
+      _this.lastAction = "Modo visual alterado para 🤖 Android (Material Design)";
     };
     m["showToast"] = function (_this) {
       pas.BVPascalDX.IonicToast("Notificação rápida com estilo nativo!",2500,"bottom","success");
-      _this["lastAction"] = "🔔 TIonicToast.Show disparado com sucesso!";
+      _this.lastAction = "🔔 TIonicToast.Show disparado com sucesso!";
     };
     m["showAlert"] = function (_this) {
       pas.BVPascalDX.IonicAlert("BlaiseVue Mobile","Estes componentes funcionam igualmente na Web, no Desktop e no Celular!","Entendido");
-      _this["lastAction"] = "💬 TIonicAlert.Alert exibido!";
+      _this.lastAction = "💬 TIonicAlert.Alert exibido!";
     };
     m["onConfirmOk"] = function (_this) {
-      _this["lastAction"] = "✅ Confirmação aceita! Dados sincronizados!";
+      _this.lastAction = "✅ Confirmação aceita! Dados sincronizados!";
       pas.BVPascalDX.IonicToast("Dados sincronizados com sucesso!",2000,"bottom","primary");
     };
     m["onConfirmCancel"] = function (_this) {
-      _this["lastAction"] = "❌ Operação cancelada pelo usuário.";
+      _this.lastAction = "❌ Operação cancelada pelo usuário.";
     };
     m["showConfirm"] = function (_this) {
-      _this["lastAction"] = "❓ TIonicAlert.Confirm aberto...";
+      _this.lastAction = "❓ TIonicAlert.Confirm aberto...";
       pas.BVPascalDX.IonicConfirm(_this,"Confirmar Operação","Deseja sincronizar os dados locais com o mORMot 2?","onConfirmOk","onConfirmCancel");
     };
     m["showLoading"] = function (_this) {
       pas.BVPascalDX.IonicLoading("Carregando registros...",1800);
-      _this["lastAction"] = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
+      _this.lastAction = "⏳ TIonicLoading.Present exibido (auto-dispensa em 1.8s)";
     };
     m["onSheetSelect"] = function (_this, opt, idx) {
-      _this["lastAction"] = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
+      _this.lastAction = "👉 Opção selecionada no Action Sheet: " + ("" + opt);
       pas.BVPascalDX.IonicToast("Selecionado: " + ("" + opt),1800,"bottom","dark");
     };
     m["showActionSheet"] = function (_this) {
-      _this["lastAction"] = "📑 TIonicActionSheet.Show aberto...";
+      _this.lastAction = "📑 TIonicActionSheet.Show aberto...";
       pas.BVPascalDX.IonicActionSheet(_this,"Ações do Registro",["Compartilhar","Editar","Duplicar","Excluir"],"onSheetSelect");
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
-      _this["currentMode"] = pas.BVPascalDX.IonicGetMode();
+      _this.currentMode = pas.BVPascalDX.IonicGetMode();
     };
     pas.BVComponents.RegisterComponent("mobile-view-page",comp);
   };
@@ -13342,27 +13342,27 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.SetField(F,"stock",0);
       pas.BVPascalDX.SetField(F,"category","");
       _this["form"] = F;
-      _this["formError"] = "";
+      _this.formError = "";
     };
     m["openCreateModal"] = function (_this) {
       pas.BVPascalDX.CallMethod(_this,"resetForm");
-      _this["isEditing"] = false;
-      _this["currentEditId"] = 0;
-      _this["isModalOpen"] = true;
+      _this.isEditing = false;
+      _this.currentEditId = 0;
+      _this.isModalOpen = true;
     };
     m["openEditModal"] = function (_this, item) {
       _this["form"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),item);
-      _this["currentEditId"] = pas.BVPascalDX.GetFieldInt(item,"id",0);
-      _this["isEditing"] = true;
-      _this["formError"] = "";
-      _this["isModalOpen"] = true;
+      _this.currentEditId = pas.BVPascalDX.GetFieldInt(item,"id",0);
+      _this.isEditing = true;
+      _this.formError = "";
+      _this.isModalOpen = true;
     };
     m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
-      _this["formError"] = "";
+      _this.isModalOpen = false;
+      _this.formError = "";
     };
     m["fetchItems"] = function (_this) {
-      pas.BVPascalDX.ApiFetch(_this,"/api/" + ("" + _this["apiEndpoint"]),"items");
+      pas.BVPascalDX.ApiFetch(_this,"/api/" + _this.apiEndpoint,"items");
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
@@ -13374,13 +13374,13 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
           }
         }
       };
-      pas.BVPascalDX.ApiSave(_this,"/api/" + ("" + _this["apiEndpoint"]),rtl.trunc(_this["currentEditId"]),!(_this["isEditing"] == false),_this["form"],"fetchItems","formError");
+      pas.BVPascalDX.ApiSave(_this,"/api/" + _this.apiEndpoint,_this.currentEditId,_this.isEditing,_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
-      pas.BVPascalDX.ApiDelete(_this,"/api/" + ("" + _this["apiEndpoint"]),id,"Are you sure you want to delete this " + ("" + _this["modelTitle"]) + "?","fetchItems");
+      pas.BVPascalDX.ApiDelete(_this,"/api/" + _this.apiEndpoint,id,"Are you sure you want to delete this " + _this.modelTitle + "?","fetchItems");
     };
     m["setupWebSocket"] = function (_this) {
-      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase("" + _this["modelTitle"]),"fetchItems");
+      pas.BVPascalDX.ApiSetupRealtime(_this,pas.SysUtils.LowerCase(_this.modelTitle),"fetchItems");
     };
     comp["methods"] = m;
     comp["mounted"] = function (_this) {
@@ -13392,7 +13392,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["computed"] = new Object();
     comp["computed"]["filteredItems"] = function (_this) {
       var Result = undefined;
-      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this["searchQuery"]);
+      Result = pas.BVPascalDX.FilterByQuery(_this["items"],_this.searchQuery);
       return Result;
     };
     pas.BVComponents.RegisterComponent("product-view-page",comp);

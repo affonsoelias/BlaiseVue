@@ -1,0 +1,182 @@
+module zephyr_demo;
+
+import Zephyr;
+import ZephyrSecurity;
+import ZephyrWs;
+
+type
+    [derive(JSON, Equals)]
+    OrderPayload = record
+        sku: String;
+        quantity: Int32;
+        unit_price: Float64;
+    end record;
+
+    [derive(JSON, Equals)]
+    OrderReceipt = record
+        status: String;
+        sku: String;
+        quantity: Int32;
+        total: Float64;
+    end record;
+
+function CreateValidatedOrder(sku: String; qty: Int32; price: Float64) return OrderReceipt is
+contract
+    require
+        Length(borrow sku) > 0;
+        qty > 0;
+        price > 0.0;
+    ensure
+        result.total > 0.0;
+begin
+    return OrderReceipt("accepted", sku, qty, Float64(qty) * price);
+end CreateValidatedOrder;
+
+function HandleHealth(req: Request) return Response is
+begin
+    return OkJson("{\"engine\":\"Zephyr-Aether\",\"status\":\"ok\",\"protocol\":\"HTTP/1.1+WS\"}");
+end HandleHealth;
+
+function HandleGetOrders(req: Request) return Response is
+begin
+    return OkJson("[{\"sku\":\"BV-PRO-01\",\"quantity\":2,\"total\":199.80}]");
+end HandleGetOrders;
+
+function HandleCreateOrder(req: Request) return Response is
+var
+    payload: OrderPayload;
+    receipt: OrderReceipt;
+begin
+    payload := OrderPayload.FromJSON(borrow req.body);
+    if (Length(borrow payload.sku) = 0) or (payload.quantity <= 0) or (payload.unit_price <= 0.0) then
+        return BadRequest("Invalid order payload: sku required, quantity > 0 and unit_price > 0");
+    end if;
+    receipt := CreateValidatedOrder(payload.sku, payload.quantity, payload.unit_price);
+    return CreatedJson(receipt.ToJSON());
+end HandleCreateOrder;
+
+function HandleWsEcho(msg: String) return String is
+begin
+    return "echo: " + msg;
+end HandleWsEcho;
+
+procedure RunSelfTest is
+var
+    accept_key: String;
+    rl: RateLimiter;
+    cfg: ZephyrConfig;
+    srv: ZephyrServer;
+    ok_req, bad_req, big_req, opt_req, trav_req: Request;
+    r1, r2, r3, r4, r5, r6: Response;
+    frame_hex, decoded_msg: String;
+begin
+    // 1. RFC 6455 Official Test Vector
+    accept_key := ComputeAcceptKey("dGhlIHNhbXBsZSBub25jZQ==");
+    Assert(accept_key = "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
+
+    // 2. WebSocket Text Frame encode + decode check
+    frame_hex := EncodeTextFrameHex("Hello Zephyr");
+    Assert(DecodeClientFrameOpcode(borrow frame_hex) = 1);
+    decoded_msg := DecodeClientFramePayload(borrow frame_hex);
+    Assert(decoded_msg = "Hello Zephyr");
+
+    // 3. Rate Limiter DoS Check
+    rl := NewRateLimiter(2, 60000);
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 1000));
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 1500));
+    Assert(not CheckRateLimitAt(mut borrow rl, "10.0.0.1", 2000));
+    Assert(CheckRateLimitAt(mut borrow rl, "10.0.0.1", 62000));
+
+    // 4. Route dispatch + JSON Contract + Security checks
+    cfg := DefaultConfig(18091);
+    cfg.rate_limit_max := 2;
+    srv := NewServerWithConfig(cfg);
+    srv.Get("/api/health", HandleHealth);
+    srv.Post("/api/orders", HandleCreateOrder);
+
+    ok_req := Request("POST", "/api/orders", "", "HTTP/1.1", "", "{\"sku\":\"GPU-9\",\"quantity\":3,\"unit_price\":150.0}", "192.168.1.5", "", true, false, "", 48);
+    r1 := DispatchRequest(mut borrow srv, borrow ok_req);
+    Assert(r1.status = 201);
+    Assert(Contains(r1.body, "\"total\": 450") or Contains(r1.body, "\"total\":450"));
+
+    bad_req := Request("POST", "/api/orders", "", "HTTP/1.1", "", "{\"sku\":\"GPU-9\",\"quantity\":0,\"unit_price\":150.0}", "192.168.1.5", "", true, false, "", 48);
+    r2 := DispatchRequest(mut borrow srv, borrow bad_req);
+    Assert(r2.status = 400);
+
+    // 3rd request from same IP hits rate limit (max 2)
+    r3 := DispatchRequest(mut borrow srv, borrow ok_req);
+    Assert(r3.status = 429);
+
+    opt_req := Request("OPTIONS", "/api/orders", "", "HTTP/1.1", "", "", "192.168.1.9", "", true, false, "", 0);
+    r4 := DispatchRequest(mut borrow srv, borrow opt_req);
+    Assert(r4.status = 204);
+
+    trav_req := Request("GET", "/../../etc/passwd", "", "HTTP/1.1", "", "", "192.168.1.9", "", true, false, "", 0);
+    r5 := DispatchRequest(mut borrow srv, borrow trav_req);
+    Assert(r5.status = 400);
+
+    big_req := Request("GET", "/api/unknown", "", "HTTP/1.1", "", "", "192.168.1.10", "", true, false, "", 0);
+    r6 := DispatchRequest(mut borrow srv, borrow big_req);
+    Assert(r6.status = 404);
+
+    PrintLn("ZEPHYR_SELF_TEST_OK");
+end RunSelfTest;
+
+program Main;
+var
+    port: UInt32;
+    max_conns: Int32;
+    self_test: Bool;
+    i: Int32;
+    arg: String;
+    cfg: ZephyrConfig;
+    srv: ZephyrServer;
+begin
+    port := 8090;
+    max_conns := -1;
+    self_test := false;
+
+    i := 1;
+    while i <= ParamCount() do
+        arg := ParamStr(i);
+        if arg = "--self-test" then
+            self_test := true;
+        else if (arg = "--port") and ((i + 1) <= ParamCount()) then
+            i := i + 1;
+            port := UInt32(StrToInt(ParamStr(i)));
+        else if (arg = "--max-conns") and ((i + 1) <= ParamCount()) then
+            i := i + 1;
+            max_conns := StrToInt(ParamStr(i));
+        else if (arg = "--rate-max") and ((i + 1) <= ParamCount()) then
+            i := i + 1;
+        end if;
+        i := i + 1;
+    end while;
+
+    if self_test then
+        RunSelfTest();
+    else
+        cfg := DefaultConfig(port);
+        // Optional tight rate limit override for tests
+        i := 1;
+        while i <= ParamCount() do
+            if (ParamStr(i) = "--rate-max") and ((i + 1) <= ParamCount()) then
+                cfg.rate_limit_max := StrToInt(ParamStr(i + 1));
+            else if (ParamStr(i) = "--max-body") and ((i + 1) <= ParamCount()) then
+                cfg.max_body_bytes := StrToInt(ParamStr(i + 1));
+            end if;
+            i := i + 1;
+        end while;
+
+        srv := NewServerWithConfig(cfg);
+        srv.Get("/api/health", HandleHealth);
+        srv.Get("/api/orders", HandleGetOrders);
+        srv.Post("/api/orders", HandleCreateOrder);
+        srv.Ws("/ws", HandleWsEcho);
+
+        PrintLn("Zephyr listening on port %d", Int32(port));
+        if not ServeN(mut borrow srv, max_conns) then
+            PrintLn("ERROR: Failed to bind Zephyr port %d", Int32(port));
+        end if;
+    end if;
+end zephyr_demo.

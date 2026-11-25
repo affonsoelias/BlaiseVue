@@ -773,43 +773,43 @@
         <IsPartOfProject Value="True"/>
       </Unit184>
       <Unit185>
-        <Filename Value="server\AuthService.pas"/>
+        <Filename Value="server-mormot\AuthService.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit185>
       <Unit186>
-        <Filename Value="server\CrudCustomer.pas"/>
+        <Filename Value="server-mormot\CrudCustomer.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit186>
       <Unit187>
-        <Filename Value="server\CrudProduct.pas"/>
+        <Filename Value="server-mormot\CrudProduct.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit187>
       <Unit188>
-        <Filename Value="server\DatabaseConfig.pas"/>
+        <Filename Value="server-mormot\DatabaseConfig.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit188>
       <Unit189>
-        <Filename Value="server\RpcService.pas"/>
+        <Filename Value="server-mormot\RpcService.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit189>
       <Unit190>
-        <Filename Value="server\server.lpr"/>
+        <Filename Value="server-mormot\server.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit190>
       <Unit191>
-        <Filename Value="server\ServerApp.pas"/>
+        <Filename Value="server-mormot\ServerApp.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit191>
       <Unit192>
-        <Filename Value="server\ServerModels.pas"/>
+        <Filename Value="server-mormot\ServerModels.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit192>
       <Unit193>
-        <Filename Value="server\Services.pas"/>
+        <Filename Value="server-mormot\Services.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit193>
       <Unit194>
-        <Filename Value="server\SwaggerService.pas"/>
+        <Filename Value="server-mormot\SwaggerService.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit194>
       <Unit195>

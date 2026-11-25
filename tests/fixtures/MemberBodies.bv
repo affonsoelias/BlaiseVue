@@ -1,0 +1,44 @@
+<template>
+  <div class="member-bodies">
+    <span class="kept">{{ kept }}</span>
+    <span class="second">{{ second }}</span>
+    <span class="twice">{{ twice(21) }}</span>
+    <span class="hits">{{ hits }}</span>
+    <button class="go" @click="go">Go</button>
+  </div>
+</template>
+
+<script>
+  data:
+    hits: integer = 0;
+
+  computed:
+    // The words below must stay inside asm: they do not start a new member.
+    function kept: JSValue;
+    begin
+      asm
+        Result = [1, 2, 3].filter(function (x) { return x > 1; }).length;
+      end;
+    end;
+
+    function second: JSValue;
+    begin
+      Result := 'ok';
+    end;
+
+  methods:
+    function twice(n: Integer): Integer;
+    begin
+      Result := n * 2;
+    end;
+
+    procedure go;
+    begin
+      asm
+        // a procedure named in a JS comment
+        var step = function (x) { return x + 1; };
+        window.__bvMemberBodiesStep = step(0);
+      end;
+      this['hits'] := Integer(this['hits']) + 1;
+    end;
+</script>

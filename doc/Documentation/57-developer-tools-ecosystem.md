@@ -147,6 +147,14 @@ bv horse init
 bv horse run
 ```
 
+You can also initialize an external backend tool directly during project creation with `--backend=<tool>`:
+
+```bash
+bv create my-app --backend=horse
+```
+
+When `--backend=<name>` does not match a built-in backend (`mormot` or `zephyr`), BlaiseVue searches installed developer tools in `~/.blaisevue/tools/` for a matching command/alias and invokes `<tool> init` automatically inside the new project.
+
 ### 6. Checking for Updates (`bv tool outdated`)
 Compares installed tools against registered ecosystem catalogs:
 

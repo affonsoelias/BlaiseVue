@@ -1,0 +1,167 @@
+module ZephyrSecurity;
+
+interface
+
+type
+    RateBucket = record
+        key: String;
+        count: Int32;
+        window_start_ms: UInt64;
+    end record;
+
+    RateLimiter = record
+        max_requests: Int32;
+        window_ms: UInt64;
+        buckets: array of RateBucket;
+    end record;
+
+function NewRateLimiter(max_req: Int32; window_ms: Int32) return RateLimiter;
+function CheckRateLimit(mut borrow rl: RateLimiter; borrow client_key: String) return Bool;
+function CheckRateLimitAt(mut borrow rl: RateLimiter; borrow client_key: String; now_ms: UInt64) return Bool;
+function IsSafePath(borrow path: String) return Bool;
+function SanitizeHeaderValue(borrow val: String) return String;
+function BuildSecurityAndCorsHeaders(
+    borrow cors_origin: String;
+    borrow cors_methods: String;
+    borrow cors_headers: String;
+    enable_sec_headers: Bool
+) return String;
+
+implementation
+
+function NewRateLimiter(max_req: Int32; window_ms: Int32) return RateLimiter is
+var
+    empty_buckets: array of RateBucket;
+    wms: UInt64;
+begin
+    SetLength(empty_buckets, 0);
+    if window_ms > 0 then
+        wms := UInt64(window_ms);
+    else
+        wms := 60000;
+    end if;
+    return RateLimiter(max_requests: max_req, window_ms: wms, buckets: empty_buckets);
+end NewRateLimiter;
+
+function CheckRateLimitAt(mut borrow rl: RateLimiter; borrow client_key: String; now_ms: UInt64) return Bool is
+var
+    i, n: Int32;
+    elapsed: UInt64;
+    oldest_idx: Int32;
+    oldest_ts: UInt64;
+begin
+    if rl.max_requests <= 0 then
+        return true;
+    end if;
+
+    n := Int32(Length(rl.buckets));
+    i := 0;
+    while i < n do
+        if rl.buckets[i].key = client_key then
+            if now_ms >= rl.buckets[i].window_start_ms then
+                elapsed := now_ms - rl.buckets[i].window_start_ms;
+            else
+                elapsed := 0;
+            end if;
+            if elapsed >= rl.window_ms then
+                rl.buckets[i].window_start_ms := now_ms;
+                rl.buckets[i].count := 1;
+                return true;
+            end if;
+            if rl.buckets[i].count >= rl.max_requests then
+                return false;
+            end if;
+            rl.buckets[i].count := rl.buckets[i].count + 1;
+            return true;
+        end if;
+        i := i + 1;
+    end while;
+
+    // Bound bucket table to prevent unbounded memory growth under IP flooding
+    if n >= 1024 then
+        oldest_idx := 0;
+        oldest_ts := rl.buckets[0].window_start_ms;
+        i := 1;
+        while i < n do
+            if rl.buckets[i].window_start_ms < oldest_ts then
+                oldest_ts := rl.buckets[i].window_start_ms;
+                oldest_idx := i;
+            end if;
+            i := i + 1;
+        end while;
+        rl.buckets[oldest_idx] := RateBucket(key: client_key, count: 1, window_start_ms: now_ms);
+        return true;
+    end if;
+
+    rl.buckets.Push(RateBucket(key: client_key, count: 1, window_start_ms: now_ms));
+    return true;
+end CheckRateLimitAt;
+
+function CheckRateLimit(mut borrow rl: RateLimiter; borrow client_key: String) return Bool is
+var
+    now_ms: UInt64;
+begin
+    now_ms := GetNanoseconds() / 1000000;
+    return CheckRateLimitAt(mut borrow rl, borrow client_key, now_ms);
+end CheckRateLimit;
+
+function IsSafePath(borrow path: String) return Bool is
+var
+    low: String;
+begin
+    if Length(borrow path) = 0 then
+        return false;
+    end if;
+    if not StartsWith(path, "/") then
+        return false;
+    end if;
+    if Contains(path, "..") or Contains(path, "\\") then
+        return false;
+    end if;
+    low := LowerCase(path);
+    if Contains(low, "%2e%2e") or Contains(low, "%2e.") or Contains(low, ".%2e") or Contains(low, "%5c") then
+        return false;
+    end if;
+    if Contains(low, "\r") or Contains(low, "\n") then
+        return false;
+    end if;
+    return true;
+end IsSafePath;
+
+function SanitizeHeaderValue(borrow val: String) return String is
+var
+    s: String;
+begin
+    s := Replace(val, "\r", "");
+    s := Replace(s, "\n", "");
+    return Trim(s);
+end SanitizeHeaderValue;
+
+function BuildSecurityAndCorsHeaders(
+    borrow cors_origin: String;
+    borrow cors_methods: String;
+    borrow cors_headers: String;
+    enable_sec_headers: Bool
+) return String is
+var
+    h: String;
+begin
+    h := "";
+    if Length(borrow cors_origin) > 0 then
+        h := h + "Access-Control-Allow-Origin: " + SanitizeHeaderValue(borrow cors_origin) + "\r\n";
+        h := h + "Access-Control-Allow-Methods: " + SanitizeHeaderValue(borrow cors_methods) + "\r\n";
+        h := h + "Access-Control-Allow-Headers: " + SanitizeHeaderValue(borrow cors_headers) + "\r\n";
+        h := h + "Access-Control-Max-Age: 86400\r\n";
+    end if;
+    if enable_sec_headers then
+        h := h + "Strict-Transport-Security: max-age=31536000; includeSubDomains\r\n";
+        h := h + "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss:; frame-ancestors 'none'\r\n";
+        h := h + "X-Frame-Options: DENY\r\n";
+        h := h + "X-Content-Type-Options: nosniff\r\n";
+        h := h + "Referrer-Policy: no-referrer\r\n";
+        h := h + "X-XSS-Protection: 1; mode=block\r\n";
+    end if;
+    return h;
+end BuildSecurityAndCorsHeaders;
+
+end ZephyrSecurity.

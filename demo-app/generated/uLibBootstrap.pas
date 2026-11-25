@@ -1,6 +1,8 @@
 unit uLibBootstrap;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,15 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uLibBootstrap;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    count: Integer;
+    libName: string;
+    category: string;
+    currentPage: Integer;
+    lastAction: string;
+  end;
 
 procedure Register_uLibBootstrap;
 var
@@ -211,7 +222,7 @@ begin
   m['clickNotif'] := procedure(_this: TJSObject; info: string)
 
     begin
-      TJSObject(_this)['lastAction'] := info;
+      TComponentThis(_this).lastAction := info;
       TriggerRef(_this, 'mainToast', 'show');
     end;
     { Opens the modal using the component reference in pure Pascal }
@@ -226,8 +237,8 @@ begin
   m['modalConfirm'] := procedure(_this: TJSObject)
 
     begin
-      TJSObject(_this)['libName'] := 'SYNC_' + NowTimestampStr;
-      TJSObject(_this)['lastAction'] := 'Modal Confirmed';
+      TComponentThis(_this).libName := 'SYNC_' + NowTimestampStr;
+      TComponentThis(_this).lastAction := 'Modal Confirmed';
       TriggerRef(_this, 'mainToast', 'show');
     end;
     { Updates the current page index from the pagination component }
@@ -235,7 +246,7 @@ begin
   m['updatePage'] := procedure(_this: TJSObject; p: integer)
 
     begin
-      TJSObject(_this)['currentPage'] := p;
+      TComponentThis(_this).currentPage := p;
     end;
     
   m['tabChanged'] := procedure(_this: TJSObject; id: string)

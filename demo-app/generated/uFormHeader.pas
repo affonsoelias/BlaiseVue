@@ -1,6 +1,8 @@
 unit uFormHeader;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,12 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uFormHeader;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    title: string;
+    subtitle: string;
+  end;
 
 procedure Register_uFormHeader;
 var
