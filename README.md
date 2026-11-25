@@ -85,6 +85,14 @@ BlaiseVue features a modular package architecture located in `/packages`:
 
 ---
 
+## 🌟 Real-World Showcase & Companion Repositories
+
+Explore production software and companion repositories built with and alongside **BlaiseVue**:
+
+- 📐 **[BlaiseNotebook](https://github.com/affonsoelias/BlaiseNotebook)** — Real-world production application built with **BlaiseVue**: an interactive computational notebook environment for Object Pascal (Jupyter/Colab style) featuring reactive Chart.js plots (`<bv-chart>`), persistent stateful kernel execution via Synopse mORMot 2 + WebSockets, interactive DataGrid Pro, one-click Dashboard View, and a cross-platform Python scientific bridge (`numpy`, `pandas`, `scikit-learn`).
+- 🔷 **[Aether Programming Language](https://github.com/affonsoelias/aether)** — Companion Pascal-inspired systems programming language (optional & experimental) with ownership/borrow checking, design-by-contract, and native C99/Pascal/WASM compilation — interoperating directly with BlaiseVue (`--aether`, `<script lang="aether">`) and powering the native **Zephyr** backend (`vendor/zephyr`).
+- 🌐 **[BlaiseVue Ecosystem](https://github.com/affonsoelias/blaisevue-ecosystem)** — Official community registry, external packages, and developer tools (including `blaise-horse`).
+
 ---
 
 ## 📖 Roadmap & Technical Documentation
@@ -171,7 +179,7 @@ BlaiseVue/
 ### 📋 Prerequisites
 - **Git (v2.30+)**: Required for cloning the framework, automatic selective updates (`bv self-update`), and channel management (`bv channel`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server-mormot/`).
-- **Aether Compiler (`aetherc`, Optional & Recommended — Experimental)**: Optional compiler needed only if you create `--aether` apps, author `<script lang="aether">` / `.aeth` modules, run `.test.aeth` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
+- **[Aether Compiler (`aetherc`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/aether)**: Optional compiler needed only if you create `--aether` apps, author `<script lang="aether">` / `.aeth` modules, run `.test.aeth` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
 - **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `update.py`, `remove.py`, `pack.py`) for the dynamic developer tooling ecosystem (`bv tool`) and custom user packages (`~/.blaisevue/tools/`).
 - **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv capacitor` / `bv mobile`).
 - **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv capacitor build`), managing emulators, and running `bv capacitor open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.

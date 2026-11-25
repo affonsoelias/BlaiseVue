@@ -114,11 +114,18 @@ begin
     Assert(Contains(raw_resp, "script-src 'self' 'unsafe-inline'"));
     Assert(Contains(raw_resp, "frame-ancestors 'none'"));
     Assert(Contains(raw_resp, "Connection: keep-alive"));
+    raw_resp := FormatHttpHeaders(200, "font/woff2", 23664, "", hdrs, false);
+    Assert(Contains(raw_resp, "Content-Type: font/woff2"));
+    Assert(Contains(raw_resp, "Content-Length: 23664"));
+    Assert(Contains(raw_resp, "Connection: close"));
 
     // 5. Static MIME types and SPA serving
     Assert(DetectMimeType("/js/main.js") = "application/javascript; charset=utf-8");
     Assert(DetectMimeType("/index.html") = "text/html; charset=utf-8");
     Assert(DetectMimeType("/app.wasm") = "application/wasm");
+    Assert(DetectMimeType("/font.woff2") = "font/woff2");
+    Assert(DetectMimeType("/font.woff") = "font/woff");
+    Assert(DetectMimeType("/logo.png") = "image/png");
     srv.ServeStatic("../fixtures_static");
     Assert(srv.static_dir = "../fixtures_static");
     res := DispatchRequest(mut borrow srv, borrow Request("GET", "/api/unknown", "", "HTTP/1.1", "", "", "127.0.0.9", "", true, false, "", 0));

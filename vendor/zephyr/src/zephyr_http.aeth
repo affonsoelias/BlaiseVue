@@ -9,6 +9,14 @@ function GetHeaderRaw(borrow headers_raw: String; borrow name: String) return St
 function ParseContentLengthFromHeaders(borrow headers_raw: String) return Int32;
 function ParseConnectionKeepAlive(borrow version: String; borrow headers_raw: String) return Bool;
 function ReasonPhrase(status_code: Int32) return String;
+function FormatHttpHeaders(
+    status_code: Int32;
+    borrow content_type: String;
+    content_len: Int64;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String;
 function FormatHttpResponse(
     status_code: Int32;
     borrow content_type: String;
@@ -111,6 +119,40 @@ begin
     end match;
 end ReasonPhrase;
 
+function FormatHttpHeaders(
+    status_code: Int32;
+    borrow content_type: String;
+    content_len: Int64;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String is
+var
+    res, conn_hdr: String;
+begin
+    if keep_alive then
+        conn_hdr := "keep-alive";
+    else
+        conn_hdr := "close";
+    end if;
+
+    res := "HTTP/1.1 " + IntToStr(status_code) + " " + ReasonPhrase(status_code) + "\r\n";
+    res := res + "Server: Zephyr-Aether/1.0\r\n";
+    if status_code <> 204 then
+        res := res + "Content-Type: " + SanitizeHeaderValue(borrow content_type) + "\r\n";
+    end if;
+    res := res + "Content-Length: " + IntToStr(content_len) + "\r\n";
+    res := res + "Connection: " + conn_hdr + "\r\n";
+    if Length(borrow sec_cors_headers) > 0 then
+        res := res + sec_cors_headers;
+    end if;
+    if Length(borrow extra_headers) > 0 then
+        res := res + extra_headers;
+    end if;
+    res := res + "\r\n";
+    return res;
+end FormatHttpHeaders;
+
 function FormatHttpResponse(
     status_code: Int32;
     borrow content_type: String;
@@ -120,34 +162,15 @@ function FormatHttpResponse(
     keep_alive: Bool
 ) return String is
 var
-    res, conn_hdr: String;
-    body_len: Int32;
+    hdrs: String;
+    body_len: Int64;
 begin
-    if keep_alive then
-        conn_hdr := "keep-alive";
-    else
-        conn_hdr := "close";
-    end if;
-    body_len := Int32(Length(borrow body));
-
-    res := "HTTP/1.1 " + IntToStr(status_code) + " " + ReasonPhrase(status_code) + "\r\n";
-    res := res + "Server: Zephyr-Aether/1.0\r\n";
+    body_len := Int64(Length(borrow body));
+    hdrs := FormatHttpHeaders(status_code, borrow content_type, body_len, borrow extra_headers, borrow sec_cors_headers, keep_alive);
     if status_code <> 204 then
-        res := res + "Content-Type: " + SanitizeHeaderValue(borrow content_type) + "\r\n";
+        return hdrs + body;
     end if;
-    res := res + "Content-Length: " + IntToStr(body_len) + "\r\n";
-    res := res + "Connection: " + conn_hdr + "\r\n";
-    if Length(borrow sec_cors_headers) > 0 then
-        res := res + sec_cors_headers;
-    end if;
-    if Length(borrow extra_headers) > 0 then
-        res := res + extra_headers;
-    end if;
-    res := res + "\r\n";
-    if status_code <> 204 then
-        res := res + body;
-    end if;
-    return res;
+    return hdrs;
 end FormatHttpResponse;
 
 end ZephyrHttp.

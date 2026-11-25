@@ -45,6 +45,7 @@ type
         body: String;
         extra_headers: String;
         close_connection: Bool;
+        file_path: String;
     end record;
 
     RouteHandler = function(Request) return Response;
@@ -114,12 +115,12 @@ begin
         idle_timeout_ms: 15000,
         max_header_bytes: 8192,
         max_body_bytes: 1048576,
-        max_keepalive_requests: 100,
+        max_keepalive_requests: 1,
         cors_origin: "*",
         cors_methods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         cors_headers: "Content-Type, Authorization, X-Requested-With",
         enable_security_headers: true,
-        rate_limit_max: 120,
+        rate_limit_max: 1000,
         rate_limit_window_ms: 60000
     );
 end DefaultConfig;
@@ -210,7 +211,7 @@ begin
         return "application/javascript; charset=utf-8";
     else if EndsWith(low, ".css") then
         return "text/css; charset=utf-8";
-    else if EndsWith(low, ".json") then
+    else if EndsWith(low, ".json") or EndsWith(low, ".map") then
         return "application/json; charset=utf-8";
     else if EndsWith(low, ".svg") then
         return "image/svg+xml";
@@ -220,8 +221,20 @@ begin
         return "image/png";
     else if EndsWith(low, ".jpg") or EndsWith(low, ".jpeg") then
         return "image/jpeg";
+    else if EndsWith(low, ".gif") then
+        return "image/gif";
+    else if EndsWith(low, ".webp") then
+        return "image/webp";
     else if EndsWith(low, ".ico") then
         return "image/x-icon";
+    else if EndsWith(low, ".woff") then
+        return "font/woff";
+    else if EndsWith(low, ".woff2") then
+        return "font/woff2";
+    else if EndsWith(low, ".ttf") then
+        return "font/ttf";
+    else if EndsWith(low, ".eot") then
+        return "application/vnd.ms-fontobject";
     else if EndsWith(low, ".txt") then
         return "text/plain; charset=utf-8";
     end if;
@@ -267,22 +280,22 @@ end impl;
 
 function OkJson(borrow json_body: String) return Response is
 begin
-    return Response(status: 200, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false);
+    return Response(status: 200, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false, file_path: "");
 end OkJson;
 
 function OkText(borrow text_body: String) return Response is
 begin
-    return Response(status: 200, content_type: "text/plain; charset=utf-8", body: text_body, extra_headers: "", close_connection: false);
+    return Response(status: 200, content_type: "text/plain; charset=utf-8", body: text_body, extra_headers: "", close_connection: false, file_path: "");
 end OkText;
 
 function CreatedJson(borrow json_body: String) return Response is
 begin
-    return Response(status: 201, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false);
+    return Response(status: 201, content_type: "application/json; charset=utf-8", body: json_body, extra_headers: "", close_connection: false, file_path: "");
 end CreatedJson;
 
 function NoContent() return Response is
 begin
-    return Response(status: 204, content_type: "text/plain", body: "", extra_headers: "", close_connection: false);
+    return Response(status: 204, content_type: "text/plain", body: "", extra_headers: "", close_connection: false, file_path: "");
 end NoContent;
 
 function ErrorJson(status_code: Int32; borrow msg: String) return Response is
@@ -295,7 +308,8 @@ begin
         content_type: "application/json; charset=utf-8",
         body: "{\"error\":\"" + clean + "\",\"status\":" + IntToStr(status_code) + "}",
         extra_headers: "",
-        close_connection: status_code >= 413
+        close_connection: status_code >= 413,
+        file_path: ""
     );
 end ErrorJson;
 
@@ -336,7 +350,7 @@ end GetHeader;
 
 function DispatchRequest(mut borrow srv: ZephyrServer; borrow req: Request) return Response is
 var
-    rate_key, cand_path, index_path, content: String;
+    rate_key, cand_path, index_path: String;
     i, n: Int32;
     method_matched: Bool;
     h: RouteHandler;
@@ -386,27 +400,27 @@ begin
             cand_path := srv.static_dir + req.path;
         end if;
 
-        if FileExists(cand_path) then
-            content := ReadFile(cand_path);
+        if FileExists(cand_path) and (not DirExists(cand_path)) then
             srv.requests_served := srv.requests_served + 1;
             return Response(
                 status: 200,
                 content_type: DetectMimeType(borrow cand_path),
-                body: content,
+                body: "",
                 extra_headers: "",
-                close_connection: false
+                close_connection: false,
+                file_path: cand_path
             );
         end if;
 
-        if (IndexOf(req.path, ".") < 0) and FileExists(index_path) then
-            content := ReadFile(index_path);
+        if (IndexOf(req.path, ".") < 0) and FileExists(index_path) and (not DirExists(index_path)) then
             srv.requests_served := srv.requests_served + 1;
             return Response(
                 status: 200,
                 content_type: "text/html; charset=utf-8",
-                body: content,
+                body: "",
                 extra_headers: "",
-                close_connection: false
+                close_connection: false,
+                file_path: index_path
             );
         end if;
     end if;
@@ -555,6 +569,7 @@ var
     req: Request;
     resp: Response;
     hdr_end, keep_count, need_bytes, want_chunk, ws_idx: Int32;
+    fsize: Int64;
     keep_running, want_keep_alive: Bool;
 begin
     peer_ip := SocketPeerIP(client_fd);
@@ -674,8 +689,21 @@ begin
 
         resp := DispatchRequest(mut borrow srv, borrow req);
         want_keep_alive := req.keep_alive and (not resp.close_connection) and ((keep_count + 1) < srv.config.max_keepalive_requests);
-        raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, want_keep_alive);
-        SocketSend(client_fd, raw_resp);
+        if Length(borrow resp.file_path) > 0 then
+            fsize := FileSize(resp.file_path);
+            if fsize < 0 then
+                resp := NotFound("Static file not found");
+                raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, want_keep_alive);
+                SocketSend(client_fd, raw_resp);
+            else
+                raw_resp := FormatHttpHeaders(resp.status, borrow resp.content_type, fsize, borrow resp.extra_headers, borrow sec_cors, want_keep_alive);
+                SocketSend(client_fd, raw_resp);
+                SocketSendFile(client_fd, resp.file_path);
+            end if;
+        else
+            raw_resp := FormatHttpResponse(resp.status, borrow resp.content_type, borrow resp.body, borrow resp.extra_headers, borrow sec_cors, want_keep_alive);
+            SocketSend(client_fd, raw_resp);
+        end if;
 
         keep_count := keep_count + 1;
         if not want_keep_alive then

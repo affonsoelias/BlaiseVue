@@ -4724,6 +4724,8 @@ Begin
                UseAether := True
         Else If ArgLow = '--mormot' Then
                AddBackendsCsv('mormot')
+        Else If ArgLow = '--horse' Then
+               AddBackendsCsv('horse')
         Else If ArgLow = '--zephyr' Then
                Begin
                  AddBackendsCsv('zephyr');
@@ -43317,6 +43319,12 @@ Begin
              (Arg1 = '--demo') Then
             SrcFile := IncludeTrailingPathDelimiter(ZephyrDir) + 'examples' +
                        DirectorySeparator + 'zephyr_demo.aeth'
+          Else If SubCmd = 'run' Then
+            Begin
+              WriteLn('No Zephyr server project found in ', ServerLabel,
+                      '/. Initializing first...');
+              CmdZephyr('init', '', '');
+            End
           Else
             Begin
               WriteLn('ERROR: ', SrcFile,
@@ -43325,21 +43333,40 @@ Begin
             End;
         End;
 
-      If (SubCmd = 'run') And
-         (Not FileExists(ProjectRoot + DirectorySeparator + 'dist' +
-         DirectorySeparator + 'index.html')) And
-         DirectoryExists(ProjectRoot + DirectorySeparator + 'src') Then
+      If (SubCmd = 'run') And DirectoryExists(ProjectRoot + DirectorySeparator +
+         'src') Then
         Begin
-          WriteLn('  [!] dist/index.html not found. Building frontend first...')
-          ;
-          SavedCwd := GetCurrentDir;
-          Try
-            SetCurrentDir(ProjectRoot);
-            CmdRunBuild;
-          Finally
-            SetCurrentDir(SavedCwd);
+          If IsRelease Then
+            Begin
+              WriteLn(
+'  [+] Compiling reactive frontend in RELEASE mode (bv build --release)...'
+              );
+              SavedCwd := GetCurrentDir;
+              Try
+                SetCurrentDir(ProjectRoot);
+                CmdRunBuild;
+              Finally
+                SetCurrentDir(SavedCwd);
+              End;
+            End
+          Else If (Not FileExists(ProjectRoot + DirectorySeparator + 'dist' +
+                  DirectorySeparator + 'index.html')) Or
+                  (Not FileExists(ProjectRoot + DirectorySeparator + 'dist' +
+                  DirectorySeparator + 'js' + DirectorySeparator + 'main.js'))
+            Then
+            Begin
+              WriteLn(
+'  [!] dist/ bundle not found or incomplete. Building frontend first...'
+              );
+              SavedCwd := GetCurrentDir;
+              Try
+                SetCurrentDir(ProjectRoot);
+                CmdBuild;
+              Finally
+                SetCurrentDir(SavedCwd);
+              End;
+            End;
         End;
-    End;
 
   ForceDir(ServerDir);
   ForceDir(BinDir);
@@ -43380,6 +43407,11 @@ Try
     Begin
       ParamsList.Add('--port');
       ParamsList.Add(PortStr);
+    End;
+  If DirectoryExists(ProjectRoot + DirectorySeparator + 'dist') Then
+    Begin
+      ParamsList.Add('--dist');
+      ParamsList.Add(ProjectRoot + DirectorySeparator + 'dist');
     End;
   SetCurrentDir(ServerDir);
   WriteLn('Starting Zephyr server: ', OutBin);
