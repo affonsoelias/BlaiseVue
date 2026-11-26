@@ -20,21 +20,21 @@ my-app/
 │   ├── views/             # Full route pages (.bv, mapped to -page tags)
 │   │   ├── Home.bv
 │   │   └── About.bv
-│   └── services/          # Business logic & formatters (.pas and/or .aeth)
-│       ├── pricing.aeth   # Optional Aether modules (with --aether)
+│   └── services/          # Business logic & formatters (.pas and/or .dels)
+│       ├── pricing.dels   # Optional DelSafe modules (with --delsafe)
 │       └── uFormatters.pas
 │
 ├── lib/                   # Component Libraries & Add-ons
 │   └── blaise-ui/         # Official BlaiseUI component kit & CSS
 │
-├── tests/                 # 3-Tier Application Unit & Integration Tests (.test.pas & .test.aeth)
+├── tests/                 # 3-Tier Application Unit & Integration Tests (.test.pas & .test.dels)
 │   ├── components/        # Component tests (props, slots, DOM, $emit)
 │   │   └── ProductCard.test.pas
 │   ├── views/             # Page tests (lifecycle, validation, user flows)
 │   │   ├── Home.test.pas
 │   │   └── DatasetView.test.pas
-│   ├── services/          # Domain service tests (.test.pas and .test.aeth)
-│   │   ├── pricing.test.aeth
+│   ├── services/          # Domain service tests (.test.pas and .test.dels)
+│   │   ├── pricing.test.dels
 │   │   └── Formatters.test.pas
 │   └── setup.js           # Vitest and JSDOM global environment setup
 │
@@ -63,7 +63,7 @@ my-app/
 - **`components/`**: Modular, reusable UI components (e.g., buttons, cards, modals, headers). Automatically given natural kebab-case HTML tags (e.g., `<product-card>`).
 - **`layouts/`** *(Optional, Highly Recommended)*: Master page shells and layout templates (e.g. `AppLayout.bv`, `AuthLayout.bv`). Eliminates code duplication by encapsulating navigation bars, sidebars, headers, and footers in components using standard `<slot></slot>`.
 - **`views/`**: Top-level page views connected to the router. Each view generates an internal `<view-name-page>` tag.
-- **`services/`**: Object Pascal units (`u*.pas`) and optional Aether modules (`*.aeth`) containing calculation engines, validators, domain models, formatters, and mORMot 2 client proxies. Configured out-of-the-box in `app.cfg` via `-Fusrc/services` and resolved automatically for Aether imports.
+- **`services/`**: Object Pascal units (`u*.pas`) and optional DelSafe modules (`*.dels`) containing calculation engines, validators, domain models, formatters, and mORMot 2 client proxies. Configured out-of-the-box in `app.cfg` via `-Fusrc/services` and resolved automatically for DelSafe imports.
 
 ---
 
@@ -81,8 +81,8 @@ BlaiseVue gives every backend framework its own dedicated directory so you can s
    - The enterprise-grade Pascal backend for high throughput, WebSockets, and end-to-end type-safe Pascal RPC contracts (legacy `server/` projects remain supported automatically).
    - Initialized via `bv mormot init` (or `bv create <app> --backend=mormot`), built with `bv mormot build`, and launched via `bv mormot run`.
 
-3. **Native Aether Full-Stack: Zephyr (`server-zephyr/`, Port `8091`)**:
-   - BlaiseVue's built-in Aether HTTP/1.1 + WebSocket backend (`vendor/zephyr`), keeping its models and entry point self-contained inside `server-zephyr/` and serving `../dist` automatically.
+3. **Native DelSafe Full-Stack: Zephyr (`server-zephyr/`, Port `8091`)**:
+   - BlaiseVue's built-in DelSafe HTTP/1.1 + WebSocket backend (`vendor/zephyr`), keeping its models and entry point self-contained inside `server-zephyr/` and serving `../dist` automatically.
    - Initialized via `bv zephyr init` (or `bv create <app> --backend=zephyr`), run with `bv zephyr run`, packaged with `bv zephyr deploy [--zip]`, and removed cleanly with `bv zephyr remove -y`.
 
 4. **Alternative Microframework: Horse (`server-horse/`, Port `9000`)**:
@@ -102,8 +102,8 @@ The BlaiseVue CLI (`bv create`) scaffolds a clean 3-tier application test hierar
    - Automatically populated by `bv g v <Name>`.
    - Tests entire pages, user interaction flows, modal toggles, and form submissions.
 3. **`tests/services/`**:
-   - Automatically populated by `bv g s <Name>` (or `--aether` for `.test.aeth`) and `bv g t <Name>` for pure business logic and services.
-   - Tests Object Pascal services (`*.test.pas`) via Vitest and Aether modules (`*.test.aeth`) natively via `aetherc`.
+   - Automatically populated by `bv g s <Name>` (or `--delsafe` for `.test.dels`) and `bv g t <Name>` for pure business logic and services.
+   - Tests Object Pascal services (`*.test.pas`) via Vitest and DelSafe modules (`*.test.dels`) natively via `delsafec`.
 4. **`tests/setup.js`**:
    - JSDOM polyfills, window mockups, and testing environment initialization for Vitest.
 

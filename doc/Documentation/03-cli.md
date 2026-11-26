@@ -24,14 +24,14 @@ bv -v
 ```bash
 bv create my-app
 bv create my-app --demo
-bv create my-app --aether
+bv create my-app --delsafe
 bv create my-app --backend=mormot
 bv create my-app --backend=zephyr
 bv create my-app --backend=horse   # Any installed external backend tool
 ```
 
 - **`--demo`**: Includes the full enterprise component/chart/dataset/mobile showcase.
-- **`--aether`**: Generates an Aether-first frontend where all `.bv` files use `<script lang="aether">`, paired with `src/services/pricing.aeth` and `src/services/uFormatters.pas` demonstrating Aether + Object Pascal interoperability.
+- **`--delsafe`**: Generates an DelSafe-first frontend where all `.bv` files use `<script lang="delsafe">`, paired with `src/services/pricing.dels` and `src/services/uFormatters.pas` demonstrating DelSafe + Object Pascal interoperability.
 - **`--backend=<name>`**: Initializes a built-in backend (`mormot` in `server-mormot/`, `zephyr` in `server-zephyr/`) or dynamically discovers installed external backend tools in `~/.blaisevue/tools/` (such as `horse` in `server-horse/`).
 
 ### 1b. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
@@ -77,49 +77,49 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 
 ### 3. Component, View, Service & Test Generators (`bv g` / `bv new`)
 
-BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites. Pass **`--aether`** (or `-a`) to scaffold Aether `.aeth`/`.test.aeth` files or `<script lang="aether">` `.bv` components:
+BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites. Pass **`--delsafe`** (or `-a`) to scaffold DelSafe `.dels`/`.test.dels` files or `<script lang="delsafe">` `.bv` components:
 
-### 1. Create Component: `bv g c <Name> [--aether] [--no-test]`
+### 1. Create Component: `bv g c <Name> [--delsafe] [--no-test]`
 Creates the visual Single File Component (`.bv`) and its companion test file:
 ```bash
 bv g c ProductCard
-bv g c MetricCard --aether
+bv g c MetricCard --delsafe
 ```
-- Creates: `src/components/ProductCard.bv` (or `<script lang="aether">` when `--aether` is passed)
+- Creates: `src/components/ProductCard.bv` (or `<script lang="delsafe">` when `--delsafe` is passed)
 - Automatically generates: `tests/components/ProductCard.test.pas`
 - Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
-### 2. Create View / Page: `bv g v <Name> [--aether] [--no-test]`
+### 2. Create View / Page: `bv g v <Name> [--delsafe] [--no-test]`
 Creates an application page view and its mount verification test:
 ```bash
 bv g v OrderHistory
-bv g v Reports --aether
+bv g v Reports --delsafe
 ```
-- Creates: `src/views/OrderHistory.bv` (or `<script lang="aether">` when `--aether` is passed)
+- Creates: `src/views/OrderHistory.bv` (or `<script lang="delsafe">` when `--delsafe` is passed)
 - Automatically generates: `tests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
-### 3. Create Service Unit: `bv g s <Name> [--aether] [--no-test]`
-Creates a pure Object Pascal unit or Aether module in `src/services/` along with its unit test:
+### 3. Create Service Unit: `bv g s <Name> [--delsafe] [--no-test]`
+Creates a pure Object Pascal unit or DelSafe module in `src/services/` along with its unit test:
 ```bash
 bv g s PaymentProcessor            # Creates src/services/uPaymentProcessor.pas + PaymentProcessor.test.pas
-bv g s Billing --aether            # Creates src/services/Billing.aeth + tests/services/Billing.test.aeth
+bv g s Billing --delsafe            # Creates src/services/Billing.dels + tests/services/Billing.test.dels
 ```
-- Creates: `src/services/u<Name>.pas` (or `src/services/<Name>.aeth` with `--aether`)
-- Automatically generates: `tests/services/<Name>.test.pas` (or `<Name>.test.aeth` with `--aether`)
+- Creates: `src/services/u<Name>.pas` (or `src/services/<Name>.dels` with `--delsafe`)
+- Automatically generates: `tests/services/<Name>.test.pas` (or `<Name>.test.dels` with `--delsafe`)
 - Pass `--no-test` (or `-nt`) to create only the service file without a test file.
 
-### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv g t <Name> [--aether]`
+### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv g t <Name> [--delsafe]`
 Creates test suites on demand with automatic directory resolution:
 ```bash
 bv g t SimpleBadge
-bv g t QuickCheck --aether
+bv g t QuickCheck --delsafe
 ```
 - **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
 - **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
 - **If `uSimpleBadge.pas` exists in `src/services/`:** created in `tests/services/SimpleBadge.test.pas`.
-- **If `SimpleBadge.aeth` exists in `src/services/` (or `--aether` is passed):** created as `.test.aeth` in `tests/services/`.
-- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` (or `.test.aeth` with `--aether`).
+- **If `SimpleBadge.dels` exists in `src/services/` (or `--delsafe` is passed):** created as `.test.dels` in `tests/services/`.
+- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` (or `.test.dels` with `--delsafe`).
 
 ### 5. List Elements: `bv list <c|v|s|store|fsm|t|lib>`
 Lists registered files across the project:
@@ -391,7 +391,7 @@ Performs a complete purge of the build workspace:
 
 Each backend uses an isolated project subdirectory so multiple backends can coexist cleanly in the same workspace:
 - **mORMot 2**: `server-mormot/` (default port `8090`; legacy `server/` folders continue to work automatically)
-- **Zephyr (Aether)**: `server-zephyr/` (default port `8091`)
+- **Zephyr (DelSafe)**: `server-zephyr/` (default port `8091`)
 - **Horse (via `blaise-horse` tool)**: `server-horse/` (default port `9000`)
 
 ### Synopse mORMot 2 (`bv mormot`)
@@ -433,16 +433,16 @@ Manages high-throughput native Pascal backend microservices and zero-configurati
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
 
-### Zephyr Native Aether Backend (`bv zephyr`)
-Manages the native Aether HTTP/1.1 + WebSocket server (`vendor/zephyr`) in an isolated **`server-zephyr/`** directory on port **`8091`**:
-- **`bv zephyr init`**: Creates `server-zephyr/zephyr_server.aeth`, `server-zephyr/models.aeth`, `server-zephyr/aether.json`, and `server-zephyr/.env` (`PORT=8091`).
-- **`bv zephyr build [--target=c|pascal] [--release|--debug]`**: Compiles `server-zephyr/bin/zephyr_server[.exe]` via `aetherc`.
+### Zephyr Native DelSafe Backend (`bv zephyr`)
+Manages the native DelSafe HTTP/1.1 + WebSocket server (`vendor/zephyr`) in an isolated **`server-zephyr/`** directory on port **`8091`**:
+- **`bv zephyr init`**: Creates `server-zephyr/zephyr_server.dels`, `server-zephyr/models.dels`, `server-zephyr/delsafe.json`, and `server-zephyr/.env` (`PORT=8091`).
+- **`bv zephyr build [--target=c|pascal] [--release|--debug]`**: Compiles `server-zephyr/bin/zephyr_server[.exe]` via `delsafec`.
 - **`bv zephyr run [--port <p>]`**: Auto-builds `dist/` if missing, compiles & launches Zephyr serving the static SPA (`../dist`), REST (`/api/health`, `/api/items`), and WebSocket (`/ws`), printing clickable URLs on startup.
 - **`bv zephyr deploy [--zip] [--port <p>] [--out <dir>]`**: Packages `dist/` and the release binary into `deploy/server-zephyr/` (plus `deploy-zephyr.zip` when `--zip` is passed).
-- **`bv zephyr status`**: Displays Zephyr SDK, `aetherc`, entry file, binary, and port info.
+- **`bv zephyr status`**: Displays Zephyr SDK, `delsafec`, entry file, binary, and port info.
 - **`bv zephyr remove [-y]`**: Removes `server-zephyr/`, `bin/server-zephyr/`, and `deploy/server-zephyr/`.
 
-See detailed documentation in **[59. Aether Language Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md)**.
+See detailed documentation in **[59. DelSafe Language Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md)**.
 
 ### Alternative Backend: Horse Framework (via `blaise-horse` tool)
 For projects preferring a lightweight microframework (Express.js-style in Pascal), BlaiseVue supports the co-official tool **`blaise-horse`**:
@@ -536,15 +536,15 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 ## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
 
 ### 1. Unit & Integration Tests (`bv test`)
-The `bv test` command compiles and executes both Object Pascal tests (`*.test.pas` via Pas2JS + Vitest) and native Aether tests (`*.test.aeth` via `aetherc`):
+The `bv test` command compiles and executes both Object Pascal tests (`*.test.pas` via Pas2JS + Vitest) and native DelSafe tests (`*.test.dels` via `delsafec`):
 ```bash
 bv test [filter] [--no-cache|--fresh]
 bv test --sdk [suite|filter]    # Runs SDK-level suites at the BlaiseVue repo root
 ```
 1. **Pre-flight Cleaning:** Cleans stale artifacts in `generated/tests/` while preserving incremental hash caches.
-2. **Recursive Discovery:** Finds `*.test.pas` and `*.test.aeth` across `tests/components/`, `tests/views/`, and `tests/services/` (or SDK `tests/` when running `--sdk`).
-3. **Component Transpilation:** Transpiles all `.bv` Single File Components (including `<script lang="aether">` and `.aeth` services) into `generated/`.
-4. **Dual Test Execution:** Compiles `.test.pas` files to `generated/tests/*.test.js` for **Vitest** / JSDOM, and compiles `.test.aeth` files via `aetherc --target=c` into `generated/tests/.cache/` for native execution.
+2. **Recursive Discovery:** Finds `*.test.pas` and `*.test.dels` across `tests/components/`, `tests/views/`, and `tests/services/` (or SDK `tests/` when running `--sdk`).
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components (including `<script lang="delsafe">` and `.dels` services) into `generated/`.
+4. **Dual Test Execution:** Compiles `.test.pas` files to `generated/tests/*.test.js` for **Vitest** / JSDOM, and compiles `.test.dels` files via `delsafec --target=c` into `generated/tests/.cache/` for native execution.
 
 For continuous test-driven development:
 ```bash
@@ -740,7 +740,7 @@ Manages Pas2JS compiler search paths (`-Fu`) in `app.cfg`, linking official buil
   - E.g.: `bv path add ../legacy/business_logic` (Imports legacy Lazarus/Delphi units)
 - **`bv path remove <target>`**: Safely removes a search path from `app.cfg`.
 - **`bv path available`**: Discovers and catalogs all 30+ pre-bundled Pas2JS packages (`vendor/pas2js/.../packages`) with real-time `[active]` status markers.
-- **Declarative JSON paths**: Projects can also declare extra directories via `"paths": { "pascal": [...], "aether": [...] }` in `blaisevue.json` or under `"blaisevue"` in `package.json`, injected automatically across `bv build`, `bv build --release`, `bv dev`, `bv test`, and displayed in `bv path`.
+- **Declarative JSON paths**: Projects can also declare extra directories via `"paths": { "pascal": [...], "delsafe": [...] }` in `blaisevue.json` or under `"blaisevue"` in `package.json`, injected automatically across `bv build`, `bv build --release`, `bv dev`, `bv test`, and displayed in `bv path`.
 
 | Path Command | Arguments | Action / Output |
 |---|---|---|

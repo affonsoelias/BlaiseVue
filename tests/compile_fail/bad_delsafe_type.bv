@@ -1,9 +1,9 @@
-<!-- EXPECT_ERROR: bad_aether_type.bv -->
+<!-- EXPECT_ERROR: bad_delsafe_type.bv -->
 <template>
   <div><span>{{ brokenFn() }}</span></div>
 </template>
 
-<script lang="aether">
+<script lang="delsafe">
   methods:
     function brokenFn() return Int32 is
     var

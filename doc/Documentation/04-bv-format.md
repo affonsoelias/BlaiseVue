@@ -55,12 +55,12 @@ Imports additional **Custom Pascal Units** that are not part of the core framewo
 > [!NOTE]
 > **Automatic Units**: BlaiseVue automatically includes core units like `JS`, `Web`, `BVComponents`, `BVReactivity`, `BVStore`, `SysUtils`, and `BVRouting` (when local routes are detected). You only need the `uses` attribute for your own external `.pas` files.
 
-### `<script lang="aether">` (Optional Aether Mode)
+### `<script lang="delsafe">` (Optional DelSafe Mode)
 
-BlaiseVue SFCs also support writing component methods and computed helpers in **Aether** (`<script lang="aether">` or `<script lang="aether" uses="pricing, uFormatters">`):
+BlaiseVue SFCs also support writing component methods and computed helpers in **DelSafe** (`<script lang="delsafe">` or `<script lang="delsafe" uses="pricing, uFormatters">`):
 
 ```html
-<script lang="aether" uses="pricing, uFormatters">
+<script lang="delsafe" uses="pricing, uFormatters">
   data:
     unitPrice: double = 49.90;
     qty: integer = 3;
@@ -73,8 +73,8 @@ BlaiseVue SFCs also support writing component methods and computed helpers in **
 </script>
 ```
 
-- References in `uses="..."` automatically import `.aeth` modules from `src/services/` (or configured `paths.aether`) and generate typed wrappers for Object Pascal `.pas` services.
-- See **[59. Aether Language Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md)** for complete details.
+- References in `uses="..."` automatically import `.dels` modules from `src/services/` (or configured `paths.delsafe`) and generate typed wrappers for Object Pascal `.pas` services.
+- See **[59. DelSafe Language Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md)** for complete details.
 
 ### `data:` Sub-section
 

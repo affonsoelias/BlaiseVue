@@ -217,7 +217,7 @@ begin
            "Upgrade: websocket\r\n" +
            "Connection: Upgrade\r\n" +
            "Sec-WebSocket-Accept: " + accept_key + "\r\n" +
-           "Server: Zephyr-Aether/1.0\r\n\r\n";
+           "Server: Zephyr-DelSafe/1.0\r\n\r\n";
 end BuildUpgradeResponse;
 
 function HexDigit(v: Int32) return String is

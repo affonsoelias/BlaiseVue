@@ -92,11 +92,11 @@ You do not have to use a Pascal backend. If you want to use BlaiseVue purely as 
   bv mormot remove -y
   ```
 
-### 2. Using the Zephyr Aether Backend (`server-zephyr/`, Port `8091`)
-For Aether-native full-stack services with OWASP security headers, static SPA serving, and WebSockets:
+### 2. Using the Zephyr DelSafe Backend (`server-zephyr/`, Port `8091`)
+For DelSafe-native full-stack services with OWASP security headers, static SPA serving, and WebSockets:
 - Scaffold via `bv zephyr init` (or `bv create my-app --backend=zephyr`), run with `bv zephyr run`, deploy with `bv zephyr deploy [--zip]`, or remove cleanly with `bv zephyr remove -y`.
 - Runs in isolated `server-zephyr/` so it coexists cleanly with `server-mormot/`.
-- See **[59. Aether Language Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md)**.
+- See **[59. DelSafe Language Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md)**.
 
 ### 3. Using the Alternative Horse Microframework (`server-horse/`)
 If you want a lightweight, Express.js-style Pascal microframework instead of enterprise mORMot 2:

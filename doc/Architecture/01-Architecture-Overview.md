@@ -78,8 +78,8 @@ BlaiseVue is architectured with isolated directories per backend so developers c
   - Implements `IInvokable` interfaces for compile-time verified type-safe RPC (`TBVRpcClient`).
   - Handles tens of thousands of requests per second with microsecond latency (legacy `server/` folders remain supported).
   - Can be cleanly removed at any time via `bv mormot remove -y`.
-- **Native Aether Server: Zephyr (`server-zephyr/`, Port `8091`)**:
-  - Built-in Aether HTTP/1.1 + WebSocket server (`vendor/zephyr`) with static SPA hosting, OWASP security headers, and `--aether` domain model compatibility.
+- **Native DelSafe Server: Zephyr (`server-zephyr/`, Port `8091`)**:
+  - Built-in DelSafe HTTP/1.1 + WebSocket server (`vendor/zephyr`) with static SPA hosting, OWASP security headers, and `--delsafe` domain model compatibility.
   - Managed via `bv zephyr init/build/run/deploy/remove`.
 - **Alternative: Lightweight Microframework with Horse (`server-horse/`, Port `9000`)**:
   - Provided via the external developer tool `blaise-horse` (`bv tool install blaise-horse` or `bv create <app> --backend=horse`).
@@ -100,7 +100,7 @@ BlaiseVue delivers a single codebase across five enterprise deployment targets:
 | **Desktop WebUI** | Native C/Pascal host with embedded lightweight WebUI engine. | **< 10 MB** standalone binary. Zero Chromium/Electron bloat. Direct access to native OS file systems, system tray, native menus, and multi-window. |
 | **Mobile (Capacitor 7+)** | Native Android (APK/AAB) and iOS (IPA) wrappers with bridge runtime. | Native hardware access (Camera, Biometrics, Geolocation, SQLite, Local Notifications). Deep integration with Ionic 8 components. |
 | **Enterprise Server (mORMot 2)** | Native compiled microservice or monolith daemon (`server-mormot/`). | Multi-threaded SOA server (port `8090`) capable of handling tens of thousands of requests per second with microsecond latency. |
-| **Aether Native Server (Zephyr)** | Native compiled C99/Pascal Aether server (`server-zephyr/`). | Self-contained HTTP/1.1 + WebSocket + SPA host (port `8091`) with Aether ownership/contract safety and OWASP headers. |
+| **DelSafe Native Server (Zephyr)** | Native compiled C99/Pascal DelSafe server (`server-zephyr/`). | Self-contained HTTP/1.1 + WebSocket + SPA host (port `8091`) with DelSafe ownership/contract safety and OWASP headers. |
 | **Microframework Server (Horse)** | Lightweight REST microservice (`server-horse/`). | Express-style simplicity in Object Pascal via `blaise-horse` (port `9000`) with zero external dependencies. |
 
 ---

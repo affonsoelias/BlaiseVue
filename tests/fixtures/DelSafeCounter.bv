@@ -1,10 +1,10 @@
 <template>
-  <div class="aether-counter">
-    <span class="aether-val">{{ stepValue(base) }}</span>
+  <div class="delsafe-counter">
+    <span class="delsafe-val">{{ stepValue(base) }}</span>
   </div>
 </template>
 
-<script lang="aether">
+<script lang="delsafe">
   data:
     base: integer = 5;
 

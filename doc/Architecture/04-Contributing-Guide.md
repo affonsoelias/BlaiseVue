@@ -92,7 +92,7 @@ The framework currently runs **66 test suites containing 357 automated tests**:
 
 ### Running Tests:
 ```bash
-# Inside a user project (runs tests/**/*.test.pas via Vitest and tests/**/*.test.aeth natively)
+# Inside a user project (runs tests/**/*.test.pas via Vitest and tests/**/*.test.dels natively)
 bv test
 
 # Inside the BlaiseVue SDK repository root (runs SDK suites under tests/)
@@ -109,16 +109,16 @@ Framework-level regression suites are organized at the repository root (separate
 - `tests/core/` — reactivity, direct DOM, virtual DOM, components
 - `tests/state/` — stores, FSM, validation, forms, datasets
 - `tests/routing_i18n/` — router v2, middleware, i18n, themes
-- `tests/sfc_compiler/` — SFC parser, `<script lang="aether">`, member bodies, template checker
+- `tests/sfc_compiler/` — SFC parser, `<script lang="delsafe">`, member bodies, template checker
 - `tests/fullstack/` — mORMot RPC, dataset sync, swagger, lib packager
 - `tests/platforms/` — Capacitor mobile, WebUI desktop, Docker
-- `tests/compile_fail/` — expected compile-time error suites (`bad_aether_type.bv`, `bad_template_binding.bv`)
+- `tests/compile_fail/` — expected compile-time error suites (`bad_delsafe_type.bv`, `bad_template_binding.bv`)
 
 ### Adding a New Test Suite:
 Use the CLI inside a project to scaffold a new test:
 ```bash
 bv g t TestFeatureName
-bv g t FeatureCheck --aether
+bv g t FeatureCheck --delsafe
 ```
 This generates a test unit in `tests/` utilizing `TBVTestContext`:
 

@@ -34,7 +34,7 @@ end CreateValidatedOrder;
 
 function HandleHealth(req: Request) return Response is
 begin
-    return OkJson("{\"engine\":\"Zephyr-Aether\",\"status\":\"ok\",\"protocol\":\"HTTP/1.1+WS\"}");
+    return OkJson("{\"engine\":\"Zephyr-DelSafe\",\"status\":\"ok\",\"protocol\":\"HTTP/1.1+WS\"}");
 end HandleHealth;
 
 function HandleGetOrders(req: Request) return Response is

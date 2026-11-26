@@ -1191,7 +1191,7 @@ Begin
         Else If ItemName = 'shared' Then Annotation := 
 
 
-                                                      ' (Shared Aether Modules)'
+                                                      ' (Shared DelSafe Modules)'
         Else If ItemName = 'server-mormot' Then Annotation := 
 
 
@@ -1199,7 +1199,7 @@ Begin
         Else If ItemName = 'server-zephyr' Then Annotation := 
 
 
-                                                      ' (Zephyr Aether Backend)'
+                                                      ' (Zephyr DelSafe Backend)'
         Else If Copy(ItemName, 1, 7) = 'server-' Then
                Begin
                  Annotation := Copy(ItemName, 8, MaxInt);
@@ -1421,7 +1421,7 @@ Type
     ScriptTarget: string;
     ScriptStartLine: Integer;
     RawScriptBlock: string;
-    AetherLogicUnit: string;
+    DelSafeLogicUnit: string;
     WasmModuleName: string;
     WasmExports: array Of TWasmExportMeta;
     DataFields: array Of TDataField;
@@ -1618,7 +1618,7 @@ Function TryDispatchExternalTool(Const ACmd: String; StartParamIdx: Integer):
 forward;
 Procedure CmdRepo;
 forward;
-Function FindAethercPath: string;
+Function FindDelsafecPath: string;
 forward;
 Function ComputeTextHash(Const S: String): string;
 forward;
@@ -1631,9 +1631,9 @@ forward;
 Function InitExternalBackendTool(Const BackendName, WorkDir: String; out
                                  FoundToolName: String): Integer;
 forward;
-Procedure CompileAetherSharedModules(Const ProjectRoot: String);
+Procedure CompileDelSafeSharedModules(Const ProjectRoot: String);
 forward;
-Procedure ProcessAetherComponentScript(Const BVFilePath, UnitName, BaseCompName:
+Procedure ProcessDelSafeComponentScript(Const BVFilePath, UnitName, BaseCompName:
                                        String; Var Parsed: TBVParsed);
 forward;
 Procedure CopyWasmArtifactsToDist(Const ProjectRoot, DistPath: String);
@@ -1698,7 +1698,7 @@ Begin
   Parsed.ScriptTarget := '';
   Parsed.ScriptStartLine := 0;
   Parsed.RawScriptBlock := '';
-  Parsed.AetherLogicUnit := '';
+  Parsed.DelSafeLogicUnit := '';
   Parsed.WasmModuleName := '';
   SetLength(Parsed.WasmExports, 0);
   Parsed.MethodsCode := '';
@@ -3105,8 +3105,8 @@ Begin
   If Parsed.WasmModuleName <> '' Then
     UsesLine := UsesLine + ', BVWasm';
 
-  If Parsed.AetherLogicUnit <> '' Then
-    UsesLine := UsesLine + ', uAetherRuntime, ' + Parsed.AetherLogicUnit;
+  If Parsed.DelSafeLogicUnit <> '' Then
+    UsesLine := UsesLine + ', uDelSafeRuntime, ' + Parsed.DelSafeLogicUnit;
 
   If Parsed.ScriptUses <> '' Then
     UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
@@ -3249,8 +3249,8 @@ Begin
     If Parsed.HasRouter Then
       UsesLine := UsesLine + ', BVRouting';
 
-    If Parsed.AetherLogicUnit <> '' Then
-      UsesLine := UsesLine + ', uAetherRuntime, ' + Parsed.AetherLogicUnit;
+    If Parsed.DelSafeLogicUnit <> '' Then
+      UsesLine := UsesLine + ', uDelSafeRuntime, ' + Parsed.DelSafeLogicUnit;
 
     If Parsed.ScriptUses <> '' Then
       UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
@@ -4664,7 +4664,7 @@ Procedure CmdCreate(Const ProjectName: String);
 Var 
   Base, TemplatePath: string;
   Content, ArgLow, OldDir, BE, ExtToolName, ServerLabel, Suffix: string;
-  IsLib, IsDemo, UseAether, SkipNext, LazCreated, LazUpdated: Boolean;
+  IsLib, IsDemo, UseDelSafe, SkipNext, LazCreated, LazUpdated: Boolean;
   LicenseArg, RealProjectName, LazCleanName: string;
   i, k, RC, LazUnitsCount: Integer;
   RequestedBackends: TStringList;
@@ -4696,7 +4696,7 @@ End;
 Begin
   IsLib := False;
   IsDemo := False;
-  UseAether := False;
+  UseDelSafe := False;
   SkipNext := False;
   LicenseArg := '';
   RealProjectName := '';
@@ -4720,8 +4720,8 @@ Begin
                    IsDemo := True;
                  SkipNext := True;
                End
-        Else If ArgLow = '--aether' Then
-               UseAether := True
+        Else If ArgLow = '--delsafe' Then
+               UseDelSafe := True
         Else If ArgLow = '--mormot' Then
                AddBackendsCsv('mormot')
         Else If ArgLow = '--horse' Then
@@ -4729,7 +4729,7 @@ Begin
         Else If ArgLow = '--zephyr' Then
                Begin
                  AddBackendsCsv('zephyr');
-                 UseAether := True;
+                 UseDelSafe := True;
                End
         Else If (ArgLow = '--backend') And (i + 1 <= ParamCount) Then
                Begin
@@ -4750,14 +4750,14 @@ Begin
       End;
 
     If RequestedBackends.IndexOf('zephyr') >= 0 Then
-      UseAether := True;
+      UseDelSafe := True;
 
     If RealProjectName = '' Then
       Begin
         WriteLn(
 
 
-'Usage: bv create <project-name> [--demo] [--aether] [--backend=<mormot|zephyr|<tool>>] [--mormot] [--zephyr] [--lib] [--license <mit|apache|lgpl|commercial|none>]'
+'Usage: bv create <project-name> [--demo] [--delsafe] [--backend=<mormot|zephyr|<tool>>] [--mormot] [--zephyr] [--lib] [--license <mit|apache|lgpl|commercial|none>]'
         );
         Halt(1);
       End;
@@ -4879,15 +4879,15 @@ Begin
         WriteStringToFile(Base + 'public' + DirectorySeparator + 'index.html',
                           Content);
 
-        If UseAether Then
+        If UseDelSafe Then
           Begin
 
-// Full Aether starter with genuine Aether + Object Pascal service interop (no shared/ clutter)
+// Full DelSafe starter with genuine DelSafe + Object Pascal service interop (no shared/ clutter)
             WriteStringToFile(Base + 'src' + DirectorySeparator + 'app.bv',
                               '<template>' + #10 +
                               '  <div>' + #10 +
                               '    <nav>' + #10 +
-                              '      <strong>BlaiseVue + Aether</strong>' + #10
+                              '      <strong>BlaiseVue + DelSafe</strong>' + #10
                               +
                               '      <a href="#/">Home</a>' + #10 +
                               '      <a href="#/about">About</a>' + #10 +
@@ -4896,15 +4896,15 @@ Begin
                               '    <router-view></router-view>' + #10 +
                               '  </div>' + #10 +
                               '</template>' + #10#10 +
-                              '<script lang="aether">' + #10 +
+                              '<script lang="delsafe">' + #10 +
                               '  data:' + #10 +
 
-                 '    message: string = ''Welcome to BlaiseVue with Aether!'';'
+                 '    message: string = ''Welcome to BlaiseVue with DelSafe!'';'
                               + #10#10 +
                               '  methods:' + #10 +
                               '    function appBadge() return String is' + #10 +
                               '    begin' + #10 +
-                              '      return "Aether";' + #10 +
+                              '      return "DelSafe";' + #10 +
                               '    end appBadge;' + #10#10 +
                               '  router:' + #10 +
                               '    routes:' + #10 +
@@ -4925,7 +4925,7 @@ Begin
             );
 
             WriteStringToFile(Base + 'src' + DirectorySeparator + 'services' +
-                              DirectorySeparator + 'pricing.aeth',
+                              DirectorySeparator + 'pricing.dels',
                               'module pricing;' + #10#10 +
                               'interface' + #10 +
 
@@ -4963,10 +4963,10 @@ Begin
             WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' +
                               DirectorySeparator + 'Home.bv',
                               '<template>' + #10 +
-                              '  <div class="home-aether">' + #10 +
+                              '  <div class="home-delsafe">' + #10 +
                               '    <h2>{{ headline() }}</h2>' + #10 +
 
-                            '    <p>Aether + Object Pascal interop in action:</p>'
+                            '    <p>DelSafe + Object Pascal interop in action:</p>'
                               + #10 +
 
 '    <p class="price-total">{{ FormatCurrency(computeTotal(unitPrice, qty)) }}</p>'
@@ -4974,7 +4974,7 @@ Begin
                               '  </div>' + #10 +
                               '</template>' + #10#10 +
 
-                            '<script lang="aether" uses="pricing, uFormatters">'
+                            '<script lang="delsafe" uses="pricing, uFormatters">'
                               + #10 +
                               '  data:' + #10 +
                               '    unitPrice: double = 49.90;' + #10 +
@@ -4982,7 +4982,7 @@ Begin
                               '  methods:' + #10 +
                               '    function headline() return String is' + #10 +
                               '    begin' + #10 +
-                              '      return "Welcome to BlaiseVue + Aether";'
+                              '      return "Welcome to BlaiseVue + DelSafe";'
                               + #10 +
                               '    end headline;' + #10#10 +
 
@@ -5004,27 +5004,27 @@ Begin
             WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' +
                               DirectorySeparator + 'About.bv',
                               '<template>' + #10 +
-                              '  <div class="about-aether">' + #10 +
+                              '  <div class="about-delsafe">' + #10 +
                               '    <h2>About</h2>' + #10 +
 
                              '    <p class="stack-label">{{ stackLabel() }}</p>'
                               + #10 +
                               '  </div>' + #10 +
                               '</template>' + #10#10 +
-                              '<script lang="aether">' + #10 +
+                              '<script lang="delsafe">' + #10 +
                               '  methods:' + #10 +
                               '    function stackLabel() return String is' + #10
                               +
                               '    begin' + #10 +
 
-                            '      return "BlaiseVue + Aether + Object Pascal";'
+                            '      return "BlaiseVue + DelSafe + Object Pascal";'
                               + #10 +
                               '    end stackLabel;' + #10 +
                               '</script>' + #10
             );
 
             WriteStringToFile(Base + 'tests' + DirectorySeparator + 'services' +
-                              DirectorySeparator + 'pricing.test.aeth',
+                              DirectorySeparator + 'pricing.test.dels',
                               'module pricing_test;' + #10#10 +
                               'import pricing;' + #10#10 +
                               'program Main;' + #10 +
@@ -5070,11 +5070,11 @@ Begin
                               'begin' + #10 +
                               '  Register_uHome;' + #10 +
 
-                        '  Describe(''View: Home (Aether + Pascal)'', procedure'
+                        '  Describe(''View: Home (DelSafe + Pascal)'', procedure'
                               + #10 +
                               '    begin' + #10 +
 
-    '       It(''should render Aether total formatted by Pascal'', procedure'
+    '       It(''should render DelSafe total formatted by Pascal'', procedure'
                               + #10 +
                               '         begin' + #10 +
                               '            Wrapper := Mount(''home-page'');' + #10 +
@@ -5097,24 +5097,24 @@ Begin
                               'var Wrapper: TWrapper;' + #10#10 +
                               'begin' + #10 +
                               '  Register_uAbout;' + #10 +
-                              '  Describe(''View: About (Aether)'', procedure' +
+                              '  Describe(''View: About (DelSafe)'', procedure' +
                               #10 +
                               '    begin' + #10 +
 
-               '       It(''should render Aether stack label without errors'', procedure'
+               '       It(''should render DelSafe stack label without errors'', procedure'
                               + #10 +
                               '         begin' + #10 +
                               '            Wrapper := Mount(''about-page'');' +
                               #10 +
 
-'            Expect(Wrapper.Find(''.stack-label'').textContent).ToContain(''Aether'');'
+'            Expect(Wrapper.Find(''.stack-label'').textContent).ToContain(''DelSafe'');'
                               + #10 +
                               '         end);' + #10 +
                               '    end);' + #10 +
                               'end.' + #10
             );
             WriteLn(
-'  [+] Added Aether full-stack starter (src/services/pricing.aeth + uFormatters.pas + tests)'
+'  [+] Added DelSafe full-stack starter (src/services/pricing.dels + uFormatters.pas + tests)'
             );
           End
         Else
@@ -5409,7 +5409,7 @@ If DirectoryExists(Base + 'server-zephyr') Then
   WriteLn(
 
 
-'  bv zephyr run             # Starts the native Zephyr Aether backend on port 8091'
+'  bv zephyr run             # Starts the native Zephyr DelSafe backend on port 8091'
   );
 If FindFirst(Base + 'server-*', faDirectory, SR) = 0 Then
   Begin
@@ -6471,7 +6471,7 @@ Begin
 End;
 
 // =====================================================================
-//  PHASE 34: AETHER SFC (<script lang="aether">), WASM & ZEPHYR ENGINE
+//  PHASE 34: DELSAFE SFC (<script lang="delsafe">), WASM & ZEPHYR ENGINE
 // =====================================================================
 
 Function ComputeTextHash(Const S: String): string;
@@ -6523,7 +6523,7 @@ Begin
   If ForInit Or DirectoryExists(NewDir) Then
     Exit(NewDir);
   If DirectoryExists(LegacyDir) And
-     FileExists(LegacyDir + DirectorySeparator + 'zephyr_server.aeth') Then
+     FileExists(LegacyDir + DirectorySeparator + 'zephyr_server.dels') Then
     Exit(LegacyDir);
   Result := NewDir;
 End;
@@ -6625,24 +6625,24 @@ Begin
 End;
 End;
 
-Function FindAethercPath: string;
+Function FindDelsafecPath: string;
 
 Var 
   Cand, EnvHome, OutStr: string;
 Begin
-  Cand := Trim(GetEnvironmentVariable('AETHERC_PATH'));
+  Cand := Trim(GetEnvironmentVariable('DELSAFEC_PATH'));
   If (Cand <> '') And FileExists(Cand) Then Exit(Cand);
 
   {$IFDEF WINDOWS}
-  Cand := ExpandFileName(GetSDKPath + '..\aether\bin\aetherc.exe');
+  Cand := ExpandFileName(GetSDKPath + '..\delsafe\bin\delsafec.exe');
   If FileExists(Cand) Then Exit(Cand);
   EnvHome := GetEnvironmentVariable('USERPROFILE');
   If EnvHome <> '' Then
     Begin
-      Cand := IncludeTrailingPathDelimiter(EnvHome) + '.aether\bin\aetherc.exe';
+      Cand := IncludeTrailingPathDelimiter(EnvHome) + '.delsafe\bin\delsafec.exe';
       If FileExists(Cand) Then Exit(Cand);
     End;
-  If RunCommand('cmd.exe', ['/c', 'where aetherc.exe'], OutStr) And (Trim(OutStr
+  If RunCommand('cmd.exe', ['/c', 'where delsafec.exe'], OutStr) And (Trim(OutStr
      ) <> '') Then
     Begin
       Cand := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
@@ -6650,15 +6650,15 @@ Begin
       If FileExists(Cand) Then Exit(Cand);
     End;
   {$ELSE}
-  Cand := ExpandFileName(GetSDKPath + '../aether/bin/aetherc');
+  Cand := ExpandFileName(GetSDKPath + '../delsafe/bin/delsafec');
   If FileExists(Cand) Then Exit(Cand);
   EnvHome := GetEnvironmentVariable('HOME');
   If EnvHome <> '' Then
     Begin
-      Cand := IncludeTrailingPathDelimiter(EnvHome) + '.aether/bin/aetherc';
+      Cand := IncludeTrailingPathDelimiter(EnvHome) + '.delsafe/bin/delsafec';
       If FileExists(Cand) Then Exit(Cand);
     End;
-  If RunCommand('which', ['aetherc'], OutStr) And (Trim(OutStr) <> '') Then
+  If RunCommand('which', ['delsafec'], OutStr) And (Trim(OutStr) <> '') Then
     Begin
       Cand := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
       If FileExists(Cand) Then Exit(Cand);
@@ -6667,7 +6667,7 @@ Begin
   Result := '';
 End;
 
-Procedure PrintAetherJsonDiagnostics(Const RawOut, ContextLabel: String);
+Procedure PrintDelSafeJsonDiagnostics(Const RawOut, ContextLabel: String);
 
 Var 
   PStart, PEnd, I: Integer;
@@ -6697,7 +6697,7 @@ Begin
                           Obj := TJSONObject(Arr.Items[I]);
                           Code := GetJsonString(Obj, 'code', 'ERR');
                           Msg := GetJsonString(Obj, 'message',
-                                 'Aether compilation error');
+                                 'DelSafe compilation error');
                           FFile := GetJsonString(Obj, 'file', ContextLabel);
                           Hint := GetJsonString(Obj, 'hint', '');
                           FLine := Obj.Get('line', 0);
@@ -6721,7 +6721,7 @@ Begin
                                     End;
                                 End;
                             End;
-                          WriteLn('  [Aether ', Code, '] ', FFile, ':', FLine,
+                          WriteLn('  [DelSafe ', Code, '] ', FFile, ':', FLine,
                                   ':', FCol, ' - ', Msg);
                           If Hint <> '' Then
                             WriteLn('    Hint: ', Hint);
@@ -6737,11 +6737,11 @@ Except
   // Fall through to raw output
 End;
 End;
-WriteLn('ERROR: Aether compilation failed for ', ContextLabel, ':');
+WriteLn('ERROR: DelSafe compilation failed for ', ContextLabel, ':');
 WriteLn(RawOut);
 End;
 
-Procedure ScanDirForAeth(Const DirPath: String; List: TStringList);
+Procedure ScanDirForDels(Const DirPath: String; List: TStringList);
 
 Var 
   SR: TSearchRec;
@@ -6755,8 +6755,8 @@ Begin
         If (SR.Name <> '.') And (SR.Name <> '..') Then
           Begin
             If (SR.Attr And faDirectory) <> 0 Then
-              ScanDirForAeth(D + SR.Name, List)
-            Else If LowerCase(ExtractFileExt(SR.Name)) = '.aeth' Then
+              ScanDirForDels(D + SR.Name, List)
+            Else If LowerCase(ExtractFileExt(SR.Name)) = '.dels' Then
                    List.Add(D + SR.Name);
           End;
       Until FindNext(SR) <> 0;
@@ -6847,10 +6847,10 @@ Begin
   'package.json', 'blaisevue');
 End;
 
-Procedure ResolveAetherSearchPaths(Const ProjectRoot: String; OutPaths:
+Procedure ResolveDelSafeSearchPaths(Const ProjectRoot: String; OutPaths:
                                    TStringList);
 Begin
-  ResolveJsonSearchPaths(ProjectRoot, 'aether', OutPaths, True);
+  ResolveJsonSearchPaths(ProjectRoot, 'delsafe', OutPaths, True);
 End;
 
 Procedure ResolvePascalSearchPaths(Const ProjectRoot: String; OutPaths:
@@ -6880,7 +6880,7 @@ Begin
   End;
 End;
 
-Function FindAetherModuleFile(Const ProjectRoot, ModName: String): string;
+Function FindDelSafeModuleFile(Const ProjectRoot, ModName: String): string;
 
 Var 
   SearchPaths: TStringList;
@@ -6890,13 +6890,13 @@ Begin
   Result := '';
   SearchPaths := TStringList.Create;
   Try
-    ResolveAetherSearchPaths(ProjectRoot, SearchPaths);
+    ResolveDelSafeSearchPaths(ProjectRoot, SearchPaths);
     For I := 0 To SearchPaths.Count - 1 Do
       Begin
         Cand1 := IncludeTrailingPathDelimiter(SearchPaths[I]) + ModName +
-                 '.aeth';
+                 '.dels';
         Cand2 := IncludeTrailingPathDelimiter(SearchPaths[I]) + LowerCase(
-                 ModName) + '.aeth';
+                 ModName) + '.dels';
         If FileExists(Cand1) Then Exit(Cand1);
         If FileExists(Cand2) Then Exit(Cand2);
       End;
@@ -7076,10 +7076,10 @@ Begin
 End;
 End;
 
-Procedure CompileAetherSharedModules(Const ProjectRoot: String);
+Procedure CompileDelSafeSharedModules(Const ProjectRoot: String);
 
 Var 
-  GenDir, AethercExe, FileSrc, BaseName, HashFile, CurHash, OldHash,
+  GenDir, DelsafecExe, FileSrc, BaseName, HashFile, CurHash, OldHash,
   OutPas, RawOut, IncKey: string;
   SearchPaths, Files, ParamsList: TStringList;
   I, J, RC: Integer;
@@ -7087,24 +7087,24 @@ Begin
   SearchPaths := TStringList.Create;
   Files := TStringList.Create;
   Try
-    ResolveAetherSearchPaths(ProjectRoot, SearchPaths);
+    ResolveDelSafeSearchPaths(ProjectRoot, SearchPaths);
     If SearchPaths.Count = 0 Then Exit;
 
     For I := 0 To SearchPaths.Count - 1 Do
-      ScanDirForAeth(SearchPaths[I], Files);
+      ScanDirForDels(SearchPaths[I], Files);
 
-    // Exclude *.test.aeth files (handled by bv test)
+    // Exclude *.test.dels files (handled by bv test)
     For I := Files.Count - 1 Downto 0 Do
-      If Pos('.test.aeth', LowerCase(ExtractFileName(Files[I]))) > 0 Then
+      If Pos('.test.dels', LowerCase(ExtractFileName(Files[I]))) > 0 Then
         Files.Delete(I);
 
     If Files.Count = 0 Then Exit;
 
-    AethercExe := FindAethercPath;
-    If AethercExe = '' Then
+    DelsafecExe := FindDelsafecPath;
+    If DelsafecExe = '' Then
       Begin
         WriteLn(
-'ERROR: Found Aether service modules (.aeth), but "aetherc" compiler was not found in PATH or AETHERC_PATH.'
+'ERROR: Found DelSafe service modules (.dels), but "delsafec" compiler was not found in PATH or DELSAFEC_PATH.'
         );
         Halt(1);
       End;
@@ -7126,15 +7126,15 @@ Begin
         ;
 
         If (CurHash = OldHash) And FileExists(OutPas) And FileExists(
-           IncludeTrailingPathDelimiter(GenDir) + 'uAetherRuntime.pas') Then
+           IncludeTrailingPathDelimiter(GenDir) + 'uDelSafeRuntime.pas') Then
           Begin
-            WriteLn('  [aether service cache] ', BaseName, '.aeth (up to date)')
+            WriteLn('  [delsafe service cache] ', BaseName, '.dels (up to date)')
             ;
             Continue;
           End;
 
-        WriteLn('  [aether service] ', BaseName,
-                '.aeth -> .blaisevue/generated/', BaseName, '.pas');
+        WriteLn('  [delsafe service] ', BaseName,
+                '.dels -> .blaisevue/generated/', BaseName, '.pas');
         ParamsList := TStringList.Create;
         Try
           ParamsList.Add('emit');
@@ -7150,14 +7150,14 @@ Begin
             End;
           ParamsList.Add('--emit-json-diag');
           ParamsList.Add('--silent');
-          RC := ExecProcessCaptureExit(AethercExe, ParamsList.ToStringArray,
+          RC := ExecProcessCaptureExit(DelsafecExe, ParamsList.ToStringArray,
                 RawOut);
         Finally
           ParamsList.Free;
       End;
     If RC <> 0 Then
       Begin
-        PrintAetherJsonDiagnostics(RawOut, FileSrc);
+        PrintDelSafeJsonDiagnostics(RawOut, FileSrc);
         Halt(1);
       End;
     WriteStringToFile(HashFile, CurHash);
@@ -7168,7 +7168,7 @@ Finally
 End;
 End;
 
-Function MapAetherParamTypeToPascal(Const ATyp: String): string;
+Function MapDelSafeParamTypeToPascal(Const ATyp: String): string;
 
 Var 
   L: string;
@@ -7186,7 +7186,7 @@ Begin
   Else Result := 'JSValue';
 End;
 
-Function ConvertAetherParamsToPascal(Const RawParams: String; out PasParams,
+Function ConvertDelSafeParamsToPascal(Const RawParams: String; out PasParams,
                                      CallArgs: String; out ParamCountOut:
                                      Integer): Boolean;
 
@@ -7222,7 +7222,7 @@ Begin
                         rfReplaceAll, rfIgnoreCase]));
             LeftPart := Trim(StringReplace(LeftPart, 'move ', '', [rfReplaceAll,
                         rfIgnoreCase]));
-            PasTyp := MapAetherParamTypeToPascal(TypPart);
+            PasTyp := MapDelSafeParamTypeToPascal(TypPart);
 
             Ids.Delimiter := ',';
             Ids.StrictDelimiter := True;
@@ -7245,11 +7245,11 @@ Begin
 End;
 End;
 
-Procedure BuildAetherSourceAndWrappers(
+Procedure BuildDelSafeSourceAndWrappers(
                                        Const LogicModName, BVFilePath: String;
                                        Const Parsed: TBVParsed;
                                        IsWasmMode: Boolean;
-                                       out AethSource: String;
+                                       out DelsSource: String;
                                        out LineOffset: Integer;
                                        out OutMethodsPas: String;
                                        out OutComputedPas: String
@@ -7281,7 +7281,7 @@ Begin
             UItem := Trim(UsesParts[I]);
             If UItem <> '' Then
               Begin
-                If (FindAetherModuleFile(ProjectRoot, UItem) <> '') Or
+                If (FindDelSafeModuleFile(ProjectRoot, UItem) <> '') Or
                    FileExists(IncludeTrailingPathDelimiter(ProjectRoot) +
                    '.blaisevue' + DirectorySeparator + 'generated' +
                    DirectorySeparator + UItem + '.pas') Then
@@ -7413,7 +7413,7 @@ Try
               ;
               If (NamePart <> '') And (Pos('<', NamePart) = 0) Then
                 Begin
-                  ConvertAetherParamsToPascal(RawParamStr, PasParams, CallArgs,
+                  ConvertDelSafeParamsToPascal(RawParamStr, PasParams, CallArgs,
                                               Arity);
                   If Arity = 0 Then WrapperSig := NamePart
                   Else WrapperSig := NamePart + '(' + PasParams + ')';
@@ -7422,7 +7422,7 @@ Try
                     Begin
                       PRet := Pos(' return ', LowerCase(SigLine));
                       If PRet > 0 Then
-                        RetType := MapAetherParamTypeToPascal(Trim(StringReplace
+                        RetType := MapDelSafeParamTypeToPascal(Trim(StringReplace
                                    (
                                    Copy(SigLine, PRet + 8, Length(SigLine)), ';'
                                    ,
@@ -7474,9 +7474,9 @@ Else
   HeaderLine := 'module ' + LogicModName + ';' + ImportsPart + ' interface' +
                 FwdDecls + ' implementation';
 
-AethSource := HeaderLine + #10 + BodyBlock;
+DelsSource := HeaderLine + #10 + BodyBlock;
 If Not HasInterfaceAlready Then
-  AethSource := AethSource + 'end ' + LogicModName + '.' + #10;
+  DelsSource := DelsSource + 'end ' + LogicModName + '.' + #10;
 
 HeaderLines := 1;
 If Parsed.ScriptStartLine > HeaderLines Then
@@ -7485,12 +7485,12 @@ Else
   LineOffset := 0;
 End;
 
-Procedure ProcessAetherComponentScript(Const BVFilePath, UnitName, BaseCompName:
+Procedure ProcessDelSafeComponentScript(Const BVFilePath, UnitName, BaseCompName:
                                        String; Var Parsed: TBVParsed);
 
 Var 
-  AethercExe, ProjectRoot, TmpDir, GenDir, WasmDir: string;
-  LogicModName, AethSource, TmpAethFile, HashFile, CurHash, OldHash, OutPas,
+  DelsafecExe, ProjectRoot, TmpDir, GenDir, WasmDir: string;
+  LogicModName, DelsSource, TmpDelsFile, HashFile, CurHash, OldHash, OutPas,
   OutWasm, OutManifest, RawOut: string;
   MethodsPas, ComputedPas, ManifestJson, PasParams, WasmPushLines, ArgName:
                                                                           string
@@ -7503,13 +7503,13 @@ Var
   Meta: TWasmExportMeta;
   IsProc: Boolean;
 Begin
-  If Parsed.ScriptLang <> 'aether' Then Exit;
+  If Parsed.ScriptLang <> 'delsafe' Then Exit;
 
-  AethercExe := FindAethercPath;
-  If AethercExe = '' Then
+  DelsafecExe := FindDelsafecPath;
+  If DelsafecExe = '' Then
     Begin
       WriteLn('ERROR: ', ExtractFileName(BVFilePath),
-      ' uses <script lang="aether">, but "aetherc" compiler was not found.');
+      ' uses <script lang="delsafe">, but "delsafec" compiler was not found.');
       Halt(1);
     End;
 
@@ -7527,18 +7527,18 @@ Begin
     Begin
       ForceDir(WasmDir);
       LogicModName := BaseCompName + '_wasm';
-      BuildAetherSourceAndWrappers(LogicModName, BVFilePath, Parsed, True,
-                                   AethSource, LineOffset, MethodsPas,
+      BuildDelSafeSourceAndWrappers(LogicModName, BVFilePath, Parsed, True,
+                                   DelsSource, LineOffset, MethodsPas,
                                    ComputedPas);
 
-      TmpAethFile := IncludeTrailingPathDelimiter(TmpDir) + LogicModName +
-                     '.aeth';
+      TmpDelsFile := IncludeTrailingPathDelimiter(TmpDir) + LogicModName +
+                     '.dels';
       OutWasm := IncludeTrailingPathDelimiter(WasmDir) + BaseCompName + '.wasm';
       OutManifest := OutWasm + '.json';
       HashFile := IncludeTrailingPathDelimiter(WasmDir) + BaseCompName +
                   '.wasm.hash';
 
-      CurHash := ComputeTextHash(AethSource + '|Offset:' + IntToStr(LineOffset))
+      CurHash := ComputeTextHash(DelsSource + '|Offset:' + IntToStr(LineOffset))
       ;
       OldHash := '';
       If FileExists(HashFile) Then OldHash := Trim(ReadFileToString(HashFile));
@@ -7546,16 +7546,16 @@ Begin
       If (CurHash = OldHash) And FileExists(OutWasm) And FileExists(OutManifest)
         Then
         Begin
-          WriteLn('  [aether wasm cache] ', ExtractFileName(BVFilePath),
+          WriteLn('  [delsafe wasm cache] ', ExtractFileName(BVFilePath),
           ' (up to date)');
         End
       Else
         Begin
-          WriteStringToFile(TmpAethFile, AethSource);
-          WriteLn('  [aether wasm] ', ExtractFileName(BVFilePath),
+          WriteStringToFile(TmpDelsFile, DelsSource);
+          WriteLn('  [delsafe wasm] ', ExtractFileName(BVFilePath),
           ' -> .blaisevue/wasm/', BaseCompName, '.wasm');
-          RC := ExecProcessCaptureExit(AethercExe, [
-                'emit', 'wasm', TmpAethFile,
+          RC := ExecProcessCaptureExit(DelsafecExe, [
+                'emit', 'wasm', TmpDelsFile,
                 '-o', OutWasm,
                 '--manifest',
                 '--source-file=' + BVFilePath,
@@ -7564,7 +7564,7 @@ Begin
                 ], RawOut);
           If RC <> 0 Then
             Begin
-              PrintAetherJsonDiagnostics(RawOut, BVFilePath);
+              PrintDelSafeJsonDiagnostics(RawOut, BVFilePath);
               Halt(1);
             End;
           WriteStringToFile(HashFile, CurHash);
@@ -7609,7 +7609,7 @@ Begin
                                 If PasParams <> '' Then PasParams := PasParams +
                                                                      '; ';
                                 PasParams := PasParams + ArgName + ': ' +
-                                             MapAetherParamTypeToPascal(
+                                             MapDelSafeParamTypeToPascal(
                                              GetJsonString(PObj, 'type',
                                              'JSValue'));
                                 WasmPushLines := WasmPushLines +
@@ -7657,36 +7657,36 @@ Begin
   Exit;
 End;
 
-// Standard Aether -> Object Pascal unit mode
+// Standard DelSafe -> Object Pascal unit mode
 LogicModName := UnitName + '_logic';
-BuildAetherSourceAndWrappers(LogicModName, BVFilePath, Parsed, False, AethSource
+BuildDelSafeSourceAndWrappers(LogicModName, BVFilePath, Parsed, False, DelsSource
                              , LineOffset, MethodsPas, ComputedPas);
 
-TmpAethFile := IncludeTrailingPathDelimiter(TmpDir) + LogicModName + '.aeth';
+TmpDelsFile := IncludeTrailingPathDelimiter(TmpDir) + LogicModName + '.dels';
 OutPas := IncludeTrailingPathDelimiter(GenDir) + LogicModName + '.pas';
 HashFile := IncludeTrailingPathDelimiter(GenDir) + LogicModName + '.hash';
-CurHash := ComputeTextHash(AethSource + '|Uses:' + Parsed.ScriptUses +
+CurHash := ComputeTextHash(DelsSource + '|Uses:' + Parsed.ScriptUses +
            '|Offset:' + IntToStr(LineOffset));
 OldHash := '';
 If FileExists(HashFile) Then OldHash := Trim(ReadFileToString(HashFile));
 
 If (CurHash = OldHash) And FileExists(OutPas) And FileExists(
-   IncludeTrailingPathDelimiter(GenDir) + 'uAetherRuntime.pas') Then
+   IncludeTrailingPathDelimiter(GenDir) + 'uDelSafeRuntime.pas') Then
   Begin
-    WriteLn('  [aether cache] ', ExtractFileName(BVFilePath), ' (up to date)');
+    WriteLn('  [delsafe cache] ', ExtractFileName(BVFilePath), ' (up to date)');
   End
 Else
   Begin
-    WriteStringToFile(TmpAethFile, AethSource);
-    WriteLn('  [aether] ', ExtractFileName(BVFilePath),
+    WriteStringToFile(TmpDelsFile, DelsSource);
+    WriteLn('  [delsafe] ', ExtractFileName(BVFilePath),
     ' -> .blaisevue/generated/', LogicModName, '.pas');
     SearchPaths := TStringList.Create;
     ParamsList := TStringList.Create;
     Try
-      ResolveAetherSearchPaths(ProjectRoot, SearchPaths);
+      ResolveDelSafeSearchPaths(ProjectRoot, SearchPaths);
       ParamsList.Add('emit');
       ParamsList.Add('pascal');
-      ParamsList.Add(TmpAethFile);
+      ParamsList.Add(TmpDelsFile);
       ParamsList.Add('--unit');
       ParamsList.Add('--shared-runtime');
       ParamsList.Add('--out-dir=' + GenDir);
@@ -7699,7 +7699,7 @@ Else
       ParamsList.Add('--line-offset=' + IntToStr(LineOffset));
       ParamsList.Add('--emit-json-diag');
       ParamsList.Add('--silent');
-      RC := ExecProcessCaptureExit(AethercExe, ParamsList.ToStringArray, RawOut)
+      RC := ExecProcessCaptureExit(DelsafecExe, ParamsList.ToStringArray, RawOut)
       ;
     Finally
       ParamsList.Free;
@@ -7707,13 +7707,13 @@ Else
   End;
 If RC <> 0 Then
   Begin
-    PrintAetherJsonDiagnostics(RawOut, BVFilePath);
+    PrintDelSafeJsonDiagnostics(RawOut, BVFilePath);
     Halt(1);
   End;
 WriteStringToFile(HashFile, CurHash);
 End;
 
-Parsed.AetherLogicUnit := LogicModName;
+Parsed.DelSafeLogicUnit := LogicModName;
 Parsed.MethodsCode := MethodsPas;
 Parsed.ComputedCode := ComputedPas;
 End;
@@ -7783,7 +7783,7 @@ Begin
 
     WriteLn('=== BlaiseVue Transpile ===');
     WriteLn('');
-    CompileAetherSharedModules(GetCurrentDir);
+    CompileDelSafeSharedModules(GetCurrentDir);
 
     // Prepares app.bv first
 
@@ -7837,7 +7837,7 @@ Begin
 
         WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
         ParseBVFile(BVFiles[i], Parsed);
-        ProcessAetherComponentScript(BVFiles[i], UnitName, ChangeFileExt(
+        ProcessDelSafeComponentScript(BVFiles[i], UnitName, ChangeFileExt(
                                      FileName, ''), Parsed);
         ValidateComponentTemplate(BVFiles[i], Parsed);
         If IsApp Then
@@ -7926,7 +7926,7 @@ Var
   Parsed: TBVParsed;
   IsApp: Boolean;
   JSFiles: TStringList;
-  AetherGenPath, AetherFuFlag: string;
+  DelSafeGenPath, DelSafeFuFlag: string;
 Begin
   RequireBlaiseVueProject('bv build');
   GenPath := GetCurrentDir + DirectorySeparator + 'generated' +
@@ -7989,7 +7989,7 @@ Begin
 
     WriteLn('[1/3] Processing ', BVFiles.Count, ' .bv file(s) ...');
     WriteLn('');
-    CompileAetherSharedModules(GetCurrentDir);
+    CompileDelSafeSharedModules(GetCurrentDir);
 
     // First pass: identify all units (requires complete list for app.bv)
 
@@ -8031,7 +8031,7 @@ Begin
 
         WriteLn('  ', FileName, ' -> ', UnitName, '.pas');
         ParseBVFile(BVFiles[i], Parsed);
-        ProcessAetherComponentScript(BVFiles[i], UnitName, ChangeFileExt(
+        ProcessDelSafeComponentScript(BVFiles[i], UnitName, ChangeFileExt(
                                      FileName, ''), Parsed);
         If IsApp Then
           GeneratedCode := GenerateAppUnit(Parsed, UnitNames)
@@ -8054,15 +8054,15 @@ Begin
 
     WriteLn('[2/3] Compiling with pas2js ...');
     WriteLn('');
-    AetherGenPath := GetCurrentDir + DirectorySeparator + '.blaisevue' +
+    DelSafeGenPath := GetCurrentDir + DirectorySeparator + '.blaisevue' +
                      DirectorySeparator + 'generated';
-    If DirectoryExists(AetherGenPath) Then
-      AetherFuFlag := ' -Fu"' + AetherGenPath + '"'
+    If DirectoryExists(DelSafeGenPath) Then
+      DelSafeFuFlag := ' -Fu"' + DelSafeGenPath + '"'
     Else
-      AetherFuFlag := '';
+      DelSafeFuFlag := '';
 
     Pas2jsCmd := '"' + GetPas2JSPath + '" @app.cfg -Fu"' + GetCorePath +
-                 '" -Fu"' + GetPas2JSLibPath + '"' + AetherFuFlag +
+                 '" -Fu"' + GetPas2JSLibPath + '"' + DelSafeFuFlag +
                  BuildExtraPascalFuFlags(GetCurrentDir, True) + ' generated' +
                  DirectorySeparator + 'main.pas -o' + DistPath + 'js' +
                  DirectorySeparator + 'main.js';
@@ -8071,13 +8071,13 @@ Begin
 
     {$IFDEF WINDOWS}
     i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"'
-         + GetPas2JSLibPath + '"' + AetherFuFlag +
+         + GetPas2JSLibPath + '"' + DelSafeFuFlag +
          BuildExtraPascalFuFlags(GetCurrentDir, True) + ' generated' +
          DirectorySeparator + 'main.pas -o' +
          DistPath + 'js' + DirectorySeparator + 'main.js');
     {$ELSE}
     i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' +
-         GetPas2JSLibPath + AetherFuFlag +
+         GetPas2JSLibPath + DelSafeFuFlag +
          BuildExtraPascalFuFlags(GetCurrentDir, False) + ' generated/main.pas -o'
          + DistPath + 'js/main.js');
     {$ENDIF}
@@ -8254,7 +8254,7 @@ End;
 // =====================================================================
 
 Procedure CmdNewComponent(Const CompName: String; CreateTest: Boolean = True;
-                          Const UseAether: Boolean = False);
+                          Const UseDelSafe: Boolean = False);
 
 Var 
   CompPath, TargetPath, Content: string;
@@ -8272,20 +8272,20 @@ Begin
 
   ForceDir(CompPath);
   CompTag := PascalToKebab(CompName);
-  If UseAether Then
+  If UseDelSafe Then
     Content := '<template>' + #10 +
                '  <div class="' + CompTag + '">' + #10 +
                '    <h3>{{ title }}</h3>' + #10 +
                '    <p>{{ greeting() }}</p>' + #10 +
                '  </div>' + #10 +
                '</template>' + #10#10 +
-               '<script lang="aether">' + #10 +
+               '<script lang="delsafe">' + #10 +
                '  data:' + #10 +
                '    title: string = ''' + CompName + ''';' + #10#10 +
                '  methods:' + #10 +
                '    function greeting() return String is' + #10 +
                '    begin' + #10 +
-               '      return "Powered by Aether";' + #10 +
+               '      return "Powered by DelSafe";' + #10 +
                '    end greeting;' + #10 +
                '</script>' + #10#10 +
                '<style>' + #10 +
@@ -8431,7 +8431,7 @@ End;
 // =====================================================================
 
 Procedure CmdNewView(Const ViewName: String; CreateTest: Boolean = True;
-                     Const UseAether: Boolean = False);
+                     Const UseDelSafe: Boolean = False);
 
 Var 
   ViewPath, TargetPath, Content: string;
@@ -8451,20 +8451,20 @@ Begin
   ForceDir(ViewPath);
   ViewKebab := PascalToKebab(ViewName);
   ViewTag := ViewKebab + '-page';
-  If UseAether Then
+  If UseDelSafe Then
     Content := '<template>' + #10 +
                '  <div class="' + ViewTag + '">' + #10 +
                '    <h2>{{ heading }}</h2>' + #10 +
                '    <p>{{ subtitle() }}</p>' + #10 +
                '  </div>' + #10 +
                '</template>' + #10#10 +
-               '<script lang="aether">' + #10 +
+               '<script lang="delsafe">' + #10 +
                '  data:' + #10 +
                '    heading: string = ''' + ViewName + ''';' + #10#10 +
                '  methods:' + #10 +
                '    function subtitle() return String is' + #10 +
                '    begin' + #10 +
-               '      return "Aether View";' + #10 +
+               '      return "DelSafe View";' + #10 +
                '    end subtitle;' + #10 +
                '</script>' + #10
   Else
@@ -11435,7 +11435,7 @@ End;
 // =====================================================================
 
 Procedure CmdNewService(Const ServiceName: String; CreateTest: Boolean = True;
-                        Const UseAether: Boolean = False);
+                        Const UseDelSafe: Boolean = False);
 
 Var 
   NormName, ServicePath, TargetPath, Content: string;
@@ -11449,12 +11449,12 @@ Begin
 
   ServicePath := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator
                  + 'services' + DirectorySeparator;
-  If UseAether Then
+  If UseDelSafe Then
     Begin
-      TargetPath := ServicePath + NormName + '.aeth';
+      TargetPath := ServicePath + NormName + '.dels';
       If FileExists(TargetPath) Then
         Begin
-          WriteLn('ERROR: Aether service "', NormName, '.aeth" already exists!')
+          WriteLn('ERROR: DelSafe service "', NormName, '.dels" already exists!')
           ;
           Halt(1);
         End;
@@ -11475,12 +11475,12 @@ Begin
                  '  end scaleValue;' + #10#10 +
                  'end ' + NormName + '.' + #10;
       WriteStringToFile(TargetPath, Content);
-      WriteLn('Aether service created: src/services/', NormName, '.aeth');
+      WriteLn('DelSafe service created: src/services/', NormName, '.dels');
       If CreateTest Then
         Begin
           TestPath := GetCurrentDir + DirectorySeparator + 'tests' +
                       DirectorySeparator + 'services' + DirectorySeparator;
-          TestFile := TestPath + NormName + '.test.aeth';
+          TestFile := TestPath + NormName + '.test.dels';
           If Not FileExists(TestFile) Then
             Begin
               ForceDir(TestPath);
@@ -11496,8 +11496,8 @@ Begin
                              '  PrintLn("PASS: ' + NormName + '");' + #10 +
                              'end ' + LowerCase(NormName) + '_test.' + #10;
               WriteStringToFile(TestFile, TestContent);
-              WriteLn('Aether service test created: tests/services/', NormName,
-                      '.test.aeth');
+              WriteLn('DelSafe service test created: tests/services/', NormName,
+                      '.test.dels');
             End;
         End;
       Exit;
@@ -12130,11 +12130,11 @@ End;
 
 // =====================================================================
 
-Procedure CmdNewTest(Const TestName: String; Const UseAether: Boolean = False);
+Procedure CmdNewTest(Const TestName: String; Const UseDelSafe: Boolean = False);
 
 Var 
   CleanName, NormName, TargetPath, TargetDir, Content: string;
-  CompBV, ViewBV, ServicePas, ServiceAeth: string;
+  CompBV, ViewBV, ServicePas, ServiceDels: string;
   CompTag, ViewTag, ViewKebab: string;
   IsExplicitPath: Boolean;
 Begin
@@ -12153,12 +12153,12 @@ Begin
       TargetDir := GetCurrentDir + DirectorySeparator + 'tests' +
                    DirectorySeparator + ExtractFilePath(CleanName);
       NormName := ExtractFileName(CleanName);
-      If UseAether Then
+      If UseDelSafe Then
         Begin
-          TargetPath := TargetDir + NormName + '.test.aeth';
+          TargetPath := TargetDir + NormName + '.test.dels';
           If FileExists(TargetPath) Then
             Begin
-              WriteLn('ERROR: Test "', CleanName, '.test.aeth" already exists!')
+              WriteLn('ERROR: Test "', CleanName, '.test.dels" already exists!')
               ;
               Halt(1);
             End;
@@ -12170,7 +12170,7 @@ Begin
                      '  PrintLn("PASS: ' + NormName + '");' + #10 +
                      'end ' + LowerCase(NormName) + '_test.' + #10;
           WriteStringToFile(TargetPath, Content);
-          WriteLn('Test created: tests/', CleanName, '.test.aeth');
+          WriteLn('Test created: tests/', CleanName, '.test.dels');
           Exit;
         End;
       TargetPath := TargetDir + NormName + '.test.pas';
@@ -12472,18 +12472,18 @@ Begin
 
 
 
-  // 3b. Is it an existing Aether service in src/services/?
-  ServiceAeth := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator
-                 + 'services' + DirectorySeparator + NormName + '.aeth';
-  If FileExists(ServiceAeth) Then
+  // 3b. Is it an existing DelSafe service in src/services/?
+  ServiceDels := GetCurrentDir + DirectorySeparator + 'src' + DirectorySeparator
+                 + 'services' + DirectorySeparator + NormName + '.dels';
+  If FileExists(ServiceDels) Then
     Begin
       TargetDir := GetCurrentDir + DirectorySeparator + 'tests' +
                    DirectorySeparator + 'services' + DirectorySeparator;
-      TargetPath := TargetDir + NormName + '.test.aeth';
+      TargetPath := TargetDir + NormName + '.test.dels';
       If FileExists(TargetPath) Then
         Begin
-          WriteLn('ERROR: Aether service test "', NormName,
-                  '.test.aeth" already exists in tests/services/!');
+          WriteLn('ERROR: DelSafe service test "', NormName,
+                  '.test.dels" already exists in tests/services/!');
           Halt(1);
         End;
       ForceDir(TargetDir);
@@ -12495,9 +12495,9 @@ Begin
                  '  PrintLn("PASS: ' + NormName + '");' + #10 +
                  'end ' + LowerCase(NormName) + '_test.' + #10;
       WriteStringToFile(TargetPath, Content);
-      WriteLn('Smart Detection: Found Aether service src/services/', NormName,
-              '.aeth');
-      WriteLn('Test created: tests/services/', NormName, '.test.aeth');
+      WriteLn('Smart Detection: Found DelSafe service src/services/', NormName,
+              '.dels');
+      WriteLn('Test created: tests/services/', NormName, '.test.dels');
       Exit;
     End;
 
@@ -12507,13 +12507,13 @@ Begin
 // 4. Fallback: Pure Unit / Service Test for business logic, services, or models
   TargetDir := GetCurrentDir + DirectorySeparator + 'tests' + DirectorySeparator
                + 'services' + DirectorySeparator;
-  If UseAether Then
+  If UseDelSafe Then
     Begin
-      TargetPath := TargetDir + NormName + '.test.aeth';
+      TargetPath := TargetDir + NormName + '.test.dels';
       If FileExists(TargetPath) Then
         Begin
           WriteLn('ERROR: Test "', NormName,
-                  '.test.aeth" already exists in tests/services/!');
+                  '.test.dels" already exists in tests/services/!');
           Halt(1);
         End;
       ForceDir(TargetDir);
@@ -12524,7 +12524,7 @@ Begin
                  '  PrintLn("PASS: ' + NormName + '");' + #10 +
                  'end ' + LowerCase(NormName) + '_test.' + #10;
       WriteStringToFile(TargetPath, Content);
-      WriteLn('Test created: tests/services/', NormName, '.test.aeth');
+      WriteLn('Test created: tests/services/', NormName, '.test.dels');
       Exit;
     End;
   TargetPath := TargetDir + NormName + '.test.pas';
@@ -14451,7 +14451,7 @@ Procedure CmdPathList;
 Var 
   AppCfgPath, Line, CleanLine, PathVal, PkgName: string;
   Lines: TStringList;
-  CoreList, Pas2jsList, CustomList, JsonPasList, JsonAethList: TStringList;
+  CoreList, Pas2jsList, CustomList, JsonPasList, JsonDelsList: TStringList;
   i: Integer;
 Begin
   AppCfgPath := GetCurrentDir + DirectorySeparator + 'app.cfg';
@@ -14534,22 +14534,22 @@ Begin
         WriteLn('    - ' + CustomList[i]);
 
     JsonPasList := TStringList.Create;
-    JsonAethList := TStringList.Create;
+    JsonDelsList := TStringList.Create;
     Try
       ResolvePascalSearchPaths(GetCurrentDir, JsonPasList);
-      ResolveJsonSearchPaths(GetCurrentDir, 'aether', JsonAethList, False);
-      If (JsonPasList.Count > 0) Or (JsonAethList.Count > 0) Then
+      ResolveJsonSearchPaths(GetCurrentDir, 'delsafe', JsonDelsList, False);
+      If (JsonPasList.Count > 0) Or (JsonDelsList.Count > 0) Then
         Begin
           WriteLn('');
           WriteLn('  [JSON Configured Paths (blaisevue.json / package.json)]');
           For i := 0 To JsonPasList.Count - 1 Do
             WriteLn('    - pascal: ' + JsonPasList[i]);
-          For i := 0 To JsonAethList.Count - 1 Do
-            WriteLn('    - aether: ' + JsonAethList[i]);
+          For i := 0 To JsonDelsList.Count - 1 Do
+            WriteLn('    - delsafe: ' + JsonDelsList[i]);
         End;
     Finally
       JsonPasList.Free;
-      JsonAethList.Free;
+      JsonDelsList.Free;
     End;
     WriteLn('');
 
@@ -15890,7 +15890,7 @@ Var
   GenPath, DistPath, PublicPath: string;
   Hash, IndexHTML: string;
   JSFiles, CSSFiles, ConfigThemes: TStringList;
-  JSTags, CSSTags, FileName, DefTheme, ThemeId, AetherGenPath, AetherFuFlag:
+  JSTags, CSSTags, FileName, DefTheme, ThemeId, DelSafeGenPath, DelSafeFuFlag:
 
 
                                                                           string
@@ -15922,21 +15922,21 @@ Begin
 
   WriteLn('[2/3] Compiling for production (pas2js)...');
 
-  AetherGenPath := GetCurrentDir + DirectorySeparator + '.blaisevue' +
+  DelSafeGenPath := GetCurrentDir + DirectorySeparator + '.blaisevue' +
                    DirectorySeparator + 'generated';
-  If DirectoryExists(AetherGenPath) Then
-    AetherFuFlag := ' -Fu"' + AetherGenPath + '"'
+  If DirectoryExists(DelSafeGenPath) Then
+    DelSafeFuFlag := ' -Fu"' + DelSafeGenPath + '"'
   Else
-    AetherFuFlag := '';
+    DelSafeFuFlag := '';
 
   {$IFDEF WINDOWS}
   i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu"' + GetCorePath + '" -Fu"' +
-       GetPas2JSLibPath + '"' + AetherFuFlag +
+       GetPas2JSLibPath + '"' + DelSafeFuFlag +
        BuildExtraPascalFuFlags(GetCurrentDir, True) +
        ' -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
   {$ELSE}
   i := ExecuteProcess(GetPas2JSPath, '@app.cfg -Fu' + GetCorePath + ' -Fu' +
-       GetPas2JSLibPath + AetherFuFlag +
+       GetPas2JSLibPath + DelSafeFuFlag +
        BuildExtraPascalFuFlags(GetCurrentDir, False) +
        ' -dPRODUCTION generated/main.pas -o' + DistPath + 'js/main.js');
   {$ENDIF}
@@ -16418,7 +16418,7 @@ Begin
         Continue;
 
       ParseBVFile(BVPath, Parsed);
-      ProcessAetherComponentScript(BVPath, UnitName, BaseNoExt, Parsed);
+      ProcessDelSafeComponentScript(BVPath, UnitName, BaseNoExt, Parsed);
       GeneratedCode := GenerateComponentUnit(UnitName, TagName, FileName, Parsed
                        );
       WriteStringToFile(PasFile, GeneratedCode);
@@ -16616,12 +16616,12 @@ Function RunCompileFailSuite(Const SDKDir: String; out Passed, Total: Integer):
 ;
 
 Var 
-  CFDir, TmpDir, AethercExe, FilePath, Content, ExpectErr, RawOut, TmpAeth:
+  CFDir, TmpDir, DelsafecExe, FilePath, Content, ExpectErr, RawOut, TmpDels:
 
 
                                                                           string
   ;
-  MethodsPas, ComputedPas, AethSource: string;
+  MethodsPas, ComputedPas, DelsSource: string;
   SR: TSearchRec;
   Parsed: TBVParsed;
   RC, LineOffset: Integer;
@@ -16637,7 +16637,7 @@ Begin
             DirectorySeparator + 'tests' + DirectorySeparator +
             '.compile_fail_tmp' + DirectorySeparator;
   ForceDir(TmpDir);
-  AethercExe := FindAethercPath;
+  DelsafecExe := FindDelsafecPath;
 
   WriteLn('=== BlaiseVue SDK Compile-Fail Suite ===');
   Try
@@ -16648,7 +16648,7 @@ Begin
             Begin
               FilePath := CFDir + SR.Name;
               If (LowerCase(ExtractFileExt(SR.Name)) <> '.bv') And (LowerCase(
-                 ExtractFileExt(SR.Name)) <> '.aeth') Then
+                 ExtractFileExt(SR.Name)) <> '.dels') Then
                 Continue;
 
               Inc(Total);
@@ -16657,34 +16657,34 @@ Begin
               RawOut := '';
               RC := 0;
 
-              If LowerCase(ExtractFileExt(SR.Name)) = '.aeth' Then
+              If LowerCase(ExtractFileExt(SR.Name)) = '.dels' Then
                 Begin
-                  If AethercExe = '' Then
+                  If DelsafecExe = '' Then
                     Begin
-                      WriteLn('  [SKIP ] ', SR.Name, ' (aetherc not found)');
+                      WriteLn('  [SKIP ] ', SR.Name, ' (delsafec not found)');
                       Continue;
                     End;
-                  RC := ExecProcessCaptureExitInDir(AethercExe, SDKDir, ['check'
+                  RC := ExecProcessCaptureExitInDir(DelsafecExe, SDKDir, ['check'
                         , FilePath, '--emit-json-diag'], RawOut);
                 End
               Else
                 Begin
                   ParseBVFile(FilePath, Parsed);
-                  If Parsed.ScriptLang = 'aether' Then
+                  If Parsed.ScriptLang = 'delsafe' Then
                     Begin
-                      If AethercExe = '' Then
+                      If DelsafecExe = '' Then
                         Begin
-                          WriteLn('  [SKIP ] ', SR.Name, ' (aetherc not found)')
+                          WriteLn('  [SKIP ] ', SR.Name, ' (delsafec not found)')
                           ;
                           Continue;
                         End;
-                      BuildAetherSourceAndWrappers(ChangeFileExt(SR.Name, '') +
-                      '_cf', FilePath, Parsed, False, AethSource, LineOffset,
+                      BuildDelSafeSourceAndWrappers(ChangeFileExt(SR.Name, '') +
+                      '_cf', FilePath, Parsed, False, DelsSource, LineOffset,
                       MethodsPas, ComputedPas);
-                      TmpAeth := TmpDir + ChangeFileExt(SR.Name, '.aeth');
-                      WriteStringToFile(TmpAeth, AethSource);
-                      RC := ExecProcessCaptureExitInDir(AethercExe, SDKDir, [
-                            'emit', 'pascal', TmpAeth,
+                      TmpDels := TmpDir + ChangeFileExt(SR.Name, '.dels');
+                      WriteStringToFile(TmpDels, DelsSource);
+                      RC := ExecProcessCaptureExitInDir(DelsafecExe, SDKDir, [
+                            'emit', 'pascal', TmpDels,
                             '--unit', '--shared-runtime',
                             '--out-dir=' + TmpDir,
                             '--source-file=' + FilePath,
@@ -16753,7 +16753,7 @@ Procedure CmdTestSDK(Const SuiteArg, FilterArg: String; Const NoCache: Boolean);
 
 Var 
   SDKDir, SuiteLow, FilterLow, OldDir, RTLFile, GenPath, CacheDir: string;
-  AethercExe, ZephyrDir, RawOut, DemoDir, ExplicitTarget, SummaryLine: string;
+  DelsafecExe, ZephyrDir, RawOut, DemoDir, ExplicitTarget, SummaryLine: string;
   Domains, TestFiles, FixtureBVs, PkgBVs, ExtraFus: TStringList;
   I, CompiledCnt, CachedCnt, CompileFailCnt, VitestExitCode: Integer;
   CFPassed, CFTotal, ZephyrRC, DemoRC: Integer;
@@ -16952,12 +16952,12 @@ If RunZephyr Then
   Begin
     ZephyrDir := SDKDir + DirectorySeparator + 'vendor' + DirectorySeparator +
                  'zephyr';
-    AethercExe := FindAethercPath;
-    If FileExists(ZephyrDir + DirectorySeparator + 'aether.json') And (
-       AethercExe <> '') Then
+    DelsafecExe := FindDelsafecPath;
+    If FileExists(ZephyrDir + DirectorySeparator + 'delsafe.json') And (
+       DelsafecExe <> '') Then
       Begin
-        WriteLn('=== Zephyr Aether Test Suite ===');
-        ZephyrRC := ExecProcessCaptureExitInDir(AethercExe, ZephyrDir, ['test',
+        WriteLn('=== Zephyr DelSafe Test Suite ===');
+        ZephyrRC := ExecProcessCaptureExitInDir(DelsafecExe, ZephyrDir, ['test',
                     '--target=all'], RawOut);
         WriteLn(RawOut);
         If ZephyrRC <> 0 Then AllOk := False;
@@ -16966,7 +16966,7 @@ If RunZephyr Then
       WriteLn(
 
 
-   '[SKIP] Zephyr Aether tests (aetherc or vendor/zephyr/aether.json not found)'
+   '[SKIP] Zephyr DelSafe tests (delsafec or vendor/zephyr/delsafe.json not found)'
       );
   End;
 
@@ -17046,7 +17046,7 @@ End;
 
 
 
-Procedure ScanDirForAethTests(Const Path: String; List: TStringList);
+Procedure ScanDirForDelsTests(Const Path: String; List: TStringList);
 
 Var 
   SR: TSearchRec;
@@ -17060,11 +17060,11 @@ Begin
         If (SR.Name <> '.') And (SR.Name <> '..') Then
           Begin
             If (SR.Attr And faDirectory) <> 0 Then
-              ScanDirForAethTests(D + SR.Name, List)
+              ScanDirForDelsTests(D + SR.Name, List)
             Else
               Begin
                 LName := LowerCase(SR.Name);
-                If Pos('.test.aeth', LName) > 0 Then
+                If Pos('.test.dels', LName) > 0 Then
                   List.Add(D + SR.Name);
               End;
           End;
@@ -17073,15 +17073,15 @@ Begin
     End;
 End;
 
-Function RunAetherUnitTests(Const CurDir, TestPath: String;
-                            Const AethTests: TStringList; Const NoCache: Boolean
+Function RunDelSafeUnitTests(Const CurDir, TestPath: String;
+                            Const DelsTests: TStringList; Const NoCache: Boolean
                             ;
                             out PassedCnt, FailedCnt, CachedCnt: Integer):
                                                                          Boolean
 ;
 
 Var 
-  AethercExe, GenTestDir, DepsHash, RawOut, RelPath, CacheKey, HashFile,
+  DelsafecExe, GenTestDir, DepsHash, RawOut, RelPath, CacheKey, HashFile,
   OutExe, CurHash: string;
   SearchPaths, ArgsList: TStringList;
   SearchArr: array Of string;
@@ -17091,13 +17091,13 @@ Begin
   PassedCnt := 0;
   FailedCnt := 0;
   CachedCnt := 0;
-  If (AethTests = Nil) Or (AethTests.Count = 0) Then Exit;
+  If (DelsTests = Nil) Or (DelsTests.Count = 0) Then Exit;
 
-  AethercExe := FindAethercPath;
-  If AethercExe = '' Then
+  DelsafecExe := FindDelsafecPath;
+  If DelsafecExe = '' Then
     Begin
       WriteLn(
-'ERROR: Found .test.aeth files, but "aetherc" compiler was not found in PATH or AETHERC_PATH.'
+'ERROR: Found .test.dels files, but "delsafec" compiler was not found in PATH or DELSAFEC_PATH.'
       );
       Result := False;
       Exit;
@@ -17105,12 +17105,12 @@ Begin
 
   SearchPaths := TStringList.Create;
   Try
-    ResolveAetherSearchPaths(CurDir, SearchPaths);
+    ResolveDelSafeSearchPaths(CurDir, SearchPaths);
     SetLength(SearchArr, SearchPaths.Count);
     For I := 0 To SearchPaths.Count - 1 Do
       SearchArr[I] := SearchPaths[I];
     If Length(SearchArr) > 0 Then
-      DepsHash := ComputeDirSignatureHash(SearchArr, '.aeth')
+      DepsHash := ComputeDirSignatureHash(SearchArr, '.dels')
     Else
       DepsHash := '';
 
@@ -17119,10 +17119,10 @@ Begin
     ForceDir(GenTestDir);
 
     WriteLn('');
-    WriteLn('=== Aether Native Unit Tests (', AethTests.Count, ' file(s)) ===');
-    For I := 0 To AethTests.Count - 1 Do
+    WriteLn('=== DelSafe Native Unit Tests (', DelsTests.Count, ' file(s)) ===');
+    For I := 0 To DelsTests.Count - 1 Do
       Begin
-        RelPath := AethTests[I];
+        RelPath := DelsTests[I];
         If Pos(IncludeTrailingPathDelimiter(TestPath), RelPath) = 1 Then
           RelPath := Copy(RelPath, Length(IncludeTrailingPathDelimiter(TestPath)
                      ) + 1, MaxInt);
@@ -17135,7 +17135,7 @@ Begin
         OutExe := IncludeTrailingPathDelimiter(GenTestDir) + ChangeFileExt(
                   CacheKey, '') + '.bin';
         {$ENDIF}
-        CurHash := ComputeTextHash(ReadFileToString(AethTests[I]) + '|' +
+        CurHash := ComputeTextHash(ReadFileToString(DelsTests[I]) + '|' +
                    DepsHash);
 
         If (Not NoCache) And FileExists(OutExe) And FileExists(HashFile) And
@@ -17145,8 +17145,8 @@ Begin
           Begin
             ArgsList := TStringList.Create;
             Try
-              ArgsList.Add(AethTests[I]);
-              ArgsList.Add('--source-file=' + AethTests[I]);
+              ArgsList.Add(DelsTests[I]);
+              ArgsList.Add('--source-file=' + DelsTests[I]);
               For J := 0 To SearchPaths.Count - 1 Do
                 Begin
                   ArgsList.Add('-I');
@@ -17155,7 +17155,7 @@ Begin
               ArgsList.Add('--target=c');
               ArgsList.Add('-o');
               ArgsList.Add(OutExe);
-              RC := ExecProcessCaptureExit(AethercExe, ArgsList.ToStringArray,
+              RC := ExecProcessCaptureExit(DelsafecExe, ArgsList.ToStringArray,
                     RawOut);
             Finally
               ArgsList.Free;
@@ -17186,7 +17186,7 @@ Begin
       End;
 End;
 
-WriteLn('Aether Tests: ', PassedCnt, ' passed, ', FailedCnt, ' failed (cached: '
+WriteLn('DelSafe Tests: ', PassedCnt, ' passed, ', FailedCnt, ' failed (cached: '
         , CachedCnt, ')');
 Finally
   SearchPaths.Free;
@@ -17198,13 +17198,13 @@ End;
 Procedure CmdTest(Const FilterArg: String = ''; Const NoCache: Boolean = False);
 
 Var 
-  AllTests, TestFiles, AllAethTests, AethTestFiles, ExtraFus, PasPaths:
+  AllTests, TestFiles, AllDelsTests, DelsTestFiles, ExtraFus, PasPaths:
   TStringList;
   i: Integer;
   CurDir, TestPath, CorePath, RTLFile, FilterLow: string;
   CompiledCnt, CachedCnt, CompileFailCnt, VitestExitCode: Integer;
-  AethPassed, AethFailed, AethCached: Integer;
-  Ok, AethOk: Boolean;
+  DelsPassed, DelsFailed, DelsCached: Integer;
+  Ok, DelsOk: Boolean;
 Begin
   CurDir := ExcludeTrailingPathDelimiter(GetCurrentDir);
 
@@ -17226,34 +17226,34 @@ Begin
 
   AllTests := TStringList.Create;
   TestFiles := TStringList.Create;
-  AllAethTests := TStringList.Create;
-  AethTestFiles := TStringList.Create;
+  AllDelsTests := TStringList.Create;
+  DelsTestFiles := TStringList.Create;
   ExtraFus := TStringList.Create;
   Try
     ScanDirForTests(TestPath, AllTests);
     AllTests.Sort;
-    ScanDirForAethTests(TestPath, AllAethTests);
-    AllAethTests.Sort;
+    ScanDirForDelsTests(TestPath, AllDelsTests);
+    AllDelsTests.Sort;
     FilterLow := LowerCase(Trim(FilterArg));
     For i := 0 To AllTests.Count - 1 Do
       Begin
         If (FilterLow = '') Or (Pos(FilterLow, LowerCase(AllTests[i])) > 0) Then
           TestFiles.Add(AllTests[i]);
       End;
-    For i := 0 To AllAethTests.Count - 1 Do
+    For i := 0 To AllDelsTests.Count - 1 Do
       Begin
-        If (FilterLow = '') Or (Pos(FilterLow, LowerCase(AllAethTests[i])) > 0)
+        If (FilterLow = '') Or (Pos(FilterLow, LowerCase(AllDelsTests[i])) > 0)
           Then
-          AethTestFiles.Add(AllAethTests[i]);
+          DelsTestFiles.Add(AllDelsTests[i]);
       End;
 
-    If (TestFiles.Count = 0) And (AethTestFiles.Count = 0) Then
+    If (TestFiles.Count = 0) And (DelsTestFiles.Count = 0) Then
       Begin
         If FilterLow <> '' Then
-          WriteLn('No .test.pas or .test.aeth files matching "', FilterArg,
+          WriteLn('No .test.pas or .test.dels files matching "', FilterArg,
                   '" found in /tests')
         Else
-          WriteLn('No .test.pas or .test.aeth files found in /tests');
+          WriteLn('No .test.pas or .test.dels files found in /tests');
         Exit;
       End;
 
@@ -17323,16 +17323,16 @@ Begin
               );
       End;
 
-    AethOk := RunAetherUnitTests(CurDir, TestPath, AethTestFiles, NoCache,
-              AethPassed, AethFailed, AethCached);
+    DelsOk := RunDelSafeUnitTests(CurDir, TestPath, DelsTestFiles, NoCache,
+              DelsPassed, DelsFailed, DelsCached);
 
-    If (Not Ok) Or (Not AethOk) Then
+    If (Not Ok) Or (Not DelsOk) Then
       Halt(1);
   Finally
     AllTests.Free;
     TestFiles.Free;
-    AllAethTests.Free;
-    AethTestFiles.Free;
+    AllDelsTests.Free;
+    DelsTestFiles.Free;
     ExtraFus.Free;
 End;
 End;
@@ -38421,7 +38421,7 @@ Begin
   Result.Add('clean');
   Result.Add('wasm');
   Result.Add('doc');
-  // Full-Stack Backend (mORMot 2 & Zephyr Aether)
+  // Full-Stack Backend (mORMot 2 & Zephyr DelSafe)
   Result.Add('mormot');
   Result.Add('zephyr');
   // Compiler (Pas2JS)
@@ -38723,10 +38723,10 @@ Begin
                    '  [HINT] Available subcommands for ''zephyr'':' + LineEnding
                    +
 
-'   init                       Scaffolds Zephyr Aether backend in server-zephyr/'
+'   init                       Scaffolds Zephyr DelSafe backend in server-zephyr/'
                    + LineEnding +
 
-'   build [--target=c|pascal] [--release|--debug] Compiles native server via aetherc'
+'   build [--target=c|pascal] [--release|--debug] Compiles native server via delsafec'
                    + LineEnding +
 
 '   run [--port <p>]           Builds & launches Zephyr backend server (Port 8091)'
@@ -38735,7 +38735,7 @@ Begin
 '   deploy [--zip]             Assembles standalone production bundle in deploy/server-zephyr/'
                    + LineEnding +
 
-'   status                     Displays Zephyr SDK, aetherc, and server binary status'
+'   status                     Displays Zephyr SDK, delsafec, and server binary status'
                    + LineEnding +
 
 '   remove [-y]                Safely deletes server-zephyr/ directory and Zephyr binaries'
@@ -41589,7 +41589,7 @@ Var
   AllHealthy: Boolean;
   ProjRoot, ProjName, VerFile, ReqPas2, UserPas2Dir: string;
   HasServerDir, HasZephyrDir, HasMobile: Boolean;
-  MormotDir, ZephyrServerDir, ZephyrAetherc, MormotConf, ReqMormot,
+  MormotDir, ZephyrServerDir, ZephyrDelsafec, MormotConf, ReqMormot,
   UserMormotDir, MormotLabel, ZephyrLabel: string;
   PkgFile, PkgContent, ReqCapVer, CapCorePath, InstalledCapVer: string;
   ExtSR: TSearchRec;
@@ -42054,7 +42054,7 @@ Begin
               End;
           End;
 
-        // B2. Zephyr Native Aether Backend
+        // B2. Zephyr Native DelSafe Backend
         ZephyrServerDir := ResolveZephyrServerDir(ProjRoot, False);
         ZephyrLabel := ExtractFileName(ExcludeTrailingPathDelimiter(
                        ZephyrServerDir));
@@ -42069,16 +42069,16 @@ Begin
           End
         Else
           Begin
-            ZephyrAetherc := FindAethercPath;
-            If ZephyrAetherc <> '' Then
+            ZephyrDelsafec := FindDelsafecPath;
+            If ZephyrDelsafec <> '' Then
               WriteLn('  [v] Zephyr Backend:       ' + ZephyrLabel +
-                      '/ (aetherc detected, default port 8091)')
+                      '/ (delsafec detected, default port 8091)')
             Else
               Begin
                 WriteLn('  [!] Zephyr Backend:       ' + ZephyrLabel +
-                        '/ detected, but "aetherc" compiler was NOT found!');
+                        '/ detected, but "delsafec" compiler was NOT found!');
                 ProjectNotices.Add('Zephyr backend exists in ' + ZephyrLabel +
-                                   '/ but aetherc compiler is missing');
+                                   '/ but delsafec compiler is missing');
               End;
           End;
 
@@ -42980,7 +42980,7 @@ Procedure CmdZephyr(Const SubCmd: String; Const Arg1: String = ''; Const Arg2:
 Var 
   ProjectRoot, ZephyrDir, ZephyrSrcDir, ServerDir, ServerLabel, BinDir,
   SrcFile, OutBin, EnvFile, BinServerDir, DeployServerDir, SavedCwd: string;
-  AethercExe, TargetMode, PortStr, RawOut, Ans, CurA, ZephyrIncFwd, OutRelFwd:
+  DelsafecExe, TargetMode, PortStr, RawOut, Ans, CurA, ZephyrIncFwd, OutRelFwd:
 
                                                                           string
   ;
@@ -42995,7 +42995,7 @@ Begin
   ZephyrDir := IncludeTrailingPathDelimiter(GetSDKPath) + 'vendor' +
                DirectorySeparator + 'zephyr';
   ZephyrSrcDir := IncludeTrailingPathDelimiter(ZephyrDir) + 'src';
-  AethercExe := FindAethercPath;
+  DelsafecExe := FindDelsafecPath;
 
   TargetMode := 'c';
   IsRelease := True;
@@ -43040,7 +43040,7 @@ Begin
       If ProjectRoot = '' Then ProjectRoot := GetCurrentDir;
       ServerDir := ResolveZephyrServerDir(ProjectRoot, False);
       BinDir := IncludeTrailingPathDelimiter(ServerDir) + 'bin';
-      SrcFile := IncludeTrailingPathDelimiter(ServerDir) + 'zephyr_server.aeth';
+      SrcFile := IncludeTrailingPathDelimiter(ServerDir) + 'zephyr_server.dels';
     {$IFDEF WINDOWS}
       OutBin := IncludeTrailingPathDelimiter(BinDir) + 'zephyr_server.exe';
     {$ELSE}
@@ -43049,7 +43049,7 @@ Begin
       WriteLn('=== BlaiseVue Zephyr Engine Status ===');
       WriteLn('  Zephyr SDK:    ', ZephyrDir, ' (exists=', BoolToStr(
               DirectoryExists(ZephyrSrcDir), True), ')');
-      WriteLn('  aetherc CLI:   ', IfThen(AethercExe <> '', AethercExe,
+      WriteLn('  delsafec CLI:   ', IfThen(DelsafecExe <> '', DelsafecExe,
               '<NOT FOUND>'));
       WriteLn('  Server Dir:    ', ServerDir, ' (exists=', BoolToStr(
               DirectoryExists(ServerDir), True), ')');
@@ -43065,7 +43065,7 @@ Begin
   ServerDir := ResolveZephyrServerDir(ProjectRoot, SubCmd = 'init');
   ServerLabel := ExtractFileName(ExcludeTrailingPathDelimiter(ServerDir));
   BinDir := IncludeTrailingPathDelimiter(ServerDir) + 'bin';
-  SrcFile := IncludeTrailingPathDelimiter(ServerDir) + 'zephyr_server.aeth';
+  SrcFile := IncludeTrailingPathDelimiter(ServerDir) + 'zephyr_server.dels';
   {$IFDEF WINDOWS}
   OutBin := IncludeTrailingPathDelimiter(BinDir) + 'zephyr_server.exe';
   OutRelFwd := 'bin/zephyr_server.exe';
@@ -43139,37 +43139,37 @@ Begin
       ForceDir(ServerDir);
       ForceDir(BinDir);
       ZephyrIncFwd := StringReplace(ZephyrSrcDir, '\', '/', [rfReplaceAll]);
-      If Not FileExists(IncludeTrailingPathDelimiter(ServerDir) + 'aether.json')
+      If Not FileExists(IncludeTrailingPathDelimiter(ServerDir) + 'delsafe.json')
         Then
         Begin
           WriteStringToFile(IncludeTrailingPathDelimiter(ServerDir) +
-          'aether.json',
+          'delsafe.json',
           '{' + #10 +
           '  "name": "zephyr_server",' + #10 +
           '  "version": "0.1.0",' + #10 +
           '  "backend": "c",' + #10 +
-          '  "entry": "zephyr_server.aeth",' + #10 +
+          '  "entry": "zephyr_server.dels",' + #10 +
           '  "output": "' + OutRelFwd + '",' + #10 +
           '  "paths": {' + #10 +
-          '    "aether": ["' + ZephyrIncFwd + '", "."]' + #10 +
+          '    "delsafe": ["' + ZephyrIncFwd + '", "."]' + #10 +
           '  }' + #10 +
           '}' + #10);
-          WriteLn('  [+] Created server-zephyr/aether.json');
+          WriteLn('  [+] Created server-zephyr/delsafe.json');
         End;
       EnvFile := IncludeTrailingPathDelimiter(ServerDir) + '.env';
       If Not FileExists(EnvFile) Then
         Begin
           WriteStringToFile(EnvFile,
-                            '# BlaiseVue Zephyr (Aether) Backend Configuration'
+                            '# BlaiseVue Zephyr (DelSafe) Backend Configuration'
                             + #10 +
                             'PORT=8091' + #10);
           WriteLn('  [+] Created server-zephyr/.env (PORT=8091)');
         End;
-      If Not FileExists(IncludeTrailingPathDelimiter(ServerDir) + 'models.aeth')
+      If Not FileExists(IncludeTrailingPathDelimiter(ServerDir) + 'models.dels')
         Then
         Begin
           WriteStringToFile(IncludeTrailingPathDelimiter(ServerDir) +
-          'models.aeth',
+          'models.dels',
           'module models;' + #10#10 +
           'interface' + #10#10 +
           'type' + #10 +
@@ -43190,7 +43190,7 @@ Begin
           '    return true;' + #10 +
           'end ValidateItem;' + #10#10 +
           'end models.' + #10);
-          WriteLn('  [+] Created server-zephyr/models.aeth');
+          WriteLn('  [+] Created server-zephyr/models.dels');
         End;
       If Not FileExists(SrcFile) Then
         Begin
@@ -43276,9 +43276,9 @@ Begin
                             '    srv.Post("/api/items", HandleCreateItem);' + #10 +
                             '    srv.Ws("/ws", HandleWsEcho);' + #10 +
                             '    PrintLn("======================================================");' + #10 +
-                            '    PrintLn("   BlaiseVue Full-Stack - Zephyr (Aether) Server");' + #10 +
+                            '    PrintLn("   BlaiseVue Full-Stack - Zephyr (DelSafe) Server");' + #10 +
                             '    PrintLn("======================================================");' + #10 +
-                            '    PrintLn("[+] Engine:    Zephyr Native HTTP/1.1 + WebSocket (Aether)");' + #10 +
+                            '    PrintLn("[+] Engine:    Zephyr Native HTTP/1.1 + WebSocket (DelSafe)");' + #10 +
                             '    PrintLn("[+] Frontend:  http://localhost:%d/", Int32(port));' + #10 +
                             '    if Length(borrow dist_dir) > 0 then' + #10 +
                             '        PrintLn("[+] Static:    %s (SPA History fallback active)", dist_dir);' + #10 +
@@ -43294,7 +43294,7 @@ Begin
                             'end zephyr_server.' + #10);
           WriteLn(
 
-            '  [+] Created server-zephyr/zephyr_server.aeth (default port 8091)'
+            '  [+] Created server-zephyr/zephyr_server.dels (default port 8091)'
           );
         End;
       WriteLn(
@@ -43306,19 +43306,19 @@ Begin
 
   If (SubCmd = 'build') Or (SubCmd = 'run') Then
     Begin
-      If AethercExe = '' Then
+      If DelsafecExe = '' Then
         Begin
-          WriteLn('ERROR: "aetherc" compiler not found in PATH or AETHERC_PATH.'
+          WriteLn('ERROR: "delsafec" compiler not found in PATH or DELSAFEC_PATH.'
           );
           Halt(1);
         End;
       If Not FileExists(SrcFile) Then
         Begin
           If FileExists(IncludeTrailingPathDelimiter(ZephyrDir) + 'examples' +
-             DirectorySeparator + 'zephyr_demo.aeth') And (SubCmd = 'build') And
+             DirectorySeparator + 'zephyr_demo.dels') And (SubCmd = 'build') And
              (Arg1 = '--demo') Then
             SrcFile := IncludeTrailingPathDelimiter(ZephyrDir) + 'examples' +
-                       DirectorySeparator + 'zephyr_demo.aeth'
+                       DirectorySeparator + 'zephyr_demo.dels'
           Else If SubCmd = 'run' Then
             Begin
               WriteLn('No Zephyr server project found in ', ServerLabel,
@@ -43379,7 +43379,7 @@ Begin
     ArgsList.Add(ZephyrSrcDir);
     ArgsList.Add('-I');
     ArgsList.Add(ServerDir);
-    ResolveAetherSearchPaths(ProjectRoot, SearchPaths);
+    ResolveDelSafeSearchPaths(ProjectRoot, SearchPaths);
     For i := 0 To SearchPaths.Count - 1 Do
       Begin
         ArgsList.Add('-I');
@@ -43390,7 +43390,7 @@ Begin
       ArgsList.Add('--release');
     ArgsList.Add('-o');
     ArgsList.Add(OutBin);
-    RC := ExecProcessCaptureExit(AethercExe, ArgsList.ToStringArray, RawOut);
+    RC := ExecProcessCaptureExit(DelsafecExe, ArgsList.ToStringArray, RawOut);
   Finally
     SearchPaths.Free;
     ArgsList.Free;
@@ -43454,7 +43454,7 @@ If DeployDir = '' Then
                + ServerLabel;
 
 WriteLn('================================================================');
-WriteLn('  BlaiseVue + Zephyr (Aether) Production Deployment Packager');
+WriteLn('  BlaiseVue + Zephyr (DelSafe) Production Deployment Packager');
 WriteLn('================================================================');
 WriteLn('');
 
@@ -43480,9 +43480,9 @@ WriteLn('  [+] Frontend compiled with production hashes in dist/');
 WriteLn('');
 
 // 2. Build Zephyr native backend in RELEASE mode
-If AethercExe = '' Then
+If DelsafecExe = '' Then
   Begin
-    WriteLn('ERROR: "aetherc" compiler not found in PATH or AETHERC_PATH.');
+    WriteLn('ERROR: "delsafec" compiler not found in PATH or DELSAFEC_PATH.');
     Halt(1);
   End;
 ForceDir(ServerDir);
@@ -43497,7 +43497,7 @@ Try
   ArgsList.Add(ZephyrSrcDir);
   ArgsList.Add('-I');
   ArgsList.Add(ServerDir);
-  ResolveAetherSearchPaths(ProjectRoot, SearchPaths);
+  ResolveDelSafeSearchPaths(ProjectRoot, SearchPaths);
   For i := 0 To SearchPaths.Count - 1 Do
     Begin
       ArgsList.Add('-I');
@@ -43507,7 +43507,7 @@ Try
   ArgsList.Add('--release');
   ArgsList.Add('-o');
   ArgsList.Add(OutBin);
-  RC := ExecProcessCaptureExit(AethercExe, ArgsList.ToStringArray, RawOut);
+  RC := ExecProcessCaptureExit(DelsafecExe, ArgsList.ToStringArray, RawOut);
 Finally
   SearchPaths.Free;
   ArgsList.Free;
@@ -43539,7 +43539,7 @@ StartBat :=
             'title BlaiseVue Zephyr Server (Port ' + PortStr + ')' + #13#10 +
             'echo ====================================================' + #13#10
             +
-            'echo  Starting BlaiseVue Zephyr Aether Native Server...' + #13#10 +
+            'echo  Starting BlaiseVue Zephyr DelSafe Native Server...' + #13#10 +
             'echo  Port: ' + PortStr + #13#10 +
             'echo  Hosting API/WS and Static Frontend from ./dist' + #13#10 +
             'echo ====================================================' + #13#10
@@ -43551,7 +43551,7 @@ WriteStringToFile(DeployDir + DirectorySeparator + 'start.bat', StartBat);
 StartSh := 
            '#!/bin/sh' + #10 +
            'echo "===================================================="' + #10 +
-           'echo " Starting BlaiseVue Zephyr Aether Native Server..."' + #10 +
+           'echo " Starting BlaiseVue Zephyr DelSafe Native Server..."' + #10 +
            'echo " Port: ' + PortStr + '"' + #10 +
            'echo " Hosting API/WS and Static Frontend from ./dist"' + #10 +
            'echo "===================================================="' + #10 +
@@ -43566,7 +43566,7 @@ ReadmeTxt :=
 'This deployment directory is 100% self-contained and ready to copy to your server.'
              + #13#10 +
 
-'No Node.js, npm, Aether compiler, or Free Pascal installation required on the host!'
+'No Node.js, npm, DelSafe compiler, or Free Pascal installation required on the host!'
              + #13#10#13#10 +
              'How to run on the server:' + #13#10 +
              '  Windows: Double-click start.bat (or run "' + BinName +
@@ -43575,7 +43575,7 @@ ReadmeTxt :=
              PortStr + '")' + #13#10#13#10 +
              'Files:' + #13#10 +
              '  - ' + BinName +
-             ' : Native Zephyr Aether HTTP/1.1 + WebSocket executable' + #13#10
+             ' : Native Zephyr DelSafe HTTP/1.1 + WebSocket executable' + #13#10
              +
              '  - dist/            : Compiled reactive SPA frontend' + #13#10 +
              '  - start.bat        : Windows startup script' + #13#10 +
@@ -43630,7 +43630,7 @@ End;
 
 Var 
   Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP: string;
-  SkipTest, SkipTestsArg, IsGlobalArg, UseAetherArg: Boolean;
+  SkipTest, SkipTestsArg, IsGlobalArg, UseDelSafeArg: Boolean;
   i: Integer;
 Begin
   If (ParamCount = 1) And ((ParamStr(1) = '--version') Or (ParamStr(1) = '-v')
@@ -43655,7 +43655,7 @@ Begin
         WriteLn(
 
 
-'  bv create <name> [--demo] [--aether] [--backend=<mormot|zephyr|<tool>>] Scaffolds clean project (+ optional backends)'
+'  bv create <name> [--demo] [--delsafe] [--backend=<mormot|zephyr|<tool>>] Scaffolds clean project (+ optional backends)'
         );
       WriteLn(
 
@@ -43779,16 +43779,16 @@ Begin
 '  bv clean                   Cleans generated build files (generated/ and dist/)'
       );
       WriteLn('');
-      WriteLn('  # === Backend Nativo Aether (Zephyr) ===');
+      WriteLn('  # === Backend Nativo DelSafe (Zephyr) ===');
       WriteLn(
 
 
-'  bv zephyr init             Scaffolds Zephyr Aether backend in server-zephyr/'
+'  bv zephyr init             Scaffolds Zephyr DelSafe backend in server-zephyr/'
       );
       WriteLn(
 
 
-'  bv zephyr build [--target=c|pascal] [--release|--debug] Compiles native HTTP/1.1 + WS server via aetherc'
+'  bv zephyr build [--target=c|pascal] [--release|--debug] Compiles native HTTP/1.1 + WS server via delsafec'
       );
       WriteLn(
 
@@ -43803,7 +43803,7 @@ Begin
       WriteLn(
 
 
-'  bv zephyr status           Displays Zephyr SDK, aetherc compiler, and server binary status'
+'  bv zephyr status           Displays Zephyr SDK, delsafec compiler, and server binary status'
       );
       WriteLn(
 
@@ -44272,7 +44272,7 @@ Begin
           WriteLn(
 
 
-'Usage: bv create <project-name> [--demo] [--aether] [--backend=<mormot|zephyr|<tool>>] [--mormot] [--zephyr] [--lib] [--license <mit|apache|lgpl|commercial|none>]'
+'Usage: bv create <project-name> [--demo] [--delsafe] [--backend=<mormot|zephyr|<tool>>] [--mormot] [--zephyr] [--lib] [--license <mit|apache|lgpl|commercial|none>]'
           );
           Halt(1);
         End;
@@ -44379,7 +44379,7 @@ Begin
            If (ParamCount < 3) Then
              Begin
                WriteLn(
-            'Usage: bv <g|new|generate> <c|v|s|t> <Name> [--aether] [--no-test]'
+            'Usage: bv <g|new|generate> <c|v|s|t> <Name> [--delsafe] [--no-test]'
                );
                WriteLn('Aliases: bv g, bv new, bv generate');
                WriteLn('Types: component (c), view (v), service (s), test (t)');
@@ -44402,7 +44402,7 @@ Begin
                );
                WriteLn(
 
-     '  bv g s Billing --aether  # Scaffolds Aether module (.aeth) + .test.aeth'
+     '  bv g s Billing --delsafe  # Scaffolds DelSafe module (.dels) + .test.dels'
                );
                WriteLn('  bv g t UserCard          # Scaffolds test file');
                Halt(1);
@@ -44411,7 +44411,7 @@ Begin
            TypeArg := LowerCase(ParamStr(2));
            NameArg := ParamStr(3);
            SkipTest := False;
-           UseAetherArg := False;
+           UseDelSafeArg := False;
            For i := 4 To ParamCount Do
              Begin
                If (LowerCase(ParamStr(i)) = '--no-test') Or (LowerCase(ParamStr(
@@ -44419,20 +44419,20 @@ Begin
 
                   (LowerCase(ParamStr(i)) = '--skip-test') Then
                  SkipTest := True
-               Else If (LowerCase(ParamStr(i)) = '--aether') Or
+               Else If (LowerCase(ParamStr(i)) = '--delsafe') Or
                        (LowerCase(ParamStr(i)) = '-a') Then
-                      UseAetherArg := True;
+                      UseDelSafeArg := True;
              End;
 
            If (TypeArg = 'c') Or (TypeArg = 'comp') Or (TypeArg = 'component')
              Then
-             CmdNewComponent(NameArg, Not SkipTest, UseAetherArg)
+             CmdNewComponent(NameArg, Not SkipTest, UseDelSafeArg)
 
            Else If (TypeArg = 'v') Or (TypeArg = 'view') Then
-                  CmdNewView(NameArg, Not SkipTest, UseAetherArg)
+                  CmdNewView(NameArg, Not SkipTest, UseDelSafeArg)
            Else If (TypeArg = 's') Or (TypeArg = 'service') Or (TypeArg = 'serv'
                    ) Then
-                  CmdNewService(NameArg, Not SkipTest, UseAetherArg)
+                  CmdNewService(NameArg, Not SkipTest, UseDelSafeArg)
            Else If (TypeArg = 'store') Or (TypeArg = 'st') Or (TypeArg = 'slice'
                    ) Then
                   CmdNewStore(NameArg, Not SkipTest)
@@ -44440,7 +44440,7 @@ Begin
                    'state') Then
                   CmdNewFSM(NameArg, Not SkipTest)
            Else If (TypeArg = 't') Or (TypeArg = 'test') Then
-                  CmdNewTest(NameArg, UseAetherArg)
+                  CmdNewTest(NameArg, UseDelSafeArg)
            Else
              Begin
                WriteLn('Unknown type: ', ParamStr(2),

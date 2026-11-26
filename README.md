@@ -48,24 +48,24 @@ BlaiseVue is decoupled by design, giving teams complete architectural freedom ac
 
 - **Frontend-Only Mode (Zero Backend)**: Build pure reactive Web SPAs, Jamstack sites, or native mobile apps that consume existing corporate REST / GraphQL APIs (Node.js, Go, Python, C#, Java, PHP, or Delphi). Remove any backend cleanly at any time (`bv mormot remove -y`, `bv zephyr remove -y`, or `bv horse remove -y`).
 - **Default Enterprise Full-Stack: Synopse mORMot 2 (`server-mormot/`, Port `8090`)**: High-throughput (100k+ req/sec) native Pascal SOA backend with shared interface contracts (`common/contracts.pas`), zero serialization drift, and sub-millisecond response times *(legacy `server/` projects remain supported automatically)*.
-- **Native Aether Full-Stack (Experimental): Zephyr (`server-zephyr/`, Port `8091`)**: Built-in Aether HTTP/1.1 + WebSocket server with integrated static SPA hosting, OWASP security headers, and zero-dependency C99/Pascal binaries (`bv zephyr init`, `bv zephyr run`, `bv zephyr deploy`).
+- **Native DelSafe Full-Stack (Experimental): Zephyr (`server-zephyr/`, Port `8091`)**: Built-in DelSafe HTTP/1.1 + WebSocket server with integrated static SPA hosting, OWASP security headers, and zero-dependency C99/Pascal binaries (`bv zephyr init`, `bv zephyr run`, `bv zephyr deploy`).
 - **Alternative Microframework: Horse (`server-horse/`, Port `9000`)**: Express.js-style lightweight REST microservices via the external **`blaise-horse`** ecosystem tool, completely isolated in `server-horse/` (`bv horse init`, `bv horse run`, `bv horse remove`).
 
 ---
 
-## 🔷 Optional Aether Integration & Zephyr Backend (Experimental)
+## 🔷 Optional DelSafe Integration & Zephyr Backend (Experimental)
 
-BlaiseVue works alongside the **[Aether](https://github.com/affonsoelias/aether)** language (`--aether`, `<script lang="aether">`, `.aeth` services in `src/services/`, and native `.test.aeth` unit tests) for building full-stack applications — while **the BlaiseVue framework itself (CLI, core reactive runtime, compiler, and official UI/data packages) remains 100% written in Free Pascal / Object Pascal**.
+BlaiseVue works alongside the **[DelSafe](https://github.com/affonsoelias/delsafe)** language (`--delsafe`, `<script lang="delsafe">`, `.dels` services in `src/services/`, and native `.test.dels` unit tests) for building full-stack applications — while **the BlaiseVue framework itself (CLI, core reactive runtime, compiler, and official UI/data packages) remains 100% written in Free Pascal / Object Pascal**.
 
-- **Completely Optional**: Using Aether is entirely optional. Standard Object Pascal remains the primary default experience (`bv create my-app`), and both languages interoperate seamlessly inside the same project (`bv create my-app --aether` or `bv g <c|v|s|t> <Name> --aether`).
-- **Why Add Aether to BlaiseVue?**: Aether preserves Pascal's readable syntax and mental model while adding modern systems-level guarantees — compile-time ownership/borrow checking, design-by-contract (`require`/`ensure`), `[derive(JSON, Equals)]`, and direct compilation to C99, Object Pascal, and WebAssembly.
-- **Why Build Zephyr exclusively in Aether?**: Writing the dedicated **Zephyr** backend (`vendor/zephyr`, scaffolded in `server-zephyr/`) in Aether gives the framework maximum architectural freedom and end-to-end control over its HTTP/1.1 + WebSocket + SPA serving stack (tight CLI integration, built-in static SPA + history fallback, OWASP security headers, and memory/contract safety without third-party C/C++ bindings).
+- **Completely Optional**: Using DelSafe is entirely optional. Standard Object Pascal remains the primary default experience (`bv create my-app`), and both languages interoperate seamlessly inside the same project (`bv create my-app --delsafe` or `bv g <c|v|s|t> <Name> --delsafe`).
+- **Why Add DelSafe to BlaiseVue?**: DelSafe preserves Pascal's readable syntax and mental model while adding modern systems-level guarantees — compile-time ownership/borrow checking, design-by-contract (`require`/`ensure`), `[derive(JSON, Equals)]`, and direct compilation to C99, Object Pascal, and WebAssembly.
+- **Why Build Zephyr exclusively in DelSafe?**: Writing the dedicated **Zephyr** backend (`vendor/zephyr`, scaffolded in `server-zephyr/`) in DelSafe gives the framework maximum architectural freedom and end-to-end control over its HTTP/1.1 + WebSocket + SPA serving stack (tight CLI integration, built-in static SPA + history fallback, OWASP security headers, and memory/contract safety without third-party C/C++ bindings).
 - **mORMot 2 Remains First-Class**: Adopting Zephyr does **not** replace **Synopse mORMot 2**. `server-mormot/` continues as the battle-tested enterprise Object Pascal backend, and both `server-mormot/` and `server-zephyr/` can coexist cleanly in the same project.
 
 > [!WARNING]
-> **Active Testing Notice:** Both the **Aether language** and the **Zephyr native backend** are currently **experimental and under active testing**. Expect rapid iterations while core Object Pascal (`pas2js` + `mORMot 2`) remains the stable enterprise baseline.
+> **Active Testing Notice:** Both the **DelSafe language** and the **Zephyr native backend** are currently **experimental and under active testing**. Expect rapid iterations while core Object Pascal (`pas2js` + `mORMot 2`) remains the stable enterprise baseline.
 >
-> See the full technical guide in **[59. Aether Language Integration & Zephyr Backend](doc/Documentation/59-aether-integration-and-zephyr-backend.md)**.
+> See the full technical guide in **[59. DelSafe Language Integration & Zephyr Backend](doc/Documentation/59-delsafe-integration-and-zephyr-backend.md)**.
 
 ---
 
@@ -90,7 +90,7 @@ BlaiseVue features a modular package architecture located in `/packages`:
 Explore production software and companion repositories built with and alongside **BlaiseVue**:
 
 - 📐 **[BlaiseNotebook](https://github.com/affonsoelias/BlaiseNotebook)** — Real-world production application built with **BlaiseVue**: an interactive computational notebook environment for Object Pascal (Jupyter/Colab style) featuring reactive Chart.js plots (`<bv-chart>`), persistent stateful kernel execution via Synopse mORMot 2 + WebSockets, interactive DataGrid Pro, one-click Dashboard View, and a cross-platform Python scientific bridge (`numpy`, `pandas`, `scikit-learn`).
-- 🔷 **[Aether Programming Language](https://github.com/affonsoelias/aether)** — Companion Pascal-inspired systems programming language (optional & experimental) with ownership/borrow checking, design-by-contract, and native C99/Pascal/WASM compilation — interoperating directly with BlaiseVue (`--aether`, `<script lang="aether">`) and powering the native **Zephyr** backend (`vendor/zephyr`).
+- 🔷 **[DelSafe Programming Language](https://github.com/affonsoelias/delsafe)** — Companion Pascal-inspired systems programming language (optional & experimental) with ownership/borrow checking, design-by-contract, and native C99/Pascal/WASM compilation — interoperating directly with BlaiseVue (`--delsafe`, `<script lang="delsafe">`) and powering the native **Zephyr** backend (`vendor/zephyr`).
 - 🌐 **[BlaiseVue Ecosystem](https://github.com/affonsoelias/blaisevue-ecosystem)** — Official community registry, external packages, and developer tools (including `blaise-horse`).
 
 ---
@@ -101,7 +101,7 @@ For the complete architectural evolution specifications, delivered enterprise pi
 
 - 🎓 **[Complete Course: Zero to Ninja (doc/Course/README.md)](doc/Course/README.md)**: 13 beginner-friendly practical modules with step-by-step guides, runnable `.bv` examples, and real-world analogies.
 - 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
-- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 59 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, mORMot 2, and Aether/Zephyr.
+- 📚 **[Documentation Index (doc/Documentation/README.md)](doc/Documentation/README.md)**: 59 comprehensive technical manuals covering CLI, reactivity, components, mobile, desktop, ecosystem, mORMot 2, and DelSafe/Zephyr.
 - 🏛️ **[Core Architecture & Internals (doc/Architecture/README.md)](doc/Architecture/README.md)**: Deep dive into the compiler pipeline, AST evaluation, and reactive proxy engine.
 
 ---
@@ -157,7 +157,7 @@ BlaiseVue/
 ├── vendor/                    # Pre-bundled compilers & native frameworks
 │   ├── pas2js/                # Official multi-platform Pas2JS transpiler & RTL binaries
 │   ├── mormot2/               # High-throughput Synopse mORMot 2.4 framework
-│   └── zephyr/                # Native Aether HTTP/1.1 + WebSocket server (experimental)
+│   └── zephyr/                # Native DelSafe HTTP/1.1 + WebSocket server (experimental)
 ├── tests/                     # SDK-level framework test suites (bv test --sdk)
 ├── doc/                       # Architecture, manuals & educational courses
 │   ├── Architecture/          # Core compiler pipeline, reactivity engine & internals
@@ -179,7 +179,7 @@ BlaiseVue/
 ### 📋 Prerequisites
 - **Git (v2.30+)**: Required for cloning the framework, automatic selective updates (`bv self-update`), and channel management (`bv channel`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server-mormot/`).
-- **[Aether Compiler (`aetherc`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/aether)**: Optional compiler needed only if you create `--aether` apps, author `<script lang="aether">` / `.aeth` modules, run `.test.aeth` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
+- **[DelSafe Compiler (`delsafec`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/delsafe)**: Optional compiler needed only if you create `--delsafe` apps, author `<script lang="delsafe">` / `.dels` modules, run `.test.dels` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
 - **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `update.py`, `remove.py`, `pack.py`) for the dynamic developer tooling ecosystem (`bv tool`) and custom user packages (`~/.blaisevue/tools/`).
 - **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv capacitor` / `bv mobile`).
 - **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv capacitor build`), managing emulators, and running `bv capacitor open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.
@@ -216,8 +216,8 @@ On Windows, add the full path to `BlaiseVue\bin` to your System or User Environm
 Scaffold a complete, modern BlaiseVue project and enter its directory:
 ```bash
 bv create my-app
-# Or initialize directly with Aether frontend / a specific backend:
-bv create my-app --aether
+# Or initialize directly with DelSafe frontend / a specific backend:
+bv create my-app --delsafe
 bv create my-app --backend=mormot
 bv create my-app --backend=zephyr
 
@@ -255,7 +255,7 @@ Your new project is multi-platform by design:
 bv mormot init
 bv mormot run
 
-# Native Zephyr (Aether) backend server (Port 8091, experimental):
+# Native Zephyr (DelSafe) backend server (Port 8091, experimental):
 bv zephyr init
 bv zephyr run
 

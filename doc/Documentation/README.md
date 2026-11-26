@@ -35,8 +35,8 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 - **🖥️ Ultra-Lightweight Native Desktop (`bv desktop`)**: Standalone native desktop applications (<10 MB, 40 MB RAM) running across Windows, Linux, and macOS without Electron overhead.
 - **⚡ WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Near-native binary execution for compute-intensive routines in the browser.
 - **🎨 Master Component Catalog (60+ Production Widgets)**: Official packages for UI (`@blaise-ui`), Bootswatch themes (`@blaise-themes`), 2,000+ vector icons (`@blaise-icons`), reactive Chart.js (`@blaise-charts`), and vector PDF/Excel reports (`@blaise-reports`).
-- **🚀 Full-Stack Backends (`bv mormot`, `bv zephyr`, External Tools)**: Isolated multi-backend scaffolding (`server-mormot/` on port `8090`, Aether-native `server-zephyr/` on port `8091`, and pluggable `server-horse/` via `blaise-horse`), with standalone production packagers (`deploy/`).
-- **🔷 First-Class Aether Integration (`--aether`)**: Author SFCs with `<script lang="aether" uses="...">`, mix `.aeth` modules and Object Pascal `.pas` units seamlessly in `src/services/`, generate Aether modules/components via `bv g <type> --aether`, and run native `.test.aeth` suites inside `bv test`.
+- **🚀 Full-Stack Backends (`bv mormot`, `bv zephyr`, External Tools)**: Isolated multi-backend scaffolding (`server-mormot/` on port `8090`, DelSafe-native `server-zephyr/` on port `8091`, and pluggable `server-horse/` via `blaise-horse`), with standalone production packagers (`deploy/`).
+- **🔷 First-Class DelSafe Integration (`--delsafe`)**: Author SFCs with `<script lang="delsafe" uses="...">`, mix `.dels` modules and Object Pascal `.pas` units seamlessly in `src/services/`, generate DelSafe modules/components via `bv g <type> --delsafe`, and run native `.test.dels` suites inside `bv test`.
 
 ---
 
@@ -85,10 +85,10 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 52. [52. Global Mixins and Global Plugins in BlaiseVue](52-mixins-and-plugins.md) — Extending framework functionality, global option injection, and cross-cutting plugin architecture.
 
 ### ⚙️ 5. Full-Stack Backend Architecture & Cloud
-37. [37. Full-Stack Pascal with mORMot 2 & Alternative Backends](37-mormot2-backend.md) — Enterprise SOA (`server-mormot/`), Zephyr Aether backend (`server-zephyr/`), Horse (`server-horse/`), and frontend-only architecture.
+37. [37. Full-Stack Pascal with mORMot 2 & Alternative Backends](37-mormot2-backend.md) — Enterprise SOA (`server-mormot/`), Zephyr DelSafe backend (`server-zephyr/`), Horse (`server-horse/`), and frontend-only architecture.
 43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md) — Shared Pascal service contracts, automated proxy scaffolding (`bv mormot rpc`), and compile-time API validation.
 46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
-59. [59. Aether Integration & Zephyr Native Backend](59-aether-integration-and-zephyr-backend.md) — `<script lang="aether">` SFCs, Aether + Object Pascal interop in `src/services/`, native `.test.aeth` testing, and `bv zephyr` server (`server-zephyr/`).
+59. [59. DelSafe Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md) — `<script lang="delsafe">` SFCs, DelSafe + Object Pascal interop in `src/services/`, native `.test.dels` testing, and `bv zephyr` server (`server-zephyr/`).
 
 ### 📱 6. Universal Multiplatform (Mobile & Desktop)
 35. [35. Hybrid Mobile Platform & Capacitor (bv capacitor / bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
@@ -98,7 +98,7 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 12. [12. Debugging & Error Handling](12-debugging.md) — Source maps, runtime error boundaries, and console inspection.
 14. [14. CSS Transitions & Animations](14-css-transitions.md) — Declarative `<transition>` wrapper with enter/leave classes.
 18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md) — Installing and managing community packages via `bv lib`.
-19. [19. Automated Unit & Integration Testing (3-Tier App + SDK + Aether)](19-unit-testing.md) — Writing and executing automated tests in Pascal (`*.test.pas` via JSDOM/Vitest) and native Aether (`*.test.aeth`), plus `bv test --sdk` for core SDK suites.
+19. [19. Automated Unit & Integration Testing (3-Tier App + SDK + DelSafe)](19-unit-testing.md) — Writing and executing automated tests in Pascal (`*.test.pas` via JSDOM/Vitest) and native DelSafe (`*.test.dels`), plus `bv test --sdk` for core SDK suites.
 20. [20. Consolidating Extra Libraries](20-extra-libraries.md) — Architecture for package imports and stylesheet bundling.
 21. [21. Teleport & Suspense](21-teleport-suspense.md) — DOM target relocation and asynchronous loading wrappers.
 22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md) — Compile-time static analysis and diff pruning for peak rendering performance.

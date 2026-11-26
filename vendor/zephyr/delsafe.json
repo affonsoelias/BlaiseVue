@@ -1,13 +1,13 @@
 {
   "name": "zephyr",
   "version": "0.1.0",
-  "description": "Native HTTP/1.1 Keep-Alive & RFC 6455 WebSocket backend engine for BlaiseVue (written in Aether)",
+  "description": "Native HTTP/1.1 Keep-Alive & RFC 6455 WebSocket backend engine for BlaiseVue (written in DelSafe)",
   "license": "MIT",
   "backend": "c",
-  "entry": "examples/zephyr_demo.aeth",
+  "entry": "examples/zephyr_demo.dels",
   "output": "bin/zephyr_demo.exe",
   "paths": {
-    "aether": [
+    "delsafe": [
       "src"
     ],
     "c_includes": [],
