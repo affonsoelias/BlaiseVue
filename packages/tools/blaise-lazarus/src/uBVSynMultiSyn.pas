@@ -5,16 +5,27 @@ unit uBVSynMultiSyn;
 interface
 
 uses
-  Classes, SysUtils, Graphics,
+  Classes, SysUtils, Graphics, LCLVersion,
   SynEditHighlighter,
   SynHighlighterMulti,
   SynHighlighterHTML,
   SynHighlighterPas,
   SynHighlighterCSS;
 
+{ Lazarus 4.99+ (SynEdit on LazEdit) no longer overrides GetDefaultAttribute in
+  TSynMultiSyn, so the workaround below is neither needed nor valid there: calling
+  through the friend class fails the -CR method call check. }
+{$IF LCL_FULLVERSION < 4990000}
+  {$DEFINE BV_MULTISYN_ATTR_FIX}
+{$ELSE}
+  {$DEFINE BV_IDE_LANGUAGE_NAME}
+{$ENDIF}
+
 type
+{$IFDEF BV_MULTISYN_ATTR_FIX}
   { Friend class to access protected GetDefaultAttribute on sub-highlighters without unsafe casts }
   TSynCustomHighlighterFriend = class(TSynCustomHighlighter);
+{$ENDIF}
 
   { TBVSynMultiSyn }
   TBVSynMultiSyn = class(TSynMultiSyn)
@@ -23,8 +34,14 @@ type
     FPasSyn: TSynPasSyn;
     FCssSyn: TSynCssSyn;
     procedure InitSubHighlighters;
+{$IFDEF BV_MULTISYN_ATTR_FIX}
   protected
     function GetDefaultAttribute(Index: integer): TSynHighlighterAttributes; override;
+{$ENDIF}
+{$IFDEF BV_IDE_LANGUAGE_NAME}
+  protected
+    function GetInstanceLanguageName: string; override;
+{$ENDIF}
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -35,6 +52,7 @@ implementation
 
 { TBVSynMultiSyn }
 
+{$IFDEF BV_MULTISYN_ATTR_FIX}
 function TBVSynMultiSyn.GetDefaultAttribute(Index: integer): TSynHighlighterAttributes;
 var
   iHL: TSynCustomHighlighter;
@@ -52,6 +70,18 @@ begin
   else
     Result := nil;
 end;
+{$ENDIF}
+
+{$IFDEF BV_IDE_LANGUAGE_NAME}
+function TBVSynMultiSyn.GetInstanceLanguageName: string;
+begin
+  // The IDE looks up the editor color scheme by the highlighter's LanguageName
+  // (TEditorOptions.SetMarkupColors) and dereferences the result without a nil
+  // check, so an unknown language raises an Access violation on every switch to
+  // a .bv tab. Report the language of the outer (template) part, which the IDE knows.
+  Result := TSynHTMLSyn.GetLanguageName;
+end;
+{$ENDIF}
 
 constructor TBVSynMultiSyn.Create(AOwner: TComponent);
 begin

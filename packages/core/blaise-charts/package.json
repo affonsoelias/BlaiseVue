@@ -1,6 +1,6 @@
 {
   "name" : "blaise-charts",
-  "version" : "4.4.0",
+  "version" : "0.1.0",
   "description" : "Reactive Chart.js data visualization suite with strongly typed Object Pascal classes for BlaiseVue",
   "main" : "chart.min.js",
   "keywords" : [

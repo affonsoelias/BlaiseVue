@@ -1,6 +1,8 @@
 unit uCounter;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,11 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uCounter;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    valor: Integer;
+  end;
 
 procedure Register_uCounter;
 var

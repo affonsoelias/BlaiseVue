@@ -1,0 +1,83 @@
+<template>
+  <div class="comment-quotes">
+    <span class="log">{{ log }}</span>
+    <button class="run" @click="runAll">Run</button>
+  </div>
+</template>
+
+<script>
+  data:
+    log: string = '';
+
+  methods:
+    // Each case holds an odd number of apostrophes in a comment or a JS string,
+    // and the call after it must still become a method call.
+    // pas2js itself rejects an apostrophe inside /* */ in asm, so case 2 has none.
+    procedure mark(const What: string);
+    begin
+      this['log'] := String(this['log']) + What + ';';
+    end;
+
+    procedure jsLineComment;
+    begin
+      asm
+        // the chart's choice
+        var x = 1;
+      end;
+      this.mark('1');
+    end;
+
+    procedure jsBlockComment;
+    begin
+      asm
+        /* a block */
+        var x = 2;
+      end;
+      this.mark('2');
+    end;
+
+    procedure jsDoubleQuoted;
+    begin
+      asm
+        var x = "it's";
+      end;
+      this.mark('3');
+    end;
+
+    procedure jsEscapedQuote;
+    begin
+      asm
+        var x = 'it\'s';
+      end;
+      this.mark('4');
+    end;
+
+    procedure pascalLineComment;
+    begin
+      // don't stop here
+      this.mark('5');
+    end;
+
+    procedure pascalBraceComment;
+    begin
+      { don't stop here }
+      this.mark('6');
+    end;
+
+    procedure pascalStarComment;
+    begin
+      (* don't stop here *)
+      this.mark('7');
+    end;
+
+    procedure runAll;
+    begin
+      this.jsLineComment();
+      this.jsBlockComment();
+      this.jsDoubleQuoted();
+      this.jsEscapedQuote();
+      this.pascalLineComment();
+      this.pascalBraceComment();
+      this.pascalStarComment();
+    end;
+</script>

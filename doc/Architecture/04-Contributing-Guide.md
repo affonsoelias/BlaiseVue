@@ -23,11 +23,11 @@ gitGraph
     merge feat/virtual-scroll id: "Merge PR into develop"
     commit id: "Pass 66 test suites (357 tests)"
     checkout main
-    merge develop tag: "v4.4 Release"
+    merge develop tag: "v0.1.0 Pre-Release"
 ```
 
 ### Branch Rules:
-- **`main`**: Production-ready code only. Tagged with formal SemVer releases (e.g., `v4.4.0`). Direct pushes to `main` are strictly forbidden.
+- **`main`**: Release-ready code only. Tagged with formal SemVer releases (e.g., `v0.1.0`, `v1.0.0`). Direct pushes to `main` are strictly forbidden.
 - **`develop`**: The primary integration branch. All active development, feature branches, and bug fixes merge into `develop`.
 - **Feature Branches (`feat/<feature-name>`)**: Branch off `develop`. Used for new directives, components, or CLI tools.
 - **Fix Branches (`fix/<issue-name>`)**: Branch off `develop`. Used for bug fixes and regression patches.
@@ -90,21 +90,35 @@ BlaiseVue enforces a **100% test pass requirement**. No Pull Request will be mer
 
 The framework currently runs **66 test suites containing 357 automated tests**:
 
+### Running Tests:
 ```bash
-# Run the entire test suite
+# Inside a user project (runs tests/**/*.test.pas via Vitest and tests/**/*.test.dels natively)
 bv test
+
+# Inside the BlaiseVue SDK repository root (runs SDK suites under tests/)
+bv test --sdk
+bv test --sdk sfc
+bv test --sdk compile_fail
 
 # Run End-to-End (E2E) browser verification
 bv test e2e
-
-# Run performance and memory benchmarks
-bv test bench
 ```
 
+### SDK Test Hierarchy (`tests/` at SDK Root):
+Framework-level regression suites are organized at the repository root (separate from `demo-app/`):
+- `tests/core/` — reactivity, direct DOM, virtual DOM, components
+- `tests/state/` — stores, FSM, validation, forms, datasets
+- `tests/routing_i18n/` — router v2, middleware, i18n, themes
+- `tests/sfc_compiler/` — SFC parser, `<script lang="delsafe">`, member bodies, template checker
+- `tests/fullstack/` — mORMot RPC, dataset sync, swagger, lib packager
+- `tests/platforms/` — Capacitor mobile, WebUI desktop, Docker
+- `tests/compile_fail/` — expected compile-time error suites (`bad_delsafe_type.bv`, `bad_template_binding.bv`)
+
 ### Adding a New Test Suite:
-Use the CLI to scaffold a new test:
+Use the CLI inside a project to scaffold a new test:
 ```bash
-bv new t TestFeatureName
+bv g t TestFeatureName
+bv g t FeatureCheck --delsafe
 ```
 This generates a test unit in `tests/` utilizing `TBVTestContext`:
 
@@ -155,7 +169,7 @@ Before submitting a Pull Request to `develop`:
 - [ ] Commit messages follow the conventional format:
   - `feat: add BVSlider component to BlaiseUI`
   - `fix: prevent effect cycle in TBVDataSet LiveBindings`
-  - `docs: update architecture overview for v4.4`
+  - `docs: update architecture overview for v0.1.0`
 
 ---
 

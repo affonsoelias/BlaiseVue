@@ -13,8 +13,8 @@ BlaiseVue provides a native, declarative, and typed form validation engine that 
 - **Zero-Boilerplate UI Binding**: Automatically sets CSS state classes (`is-invalid` / `is-valid`) on blurred inputs.
 
 > [!TIP]
-> **Vue-Style Aliases (`v-validate` e `v-model`)**
-> Assim como as demais diretivas do BlaiseVue, o motor de validação aceita indistintamente tanto o prefixo `b-` quanto o prefixo `v-`. Você pode usar `v-validate` em conjunto com `v-model`:
+> **Vue-Style Aliases (`v-validate` and `v-model`)**
+> Just like other BlaiseVue directives, the validation engine seamlessly accepts either the `b-` or `v-` prefix. You can use `v-validate` alongside `v-model`:
 > ```html
 > <input type="email" v-model="email" v-validate="required|email" />
 > ```

@@ -22,8 +22,8 @@ yarn-debug.log*
 bin/*.exe
 bin/*.o
 bin/*.ppu
-server/bin/*.exe
-server/lib/
+server-mormot/bin/*.exe
+server-mormot/lib/
 
 # Local IDE & editor caches
 .vscode/

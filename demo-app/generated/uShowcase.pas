@@ -1,6 +1,8 @@
 unit uShowcase;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,11 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uShowcase;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    currentThemeName: string;
+  end;
 
 procedure Register_uShowcase;
 var

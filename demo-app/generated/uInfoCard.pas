@@ -1,6 +1,8 @@
 unit uInfoCard;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,12 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uInfoCard;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    titulo: string;
+    texto: string;
+  end;
 
 procedure Register_uInfoCard;
 var

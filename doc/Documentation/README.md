@@ -4,29 +4,39 @@
   </a>
 </p>
 
-# 🛡️ BlaiseVue 4.4 Documentation
+# 🛡️ BlaiseVue Documentation
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.
 
+> [!NOTE]
+> ### 🚀 Project Status: Public Pre-Release (`v0.1.x`)
+>
+> BlaiseVue is currently in active public pre-release (**`v0.1.0`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready for developers to clone, compile locally (`build.ps1` / `build.bat` / `build.sh`), run `demo-app`, test, build prototypes, and evaluate full-stack architectures**.
+>
+> BlaiseVue will continue evolving within **`v0.1.x`** across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**.
+>
+> We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
+
 ---
 
-## 🌟 The BlaiseVue 4.4 Enterprise Universal Architecture
+## 🌟 The BlaiseVue Enterprise Universal Architecture
 
-BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
+BlaiseVue delivers full-stack mORMot 2 and DelSafe/Zephyr integration, native mobile and desktop suites, an interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
 
-- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates (v4.4)**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
-- **💾 Offline-First `TBVDataSet` & Delta Sync (v4.4)**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
-- **🔗 Relational Master-Detail CRUD & Multi-Database ORM (v4.4)**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
-- **🏎️ High-Performance Virtual Scrolling (v4.4)**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
-- **📦 Standalone Library Scaffolding & Packaging (v4.4)**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
-- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset (v4.4)**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
+- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
+- **💾 Offline-First `TBVDataSet` & Delta Sync**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
+- **🔗 Relational Master-Detail CRUD & Multi-Database ORM**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
+- **🏎️ High-Performance Virtual Scrolling**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
+- **📦 Standalone Library Scaffolding & Packaging**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
+- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
 - **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
 - **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. In-memory cursor navigation (`First`, `Next`, `Prior`, `Last`), transactional buffering (`Append`, `Edit`, `Post`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), and two-way `b-field` directive.
 - **📱 Universal Hybrid Mobile Suite (Capacitor & `@blaise-ui-mobile`)**: 22+ adaptive Ionic components with Cupertino (iOS) and Material Design (Android) aesthetics, touch gestures, and safe-area notch handling.
 - **🖥️ Ultra-Lightweight Native Desktop (`bv desktop`)**: Standalone native desktop applications (<10 MB, 40 MB RAM) running across Windows, Linux, and macOS without Electron overhead.
 - **⚡ WebAssembly Acceleration Engine (`BVWasm` / `$wasm`)**: Near-native binary execution for compute-intensive routines in the browser.
 - **🎨 Master Component Catalog (60+ Production Widgets)**: Official packages for UI (`@blaise-ui`), Bootswatch themes (`@blaise-themes`), 2,000+ vector icons (`@blaise-icons`), reactive Chart.js (`@blaise-charts`), and vector PDF/Excel reports (`@blaise-reports`).
-- **🚀 Full-Stack mORMot 2 Micro-Containers**: Production Dockerfile multi-stage builds (`bv mormot docker`) generating sub-20 MB Alpine containers with <15ms startup time.
+- **🚀 Full-Stack Backends (`bv mormot`, `bv zephyr`, External Tools)**: Isolated multi-backend scaffolding (`server-mormot/` on port `8090`, DelSafe-native `server-zephyr/` on port `8091`, and pluggable `server-horse/` via `blaise-horse`), with standalone production packagers (`deploy/`).
+- **🔷 First-Class DelSafe Integration (`--delsafe`)**: Author SFCs with `<script lang="delsafe" uses="...">`, mix `.dels` modules and Object Pascal `.pas` units seamlessly in `src/services/`, generate DelSafe modules/components via `bv g <type> --delsafe`, and run native `.test.dels` suites inside `bv test`.
 
 ---
 
@@ -74,20 +84,21 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 51. [51. BlaiseReports: Native Vector PDF, Excel & Print Engine](51-blaise-reports.md) — Declarative enterprise reporting and multi-format document export engine in pure Object Pascal with `TBVReport` and print optimization.
 52. [52. Global Mixins and Global Plugins in BlaiseVue](52-mixins-and-plugins.md) — Extending framework functionality, global option injection, and cross-cutting plugin architecture.
 
-### ⚙️ 5. Full-Stack mORMot 2 & Cloud Architecture
-37. [37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md) — High-throughput REST API, ORM, WebSockets, JWT authentication, and Docker micro-containers.
+### ⚙️ 5. Full-Stack Backend Architecture & Cloud
+37. [37. Full-Stack Pascal with mORMot 2 & Alternative Backends](37-mormot2-backend.md) — Enterprise SOA (`server-mormot/`), Zephyr DelSafe backend (`server-zephyr/`), Horse (`server-horse/`), and frontend-only architecture.
 43. [43. End-to-End Type-Safe Pascal RPC with mORMot 2](43-typesafe-rpc-mormot.md) — Shared Pascal service contracts, automated proxy scaffolding (`bv mormot rpc`), and compile-time API validation.
 46. [46. Multi-Database ORM & Relational Master-Detail CRUD](46-relational-master-detail-crud.md) — Pluggable database engines (SQLite, Postgres, MySQL, Firebird), foreign key mapping, and parent-child dual-grid CRUD scaffolding (`bv mormot crud`).
+59. [59. DelSafe Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md) — `<script lang="delsafe">` SFCs, DelSafe + Object Pascal interop in `src/services/`, native `.test.dels` testing, and `bv zephyr` server (`server-zephyr/`).
 
 ### 📱 6. Universal Multiplatform (Mobile & Desktop)
-35. [35. Hybrid Mobile Platform & Capacitor (bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
+35. [35. Hybrid Mobile Platform & Capacitor (bv capacitor / bv mobile)](35-mobile-capacitor.md) — Native Android APK builds, emulator management, and responsive 12-column mobile layout.
 36. [36. Multiplatform Desktop & Lazarus IDE (bv desktop)](36-desktop-webui.md) — Ultra-lightweight native desktop apps (<10 MB) via WebUI with dual Debug and Release GUI modes.
 
 ### 🛠️ 7. Tooling, Optimization & Developer Experience
 12. [12. Debugging & Error Handling](12-debugging.md) — Source maps, runtime error boundaries, and console inspection.
 14. [14. CSS Transitions & Animations](14-css-transitions.md) — Declarative `<transition>` wrapper with enter/leave classes.
 18. [18. External Libraries & Setup Scripts (/lib)](18-external-libraries.md) — Installing and managing community packages via `bv lib`.
-19. [19. Automated Unit & Integration Testing (4-Tier Architecture)](19-unit-testing.md) — Writing and executing automated tests in Pascal across 4 tiers (components, views, unit services, framework) with JSDOM and Vitest.
+19. [19. Automated Unit & Integration Testing (3-Tier App + SDK + DelSafe)](19-unit-testing.md) — Writing and executing automated tests in Pascal (`*.test.pas` via JSDOM/Vitest) and native DelSafe (`*.test.dels`), plus `bv test --sdk` for core SDK suites.
 20. [20. Consolidating Extra Libraries](20-extra-libraries.md) — Architecture for package imports and stylesheet bundling.
 21. [21. Teleport & Suspense](21-teleport-suspense.md) — DOM target relocation and asynchronous loading wrappers.
 22. [22. Static Hoisting & Compiler Optimization](22-static-hoisting.md) — Compile-time static analysis and diff pruning for peak rendering performance.
@@ -101,19 +112,22 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
 53. [53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md) — Linking official Pas2JS built-in packages (chartjs, fcl-base, jspdf) and importing legacy Lazarus/Delphi business logic without rewriting.
 54. [54. Lazarus IDE Integration & Design-Time Package (blaisevue_ide.lpk)](54-lazarus-ide-package.md) — Official Lazarus design-time package with tri-syntax highlighting (`.bv`), File -> New wizards, Tools menu, and `bv lazarus init`.
+56. [56. Multi-Version SDK & Compiler Management (bv versions, bv framework, bv pas2js)](56-multi-version-sdk-management.md) — Local FPC-compiled BlaiseVue framework versions (`.blaisevue-version`), upstream release discovery (GitHub, GitLab, npm), immutable baseline protection, and interactive cleanup wizard (`bv versions clean`).
+57. [57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md) — Pluggable tooling engine, Cargo/Git-style dynamic CLI dispatch (bv <tool>), tool.json manifest specification, lifecycle hooks, and SHA-256 release packaging (bv tool pack).
+58. [58. Framework & Project Diagnostics (bv doctor)](58-framework-diagnostics-and-doctor.md) — Automated host environment verification, contextual project SDK alignment, immutable factory fallbacks, and actionable dependency notices.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
-- [Technical Roadmap (v2.0 - v4.4)](99-roadmap.md) — Detailed milestone history and upcoming feature specifications.
+- [Technical Roadmap](99-roadmap.md) — Detailed milestone history and upcoming feature specifications.
 
 ---
 
 ## 🛠️ CLI Quick Reference (`bv.exe`)
 
-The BlaiseVue CLI is a single, zero-dependency native executable compiled with Free Pascal.
+The BlaiseVue CLI is a single, zero-dependency native executable compiled locally with Free Pascal (`build.ps1` / `build.bat` / `build.sh`).
 
 ```bash
-  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+  BlaiseVue CLI v0.1.0 (Universal Pascal Full-Stack Platform)
   ============================================================
   Usage: bv <command> [options]
 
@@ -147,8 +161,12 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv check [file]            Validates component templates against script declarations (AST Type-Checker)
   bv clean                   Cleans generated build files (generated/ and dist/)
 
-  # === Backend & Full-Stack (Synopse mORMot 2) ===
+  # === Backend & Full-Stack (mORMot 2) ===
   bv mormot init             Scaffolds mORMot 2 backend server in server/
+  bv mormot versions         Lists active, bundled and cached user mORMot versions
+  bv mormot upgrade [--tag]  Interactively selects and downloads mORMot release
+  bv mormot use <version>    Switches active mORMot version (.mormot-version)
+  bv mormot remove-version   Interactively removes a cached user version
   bv mormot run [--release] [--fresh] [--port <p>] Starts native backend server (--fresh kills lingering instances)
   bv mormot build [--release] Compiles native server binary with Free Pascal (-O2 debug / -O3 release)
   bv mormot kill [--port <p>] Terminates lingering server.exe instances & verifies port release
@@ -159,23 +177,29 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv mormot docs | swagger   Generates interactive OpenAPI 3.0 & Swagger UI explorer (/api/docs)
   bv mormot docker [--build] Scaffolds sub-20MB Alpine micro-container & docker-compose.yml
   bv mormot rpc              Scaffolds type-safe Pascal RPC client proxies from SOA interfaces
+  bv mormot remove [-y]      Safely deletes server/ directory and mORMot binaries
 
   # === Mobile (Android & iOS via Capacitor) ===
-  bv mobile init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
-  bv mobile upgrade [--check] Migrates Capacitor dependencies & updates Gradle
-  bv mobile sync             Syncs dist/ with native mobile assets
-  bv mobile remove [-y]      Safely deletes mobile/ and capacitor.config.json
-  bv mobile build android    Builds native Android Debug APK in mobile/bin/android/
-  bv mobile build android --release Builds optimized Release APK (R8/ProGuard)
-  bv mobile build android --bundle Builds Google Play Android App Bundle (.aab)
-  bv mobile emulator list    Lists installed Android Virtual Devices (AVD)
-  bv mobile emulator start   Boots Android emulator in background
-  bv mobile emulator kill    Terminates lingering emulator & QEMU processes (alias: bv mobile kill)
-  bv mobile run android      Installs and launches APK on connected USB device
-  bv mobile run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
-  bv mobile open android     Opens project in Android Studio
+  bv capacitor init [name] [id] [--version=<v>] Scaffolds Capacitor & mobile/ native project
+  bv capacitor upgrade [--check] Migrates Capacitor dependencies & updates Gradle
+  bv capacitor versions      Lists installed and active Capacitor runtime versions
+  bv capacitor remove-version Interactively removes an installed Capacitor version
+  bv capacitor sync          Syncs dist/ with native mobile assets
+  bv capacitor remove [-y]   Safely deletes mobile/ and capacitor.config.json
+  bv capacitor build android Builds native Android Debug APK in mobile/bin/android/
+  bv capacitor build android --release Builds optimized Release APK (R8/ProGuard)
+  bv capacitor build android --bundle Builds Google Play Android App Bundle (.aab)
+  bv capacitor emulator list Lists installed Android Virtual Devices (AVD)
+  bv capacitor emulator start Boots Android emulator in background
+  bv capacitor emulator kill Terminates lingering emulator & QEMU processes (alias: bv capacitor kill)
+  bv capacitor run android   Installs and launches APK on connected USB device
+  bv capacitor run android --emulator [--release] [--fresh] Boots emulator, compiles & launches app (flags can be combined)
+  bv capacitor open android  Opens project in Android Studio
+  # Note: bv mobile is fully supported as an identical alias for all bv capacitor commands.
 
   # === Desktop (Free Pascal, Lazarus IDE & WebUI) ===
+  bv lazarus init            Scaffolds & syncs root Lazarus project (.lpi, .lpr) for IDE development
+  bv lazarus sync            Synchronizes all .bv components and Pascal units in Lazarus project tree
   bv desktop init [name]     Scaffolds Lazarus (.lpi, .lpr) & WebUI project
   bv desktop sync            Syncs dist/ with desktop/assets/
   bv desktop remove [-y]     Safely deletes desktop/ native project
@@ -204,7 +228,17 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv theme remove <name>     Removes a theme from package.json
   bv theme use <name>        Sets active default theme in package.json & index.html
   bv theme reset             Resets theme filters (bundles all themes in compatibility mode)
-  bv extension <list|install|remove|pack> [target] Manages development extensions & tools
+  bv tool list               Lists all installed tools (built-in, co-official & user third-party)
+  bv tool search [term]      Searches tools in registered ecosystem repositories
+  bv tool info <name>        Displays detailed information, versions and scripts of a tool
+  bv tool install [<repo>:]<name[@ver]> Installs tool from ecosystem into user tools (~/.blaisevue/tools)
+  bv tool install <url|zip>  Installs tool from local archive or download URL
+  bv tool outdated           Checks for available updates across all installed tools
+  bv tool run <name> [args]  Runs an installed developer tool CLI or script
+  bv tool update [<name>]    Updates user tools to latest versions found in ecosystem
+  bv tool remove <name>      Removes a tool from user tools directory (~/.blaisevue/tools)
+  bv tool pack [dir]         Packages a tool into a distributable archive (.zip with SHA-256)
+  bv tool init <name>        Creates a new tool project scaffold with tool.json and lifecycle scripts
 
   # === Project Configuration & Search Paths ===
   bv license [list|show|set] Manages project license (MIT, Apache, LGPL, GPL, BSD, etc.)
@@ -215,9 +249,20 @@ The BlaiseVue CLI is a single, zero-dependency native executable compiled with F
   bv path available          Lists all built-in Pas2JS packages available to link
   bv reset [--bare] [--force] Resets project to a clean slate (protected against demo-app)
 
+  # === Compiler (Pas2JS) ===
+  bv pas2js versions         Lists active, factory baseline and installed compiler versions
+  bv pas2js upgrade          Interactively selects and downloads Pas2JS distribution
+  bv pas2js use <version>    Switches active compiler for project (.pas2js-version)
+  bv pas2js remove-version   Interactively removes a cached compiler version
+
+  # === Multi-Version SDK Management ===
+  bv versions                Consolidated dashboard of active dependencies & SDK caches
+  bv versions clean          Interactive cross-module disk cleanup wizard (or bv versions remove)
+
   # === Framework Diagnostics & Maintenance ===
   bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)
   bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git
   bv channel [use <name>]    Inspects or switches framework branch (main/develop)
+  bv rollback                Restores previous CLI binary from backup (bv.bak)
   bv update [--dry-run]      Surgically syncs project infrastructure with latest framework features
 ```

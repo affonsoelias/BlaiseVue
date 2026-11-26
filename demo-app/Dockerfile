@@ -17,12 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 
 # Copy project source files
-COPY server/ ./server/
+COPY server-mormot/ ./server-mormot/
 COPY core/ ./core/ 2>/dev/null || true
 COPY vendor/ ./vendor/ 2>/dev/null || true
 
 # Compile native mORMot 2 server for Linux x86_64
-WORKDIR /build/server
+WORKDIR /build/server-mormot
 RUN fpc -Mobjfpc -Sh -O2 -XX -Xs \
     -Fu/build/vendor/mormot2/src/** \
     -FEbin \
@@ -47,7 +47,7 @@ RUN addgroup -g 1001 -S blaise && \
 WORKDIR /app
 
 # Copy compiled native server executable from builder stage
-COPY --from=builder /build/server/bin/server /app/server
+COPY --from=builder /build/server-mormot/bin/server /app/server
 RUN chmod +x /app/server
 
 # Copy compiled frontend distribution (SPA)

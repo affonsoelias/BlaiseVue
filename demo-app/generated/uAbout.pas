@@ -1,6 +1,8 @@
 unit uAbout;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,15 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uAbout;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    versao: string;
+    showDemos: Boolean;
+    logado: Boolean;
+    firstName: string;
+    lastName: string;
+  end;
 
 procedure Register_uAbout;
 var
@@ -138,8 +149,8 @@ begin
   begin
     d := TJSObject.new;
     d['versao'] := APP_VERSION;
-    d['showDemos'] := false;
-    d['logado'] := false;
+    d['showDemos'] := False;
+    d['logado'] := False;
     d['tecnologias'] := TJSArray.new;
     d['firstName'] := 'Blaise';
     d['lastName'] := 'Pascal';
@@ -171,7 +182,7 @@ begin
   m['toggleLogin'] := procedure(_this: TJSObject)
 
     begin
-      TJSObject(_this)['logado'] := not Boolean(TJSObject(_this)['logado']);
+      TComponentThis(_this).logado := not Boolean(TComponentThis(_this).logado);
     end;
     { Adds a dynamic record to the reactive array }
     

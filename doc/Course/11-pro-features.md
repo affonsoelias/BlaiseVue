@@ -140,7 +140,7 @@ When a root component (such as `App.bv`) needs to provide a global configuration
 // In the Root Component (App.bv):
 provide:
   activeTheme: 'darkly';
-  apiVersion: 'v4.4.0';
+  apiVersion: 'v0.1.0';
 
 // In any descendant child component:
 inject:

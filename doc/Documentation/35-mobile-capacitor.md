@@ -1,6 +1,8 @@
-# 35. Hybrid Mobile Platform & Capacitor (bv mobile)
+# 35. Hybrid Mobile Platform & Capacitor (bv capacitor / bv mobile)
 
 BlaiseVue enables native mobile application compilation and execution on **Android** and **iOS**, leveraging the modern **Capacitor** runtime together with the framework's native Pascal compiler.
+
+The primary command for mobile development is **`bv capacitor`**, with **`bv mobile`** maintained as a transparent, first-class alias for complete backward compatibility.
 
 This architecture enables the exact same Object Pascal business logic and Single File Components (`.bv`) to run on the Web and packaged into native APKs for mobile phones and tablets.
 
@@ -13,17 +15,17 @@ This architecture enables the exact same Object Pascal business logic and Single
 │         BlaiseVue Single File Components (.bv)         │
 │         100% Object Pascal Logic + Templates           │
 └──────────────────────────┬─────────────────────────────┘
-                           │ Transpilation (bv run build)
+                           │ Transpilation (bv build)
 ┌──────────────────────────▼─────────────────────────────┐
 │                 Optimized Web Bundle                   │
 │          dist/ (index.html, main.js, css/)             │
 └──────────────────────────┬─────────────────────────────┘
-                           │ Synchronization (bv mobile sync)
+                           │ Synchronization (bv capacitor sync)
 ┌──────────────────────────▼─────────────────────────────┐
 │           Capacitor Native Platform (mobile/)          │
 │   mobile/android/ (Android Studio) / mobile/ios/ (Xcode)│
 └──────────────────────────┬─────────────────────────────┘
-                           │ Compilation (bv mobile build [target] [--release])
+                           │ Compilation (bv capacitor build [target] [--release])
 ┌──────────────────────────▼─────────────────────────────┐
 │          Native Installable Packages (mobile/bin/)     │
 │   mobile/bin/android/<App>-debug.apk                   │
@@ -36,7 +38,7 @@ This architecture enables the exact same Object Pascal business logic and Single
 
 ## 📦 Directory Structure (`mobile/`)
 
-When running `bv mobile init [AppName] [com.company.app]`, the following segregated multiplatform structure is generated in `mobile/`:
+When running `bv capacitor init [AppName] [com.company.app]` (or `bv mobile init`), the following segregated multiplatform structure is generated in `mobile/`:
 
 ```text
 my-project/
@@ -78,62 +80,73 @@ To develop and build mobile applications in BlaiseVue, the developer only needs 
 
 ---
 
-## 🛠️ CLI Commands (`bv mobile`)
+## 🛠️ CLI Commands (`bv capacitor` / `bv mobile`)
 
-The `bv.exe` CLI provides native, granular support for the entire mobile lifecycle:
+The `bv.exe` CLI provides native, granular support for the entire mobile lifecycle (all commands accept `bv capacitor` or `bv mobile` interchangeably):
 
 ```bash
-# 1. Initialize mobile project with Capacitor and mobile/ directory structure
-bv mobile init [AppName] [com.yourcompany.app]
+# 1. Initialize mobile project with Capacitor and mobile/ directory structure:
+bv capacitor init [AppName] [com.yourcompany.app] [--version=<ver>]
 
-# 2. Synchronize build directory (dist/) with Android/iOS native assets
-bv mobile sync [android|ios|all]
+# 2. Upgrade Capacitor dependencies and run native migration:
+bv capacitor upgrade [--check]
 
-# 3. Safely remove mobile platform:
-bv mobile remove [-y]
+# 3. List installed and active Capacitor runtime versions:
+bv capacitor versions
 
-# 3. DEBUG Build Mode (active symbols and verbose logging):
-bv mobile build android             # Builds Debug APK to mobile/bin/android/<App>-debug.apk
-bv mobile build ios                 # Prepares and synchronizes native iOS project
+# 4. Interactively remove an installed Capacitor version from user storage:
+bv capacitor remove-version [version] [-y]
 
-# 4. RELEASE Build Mode (R8/ProGuard code shrinking and bytecode optimization):
-bv mobile build android --release   # Builds Release APK to mobile/bin/android/<App>-release.apk (local testing)
-bv mobile build android --bundle    # Builds Android App Bundle (.aab) for Google Play Console
-bv mobile build all --release       # Compiles all mobile platforms
+# 5. Synchronize build directory (dist/) with Android/iOS native assets:
+bv capacitor sync [android|ios|all]
 
-# 5. Android Virtual Device (AVD) Emulator Management:
-bv mobile emulator list             # Lists all emulators installed in Android Studio
-bv mobile emulator start [name]      # Boots the specified emulator in the background
-bv mobile emulator kill              # Stops and terminates any lingering emulator/QEMU processes
-bv mobile emulator run [name]        # Boots emulator, waits for system, and launches the app
+# 6. Safely remove mobile platform:
+bv capacitor remove [-y]
 
-# 6. Direct execution on connected device or emulator via ADB:
-bv mobile run android               # Installs and launches on USB-connected phone
-bv mobile run android --emulator    # Automatically boots emulator and launches the app
-bv mobile run android --emulator --fresh # Kills any previous ghost/stuck emulator and boots fresh
-bv mobile run android --emulator --release --fresh # Combines flags: clean emulator boot + Release APK build & launch!
+# 7. DEBUG Build Mode (active symbols and verbose logging):
+bv capacitor build android             # Builds Debug APK to mobile/bin/android/<App>-debug.apk
+bv capacitor build ios                 # Prepares and synchronizes native iOS project
 
-# 7. Open project in native IDE:
-bv mobile open android              # Opens project in Android Studio
-bv mobile open ios                  # Opens project in Xcode (on macOS)
+# 8. RELEASE Build Mode (R8/ProGuard code shrinking and bytecode optimization):
+bv capacitor build android --release   # Builds Release APK to mobile/bin/android/<App>-release.apk (local testing)
+bv capacitor build android --bundle    # Builds Android App Bundle (.aab) for Google Play Console
+bv capacitor build all --release       # Compiles all mobile platforms
+
+# 9. Android Virtual Device (AVD) Emulator Management:
+bv capacitor emulator list             # Lists all emulators installed in Android Studio
+bv capacitor emulator start [name]      # Boots the specified emulator in the background
+bv capacitor emulator kill              # Stops and terminates any lingering emulator/QEMU processes (alias: bv capacitor kill)
+bv capacitor emulator run [name]        # Boots emulator, waits for system, and launches the app
+
+# 10. Direct execution on connected device or emulator via ADB:
+bv capacitor run android               # Installs and launches on USB-connected phone
+bv capacitor run android --emulator    # Automatically boots emulator and launches the app
+bv capacitor run android --emulator --fresh # Kills any previous ghost/stuck emulator and boots fresh
+bv capacitor run android --emulator --release --fresh # Combines flags: clean emulator boot + Release APK build & launch!
+
+# 11. Open project in native IDE:
+bv capacitor open android              # Opens project in Android Studio
+bv capacitor open ios                  # Opens project in Xcode (on macOS)
 ```
 
 ### ⚙️ Build Modes & Mobile Platforms
 
-| Mobile Command | Platform | Build Mode | Package / Action | Purpose |
+| Command (`bv capacitor` / `bv mobile`) | Platform | Build Mode | Package / Action | Purpose |
 |---|---|---|---|---|
-| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version | Version selection (v8 LTS, v7, latest, next) |
-| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure | One-step migration with Universal Self-Healing |
-| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` | Rapid testing, development, and Logcat diagnostics |
-| `bv mobile build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Compact, optimized production build for local testing |
-| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` | Official Android App Bundle for Google Play Store upload |
-| `bv mobile emulator list` | Android | - | Displays installed AVDs | Inspect configured emulators on host machine |
-| `bv mobile emulator start` | Android | - | Boots AVD in background | Prepares emulator environment for development |
-| `bv mobile emulator kill` | Android | - | Terminates emulator processes | Cleanly kills lingering QEMU and emulator instances |
-| `bv mobile run android` | Android | Debug | ADB Deploy & Launch | Direct installation on USB device |
-| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boot AVD + ADB Deploy | 100% automated build & launch (combine flags freely) |
-| `bv mobile open android` | Android | - | Android Studio | Native Java/Kotlin editing, emulators, profilers |
-| `bv mobile open ios` | iOS | - | Xcode | Signing and compiling for iPhone/iPad (macOS) |
+| `bv capacitor init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version | Version selection (v8 LTS, v7, latest, next) |
+| `bv capacitor upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure | One-step migration with Universal Self-Healing |
+| `bv capacitor versions` | Universal | - | Displays active and cached Capacitor versions | Inspect installed runtime versions |
+| `bv capacitor remove-version [ver]` | Universal | - | Interactively removes cached version | Frees user disk space |
+| `bv capacitor build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` | Rapid testing, development, and Logcat diagnostics |
+| `bv capacitor build android --release` | Android | Release (R8/ProGuard) | `mobile/bin/android/<App>-release.apk` | Compact, optimized production build for local testing |
+| `bv capacitor build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` | Official Android App Bundle for Google Play Store upload |
+| `bv capacitor emulator list` | Android | - | Displays installed AVDs | Inspect configured emulators on host machine |
+| `bv capacitor emulator start` | Android | - | Boots AVD in background | Prepares emulator environment for development |
+| `bv capacitor emulator kill` | Android | - | Terminates emulator processes | Cleanly kills lingering QEMU and emulator instances |
+| `bv capacitor run android` | Android | Debug | ADB Deploy & Launch | Direct installation on USB device |
+| `bv capacitor run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boot AVD + ADB Deploy | 100% automated build & launch (combine flags freely) |
+| `bv capacitor open android` | Android | - | Android Studio | Native Java/Kotlin editing, emulators, profilers |
+| `bv capacitor open ios` | iOS | - | Xcode | Signing and compiling for iPhone/iPad (macOS) |
 
 ---
 
@@ -248,7 +261,7 @@ BlaiseVue's `EnsureAndroidGradleCompatibility` inspects and automatically harmon
   BlaiseVue automatically detects `keystore.properties` and signs release APKs and Bundles with your production key. Both `keystore.properties` and `*.jks` / `*.keystore` are protected in `.gitignore`.
 
 ### 3. Resilient Emulator Boot & ADB Handshake
-When executing `bv mobile run android --emulator`:
+When executing `bv capacitor run android --emulator` (or `bv mobile run android --emulator`):
 1. BlaiseVue boots the AVD in the background (if offline).
 2. Performs active polling on `sys.boot_completed == 1` (up to 90s timeout).
 3. Verifies that the Package Manager service (`pm path android`) is online and ready.

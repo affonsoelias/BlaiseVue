@@ -27,3 +27,23 @@ The ecosystem uses a Hash-based router to ensure compatibility with static serve
 
 ## ⚡ Initial Performance
 The initialization time of the BlaiseVue reactive engine is less than **10ms**, thanks to the absence of virtual rendering overhead during the first mount. 🛡️✨🏆
+
+---
+
+## 🔌 Backend Freedom & Decoupling
+
+BlaiseVue is an independent, client-first reactive framework. While it provides first-class integrations with native Pascal servers, **it is completely decoupled from any specific backend**:
+
+1. **Frontend-Only Mode (Zero Pascal Backend)**:
+   - Build pure reactive Web SPAs, Jamstack sites, or native mobile apps in Object Pascal.
+   - Host `dist/` on any static provider (Netlify, Vercel, AWS S3, Cloudflare Pages, Nginx).
+   - In-app HTTP communication uses the built-in `$api` (REST) and `$ws` (WebSocket) clients to consume any existing API written in **Node.js, Go, Python, C# (.NET), Java, PHP, or Delphi**.
+
+2. **Enterprise Full-Stack (Synopse mORMot 2)**:
+   - The default high-throughput Pascal SOA backend (`server/`) with shared type-safe interface contracts (`common/contracts.pas`), zero serialization drift, and microsecond latency.
+
+3. **Alternative Microframeworks (Horse)**:
+   - For lightweight, Express.js-style REST microservices, developers can use the co-official tool **`blaise-horse`** in an isolated `server-horse/` directory.
+
+4. **Architectural Symmetry & Removal**:
+   - Backend architectures can be safely added or removed at any time (`bv mormot init` / `bv mormot remove -y` or `bv horse init` / `bv horse remove -y`) without affecting the frontend.

@@ -1,6 +1,8 @@
 unit uCharts;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,14 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uCharts;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    universalType: string;
+    clickedPointInfo: string;
+    currentPalette: string;
+    isDarkMode: Boolean;
+  end;
 
 procedure Register_uCharts;
 var
@@ -137,7 +147,7 @@ begin
     d['universalType'] := 'bar';
     d['clickedPointInfo'] := '';
     d['currentPalette'] := 'Emerald';
-    d['isDarkMode'] := false;
+    d['isDarkMode'] := False;
     Result := d;
   end;
 

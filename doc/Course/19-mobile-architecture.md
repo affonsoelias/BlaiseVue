@@ -38,13 +38,13 @@ BlaiseVue achieves this through a high-performance **Hybrid Mobile Architecture*
 
 ---
 
-## 🛠️ 2. Initializing Mobile with `bv mobile init`
+## 🛠️ 2. Initializing Mobile with `bv capacitor init` (or `bv mobile init`)
 
 To turn any existing BlaiseVue project into a multi-platform mobile application, run:
 
 ```bash
-# Syntax: bv mobile init [AppName] [PackageIdentifier]
-bv mobile init MyApp com.mycompany.myapp
+# Syntax: bv capacitor init [AppName] [PackageIdentifier] (or: bv mobile init)
+bv capacitor init MyApp com.mycompany.myapp
 ```
 
 This single command sets up Capacitor, downloads runtime dependencies, and configures the native Android Studio project structure in `mobile/`.

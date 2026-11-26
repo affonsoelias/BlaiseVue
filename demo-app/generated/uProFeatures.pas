@@ -1,6 +1,8 @@
 unit uProFeatures;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,22 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uProFeatures;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    contador: Integer;
+    showElement: Boolean;
+    fibInput: Integer;
+    wasmFibResult: Integer;
+    wasmFibTime: string;
+    primeInput: Integer;
+    primeResult: string;
+    benchIters: Integer;
+    benchJsTime: string;
+    benchWasmTime: string;
+    benchSpeedup: string;
+    benchSummary: string;
+  end;
 
 procedure Register_uProFeatures;
 var
@@ -172,7 +190,7 @@ begin
   begin
     d := TJSObject.new;
     d['contador'] := 0;
-    d['showElement'] := true;
+    d['showElement'] := True;
     d['itens'] := '';
     d['fibInput'] := 20;
     d['wasmFibResult'] := 6765;

@@ -1,28 +1,28 @@
-# 42. LiveBindings & Dataset Reativo (`TBVDataSet`)
+# 42. LiveBindings & Reactive Dataset (`TBVDataSet`)
 
-O **BlaiseVue** conta com o motor enterprise de **LiveBindings** e **Dataset Reativo em Memória (`TBVDataSet`)**, unindo a semântica clássica de dados orientada a registros do **Delphi / Lazarus (`TClientDataSet` / `TDataSet`)** com o modelo reativo de ponta do **Vue 3 (`Proxy` e `effect`)**.
+**BlaiseVue** features an enterprise **LiveBindings** and **In-Memory Reactive Dataset (`TBVDataSet`)** engine, merging classic record-oriented data semantics from **Delphi / Lazarus (`TClientDataSet` / `TDataSet`)** with modern reactive architectures from **Vue 3 (`Proxy` and `effect`)**.
 
-Com o `TBVDataSet`, desenvolvedores Pascal criam aplicações empresariais com navegação por cursor, buffering de edição transacional, filtragem local em tempo real, ordenação por coluna, rastreamento offline de deltas e LiveBindings bidirecionais automáticos via diretiva `b-field`.
+With `TBVDataSet`, Pascal developers build enterprise applications featuring cursor navigation, transactional edit buffering, real-time local filtering, column sorting, offline delta tracking, and automatic two-way LiveBindings via the `b-field` directive.
 
 ---
 
-## 1. Visão Geral da Arquitetura
+## 1. Architecture Overview
 
 ```
 +-------------------------------------------------------------+
-|                     Template BlaiseVue                      |
+|                     BlaiseVue Template                      |
 |  <bv-datagrid :dataset="myDS" />                            |
 |  <input b-field="myDS.name" />                              |
-|  <span>Estado: {{ myDS.StateStr }} | RecNo: {{ myDS.RecNo }}|
+|  <span>State: {{ myDS.StateStr }} | RecNo: {{ myDS.RecNo }} |
 +------------------------------+------------------------------+
-                               | Reatividade Bidirecional (b-field)
+                               | Two-Way Reactivity (b-field)
                                v
 +-------------------------------------------------------------+
-|                  TBVDataSet (Reativo em Memória)            |
+|               TBVDataSet (In-Memory Reactive)               |
 |  - States: dsInactive, dsBrowse, dsEdit, dsInsert           |
 |  - Buffers: FEditBuffer, FOriginalBuffer, FDelta            |
-|  - Cursos: RecNo, RecordCount, Bof, Eof, IsEmpty            |
-|  - Métodos: Append, Edit, Post, Cancel, Delete, Locate      |
+|  - Cursor: RecNo, RecordCount, Bof, Eof, IsEmpty            |
+|  - Methods: Append, Edit, Post, Cancel, Delete, Locate      |
 |  - Typed Fields: AsString, AsInteger, AsFloat, AsBoolean    |
 |  - Offline Sync: GetDeltaJSON(), SaveToStorage()            |
 +-------------------------------------------------------------+
@@ -30,111 +30,111 @@ Com o `TBVDataSet`, desenvolvedores Pascal criam aplicações empresariais com n
 
 ---
 
-## 2. Máquina de Estados e Ciclo de Vida
+## 2. State Machine & Lifecycle
 
-O `TBVDataSet` adota a máquina de estados rigorosa do `TDataSet` do Object Pascal:
+`TBVDataSet` adheres to the strict state machine of Object Pascal's `TDataSet`:
 
-| Estado | Símbolo Pascal | String Reativa (`StateStr`) | Descrição |
+| State | Pascal Symbol | Reactive String (`StateStr`) | Description |
 | :--- | :--- | :--- | :--- |
-| **Inativo** | `dsInactive` | `'inactive'` | Dataset recém-criado ou sem dados carregados. |
-| **Navegação** | `dsBrowse` | `'browse'` | Modo de leitura / navegação pelo cursor (`RecNo`). |
-| **Edição** | `dsEdit` | `'edit'` | Registro atual sob edição em buffer isolado (`FEditBuffer`). |
-| **Inserção** | `dsInsert` | `'insert'` | Novo registro em buffer pendente de persistência. |
+| **Inactive** | `dsInactive` | `'inactive'` | Newly created dataset or no data loaded. |
+| **Browse** | `dsBrowse` | `'browse'` | Read-only mode / cursor navigation (`RecNo`). |
+| **Edit** | `dsEdit` | `'edit'` | Current record under modification in isolated buffer (`FEditBuffer`). |
+| **Insert** | `dsInsert` | `'insert'` | New record in buffer pending persistence. |
 
-### Transições de Estado
+### State Transitions
 
 ```pascal
 ds := TBVDataSet.Create;      // dsInactive
 ds.LoadFromJSON(jsonString);  // dsBrowse
 ds.Edit;                      // dsEdit
 ds.FieldByName('price').AsFloat := 149.90;
-ds.Post;                      // dsBrowse (com delta registrado!)
+ds.Post;                      // dsBrowse (with recorded delta!)
 
 ds.Append;                    // dsInsert
-ds.FieldByName('name').AsString := 'Novo Produto';
-ds.Cancel;                    // dsBrowse (buffer descartado)
+ds.FieldByName('name').AsString := 'New Product';
+ds.Cancel;                    // dsBrowse (buffer discarded)
 ```
 
 ---
 
-## 3. API Completa do `TBVDataSet`
+## 3. Comprehensive `TBVDataSet` API
 
-### 3.1. Navegação de Cursor
-- `ds.First`: Move o cursor para o primeiro registro ativo.
-- `ds.Prior`: Move o cursor para o registro anterior.
-- `ds.Next`: Move o cursor para o próximo registro.
-- `ds.Last`: Move o cursor para o último registro.
-- `ds.MoveBy(Distance: Integer)`: Salta $N$ registros para frente ou para trás.
-- `ds.RecNo: Integer`: Índice 1-based do registro atual.
-- `ds.RecordCount: Integer`: Quantidade total de registros ativos/filtrados.
-- `ds.Bof: Boolean`: Retorna `True` se estiver no início do dataset.
-- `ds.Eof: Boolean`: Retorna `True` se estiver no fim do dataset.
-- `ds.IsEmpty: Boolean`: Retorna `True` se a tabela estiver vazia.
+### 3.1. Cursor Navigation
+- `ds.First`: Moves cursor to the first active record.
+- `ds.Prior`: Moves cursor to the preceding record.
+- `ds.Next`: Moves cursor to the subsequent record.
+- `ds.Last`: Moves cursor to the final record.
+- `ds.MoveBy(Distance: Integer)`: Jumps $N$ records forward or backward.
+- `ds.RecNo: Integer`: 1-based index of the current active record.
+- `ds.RecordCount: Integer`: Total count of active/filtered records.
+- `ds.Bof: Boolean`: Returns `True` if cursor is at the beginning of the dataset.
+- `ds.Eof: Boolean`: Returns `True` if cursor is at the end of the dataset.
+- `ds.IsEmpty: Boolean`: Returns `True` if dataset contains no records.
 
-### 3.2. Operações CRUD e Buffering
-- `ds.Append` / `ds.Insert`: Cria um novo registro limpo no buffer de edição.
-- `ds.Edit`: Clona o registro atual em buffer de edição antes de modificar campos.
-- `ds.Post`: Valida alterações, persiste no array de registros e adiciona a operação no delta offline.
-- `ds.Cancel`: Aborta as alterações em buffer e retorna para `dsBrowse`.
-- `ds.Delete`: Remove o registro atual e gera entrada `'delete'` no log de deltas.
-- `ds.EmptyTable`: Limpa todos os dados, filtros e histórico de deltas.
+### 3.2. CRUD Operations & Buffering
+- `ds.Append` / `ds.Insert`: Creates a new blank record in the edit buffer.
+- `ds.Edit`: Clones the current record into the edit buffer before field modification.
+- `ds.Post`: Validates modifications, persists to record array, and records operation in the offline delta.
+- `ds.Cancel`: Discards buffered changes and returns to `dsBrowse`.
+- `ds.Delete`: Removes current record and logs a `'delete'` entry in the delta log.
+- `ds.EmptyTable`: Clears all data, active filters, and delta history.
 
-### 3.3. Acesso Tipado a Campos (`TBVField`)
+### 3.3. Typed Field Access (`TBVField`)
 ```pascal
 ds.AddField('id', ftInteger);
 ds.AddField('title', ftString);
 ds.AddField('price', ftFloat);
 ds.AddField('active', ftBoolean);
 
-// Leitura Tipada
+// Typed Reading
 id    := ds.FieldByName('id').AsInteger;
 title := ds.FieldByName('title').AsString;
 price := ds.FieldByName('price').AsFloat;
 ok    := ds.FieldByName('active').AsBoolean;
 
-// Escrita Tipada (entra automaticamente em dsEdit se estiver em dsBrowse)
-ds.FieldByName('title').AsString := 'Laptop Gamer';
+// Typed Writing (automatically enters dsEdit when in dsBrowse)
+ds.FieldByName('title').AsString := 'Gaming Laptop';
 ds.FieldByName('price').AsFloat  := 4500.00;
 ds.Post;
 ```
 
-### 3.4. Filtragem, Ordenação e Pesquisa
-- `ds.Locate(FieldName, Value): Boolean`: Varre o dataset procurando correspondência exata; se encontrar, posiciona o cursor no registro e sincroniza a UI.
-- `ds.SetFilter(QueryString)`: Aplica filtro "full-text" instantâneo em todas as colunas e reposiciona o cursor no topo (`First`).
-- `ds.ClearFilter`: Restaura a visão completa dos registros.
-- `ds.SortBy(FieldName, Ascending: Boolean = True)`: Ordena numericamente ou alfabeticamente pela coluna indicada.
+### 3.4. Filtering, Sorting & Search
+- `ds.Locate(FieldName, Value): Boolean`: Scans dataset for an exact match; if found, positions cursor and synchronizes UI.
+- `ds.SetFilter(QueryString)`: Applies instant full-text filtering across all columns and resets cursor to top (`First`).
+- `ds.ClearFilter`: Restores full view of all records.
+- `ds.SortBy(FieldName, Ascending: Boolean = True)`: Sorts numerically or alphabetically by the specified column.
 
 ---
 
-## 4. Diretiva de LiveBindings: `b-field`
+## 4. LiveBindings Directive: `b-field`
 
-A diretiva `b-field` conecta diretamente qualquer `<input>`, `<select>`, `<textarea>` ou componente Pascal a uma coluna do dataset atual.
+The `b-field` directive directly connects any `<input>`, `<select>`, `<textarea>`, or Pascal component to a column of the active dataset.
 
 ```html
 <template>
   <div class="card">
-    <h3>Edição de Cliente</h3>
+    <h3>Customer Edit</h3>
     
-    <!-- Vinculação declarativa e bidirecional aos campos do DataSet -->
+    <!-- Declarative two-way binding to DataSet fields -->
     <div class="form-group">
-      <label>Nome:</label>
+      <label>Name:</label>
       <input type="text" b-field="customerDS.name" class="form-control" />
     </div>
 
     <div class="form-group">
-      <label>E-mail:</label>
+      <label>Email:</label>
       <input type="email" b-field="customerDS.email" class="form-control" />
     </div>
 
-    <!-- Barra de Controle do DataSet (VCL / Lazarus Style) -->
+    <!-- DataSet Controller Bar (VCL / Lazarus Style) -->
     <div class="dataset-navigator">
-      <button @click="customerDS.Prior" :disabled="customerDS.Bof">« Anterior</button>
-      <span>Registro {{ customerDS.RecNo }} de {{ customerDS.RecordCount }}</span>
-      <button @click="customerDS.Next" :disabled="customerDS.Eof">Próximo »</button>
-      <button @click="customerDS.Append">Novo</button>
-      <button @click="customerDS.Post" :disabled="customerDS.StateStr == 'browse'">Salvar</button>
-      <button @click="customerDS.Cancel" :disabled="customerDS.StateStr == 'browse'">Cancelar</button>
-      <button @click="customerDS.Delete">Excluir</button>
+      <button @click="customerDS.Prior" :disabled="customerDS.Bof">« Prior</button>
+      <span>Record {{ customerDS.RecNo }} of {{ customerDS.RecordCount }}</span>
+      <button @click="customerDS.Next" :disabled="customerDS.Eof">Next »</button>
+      <button @click="customerDS.Append">New</button>
+      <button @click="customerDS.Post" :disabled="customerDS.StateStr == 'browse'">Save</button>
+      <button @click="customerDS.Cancel" :disabled="customerDS.StateStr == 'browse'">Cancel</button>
+      <button @click="customerDS.Delete">Delete</button>
     </div>
   </div>
 </template>
@@ -142,24 +142,24 @@ A diretiva `b-field` conecta diretamente qualquer `<input>`, `<select>`, `<texta
 
 ---
 
-## 5. Integração com `<bv-datagrid>`
+## 5. Integration with `<bv-datagrid>`
 
-O componente oficial `bv-datagrid` do pacote `@blaise-ui` possui suporte nativo a datasets reativos através da propriedade `:dataset`:
+The official `bv-datagrid` component from `@blaise-ui` provides native support for reactive datasets via the `:dataset` prop:
 
 ```html
 <template>
   <div class="container">
-    <h2>Catálogo de Produtos</h2>
+    <h2>Product Catalog</h2>
 
-    <!-- O DataGrid consome myDS diretamente, sincronizando paginação e colunas -->
+    <!-- DataGrid directly consumes productsDS, synchronizing pagination and columns -->
     <bv-datagrid :dataset="productsDS" @row-select="onSelectProduct" />
 
-    <!-- Formulário detalhado com LiveBindings ao registro selecionado na grade -->
+    <!-- Detail form with LiveBindings to the active record selected in the grid -->
     <div v-if="productsDS.Current" class="mt-4">
-      <h4>Detalhes do Registro Selecionado</h4>
+      <h4>Selected Record Details</h4>
       <input type="text" b-field="productsDS.title" />
       <input type="number" b-field="productsDS.price" />
-      <button @click="productsDS.Post">Atualizar</button>
+      <button @click="productsDS.Post">Update</button>
     </div>
   </div>
 </template>
@@ -167,9 +167,9 @@ O componente oficial `bv-datagrid` do pacote `@blaise-ui` possui suporte nativo 
 
 ---
 
-## 6. Sincronização e Rastreamento Offline (Deltas)
+## 6. Offline Synchronization & Delta Tracking
 
-O `TBVDataSet` rastreia silenciosamente todas as mutações sofridas pelos dados para sincronização com backends REST ou mORMot 2:
+`TBVDataSet` transparently tracks all data mutations for synchronization with REST or mORMot 2 backends:
 
 ```pascal
 procedure SyncWithServer;
@@ -179,14 +179,14 @@ begin
   if productsDS.ChangeCount > 0 then
   begin
     deltaJSON := productsDS.GetDeltaJSON;
-    // Envia lote de alterações (insert, update, delete) em uma única requisição
+    // Dispatches batch of mutations (insert, update, delete) in a single request
     ApiSave(this, '/api/products/batch', 0, False, JsonParse(deltaJSON), 'onSyncSuccess');
-    productsDS.ApplyUpdates; // Limpa o delta após persistência confirmada
+    productsDS.ApplyUpdates; // Clears delta buffer after confirmed persistence
   end;
 end;
 ```
 
-Além disso, persistência local no `localStorage` é provida por duas chamadas:
+Additionally, local persistence in `localStorage` is provided via two simple calls:
 - `productsDS.SaveToStorage('offline_products');`
 - `productsDS.LoadFromStorage('offline_products');`
 
@@ -194,9 +194,9 @@ Além disso, persistência local no `localStorage` é provida por duas chamadas:
 
 ## 7. Zero-ASM Pascal DX (`BVPascalDX`)
 
-Para manter conformidade com a arquitetura Zero-ASM do BlaiseVue, o unit `BVPascalDX` exporta utilitários fortemente tipados para manipulação de datasets em qualquer método de componente:
+To maintain conformity with BlaiseVue's Zero-ASM architecture, the `BVPascalDX` unit exports strongly typed helpers for dataset manipulation inside any component method:
 
-| Rotina PascalDX | Equivalente Direto no DataSet |
+| PascalDX Routine | Direct DataSet Equivalent |
 | :--- | :--- |
 | `NewDataSet: JSValue` | `TBVDataSet.Create` |
 | `DataSetLoad(ds, data)` | `ds.LoadFromData(data)` |

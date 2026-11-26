@@ -100,19 +100,19 @@ Replace the contents of your view component (e.g. `src/views/Home.bv`) with:
     // Action 1: Add 1 point
     procedure increment;
     begin
-      this['score'] := Integer(this['score']) + 1;
+      this.score += 1;
     end;
 
     // Action 2: Subtract 1 point
     procedure decrement;
     begin
-      this['score'] := Integer(this['score']) - 1;
+      this.score -= 1;
     end;
 
     // Action 3: Reset back to zero
     procedure resetScore;
     begin
-      this['score'] := 0;
+      this.score := 0;
     end;
 </script>
 
@@ -155,10 +155,12 @@ Replace the contents of your view component (e.g. `src/views/Home.bv`) with:
 ```
 
 ### Understanding the Pascal Logic:
-- `data: score: integer = 0;`: Initializes the variable `score` with zero.
-- `this['score']`: Accesses the reactive data property of the current component instance.
-- `Integer(this['score']) + 1`: Evaluates the current value, adds 1, and assigns it back.
-- BlaiseVue's reactive proxy automatically intercepts the assignment and updates the DOM in real time!
+- `data: score: integer = 0;`: Initializes the reactive `score` field with zero.
+- `this.score += 1;` and `this.score -= 1;`: Direct, strongly typed access to component fields. BlaiseVue's `.bv` compiler automatically generates a typed `TComponentThis` external class (`{$modeswitch externalclass}` + `{$COPERATORS ON}`) for primitive `data:` and `props:` fields (`integer`, `real`/`double`, `string`, `boolean`), so you can write clean Pascal expressions (`this.score += 1`, `this.unitPrice * this.quantity`, `this.showMessage := not this.showMessage`) without manual type casts.
+- `this.score := 0;`: Assigns a new value directly; BlaiseVue's reactive proxy intercepts the write and updates the DOM in real time.
+
+> [!TIP]
+> **Backward compatibility:** Bracket syntax (`this['score']`) remains fully supported and is still used for dynamic properties, `watch:` handlers, and fields whose names match Pascal reserved keywords (such as `type`).
 
 ---
 
@@ -171,7 +173,7 @@ Now it's your turn to experiment:
    ```pascal
    procedure doubleScore;
    begin
-     this['score'] := Integer(this['score']) * 2;
+     this.score := this.score * 2;
    end;
    ```
 3. Test it in the browser: click "Increment" until you reach 5, then click "Double". The display instantly turns into 10!
@@ -189,7 +191,7 @@ Now it's your turn to experiment:
 
 ## 📖 Deeper Technical Reference
 For advanced architectural deep-dives into BlaiseVue's reactive core:
-- **[Chapter 06: Reactivity Engine & Dependency Tracking](../Documentation/06-reactivity.md)** — Learn how ES6 `Proxy`, `track()`, `trigger()`, and microtask batching provide $O(1)$ fine-grained DOM patching without virtual DOM diffing overhead.
+- **[Chapter 05: Reactivity Engine & Practical State Management](../Documentation/05-reactivity.md)** — Learn how ES6 `Proxy`, `track()`, `trigger()`, and microtask batching provide $O(1)$ fine-grained DOM patching without virtual DOM diffing overhead.
 - **[Chapter 29: Zero-ASM Object Pascal DX Patterns](../Documentation/29-zero-asm-dx.md)** — Writing 100% clean Pascal without inline `asm ... end;` blocks using pure DX wrappers.
 
 ---

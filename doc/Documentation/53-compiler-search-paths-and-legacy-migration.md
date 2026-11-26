@@ -15,7 +15,7 @@ During compilation (`bv run dev` or `bv build`), the Pas2JS compiler reads `@app
 ```
 ┌────────────────────────────────────────────────────────┐
 │                   Component (.bv)                      │
-│   <script uses="uRegraTributaria, chartjs, jspdf">     │
+│   <script uses="uTaxRules, chartjs, jspdf">            │
 └───────────────────────────┬────────────────────────────┘
                             │ (Compiler Unit Resolution)
                             ▼
@@ -97,11 +97,11 @@ To reuse existing Pascal units from an on-disk folder:
 
 ```bash
 # Relative paths:
-bv path add ../meu-sistema-legado/models
-bv path add ./legacy/regras-de-negocio
+bv path add ../my-legacy-system/models
+bv path add ./legacy/business-rules
 
 # Absolute paths:
-bv path add C:\ProjetosLazarus\SharedUnits
+bv path add C:\LazarusProjects\SharedUnits
 ```
 
 > [!NOTE]
@@ -117,7 +117,7 @@ Removes a search path or Pas2JS package from `app.cfg`:
 bv path remove pas2js:chartjs
 
 # Remove by directory path:
-bv path remove ../meu-sistema-legado/models
+bv path remove ../my-legacy-system/models
 ```
 
 **Output:**
@@ -245,3 +245,34 @@ bv path add C:\SharedPascal\models
 bv path remove pas2js:chartjs
 bv path remove ../legacy/business-rules
 ```
+
+---
+
+## 🔷 Declarative JSON Search Paths (`blaisevue.json` & `package.json`)
+
+In addition to `app.cfg` (`bv path add`), BlaiseVue supports declaring extra **Object Pascal** (`-Fu`) and **DelSafe** (`-I`) search directories declaratively in **`blaisevue.json`** or inside **`package.json`**:
+
+```json
+{
+  "paths": {
+    "pascal": ["extra_pas", "../legacy/models"],
+    "delsafe": ["extra_dels", "../shared-delsafe"]
+  }
+}
+```
+
+Or nested under `"blaisevue"` inside `package.json`:
+
+```json
+{
+  "blaisevue": {
+    "paths": {
+      "pascal": ["extra_pas"],
+      "delsafe": ["extra_dels"]
+    }
+  }
+}
+```
+
+- **`paths.pascal`**: Automatically injected as `-Fu<dir>` into `bv build`, `bv build --release`, `bv dev`, `bv test`, DelSafe `<script lang="delsafe" uses="...">` service wrapper resolution, and shown in `bv path`.
+- **`paths.delsafe`**: Automatically scanned and passed via `-I <dir>` into `bv transpile`, `bv build`, `bv test` (`.test.dels`), and `bv zephyr` (with `src/services/` always scanned by default).

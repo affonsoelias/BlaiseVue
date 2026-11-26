@@ -1,0 +1,418 @@
+module ZephyrWs;
+
+interface
+
+function ComputeAcceptKey(borrow client_key: String) return String;
+function BuildUpgradeResponse(borrow client_key: String) return String;
+function HexFromBytes(borrow bytes: array of Int32) return String;
+function HexToBytes(borrow hex_str: String) return array of Int32;
+function EncodeTextFrameHex(borrow text: String) return String;
+function EncodePongFrameHex(borrow payload: String) return String;
+function EncodeCloseFrameHex(code: Int32) return String;
+function DecodeClientFrameOpcode(borrow hex_data: String) return Int32;
+function DecodeClientFramePayload(borrow hex_data: String) return String;
+function DecodeClientFrameConsumedBytes(borrow hex_data: String) return Int32;
+
+implementation
+
+const
+    WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    B64_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    HEX_ALPHA = "0123456789abcdef";
+
+function Rol32(val: UInt32; bits: Int32) return UInt32 is
+begin
+    return (val shl bits) or (val shr (32 - bits));
+end Rol32;
+
+function Sha1DigestBytes(borrow input: String) return array of Int32 is
+var
+    msg_len, bit_len, i, j, idx: Int32;
+    bytes: array of Int32;
+    w: array[80] of UInt32;
+    h0, h1, h2, h3, h4: UInt32;
+    a, b, c, d, e, f, k, temp: UInt32;
+    chunk_off: Int32;
+    digest: array of Int32;
+    rem: Int32;
+begin
+    msg_len := Int32(Length(borrow input));
+    SetLength(bytes, 0);
+    i := 0;
+    while i < msg_len do
+        bytes.Push(ByteAt(input, i) and $FF);
+        i := i + 1;
+    end while;
+
+    // Append bit '1' (0x80), pad with 0x00 until length mod 64 == 56
+    bytes.Push($80);
+    while (Int32(Length(bytes)) mod 64) <> 56 do
+        bytes.Push(0);
+    end while;
+
+    // Append 64-bit big-endian bit length
+    bit_len := msg_len * 8;
+    bytes.Push(0);
+    bytes.Push(0);
+    bytes.Push(0);
+    bytes.Push(0);
+    bytes.Push((bit_len shr 24) and $FF);
+    bytes.Push((bit_len shr 16) and $FF);
+    bytes.Push((bit_len shr 8) and $FF);
+    bytes.Push(bit_len and $FF);
+
+    h0 := $67452301;
+    h1 := $EFCDAB89;
+    h2 := $98BADCFE;
+    h3 := $10325476;
+    h4 := $C3D2E1F0;
+
+    chunk_off := 0;
+    while chunk_off < Int32(Length(bytes)) do
+        i := 0;
+        while i < 16 do
+            idx := chunk_off + (i * 4);
+            w[i] := (UInt32(bytes[idx]) shl 24) or
+                    (UInt32(bytes[idx + 1]) shl 16) or
+                    (UInt32(bytes[idx + 2]) shl 8) or
+                    UInt32(bytes[idx + 3]);
+            i := i + 1;
+        end while;
+
+        while i < 80 do
+            w[i] := Rol32(w[i - 3] xor w[i - 8] xor w[i - 14] xor w[i - 16], 1);
+            i := i + 1;
+        end while;
+
+        a := h0;
+        b := h1;
+        c := h2;
+        d := h3;
+        e := h4;
+
+        j := 0;
+        while j < 80 do
+            if j < 20 then
+                f := (b and c) or ((not b) and d);
+                k := $5A827999;
+            else if j < 40 then
+                f := b xor c xor d;
+                k := $6ED9EBA1;
+            else if j < 60 then
+                f := (b and c) or (b and d) or (c and d);
+                k := $8F1BBCDC;
+            else
+                f := b xor c xor d;
+                k := $CA62C1D6;
+            end if;
+
+            temp := Rol32(a, 5) + f + e + k + w[j];
+            e := d;
+            d := c;
+            c := Rol32(b, 30);
+            b := a;
+            a := temp;
+            j := j + 1;
+        end while;
+
+        h0 := h0 + a;
+        h1 := h1 + b;
+        h2 := h2 + c;
+        h3 := h3 + d;
+        h4 := h4 + e;
+
+        chunk_off := chunk_off + 64;
+    end while;
+
+    SetLength(digest, 20);
+    digest[0] := Int32((h0 shr 24) and $FF);
+    digest[1] := Int32((h0 shr 16) and $FF);
+    digest[2] := Int32((h0 shr 8) and $FF);
+    digest[3] := Int32(h0 and $FF);
+    digest[4] := Int32((h1 shr 24) and $FF);
+    digest[5] := Int32((h1 shr 16) and $FF);
+    digest[6] := Int32((h1 shr 8) and $FF);
+    digest[7] := Int32(h1 and $FF);
+    digest[8] := Int32((h2 shr 24) and $FF);
+    digest[9] := Int32((h2 shr 16) and $FF);
+    digest[10] := Int32((h2 shr 8) and $FF);
+    digest[11] := Int32(h2 and $FF);
+    digest[12] := Int32((h3 shr 24) and $FF);
+    digest[13] := Int32((h3 shr 16) and $FF);
+    digest[14] := Int32((h3 shr 8) and $FF);
+    digest[15] := Int32(h3 and $FF);
+    digest[16] := Int32((h4 shr 24) and $FF);
+    digest[17] := Int32((h4 shr 16) and $FF);
+    digest[18] := Int32((h4 shr 8) and $FF);
+    digest[19] := Int32(h4 and $FF);
+    rem := digest[0];
+    return digest;
+end Sha1DigestBytes;
+
+function Base64Char(idx: Int32) return String is
+begin
+    if (idx >= 0) and (idx < 64) then
+        return CharAt(borrow B64_ALPHA, UInt32(idx));
+    end if;
+    return "=";
+end Base64Char;
+
+function Base64EncodeBytes(borrow data: array of Int32) return String is
+var
+    n, i: Int32;
+    b0, b1, b2: Int32;
+    triple: Int32;
+    out_str: String;
+begin
+    n := Int32(Length(data));
+    out_str := "";
+    i := 0;
+    while i < n do
+        b0 := data[i] and $FF;
+        if (i + 1) < n then
+            b1 := data[i + 1] and $FF;
+        else
+            b1 := 0;
+        end if;
+        if (i + 2) < n then
+            b2 := data[i + 2] and $FF;
+        else
+            b2 := 0;
+        end if;
+
+        triple := (b0 shl 16) or (b1 shl 8) or b2;
+        out_str := out_str + Base64Char((triple shr 18) and $3F);
+        out_str := out_str + Base64Char((triple shr 12) and $3F);
+        if (i + 1) < n then
+            out_str := out_str + Base64Char((triple shr 6) and $3F);
+        else
+            out_str := out_str + "=";
+        end if;
+        if (i + 2) < n then
+            out_str := out_str + Base64Char(triple and $3F);
+        else
+            out_str := out_str + "=";
+        end if;
+        i := i + 3;
+    end while;
+    return out_str;
+end Base64EncodeBytes;
+
+function ComputeAcceptKey(borrow client_key: String) return String is
+var
+    concat_key: String;
+    digest: array of Int32;
+begin
+    concat_key := Trim(client_key) + WS_GUID;
+    digest := Sha1DigestBytes(borrow concat_key);
+    return Base64EncodeBytes(borrow digest);
+end ComputeAcceptKey;
+
+function BuildUpgradeResponse(borrow client_key: String) return String is
+var
+    accept_key: String;
+begin
+    accept_key := ComputeAcceptKey(borrow client_key);
+    return "HTTP/1.1 101 Switching Protocols\r\n" +
+           "Upgrade: websocket\r\n" +
+           "Connection: Upgrade\r\n" +
+           "Sec-WebSocket-Accept: " + accept_key + "\r\n" +
+           "Server: Zephyr-DelSafe/1.0\r\n\r\n";
+end BuildUpgradeResponse;
+
+function HexDigit(v: Int32) return String is
+begin
+    return CharAt(borrow HEX_ALPHA, UInt32(v and $0F));
+end HexDigit;
+
+function HexByte(b: Int32) return String is
+begin
+    return HexDigit((b shr 4) and $0F) + HexDigit(b and $0F);
+end HexByte;
+
+function HexNibble(ch: String) return Int32 is
+var
+    code: Int32;
+begin
+    code := ByteAt(ch, 0);
+    if (code >= 48) and (code <= 57) then
+        return code - 48;
+    end if;
+    if (code >= 97) and (code <= 102) then
+        return code - 97 + 10;
+    end if;
+    if (code >= 65) and (code <= 70) then
+        return code - 65 + 10;
+    end if;
+    return 0;
+end HexNibble;
+
+function HexFromBytes(borrow bytes: array of Int32) return String is
+var
+    i, n: Int32;
+    res: String;
+begin
+    n := Int32(Length(bytes));
+    res := "";
+    i := 0;
+    while i < n do
+        res := res + HexByte(bytes[i]);
+        i := i + 1;
+    end while;
+    return res;
+end HexFromBytes;
+
+function HexToBytes(borrow hex_str: String) return array of Int32 is
+var
+    n, i: Int32;
+    res: array of Int32;
+    hi, lo: Int32;
+begin
+    n := Int32(Length(borrow hex_str)) div 2;
+    SetLength(res, n);
+    i := 0;
+    while i < n do
+        hi := HexNibble(CharAt(borrow hex_str, UInt32(i * 2)));
+        lo := HexNibble(CharAt(borrow hex_str, UInt32(i * 2 + 1)));
+        res[i] := (hi shl 4) or lo;
+        i := i + 1;
+    end while;
+    return res;
+end HexToBytes;
+
+function EncodeFrameHex(opcode: Int32; borrow payload: String) return String is
+var
+    plen, i: Int32;
+    out_hex: String;
+begin
+    plen := Int32(Length(borrow payload));
+    out_hex := HexByte($80 or (opcode and $0F));
+    if plen <= 125 then
+        out_hex := out_hex + HexByte(plen);
+    else
+        out_hex := out_hex + HexByte(126);
+        out_hex := out_hex + HexByte((plen shr 8) and $FF);
+        out_hex := out_hex + HexByte(plen and $FF);
+    end if;
+    i := 0;
+    while i < plen do
+        out_hex := out_hex + HexByte(ByteAt(payload, i));
+        i := i + 1;
+    end while;
+    return out_hex;
+end EncodeFrameHex;
+
+function EncodeTextFrameHex(borrow text: String) return String is
+begin
+    return EncodeFrameHex(1, borrow text);
+end EncodeTextFrameHex;
+
+function EncodePongFrameHex(borrow payload: String) return String is
+begin
+    return EncodeFrameHex(10, borrow payload);
+end EncodePongFrameHex;
+
+function EncodeCloseFrameHex(code: Int32) return String is
+var
+    hi, lo: Int32;
+begin
+    hi := (code shr 8) and $FF;
+    lo := code and $FF;
+    return HexByte($88) + HexByte(2) + HexByte(hi) + HexByte(lo);
+end EncodeCloseFrameHex;
+
+function DecodeClientFrameConsumedBytes(borrow hex_data: String) return Int32 is
+var
+    bytes: array of Int32;
+    blen, b1, plen, header_len: Int32;
+    masked: Bool;
+begin
+    bytes := HexToBytes(borrow hex_data);
+    blen := Int32(Length(bytes));
+    if blen < 2 then
+        return 0;
+    end if;
+    b1 := bytes[1];
+    masked := (b1 and $80) <> 0;
+    plen := b1 and $7F;
+    header_len := 2;
+    if plen = 126 then
+        if blen < 4 then
+            return 0;
+        end if;
+        plen := (bytes[2] shl 8) or bytes[3];
+        header_len := 4;
+    else if plen = 127 then
+        return 0;
+    end if;
+    if masked then
+        header_len := header_len + 4;
+    end if;
+    if blen < (header_len + plen) then
+        return 0;
+    end if;
+    return header_len + plen;
+end DecodeClientFrameConsumedBytes;
+
+function DecodeClientFrameOpcode(borrow hex_data: String) return Int32 is
+var
+    bytes: array of Int32;
+begin
+    bytes := HexToBytes(borrow hex_data);
+    if Int32(Length(bytes)) < 2 then
+        return -1;
+    end if;
+    return bytes[0] and $0F;
+end DecodeClientFrameOpcode;
+
+function DecodeClientFramePayload(borrow hex_data: String) return String is
+var
+    bytes: array of Int32;
+    blen, b1, plen, off, mask_off, i, b: Int32;
+    masked: Bool;
+    res: String;
+begin
+    bytes := HexToBytes(borrow hex_data);
+    blen := Int32(Length(bytes));
+    if blen < 2 then
+        return "";
+    end if;
+    b1 := bytes[1];
+    masked := (b1 and $80) <> 0;
+    plen := b1 and $7F;
+    off := 2;
+    if plen = 126 then
+        if blen < 4 then
+            return "";
+        end if;
+        plen := (bytes[2] shl 8) or bytes[3];
+        off := 4;
+    else if plen = 127 then
+        return "";
+    end if;
+
+    mask_off := off;
+    if masked then
+        off := off + 4;
+    end if;
+    if blen < (off + plen) then
+        return "";
+    end if;
+
+    res := "";
+    i := 0;
+    while i < plen do
+        if masked then
+            b := bytes[off + i] xor bytes[mask_off + (i mod 4)];
+        else
+            b := bytes[off + i];
+        end if;
+        if b > 0 then
+            res := res + CharFromByte(b);
+        end if;
+        i := i + 1;
+    end while;
+    return res;
+end DecodeClientFramePayload;
+
+end ZephyrWs.

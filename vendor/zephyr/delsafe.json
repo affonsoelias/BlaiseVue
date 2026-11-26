@@ -1,0 +1,29 @@
+{
+  "name": "zephyr",
+  "version": "0.1.0",
+  "description": "Native HTTP/1.1 Keep-Alive & RFC 6455 WebSocket backend engine for BlaiseVue (written in DelSafe)",
+  "license": "MIT",
+  "backend": "c",
+  "entry": "examples/zephyr_demo.dels",
+  "output": "bin/zephyr_demo.exe",
+  "paths": {
+    "delsafe": [
+      "src"
+    ],
+    "c_includes": [],
+    "c_sources": [],
+    "pascal_units": [],
+    "lib_dirs": [],
+    "libs": [],
+    "shared_libs": []
+  },
+  "system_libs": [],
+  "pascal_packages": [],
+  "outputs": {
+    "bin_dir": "bin",
+    "pascal_src_dir": "build/pascal",
+    "pascal_unit_dir": "build/units",
+    "c_src_dir": "build/c",
+    "as_unit": false
+  }
+}

@@ -8,14 +8,14 @@ Reactivity is the heartbeat of **BlaiseVue**. It allows you to declare applicati
 
 In BlaiseVue, every variable declared in your component's `data:` section is automatically wrapped in a high-performance **ES6 Proxy**. 
 
-When you read a variable in your `<template>` (e.g. `{{ count }}`), BlaiseVue **tracks** that dependency. When you modify that variable in an Object Pascal method (e.g. `count := count + 1;`), BlaiseVue **triggers** an instant, surgical update to only the affected DOM elements.
+When you read a variable in your `<template>` (e.g. `{{ count }}`), BlaiseVue **tracks** that dependency. When you modify that variable in an Object Pascal method (e.g. `this.count += 1;`), BlaiseVue **triggers** an instant, surgical update to only the affected DOM elements.
 
 ```
        User Action (Click, Input, Timer)
                       │
                       ▼
        Object Pascal Method (`methods:`)
-         `self.count := self.count + 1;`
+             `this.count += 1;`
                       │
                       ▼
          ES6 Proxy Interception (`set`)
@@ -45,40 +45,32 @@ Here is a complete, runnable Single File Component (`.bv`) demonstrating primiti
 </template>
 
 <script>
-type
-  TCounterComponent = class
-  public
-    data:
-      count: Integer = 0;
-      statusMessage: String = 'Ready';
+  data:
+    count: Integer = 0;
+    statusMessage: String = 'Ready';
 
-    methods:
-      procedure Increment;
-      procedure Decrement;
-      procedure Reset;
-  end;
+  methods:
+    procedure Increment;
+    begin
+      this.count += 1;
+      if this.count > 10 then
+        this.statusMessage := 'High activity! 🚀'
+      else
+        this.statusMessage := 'Incremented';
+    end;
 
-procedure TCounterComponent.Increment;
-begin
-  self.count := self.count + 1;
-  if self.count > 10 then
-    self.statusMessage := 'High activity! 🚀'
-  else
-    self.statusMessage := 'Incremented';
-end;
+    procedure Decrement;
+    begin
+      if this.count > 0 then
+        this.count -= 1;
+      this.statusMessage := 'Decremented';
+    end;
 
-procedure TCounterComponent.Decrement;
-begin
-  if self.count > 0 then
-    self.count := self.count - 1;
-  self.statusMessage := 'Decremented';
-end;
-
-procedure TCounterComponent.Reset;
-begin
-  self.count := 0;
-  self.statusMessage := 'Reset to zero';
-end;
+    procedure Reset;
+    begin
+      this.count := 0;
+      this.statusMessage := 'Reset to zero';
+    end;
 </script>
 
 <style>
@@ -102,10 +94,13 @@ end;
 ```
 
 ### 💡 What happens behind the scenes:
-1. When `TCounterComponent` mounts, the template binds `{{ count }}` and `{{ statusMessage }}` to the reactive instance.
+1. When the component mounts, the template binds `{{ count }}` and `{{ statusMessage }}` to the reactive instance.
 2. Clicking `+ Increment` executes `Increment` in pure Object Pascal.
-3. Modifying `self.count := self.count + 1` notifies all dependent DOM text nodes to update immediately.
+3. Modifying `this.count += 1;` notifies all dependent DOM text nodes to update immediately.
 4. No need for `this.setState(...)`, `notifyListeners()`, or manual element querying!
+
+> [!NOTE]
+> **Automatic Strong Typing for `this` (`TComponentThis`):** The `.bv` compiler generates a strongly typed `TComponentThis` external class (`{$modeswitch externalclass}` + `{$COPERATORS ON}`) for primitive `data:` and `props:` fields (`integer`, `double`/`real`/`float`, `string`, `boolean`) across `methods:`, `computed:`, and lifecycle hooks — eliminating manual casts like `Integer(this['count'])`. Full retrocompatibility with `this['field']` is preserved for dynamic fields, `watch:` handlers, and Pascal reserved keyword names (such as `type`).
 
 ---
 
@@ -207,38 +202,30 @@ Computed properties are **derived values** that are cached based on their reacti
 </template>
 
 <script>
-type
-  TCartComponent = class
-  public
-    data:
-      unitPrice: Double = 49.90;
-      quantity: Integer = 2;
-      taxRate: Double = 0.10;
+  data:
+    unitPrice: Double = 49.90;
+    quantity: Integer = 2;
+    taxRate: Double = 0.10;
 
-    computed:
-      function subtotal: Double;
-      function taxAmount: Double;
-      function formattedTotal: String;
-  end;
+  computed:
+    function subtotal: Double;
+    begin
+      // Cached until unitPrice or quantity changes!
+      Result := this.unitPrice * this.quantity;
+    end;
 
-function TCartComponent.subtotal: Double;
-begin
-  // Cached until unitPrice or quantity changes!
-  Result := self.unitPrice * self.quantity;
-end;
+    function taxAmount: Double;
+    begin
+      Result := (this.unitPrice * this.quantity) * this.taxRate;
+    end;
 
-function TCartComponent.taxAmount: Double;
-begin
-  Result := self.subtotal * self.taxRate;
-end;
-
-function TCartComponent.formattedTotal: String;
-var
-  LTotal: Double;
-begin
-  LTotal := self.subtotal + self.taxAmount;
-  Result := FormatFloat('0.00', LTotal);
-end;
+    function formattedTotal: String;
+    var
+      LTotal: Double;
+    begin
+      LTotal := (this.unitPrice * this.quantity) * (1 + this.taxRate);
+      Result := FormatFloat('0.00', LTotal);
+    end;
 </script>
 ```
 

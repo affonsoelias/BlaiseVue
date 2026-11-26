@@ -1,0 +1,176 @@
+module ZephyrHttp;
+
+import ZephyrSecurity;
+
+interface
+
+function FindHeaderEnd(borrow raw: String) return Int32;
+function GetHeaderRaw(borrow headers_raw: String; borrow name: String) return String;
+function ParseContentLengthFromHeaders(borrow headers_raw: String) return Int32;
+function ParseConnectionKeepAlive(borrow version: String; borrow headers_raw: String) return Bool;
+function ReasonPhrase(status_code: Int32) return String;
+function FormatHttpHeaders(
+    status_code: Int32;
+    borrow content_type: String;
+    content_len: Int64;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String;
+function FormatHttpResponse(
+    status_code: Int32;
+    borrow content_type: String;
+    borrow body: String;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String;
+
+implementation
+
+function FindHeaderEnd(borrow raw: String) return Int32 is
+var
+    idx: Int32;
+begin
+    idx := IndexOf(raw, "\r\n\r\n");
+    if idx >= 0 then
+        return idx;
+    end if;
+    return -1;
+end FindHeaderEnd;
+
+function GetHeaderRaw(borrow headers_raw: String; borrow name: String) return String is
+var
+    lines: array of String;
+    target, line, low_line: String;
+    colon, i, n: Int32;
+begin
+    target := LowerCase(Trim(name));
+    if Length(borrow target) = 0 then
+        return "";
+    end if;
+    lines := Split(headers_raw, "\n");
+    n := Int32(Length(lines));
+    i := 0;
+    while i < n do
+        line := Trim(Replace(lines[i], "\r", ""));
+        colon := IndexOf(line, ":");
+        if colon > 0 then
+            low_line := LowerCase(Trim(Substring(borrow line, 0, UInt32(colon))));
+            if low_line = target then
+                return Trim(Substring(borrow line, UInt32(colon + 1), UInt32(Int32(Length(borrow line)) - colon - 1)));
+            end if;
+        end if;
+        i := i + 1;
+    end while;
+    return "";
+end GetHeaderRaw;
+
+function ParseContentLengthFromHeaders(borrow headers_raw: String) return Int32 is
+var
+    v: String;
+    n: Int32;
+begin
+    v := GetHeaderRaw(borrow headers_raw, "Content-Length");
+    if Length(borrow v) = 0 then
+        return 0;
+    end if;
+    n := StrToInt(v);
+    if n < 0 then
+        return -1;
+    end if;
+    return n;
+end ParseContentLengthFromHeaders;
+
+function ParseConnectionKeepAlive(borrow version: String; borrow headers_raw: String) return Bool is
+var
+    conn: String;
+begin
+    conn := LowerCase(GetHeaderRaw(borrow headers_raw, "Connection"));
+    if Contains(conn, "close") then
+        return false;
+    end if;
+    if Contains(conn, "keep-alive") then
+        return true;
+    end if;
+    if Contains(version, "1.1") then
+        return true;
+    end if;
+    return false;
+end ParseConnectionKeepAlive;
+
+function ReasonPhrase(status_code: Int32) return String is
+begin
+    match status_code do
+        101 => return "Switching Protocols";
+        200 => return "OK";
+        201 => return "Created";
+        204 => return "No Content";
+        400 => return "Bad Request";
+        401 => return "Unauthorized";
+        403 => return "Forbidden";
+        404 => return "Not Found";
+        405 => return "Method Not Allowed";
+        413 => return "Payload Too Large";
+        429 => return "Too Many Requests";
+        431 => return "Request Header Fields Too Large";
+        500 => return "Internal Server Error";
+        _ => return "OK";
+    end match;
+end ReasonPhrase;
+
+function FormatHttpHeaders(
+    status_code: Int32;
+    borrow content_type: String;
+    content_len: Int64;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String is
+var
+    res, conn_hdr: String;
+begin
+    if keep_alive then
+        conn_hdr := "keep-alive";
+    else
+        conn_hdr := "close";
+    end if;
+
+    res := "HTTP/1.1 " + IntToStr(status_code) + " " + ReasonPhrase(status_code) + "\r\n";
+    res := res + "Server: Zephyr-DelSafe/1.0\r\n";
+    if status_code <> 204 then
+        res := res + "Content-Type: " + SanitizeHeaderValue(borrow content_type) + "\r\n";
+    end if;
+    res := res + "Content-Length: " + IntToStr(content_len) + "\r\n";
+    res := res + "Connection: " + conn_hdr + "\r\n";
+    if Length(borrow sec_cors_headers) > 0 then
+        res := res + sec_cors_headers;
+    end if;
+    if Length(borrow extra_headers) > 0 then
+        res := res + extra_headers;
+    end if;
+    res := res + "\r\n";
+    return res;
+end FormatHttpHeaders;
+
+function FormatHttpResponse(
+    status_code: Int32;
+    borrow content_type: String;
+    borrow body: String;
+    borrow extra_headers: String;
+    borrow sec_cors_headers: String;
+    keep_alive: Bool
+) return String is
+var
+    hdrs: String;
+    body_len: Int64;
+begin
+    body_len := Int64(Length(borrow body));
+    hdrs := FormatHttpHeaders(status_code, borrow content_type, body_len, borrow extra_headers, borrow sec_cors_headers, keep_alive);
+    if status_code <> 204 then
+        return hdrs + body;
+    end if;
+    return hdrs;
+end FormatHttpResponse;
+
+end ZephyrHttp.

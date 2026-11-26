@@ -19,7 +19,7 @@ With this architecture, Pascal developers can write **both frontend components a
                            │ (ws://localhost:8090/blaise-ws)
 ┌──────────────────────────▼─────────────────────────────┐
 │          Synopse mORMot 2 Native Backend Server        │
-│         (server/server.lpr, server/ServerApp.pas)      │
+│    (server-mormot/server.lpr, server-mormot/ServerApp) │
 ├────────────────────────────────────────────────────────┤
 │  [+] Asynchronous Non-blocking HTTP Server Engine      │
 │  [+] Real-time WebSocket Protocol (TWebSocketServer)   │
@@ -36,10 +36,19 @@ With this architecture, Pascal developers can write **both frontend components a
 The BlaiseVue CLI provides end-to-end tooling to scaffold, build, run, and inspect the native mORMot 2 server.
 
 ```bash
-# 1. Initialize the mORMot 2 backend inside a project:
+# 1. Initialize the mORMot 2 backend inside a project (isolated server-mormot/):
 bv mormot init
 
-# 2. DEBUG Build Mode (includes debug symbols and diagnostic output):
+# 2. Multi-Version Management (Upgrade, Switch, List, Clean):
+bv mormot versions                      # Lists active, bundled and cached user versions with disk usage
+bv mormot upgrade                       # Interactive version picker fetching tags from Synopse GitHub
+bv mormot upgrade --tag=v2.2            # Downloads specific tag into ~/.blaisevue/versions/mormot/v2.2
+bv mormot use v2.2                      # Configures project to use specific mORMot 2 version
+bv mormot use bundled                   # Reverts project to factory bundled version (vendor/mormot2)
+bv mormot remove-version                # Interactively choose a cached version to delete (frees disk space)
+bv mormot remove-version v2.2 -y        # Deletes specific cached version without prompt
+
+# 3. DEBUG Build Mode (includes debug symbols and diagnostic output):
 bv mormot build
 
 # 3. RELEASE Build Mode (maximum compiler optimization -O3, stripped symbols):
@@ -58,34 +67,81 @@ bv mormot status                       # Queries http://localhost:8090/api/statu
 bv mormot status --port 8080           # Queries custom port
 
 # 6. Package standalone production bundle for deployment:
-bv mormot deploy                       # Generates standalone deploy/ directory
-bv mormot deploy --zip                 # Generates deploy/ and packages into deploy.zip
+bv mormot deploy                       # Generates standalone deploy/server-mormot/ directory
+bv mormot deploy --zip                 # Generates deploy/server-mormot/ and deploy.zip
 bv mormot deploy --zip --port 80       # Customizes startup port in start.bat/start.sh
+
+# 7. Safely remove mORMot 2 backend from project:
+bv mormot remove                       # Asks confirmation before deleting server-mormot/
+bv mormot remove -y                    # Deletes server-mormot/ without confirmation prompt
 ```
 
 ---
 
-## 🚀 Standalone Production Deployment (`deploy/`)
+## 🧩 Architectural Flexibility: Frontend-Only & Alternative Backends
+
+While mORMot 2 is the official enterprise default, **BlaiseVue is fully decoupled**:
+
+### 1. Using Only the Frontend (Frontend-Only Mode)
+You do not have to use a Pascal backend. If you want to use BlaiseVue purely as a modern reactive frontend:
+- Compile your SPA with `bv build` or `bv build --release`.
+- Host `dist/` on any static provider (Netlify, Vercel, AWS S3, Cloudflare Pages, Nginx, Apache).
+- Connect to your existing REST, GraphQL, or gRPC backend (written in Node.js, Go, Python, C#, Java, etc.) using BlaiseVue's built-in `$api` (`fetch`) or `$ws` (WebSocket) clients.
+- If your project has a `server-mormot/` (or legacy `server/`) directory and you want to purge it, run:
+  ```bash
+  bv mormot remove -y
+  ```
+
+### 2. Using the Zephyr DelSafe Backend (`server-zephyr/`, Port `8091`)
+For DelSafe-native full-stack services with OWASP security headers, static SPA serving, and WebSockets:
+- Scaffold via `bv zephyr init` (or `bv create my-app --backend=zephyr`), run with `bv zephyr run`, deploy with `bv zephyr deploy [--zip]`, or remove cleanly with `bv zephyr remove -y`.
+- Runs in isolated `server-zephyr/` so it coexists cleanly with `server-mormot/`.
+- See **[59. DelSafe Language Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md)**.
+
+### 3. Using the Alternative Horse Microframework (`server-horse/`)
+If you want a lightweight, Express.js-style Pascal microframework instead of enterprise mORMot 2:
+- Install the co-official `blaise-horse` developer tool:
+  ```bash
+  bv tool install blaise-horse
+  ```
+- Scaffold the isolated Horse backend:
+  ```bash
+  bv horse init
+  ```
+  This creates `server-horse/` (completely isolated from `server-mormot/` and `server-zephyr/`).
+- Run and build:
+  ```bash
+  bv horse run
+  bv horse build --release
+  ```
+- If you later choose to remove it:
+  ```bash
+  bv horse remove -y
+  ```
+
+---
+
+## 🚀 Standalone Production Deployment (`deploy/server-mormot/`)
 
 When running `bv mormot deploy`, BlaiseVue automates the complete production build pipeline:
 1. **Frontend Production Build**: Executes `bv build --release`, generating minified JavaScript with cache-busting hashes in `dist/`.
-2. **Backend Native Release Build**: Compiles `server/server.lpr` with maximum Free Pascal optimizations (`-O3 -Xs`), producing a stripped native binary under 2 MB.
-3. **Standalone Folder Assembly**: Assembles `deploy/`:
+2. **Backend Native Release Build**: Compiles `server-mormot/server.lpr` with maximum Free Pascal optimizations (`-O3 -Xs`), producing a stripped native binary under 2 MB.
+3. **Standalone Folder Assembly**: Assembles `deploy/server-mormot/`:
    - `server.exe` (or `server` on Linux)
    - `dist/` (static SPA files)
    - `start.bat` / `start.sh` (1-click startup scripts)
    - `README.txt`
-4. **Zero Server Prerequisites**: The target production server **does not need Node.js, npm, Lazarus, or Free Pascal**. Simply copy `deploy/` or upload `deploy.zip`, extract, and launch!
+4. **Zero Server Prerequisites**: The target production server **does not need Node.js, npm, Lazarus, or Free Pascal**. Simply copy `deploy/server-mormot/` or upload `deploy.zip`, extract, and launch!
 
 ---
 
-## 📂 Directory Structure (`server/`)
+## 📂 Directory Structure (`server-mormot/`)
 
-Scaffolding the backend creates a clean, decoupled directory structure inside your BlaiseVue project:
+Scaffolding the backend creates a clean, decoupled directory structure inside your BlaiseVue project *(legacy `server/` folders are still auto-detected)*:
 
 ```text
 my-project/
-├── server/
+├── server-mormot/
 │   ├── server.lpi           # Lazarus IDE project file (with mormot2 package dependency)
 │   ├── server.lpr           # Console entry point, banner, and CLI parser
 │   ├── ServerApp.pas        # HTTP router, WebSocket protocol, static SPA file server

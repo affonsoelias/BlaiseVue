@@ -1,6 +1,8 @@
 unit uFormulario;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,16 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uFormulario;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    nome: string;
+    email: string;
+    cidade: string;
+    meuSub: string;
+    msgHeader: string;
+    msgSucesso: string;
+  end;
 
 procedure Register_uFormulario;
 var

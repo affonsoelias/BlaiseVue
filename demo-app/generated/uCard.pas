@@ -1,6 +1,8 @@
 unit uCard;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,13 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uCard;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    titulo: string;
+    temFooter: Boolean;
+    footerTexto: string;
+  end;
 
 procedure Register_uCard;
 var
@@ -39,7 +48,7 @@ begin
   begin
     d := TJSObject.new;
     d['titulo'] := 'Título do Card';
-    d['temFooter'] := false;
+    d['temFooter'] := False;
     d['footerTexto'] := 'Rodapé Padrão';
     Result := d;
   end;

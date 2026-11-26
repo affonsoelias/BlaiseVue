@@ -608,7 +608,7 @@ initialization
         };
       }
 
-      let bVer = (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? ('v' + pas.uAppVersion.APP_VERSION) : 'v4.4.0';
+      let bVer = (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? ('v' + pas.uAppVersion.APP_VERSION) : 'v0.1.0';
       console.log("[Compiler] BLAISE " + bVer + " ENGAGED on <" + Root.tagName + ">");
       bv.traverse(Root, Data, Methods);
       bv.trigger(Data.FData, ""); // Initial trigger for all expressions

@@ -3,7 +3,7 @@
 
 Writing mobile components is only half the journey. As a professional developer, you need to test your application on emulated virtual devices, debug on real physical smartphones connected via USB, and package signed bundles ready for the Google Play Store.
 
-The BlaiseVue CLI (`bv mobile`) provides automated commands that orchestrate the Android SDK, Gradle, ADB, and emulators with zero friction.
+The BlaiseVue CLI (`bv capacitor`, with alias `bv mobile`) provides automated commands that orchestrate the Android SDK, Gradle, ADB, and emulators with zero friction.
 
 ---
 

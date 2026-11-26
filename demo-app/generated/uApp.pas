@@ -1,6 +1,8 @@
 unit uApp;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,11 @@ uses JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, B
 procedure Init_App;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    isMobileMenuOpen: Boolean;
+  end;
 
 procedure Init_App;
 var

@@ -20,25 +20,22 @@ my-app/
 │   ├── views/             # Full route pages (.bv, mapped to -page tags)
 │   │   ├── Home.bv
 │   │   └── About.bv
-│   └── services/          # Pure Pascal business logic, rules & models (.pas)
-│       ├── uCalculadoraFrete.pas
+│   └── services/          # Business logic & formatters (.pas and/or .dels)
+│       ├── pricing.dels   # Optional DelSafe modules (with --delsafe)
 │       └── uFormatters.pas
 │
 ├── lib/                   # Component Libraries & Add-ons
 │   └── blaise-ui/         # Official BlaiseUI component kit & CSS
 │
-├── tests/                 # 4-Tier Automated Unit & Integration Tests (Pascal + Vitest)
+├── tests/                 # 3-Tier Application Unit & Integration Tests (.test.pas & .test.dels)
 │   ├── components/        # Component tests (props, slots, DOM, $emit)
 │   │   └── ProductCard.test.pas
 │   ├── views/             # Page tests (lifecycle, validation, user flows)
 │   │   ├── Home.test.pas
 │   │   └── DatasetView.test.pas
-│   ├── services/          # Pure Pascal domain service tests (business logic, calculations)
-│   │   ├── CalculadoraFrete.test.pas
+│   ├── services/          # Domain service tests (.test.pas and .test.dels)
+│   │   ├── pricing.test.dels
 │   │   └── Formatters.test.pas
-│   ├── framework/         # Internal framework verification tests
-│   │   ├── reactivity.test.pas
-│   │   └── dataset_offline.test.pas
 │   └── setup.js           # Vitest and JSDOM global environment setup
 │
 ├── generated/             # Generated Pascal code (DO NOT EDIT!)
@@ -66,27 +63,51 @@ my-app/
 - **`components/`**: Modular, reusable UI components (e.g., buttons, cards, modals, headers). Automatically given natural kebab-case HTML tags (e.g., `<product-card>`).
 - **`layouts/`** *(Optional, Highly Recommended)*: Master page shells and layout templates (e.g. `AppLayout.bv`, `AuthLayout.bv`). Eliminates code duplication by encapsulating navigation bars, sidebars, headers, and footers in components using standard `<slot></slot>`.
 - **`views/`**: Top-level page views connected to the router. Each view generates an internal `<view-name-page>` tag.
-- **`services/`**: Pure Object Pascal units (`.pas`) containing calculation engines, validators, domain models, formatters, and mORMot 2 client proxies. Configured out-of-the-box in `app.cfg` via `-Fusrc/services`.
+- **`services/`**: Object Pascal units (`u*.pas`) and optional DelSafe modules (`*.dels`) containing calculation engines, validators, domain models, formatters, and mORMot 2 client proxies. Configured out-of-the-box in `app.cfg` via `-Fusrc/services` and resolved automatically for DelSafe imports.
 
 ---
 
-### `tests/` — 4-Tier Automated Testing Architecture
+### Backend Architecture: Isolated & Modular (`server-mormot/`, `server-zephyr/`, `server-horse/`, or Frontend-Only)
 
-The BlaiseVue CLI (`bv create`) scaffolds an enterprise-ready 4-tier testing hierarchy in every new project:
+BlaiseVue gives every backend framework its own dedicated directory so you can switch or combine backends cleanly without file collisions:
+
+1. **Frontend-Only Mode (Static SPA / Jamstack)**:
+   - If you only want the reactive frontend, you do not need any backend directory.
+   - Your compiled frontend (`dist/`) can be hosted on any static provider (Netlify, Vercel, S3, Nginx, Apache, Cloudflare Pages).
+   - In-app communication uses the built-in `$api` (REST) and `$ws` (WebSocket) clients to consume any existing API.
+   - Cleanly purge an existing backend when needed: `bv mormot remove -y`, `bv zephyr remove -y`, or `bv horse remove -y`.
+
+2. **Enterprise Pascal Full-Stack: Synopse mORMot 2 (`server-mormot/`, Port `8090`)**:
+   - The enterprise-grade Pascal backend for high throughput, WebSockets, and end-to-end type-safe Pascal RPC contracts (legacy `server/` projects remain supported automatically).
+   - Initialized via `bv mormot init` (or `bv create <app> --backend=mormot`), built with `bv mormot build`, and launched via `bv mormot run`.
+
+3. **Native DelSafe Full-Stack: Zephyr (`server-zephyr/`, Port `8091`)**:
+   - BlaiseVue's built-in DelSafe HTTP/1.1 + WebSocket backend (`vendor/zephyr`), keeping its models and entry point self-contained inside `server-zephyr/` and serving `../dist` automatically.
+   - Initialized via `bv zephyr init` (or `bv create <app> --backend=zephyr`), run with `bv zephyr run`, packaged with `bv zephyr deploy [--zip]`, and removed cleanly with `bv zephyr remove -y`.
+
+4. **Alternative Microframework: Horse (`server-horse/`, Port `9000`)**:
+   - Lightweight REST microframework via the external `blaise-horse` tool (`bv tool install blaise-horse`).
+   - Lives in `server-horse/` and can be initialized directly during project creation with `bv create <app> --backend=horse` or afterwards with `bv horse init`.
+
+---
+
+### `tests/` — 3-Tier Application Testing Architecture
+
+The BlaiseVue CLI (`bv create`) scaffolds a clean 3-tier application test hierarchy in every new project (without framework SDK clutter):
 
 1. **`tests/components/`**:
-   - Automatically populated by `bv new component <Name>`.
+   - Automatically populated by `bv g c <Name>`.
    - Tests visual rendering, default and custom props, slots, and `$emit` event triggers using `BVTestUtils.Mount`.
 2. **`tests/views/`**:
-   - Automatically populated by `bv new view <Name>`.
+   - Automatically populated by `bv g v <Name>`.
    - Tests entire pages, user interaction flows, modal toggles, and form submissions.
 3. **`tests/services/`**:
-   - Automatically populated by `bv new service <Name>` and `bv new test <Name>` for pure business logic and services.
-   - Tests classes, calculation engines, and service units without requiring DOM rendering.
-4. **`tests/framework/`**:
-   - BlaiseVue core subsystem verification (Reactivity, Routing, DataSet, RPC, Transitions).
-5. **`tests/setup.js`**:
+   - Automatically populated by `bv g s <Name>` (or `--delsafe` for `.test.dels`) and `bv g t <Name>` for pure business logic and services.
+   - Tests Object Pascal services (`*.test.pas`) via Vitest and DelSafe modules (`*.test.dels`) natively via `delsafec`.
+4. **`tests/setup.js`**:
    - JSDOM polyfills, window mockups, and testing environment initialization for Vitest.
+
+*(Framework-level SDK suites reside at the BlaiseVue SDK root `tests/` directory and run via `bv test --sdk`.)*
 
 ---
 
@@ -114,8 +135,8 @@ Optimized output ready for web servers, Docker containers, or Electron/WebUI des
 
 ```bash
 # 1. Create a new project (scaffolds 4-tier tests & services natively)
-bv create MeuProjeto
-cd MeuProjeto
+bv create my-app
+cd my-app
 
 # 2. Run automated test suite
 bv test

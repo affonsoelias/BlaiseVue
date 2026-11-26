@@ -51,10 +51,11 @@ begin
   inherited Destroy;
 end;
 
-procedure TBVIDEHook.OnEditorCreated({%H-}Sender: TObject);
+procedure TBVIDEHook.OnEditorCreated(Sender: TObject);
 begin
-  if SourceEditorManagerIntf <> nil then
-    ApplyBVHighlighter(SourceEditorManagerIntf.ActiveEditor);
+  // Sender is the new editor; ActiveEditor may still be another (or half built) one
+  if Sender is TSourceEditorInterface then
+    ApplyBVHighlighter(TSourceEditorInterface(Sender));
 end;
 
 procedure TBVIDEHook.OnEditorActivated({%H-}Sender: TObject);

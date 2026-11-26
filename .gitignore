@@ -12,10 +12,19 @@ bin/*.o
 bin/*.ppu
 bin/*.dcu
 bin/*.rsj
+bin/bv
+bin/bv.exe
+bin/bv_new
+bin/bv_new.exe
+bin/bv.bak
+bin/bv.bak.exe
 bin/bv_old*
+bin/bv_running*
 bin/lib/
 **/server/bin/
 **/server/lib/
+**/server-mormot/bin/
+**/server-mormot/lib/
 **/desktop/bin/
 **/desktop/units/
 
@@ -26,8 +35,6 @@ bin/lib/
 *.ppu.js
 *.rsj
 *.exe
-!bin/bv.exe
-!bin/bv
 *.dll
 *.so
 *.dylib
@@ -54,6 +61,7 @@ packagefiles.xml
 !vendor/**/*.o
 !vendor/**/*.obj
 !vendor/**/*.a
+vendor/mormot2/packages/lazarus/lib/
 
 # 📊 Local Logs & Trace
 compile_log.txt
@@ -73,6 +81,7 @@ deploy/
 **/deploy/
 .bv_backup/
 **/.bv_backup/
+.blaisevue/
 *.zip
 **/desktop/assets/js/main.*.js
 

@@ -1,18 +1,18 @@
-# 43. End-to-End Type-Safe Pascal RPC com mORMot 2
+# 43. End-to-End Type-Safe Pascal RPC with mORMot 2
 
-O **BlaiseVue** conta com uma camada revolucionária de comunicação cliente-servidor: **End-to-End Type-Safe Pascal RPC**. Esta funcionalidade elimina por completo URLs REST manuais escritas como strings soltas, verbos HTTP manuais e boilerplates de requisição, unindo o backend nativo **mORMot 2 (FPC)** e o frontend reativo **BlaiseVue (Pas2JS)** em um único ecossistema 100% verificado em tempo de compilação.
+**BlaiseVue** features a revolutionary client-server communication layer: **End-to-End Type-Safe Pascal RPC**. This capability completely eliminates manual REST string URLs, manual HTTP verbs, and boilerplate fetch requests, unifying the native **mORMot 2 (FPC)** backend and the reactive **BlaiseVue (Pas2JS)** frontend into a single compile-time verified ecosystem.
 
 ---
 
-## 1. Visão Geral e Princípios Arquiteturais
+## 1. Overview & Architectural Principles
 
-Na arquitetura tradicional baseada em REST string-based, qualquer renomeação de rota no backend ou alteração de tipo de parâmetro só é detectada em tempo de execução via erro `404 Not Found` ou `500 Internal Server Error`.
+In traditional string-based REST architectures, any route rename or parameter type modification on the backend is only discovered at runtime via `404 Not Found` or `500 Internal Server Error` responses.
 
-Com o **BlaiseVue Type-Safe RPC**:
-1. **Contratos Compartilhados (`common/Services.pas`)**: As interfaces de serviço herdam de `IInvokable` e usam DTOs estruturados (`record` e `array of T`), compartilhados entre o servidor nativo e o cliente web.
-2. **Proxies Fortemente Tipados (`ClientProxies.pas`)**: Gerados automaticamente pelo comando `bv mormot rpc`, oferecendo assinaturas fortemente tipadas tanto no estilo de **Callbacks fluídos** (`reference to procedure(...)`) quanto no padrão moderno de **Promises assíncronas** (`TJSPromise`).
-3. **Validação Estrita em Tempo de Compilação**: Se o servidor alterar a assinatura de um método ou um DTO, o compilador `pas2js` acusa erro imediato ao compilar o frontend (`bv run dev`), garantindo sincronia perfeita.
-4. **Transporte Duplo & Alta Performance**: Suporte transparente a **HTTP POST** (`/api/rpc/:service/:method` e JSON-RPC 2.0 `/api/rpc`) e **WebSockets Bidirecionais** em tempo real (`rpc_call` / `rpc_response`), com compressão / modo pack opcional.
+With **BlaiseVue Type-Safe RPC**:
+1. **Shared Service Contracts (`common/Services.pas`)**: Service interfaces inherit from `IInvokable` and utilize structured DTOs (`record` and `array of T`), shared seamlessly between the native server and the web client.
+2. **Strongly Typed Client Proxies (`ClientProxies.pas`)**: Generated automatically by the `bv mormot rpc` command, offering strongly typed signatures in both **fluent callback** style (`reference to procedure(...)`) and modern **asynchronous Promise** patterns (`TJSPromise`).
+3. **Strict Compile-Time Validation**: If the backend alters a method signature or DTO field, the `pas2js` compiler immediately catches the error during frontend compilation (`bv run dev` / `bv build`), guaranteeing perfect synchrony.
+4. **Dual Transport & High Performance**: Transparent support for **HTTP POST** (`/api/rpc/:service/:method` and JSON-RPC 2.0 `/api/rpc`) and real-time **Bidirectional WebSockets** (`rpc_call` / `rpc_response`), with optional data compression / pack mode.
 
 ```
 +-----------------------------------------------------------------------------------+
@@ -44,9 +44,9 @@ Com o **BlaiseVue Type-Safe RPC**:
 
 ---
 
-## 2. Contratos Compartilhados (`common/Services.pas`)
+## 2. Shared Contracts (`common/Services.pas`)
 
-O arquivo `common/Services.pas` é a fonte única da verdade para serviços e modelos DTOs do sistema:
+The `common/Services.pas` file serves as the single source of truth for services and DTO models across the system:
 
 ```pascal
 unit Services;
@@ -131,16 +131,16 @@ end.
 
 ---
 
-## 3. Gerador CLI (`bv mormot rpc`)
+## 3. CLI Scaffolding (`bv mormot rpc`)
 
-O comando de scaffolding `bv mormot rpc` verifica os contratos em `common/Services.pas`, assegura as pastas do projeto e gera os proxies cliente fortemente tipados em `common/ClientProxies.pas` e `generated/ClientProxies.pas`, além de atualizar `app.cfg`:
+The `bv mormot rpc` scaffolding command verifies contracts in `common/Services.pas`, ensures project directory structure, generates strongly typed client proxies in `common/ClientProxies.pas` and `generated/ClientProxies.pas`, and updates search paths in `app.cfg`:
 
 ```bash
-# Executa a geração automática de proxies
+# Execute automated proxy generation
 bv mormot rpc
 ```
 
-Saída:
+Output:
 ```
 ======================================================================
   BlaiseVue End-to-End Type-Safe Pascal RPC with mORMot 2
@@ -165,11 +165,11 @@ Saída:
 
 ---
 
-## 4. Consumo nos Componentes e Views (`.bv`)
+## 4. Consuming in Components and Views (`.bv`)
 
-Nos componentes BlaiseVue, o desenvolvedor simplesmente inclui `uses Services, ClientProxies;` e consome os singletons tipados `CustomerService`, `ProductService` ou `SystemService`.
+Inside BlaiseVue components, simply add `uses Services, ClientProxies;` and consume the typed singletons `CustomerService`, `ProductService`, or `SystemService`.
 
-### Exemplo em `CustomerView.bv`:
+### Example in `CustomerView.bv`:
 
 ```pascal
 <script>
@@ -184,7 +184,7 @@ procedure LoadCustomers;
 begin
   isLoading := True;
   
-  // Chamada tipada com callback de sucesso e tratamento de erro
+  // Typed call with success callback and error handling
   CustomerService.GetAll(
     procedure(Items: TCustomerDynArray)
     begin
@@ -194,7 +194,7 @@ begin
     procedure(ErrMsg: string)
     begin
       isLoading := False;
-      ShowToast('Erro ao carregar clientes: ' + ErrMsg);
+      ShowToast('Error loading customers: ' + ErrMsg);
     end
   );
 end;
@@ -204,7 +204,7 @@ begin
   CustomerService.Save(Cust,
     procedure(Saved: TCustomer)
     begin
-      ShowToast('Cliente salvo com sucesso!');
+      ShowToast('Customer saved successfully!');
       LoadCustomers;
     end
   );
@@ -217,7 +217,7 @@ begin
     begin
       if Ok then
       begin
-        ShowToast('Cliente removido');
+        ShowToast('Customer removed');
         LoadCustomers;
       end;
     end
@@ -226,34 +226,34 @@ end;
 </script>
 ```
 
-### Modo Assíncrono com Promises (`TJSPromise`):
+### Asynchronous Mode with Promises (`TJSPromise`):
 
 ```pascal
 procedure LoadAsync;
 begin
   CustomerService.GetByIdAsync(10)._then(procedure(Item: JSValue)
   begin
-    ShowToast('Cliente carregado via Promise');
+    ShowToast('Customer loaded via Promise');
   end);
 end;
 ```
 
 ---
 
-## 5. Runtime do Cliente RPC (`core/BVRpc.pas`)
+## 5. RPC Client Runtime (`core/BVRpc.pas`)
 
-O módulo `core/BVRpc.pas` fornece a infraestrutura de comunicação subjacente:
-- **`TBVRpcClient`**: Cliente mestre de RPC conectado ao ecossistema BlaiseVue via `window.__BV_CORE__.rpc`.
-- **`TBVRemoteProxy`**: Classe base extensível para proxies de serviços remotos.
-- **Transversalidade de Transporte**: Alternância dinâmica entre HTTP e WebSocket com failover transparente:
+The `core/BVRpc.pas` module provides the underlying communication infrastructure:
+- **`TBVRpcClient`**: Master RPC client connected to the BlaiseVue ecosystem via `window.__BV_CORE__.rpc`.
+- **`TBVRemoteProxy`**: Extensible base class for remote service proxies.
+- **Transport Flexibility**: Dynamic switching between HTTP and WebSocket with transparent failover:
   ```pascal
-  BVRpcClient.SetTransport('ws');      // Ou 'http'
+  BVRpcClient.SetTransport('ws');      // Or 'http'
   BVRpcClient.SetBaseUrl('/api/rpc');
   BVRpcClient.SetTimeout(10000);
-  BVRpcClient.SetUsePack(True);        // Modo pack ativado
+  BVRpcClient.SetUsePack(True);        // Pack mode enabled
   ```
-- **Injeção Automática no Escopo Reativo**: `$rpc` está disponível em todas as instâncias de componentes (`Data.$rpc`).
-- **Helpers Pascal DX (`core/BVPascalDX.pas`)**:
+- **Automatic Reactive Injection**: `$rpc` is available on all component instances (`Data.$rpc`).
+- **Pascal DX Helpers (`core/BVPascalDX.pas`)**:
   - `RpcCall(ServiceName, MethodName, Params, OnSuccess, OnError)`
   - `RpcCallAsync(ServiceName, MethodName, Params): TJSPromise`
   - `RpcSetBaseUrl(Url)`
@@ -264,9 +264,9 @@ O módulo `core/BVRpc.pas` fornece a infraestrutura de comunicação subjacente:
 
 ---
 
-## 6. Dispatcher de Servidor SOA mORMot 2 (`demo-app/server/RpcService.pas`)
+## 6. SOA mORMot 2 Server Dispatcher (`demo-app/server/RpcService.pas`)
 
-No backend mORMot 2 nativo, o despachante SOA `TRpcDispatcher` mapeia as chamadas HTTP e frames WebSocket diretamente para a lógica de negócio dos serviços:
+In the native mORMot 2 backend, the `TRpcDispatcher` SOA dispatcher maps HTTP requests and WebSocket frames directly to service business logic:
 
 ```pascal
 unit RpcService;
@@ -293,7 +293,7 @@ type
     constructor Create;
     destructor Destroy; override;
     
-    // HTTP Dispatcher (/api/rpc/:service/:method ou /api/rpc JSON-RPC 2.0)
+    // HTTP Dispatcher (/api/rpc/:service/:method or /api/rpc JSON-RPC 2.0)
     function HandleRequest(Ctxt: THttpServerRequest): Cardinal;
     
     // WebSocket Frame Dispatcher (rpc_call -> rpc_response)
@@ -301,7 +301,7 @@ type
   end;
 ```
 
-### Formato de Fio (Wire Protocol):
+### Wire Protocol:
 - **HTTP REST SOA**: `POST /api/rpc/CustomerService/GetAll`
 - **JSON-RPC 2.0**:
   ```json
@@ -325,19 +325,19 @@ type
 
 ---
 
-## 7. Cobertura de Testes Automatizados
+## 7. Automated Test Coverage
 
-O BlaiseVue inclui a suíte completa de testes unitários em `demo-app/tests/rpc.test.pas`:
-- Verificação da ponte JS `window.__BV_CORE__.rpc`.
-- Injeção reativa do `$rpc` no núcleo do BlaiseVue.
-- Formatação e parsing de payload JSON-RPC 2.0.
-- Execução síncrona/callback e assíncrona baseada em Promises.
-- Despacho tipado via proxies `TCustomerServiceClient`, `TProductServiceClient` e `TSystemServiceClient`.
-- Troca de transporte (`http` <-> `ws`) e modo compactado (`usePack`).
-- Tratamento resiliente de erros com propagação de mensagens de exceção.
+BlaiseVue includes an extensive unit test suite in `demo-app/tests/rpc.test.pas`:
+- Validation of JS bridge `window.__BV_CORE__.rpc`.
+- Reactive injection of `$rpc` into BlaiseVue core.
+- JSON-RPC 2.0 payload formatting and parsing.
+- Synchronous callback and Promise-based asynchronous execution.
+- Typed dispatch through `TCustomerServiceClient`, `TProductServiceClient`, and `TSystemServiceClient` proxies.
+- Transport switching (`http` <-> `ws`) and compressed mode (`usePack`).
+- Resilient error handling with exception message propagation.
 
-Para executar todos os testes da plataforma:
+To execute all platform tests:
 ```bash
 bv test
 ```
-Resultando em **25 test suites passing (437+ passed tests, 0 errors)**.
+Resulting in **68 test files passing (364/364 passed tests, 0 errors)**.

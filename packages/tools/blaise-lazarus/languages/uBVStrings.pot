@@ -1,0 +1,123 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: ubvstrings.rsbvcategorydescription
+msgid "Reactive Components (.bv) and SPA Pages for BlaiseVue"
+msgstr ""
+
+#: ubvstrings.rsbvcheckcomponent
+msgid "Check Active Component (.bv)"
+msgstr ""
+
+#: ubvstrings.rsbvcheckfailed
+msgid "Failure: validation errors found in the component."
+msgstr ""
+
+#: ubvstrings.rsbvcheckheader
+#, object-pascal-format
+msgid "=== [BlaiseVue AST Check] Checking: %s ==="
+msgstr ""
+
+#: ubvstrings.rsbvcheckok
+msgid "Success: the syntax and AST of the component are sound!"
+msgstr ""
+
+#: ubvstrings.rsbvcomponentdescription
+msgid "Create a new reactive BlaiseVue Single File Component (.bv) with template, Pascal script, and scoped CSS style."
+msgstr ""
+
+#: ubvstrings.rsbvcomponentname
+msgid "BlaiseVue Component (.bv)"
+msgstr ""
+
+#: ubvstrings.rsbvdevended
+#, object-pascal-format
+msgid "The preview server has ended (code %d)."
+msgstr ""
+
+#: ubvstrings.rsbvdevstarting
+#, object-pascal-format
+msgid "=== [BlaiseVue Dev] Starting \"bv dev\" in %s (save the .bv to refresh the browser) ==="
+msgstr ""
+
+#: ubvstrings.rsbvdevstopped
+msgid "Preview server stopped."
+msgstr ""
+
+#: ubvstrings.rsbvformatcomponent
+msgid "Format Active Component (.bv) (Ctrl+Shift+F)"
+msgstr ""
+
+#: ubvstrings.rsbvformatdone
+#, object-pascal-format
+msgid "Component formatted: %s"
+msgstr ""
+
+#: ubvstrings.rsbvformatunchanged
+#, object-pascal-format
+msgid "The component is already formatted: %s"
+msgstr ""
+
+#: ubvstrings.rsbvlistpaths
+msgid "List Compiler Search Paths (bv path)"
+msgstr ""
+
+#: ubvstrings.rsbvnoactivefile
+msgid "No active file in the Lazarus editor."
+msgstr ""
+
+#: ubvstrings.rsbvnodevserver
+msgid "No preview server is running."
+msgstr ""
+
+#: ubvstrings.rsbvnoprojectroot
+#, object-pascal-format
+msgid "No BlaiseVue project (src/app.bv) was found above %s."
+msgstr ""
+
+#: ubvstrings.rsbvnoroute
+#, object-pascal-format
+msgid "%s has no route of its own in the router: opening the home page of the app."
+msgstr ""
+
+#: ubvstrings.rsbvnotbvfile
+#, object-pascal-format
+msgid "The active file (%s) is not a BlaiseVue component (.bv)."
+msgstr ""
+
+#: ubvstrings.rsbvpathsheader
+msgid "=== [BlaiseVue Path] Units Mapped in the Compiler ==="
+msgstr ""
+
+#: ubvstrings.rsbvpreview
+msgid "Preview Active Component in the Browser (bv dev)"
+msgstr ""
+
+#: ubvstrings.rsbvruntests
+msgid "Run Test Suite (bv test)"
+msgstr ""
+
+#: ubvstrings.rsbvstoppreview
+msgid "Stop Preview Server (bv dev)"
+msgstr ""
+
+#: ubvstrings.rsbvsyncheader
+msgid "=== [BlaiseVue Lazarus] Syncing the Project (.lpi) ==="
+msgstr ""
+
+#: ubvstrings.rsbvsyncproject
+msgid "Sync Lazarus Project (.lpi)"
+msgstr ""
+
+#: ubvstrings.rsbvtestsheader
+msgid "=== [BlaiseVue Test] Running the Test Suite ==="
+msgstr ""
+
+#: ubvstrings.rsbvviewdescription
+msgid "Create a new routed Page View (.bv) with layout template, page controller, and styles for BlaiseVue SPA router."
+msgstr ""
+
+#: ubvstrings.rsbvviewname
+msgid "BlaiseVue Page View (.bv)"
+msgstr ""
+

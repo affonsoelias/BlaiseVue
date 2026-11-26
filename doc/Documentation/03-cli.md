@@ -10,12 +10,10 @@ Outputs the dynamic framework version derived from the Single Source of Truth (`
 
 ```bash
 bv --version
-# Output: BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+# Output: BlaiseVue CLI v0.1.0 (Universal Pascal Full-Stack Platform)
 
 bv -v
 ```
-
----
 
 ---
 
@@ -23,9 +21,20 @@ bv -v
 
 ### 1. Dedicated Project & Library Scaffolding (`bv create`)
 
-BlaiseVue enables creating, testing, and distributing modular component libraries:
+```bash
+bv create my-app
+bv create my-app --demo
+bv create my-app --delsafe
+bv create my-app --backend=mormot
+bv create my-app --backend=zephyr
+bv create my-app --backend=horse   # Any installed external backend tool
+```
 
-### 1. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
+- **`--demo`**: Includes the full enterprise component/chart/dataset/mobile showcase.
+- **`--delsafe`**: Generates an DelSafe-first frontend where all `.bv` files use `<script lang="delsafe">`, paired with `src/services/pricing.dels` and `src/services/uFormatters.pas` demonstrating DelSafe + Object Pascal interoperability.
+- **`--backend=<name>`**: Initializes a built-in backend (`mormot` in `server-mormot/`, `zephyr` in `server-zephyr/`) or dynamically discovers installed external backend tools in `~/.blaisevue/tools/` (such as `horse` in `server-horse/`).
+
+### 1b. Scaffold Dedicated Library: `bv create <name> --lib [--license <type>]`
 Creates an isolated library repository with component templates, standalone CSS, autonomous test suite, and interactive development sandbox:
 ```bash
 bv create my-ui-kit --lib
@@ -60,62 +69,57 @@ The BlaiseVue CLI's internal architecture is designed to eliminate hardcoded tem
 2. **Resource Embedding (`{$R templates.res}`)**:
    - Templates are compiled into a binary resource file (`templates.res`) via `windres` / FPC.
    - Embedded directly into the `bv.exe` executable at compile-time.
-3. **Standalone Binary & 4-Tier Scaffolding**:
-   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the complete enterprise directory tree.
-   - Automatically establishes the **4-Tier Testing Architecture** (`tests/components/`, `tests/views/`, `tests/services/`, `tests/framework/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery.
+3. **Standalone Binary & 3-Tier App Scaffolding**:
+   - Running `bv create <ProjectName>` extracts the templates cleanly using `TResourceStream` and scaffolds the clean project directory tree.
+   - Automatically establishes the **3-Tier App Testing Architecture** (`tests/components/`, `tests/views/`, `tests/services/`), initial domain services in `src/services/`, and sets up `vitest.config.js` with deep recursive glob discovery. Framework-level SDK regression tests live at the SDK root (`tests/`) and run via `bv test --sdk`.
 
 ---
 
 ### 3. Component, View, Service & Test Generators (`bv g` / `bv new`)
 
-BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites:
+BlaiseVue features intelligent code generators that accelerate development and automatically create corresponding test suites. Pass **`--delsafe`** (or `-a`) to scaffold DelSafe `.dels`/`.test.dels` files or `<script lang="delsafe">` `.bv` components:
 
-### 1. Create Component: `bv new component <Name> [--no-test]`
+### 1. Create Component: `bv g c <Name> [--delsafe] [--no-test]`
 Creates the visual Single File Component (`.bv`) and its companion test file:
 ```bash
-bv new component ProductCard
-# Shorthand:
-bv new c ProductCard
+bv g c ProductCard
+bv g c MetricCard --delsafe
 ```
-- Creates: `src/components/ProductCard.bv`
+- Creates: `src/components/ProductCard.bv` (or `<script lang="delsafe">` when `--delsafe` is passed)
 - Automatically generates: `tests/components/ProductCard.test.pas`
 - Pass `--no-test` (or `-nt`) to create only the `.bv` component.
 
-### 2. Create View / Page: `bv new view <Name> [--no-test]`
+### 2. Create View / Page: `bv g v <Name> [--delsafe] [--no-test]`
 Creates an application page view and its mount verification test:
 ```bash
-bv new view OrderHistory
-# Shorthand:
-bv new v OrderHistory
+bv g v OrderHistory
+bv g v Reports --delsafe
 ```
-- Creates: `src/views/OrderHistory.bv`
+- Creates: `src/views/OrderHistory.bv` (or `<script lang="delsafe">` when `--delsafe` is passed)
 - Automatically generates: `tests/views/OrderHistory.test.pas`
 - Supports `--no-test` to skip test generation.
 
-### 3. Create Service Unit: `bv new service <Name> [--no-test]`
-Creates a pure Pascal business service unit and its corresponding domain unit test:
+### 3. Create Service Unit: `bv g s <Name> [--delsafe] [--no-test]`
+Creates a pure Object Pascal unit or DelSafe module in `src/services/` along with its unit test:
 ```bash
-bv new service PaymentProcessor
-# Shorthand:
-bv new s PaymentProcessor
-# Generator alias:
-bv g s PaymentProcessor
+bv g s PaymentProcessor            # Creates src/services/uPaymentProcessor.pas + PaymentProcessor.test.pas
+bv g s Billing --delsafe            # Creates src/services/Billing.dels + tests/services/Billing.test.dels
 ```
-- Creates: `src/services/uPaymentProcessor.pas` (Pure Pascal domain logic)
-- Automatically generates: `tests/services/PaymentProcessor.test.pas` (Pre-configured unit test with `BVTestUtils`)
-- Pass `--no-test` (or `-nt`) to create only the service unit without a test file.
+- Creates: `src/services/u<Name>.pas` (or `src/services/<Name>.dels` with `--delsafe`)
+- Automatically generates: `tests/services/<Name>.test.pas` (or `<Name>.test.dels` with `--delsafe`)
+- Pass `--no-test` (or `-nt`) to create only the service file without a test file.
 
-### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv new test <Name>`
+### 4. Create Dedicated Test File (Smart Hierarchy Resolution): `bv g t <Name> [--delsafe]`
 Creates test suites on demand with automatic directory resolution:
 ```bash
-bv new test SimpleBadge
-# Shorthand:
-bv new t SimpleBadge
+bv g t SimpleBadge
+bv g t QuickCheck --delsafe
 ```
 - **If `SimpleBadge.bv` is a component:** created in `tests/components/SimpleBadge.test.pas` mounting `'simple-badge'`.
 - **If it is a view:** created in `tests/views/SimpleBadge.test.pas` mounting `'simple-badge-page'`.
-- **If it is a service in `src/services/`:** created in `tests/services/SimpleBadge.test.pas` importing `uSimpleBadge`.
-- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` for pure Object Pascal business logic.
+- **If `uSimpleBadge.pas` exists in `src/services/`:** created in `tests/services/SimpleBadge.test.pas`.
+- **If `SimpleBadge.dels` exists in `src/services/` (or `--delsafe` is passed):** created as `.test.dels` in `tests/services/`.
+- **Otherwise:** created in `tests/services/SimpleBadge.test.pas` (or `.test.dels` with `--delsafe`).
 
 ### 5. List Elements: `bv list <c|v|s|store|fsm|t|lib>`
 Lists registered files across the project:
@@ -124,7 +128,7 @@ Lists registered files across the project:
 - `bv list s`: Lists pure Pascal service units in `src/services/`.
 - `bv list store`: Lists all BlaiseX store slices in `src/stores/`.
 - `bv list fsm`: Lists all finite state machines in `src/machines/`.
-- `bv list t`: Lists all test suites recursively across the 4 tiers of `tests/`.
+- `bv list t`: Lists all test suites recursively across the 4 tiers of `ttests/`.
 - `bv list lib`: Lists installed libraries in `lib/`.
 
 ### 6. Remove Elements: `bv remove <component|view|service|store|fsm|test> <Name>`
@@ -168,14 +172,12 @@ bv rename project my-new-erp
 # Shorthand:
 bv rename p my-new-erp
 ```
-* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `tests/services/<New>.test.pas`.
+* **Services**: Renames `src/services/u<Old>.pas` to `src/services/u<New>.pas`, updates `unit u<New>;`, refactors `T<New> = class`, method signatures, and updates `ttests/services/<New>.test.pas`.
 * **Components**: Renames `src/components/<Old>.bv` to `src/components/<New>.bv`, updates associated test and tags (`<old-card>` -> `<new-card>`).
 * **Views**: Renames `src/views/<Old>.bv` to `src/views/<New>.bv`, updates associated test and automatically updates route tags in `src/app.bv`.
-* **Stores**: Renames `src/stores/u<Old>Store.pas` to `src/stores/u<New>Store.pas`, refactors `unit u<New>Store;`, updates `Init<New>Store` and `DefineStore('<new>', ...)`, and renames `tests/stores/<New>Store.test.pas`.
-* **FSMs**: Renames `src/machines/u<Old>Machine.pas` to `src/machines/u<New>Machine.pas`, refactors `unit u<New>Machine;`, updates `Create<New>Machine` and `TBVStateMachine.Create('<New>')`, and renames `tests/machines/<New>Machine.test.pas`.
+* **Stores**: Renames `src/stores/u<Old>Store.pas` to `src/stores/u<New>Store.pas`, refactors `unit u<New>Store;`, updates `Init<New>Store` and `DefineStore('<new>', ...)`, and renames `ttests/stores/<New>Store.test.pas`.
+* **FSMs**: Renames `src/machines/u<Old>Machine.pas` to `src/machines/u<New>Machine.pas`, refactors `unit u<New>Machine;`, updates `Create<New>Machine` and `TBVStateMachine.Create('<New>')`, and renames `ttests/machines/<New>Machine.test.pas`.
 * **Projects**: Updates `package.json`, `src/uAppVersion.pas`, `src/app.bv` (`appTitle`), `public/index.html` (`<title>`), and the global project registry.
-
----
 
 ---
 
@@ -233,7 +235,7 @@ Commands available both from the terminal and inside the interactive cockpit:
   Registered BlaiseVue Projects:
   ----------------------------------------------------------------------------
   * my-erp            v1.0.0    C:\Projects\my-erp
-    customer-portal   v4.4.0    D:\Work\customer-portal
+    customer-portal   v0.1.0    D:\Work\customer-portal
   ----------------------------------------------------------------------------
   Total: 2 project(s) registered (* active)
   ```
@@ -265,7 +267,7 @@ bv clear
 
 ### 7. Hierarchical Project Root Resolution & Safety Guard
 All platform scaffolding commands (`bv mobile init`, `bv desktop init`, `bv mormot init`) and generators (`bv g c`, `bv g v`, `bv g s`, `bv g t`, etc.) feature intelligent upward directory traversal:
-- **Run from Anywhere Inside Project**: Execute commands at root or inside any nested directory (`src/`, `src/components/`, `tests/services/`); the CLI traverses upwards to discover the project root (`app.cfg`, `package.json`, `src/app.bv`) and places generated files in the canonical root-relative paths (preventing duplicate nested paths like `src/src/...`).
+- **Run from Anywhere Inside Project**: Execute commands at root or inside any nested directory (`src/`, `src/components/`, `ttests/services/`); the CLI traverses upwards to discover the project root (`app.cfg`, `package.json`, `src/app.bv`) and places generated files in the canonical root-relative paths (preventing duplicate nested paths like `src/src/...`).
 - **Safety Guard**: If executed outside a BlaiseVue project (e.g. in arbitrary system folders or the Desktop), the CLI refuses to execute and creates zero files or directories.
 
 ### 8. Running Commands Inside the Cockpit
@@ -385,94 +387,130 @@ Performs a complete purge of the build workspace:
 
 ---
 
----
+## 4. 🐘 Backends (`bv mormot`, `bv zephyr`, External Tools)
 
-## 4. 🐘 Backend & Full-Stack Pascal with Synopse mORMot 2 (`bv mormot`)
+Each backend uses an isolated project subdirectory so multiple backends can coexist cleanly in the same workspace:
+- **mORMot 2**: `server-mormot/` (default port `8090`; legacy `server/` folders continue to work automatically)
+- **Zephyr (DelSafe)**: `server-zephyr/` (default port `8091`)
+- **Horse (via `blaise-horse` tool)**: `server-horse/` (default port `9000`)
 
+### Synopse mORMot 2 (`bv mormot`)
 Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-Manages high-throughput native Pascal backend microservices and zero-configuration production deployment:
-- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server/`.
-- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal.
+- **`bv mormot init`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `ServerApp.pas`, `ServerModels.pas`) inside `server-mormot/`.
+- **`bv mormot versions`**: Lists the active version in the current project, the immutable factory baseline (`vendor/mormot2`), and all cached user distributions in `~/.blaisevue/versions/mormot/` along with disk usage.
+- **`bv mormot upgrade [--tag=<v>]`**: Queries the official Synopse repository and presents an interactive version picker (or downloads the specified git tag) into user storage (`~/.blaisevue/versions/mormot/<tag>`), keeping the factory bundled baseline 100% intact.
+- **`bv mormot use <tag|bundled>`**: Configures the current project to bind to a specific user version or reverts to the factory baseline (`server-mormot/mormot.path`).
+- **`bv mormot remove-version [tag] [-y]`**: Lists cached user versions and interactively prompts for selection to safely delete and reclaim disk space (protected factory baseline cannot be deleted).
+- **`bv mormot build [--release]`**: Compiles the native backend executable with Free Pascal (`server-mormot/bin/server.exe`).
   - E.g.: `bv mormot build` (Debug mode with diagnostic symbols)
   - E.g.: `bv mormot build --release` (Maximum optimization `-O3`, stripped symbols, ~1.6 MB)
-- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port (e.g. 8091).
+- **`bv mormot run [--release] [--port <port>]`**: Launches the native mORMot 2 server (defaults to port 8090, or reads `PORT` from `.env`) with static SPA hosting and REST API. Features **Intelligent Port Fallback**: if port 8090 is in use or locked by a Windows socket, it automatically detects it and binds to the next available port.
   - Pass `--release` to automatically compile the frontend in production mode (`bv build --release`) and start the native server in optimized release mode (`-O3 -Xs`).
 - **`bv mormot kill`**: Forcibly terminates any running background `server.exe` instances and releases locked ports.
 - **`bv mormot status [--port <port>]`**: Queries the running server health endpoint (`/api/status`). Fast 2-second timeout prevents terminal hangs.
-- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle:
+- **`bv mormot deploy [--zip] [--port <port>]`**: Packages the complete standalone production bundle into `deploy/server-mormot/`:
   - Compiles frontend in production mode (`bv build --release`).
   - Compiles backend in release mode (`bv mormot build --release`).
-  - Assembles `deploy/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
+  - Assembles `deploy/server-mormot/` with `server.exe`, `dist/`, `start.bat`, `start.sh`, and `README.txt`.
   - Optionally compresses everything into `deploy.zip` when `--zip` is passed.
   - **Zero Server Prerequisites**: No Node.js, npm, Free Pascal, or Lazarus required on the target server!
 
 | mORMot Command | Subcommand / Flag | Action / Output |
 |---|---|---|
-| `bv mormot init` | - | Scaffolds native backend in `server/` |
-| `bv mormot build` | - | Compiles Debug server (`server/bin/server.exe`) |
+| `bv mormot init` | - | Scaffolds native backend in `server-mormot/` |
+| `bv mormot versions` | - | Lists active, bundled and cached user versions with disk usage |
+| `bv mormot upgrade` | `[--tag=<v>]` | Interactively chooses and downloads mORMot 2 release to `~/.blaisevue/versions/` |
+| `bv mormot use` | `<tag\|bundled>` | Switches active mORMot 2 version for current project |
+| `bv mormot remove-version` | `[tag] [-y]` | Interactively selects and deletes a cached user version |
+| `bv mormot build` | - | Compiles Debug server (`server-mormot/bin/server.exe`) |
 | `bv mormot build` | `--release` | Compiles optimized Release server |
 | `bv mormot run` | `[--release] [--fresh] [--port <p>]` | Starts server (debug/release) with port conflict fallback or `--fresh` auto-kill |
 | `bv mormot kill` | `[--port <p>]` | Two-stage termination of `server.exe` and port release verification |
 | `bv mormot status` | `[--port <p>]` | Queries `/api/status` health check (with 2s timeout) |
-| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/` folder |
+| `bv mormot deploy` | `[--port <p>]` | Creates standalone `deploy/server-mormot/` folder |
 | `bv mormot deploy` | `--zip` | Creates standalone `deploy.zip` archive |
+| `bv mormot remove` | `[-y\|--yes]` | Safely deletes `server-mormot/` directory and mORMot binaries |
 
 See detailed documentation in **[37. Full-Stack Pascal with mORMot 2](37-mormot2-backend.md)**.
 
+### Zephyr Native DelSafe Backend (`bv zephyr`)
+Manages the native DelSafe HTTP/1.1 + WebSocket server (`vendor/zephyr`) in an isolated **`server-zephyr/`** directory on port **`8091`**:
+- **`bv zephyr init`**: Creates `server-zephyr/zephyr_server.dels`, `server-zephyr/models.dels`, `server-zephyr/delsafe.json`, and `server-zephyr/.env` (`PORT=8091`).
+- **`bv zephyr build [--target=c|pascal] [--release|--debug]`**: Compiles `server-zephyr/bin/zephyr_server[.exe]` via `delsafec`.
+- **`bv zephyr run [--port <p>]`**: Auto-builds `dist/` if missing, compiles & launches Zephyr serving the static SPA (`../dist`), REST (`/api/health`, `/api/items`), and WebSocket (`/ws`), printing clickable URLs on startup.
+- **`bv zephyr deploy [--zip] [--port <p>] [--out <dir>]`**: Packages `dist/` and the release binary into `deploy/server-zephyr/` (plus `deploy-zephyr.zip` when `--zip` is passed).
+- **`bv zephyr status`**: Displays Zephyr SDK, `delsafec`, entry file, binary, and port info.
+- **`bv zephyr remove [-y]`**: Removes `server-zephyr/`, `bin/server-zephyr/`, and `deploy/server-zephyr/`.
+
+See detailed documentation in **[59. DelSafe Language Integration & Zephyr Native Backend](59-delsafe-integration-and-zephyr-backend.md)**.
+
+### Alternative Backend: Horse Framework (via `blaise-horse` tool)
+For projects preferring a lightweight microframework (Express.js-style in Pascal), BlaiseVue supports the co-official tool **`blaise-horse`**:
+- Install from ecosystem: `bv tool install blaise-horse`.
+- Isolated directory: `server-horse/` (preventing collision with `server-mormot/` and `server-zephyr/`).
+- Dynamic CLI resolution: Once installed, `bv horse <cmd>` (or `bv tool run blaise-horse <cmd>`) is dynamically dispatched to the tool, or initialized at project creation via `bv create my-app --backend=horse`.
+- Multi-version management: Supports `bv horse versions`, `bv horse upgrade`, `bv horse use <version>`, and `bv horse remove-version`.
+- Clean removal: `bv horse remove -y` or `bv tool remove blaise-horse`.
+
 ---
 
-## 5. 📱 Hybrid Mobile Platform (`bv mobile` - Android & iOS via Capacitor)
+## 5. 📱 Hybrid Mobile Platform (`bv capacitor` / `bv mobile` - Android & iOS via Capacitor)
 
 Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
-Manages the complete mobile development lifecycle using Capacitor within a unified `mobile/` architecture:
-- **`bv mobile init [name] [id] [--version=<ver>]`**: Scaffolds the mobile directory structure inside `mobile/` (supports `--version=8` for v8 LTS, `--version=7`, `--version=latest`, or `--version=next`) (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
-- **`bv mobile upgrade [--check] [--target=<ver>]`**: Upgrades Capacitor packages and runs native platform migration (`npx cap migrate`) with Universal Self-Healing for Android Gradle. Use `--check` to audit available updates without modifying files.
-- **`bv mobile sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
-- **`bv mobile remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
-- **`bv mobile build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
-  - E.g.: `bv mobile build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
-  - E.g.: `bv mobile build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
-  - E.g.: `bv mobile build android --bundle` (Generates Google Play Android App Bundle `mobile/bin/android/<App>-release.aab` via Gradle `bundleRelease`)
-  - E.g.: `bv mobile build ios` (Prepares and synchronizes native Xcode project)
-  - E.g.: `bv mobile build all --release` (Compiles all mobile target platforms in release mode)
-- **`bv mobile emulator <list|start [name]|run [name]|kill>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
-  - E.g.: `bv mobile emulator list` (Lists all installed AVDs from Android Studio)
-  - E.g.: `bv mobile emulator start` (Starts the emulator process in the background with `-no-snapshot-load`)
-  - E.g.: `bv mobile emulator kill` (Cleanly terminates all emulator and QEMU instances)
-- **`bv mobile run [target] [--emulator [name]] [--release] [--fresh] [--no-build]`**: Compiles, syncs, installs and launches the application on a connected device or emulator via ADB (`adb install -r` + `am start`).
-  - **Combinable Flags**: You can combine flags in any order, e.g. `bv mobile run android --emulator --release --fresh`.
+- **`bv capacitor init [name] [id] [--version=<ver>]`**: Scaffolds the mobile directory structure inside `mobile/` (supports `--version=8` for v8 LTS, `--version=7`, `--version=latest`, or `--version=next`) (`mobile/android/`, `mobile/ios/`, `mobile/bin/android/`, `mobile/bin/ios/`, `mobile/README.md`) and configures `capacitor.config.json`.
+- **`bv capacitor upgrade [--check] [--target=<ver>]`**: Upgrades Capacitor packages and runs native platform migration (`npx cap migrate`) with Universal Self-Healing for Android Gradle. If run without arguments, presents an interactive menu to choose target version. Use `--check` to audit available updates without modifying files.
+- **`bv capacitor versions`**: Lists the active Capacitor version in the project (`package.json`) and any cached user SDK versions in `~/.blaisevue/versions/capacitor/`.
+- **`bv capacitor remove-version [ver] [-y]`**: Interactively selects and removes a cached Capacitor version from `~/.blaisevue/versions/capacitor/` to free disk space.
+- **`bv capacitor sync [android|ios|all]`**: Synchronizes the production build (`dist/`) with the selected native mobile platforms.
+- **`bv capacitor remove [-y]`**: Safely removes the `mobile/` directory, `capacitor.config.json`, and mobile binaries.
+- **`bv capacitor build [target] [--release]`**: Compiles ready-to-install native packages (`.apk` / `.aab` / `.ipa`).
+  - E.g.: `bv capacitor build android` (Generates `mobile/bin/android/<App>-debug.apk` via Gradle `assembleDebug`)
+  - E.g.: `bv capacitor build android --release` (Generates `mobile/bin/android/<App>-release.apk` optimized with R8/ProGuard)
+  - E.g.: `bv capacitor build android --bundle` (Generates Google Play Android App Bundle `mobile/bin/android/<App>-release.aab` via Gradle `bundleRelease`)
+  - E.g.: `bv capacitor build ios` (Prepares and synchronizes native Xcode project)
+  - E.g.: `bv capacitor build all --release` (Compiles all mobile target platforms in release mode)
+- **`bv capacitor emulator <list|start [name]|run [name]|kill>`**: Manages and launches Android Virtual Devices (AVD) directly from the command line.
+  - E.g.: `bv capacitor emulator list` (Lists all installed AVDs from Android Studio)
+  - E.g.: `bv capacitor emulator start` (Starts the emulator process in the background with `-no-snapshot-load`)
+  - E.g.: `bv capacitor emulator kill` (Cleanly terminates all emulator and QEMU instances)
+- **`bv capacitor run [target] [--emulator [name]] [--release] [--fresh] [--no-build]`**: Compiles, syncs, installs and launches the application on a connected device or emulator via ADB (`adb install -r` + `am start`).
+  - **Combinable Flags**: You can combine flags in any order, e.g. `bv capacitor run android --emulator --release --fresh`.
     - `--emulator` (`-e`): Boots and deploys to the Android Virtual Device emulator instead of physical USB device.
     - `--release` (`-r`): Builds optimized Release APK (R8/ProGuard) before running.
     - `--fresh`: Kills any lingering/ghost emulator or QEMU processes and boots clean with `-no-snapshot-load`.
     - `--no-build`: Runs the existing APK without recompiling frontend or Gradle.
-  - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv mobile run` auto-scaffolds it transparently!
-- **`bv mobile open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
+  - **Auto-Scaffolding**: If `mobile/android` has not been initialized yet, `bv capacitor run` auto-scaffolds it transparently!
+- **`bv capacitor open [target]`**: Opens the native IDE (`open android` for Android Studio, `open ios` for Xcode on macOS).
+- **`bv mobile <...>`**: Fully supported as a transparent backward-compatible alias for all `bv capacitor` commands.
 
 > [!NOTE]
 > **BlaiseVue does NOT require Flutter.** The mobile toolchain only requires Node.js/npm, Android Studio (Android SDK, Build-Tools, and Platform-Tools `adb`), and Java JDK 17/21.
 
-| Mobile Command | Platform | Build Mode | Output / Action |
+| Mobile Command (`bv capacitor` / `bv mobile`) | Platform | Build Mode | Output / Action |
 |---|---|---|---|
-| `bv mobile init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
-| `bv mobile upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
-| `bv mobile build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
-| `bv mobile build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
-| `bv mobile build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
-| `bv mobile emulator list` | Android | - | Lists installed AVD emulators |
-| `bv mobile emulator start` | Android | - | Boots emulator in background |
-| `bv mobile emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
-| `bv mobile run android` | Android | Debug | Installs & launches on USB-connected device |
-| `bv mobile run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
-| `bv mobile open android` | Android | - | Opens project in Android Studio |
-| `bv mobile open ios` | iOS | - | Opens project in Xcode (macOS) |
+| `bv capacitor init [name] [id] [--version=<v>]` | Universal | - | Scaffolds Capacitor with custom or latest version |
+| `bv capacitor upgrade [--check]` | Universal | - | Upgrades Capacitor & migrates native Android/iOS structure |
+| `bv capacitor versions` | Universal | - | Displays active project and cached Capacitor SDK versions |
+| `bv capacitor remove-version [ver]` | Universal | - | Interactively deletes a cached user Capacitor version |
+| `bv capacitor build android` | Android | Debug | `mobile/bin/android/<App>-debug.apk` |
+| `bv capacitor build android --release` | Android | Release | `mobile/bin/android/<App>-release.apk` |
+| `bv capacitor build android --bundle` | Android | Release (Bundle) | `mobile/bin/android/<App>-release.aab` |
+| `bv capacitor emulator list` | Android | - | Lists installed AVD emulators |
+| `bv capacitor emulator start` | Android | - | Boots emulator in background |
+| `bv capacitor emulator kill` | Android | - | Terminates lingering emulator & QEMU processes |
+| `bv capacitor run android` | Android | Debug | Installs & launches on USB-connected device |
+| `bv capacitor run android --emulator [--release] [--fresh]` | Android | Debug / Release | Boots emulator, compiles & launches app (combine flags like `--release --fresh`) |
+| `bv capacitor open android` | Android | - | Opens project in Android Studio |
+| `bv capacitor open ios` | iOS | - | Opens project in Xcode (macOS) |
 
 ---
 
-## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` - WebUI)
+## 6. 🖥️ Multiplatform Desktop & Lazarus IDE (`bv desktop` / `bv lazarus` - WebUI & IDE Integration)
 
-Manages the native desktop development lifecycle with Free Pascal and WebUI:
-Manages the native desktop development lifecycle with Free Pascal and WebUI:
-- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`.
+Manages native desktop applications with Free Pascal and WebUI, and synchronizes Lazarus IDE project integration:
+- **`bv lazarus init`**: Scaffolds and synchronizes the root Lazarus project (`<project_name>.lpi` and `<project_name>.lpr`) for opening the reactive project directly inside Lazarus IDE with full component indexing and F9 live dev server execution.
+- **`bv lazarus sync`**: Re-indexes all `.bv` components and Pascal units in the project tree inside `<project_name>.lpi`.
+- **`bv desktop init [name]`**: Scaffolds the Lazarus project structure (`.lpi`, `.lpr`, `webui.pas`, `uDesktopBridge.pas`, `assets/`, `bin/`, `units/`, `README.md`) inside `desktop/`, and automatically ensures root Lazarus project files exist if missing.
 - **`bv desktop sync`**: Synchronizes the production web build (`dist/`) into desktop application assets (`desktop/assets/`).
 - **`bv desktop remove [-y]`**: Safely removes the `desktop/` directory and desktop binaries.
 - **`bv desktop build [target] [--release]`**: Compiles native binaries for a specific platform (`windows`, `linux`, `macos`, or `all`). Defaults to the host OS if not specified.
@@ -498,50 +536,45 @@ See detailed documentation in **[36. Multiplatform Desktop & Lazarus IDE](36-des
 ## 7. 🧪 Testing & Docs (`bv test`, `bv test e2e`, `bv doc`, `bv studio`)
 
 ### 1. Unit & Integration Tests (`bv test`)
-The v test command compiles and executes all unit and integration tests across the 4-tier hierarchy:
-`ash
-bv test
-`
-1. **Pre-flight Cleaning:** Automatically cleans stale artifacts in generated/tests/ to prevent orphan test execution.
-2. **Recursive Discovery:** Finds all *.test.pas files across 	ests/components/, 	ests/views/, 	ests/services/, and 	ests/framework/.
-3. **Component Transpilation:** Transpiles all .bv Single File Components into generated/.
-4. **Folder-Preserving Compilation:** Compiles each Pascal test program to JavaScript using Pas2JS, maintaining relative folder structure (e.g. generated/tests/views/Home.test.js).
-5. **Vitest Execution:** Runs the test suites via **Vitest** on Node.js / JSDOM with 100% test compatibility and terminal reporting.
+The `bv test` command compiles and executes both Object Pascal tests (`*.test.pas` via Pas2JS + Vitest) and native DelSafe tests (`*.test.dels` via `delsafec`):
+```bash
+bv test [filter] [--no-cache|--fresh]
+bv test --sdk [suite|filter]    # Runs SDK-level suites at the BlaiseVue repo root
+```
+1. **Pre-flight Cleaning:** Cleans stale artifacts in `generated/tests/` while preserving incremental hash caches.
+2. **Recursive Discovery:** Finds `*.test.pas` and `*.test.dels` across `tests/components/`, `tests/views/`, and `tests/services/` (or SDK `tests/` when running `--sdk`).
+3. **Component Transpilation:** Transpiles all `.bv` Single File Components (including `<script lang="delsafe">` and `.dels` services) into `generated/`.
+4. **Dual Test Execution:** Compiles `.test.pas` files to `generated/tests/*.test.js` for **Vitest** / JSDOM, and compiles `.test.dels` files via `delsafec --target=c` into `generated/tests/.cache/` for native execution.
 
 For continuous test-driven development:
-`ash
+```bash
 bv test --watch
-`
+```
 
 ### 2. End-to-End Integration Tests (`bv test e2e`)
 Runs headless browser End-to-End integration test suite across application views and workflows:
-`ash
+```bash
 bv test e2e
-`
+```
 
 ### 3. Component Documentation & Playground (`bv doc [--serve]`)
-Parses the AST of all .bv components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at dist/docs/index.html:
-`ash
+Parses the AST of all `.bv` components across the project, extracting props, slots, events, and Pascal docstrings, and generates an interactive component documentation website at `dist/docs/index.html`:
+```bash
 bv doc          # Generates documentation in dist/docs/
 bv doc --serve  # Generates and starts dedicated HTTP preview server
-`
+```
 
 ### 4. BlaiseVue Studio Dashboard (`bv studio`)
-Launches the visual developer cockpit and live telemetry hub on http://localhost:9000:
-`ash
+Launches the visual developer cockpit and live telemetry hub on `http://localhost:9000`:
+```bash
 bv studio
-`
+```
 See detailed documentation in **[40. BlaiseVue Studio Dashboard](40-blaise-studio.md)**.
-
 ---
 
----
+## 8. 📦 Package, Theme & Tool Management (`bv repo`, `bv lib`, `bv theme`, `bv tool`)
 
-## 8. 📦 Package, Theme & Extension Management (`bv repo`, `bv lib`, `bv theme`, `bv extension`)
-
-BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories:
-
-BlaiseVue features a modern, multi-tier package manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories.
+BlaiseVue features a modern, multi-tier package and tool manager designed for zero-conflict SDK updates, SemVer version pinning, global offline caching, and decentralized repositories:
 
 ### 1. Package Repositories (`bv repo`)
 Manages upstream catalog sources and multi-package ecosystem repositories configured in `~/.blaisevue/repos.json`:
@@ -645,16 +678,55 @@ bv lib remove test --global
 
 ---
 
-### 4. `bv extension <list|install|remove|pack> [target]` (Development Tools & Extensions)
-Manages built-in framework developer tooling (`packages/tools/`) and user-level custom extensions (`~/.blaisevue/tools/`):
-- `bv extension list`: Inspects available extensions (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`, and custom tools) and their installation status and versions.
-- `bv extension install <target>`: Installs a specific target extension:
-  - `bv extension install blaise-vscode` (alias: `vscode`): Deploys the official VS Code / Antigravity IDE / Cursor extension (`~/.vscode/extensions/`, `~/.antigravity/extensions/`). After running this command, reload the window via `Ctrl + Shift + P` $\rightarrow$ `Developer: Reload Window` (or restart the IDE). Alternatively, install the pre-packaged `.vsix` manually through the Extensions UI (*Install from VSIX...*) or via terminal (`code --install-extension packages/tools/blaise-vscode/blaisevue-vscode-4.4.0.vsix`).
-  - `bv extension install blaise-lazarus` (alias: `lazarus`): Compiles and validates the official Lazarus IDE package (`blaisevue_ide.lpk`) using `lazbuild`.
-  - `bv extension install blaise-devtools` (alias: `devtools`): Displays step-by-step instructions for loading the DevTools panel in Mozilla Firefox (`about:debugging`) and Google Chrome (`chrome://extensions`).
-  - `bv extension install <tool>`: Executes the custom installer from `~/.blaisevue/tools/<name>/install.ps1` (or `install.sh`).
-- `bv extension remove <target>`: Uninstalls a specific extension (e.g. `bv extension remove blaise-vscode` or `bv extension remove <tool>`).
-- `bv extension pack [target]`: Compiles and packages the extension into an installable standalone `.vsix` bundle using `@vscode/vsce`.
+### 4. `bv tool <list|search|info|install|run|outdated|update|remove|pack|init>` (Developer Tool Manager)
+Manages built-in framework developer tools (`packages/tools/`), co-official ecosystem tools, and third-party user extensions (`~/.blaisevue/tools/`):
+
+#### Tool Classification & Origin
+- **`[Built-in]`**: Native tools pre-bundled in `packages/tools/` (`blaise-vscode`, `blaise-lazarus`, `blaise-devtools`). These are protected core framework tools and cannot be accidentally uninstalled.
+- **`[Co-Official]`**: Official ecosystem tools curated by the BlaiseVue team with official prefix (`blaise-*`). Hosted on the ecosystem registry and installed cleanly into the user global directory (`~/.blaisevue/tools/`), keeping the base framework download lightweight.
+- **`[Third-Party]`**: Community-developed developer tools installed in `~/.blaisevue/tools/` from ecosystem registries, local archives, or remote URLs.
+
+#### Subcommands
+- **`bv tool list`**: Displays a formatted table of all installed tools across both built-in and user directories, showing name, category, version, classification, and runtime status.
+- **`bv tool search [term]`**: Searches the synchronized ecosystem catalog (`*-ecosystem.json`) for available tools matching a keyword or category.
+- **`bv tool info <name>`**: Displays a comprehensive technical card for a tool (installed version, latest ecosystem version, classification, repository, directory path, author, homepage, and configured lifecycle scripts).
+- **`bv tool install [<repo>:]<name[@version]>`**: Resolves the tool in registered ecosystem repositories supporting exact and flexible SemVer ranges (`^1.0.0`, `~1.2.0`, `latest`, `*`), verifies integrity via SHA-256, extracts it into `~/.blaisevue/tools/<name>/`, and executes its `install` script. For built-in tools, it runs the official IDE setup hook.
+- **`bv tool install <url|archive.zip>`**: Directly installs a tool package from a local `.zip` file or download URL into `~/.blaisevue/tools/<name>/`.
+- **`bv tool run <name> [args...]`** (or `bv tool exec`): Directly invokes an installed developer tool CLI, binary, or entry script (`bin` / `exec` / `main` in `tool.json`, native `.exe`, `run.py`, `run.pas`, or `cli.js`), seamlessly forwarding arguments.
+- **`bv tool outdated`**: Inspects all installed tools against registered ecosystem catalogs, reporting which tools have newer versions available.
+- **`bv tool update [<name>]`**: Updates a specific user tool (or all user tools in `~/.blaisevue/tools/`) to the latest version found in the ecosystem.
+- **`bv tool remove <name>`**: Executes the tool's uninstallation script (`remove.py`/`remove.pas`) and cleanly removes the directory from `~/.blaisevue/tools/`.
+- **`bv tool pack [dir]`**: Compiles and packages a tool directory into a distributable release archive (`dist/<name>-<version>.zip`) with an accompanying `.sha256` checksum file.
+- **`bv tool init <name> [--local]`**: Scaffolds a new tool project with `tool.json`, `README.md`, entry executable (`run.py`), and lifecycle hooks (`status.py`, `install.py`, `update.py`, `remove.py`) ready for development.
+
+#### 🚀 Direct Execution via Dynamic Tool Resolution (Cargo/Git Pattern)
+In addition to `bv tool run <name> [args]`, BlaiseVue dynamically resolves installed developer tools when their name or alias is typed directly as a top-level command:
+```bash
+# If blaise-horse is installed in ~/.blaisevue/tools/:
+bv horse init              # Dynamically resolves and invokes blaise-horse
+bv horse run
+
+# Or invoke by full tool name:
+bv blaise-horse status
+```
+This guarantees that the core framework CLI (`bv.pas`) remains 100% clean and unpolluted by external tools, while developers enjoy short, ergonomic commands. If a tool is not installed, the command is treated as unknown.
+
+#### Folder Structure of a Tool Package
+Both libraries and tools can include documentation (`doc/`) and runnable examples (`examples/`):
+```
+my-tool/
+├── tool.json          # Manifest with name, version, category, bin, and scripts
+├── README.md          # Tool documentation and usage guide
+├── run.py             # Main CLI entry script (invoked via "bv tool run my-tool")
+├── doc/               # Extended architecture and technical manuals
+├── examples/          # Sample configurations, scripts, and demo code
+├── status.py          # Status reporting hook
+├── install.py         # Installation hook
+├── update.py          # Update hook
+└── remove.py          # Cleanup hook
+```
+
+See detailed documentation in **[57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md)**.
 
 ---
 
@@ -668,6 +740,7 @@ Manages Pas2JS compiler search paths (`-Fu`) in `app.cfg`, linking official buil
   - E.g.: `bv path add ../legacy/business_logic` (Imports legacy Lazarus/Delphi units)
 - **`bv path remove <target>`**: Safely removes a search path from `app.cfg`.
 - **`bv path available`**: Discovers and catalogs all 30+ pre-bundled Pas2JS packages (`vendor/pas2js/.../packages`) with real-time `[active]` status markers.
+- **Declarative JSON paths**: Projects can also declare extra directories via `"paths": { "pascal": [...], "delsafe": [...] }` in `blaisevue.json` or under `"blaisevue"` in `package.json`, injected automatically across `bv build`, `bv build --release`, `bv dev`, `bv test`, and displayed in `bv path`.
 
 | Path Command | Arguments | Action / Output |
 |---|---|---|
@@ -708,7 +781,64 @@ bv reset --force           # Resets non-interactively without prompt
 
 ---
 
-## 10. 🧹 Framework Diagnostics & Maintenance (`bv doctor`, `bv self-update`, `bv channel`, `bv update`)
+## 10. ⚡ Pas2JS Compiler Multi-Version Manager (`bv pas2js` / `bv compiler`)
+
+BlaiseVue projects compile Pascal Single-File Components (`.bv`) into high-performance JavaScript via the native **Pas2JS** compiler. BlaiseVue includes an immutable factory baseline in `vendor/pas2js` (protected from deletion), and allows developers to download, manage, and switch between multiple compiler versions:
+
+- **`bv pas2js versions`** (alias: `bv compiler versions`):
+  Lists the active compiler for the current project (from `.pas2js-version` or system default), the immutable bundled baseline (`vendor/pas2js`), and all user-installed compilers in `~/.blaisevue/versions/pas2js/` with disk sizes and executable paths.
+- **`bv pas2js upgrade [--version=<ver>]`**:
+  Dynamically queries the official Free Pascal GitLab repository (`https://gitlab.com/freepascal.org/fpc/pas2js.git`) and presents an interactive menu to download and build compiler distributions into `~/.blaisevue/versions/pas2js/<version>/`:
+  - Official stable releases (e.g., `3.2.0`, `3.0.1`, `2.2.0`).
+  - Active development builds (`3.4.0` from GitLab `main`).
+  - Custom Git tags or commit hashes.
+- **`bv pas2js use <version|bundled>`**:
+  Binds the current project to a specific compiler version by creating or updating `.pas2js-version` in the project root. Pass `bundled` to revert to the factory-protected baseline.
+- **`bv pas2js remove-version [ver] [-y]`**:
+  Interactively selects and safely deletes a cached compiler version from `~/.blaisevue/versions/pas2js/` to free disk space. The bundled factory baseline in `vendor/pas2js` is protected and cannot be deleted.
+
+| Pas2JS Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv pas2js versions` | - | Displays active compiler, binary paths, system RTL units and disk usage |
+| `bv pas2js upgrade` | `[--version=<ver>]` | Interactively selects and installs a Pas2JS compiler distribution |
+| `bv pas2js use` | `<version\|bundled>` | Switches active Pas2JS compiler for the current project (`.pas2js-version`) |
+| `bv pas2js remove-version` | `[version] [-y]` | Interactively selects and deletes a cached compiler version |
+
+See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56-multi-version-sdk-management.md)**.
+
+---
+
+## 11. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`, `bv framework`)
+
+BlaiseVue features unified, cross-module SDK version management across the BlaiseVue framework itself, Capacitor, mORMot 2, Pas2JS, and Horse:
+
+- **`bv versions`** (or `bv sdk`):
+  Prints a consolidated bird's-eye dashboard summarizing active project dependencies, protected baselines, and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
+- **`bv versions clean`** (or `bv versions remove` / `bv versions prune`):
+  Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Protected baselines (`active channel`, `vendor/pas2js`, `vendor/mormot2`) are never deleted.
+- **`bv framework versions`** (alias: `bv fw versions`):
+  Lists the active project framework version (from `.blaisevue-version` or global `channel`), host SDK location, and all locally compiled framework versions in `~/.blaisevue/versions/blaisevue/`.
+- **`bv framework upgrade [--version=<ver>]`**:
+  Queries GitHub tags via `git ls-remote --tags --refs`, performs a lean sparse checkout (reusing `vendor/pas2js` and `vendor/mormot2` from the host SDK), and compiles `bin/bv.pas` locally with Free Pascal.
+- **`bv framework use <ver|channel>`**:
+  Pins a project to a cached BlaiseVue version via `.blaisevue-version` (with transparent auto-delegation), or pass `channel` to follow your active global Git branch again.
+- **`bv framework remove-version [ver] [-y]`**:
+  Safely removes a cached BlaiseVue version from `~/.blaisevue/versions/blaisevue/`.
+
+| Versions & Framework Command | Flags / Arguments | Description / Action |
+|---|---|---|
+| `bv versions` | - | Displays active project dependencies, baselines & cached user SDKs |
+| `bv versions clean` | - | Interactive cross-module cleanup wizard to delete user-installed SDKs |
+| `bv framework versions` | - | Lists active channel and cached BlaiseVue framework distributions |
+| `bv framework upgrade` | `[--version=<ver>]` | Clones GitHub tag sparsely and compiles BlaiseVue CLI locally via FPC |
+| `bv framework use` | `<ver\|channel>` | Pins BlaiseVue version in `.blaisevue-version` or tracks global channel |
+| `bv framework remove-version` | `[ver] [-y]` | Removes a cached BlaiseVue distribution from user storage |
+
+See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56-multi-version-sdk-management.md)**.
+
+---
+
+## 12. 🧹 Framework Diagnostics & Maintenance (`bv doctor`, `bv self-update`, `bv channel`, `bv update`)
 
 ### `bv update` (alias: `bv upgrade`)
 Surgically and non-destructively updates an existing BlaiseVue project with the latest framework runtime improvements, signal handlers, port conflict mitigation, `.env` support, runtime scripts, RTL assets, and **Lazarus IDE project files (`.lpi` / `.lpr` and `server/server.lpi`)**.
@@ -735,26 +865,27 @@ bv update --no-backup  # Skip creating automatic backup snapshot
 ---
 
 ### `bv doctor`
-Diagnoses your system environment, verifying that essential tools and bundled assets are correctly configured and accessible.
+Diagnoses your system environment and active project workspace, verifying that essential tools, bundled assets, and project-pinned SDK versions are correctly configured and accessible.
 
 ```bash
 bv doctor
 ```
 
 **What it verifies:**
-1. **Git CLI**: Required for framework updates and channel switching.
-2. **Free Pascal (FPC) & Lazarus IDE**: Automatically detects FPC either in the system PATH or bundled within standard Lazarus paths (`C:\lazarus\fpc\...` on Windows, `/usr/bin/fpc` on Linux/macOS).
-3. **InstantFPC**: Automatically detects InstantFPC in system PATH or inside the Lazarus FPC directory (`instantfpc.exe`), enabling direct Pascal script execution for developer tools.
-4. **Python 3**: Verifies Python in PATH, recommended for dynamic extension lifecycle scripts (`install.py`, `remove.py`, `status.py`, `pack.py`).
-5. **Pas2JS (Bundled)**: Verifies the built-in Object Pascal to JavaScript transpiler in `vendor/pas2js/`.
-6. **Synopse mORMot 2 (Bundled)**: Confirms presence of the embedded mORMot 2 full-stack framework in `vendor/mormot2/`.
-7. **Node.js & npm**: Checks for Vitest testing suite and live development HMR support.
-8. **Docker & Optional Tools**: Checks micro-container tools and Android SDK for cross-platform workflows.
+1. **Core Framework Tooling**: Git CLI, Free Pascal (FPC), InstantFPC, Lazarus IDE, Pas2JS (bundled baseline), and Synopse mORMot 2 (bundled baseline).
+2. **Ecosystem & Testing**: Python 3 (tool packaging), Node.js & npm (HMR & Vitest), Docker CLI (micro-containers), and active developer tools.
+3. **Mobile & Cross-Platform**: Java Runtime (JDK 17/21 LTS), Android SDK (`ANDROID_HOME`), ADB, Android Emulator & AVDs, and Capacitor CLI.
+4. **Active Project Alignment (when executed inside a BlaiseVue project)**:
+   - **Pas2JS Compiler**: Audits `.pas2js-version`. If a pinned version is not installed in `~/.blaisevue/versions/pas2js/`, alerts the developer and indicates that the safe factory fallback baseline (`vendor/pas2js`) is active.
+   - **mORMot 2 Framework**: Audits `server/mormot.path` / `.mormot-version`. If a custom version is missing from `~/.blaisevue/versions/mormot/`, falls back gracefully to `vendor/mormot2`.
+   - **Capacitor Mobile**: Checks whether `@capacitor/core` declared in `package.json` is physically installed in `node_modules/@capacitor/core`.
+   - **Horse Backend**: Checks if `server-horse/` is configured and verifies that the `blaise-horse` tool is installed.
+   - **Project Dependency Notice**: Generates an actionable summary banner listing exact commands (e.g. `bv pas2js upgrade --version=<v>`, `npm install`) to align all project dependencies.
 
 ---
 
 ### `bv self-update` (alias: `bv upgrade-cli`)
-Updates the BlaiseVue framework engine itself directly from GitHub using Git.
+Syncs and recompiles your active global channel (`main` or `develop`) directly from GitHub using Git.
 
 ```bash
 # Synchronize and update framework on current branch:
@@ -780,8 +911,8 @@ bv self-update --channel=main
 
 ---
 
-### `bv channel` (Git Channel Manager)
-Inspects active framework branch and quickly switches between stable release channel (`main`) and development channel (`develop`).
+### `bv channel` (Global Git Channel Manager)
+Inspects your global framework branch and switches between the release channel (`main`) and development channel (`develop`).
 
 ```bash
 # Display active channel, current commit, and repository status:

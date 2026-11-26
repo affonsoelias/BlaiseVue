@@ -1,6 +1,8 @@
 unit uLibBootstrap;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,21 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uLibBootstrap;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    count: Integer;
+    libName: string;
+    category: string;
+    currentPage: Integer;
+    lastAction: string;
+    hwAccel: Boolean;
+    offlineCache: Boolean;
+    darkPalette: Boolean;
+    compressPayloads: Boolean;
+    accessMode: string;
+    sliderValue: Integer;
+  end;
 
 procedure Register_uLibBootstrap;
 var
@@ -251,10 +268,10 @@ begin
     d['lastAction'] := 'System Ready';
     d['faqItems'] := '';
     d['catOptions'] := '';
-    d['hwAccel'] := true;
-    d['offlineCache'] := true;
-    d['darkPalette'] := false;
-    d['compressPayloads'] := true;
+    d['hwAccel'] := True;
+    d['offlineCache'] := True;
+    d['darkPalette'] := False;
+    d['compressPayloads'] := True;
     d['accessMode'] := 'write';
     d['sliderValue'] := 75;
     Result := d;
@@ -265,7 +282,7 @@ begin
   m['clickNotif'] := procedure(_this: TJSObject; info: string)
 
     begin
-      TJSObject(_this)['lastAction'] := info;
+      TComponentThis(_this).lastAction := info;
       TriggerRef(_this, 'mainToast', 'show');
     end;
     
@@ -278,15 +295,15 @@ begin
   m['modalConfirm'] := procedure(_this: TJSObject)
 
     begin
-      TJSObject(_this)['libName'] := 'SYNC_' + NowTimestampStr;
-      TJSObject(_this)['lastAction'] := 'Modal Confirmed';
+      TComponentThis(_this).libName := 'SYNC_' + NowTimestampStr;
+      TComponentThis(_this).lastAction := 'Modal Confirmed';
       TriggerRef(_this, 'mainToast', 'show');
     end;
     
   m['updatePage'] := procedure(_this: TJSObject; p: integer)
 
     begin
-      TJSObject(_this)['currentPage'] := p;
+      TComponentThis(_this).currentPage := p;
     end;
     
   m['tabChanged'] := procedure(_this: TJSObject; id: string)

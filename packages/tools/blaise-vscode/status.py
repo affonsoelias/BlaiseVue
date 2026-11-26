@@ -20,7 +20,7 @@ def check_status():
                 for entry in os.listdir(t):
                     if entry.startswith('blaisevue.blaisevue-vscode-'):
                         version = entry.replace('blaisevue.blaisevue-vscode-', '')
-                        print(f"Installed (v{version})")
+                        print("Installed (VS Code / IDE)")
                         return
                     elif entry == 'blaisevue-vscode':
                         print("Installed (IDE)")
@@ -28,7 +28,7 @@ def check_status():
             except OSError:
                 pass
                 
-    print("Available (Run: bv extension install blaise-vscode)")
+    print("Available (Run: bv tool install blaise-vscode)")
 
 if __name__ == '__main__':
     check_status()

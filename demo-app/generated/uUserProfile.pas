@@ -1,6 +1,8 @@
 unit uUserProfile;
 
 {$mode objfpc}
+{$modeswitch externalclass}
+{$COPERATORS ON}
 
 interface
 
@@ -9,6 +11,14 @@ uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, 
 procedure Register_uUserProfile;
 
 implementation
+
+type
+  TComponentThis = class external name 'Object' (TJSObject)
+    id: string;
+    tab: string;
+    tema: string;
+    nomeUsuario: string;
+  end;
 
 procedure Register_uUserProfile;
 var
