@@ -1,6 +1,6 @@
 # 📋 BlaiseVue Versioning & Release Model
 
-BlaiseVue adopts a hybrid versioning model that unites the rock-solid stability traditions of the **Lazarus IDE and Free Pascal** with modern **Semantic Versioning 2.0.0 (SemVer)** and automated Git workflows.
+BlaiseVue adopts standard **Semantic Versioning 2.0.0 (SemVer)** combined with automated Git channel workflows (`main` / `develop`).
 
 ---
 
@@ -8,35 +8,31 @@ BlaiseVue adopts a hybrid versioning model that unites the rock-solid stability 
 
 All releases follow the standard semantic format:
 
-$$\text{MAJOR} \,.\, \text{MINOR} \,.\, \text{PATCH} \quad (\text{e.g., } \mathbf{4.4.0})$$
+$$\text{MAJOR} \,.\, \text{MINOR} \,.\, \text{PATCH} \quad (\text{e.g., } \mathbf{0.1.0} \text{ pre-release} \rightarrow \mathbf{1.0.0} \text{ stable})$$
 
 ```
-     4   .   4   .   0
+     1   .   0   .   0
      ▲       ▲       ▲
      │       │       └── PATCH: Non-breaking bugfixes, security & optimizations
-     │       └────────── MINOR: Even (Stable Release) / Odd (Active Development)
+     │       └────────── MINOR: Backward-compatible new features & capabilities
      └────────────────── MAJOR: Architectural leaps & major platform milestones
 ```
 
+> [!NOTE]
+> **Current Public Pre-Release (`v0.1.x`):** BlaiseVue is in the public **`v0.1.x`** pre-release series and will **continue in `v0.1.x`** throughout all upcoming roadmap phases (including Serverless Edge / BlaiseEdge) and beyond. There is currently **no scheduled release date for `v1.0.0`**. BlaiseVue follows standard Semantic Versioning 2.0.0 (`MAJOR.MINOR.PATCH`) with `main`/`develop` Git channels.
+
 ### 1. 🏛️ Major Version (Eras & Architectural Leaps)
-Incremented when fundamental architectural evolutions occur or when breaking API changes are introduced across the framework runtime, compiler pipeline, or core interfaces.
+Incremented when fundamental architectural evolutions occur or when breaking API changes are introduced across the framework runtime, compiler pipeline, or core interfaces (`0.x` represents public pre-release development prior to `1.0.0`).
 
-### 2. ⚖️ The Even/Odd Rule (Minor Version Parity)
-Inherited from the Lazarus/FPC and Linux kernel heritage, the **Minor** version number strictly signals stability guarantees:
+### 2. ✨ Minor Version (New Features & Capabilities)
+Incremented when new backward-compatible features, directives, components, CLI commands, or platform capabilities are introduced:
 
-- **🟢 EVEN Minor Numbers (Stable Production Releases)**:
-  - Examples: `1.0.x`, `2.0.x`, `3.0.x`, `4.0.x`, `4.2.x`, `4.4.x`.
-  - Production-ready, thoroughly validated branches.
-  - **Zero breaking changes**: only bugfixes, performance enhancements, and non-disruptive patches are backported.
-  
-- **🔴 ODD Minor Numbers (Active Development & Staging)**:
-  - Examples: `1.1.x`, `3.1.x`, `4.1.x`, `4.3.x`, `4.5.x`.
-  - Development branches on `develop`.
-  - Incubate new directives, compiler features, and experimental capabilities on the road to the next stable release.
+- During the **`0.1.x`** pre-release series, minor and patch iterations deliver new subsystems and refinements as the platform matures.
+- Starting at **`1.0.0`**, **Minor** increments (`1.1.0`, `1.2.0`, ...) deliver backward-compatible feature additions without breaking public APIs.
 
 ### 3. 🛠️ Patch / Revision
 Incremented for bugfixes, security patches, compiler edge-case resolutions, and documentation updates.
-- Example: `4.4.0` $\rightarrow$ `4.4.1` (Strictly bugfixes, fully backward-compatible).
+- Example: `1.0.0` $\rightarrow$ `1.0.1` (Strictly bugfixes, fully backward-compatible).
 
 ---
 
@@ -45,18 +41,18 @@ Incremented for bugfixes, security patches, compiler edge-case resolutions, and 
 BlaiseVue enforces a clean separation of concerns between production stability and active development:
 
 ```
-[develop]  ───●──────●───────●──────●──── (Odd Minors: v4.5.0-dev)
+[develop]  ───●──────●───────●──────●──── (Active Integration: v0.1.x-dev)
                \                   /
                 └─── [feat/...] ──┘
                                    \ (Merge / Tag)
-[main]     ─────────────────────────●──── (Even Minors: v4.4.0 / v4.4.1)
-                                    🏷️ v4.4.0
+[main]     ─────────────────────────●──── (Release Channel: v0.1.0 / v0.1.x)
+                                    🏷️ v0.1.0
 ```
 
 | Branch | Stability | Target Version | Purpose |
 |---|---|---|---|
-| **`main`** | 🟢 Stable | Even Minors (`v4.4.x`) | Production-ready code, official releases, and signed release tags. |
-| **`develop`** | 🟡 Active | Odd Minors (`v4.5.x-dev`) | Integration branch for new features, community PRs, and bleeding-edge changes. |
+| **`main`** | 🟢 Release | Tagged Releases (`v0.1.0`, `v0.1.x`, ...) | Release-ready code, official releases, and release tags. |
+| **`develop`** | 🟡 Active | Active Development | Integration branch for new features, community PRs, and bleeding-edge changes. |
 | **`feat/*`** | 🧪 Experimental | — | Isolated feature development branched from `develop`. |
 | **`fix/*`** | 🩹 Hotfix | Patch bump | Critical bugfixes targeted at `develop` (and cherry-picked to `main` if urgent). |
 
@@ -64,26 +60,26 @@ BlaiseVue enforces a clean separation of concerns between production stability a
 
 ## ⚙️ Automated Versioning via BlaiseVue CLI
 
-Starting with **v4.4**, the BlaiseVue CLI (`bv`) features an automated SemVer and metadata synchronization suite for both the framework and user applications.
+The BlaiseVue CLI (`bv`) features an automated SemVer and metadata synchronization suite for both the framework and user applications.
 
 ### 📦 Bumping Project Versions
 
 You can increment project versions directly from the command line:
 
 ```bash
-# Increment patch: 4.4.0 -> 4.4.1 (Bugfix)
+# Increment patch: 0.1.0 -> 0.1.1 (Bugfix)
 bv meta bump patch
 
-# Increment minor: 4.4.1 -> 4.5.0 (New feature / dev cycle)
+# Increment minor: 0.1.1 -> 0.2.0 (New feature / dev cycle)
 bv meta bump minor
 
-# Increment major: 4.5.0 -> 5.0.0 (Next architectural era)
+# Increment major: 0.2.0 -> 1.0.0 (Official 1.0.0 milestone)
 bv meta bump major
 ```
 
 ### 🔄 Automatic Pascal Unit Synchronization (`uAppVersion.pas`)
 
-Whenever `bv meta bump` or `bv meta set` is executed, the CLI automatically keeps `package.json` and the Pascal source unit [`src/uAppVersion.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/uAppVersion.pas) in exact lockstep:
+Whenever `bv meta bump` or `bv meta set` is executed, the CLI automatically keeps `package.json` and the Pascal source unit [`core/uAppVersion.pas`](file:///c:/Users/Pichau/Documents/BlaiseVue/core/uAppVersion.pas) in exact lockstep:
 
 ```pascal
 unit uAppVersion;
@@ -94,7 +90,7 @@ interface
 
 const
   APP_NAME    = 'MyProject';
-  APP_VERSION = '4.4.0';
+  APP_VERSION = '0.1.0';
   APP_AUTHOR  = 'Elias Affonso';
   APP_LICENSE = 'MIT';
 
@@ -129,10 +125,9 @@ Third-party and official ecosystem packages (`blaise-ui`, `blaise-charts`, etc.)
 
 | Version Range | Era Name | Release Focus | Status |
 |---|---|---|---|
-| **v1.0 - v1.2** | Genesis Era | Virtual DOM, `@click`, `b-model`, basic CLI | 📜 Legacy |
-| **v2.0 - v3.5** | Foundation & Reactivity | Surgical DOM patching, mORMot 2 SSR, WebAssembly acceleration | 📜 Shipped |
-| **v4.0 - v4.4** | **Enterprise Universal** | Monorepo architecture, `bv extension`, ecosystem packages, metadata suite | 🟢 **Current Stable** |
-| **v5.0** | **Cloud Era** | High-density WebSockets, micro-frontends, multi-registry mesh | 🚀 Upcoming (Q3 2027) |
+| **v0.1.0** | **Public Pre-Release Baseline** | Universal Pascal SPA/SSG, mORMot 2, Capacitor Mobile, Desktop WebUI, BlaiseX + Fragments, Multi-Version `bv framework`, CLI tooling, DelSafe/Zephyr *(experimental)* | 🟢 **Current Baseline** |
+| **v0.1.x** | **Ongoing Pre-Release Track** | Phase A (PWA, mORMot SSR, Studio 2.0), Phase B (Micro-Frontends & Module Federation), Phase C (BlaiseEdge / `wasm32-wasi` Serverless) — **continues in `0.1.x` even after Phase C** | 🚀 **Active Roadmap (`0.1.x`)** |
+| **v1.0.0** | **Future Official GA** | Long-term API freeze, full cross-platform certification, and standard SemVer 2.0.0 long-term stability guarantees | ⏳ **TBD (No Forecast Yet)** |
 
 ---
 

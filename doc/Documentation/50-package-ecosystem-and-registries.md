@@ -144,7 +144,7 @@ Scope: Local Project (/lib)
 Package               Installed     Latest          Status                    
 ------------------------------------------------------------------------------
 test                  v1.0.0        v1.1.0          Outdated -> v1.1.0
-blaise-ui             v4.4.0        v4.4.0          Official Core (Up to date)
+blaise-ui             v0.1.0        v0.1.0          Official Core (Up to date)
 ------------------------------------------------------------------------------
 1 of 2 package(s) are outdated.
 To update, run: bv lib update

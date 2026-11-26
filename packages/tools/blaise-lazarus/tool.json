@@ -1,12 +1,12 @@
 {
-  "name": "blaise-lazarus",
-  "category": "Lazarus IDE Package",
-  "description": "Official Lazarus IDE package (blaisevue_ide.lpk) with syntax highlighting, browser preview, autocomplete, and IDE tools",
-  "version": "1.0.0",
-  "scripts": {
-    "status": "status.py",
-    "install": "install.py",
-    "update": "install.py",
-    "remove": "remove.py"
+  "name" : "blaise-lazarus",
+  "category" : "Lazarus IDE Package",
+  "description" : "Official Lazarus IDE package (blaisevue_ide.lpk) with syntax highlighting, browser preview, autocomplete, and IDE tools",
+  "version" : "0.1.0",
+  "scripts" : {
+    "status" : "status.py",
+    "install" : "install.py",
+    "update" : "install.py",
+    "remove" : "remove.py"
   }
 }

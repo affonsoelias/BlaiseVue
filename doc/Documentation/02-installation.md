@@ -65,11 +65,28 @@ cd BlaiseVue
 
 ---
 
-## 🛠️ Step 2: Add the BlaiseVue CLI to System PATH
+## 🛠️ Step 2: Compile the CLI Locally & Add `bin/` to System PATH
 
-Pre-compiled CLI binaries are already provided in `bin/` (`bv.exe` for Windows, `bv` for Linux/macOS). Add the `bin/` directory to your system `PATH` so you can execute `bv` from any directory:
+BlaiseVue ships **source-first** without pre-compiled executables in Git. From the cloned repository root, run the native build script for your platform (takes ~2 seconds with Free Pascal 3.2+):
 
-### Windows (PowerShell - Run as Administrator)
+### Windows (PowerShell or Command Prompt)
+```powershell
+.\build.ps1
+# or in Command Prompt:
+build.bat
+```
+
+### Linux & macOS (Bash / Zsh)
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+*(Each build script compiles into a temporary `bv_new` binary first and backs up any existing `bin/bv` to `bin/bv.bak` before replacing it, so a failed build never breaks an already-working CLI.)*
+
+Next, add the `bin/` directory to your system `PATH` so you can execute `bv` from any directory:
+
+### Windows (PowerShell - Add to User PATH)
 ```powershell
 $sdkBin = "C:\path\to\BlaiseVue\bin"
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -84,7 +101,7 @@ Add the `bin/` folder to your shell configuration file (`~/.zshrc` for Zsh users
 ```bash
 export PATH="$HOME/path/to/BlaiseVue/bin:$PATH"
 ```
-Ensure both the `bv` CLI and the bundled `pas2js` transpiler binaries have executable permissions (`+x`):
+Ensure both the `bv` CLI and the bundled `pas2js` transpiler binaries have executable permissions (`+x`, handled automatically by `./build.sh`):
 ```bash
 chmod +x "$HOME/path/to/BlaiseVue/bin/bv"
 chmod +x "$HOME/path/to/BlaiseVue/vendor/pas2js/"pas2js-*/bin/{pas2js,compileserver,makestub,webidl2pas} 2>/dev/null || true
@@ -104,13 +121,22 @@ source ~/.bashrc
 
 ---
 
-## 📦 Step 3: Create Your First Project
+## 📦 Step 3: Run the Demo App (`demo-app`) or Create a Clean Project
 
-Scaffold a complete, standalone application using `bv create`:
+### Option A — Run the Included Demo Application (`demo-app`)
+```bash
+cd demo-app
+npm install
+bv doctor
+bv dev
+# Optional: run "bv mormot run" in a second terminal for full-stack API/RPC
+```
 
+### Option B — Scaffold a Clean Application (`bv create`)
 ```bash
 bv create my-app
 cd my-app
+npm install
 ```
 
 `bv create` sets up a production-ready project workspace:
@@ -246,15 +272,11 @@ bv channel use main
 
 ---
 
-## 🔧 Recompiling the CLI from Source (Optional)
+## 🔧 Rebuilding the CLI from Source
 
-If you modify `bin/bv.pas` directly or want to recompile the CLI manually:
+Run the cross-platform build scripts in the repository root (`./build.ps1`, `build.bat`, or `./build.sh`), or compile manually inside `bin/`:
 
 ```bash
 cd bin
-fpc -MObjFPC -Sh bv.pas
-```
-On Linux and macOS, ensure executable permissions:
-```bash
-chmod +x bv
+fpc -MObjFPC -Sh -O2 -obv_new bv.pas
 ```

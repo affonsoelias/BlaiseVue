@@ -12,7 +12,7 @@ def main():
     source_dir = os.path.dirname(os.path.abspath(__file__))
     pkg_json_path = os.path.join(source_dir, 'package.json')
     
-    version = '4.4.0'
+    version = '0.1.0'
     if os.path.isfile(pkg_json_path):
         try:
             with open(pkg_json_path, 'r', encoding='utf-8') as f:

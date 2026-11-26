@@ -23,11 +23,11 @@ gitGraph
     merge feat/virtual-scroll id: "Merge PR into develop"
     commit id: "Pass 66 test suites (357 tests)"
     checkout main
-    merge develop tag: "v4.4 Release"
+    merge develop tag: "v0.1.0 Pre-Release"
 ```
 
 ### Branch Rules:
-- **`main`**: Production-ready code only. Tagged with formal SemVer releases (e.g., `v4.4.0`). Direct pushes to `main` are strictly forbidden.
+- **`main`**: Release-ready code only. Tagged with formal SemVer releases (e.g., `v0.1.0`, `v1.0.0`). Direct pushes to `main` are strictly forbidden.
 - **`develop`**: The primary integration branch. All active development, feature branches, and bug fixes merge into `develop`.
 - **Feature Branches (`feat/<feature-name>`)**: Branch off `develop`. Used for new directives, components, or CLI tools.
 - **Fix Branches (`fix/<issue-name>`)**: Branch off `develop`. Used for bug fixes and regression patches.
@@ -169,7 +169,7 @@ Before submitting a Pull Request to `develop`:
 - [ ] Commit messages follow the conventional format:
   - `feat: add BVSlider component to BlaiseUI`
   - `fix: prevent effect cycle in TBVDataSet LiveBindings`
-  - `docs: update architecture overview for v4.4`
+  - `docs: update architecture overview for v0.1.0`
 
 ---
 

@@ -27,7 +27,7 @@ interface
 
 const
   APP_NAME = 'blaise-ui-mobile';
-  APP_VERSION = '4.4.0';
+  APP_VERSION = '0.1.0';
   APP_AUTHOR = 'BlaiseVue Core Team';
   APP_LICENSE = 'Modified GNU LGPL v2.1 with Static Linking Exception';
   APP_BUILD_DATE = '2026-10-24';

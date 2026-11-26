@@ -10,7 +10,7 @@ Outputs the dynamic framework version derived from the Single Source of Truth (`
 
 ```bash
 bv --version
-# Output: BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+# Output: BlaiseVue CLI v0.1.0 (Universal Pascal Full-Stack Platform)
 
 bv -v
 ```
@@ -235,7 +235,7 @@ Commands available both from the terminal and inside the interactive cockpit:
   Registered BlaiseVue Projects:
   ----------------------------------------------------------------------------
   * my-erp            v1.0.0    C:\Projects\my-erp
-    customer-portal   v4.4.0    D:\Work\customer-portal
+    customer-portal   v0.1.0    D:\Work\customer-portal
   ----------------------------------------------------------------------------
   Total: 2 project(s) registered (* active)
   ```
@@ -808,19 +808,31 @@ See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56
 
 ---
 
-## 11. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`)
+## 11. 🌐 Centralized SDK & Multi-Version Dashboard (`bv versions`, `bv framework`)
 
-BlaiseVue features unified, cross-module SDK version management across all supported platforms (Capacitor, mORMot 2, Pas2JS, and Horse):
+BlaiseVue features unified, cross-module SDK version management across the BlaiseVue framework itself, Capacitor, mORMot 2, Pas2JS, and Horse:
 
 - **`bv versions`** (or `bv sdk`):
-  Prints a consolidated bird's-eye dashboard summarizing active project dependencies, immutable factory baselines (`vendor/`), and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
+  Prints a consolidated bird's-eye dashboard summarizing active project dependencies, protected baselines, and all user-cached SDK distributions in `~/.blaisevue/versions/` with disk footprint and absolute paths.
 - **`bv versions clean`** (or `bv versions remove` / `bv versions prune`):
-  Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Immutable factory baselines in `vendor/` are always protected from deletion.
+  Launches an interactive cross-module disk cleanup wizard. Scans and lists all cached user versions across modules with numbers `[1-N]` and `[A]` (Purge All), prompting for safe confirmation to reclaim disk space. Protected baselines (`active channel`, `vendor/pas2js`, `vendor/mormot2`) are never deleted.
+- **`bv framework versions`** (alias: `bv fw versions`):
+  Lists the active project framework version (from `.blaisevue-version` or global `channel`), host SDK location, and all locally compiled framework versions in `~/.blaisevue/versions/blaisevue/`.
+- **`bv framework upgrade [--version=<ver>]`**:
+  Queries GitHub tags via `git ls-remote --tags --refs`, performs a lean sparse checkout (reusing `vendor/pas2js` and `vendor/mormot2` from the host SDK), and compiles `bin/bv.pas` locally with Free Pascal.
+- **`bv framework use <ver|channel>`**:
+  Pins a project to a cached BlaiseVue version via `.blaisevue-version` (with transparent auto-delegation), or pass `channel` to follow your active global Git branch again.
+- **`bv framework remove-version [ver] [-y]`**:
+  Safely removes a cached BlaiseVue version from `~/.blaisevue/versions/blaisevue/`.
 
-| Versions Command | Flags / Arguments | Description / Action |
+| Versions & Framework Command | Flags / Arguments | Description / Action |
 |---|---|---|
-| `bv versions` | - | Displays active project dependencies, factory baselines & cached user SDKs |
+| `bv versions` | - | Displays active project dependencies, baselines & cached user SDKs |
 | `bv versions clean` | - | Interactive cross-module cleanup wizard to delete user-installed SDKs |
+| `bv framework versions` | - | Lists active channel and cached BlaiseVue framework distributions |
+| `bv framework upgrade` | `[--version=<ver>]` | Clones GitHub tag sparsely and compiles BlaiseVue CLI locally via FPC |
+| `bv framework use` | `<ver\|channel>` | Pins BlaiseVue version in `.blaisevue-version` or tracks global channel |
+| `bv framework remove-version` | `[ver] [-y]` | Removes a cached BlaiseVue distribution from user storage |
 
 See detailed documentation in **[56. Multi-Version SDK & Compiler Management](56-multi-version-sdk-management.md)**.
 
@@ -873,7 +885,7 @@ bv doctor
 ---
 
 ### `bv self-update` (alias: `bv upgrade-cli`)
-Updates the BlaiseVue framework engine itself directly from GitHub using Git.
+Syncs and recompiles your active global channel (`main` or `develop`) directly from GitHub using Git.
 
 ```bash
 # Synchronize and update framework on current branch:
@@ -899,8 +911,8 @@ bv self-update --channel=main
 
 ---
 
-### `bv channel` (Git Channel Manager)
-Inspects active framework branch and quickly switches between stable release channel (`main`) and development channel (`develop`).
+### `bv channel` (Global Git Channel Manager)
+Inspects your global framework branch and switches between the release channel (`main`) and development channel (`develop`).
 
 ```bash
 # Display active channel, current commit, and repository status:

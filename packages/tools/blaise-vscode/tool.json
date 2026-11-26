@@ -1,13 +1,13 @@
 {
-  "name": "blaise-vscode",
-  "category": "VS Code / VSCodium",
-  "description": "Official BlaiseVue VS Code / VSCodium extension with syntax highlighting, autocomplete, and code formatter",
-  "version": "1.0.0",
-  "scripts": {
-    "status": "status.py",
-    "install": "install.py",
-    "update": "install.py",
-    "remove": "remove.py",
-    "pack": "pack.py"
+  "name" : "blaise-vscode",
+  "category" : "VS Code / VSCodium",
+  "description" : "Official BlaiseVue VS Code / VSCodium extension with syntax highlighting, autocomplete, and code formatter",
+  "version" : "0.1.0",
+  "scripts" : {
+    "status" : "status.py",
+    "install" : "install.py",
+    "update" : "install.py",
+    "remove" : "remove.py",
+    "pack" : "pack.py"
   }
 }

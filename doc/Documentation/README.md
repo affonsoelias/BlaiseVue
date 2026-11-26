@@ -4,31 +4,31 @@
   </a>
 </p>
 
-# 🛡️ BlaiseVue 4.4 Documentation
+# 🛡️ BlaiseVue Documentation
 **The Universal Reactive Framework for Object Pascal.**  
 Build modern Web (SPA/SSG), Native Mobile (Android/iOS), Ultra-light Desktop, and High-Throughput Full-Stack microservices from a single Pascal codebase.
 
 > [!NOTE]
-> ### 🚀 Project Status: Active Development & Upcoming Official v1.0.0 Release
+> ### 🚀 Project Status: Public Pre-Release (`v0.1.x`)
 >
-> BlaiseVue is currently in active pre-release development. The platform is **fully functional, battle-tested, and ready for developers to clone, test, build prototypes, explore reactive Pascal, and evaluate full-stack architectures**.
+> BlaiseVue is currently in active public pre-release (**`v0.1.0`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready for developers to clone, compile locally (`build.ps1` / `build.bat` / `build.sh`), run `demo-app`, test, build prototypes, and evaluate full-stack architectures**.
 >
-> Current version tags or numbers appearing in the CLI and documentation are **internal development milestones** used to track architectural iterations. An official, production-ready **v1.0.0 Release** is being finalized and will be officially launched very soon.
+> BlaiseVue will continue evolving within **`v0.1.x`** across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**.
 >
 > We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
 
 ---
 
-## 🌟 The BlaiseVue 4.4 Enterprise Universal Architecture
+## 🌟 The BlaiseVue Enterprise Universal Architecture
 
-BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-stack mORMot 2 integration, native mobile and desktop suites, interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
+BlaiseVue delivers full-stack mORMot 2 and DelSafe/Zephyr integration, native mobile and desktop suites, an interactive developer cockpit, zero-ASM pure Object Pascal DX, compile-time template verification, and offline-first dataset synchronization:
 
-- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates (v4.4)**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
-- **💾 Offline-First `TBVDataSet` & Delta Sync (v4.4)**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
-- **🔗 Relational Master-Detail CRUD & Multi-Database ORM (v4.4)**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
-- **🏎️ High-Performance Virtual Scrolling (v4.4)**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
-- **📦 Standalone Library Scaffolding & Packaging (v4.4)**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
-- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset (v4.4)**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
+- **⚡ Compiler Template Type-Checking & Zero-`with()` Native Templates**: Recursive-descent AST evaluator (`bv.fastEval`) with LRU caching, strict CSP compliance, and compile-time AST verification with Levenshtein typo suggestions (`bv check`).
+- **💾 Offline-First `TBVDataSet` & Delta Sync**: High-capacity IndexedDB persistence with transactional delta tracking (`FDelta`), server ID reconciliation, and automated reconnect triggers for mORMot 2 (`ApplyUpdates`).
+- **🔗 Relational Master-Detail CRUD & Multi-Database ORM**: Automated relational model generation (`bv mormot crud`) with foreign keys, nested views, and pluggable database support (`--db sqlite|postgres|mysql|firebird` or `.env`).
+- **🏎️ High-Performance Virtual Scrolling**: DOM virtualization engine (`<bv-virtual-scroll>`) rendering 100,000+ records at a constant 60 FPS in `<bv-data-grid>`.
+- **📦 Standalone Library Scaffolding & Packaging**: Dedicated library generator (`bv create --lib`) with interactive license selection (MIT, Apache, LGPL), isolated HMR playground, autonomous test suite, and release packager (`bv lib pack`).
+- **🛡️ Project Metadata, Licensing Suite & Clean Slate Reset**: Automated licensing (`bv license`), SemVer bumping (`bv meta bump`), Pascal unit sync (`src/uAppVersion.pas`), and clean slate project reset (`bv reset`) with double-layered safety guards.
 - **🛡️ End-to-End Type-Safe Pascal RPC with mORMot 2 (v4.3)**: Shared service interfaces (`ICustomerService`), automated client proxy generation (`bv mormot rpc`), dual HTTP/WebSocket transport, JSON-RPC 2.0, and 100% compile-time API validation in pure Object Pascal.
 - **📊 LiveBindings & Reactive `TBVDataSet` (v4.2)**: Delphi/Lazarus data-aware semantics in modern reactive Web applications. In-memory cursor navigation (`First`, `Next`, `Prior`, `Last`), transactional buffering (`Append`, `Edit`, `Post`, `Delete`), strongly typed fields (`AsString`, `AsInteger`, `AsFloat`, `AsBoolean`), and two-way `b-field` directive.
 - **📱 Universal Hybrid Mobile Suite (Capacitor & `@blaise-ui-mobile`)**: 22+ adaptive Ionic components with Cupertino (iOS) and Material Design (Android) aesthetics, touch gestures, and safe-area notch handling.
@@ -112,22 +112,22 @@ BlaiseVue 4.4 represents an enterprise generational milestone, delivering full-s
 44. [44. Native Fast Templates & Compiler AST Verifier](44-native-templates-ast-checker.md) — Zero-with template evaluation, 100% CSP compliance, and compile-time AST typo checking.
 53. [53. Compiler Search Paths & Legacy Pascal Migration (bv path)](53-compiler-search-paths-and-legacy-migration.md) — Linking official Pas2JS built-in packages (chartjs, fcl-base, jspdf) and importing legacy Lazarus/Delphi business logic without rewriting.
 54. [54. Lazarus IDE Integration & Design-Time Package (blaisevue_ide.lpk)](54-lazarus-ide-package.md) — Official Lazarus design-time package with tri-syntax highlighting (`.bv`), File -> New wizards, Tools menu, and `bv lazarus init`.
-56. [56. Multi-Version SDK & Compiler Management (bv versions, bv pas2js)](56-multi-version-sdk-management.md) — Dynamic upstream release discovery (GitLab, GitHub, npm), project version pin (.pas2js-version), immutable factory baseline protection (vendor/), and interactive cleanup wizard (bv versions clean).
+56. [56. Multi-Version SDK & Compiler Management (bv versions, bv framework, bv pas2js)](56-multi-version-sdk-management.md) — Local FPC-compiled BlaiseVue framework versions (`.blaisevue-version`), upstream release discovery (GitHub, GitLab, npm), immutable baseline protection, and interactive cleanup wizard (`bv versions clean`).
 57. [57. Developer Tools & Dynamic CLI Extension (bv tool)](57-developer-tools-ecosystem.md) — Pluggable tooling engine, Cargo/Git-style dynamic CLI dispatch (bv <tool>), tool.json manifest specification, lifecycle hooks, and SHA-256 release packaging (bv tool pack).
 58. [58. Framework & Project Diagnostics (bv doctor)](58-framework-diagnostics-and-doctor.md) — Automated host environment verification, contextual project SDK alignment, immutable factory fallbacks, and actionable dependency notices.
 
 ### 📖 8. Technical References & Roadmaps
 - [API Technical Reference](api-reference.md) — Complete technical specification of global helpers, classes, and directives.
-- [Technical Roadmap (v2.0 - v4.4)](99-roadmap.md) — Detailed milestone history and upcoming feature specifications.
+- [Technical Roadmap](99-roadmap.md) — Detailed milestone history and upcoming feature specifications.
 
 ---
 
 ## 🛠️ CLI Quick Reference (`bv.exe`)
 
-The BlaiseVue CLI is a single, zero-dependency native executable compiled with Free Pascal.
+The BlaiseVue CLI is a single, zero-dependency native executable compiled locally with Free Pascal (`build.ps1` / `build.bat` / `build.sh`).
 
 ```bash
-  BlaiseVue CLI v4.4.0 (Universal Pascal Full-Stack Platform)
+  BlaiseVue CLI v0.1.0 (Universal Pascal Full-Stack Platform)
   ============================================================
   Usage: bv <command> [options]
 

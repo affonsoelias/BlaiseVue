@@ -9,7 +9,7 @@ Program bv;
   🛡️ BlaiseVue Compiler, Single File Component (SFC) Preprocessor & CLI Engine
   =============================================================================
   Part of the BlaiseVue Universal Reactive Framework for Object Pascal.
-  Version: 4.4.0 (Universal Enterprise Release)
+  Version: 0.1.0 (Pre-Release)
   Target:  Free Pascal Compiler (FPC 3.2.0+) / Windows, Linux, macOS
   Build:   fpc -FEbin bin/bv.pas (or "fpc bv.pas" from within bin/)
 
@@ -213,6 +213,20 @@ Begin
     Result := ExeDir;
 End;
 
+{ Returns the host BlaiseVue SDK path (respecting BV_HOST_SDK when delegated) }
+
+Function GetHostSDKPath: string;
+
+Var 
+  EnvHost: string;
+Begin
+  EnvHost := Trim(GetEnvironmentVariable('BV_HOST_SDK'));
+  If (EnvHost <> '') And DirectoryExists(EnvHost) Then
+    Result := IncludeTrailingPathDelimiter(EnvHost)
+  Else
+    Result := GetSDKPath;
+End;
+
 
 
 
@@ -366,6 +380,11 @@ Begin
   If DirectoryExists(GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js') Then
     Result := GetSDKPath + 'vendor' + DirectorySeparator + 'pas2js' +
               DirectorySeparator
+  Else If (GetHostSDKPath <> GetSDKPath) And
+          DirectoryExists(GetHostSDKPath + 'vendor' + DirectorySeparator +
+                          'pas2js') Then
+    Result := GetHostSDKPath + 'vendor' + DirectorySeparator + 'pas2js' +
+              DirectorySeparator
   Else
     Result := GetSDKPath + 'pas2js' + DirectorySeparator;
 End;
@@ -447,6 +466,14 @@ Begin
           DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
   If DirectoryExists(Cand) Then Exit(Cand);
 
+  If GetHostSDKPath <> GetSDKPath Then
+    Begin
+      Cand := GetHostSDKPath + 'vendor' + DirectorySeparator + 'pas2js' +
+              DirectorySeparator + OSFolder + DirectorySeparator + 'packages' +
+              DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
+      If DirectoryExists(Cand) Then Exit(Cand);
+    End;
+
   Result := Base + OSFolder + DirectorySeparator + 'packages' +
             DirectorySeparator + 'rtl' + DirectorySeparator + 'src';
 End;
@@ -483,6 +510,14 @@ Begin
           DirectorySeparator + OSFolder + DirectorySeparator + 'packages' +
           DirectorySeparator;
   If DirectoryExists(Cand) Then Exit(Cand);
+
+  If GetHostSDKPath <> GetSDKPath Then
+    Begin
+      Cand := GetHostSDKPath + 'vendor' + DirectorySeparator + 'pas2js' +
+              DirectorySeparator + OSFolder + DirectorySeparator + 'packages' +
+              DirectorySeparator;
+      If DirectoryExists(Cand) Then Exit(Cand);
+    End;
 
   Result := Base + OSFolder + DirectorySeparator + 'packages' +
             DirectorySeparator;
@@ -1584,6 +1619,27 @@ Procedure CmdChannel;
 forward;
 Procedure CmdRollback;
 forward;
+Function NormalizeFrameworkVersionName(Const RawVer: String): string;
+forward;
+Function GetActiveFrameworkVersion: string;
+forward;
+Function GetFrameworkVersionBinaryPath(Const VerDir: String): string;
+forward;
+Function CompileFrameworkVersionBinary(Const VerDir: String; out ErrLog: String
+                                       ): Boolean;
+forward;
+Procedure TryDelegatePinnedFrameworkVersion;
+forward;
+Procedure CmdFrameworkVersions;
+forward;
+Procedure CmdFrameworkUse(TargetVer: String);
+forward;
+Procedure CmdFrameworkUpgrade(TargetVer: String);
+forward;
+Procedure CmdFrameworkRemoveVersion(TargetVer: String; Force: Boolean);
+forward;
+Procedure CmdFramework(Const SubCmd, Arg1, Arg2: String);
+forward;
 Function FindBestJavaHome(out JavaHome, JavaVer, SourceDesc: String): Boolean;
 forward;
 Function FindAndroidSdkPath: string;
@@ -1618,7 +1674,19 @@ Function TryDispatchExternalTool(Const ACmd: String; StartParamIdx: Integer):
 forward;
 Procedure CmdRepo;
 forward;
+Procedure ResolveDelSafeSearchPaths(Const ProjectRoot: String; OutPaths:
+                                   TStringList);
+forward;
 Function FindDelsafecPath: string;
+forward;
+Function FindDelsafecInfo(out ExePath, VerStr, SourceDesc: String): Boolean;
+forward;
+Procedure ProbeDelSafeBackends(Const DelsafecExe: String; out HasGcc, HasClang:
+                               Boolean; out GccVer, ClangVer: String);
+forward;
+Procedure InspectProjectDelSafeUsage(Const ProjRoot: String; out BvDelSafeCount,
+                                     DelsModuleCount, DelsTestCount,
+                                     ExtraSearchPathsCount: Integer);
 forward;
 Function ComputeTextHash(Const S: String): string;
 forward;
@@ -4789,7 +4857,8 @@ Begin
         WriteLn('Scaffolding BlaiseVue demo showcase project: ', RealProjectName
         );
         CopyDir(TemplatePath, Base, ['.git', '.github', 'node_modules', 'dist',
-                'generated', '.blaisevue', 'framework']);
+                'generated', '.blaisevue', 'framework', 'bin', 'units',
+                'android', 'backup', 'deploy', '.bv_backup', '.gradle']);
 
         If DirectoryExists(Base + 'tests' + DirectorySeparator + 'framework')
           Then
@@ -5436,7 +5505,7 @@ End;
 
 // =====================================================================
 
-//  BLAISEVUE 4.4: COMPILER TEMPLATE AST VERIFIER & TYPE-CHECKER
+//  BLAISEVUE: COMPILER TEMPLATE AST VERIFIER & TYPE-CHECKER
 
 // =====================================================================
 
@@ -6625,46 +6694,288 @@ Begin
 End;
 End;
 
-Function FindDelsafecPath: string;
+Function FindDelsafecInfo(out ExePath, VerStr, SourceDesc: String): Boolean;
 
-Var 
+  Function ProbeDelsafecVersion(Const BinPath: String): string;
+  Var
+    RawOut, LineStr, LowLine: string;
+    Lines: TStringList;
+    I, SpPos: Integer;
+  Begin
+    Result := 'detected';
+    If ExecProcessCaptureExit(BinPath, ['--version'], RawOut) <> 0 Then Exit;
+    Lines := TStringList.Create;
+    Try
+      Lines.Text := RawOut;
+      For I := 0 To Lines.Count - 1 Do
+        Begin
+          LineStr := Trim(Lines[I]);
+          If LineStr = '' Then Continue;
+          LowLine := LowerCase(LineStr);
+          If Pos('delsafec ', LowLine) = 1 Then
+            LineStr := Trim(Copy(LineStr, 10, MaxInt));
+          SpPos := Pos(' ', LineStr);
+          If SpPos > 1 Then
+            LineStr := Copy(LineStr, 1, SpPos - 1);
+          If (Length(LineStr) > 1) And ((LineStr[1] = 'v') Or (LineStr[1] = 'V')) Then
+            Delete(LineStr, 1, 1);
+          If LineStr <> '' Then
+            Result := LineStr;
+          Break;
+        End;
+    Finally
+      Lines.Free;
+    End;
+  End;
+
+  Function TryCand(Const Cand, Desc: String): Boolean;
+  Begin
+    Result := False;
+    If (Cand <> '') And FileExists(Cand) Then
+      Begin
+        ExePath := Cand;
+        SourceDesc := Desc;
+        VerStr := ProbeDelsafecVersion(Cand);
+        Result := True;
+      End;
+  End;
+
+Var
   Cand, EnvHome, OutStr: string;
 Begin
+  ExePath := '';
+  VerStr := '';
+  SourceDesc := '';
+  Result := False;
+
   Cand := Trim(GetEnvironmentVariable('DELSAFEC_PATH'));
-  If (Cand <> '') And FileExists(Cand) Then Exit(Cand);
+  If TryCand(Cand, 'DELSAFEC_PATH') Then Exit(True);
 
   {$IFDEF WINDOWS}
+  Cand := ExpandFileName(GetSDKPath + '..\DelSafe\bin\delsafec.exe');
+  If TryCand(Cand, 'sibling workspace') Then Exit(True);
   Cand := ExpandFileName(GetSDKPath + '..\delsafe\bin\delsafec.exe');
-  If FileExists(Cand) Then Exit(Cand);
+  If TryCand(Cand, 'sibling workspace') Then Exit(True);
   EnvHome := GetEnvironmentVariable('USERPROFILE');
   If EnvHome <> '' Then
     Begin
       Cand := IncludeTrailingPathDelimiter(EnvHome) + '.delsafe\bin\delsafec.exe';
-      If FileExists(Cand) Then Exit(Cand);
+      If TryCand(Cand, '~/.delsafe/bin') Then Exit(True);
     End;
-  If RunCommand('cmd.exe', ['/c', 'where delsafec.exe'], OutStr) And (Trim(OutStr
-     ) <> '') Then
+  If RunCommand('cmd.exe', ['/c', 'where delsafec.exe'], OutStr) And
+     (Trim(OutStr) <> '') Then
     Begin
       Cand := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
       Cand := Trim(StringReplace(Cand, #13, '', [rfReplaceAll]));
-      If FileExists(Cand) Then Exit(Cand);
+      If TryCand(Cand, 'system PATH') Then Exit(True);
     End;
   {$ELSE}
+  Cand := ExpandFileName(GetSDKPath + '../DelSafe/bin/delsafec');
+  If TryCand(Cand, 'sibling workspace') Then Exit(True);
   Cand := ExpandFileName(GetSDKPath + '../delsafe/bin/delsafec');
-  If FileExists(Cand) Then Exit(Cand);
+  If TryCand(Cand, 'sibling workspace') Then Exit(True);
   EnvHome := GetEnvironmentVariable('HOME');
   If EnvHome <> '' Then
     Begin
       Cand := IncludeTrailingPathDelimiter(EnvHome) + '.delsafe/bin/delsafec';
-      If FileExists(Cand) Then Exit(Cand);
+      If TryCand(Cand, '~/.delsafe/bin') Then Exit(True);
     End;
   If RunCommand('which', ['delsafec'], OutStr) And (Trim(OutStr) <> '') Then
     Begin
       Cand := Trim(Copy(OutStr, 1, Pos(#10, OutStr + #10) - 1));
-      If FileExists(Cand) Then Exit(Cand);
+      Cand := Trim(StringReplace(Cand, #13, '', [rfReplaceAll]));
+      If TryCand(Cand, 'system PATH') Then Exit(True);
     End;
   {$ENDIF}
-  Result := '';
+End;
+
+Function FindDelsafecPath: string;
+Var
+  ExePath, VerStr, SourceDesc: string;
+Begin
+  If FindDelsafecInfo(ExePath, VerStr, SourceDesc) Then
+    Result := ExePath
+  Else
+    Result := '';
+End;
+
+Procedure ProbeDelSafeBackends(Const DelsafecExe: String; out HasGcc, HasClang:
+                               Boolean; out GccVer, ClangVer: String);
+Var
+  RawOut, LineStr, LowLine, Section, AfterColon, LastTok, SubStr: string;
+  Lines: TStringList;
+  I, ColonPos, SpPos, ClangPos: Integer;
+Begin
+  HasGcc := False;
+  HasClang := False;
+  GccVer := '';
+  ClangVer := '';
+  If (DelsafecExe = '') Or (Not FileExists(DelsafecExe)) Then Exit;
+
+  ExecProcessCaptureExit(DelsafecExe, ['--doctor'], RawOut);
+  If Trim(RawOut) = '' Then Exit;
+
+  Lines := TStringList.Create;
+  Try
+    Lines.Text := RawOut;
+    Section := '';
+    For I := 0 To Lines.Count - 1 Do
+      Begin
+        LineStr := Trim(Lines[I]);
+        If LineStr = '' Then Continue;
+        LowLine := LowerCase(LineStr);
+        If Pos('[ok]', LowLine) = 1 Then
+          Begin
+            If Pos('c compiler', LowLine) > 0 Then
+              Begin
+                HasGcc := True;
+                Section := 'gcc';
+              End
+            Else If Pos('clang compiler', LowLine) > 0 Then
+              Begin
+                HasClang := True;
+                Section := 'clang';
+              End
+            Else
+              Section := '';
+          End
+        Else If LineStr[1] = '[' Then
+          Section := ''
+        Else If (Section <> '') And (Pos('version', LowLine) = 1) Then
+          Begin
+            ColonPos := Pos(':', LineStr);
+            If ColonPos > 0 Then
+              Begin
+                AfterColon := Trim(Copy(LineStr, ColonPos + 1, MaxInt));
+                If Section = 'gcc' Then
+                  Begin
+                    LastTok := AfterColon;
+                    SpPos := LastDelimiter(' ', AfterColon);
+                    If SpPos > 0 Then
+                      LastTok := Trim(Copy(AfterColon, SpPos + 1, MaxInt));
+                    If (LastTok <> '') And (LastTok[1] >= '0') And (LastTok[1] <= '9') Then
+                      GccVer := LastTok
+                    Else
+                      GccVer := Copy(AfterColon, 1, 24);
+                  End
+                Else If Section = 'clang' Then
+                  Begin
+                    ClangPos := Pos('clang version ', LowerCase(AfterColon));
+                    If ClangPos > 0 Then
+                      Begin
+                        SubStr := Trim(Copy(AfterColon, ClangPos + 14, MaxInt));
+                        SpPos := Pos(' ', SubStr);
+                        If SpPos > 1 Then
+                          ClangVer := Copy(SubStr, 1, SpPos - 1)
+                        Else
+                          ClangVer := SubStr;
+                      End
+                    Else
+                      ClangVer := Copy(AfterColon, 1, 24);
+                  End;
+              End;
+          End;
+      End;
+  Finally
+    Lines.Free;
+  End;
+End;
+
+Procedure InspectProjectDelSafeUsage(Const ProjRoot: String; out BvDelSafeCount,
+                                     DelsModuleCount, DelsTestCount,
+                                     ExtraSearchPathsCount: Integer);
+
+  Function ShouldSkipDir(Const DirName: String): Boolean;
+  Var
+    L: string;
+  Begin
+    L := LowerCase(DirName);
+    Result := (L = '.git') Or (L = 'node_modules') Or (L = 'dist') Or
+              (L = 'generated') Or (L = '.blaisevue') Or (L = 'vendor') Or
+              (L = 'backup') Or (L = 'bin') Or (L = 'deploy');
+  End;
+
+  Procedure ScanTree(Const DirPath: String; Const CountBv, CountDels,
+                     CountTestDels: Boolean);
+  Var
+    SR: TSearchRec;
+    D, LowName, Ext, LowText: string;
+    IsTestDels: Boolean;
+  Begin
+    If Not DirectoryExists(DirPath) Then Exit;
+    D := IncludeTrailingPathDelimiter(DirPath);
+    If FindFirst(D + '*', faAnyFile, SR) = 0 Then
+      Begin
+        Try
+          Repeat
+            If (SR.Name <> '.') And (SR.Name <> '..') Then
+              Begin
+                If (SR.Attr And faDirectory) <> 0 Then
+                  Begin
+                    If Not ShouldSkipDir(SR.Name) Then
+                      ScanTree(D + SR.Name, CountBv, CountDels, CountTestDels);
+                  End
+                Else
+                  Begin
+                    LowName := LowerCase(SR.Name);
+                    Ext := LowerCase(ExtractFileExt(SR.Name));
+                    If CountBv And (Ext = '.bv') Then
+                      Begin
+                        LowText := LowerCase(ReadFileToString(D + SR.Name));
+                        If (Pos('lang="delsafe"', LowText) > 0) Or
+                           (Pos('lang=''delsafe''', LowText) > 0) Then
+                          Inc(BvDelSafeCount);
+                      End
+                    Else If Ext = '.dels' Then
+                      Begin
+                        IsTestDels := (Length(LowName) > 10) And
+                                      (Copy(LowName, Length(LowName) - 9, 10) = '.test.dels');
+                        If IsTestDels And CountTestDels Then
+                          Inc(DelsTestCount)
+                        Else If (Not IsTestDels) And CountDels Then
+                          Inc(DelsModuleCount);
+                      End;
+                  End;
+              End;
+          Until FindNext(SR) <> 0;
+        Finally
+          FindClose(SR);
+        End;
+      End;
+  End;
+
+Var
+  SearchPaths: TStringList;
+  DefaultServicesDir, SrcDirLow, PLow: string;
+  I: Integer;
+Begin
+  BvDelSafeCount := 0;
+  DelsModuleCount := 0;
+  DelsTestCount := 0;
+  ExtraSearchPathsCount := 0;
+  If ProjRoot = '' Then Exit;
+
+  ScanTree(IncludeTrailingPathDelimiter(ProjRoot) + 'src', True, True, False);
+  ScanTree(IncludeTrailingPathDelimiter(ProjRoot) + 'tests', False, False, True);
+
+  SearchPaths := TStringList.Create;
+  Try
+    ResolveDelSafeSearchPaths(ProjRoot, SearchPaths);
+    DefaultServicesDir := LowerCase(ExcludeTrailingPathDelimiter(ExpandFileName(
+      IncludeTrailingPathDelimiter(ProjRoot) + 'src' + DirectorySeparator + 'services')));
+    SrcDirLow := LowerCase(ExcludeTrailingPathDelimiter(ExpandFileName(
+      IncludeTrailingPathDelimiter(ProjRoot) + 'src')));
+    For I := 0 To SearchPaths.Count - 1 Do
+      Begin
+        PLow := LowerCase(ExcludeTrailingPathDelimiter(ExpandFileName(SearchPaths[I])));
+        If PLow <> DefaultServicesDir Then
+          Inc(ExtraSearchPathsCount);
+        If (PLow <> SrcDirLow) And (Pos(SrcDirLow + DirectorySeparator, PLow) <> 1) Then
+          ScanTree(SearchPaths[I], False, True, False);
+      End;
+  Finally
+    SearchPaths.Free;
+  End;
 End;
 
 Procedure PrintDelSafeJsonDiagnostics(Const RawOut, ContextLabel: String);
@@ -8789,7 +9100,7 @@ If Result = '' Then
   End;
 End;
 If Result = '' Then
-  Result := '4.4.0';
+  Result := '0.1.0';
 End;
 End;
 End;
@@ -10439,7 +10750,7 @@ Begin
             IsCore := (Not IsGlobal) And IsOfficialCorePackage(SR.Name);
             If IsCore Then
               Begin
-                If InstalledVer = '' Then InstalledVer := '4.4.0';
+                If InstalledVer = '' Then InstalledVer := '0.1.0';
                 FoundVer := InstalledVer;
                 WriteLn(PadRight(SR.Name, 22), PadRight('v' + InstalledVer, 14),
                 PadRight('v' + FoundVer, 16), 'Official Core (Up to date)');
@@ -13162,7 +13473,7 @@ Begin
       Exit;
     End;
 
-  Result := '4.4.0';
+  Result := '0.1.0';
   PkgPath := GetCurrentDir + DirectorySeparator + 'package.json';
   If FileExists(PkgPath) Then
     Begin
@@ -13183,9 +13494,13 @@ Except
 End;
 End;
 
-SdkDir := ExtractFilePath(ParamStr(0));
-CurP := ExcludeTrailingPathDelimiter(SdkDir);
-PkgPath := ExtractFilePath(CurP) + 'package.json';
+PkgPath := GetSDKPath + 'package.json';
+If Not FileExists(PkgPath) Then
+  Begin
+    SdkDir := ExtractFilePath(ParamStr(0));
+    CurP := ExcludeTrailingPathDelimiter(SdkDir);
+    PkgPath := ExtractFilePath(CurP) + 'package.json';
+  End;
 If FileExists(PkgPath) Then
   Begin
     Try
@@ -13205,7 +13520,7 @@ End;
 CachedCliVersion := Result;
 End;
 
-{ Returns the major.minor version string of the BlaiseVue CLI (e.g. "4.4"). }
+{ Returns the major.minor version string of the BlaiseVue CLI (e.g. "0.1"). }
 Function GetCliMajorMinor: string;
 
 Var 
@@ -14308,7 +14623,7 @@ If SubCmd = 'sync' Then
         Halt(1);
       End;
     Try
-      VerVal := GetJsonString(PkgJson, 'version', '4.4.0');
+      VerVal := GetJsonString(PkgJson, 'version', '0.1.0');
       NameVal := GetJsonString(PkgJson, 'name', 'blaisevue');
       AuthVal := GetJsonString(PkgJson, 'author', 'BlaiseVue Core Team');
       LicVal := GetJsonString(PkgJson, 'license', 'MIT');
@@ -25289,10 +25604,17 @@ Begin
   If IsValidMormot(Candidate) Then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
 
-  // 3. Embedded vendor in BlaiseVue SDK: vendor/mormot2
+  // 3. Embedded vendor in BlaiseVue SDK: vendor/mormot2 (or host SDK when delegated)
   Candidate := GetSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
   If IsValidMormot(Candidate) Then
     Exit(ExcludeTrailingPathDelimiter(Candidate));
+
+  If GetHostSDKPath <> GetSDKPath Then
+    Begin
+      Candidate := GetHostSDKPath + 'vendor' + DirectorySeparator + 'mormot2';
+      If IsValidMormot(Candidate) Then
+        Exit(ExcludeTrailingPathDelimiter(Candidate));
+    End;
 
 
 
@@ -35269,7 +35591,7 @@ End;
 Procedure CmdGlobalVersions;
 
 Var 
-  CapVer, MormotVer, Pas2jsVer, HorseVer: string;
+  FwVer, CapVer, MormotVer, Pas2jsVer, HorseVer, SdkDir, BranchName: string;
   Root, PkgFile, CapCfg, PkgContent, HPathFile, MPath: string;
   AllItems: TStringList;
   TotalBytes: Int64;
@@ -35280,8 +35602,24 @@ Var
 Begin
   Root := FindBlaiseVueProjectRoot('');
   If Root = '' Then Root := GetCurrentDir;
+  SdkDir := ExcludeTrailingPathDelimiter(GetHostSDKPath);
 
   // 1. Resolve Active Project Versions
+  // BlaiseVue Framework
+  FwVer := GetActiveFrameworkVersion;
+  BranchName := 'channel';
+  If DirectoryExists(SdkDir + DirectorySeparator + '.git') Then
+    Begin
+      ExecCmdCapture('git -C "' + SdkDir + '" rev-parse --abbrev-ref HEAD',
+                     BranchName);
+      BranchName := Trim(BranchName);
+      If BranchName = '' Then BranchName := 'channel';
+    End;
+  If (FwVer = '') Or (LowerCase(FwVer) = 'channel') Then
+    FwVer := 'channel (' + BranchName + ' - v' + GetCliVersion + ')'
+  Else
+    FwVer := FwVer + ' (.blaisevue-version)';
+
   // Capacitor
   CapVer := '(not initialized)';
   PkgFile := IncludeTrailingPathDelimiter(Root) + 'package.json';
@@ -35343,6 +35681,7 @@ Begin
   WriteLn('  BlaiseVue SDK & Multi-Version Global Dashboard');
   WriteLn('================================================================');
   WriteLn('  Active Project Dependencies:');
+  WriteLn('    * BlaiseVue: ' + FwVer);
   WriteLn('    * Capacitor: ' + CapVer);
   WriteLn('    * mORMot 2:  ' + MormotVer);
   WriteLn('    * Pas2JS:    ' + Pas2jsVer);
@@ -35350,6 +35689,7 @@ Begin
     WriteLn('    * Horse:     ' + HorseVer);
   WriteLn('----------------------------------------------------------------');
   WriteLn('  Factory Protected Baselines:');
+  WriteLn('    [x] active channel  BlaiseVue Global Git Channel (Protected)');
   WriteLn('    [x] vendor/mormot2  Synopse mORMot 2 Core (Immutable Baseline)');
   WriteLn(
 
@@ -35363,6 +35703,7 @@ Begin
   Parts := TStringList.Create;
   TotalBytes := 0;
   Try
+    ScanModuleVersions('blaisevue', AllItems, TotalBytes);
     ScanModuleVersions('capacitor', AllItems, TotalBytes);
     ScanModuleVersions('mormot', AllItems, TotalBytes);
     ScanModuleVersions('pas2js', AllItems, TotalBytes);
@@ -35405,14 +35746,20 @@ If HasHorseServer Or HasHorseTool Then
     WriteLn(
 
 
-         'To switch version:   bv <capacitor|mormot|pas2js|horse> use <version>'
+ 'To switch version:   bv <framework|capacitor|mormot|pas2js|horse> use <ver>'
     );
-    WriteLn('To download version: bv <capacitor|mormot|pas2js|horse> upgrade');
+    WriteLn(
+'To download version: bv <framework|capacitor|mormot|pas2js|horse> upgrade'
+    );
   End
 Else
   Begin
-    WriteLn('To switch version:   bv <capacitor|mormot|pas2js> use <version>');
-    WriteLn('To download version: bv <capacitor|mormot|pas2js> upgrade');
+    WriteLn(
+     'To switch version:   bv <framework|capacitor|mormot|pas2js> use <ver>'
+    );
+    WriteLn(
+     'To download version: bv <framework|capacitor|mormot|pas2js> upgrade'
+    );
   End;
 WriteLn('To clean versions:   bv versions clean (or bv versions remove)');
 WriteLn('================================================================');
@@ -35432,6 +35779,7 @@ Begin
   Parts := TStringList.Create;
   TotalBytes := 0;
   Try
+    ScanModuleVersions('blaisevue', AllItems, TotalBytes);
     ScanModuleVersions('capacitor', AllItems, TotalBytes);
     ScanModuleVersions('mormot', AllItems, TotalBytes);
     ScanModuleVersions('pas2js', AllItems, TotalBytes);
@@ -35541,6 +35889,15 @@ Begin
       Begin
         WriteLn('  [-] Removing ' + ItemPath + ' ...');
         DeleteDir(ItemPath);
+        If (LowerCase(ModName) = 'blaisevue') And
+           (LowerCase(GetActiveFrameworkVersion) = LowerCase(VerName)) Then
+          Begin
+            Line := FindBlaiseVueProjectRoot('');
+            If (Line <> '') And FileExists(IncludeTrailingPathDelimiter(Line) +
+               '.blaisevue-version') Then
+              DeleteFile(IncludeTrailingPathDelimiter(Line) +
+                         '.blaisevue-version');
+          End;
         WriteLn('  [SUCCESS] Version "' + VerName + '" removed successfully! ('
                 + FormatFileSizeMB(SzBytes) + ' freed)');
       End
@@ -38616,6 +38973,13 @@ Begin
            Result.Add('info');
            Result.Add('benchmark');
          End
+  Else If (Cmd = 'framework') Or (Cmd = 'fw') Then
+         Begin
+           Result.Add('versions');
+           Result.Add('upgrade');
+           Result.Add('use');
+           Result.Add('remove-version');
+         End
   Else If (Cmd = 'versions') Or (Cmd = 'sdk') Or (Cmd = 'sdks') Then
          Begin
            Result.Add('clean');
@@ -38739,6 +39103,17 @@ Begin
                    + LineEnding +
 
 '   remove [-y]                Safely deletes server-zephyr/ directory and Zephyr binaries'
+  Else If (Cmd = 'framework') Or (Cmd = 'fw') Then
+         Result :=
+                   '  [HINT] Available subcommands for ''framework'':' +
+                   LineEnding +
+'   versions                   Lists active channel & cached BlaiseVue versions'
+                   + LineEnding +
+'   upgrade [--version=<ver>]  Clones GitHub tag & compiles CLI locally via FPC'
+                   + LineEnding +
+'   use <version|channel>      Pins BlaiseVue version (.blaisevue-version) or tracks channel'
+                   + LineEnding +
+'   remove-version [ver]       Interactively removes a cached BlaiseVue version'
   Else If (Cmd = 'pas2js') Or (Cmd = 'compiler') Then
          Result := 
                    '  [HINT] Available subcommands for ''pas2js'':' + LineEnding
@@ -41587,7 +41962,7 @@ Var
   AllTools: TBVToolArray;
   BuiltInCount, UserCount, ToolIdx: Integer;
   AllHealthy: Boolean;
-  ProjRoot, ProjName, VerFile, ReqPas2, UserPas2Dir: string;
+  ProjRoot, ProjName, VerFile, ReqPas2, UserPas2Dir, ReqFw, UserFwDir: string;
   HasServerDir, HasZephyrDir, HasMobile: Boolean;
   MormotDir, ZephyrServerDir, ZephyrDelsafec, MormotConf, ReqMormot,
   UserMormotDir, MormotLabel, ZephyrLabel: string;
@@ -41598,9 +41973,27 @@ Var
   FoundExtAny: Boolean;
   ProjectNotices: TStringList;
   NoticeIdx: Integer;
+  HasDelsafec, HasDelSafeGcc, HasDelSafeClang, HasZephyrSdk, HasFallbackActive:
+                                                                         Boolean
+  ;
+  DelsafecExe, DelsafecVer, DelsafecSource, DelSafeGccVer, DelSafeClangVer,
+  DelSafeBackendsStr, ZephyrSdkDir, DelSafeSummary: string;
+  BvDelSafeCount, DelsModuleCount, DelsTestCount, ExtraDelSafePathsCount:
+                                                                         Integer
+  ;
 Begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
   AllHealthy := True;
+  HasFallbackActive := False;
+  HasDelsafec := False;
+  HasDelSafeGcc := False;
+  HasDelSafeClang := False;
+  HasZephyrSdk := False;
+  DelsafecExe := '';
+  DelsafecVer := '';
+  DelsafecSource := '';
+  DelSafeGccVer := '';
+  DelSafeClangVer := '';
   ProjectNotices := TStringList.Create;
   Try
 
@@ -41753,6 +42146,73 @@ Begin
         AllHealthy := False;
         WriteLn('  [X] Synopse mORMot 2:     Not found in vendor/mormot2!');
       End;
+
+    // DelSafe Compiler (Optional)
+    HasDelsafec := FindDelsafecInfo(DelsafecExe, DelsafecVer, DelsafecSource);
+    If HasDelsafec Then
+      Begin
+        If DelsafecVer = 'detected' Then
+          WriteLn('  [v] DelSafe Compiler:     detected (', DelsafecSource,
+                  ', optional)')
+        Else
+          WriteLn('  [v] DelSafe Compiler:     v', DelsafecVer, ' (',
+                  DelsafecSource, ', optional)');
+
+        ProbeDelSafeBackends(DelsafecExe, HasDelSafeGcc, HasDelSafeClang,
+                             DelSafeGccVer, DelSafeClangVer);
+        DelSafeBackendsStr := '';
+        If HasDelSafeGcc Then
+          DelSafeBackendsStr := IfThen(DelSafeGccVer <> '', 'C (GCC ' +
+                                       DelSafeGccVer + ')', 'C (GCC)');
+        If HasDelSafeClang Then
+          Begin
+            If DelSafeBackendsStr <> '' Then
+              DelSafeBackendsStr := DelSafeBackendsStr + ', ';
+            DelSafeBackendsStr := DelSafeBackendsStr +
+                                  IfThen(DelSafeClangVer <> '', 'WASM (Clang ' +
+                                         DelSafeClangVer + ')', 'WASM (Clang)');
+          End;
+        If HasFpc Then
+          Begin
+            If DelSafeBackendsStr <> '' Then
+              DelSafeBackendsStr := DelSafeBackendsStr + ', ';
+            DelSafeBackendsStr := DelSafeBackendsStr + 'Pascal (FPC)';
+          End;
+
+        If HasDelSafeGcc Then
+          WriteLn('  [v] DelSafe Backends:     ', DelSafeBackendsStr)
+        Else
+          Begin
+            WriteLn(
+'  [!] DelSafe Backends:     C compiler (GCC) not detected (needed for .test.dels & bv zephyr --target=c)'
+            );
+            If DelSafeBackendsStr <> '' Then
+              WriteLn('      -> Available:         ', DelSafeBackendsStr,
+                      ' (run "delsafec --doctor" for details)');
+          End;
+      End
+    Else
+      Begin
+        WriteLn(
+'  [!] DelSafe Compiler:     Not detected (Optional: needed only for --delsafe, .dels & Zephyr)'
+        );
+        WriteLn(
+'      -> Install from: https://github.com/affonsoelias/delsafe (or set DELSAFEC_PATH)'
+        );
+      End;
+
+    // Zephyr SDK (Bundled)
+    ZephyrSdkDir := IncludeTrailingPathDelimiter(SDKDir) + 'vendor' +
+                    DirectorySeparator + 'zephyr';
+    HasZephyrSdk := FileExists(ZephyrSdkDir + DirectorySeparator + 'src' +
+                    DirectorySeparator + 'zephyr.dels');
+    If HasZephyrSdk Then
+      WriteLn('  [v] Zephyr SDK (Bundled): Verified at ', ExtractRelativePath(
+              SDKDir + DirectorySeparator, ZephyrSdkDir))
+    Else
+      WriteLn(
+'  [!] Zephyr SDK (Bundled): Not found in vendor/zephyr (Optional: native DelSafe backend)'
+      );
 
     WriteLn('');
     WriteLn('[2] Ecosystem & Testing Tools:');
@@ -41936,6 +42396,47 @@ Begin
           ProjName := ProjName + ' (Framework Core)';
         WriteLn('[4] Active Project Alignment (' + ProjName + '):');
 
+        // A0. BlaiseVue Framework Version
+        ReqFw := GetActiveFrameworkVersion;
+        If (ReqFw = '') Or (LowerCase(ReqFw) = 'channel') Then
+          Begin
+            WriteLn('  [v] BlaiseVue Framework:  v' + GetCliVersion +
+                    ' (tracking global channel: ' + BranchName + ')');
+          End
+        Else
+          Begin
+            UserFwDir := IncludeTrailingPathDelimiter(GetGlobalVersionsPath(
+                         'blaisevue')) + ReqFw;
+            If DirectoryExists(UserFwDir) And
+               FileExists(GetFrameworkVersionBinaryPath(UserFwDir)) Then
+              WriteLn('  [v] BlaiseVue Framework:  v' + ReqFw +
+                      ' (active in .blaisevue-version, cached)')
+            Else If DirectoryExists(UserFwDir) Then
+              Begin
+                WriteLn('  [!] BlaiseVue Framework:  v' + ReqFw +
+                        ' cached, but CLI binary is not compiled yet!');
+                WriteLn(
+                      '      -> Run to compile:    bv framework upgrade --version='
+                        + ReqFw);
+                ProjectNotices.Add('BlaiseVue v' + ReqFw +
+                  ' cached binary missing -> Run: bv framework upgrade --version='
+                  + ReqFw);
+              End
+            Else
+              Begin
+                WriteLn('  [!] BlaiseVue Framework:  v' + ReqFw +
+                        ' requested in .blaisevue-version, but NOT installed!');
+                WriteLn('      -> Active fallback:   v' + GetCliVersion +
+                        ' (global channel: ' + BranchName + ')');
+                WriteLn(
+                      '      -> Run to install:    bv framework upgrade --version='
+                        + ReqFw);
+                HasFallbackActive := True;
+                ProjectNotices.Add('BlaiseVue framework v' + ReqFw +
+                  ' is missing -> Run: bv framework upgrade --version=' + ReqFw);
+              End;
+          End;
+
         // A. Pas2JS Compiler
         VerFile := IncludeTrailingPathDelimiter(ProjRoot) + '.pas2js-version';
         ReqPas2 := '';
@@ -41969,11 +42470,82 @@ Begin
 
                       '      -> Run to install:    bv pas2js upgrade --version='
                         + ReqPas2);
+                HasFallbackActive := True;
                 ProjectNotices.Add('Pas2JS compiler v' + ReqPas2 +
 
 
                               ' is missing -> Run: bv pas2js upgrade --version='
                                    + ReqPas2);
+              End;
+          End;
+
+        // A2. DelSafe Language (Frontend / Services / Tests)
+        InspectProjectDelSafeUsage(ProjRoot, BvDelSafeCount, DelsModuleCount,
+                                   DelsTestCount, ExtraDelSafePathsCount);
+        If (BvDelSafeCount + DelsModuleCount + DelsTestCount) = 0 Then
+          Begin
+            If ExtraDelSafePathsCount > 0 Then
+              WriteLn('  [v] DelSafe Language:     Configured (',
+                      ExtraDelSafePathsCount,
+                      ' search path(s), 0 files yet)')
+            Else
+              WriteLn(
+'  [-] DelSafe Language:     Not used in this project (optional, use --delsafe to enable)'
+              );
+          End
+        Else
+          Begin
+            DelSafeSummary := '';
+            If BvDelSafeCount > 0 Then
+              DelSafeSummary := IntToStr(BvDelSafeCount) + ' .bv';
+            If DelsModuleCount > 0 Then
+              Begin
+                If DelSafeSummary <> '' Then
+                  DelSafeSummary := DelSafeSummary + ', ';
+                DelSafeSummary := DelSafeSummary + IntToStr(DelsModuleCount) +
+                                  ' .dels';
+              End;
+            If DelsTestCount > 0 Then
+              Begin
+                If DelSafeSummary <> '' Then
+                  DelSafeSummary := DelSafeSummary + ', ';
+                DelSafeSummary := DelSafeSummary + IntToStr(DelsTestCount) +
+                                  ' .test.dels';
+              End;
+            If ExtraDelSafePathsCount > 0 Then
+              DelSafeSummary := DelSafeSummary + ', +' +
+                                IntToStr(ExtraDelSafePathsCount) +
+                                ' custom path(s)';
+
+            If HasDelsafec Then
+              Begin
+                If (DelsTestCount > 0) And (Not HasDelSafeGcc) Then
+                  Begin
+                    WriteLn('  [!] DelSafe Language:     Active (',
+                            DelSafeSummary, ') - GCC missing for .test.dels');
+                    WriteLn(
+'      -> Run "delsafec --doctor" to inspect C compiler setup (GCC/MSYS2)'
+                    );
+                    ProjectNotices.Add('Project has ' + IntToStr(DelsTestCount)
+                      + ' .test.dels file(s) but GCC (C backend) was not detected -> Run: delsafec --doctor'
+                    );
+                  End
+                Else
+                  WriteLn('  [v] DelSafe Language:     Active (',
+                          DelSafeSummary, '; delsafec ',
+                          IfThen(DelsafecVer = 'detected', 'detected', 'v' +
+                                 DelsafecVer), ')');
+              End
+            Else
+              Begin
+                WriteLn('  [!] DelSafe Language:     Used in project (',
+                        DelSafeSummary, '), but "delsafec" was NOT found!');
+                WriteLn(
+'      -> Install DelSafe (https://github.com/affonsoelias/delsafe) and add to PATH or set DELSAFEC_PATH'
+                );
+                ProjectNotices.Add('Project uses DelSafe (' + DelSafeSummary +
+                  ') but delsafec compiler is missing -> Install DelSafe or set DELSAFEC_PATH'
+                );
               End;
           End;
 
@@ -42045,6 +42617,7 @@ Begin
 
                           '      -> Run to install:    bv mormot upgrade --tag='
                             + ReqMormot);
+                    HasFallbackActive := True;
                     ProjectNotices.Add('mORMot 2 framework "' + ReqMormot +
 
 
@@ -42069,16 +42642,45 @@ Begin
           End
         Else
           Begin
-            ZephyrDelsafec := FindDelsafecPath;
-            If ZephyrDelsafec <> '' Then
-              WriteLn('  [v] Zephyr Backend:       ' + ZephyrLabel +
-                      '/ (delsafec detected, default port 8091)')
+            If HasDelsafec Then
+              Begin
+                If Not HasZephyrSdk Then
+                  Begin
+                    WriteLn('  [!] Zephyr Backend:       ' + ZephyrLabel +
+                            '/ detected, but vendor/zephyr SDK is missing!');
+                    ProjectNotices.Add('Zephyr backend exists in ' +
+                      ZephyrLabel + '/ but bundled vendor/zephyr SDK is missing'
+                    );
+                  End
+                Else If Not HasDelSafeGcc Then
+                  Begin
+                    WriteLn('  [!] Zephyr Backend:       ' + ZephyrLabel +
+                            '/ (delsafec ' + IfThen(DelsafecVer = 'detected',
+                            'detected', 'v' + DelsafecVer) +
+                            ', GCC missing for default --target=c; use --target=pascal)'
+                    );
+                    ProjectNotices.Add('Zephyr backend in ' + ZephyrLabel +
+                      '/ needs GCC for default --target=c (or build with --target=pascal)'
+                    );
+                  End
+                Else
+                  WriteLn('  [v] Zephyr Backend:       ' + ZephyrLabel +
+                          '/ (delsafec ' + IfThen(DelsafecVer = 'detected',
+                          'detected', 'v' + DelsafecVer) +
+                          IfThen(FileExists(ZephyrServerDir + DirectorySeparator
+                          + 'delsafe.json'), '', ', missing delsafe.json') +
+                          ', default port 8091)');
+              End
             Else
               Begin
                 WriteLn('  [!] Zephyr Backend:       ' + ZephyrLabel +
                         '/ detected, but "delsafec" compiler was NOT found!');
+                WriteLn(
+'      -> Install DelSafe (https://github.com/affonsoelias/delsafe) or set DELSAFEC_PATH'
+                );
                 ProjectNotices.Add('Zephyr backend exists in ' + ZephyrLabel +
-                                   '/ but delsafec compiler is missing');
+                  '/ but delsafec compiler is missing -> Install DelSafe or set DELSAFEC_PATH'
+                );
               End;
           End;
 
@@ -42228,21 +42830,31 @@ If ProjectNotices.Count > 0 Then
         '----------------------------------------------------------------------'
     );
     WriteLn('  [!] Project Dependency Notice:');
-    WriteLn(
+    If HasFallbackActive Then
+      Begin
+        WriteLn(
 
 
      '      The project specifies SDK/tool versions not cached on this machine.'
-    );
-    WriteLn(
+        );
+        WriteLn(
 
 
 '      Safe factory fallback baselines are currently active to prevent build breakage.'
-    );
-    WriteLn(
+        );
+        WriteLn(
 
 
            '      To align your environment with exact project pinned versions:'
-    );
+        );
+      End
+    Else
+      Begin
+        WriteLn(
+'      The active project requires compilers, tools, or packages missing on this machine.'
+        );
+        WriteLn('      To resolve:');
+      End;
     For NoticeIdx := 0 To ProjectNotices.Count - 1 Do
       WriteLn('        * ' + ProjectNotices[NoticeIdx]);
     WriteLn(
@@ -42263,12 +42875,19 @@ If AllHealthy And (ProjectNotices.Count = 0) Then
   )
 Else If AllHealthy And (ProjectNotices.Count > 0) Then
        Begin
-         WriteLn(
+         If HasFallbackActive Then
+           Begin
+             WriteLn(
 
 
 '  [!] Diagnostics complete: Environment is healthy, but project has missing pinned versions.'
-         );
-         WriteLn('      Safe factory fallback baselines are currently active.');
+             );
+             WriteLn('      Safe factory fallback baselines are currently active.');
+           End
+         Else
+           WriteLn(
+'  [!] Diagnostics complete: Environment is healthy, but active project has missing tools/dependencies.'
+           );
        End
 Else
   WriteLn('  [!] Issues found with required tools listed above with [X].');
@@ -42300,7 +42919,9 @@ Var
                                                                           string
   ;
   DiffList: TStringList;
-  CheckOnly, ForceUpdate, NeedRecompile, HadLocalBinMod: Boolean;
+  CheckOnly, ForceUpdate, NeedRecompile, HadLocalBinMod, SwitchedBranch:
+                                                                         Boolean
+  ;
   i: Integer;
 Begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
@@ -42587,46 +43208,21 @@ If CheckOnly Then
 
 // Pre-update safety: always ensure a persistent backup of the current working binary exists
 BinDir := SDKDir + DirectorySeparator + 'bin';
+SwitchedBranch := (TargetBranch <> CurBranch);
   {$IFDEF WINDOWS}
+TargetBv := BinDir + DirectorySeparator + 'bv.exe';
 ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
                '" && if exist bv.exe copy /y bv.exe bv.bak.exe > nul 2>&1',
                DummyOut);
   {$ELSE}
+TargetBv := BinDir + DirectorySeparator + 'bv';
 ExecCmdCapture('cd ''' + BinDir +
                ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi',
                DummyOut);
   {$ENDIF}
 
-
-
-
-// Reset local CLI binary modifications before git checkout/pull to avoid binary merge conflicts
-If HadLocalBinMod Or (TargetBranch <> CurBranch) Or ForceUpdate Then
-  Begin
-    ExecCmdCapture('git -C "' + SDKDir +
-                   '" checkout -- bin/bv bin/bv.exe bin/bv.o 2>/dev/null',
-                   DummyOut);
-
-
-
-// If Git checkout removed or did not have bin/bv, restore from persistent backup immediately
-    {$IFDEF WINDOWS}
-    ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-
-
-'" && if not exist bv.exe if exist bv.bak.exe copy /y bv.bak.exe bv.exe > nul 2>&1'
-                   , DummyOut);
-    {$ELSE}
-    ExecCmdCapture('cd ''' + BinDir +
-
-
-''' && if [ ! -f bv ] && [ -f bv.bak ]; then cp -f bv.bak bv && chmod +x bv 2>/dev/null; fi'
-                   , DummyOut);
-    {$ENDIF}
-  End;
-
 // 7. Checkout branch if switching
-If TargetBranch <> CurBranch Then
+If SwitchedBranch Then
   Begin
     WriteLn('  [+] Switching channel: ' + CurBranch + ' -> ' + TargetBranch +
             '...');
@@ -42669,13 +43265,21 @@ Else
       End;
   End;
 
+// Ensure local working binary remains present even if Git branch transition removed tracked binaries
+  {$IFDEF WINDOWS}
+ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
+'" && if not exist bv.exe if exist bv.bak.exe copy /y bv.bak.exe bv.exe > nul 2>&1'
+               , DummyOut);
+  {$ELSE}
+ExecCmdCapture('cd ''' + BinDir +
+''' && if [ ! -f bv ] && [ -f bv.bak ]; then cp -f bv.bak bv && chmod +x bv 2>/dev/null; fi'
+               , DummyOut);
+  {$ENDIF}
 
-
-
-// 9. Recompile binary if bv.pas was updated, switched branch, or restored local binary
-NeedRecompile := ForceUpdate Or (TargetBranch <> CurBranch) Or (Pos('bin/bv.pas'
-                 , DiffOut) > 0) Or (Pos('bin\bv.pas', DiffOut) > 0) Or
-                 HadLocalBinMod;
+// 9. Recompile binary if bv.pas was updated, switched branch, binary missing, or local mod
+NeedRecompile := ForceUpdate Or SwitchedBranch Or (Not FileExists(TargetBv)) Or
+                 (Pos('bin/bv.pas', DiffOut) > 0) Or
+                 (Pos('bin\bv.pas', DiffOut) > 0) Or HadLocalBinMod;
 If NeedRecompile Then
   Begin
     WriteLn(
@@ -42701,7 +43305,7 @@ If NeedRecompile Then
                    '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
     // Compile into isolated temporary target (bv_new.exe)
     CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe +
-               '" -MObjFPC -Sh -obv_new.exe bv.pas';
+               '" -MObjFPC -Sh -O2 -obv_new.exe bv.pas';
     ExecCmdCapture(CompCmd, CompOut);
     {$ELSE}
     TargetNew := BinDir + DirectorySeparator + 'bv_new';
@@ -42712,7 +43316,7 @@ If NeedRecompile Then
     );
     // Compile into isolated temporary target (bv_new)
     CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe +
-               ''' -MObjFPC -Sh -obv_new bv.pas && chmod +x bv_new';
+               ''' -MObjFPC -Sh -O2 -obv_new bv.pas && chmod +x bv_new';
     ExecCmdCapture(CompCmd, CompOut);
     {$ENDIF}
 
@@ -42972,6 +43576,866 @@ Begin
         '======================================================================'
   );
   WriteLn('');
+End;
+
+// =====================================================================
+//  FRAMEWORK MULTI-VERSION MANAGER & AUTO-DELEGATION (bv framework)
+// =====================================================================
+
+Function NormalizeFrameworkVersionName(Const RawVer: String): string;
+
+Var 
+  S: string;
+Begin
+  S := Trim(RawVer);
+  If (Length(S) >= 2) And ((S[1] = 'v') Or (S[1] = 'V')) And
+     (S[2] >= '0') And (S[2] <= '9') Then
+    Delete(S, 1, 1);
+  Result := S;
+End;
+
+Function GetActiveFrameworkVersion: string;
+
+Var 
+  ProjDir, VerFile, Raw: string;
+Begin
+  Result := 'channel';
+  ProjDir := FindBlaiseVueProjectRoot('');
+  If ProjDir = '' Then Exit;
+  VerFile := IncludeTrailingPathDelimiter(ProjDir) + '.blaisevue-version';
+  If FileExists(VerFile) Then
+    Begin
+      Raw := Trim(ReadFileToString(VerFile));
+      If (Raw = '') Or (LowerCase(Raw) = 'channel') Or
+         (LowerCase(Raw) = 'default') Or (LowerCase(Raw) = 'bundled') Then
+        Result := 'channel'
+      Else
+        Result := NormalizeFrameworkVersionName(Raw);
+    End;
+End;
+
+Function GetFrameworkVersionBinaryPath(Const VerDir: String): string;
+Begin
+  Result := IncludeTrailingPathDelimiter(VerDir) + 'bin' + DirectorySeparator +
+            {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'{$ENDIF};
+End;
+
+Function CompileFrameworkVersionBinary(Const VerDir: String; out ErrLog: String
+                                       ): Boolean;
+
+Var 
+  FpcExe, FpcVer, FpcSource, BinDir, SrcPas, TargetNew, TargetBin, TargetBak:
+                                                                          string
+  ;
+  RC: Integer;
+Begin
+  Result := False;
+  ErrLog := '';
+  If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
+    Begin
+      ErrLog := 'Free Pascal Compiler (fpc) was not detected on this machine.';
+      Exit;
+    End;
+
+  BinDir := IncludeTrailingPathDelimiter(VerDir) + 'bin';
+  SrcPas := BinDir + DirectorySeparator + 'bv.pas';
+  If Not FileExists(SrcPas) Then
+    Begin
+      ErrLog := 'CLI source file not found: ' + SrcPas;
+      Exit;
+    End;
+
+  TargetNew := BinDir + DirectorySeparator +
+               {$IFDEF WINDOWS}'bv_new.exe'{$ELSE}'bv_new'{$ENDIF};
+  TargetBin := GetFrameworkVersionBinaryPath(VerDir);
+  TargetBak := BinDir + DirectorySeparator +
+               {$IFDEF WINDOWS}'bv.bak.exe'{$ELSE}'bv.bak'{$ENDIF};
+
+  If FileExists(TargetNew) Then
+    DeleteFile(TargetNew);
+
+  RC := ExecProcessCaptureExitInDir(FpcExe, BinDir,
+          ['-MObjFPC', '-Sh', '-O2', '-o' + ExtractFileName(TargetNew),
+           'bv.pas'], ErrLog);
+  If (RC = 0) And FileExists(TargetNew) Then
+    Begin
+      {$IFDEF UNIX}
+      FpChmod(TargetNew, &755);
+      {$ENDIF}
+      If FileExists(TargetBin) Then
+        Begin
+          CopyFile(TargetBin, TargetBak);
+          DeleteFile(TargetBin);
+        End;
+      If RenameFile(TargetNew, TargetBin) Then
+        Begin
+          {$IFDEF UNIX}
+          FpChmod(TargetBin, &755);
+          {$ENDIF}
+          Result := True;
+        End
+      Else
+        Begin
+          ErrLog := ErrLog + LineEnding + 'Failed to move compiled binary into '
+                    + TargetBin;
+          If FileExists(TargetNew) Then DeleteFile(TargetNew);
+        End;
+    End
+  Else
+    Begin
+      If FileExists(TargetNew) Then DeleteFile(TargetNew);
+    End;
+End;
+
+Procedure TryDelegatePinnedFrameworkVersion;
+
+Var 
+  FirstArg, PinnedVer, VersionsDir, VerDir, TargetBin, ErrLog, EnvEntry,
+  HostBranch: string;
+  P: TProcess;
+  I: Integer;
+Begin
+  If Trim(GetEnvironmentVariable('BV_DELEGATED_VERSION')) <> '' Then Exit;
+
+  If ParamCount >= 1 Then
+    Begin
+      FirstArg := LowerCase(Trim(ParamStr(1)));
+      If (FirstArg = 'framework') Or (FirstArg = 'fw') Or
+         (FirstArg = 'versions') Or (FirstArg = 'sdk') Or (FirstArg = 'sdks') Or
+         (FirstArg = 'channel') Or (FirstArg = 'branch') Or
+         (FirstArg = 'self-update') Or (FirstArg = 'selfupdate') Or
+         (FirstArg = 'upgrade-cli') Or (FirstArg = 'rollback') Or
+         (FirstArg = 'revert-cli') Or (FirstArg = 'doctor') Or
+         (FirstArg = 'doc-env') Or (FirstArg = 'create') Or
+         (FirstArg = 'project') Or (FirstArg = 'p') Or (FirstArg = 'use') Then
+        Exit;
+    End;
+
+  PinnedVer := GetActiveFrameworkVersion;
+  If (PinnedVer = '') Or (LowerCase(PinnedVer) = 'channel') Then Exit;
+
+  VersionsDir := GetGlobalVersionsPath('blaisevue');
+  VerDir := ExcludeTrailingPathDelimiter(VersionsDir + PinnedVer);
+  If Not DirectoryExists(VerDir) Then
+    Begin
+      If DirectoryExists(ExcludeTrailingPathDelimiter(VersionsDir + 'v' +
+         PinnedVer)) Then
+        VerDir := ExcludeTrailingPathDelimiter(VersionsDir + 'v' + PinnedVer)
+      Else
+        Begin
+          HostBranch := 'channel';
+          If DirectoryExists(ExcludeTrailingPathDelimiter(GetHostSDKPath) +
+             DirectorySeparator + '.git') Then
+            Begin
+              ExecCmdCapture('git -C "' + ExcludeTrailingPathDelimiter(
+                             GetHostSDKPath) +
+                             '" rev-parse --abbrev-ref HEAD', HostBranch);
+              HostBranch := Trim(HostBranch);
+              If HostBranch = '' Then HostBranch := 'channel';
+            End;
+          WriteLn('  [!] Project pins BlaiseVue v' + PinnedVer +
+                  ' (.blaisevue-version), but it is NOT installed.');
+          WriteLn('      -> Active fallback: global channel (' + HostBranch +
+                  ' - v' + GetCliVersion + ')');
+          WriteLn('      -> Run to install:  bv framework upgrade --version=' +
+                  PinnedVer);
+          WriteLn('');
+          Exit;
+        End;
+    End;
+
+  TargetBin := GetFrameworkVersionBinaryPath(VerDir);
+  If Not FileExists(TargetBin) Then
+    Begin
+      If FileExists(IncludeTrailingPathDelimiter(VerDir) + 'bin' +
+         DirectorySeparator + 'bv.pas') Then
+        Begin
+          WriteLn('  [BUILD] Compiling cached BlaiseVue ' + PinnedVer +
+                  ' CLI locally with Free Pascal...');
+          If Not CompileFrameworkVersionBinary(VerDir, ErrLog) Then
+            Begin
+              WriteLn('  [!] Failed to compile cached BlaiseVue ' + PinnedVer +
+                      ':');
+              WriteLn(ErrLog);
+              WriteLn('      -> Active fallback: global channel (v' +
+                      GetCliVersion + ')');
+              WriteLn('');
+              Exit;
+            End;
+        End
+      Else
+        Begin
+          WriteLn('  [!] Cached BlaiseVue ' + PinnedVer +
+                  ' is missing bin/bv.pas -> using active channel.');
+          Exit;
+        End;
+    End;
+
+  P := TProcess.Create(Nil);
+  Try
+    P.Executable := TargetBin;
+    For I := 1 To ParamCount Do
+      P.Parameters.Add(ParamStr(I));
+    P.Options := [poWaitOnExit];
+    For I := 1 To GetEnvironmentVariableCount Do
+      Begin
+        EnvEntry := GetEnvironmentString(I);
+        If (Pos('BV_DELEGATED_VERSION=', UpperCase(EnvEntry)) <> 1) And
+           (Pos('BV_HOST_SDK=', UpperCase(EnvEntry)) <> 1) Then
+          P.Environment.Add(EnvEntry);
+      End;
+    P.Environment.Add('BV_DELEGATED_VERSION=' + PinnedVer);
+    P.Environment.Add('BV_HOST_SDK=' + ExcludeTrailingPathDelimiter(
+                      GetHostSDKPath));
+    P.Execute;
+    Halt(P.ExitStatus);
+  Finally
+    P.Free;
+  End;
+End;
+
+Procedure CmdFrameworkVersions;
+
+Var 
+  VersionsDir, ActiveVer, SdkDir, BranchName, ItemPath, BinPath, StatusStr:
+                                                                          string
+  ;
+  SR: TSearchRec;
+  SizeBytes: Int64;
+  HasUserVersions, IsActive: Boolean;
+Begin
+  VersionsDir := GetGlobalVersionsPath('blaisevue');
+  ActiveVer := GetActiveFrameworkVersion;
+  SdkDir := ExcludeTrailingPathDelimiter(GetHostSDKPath);
+  BranchName := 'channel';
+  If DirectoryExists(SdkDir + DirectorySeparator + '.git') Then
+    Begin
+      ExecCmdCapture('git -C "' + SdkDir + '" rev-parse --abbrev-ref HEAD',
+                     BranchName);
+      BranchName := Trim(BranchName);
+      If BranchName = '' Then BranchName := 'channel';
+    End;
+
+  WriteLn('================================================================');
+  WriteLn('  BlaiseVue Framework Versions & Channel Status');
+  WriteLn('================================================================');
+  If (ActiveVer = '') Or (LowerCase(ActiveVer) = 'channel') Then
+    WriteLn('  [*] Active in Project:   channel (' + BranchName + ' - v' +
+            GetCliVersion + ')')
+  Else
+    WriteLn('  [*] Active in Project:   ' + ActiveVer + ' (.blaisevue-version)');
+  WriteLn('  [*] Host SDK Location:   ' + SdkDir);
+  WriteLn('----------------------------------------------------------------');
+  WriteLn('  Available Framework Distributions:');
+
+  IsActive := (ActiveVer = '') Or (LowerCase(ActiveVer) = 'channel');
+  If IsActive Then
+    WriteLn('    [*] channel    ' + SdkDir + ' (ACTIVE: ' + BranchName +
+            ', Protected)')
+  Else
+    WriteLn('    [ ] channel    ' + SdkDir + ' (Global Git Channel: ' +
+            BranchName + ', Protected)');
+
+  HasUserVersions := False;
+  If FindFirst(VersionsDir + '*', faDirectory, SR) = 0 Then
+    Begin
+      Try
+        Repeat
+          If (SR.Name <> '.') And (SR.Name <> '..') And
+             ((SR.Attr And faDirectory) <> 0) And
+             (Pos('.tmp', LowerCase(SR.Name)) <> Length(SR.Name) - 3) Then
+            Begin
+              HasUserVersions := True;
+              ItemPath := VersionsDir + SR.Name;
+              SizeBytes := GetDirSizeBytes(ItemPath);
+              BinPath := GetFrameworkVersionBinaryPath(ItemPath);
+              StatusStr := IfThen(FileExists(BinPath), 'ready', 'needs build');
+              IsActive := (LowerCase(ActiveVer) = LowerCase(SR.Name));
+              If IsActive Then
+                WriteLn('    [*] ' + PadRight(SR.Name, 10) + ' ' + ItemPath +
+                        ' (ACTIVE | ' + StatusStr + ' | ' +
+                        FormatFileSizeMB(SizeBytes) + ')')
+              Else
+                WriteLn('    [ ] ' + PadRight(SR.Name, 10) + ' ' + ItemPath +
+                        ' (' + StatusStr + ' | ' + FormatFileSizeMB(SizeBytes) +
+                        ')');
+            End;
+        Until FindNext(SR) <> 0;
+      Finally
+        FindClose(SR);
+      End;
+    End;
+
+  If Not HasUserVersions Then
+    WriteLn(
+'    (no cached versions installed - run "bv framework upgrade" to install)'
+    );
+
+  WriteLn('================================================================');
+  WriteLn('To switch version in project: bv framework use <ver | channel>');
+  WriteLn('To install/compile version:   bv framework upgrade [--version=<v>]');
+  WriteLn('To remove cached version:     bv framework remove-version [ver]');
+  WriteLn('================================================================');
+End;
+
+Procedure CmdFrameworkUse(TargetVer: String);
+
+Var 
+  ProjectRoot, VerFile, NormVer, UserPath, BinPath, ErrLog: string;
+Begin
+  TargetVer := Trim(TargetVer);
+  ProjectRoot := RequireBlaiseVueProject('bv framework use');
+  VerFile := IncludeTrailingPathDelimiter(ProjectRoot) + '.blaisevue-version';
+
+  If TargetVer = '' Then
+    Begin
+      WriteLn('Usage: bv framework use <version | channel>');
+      WriteLn('Run "bv framework versions" to view available distributions.');
+      Exit;
+    End;
+
+  If (LowerCase(TargetVer) = 'channel') Or (LowerCase(TargetVer) = 'default') Or
+     (LowerCase(TargetVer) = 'bundled') Then
+    Begin
+      If FileExists(VerFile) Then
+        DeleteFile(VerFile);
+      WriteLn(
+'  [SUCCESS] Project configured to track active global channel (bv channel).'
+      );
+      Exit;
+    End;
+
+  NormVer := NormalizeFrameworkVersionName(TargetVer);
+  UserPath := ExcludeTrailingPathDelimiter(GetGlobalVersionsPath('blaisevue') +
+              NormVer);
+  If Not DirectoryExists(UserPath) Then
+    Begin
+      If DirectoryExists(ExcludeTrailingPathDelimiter(GetGlobalVersionsPath(
+         'blaisevue') + TargetVer)) Then
+        Begin
+          NormVer := TargetVer;
+          UserPath := ExcludeTrailingPathDelimiter(GetGlobalVersionsPath(
+                      'blaisevue') + TargetVer);
+        End
+      Else
+        Begin
+          WriteLn('  [ERROR] BlaiseVue version "' + NormVer +
+                  '" is not installed.');
+          WriteLn('  Run "bv framework upgrade --version=' + NormVer +
+                  '" to install and compile it locally.');
+          Exit;
+        End;
+    End;
+
+  BinPath := GetFrameworkVersionBinaryPath(UserPath);
+  If (Not FileExists(BinPath)) And FileExists(IncludeTrailingPathDelimiter(
+     UserPath) + 'bin' + DirectorySeparator + 'bv.pas') Then
+    Begin
+      WriteLn('  [BUILD] Compiling cached BlaiseVue ' + NormVer +
+              ' CLI locally with Free Pascal...');
+      If Not CompileFrameworkVersionBinary(UserPath, ErrLog) Then
+        Begin
+          WriteLn('  [ERROR] Failed to compile BlaiseVue ' + NormVer + ':');
+          WriteLn(ErrLog);
+          Halt(1);
+        End;
+    End;
+
+  WriteStringToFile(VerFile, NormVer);
+  WriteLn('  [SUCCESS] Project pinned to BlaiseVue ' + NormVer +
+          ' (.blaisevue-version).');
+  WriteLn('            Cached CLI: ' + BinPath);
+End;
+
+Procedure CmdFrameworkUpgrade(TargetVer: String);
+
+  Function TrySparseCloneRef(Const Repo, RefName, OutDir: String; out LogOut:
+                             String): Boolean;
+  Var
+    RC1, RC2: Integer;
+    L1, L2: string;
+  Begin
+    Result := False;
+    If DirectoryExists(OutDir) Then DeleteDir(OutDir);
+    RC1 := ExecProcessCaptureExit('git', ['clone', '--depth', '1', '--branch',
+             RefName, '--filter=blob:none', '--sparse', Repo, OutDir], L1);
+    If RC1 = 0 Then
+      Begin
+        RC2 := ExecProcessCaptureExitInDir('git', OutDir,
+                 ['sparse-checkout', 'set', 'bin', 'core', 'packages/core',
+                  'templates', 'vendor/zephyr'], L2);
+        LogOut := L1 + LineEnding + L2;
+        If RC2 = 0 Then Exit(True);
+      End;
+
+    // Fallback for older Git versions without --filter=blob:none / --sparse
+    If DirectoryExists(OutDir) Then DeleteDir(OutDir);
+    RC1 := ExecProcessCaptureExit('git', ['clone', '--depth', '1', '--branch',
+             RefName, Repo, OutDir], L1);
+    LogOut := L1;
+    If RC1 = 0 Then
+      Begin
+        If DirectoryExists(OutDir + DirectorySeparator + 'vendor' +
+           DirectorySeparator + 'pas2js') Then
+          DeleteDir(OutDir + DirectorySeparator + 'vendor' + DirectorySeparator +
+                    'pas2js');
+        If DirectoryExists(OutDir + DirectorySeparator + 'vendor' +
+           DirectorySeparator + 'mormot2') Then
+          DeleteDir(OutDir + DirectorySeparator + 'vendor' + DirectorySeparator +
+                    'mormot2');
+        If DirectoryExists(OutDir + DirectorySeparator + 'demo-app') Then
+          DeleteDir(OutDir + DirectorySeparator + 'demo-app');
+        If DirectoryExists(OutDir + DirectorySeparator + 'doc') Then
+          DeleteDir(OutDir + DirectorySeparator + 'doc');
+        If DirectoryExists(OutDir + DirectorySeparator + 'tests') Then
+          DeleteDir(OutDir + DirectorySeparator + 'tests');
+        Exit(True);
+      End;
+  End;
+
+Var 
+  VersionsDir, SdkDir, RepoUrl, NormVer, StageDir, DestDir, UserChoice,
+  RemoteOut, Line, TagName, RawRef, CloneLog, ErrLog, FpcExe, FpcVer, FpcSource
+  , ProjectRoot, BinFile: string;
+  TagLines, AvailableTags: TStringList;
+  I, PosRef, ChoiceIdx, MaxDisp: Integer;
+  GitAvail, CloneOk: Boolean;
+  SizeBytes: Int64;
+Begin
+  VersionsDir := GetGlobalVersionsPath('blaisevue');
+  TargetVer := Trim(TargetVer);
+  GitAvail := HasCommand('git');
+
+  If StartsText('--version=', TargetVer) Then
+    TargetVer := Copy(TargetVer, 11, Length(TargetVer))
+  Else If StartsText('--tag=', TargetVer) Then
+         TargetVer := Copy(TargetVer, 7, Length(TargetVer));
+
+  If Not GitAvail Then
+    Begin
+      WriteLn('  [ERROR] Git was not detected in PATH.');
+      WriteLn('          Install Git from: https://git-scm.com/');
+      Halt(1);
+    End;
+
+  If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
+    Begin
+      WriteLn(
+'  [ERROR] Free Pascal Compiler (FPC) is required to build cached versions locally.'
+      );
+      WriteLn('          Install Lazarus/FPC and run "bv doctor" to verify.');
+      Halt(1);
+    End;
+
+  SdkDir := ExcludeTrailingPathDelimiter(GetHostSDKPath);
+  RepoUrl := '';
+  If DirectoryExists(SdkDir + DirectorySeparator + '.git') Then
+    Begin
+      ExecCmdCapture('git -C "' + SdkDir + '" remote get-url origin', RepoUrl);
+      RepoUrl := Trim(RepoUrl);
+      If (Pos('fatal:', LowerCase(RepoUrl)) > 0) Or
+         (Pos('error:', LowerCase(RepoUrl)) > 0) Then
+        RepoUrl := '';
+    End;
+  If RepoUrl = '' Then
+    RepoUrl := 'https://github.com/affonsoelias/BlaiseVue.git';
+
+  // Interactive menu if empty
+  If TargetVer = '' Then
+    Begin
+      AvailableTags := TStringList.Create;
+      Try
+        WriteLn('  [*] Querying available releases from GitHub ...');
+        If ExecCmdCapture('git ls-remote --tags --refs "' + RepoUrl + '"',
+           RemoteOut) And (RemoteOut <> '') Then
+          Begin
+            TagLines := TStringList.Create;
+            Try
+              TagLines.Text := RemoteOut;
+              For I := TagLines.Count - 1 Downto 0 Do
+                Begin
+                  Line := Trim(TagLines[I]);
+                  PosRef := Pos('refs/tags/', Line);
+                  If PosRef > 0 Then
+                    Begin
+                      TagName := Trim(Copy(Line, PosRef + 10, Length(Line)));
+                      If (TagName <> '') And (AvailableTags.IndexOf(TagName) < 0)
+                        Then
+                        AvailableTags.Add(TagName);
+                    End;
+                End;
+            Finally
+              TagLines.Free;
+            End;
+          End;
+
+        MaxDisp := AvailableTags.Count;
+        If MaxDisp > 8 Then MaxDisp := 8;
+
+        WriteLn('================================================================');
+        WriteLn('  BlaiseVue Framework Version Manager (Local FPC Build)');
+        WriteLn('================================================================');
+        WriteLn('  Source: ' + RepoUrl);
+        WriteLn('');
+        If MaxDisp > 0 Then
+          Begin
+            WriteLn('  Published Release Tags:');
+            For I := 0 To MaxDisp - 1 Do
+              Begin
+                If I = 0 Then
+                  WriteLn('    [' + IntToStr(I + 1) + '] ' +
+                          PadRight(AvailableTags[I], 14) + ' (Latest Tag)')
+                Else
+                  WriteLn('    [' + IntToStr(I + 1) + '] ' +
+                          PadRight(AvailableTags[I], 14));
+              End;
+          End
+        Else
+          WriteLn('  (No release tags published yet on remote)');
+        WriteLn('    [M] main       (Stable channel snapshot)');
+        WriteLn('    [D] develop    (Active development snapshot)');
+        WriteLn('    [C] Custom     (Specify custom tag or branch)');
+        WriteLn('================================================================');
+        If MaxDisp > 0 Then
+          Write('Select option [1-' + IntToStr(MaxDisp) +
+                ', M, D, C] or [Q]uit: ')
+        Else
+          Write('Select option [M, D, C] or [Q]uit: ');
+        ReadLn(UserChoice);
+        UserChoice := Trim(UserChoice);
+
+        If (UserChoice = '') Or (LowerCase(UserChoice) = 'q') Or
+           (LowerCase(UserChoice) = 'quit') Or
+           (LowerCase(UserChoice) = 'cancel') Then
+          Begin
+            WriteLn('Operation cancelled.');
+            Exit;
+          End
+        Else If (LowerCase(UserChoice) = 'm') Or
+                (LowerCase(UserChoice) = 'main') Then
+               TargetVer := 'main'
+        Else If (LowerCase(UserChoice) = 'd') Or
+                (LowerCase(UserChoice) = 'dev') Or
+                (LowerCase(UserChoice) = 'develop') Then
+               TargetVer := 'develop'
+        Else If (LowerCase(UserChoice) = 'c') Or
+                (LowerCase(UserChoice) = 'custom') Then
+               Begin
+                 Write('Enter tag or branch (e.g. v0.1.0, 1.0.0, main): ');
+                 ReadLn(TargetVer);
+                 TargetVer := Trim(TargetVer);
+                 If TargetVer = '' Then
+                   Begin
+                     WriteLn('Invalid version.');
+                     Exit;
+                   End;
+               End
+        Else
+          Begin
+            ChoiceIdx := StrToIntDef(UserChoice, -1);
+            If (ChoiceIdx >= 1) And (ChoiceIdx <= MaxDisp) Then
+              TargetVer := AvailableTags[ChoiceIdx - 1]
+            Else
+              Begin
+                WriteLn('Invalid selection.');
+                Exit;
+              End;
+          End;
+      Finally
+        AvailableTags.Free;
+      End;
+    End;
+
+  NormVer := NormalizeFrameworkVersionName(TargetVer);
+  If (LowerCase(NormVer) = 'channel') Or (LowerCase(NormVer) = 'default') Or
+     (LowerCase(NormVer) = 'bundled') Then
+    Begin
+      WriteLn(
+'  [INFO] "channel" refers to your global Git branch (bv channel). Use "bv framework use channel" in a project.'
+      );
+      Exit;
+    End;
+
+  DestDir := ExcludeTrailingPathDelimiter(VersionsDir + NormVer);
+  StageDir := ExcludeTrailingPathDelimiter(VersionsDir + NormVer + '.tmp');
+
+  WriteLn('================================================================');
+  WriteLn('  Target Framework:  BlaiseVue ' + NormVer + ' (ref: ' + TargetVer +
+          ')');
+  WriteLn('  Install Location:  ' + DestDir);
+  WriteLn('  Build Strategy:    Lean sparse checkout + local FPC (' + FpcVer +
+          ')');
+  WriteLn('================================================================');
+
+  WriteLn('  [*] Fetching lean framework sources from GitHub ...');
+  CloneOk := False;
+  If (Length(TargetVer) > 0) And (TargetVer[1] >= '0') And (TargetVer[1] <= '9')
+    Then
+    Begin
+      RawRef := 'v' + NormVer;
+      CloneOk := TrySparseCloneRef(RepoUrl, RawRef, StageDir, CloneLog);
+      If Not CloneOk Then
+        CloneOk := TrySparseCloneRef(RepoUrl, NormVer, StageDir, CloneLog);
+    End
+  Else
+    CloneOk := TrySparseCloneRef(RepoUrl, TargetVer, StageDir, CloneLog);
+
+  If Not CloneOk Then
+    Begin
+      If DirectoryExists(StageDir) Then DeleteDir(StageDir);
+      WriteLn('  [ERROR] Failed to clone BlaiseVue ref "' + TargetVer +
+              '" from ' + RepoUrl);
+      If Trim(CloneLog) <> '' Then WriteLn(CloneLog);
+      Halt(1);
+    End;
+
+  // Remove any pre-existing binaries in cloned tree so native binary is always built locally
+  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
+             + 'bv';
+  If FileExists(BinFile) Then DeleteFile(BinFile);
+  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
+             + 'bv.exe';
+  If FileExists(BinFile) Then DeleteFile(BinFile);
+  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
+             + 'bv.o';
+  If FileExists(BinFile) Then DeleteFile(BinFile);
+
+  WriteLn('  [+] Compiling native CLI locally with Free Pascal (' + FpcVer +
+          ') ...');
+  If Not CompileFrameworkVersionBinary(StageDir, ErrLog) Then
+    Begin
+      If DirectoryExists(StageDir) Then DeleteDir(StageDir);
+      WriteLn('  [ERROR] Local compilation of BlaiseVue ' + NormVer +
+              ' failed:');
+      WriteLn(ErrLog);
+      If DirectoryExists(DestDir) Then
+        WriteLn(
+'  [SAFETY] Existing cached version at ' + DestDir + ' was preserved intact.'
+        );
+      Halt(1);
+    End;
+
+  If DirectoryExists(DestDir) Then
+    DeleteDir(DestDir);
+  If Not RenameFile(StageDir, DestDir) Then
+    Begin
+      WriteLn('  [ERROR] Failed to promote ' + StageDir + ' -> ' + DestDir);
+      Halt(1);
+    End;
+
+  SizeBytes := GetDirSizeBytes(DestDir);
+  WriteLn('');
+  WriteLn('================================================================');
+  WriteLn('  [SUCCESS] BlaiseVue ' + NormVer +
+          ' installed and compiled locally!');
+  WriteLn('  Location:  ' + DestDir + ' (' + FormatFileSizeMB(SizeBytes) + ')');
+  WriteLn('  CLI Bin:   ' + GetFrameworkVersionBinaryPath(DestDir));
+  WriteLn('================================================================');
+
+  Try
+    ProjectRoot := FindBlaiseVueProjectRoot('');
+    If ProjectRoot <> '' Then
+      Begin
+        Write('Do you want to activate BlaiseVue "' + NormVer +
+              '" in the current project now? [y/N]: ');
+        ReadLn(UserChoice);
+        UserChoice := LowerCase(Trim(UserChoice));
+        If (UserChoice = 'y') Or (UserChoice = 'yes') Or (UserChoice = 's') Or (
+           UserChoice = 'sim') Then
+          CmdFrameworkUse(NormVer);
+      End;
+  Except
+    // Ignore non-interactive EOF
+  End;
+End;
+
+Procedure CmdFrameworkRemoveVersion(TargetVer: String; Force: Boolean);
+
+Var 
+  VersionsDir, ItemPath, UserChoice, ActiveVer, ProjectRoot, VerFile, NormVer:
+                                                                          string
+  ;
+  SR: TSearchRec;
+  Names: TStringList;
+  I, ChoiceIdx: Integer;
+  SizeBytes: Int64;
+  IsActiveInProject: Boolean;
+Begin
+  VersionsDir := GetGlobalVersionsPath('blaisevue');
+  TargetVer := Trim(TargetVer);
+  If (LowerCase(TargetVer) = '-y') Or (LowerCase(TargetVer) = '--yes') Then
+    Begin
+      TargetVer := '';
+      Force := True;
+    End;
+
+  If (LowerCase(TargetVer) = 'channel') Or (LowerCase(TargetVer) = 'default') Or
+     (LowerCase(TargetVer) = 'bundled') Then
+    Begin
+      WriteLn(
+'  [ERROR] The global "channel" installation is protected and cannot be deleted.'
+      );
+      Exit;
+    End;
+
+  If TargetVer = '' Then
+    Begin
+      Names := TStringList.Create;
+      Try
+        If FindFirst(VersionsDir + '*', faDirectory, SR) = 0 Then
+          Begin
+            Try
+              Repeat
+                If (SR.Name <> '.') And (SR.Name <> '..') And
+                   ((SR.Attr And faDirectory) <> 0) And
+                   (Pos('.tmp', LowerCase(SR.Name)) <> Length(SR.Name) - 3)
+                  Then
+                  Names.Add(SR.Name);
+              Until FindNext(SR) <> 0;
+            Finally
+              FindClose(SR);
+            End;
+          End;
+
+        If Names.Count = 0 Then
+          Begin
+            WriteLn('No cached BlaiseVue versions found in ' + VersionsDir);
+            Exit;
+          End;
+
+        WriteLn('================================================================');
+        WriteLn('  Cached BlaiseVue Versions (' + VersionsDir + ')');
+        WriteLn('================================================================');
+        For I := 0 To Names.Count - 1 Do
+          Begin
+            ItemPath := VersionsDir + Names[I];
+            SizeBytes := GetDirSizeBytes(ItemPath);
+            WriteLn('  [' + IntToStr(I + 1) + '] ' + PadRight(Names[I], 14) +
+                    ' (' + FormatFileSizeMB(SizeBytes) + ')');
+          End;
+        WriteLn('================================================================');
+        Write('Select a version to remove [1-' + IntToStr(Names.Count) +
+              '] or [C]ancel: ');
+        ReadLn(UserChoice);
+        UserChoice := Trim(UserChoice);
+        If (UserChoice = '') Or (LowerCase(UserChoice) = 'c') Or
+           (LowerCase(UserChoice) = 'cancel') Then
+          Begin
+            WriteLn('Operation cancelled.');
+            Exit;
+          End;
+
+        ChoiceIdx := StrToIntDef(UserChoice, -1);
+        If (ChoiceIdx < 1) Or (ChoiceIdx > Names.Count) Then
+          Begin
+            WriteLn('Invalid selection.');
+            Exit;
+          End;
+        TargetVer := Names[ChoiceIdx - 1];
+      Finally
+        Names.Free;
+      End;
+    End;
+
+  NormVer := NormalizeFrameworkVersionName(TargetVer);
+  ItemPath := ExcludeTrailingPathDelimiter(VersionsDir + NormVer);
+  If Not DirectoryExists(ItemPath) Then
+    Begin
+      If DirectoryExists(ExcludeTrailingPathDelimiter(VersionsDir + TargetVer))
+        Then
+        Begin
+          NormVer := TargetVer;
+          ItemPath := ExcludeTrailingPathDelimiter(VersionsDir + TargetVer);
+        End
+      Else
+        Begin
+          WriteLn('[!] BlaiseVue version "' + NormVer + '" not found in ' +
+                  VersionsDir);
+          Exit;
+        End;
+    End;
+
+  ActiveVer := GetActiveFrameworkVersion;
+  IsActiveInProject := (LowerCase(ActiveVer) = LowerCase(NormVer));
+  If IsActiveInProject Then
+    Begin
+      WriteLn('  [WARNING] Version "' + NormVer +
+              '" is currently active in this project!');
+      WriteLn(
+'            If deleted, the project will fall back to your global channel.'
+      );
+    End;
+
+  If Not Force Then
+    Begin
+      Write('Are you sure you want to permanently delete BlaiseVue version "' +
+            NormVer + '"? [y/N]: ');
+      ReadLn(UserChoice);
+      UserChoice := LowerCase(Trim(UserChoice));
+      If (UserChoice <> 'y') And (UserChoice <> 'yes') And (UserChoice <> 's')
+         And (UserChoice <> 'sim') Then
+        Begin
+          WriteLn('Operation cancelled.');
+          Exit;
+        End;
+    End;
+
+  If IsActiveInProject Then
+    Begin
+      ProjectRoot := FindBlaiseVueProjectRoot('');
+      If ProjectRoot <> '' Then
+        Begin
+          VerFile := IncludeTrailingPathDelimiter(ProjectRoot) +
+                     '.blaisevue-version';
+          If FileExists(VerFile) Then
+            DeleteFile(VerFile);
+        End;
+    End;
+
+  SizeBytes := GetDirSizeBytes(ItemPath);
+  WriteLn('  [-] Removing ' + ItemPath + ' ...');
+  DeleteDir(ItemPath);
+  WriteLn('  [SUCCESS] BlaiseVue version "' + NormVer +
+          '" removed successfully! (' + FormatFileSizeMB(SizeBytes) +
+          ' freed)');
+End;
+
+Procedure CmdFramework(Const SubCmd, Arg1, Arg2: String);
+
+Var 
+  SC, TargetArg: string;
+  ForceArg: Boolean;
+Begin
+  SC := LowerCase(Trim(SubCmd));
+  If (SC = 'versions') Or (SC = 'list') Or (SC = 'ls') Then
+    CmdFrameworkVersions
+  Else If (SC = 'use') Or (SC = 'switch') Or (SC = 'set') Then
+         CmdFrameworkUse(Arg1)
+  Else If (SC = 'upgrade') Or (SC = 'install') Or (SC = 'update') Or
+          (SC = 'get') Then
+         Begin
+           TargetArg := Trim(Arg1);
+           If ((LowerCase(TargetArg) = '--version') Or
+               (LowerCase(TargetArg) = '--tag')) And (Trim(Arg2) <> '') Then
+             TargetArg := Trim(Arg2);
+           CmdFrameworkUpgrade(TargetArg);
+         End
+  Else If (SC = 'remove-version') Or (SC = 'delete-version') Or
+          (SC = 'remove') Or (SC = 'rm') Then
+         Begin
+           ForceArg := (LowerCase(Trim(Arg1)) = '-y') Or
+                       (LowerCase(Trim(Arg1)) = '--yes') Or
+                       (LowerCase(Trim(Arg2)) = '-y') Or
+                       (LowerCase(Trim(Arg2)) = '--yes');
+           CmdFrameworkRemoveVersion(Arg1, ForceArg);
+         End
+  Else
+    Begin
+      WriteLn(
+'Usage: bv framework <versions|upgrade [--version=<v>]|use <v|channel>|remove-version [v] [-y]>'
+      );
+      Halt(1);
+    End;
 End;
 
 Procedure CmdZephyr(Const SubCmd: String; Const Arg1: String = ''; Const Arg2:
@@ -43629,14 +45093,22 @@ End;
 // =====================================================================
 
 Var 
-  Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP: string;
+  Cmd, TypeArg, NameArg, DirArg, DummyRenamed, PkgNameArg, CurP, PinSuffix:
+                                                                          string
+  ;
   SkipTest, SkipTestsArg, IsGlobalArg, UseDelSafeArg: Boolean;
   i: Integer;
 Begin
+  TryDelegatePinnedFrameworkVersion;
+
+  PinSuffix := '';
+  If Trim(GetEnvironmentVariable('BV_DELEGATED_VERSION')) <> '' Then
+    PinSuffix := ' [pinned via .blaisevue-version]';
+
   If (ParamCount = 1) And ((ParamStr(1) = '--version') Or (ParamStr(1) = '-v')
      Or (ParamStr(1) = 'version')) Then
     Begin
-      WriteLn('BlaiseVue CLI v' + GetCliVersion +
+      WriteLn('BlaiseVue CLI v' + GetCliVersion + PinSuffix +
               ' (Universal Pascal Full-Stack Platform)');
       Halt(0);
     End;
@@ -43645,7 +45117,7 @@ Begin
      ParamStr(1) = '-h') Then
     Begin
       WriteLn('');
-      WriteLn('  BlaiseVue CLI v' + GetCliVersion +
+      WriteLn('  BlaiseVue CLI v' + GetCliVersion + PinSuffix +
               ' (Universal Pascal Full-Stack Platform)');
       WriteLn('  ============================================================');
       WriteLn('  Usage: bv <command> [options]');
@@ -43779,7 +45251,7 @@ Begin
 '  bv clean                   Cleans generated build files (generated/ and dist/)'
       );
       WriteLn('');
-      WriteLn('  # === Backend Nativo DelSafe (Zephyr) ===');
+      WriteLn('  # === Native DelSafe Backend (Zephyr) ===');
       WriteLn(
 
 
@@ -44230,22 +45702,34 @@ Begin
 
 '  bv versions clean          Interactive cross-module disk cleanup wizard (or bv versions remove)'
       );
+      WriteLn(
+'  bv framework versions      Lists active channel & cached BlaiseVue versions (~/.blaisevue/versions/blaisevue)'
+      );
+      WriteLn(
+'  bv framework upgrade [--version=<v>] Discovers GitHub tags & compiles a BlaiseVue version locally via FPC'
+      );
+      WriteLn(
+'  bv framework use <ver|channel> Pins BlaiseVue version for project (.blaisevue-version) or tracks active channel'
+      );
+      WriteLn(
+'  bv framework remove-version [ver] Removes a cached BlaiseVue version from user storage'
+      );
       WriteLn('');
       WriteLn('  # === Framework Diagnostics & Maintenance ===');
       WriteLn(
 
 
-'  bv doctor                  Diagnoses environment tools (Git, Lazarus, FPC, Pas2JS, Node)'
+'  bv doctor                  Diagnoses environment tools (Git, FPC, Pas2JS, DelSafe, Node, Android)'
       );
       WriteLn(
 
 
-'  bv self-update [--check] [--force] Syncs & recompiles BlaiseVue directly from GitHub via Git'
+'  bv self-update [--check] [--force] Syncs & recompiles active channel directly from GitHub via Git'
       );
       WriteLn(
 
 
-'  bv channel [use <name>]    Inspects or switches framework branch (main/develop)'
+'  bv channel [use <name>]    Inspects or switches global framework Git branch (main/develop)'
       );
       WriteLn(
 
@@ -44862,6 +46346,18 @@ Begin
              End;
 
            CmdServer(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
+         End
+
+  Else If (Cmd = 'framework') Or (Cmd = 'fw') Then
+         Begin
+           If ParamCount < 2 Then
+             Begin
+               WriteLn(
+'Usage: bv framework <versions|upgrade [--version=<v>]|use <v|channel>|remove-version [v] [-y]>'
+               );
+               Halt(1);
+             End;
+           CmdFramework(LowerCase(ParamStr(2)), ParamStr(3), ParamStr(4));
          End
 
   Else If (Cmd = 'pas2js') Or (Cmd = 'compiler') Then

@@ -7,7 +7,7 @@
 
     <div class="crud-header">
       <div>
-        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync (v4.4)</h1>
+        <h1 class="crud-title">💾 TBVDataSet Offline-First & Delta Sync</h1>
         <p class="crud-subtitle">Motor empresarial de dados reativos em memória com persistência IndexedDB, detecção offline/online, rastreamento de deltas e sincronização automatizada (<code>ApplyUpdates</code>) com mORMot 2.</p>
       </div>
       <div class="crud-header-btns">
@@ -147,7 +147,7 @@
       <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Console de Sincronização & Logs</h3>
-          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">v4.4 Engine</span>
+          <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">DataSet Engine</span>
         </div>
         <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">
           <div>{{ syncStatusMsg }}</div>
@@ -542,7 +542,7 @@
       rep: JSValue;
     begin
       rep := NewReport(this['productsDS']);
-      ReportSetTitle(rep, 'Relatório de Produtos (TBVDataSet)', 'Exportado diretamente da View DataSet v4.4/v5.0');
+      ReportSetTitle(rep, 'Relatório de Produtos (TBVDataSet)', 'Exportado diretamente da View DataSet');
       ReportSetCompany(rep, 'BlaiseVue Enterprise', 'BV-5.0');
       ReportSetColumns(rep, ['id:ID:integer', 'title:Produto', 'category:Categoria', 'price:Preço Unit.:currency', 'stock:Estoque:integer']);
       ReportAddSummary(rep, 'Soma Preços Unitários', 'price', 'sum', 'currency');

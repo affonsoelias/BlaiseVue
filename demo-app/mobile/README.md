@@ -1,4 +1,4 @@
-# BlaiseVue Mobile (BlaiseVue 4.4 Mobile)
+# BlaiseVue Mobile
 
 Native mobile application powered by **Capacitor** and **BlaiseVue**.
 

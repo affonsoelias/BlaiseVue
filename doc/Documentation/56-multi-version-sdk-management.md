@@ -1,6 +1,6 @@
-# 56. Multi-Version SDK & Compiler Management (`bv versions`, `bv pas2js`)
+# 56. Multi-Version SDK & Compiler Management (`bv versions`, `bv framework`, `bv pas2js`)
 
-BlaiseVue 4.4 incorporates a native, cross-module **Multi-Version SDK & Compiler Management** architecture.
+BlaiseVue (`v0.1.0`+) incorporates a native, cross-module **Multi-Version SDK & Compiler Management** architecture — covering **BlaiseVue itself** (`bv framework`), **Pas2JS**, **Synopse mORMot 2**, **Capacitor**, and **Horse**.
 
 Similar to modern version managers in other ecosystems (such as `nvm` for Node, `rustup` for Rust, or `pyenv` for Python), BlaiseVue provides complete freedom to discover, download, isolate, switch, and prune multiple runtime and compiler versions per project, without breaking system stability.
 
@@ -31,15 +31,17 @@ BlaiseVue comes bundled with verified, stable baseline distributions of core too
 
 ### 2. User Distribution Isolation (`~/.blaisevue/versions/`)
 All dynamically downloaded versions are isolated inside the user's home directory:
+- `~/.blaisevue/versions/blaisevue/<version>/` (lean sparse checkout compiled locally via FPC)
 - `~/.blaisevue/versions/pas2js/<version>/`
 - `~/.blaisevue/versions/mormot/<version>/`
 - `~/.blaisevue/versions/capacitor/<version>/`
 - `~/.blaisevue/versions/horse/<version>/` (when the `blaise-horse` tool is installed)
 
-This guarantees that upgrading or switching versions never modifies the Git working copy or framework core.
+This guarantees that upgrading or switching versions never modifies the Git working copy or active global channel.
 
-### 3. Project Pinning via Dotfiles (`.pas2js-version`, `.mormot-version`)
+### 3. Project Pinning via Dotfiles (`.blaisevue-version`, `.pas2js-version`, `.mormot-version`)
 Each project can declare its own pinned versions by placing simple single-line dotfiles in its root:
+- `.blaisevue-version` $\rightarrow$ Pins the BlaiseVue framework CLI, SFC compiler, core runtime, and packages (e.g. `0.1.0`), or omit/`channel` to track `bv channel`.
 - `.pas2js-version` $\rightarrow$ Specifies the active Pas2JS compiler (e.g. `3.4.0` or `bundled`).
 - `.mormot-version` $\rightarrow$ Specifies the active mORMot 2 core.
 - `.horse-version` $\rightarrow$ Specifies the active Horse framework version.
@@ -124,6 +126,40 @@ Are you sure you want to permanently delete pas2js version '3.4.0'? (y/N): y
 
 - **Protected Baselines**: Factory baselines in `vendor/` are never listed for deletion.
 - **Active Project Safety**: If the active project is currently bound to the version being deleted, BlaiseVue warns the user and automatically falls back to `bundled`.
+
+---
+
+## 🚀 BlaiseVue Framework Multi-Version Manager (`bv framework`)
+
+Similar to `fvm` for Flutter or `rustup` toolchains, **`bv framework`** lets different projects on the same machine target different versions of **BlaiseVue itself** without changing your global `bv channel` (`main`/`develop`):
+
+1. **Lean Sparse Checkout + Local FPC Compilation (Zero Pre-Built Binaries Required)**:
+   - `bv framework upgrade` queries GitHub tags via `git ls-remote --tags --refs` and performs a lean sparse checkout (`bin/`, `core/`, `packages/core/`, `templates/`, `vendor/zephyr/`), skipping heavy `vendor/pas2js`, `vendor/mormot2`, `demo-app/`, and `doc/` (~5–15 MB per cached version).
+   - It then compiles `bin/bv.pas` locally into `~/.blaisevue/versions/blaisevue/<ver>/bin/bv[.exe]` using Free Pascal in a staging directory before promotion.
+2. **Transparent Auto-Delegation (`BV_DELEGATED_VERSION` + `BV_HOST_SDK`)**:
+   - When `.blaisevue-version` exists in a project, running `bv dev`, `bv build`, `bv test`, `bv check`, etc., automatically delegates to the pinned version's CLI, SFC transpiler, `core/`, and `packages/core/`.
+   - The host passes `BV_HOST_SDK` so the cached version reuses `vendor/pas2js` and `vendor/mormot2` from your main SDK (unless overridden by `.pas2js-version` or `.mormot-version`).
+   - If the pinned version is missing locally, BlaiseVue prints an actionable warning and safely falls back to your active global channel.
+
+```bash
+# 1. Inspect active channel and cached BlaiseVue versions:
+bv framework versions
+
+# 2. Discover GitHub tags and compile a version locally into cache:
+bv framework upgrade
+bv framework upgrade --version=0.1.0
+
+# 3. Pin the current project to v0.1.0 (.blaisevue-version):
+bv framework use 0.1.0
+
+# 4. Unpin and follow your global channel (main/develop) again:
+bv framework use channel
+
+# 5. Remove a cached version:
+bv framework remove-version 0.1.0 -y
+```
+
+> **Note (`bv channel` vs. `bv framework use channel`):** `bv channel use <main|develop>` switches your **global** SDK installation branch, whereas `bv framework use channel` configures the **current project** to track whichever global channel is active.
 
 ---
 
@@ -273,6 +309,10 @@ Running `bv doctor` inside a project root automatically cross-examines the proje
 |---|---|---|
 | `bv versions` | - | Consolidated dashboard of all dependencies, baselines, and disk sizes |
 | `bv versions` | `clean` | Interactive multi-module disk cleanup wizard |
+| `bv framework` | `versions` | Lists active project pin, global channel, and cached BlaiseVue versions |
+| `bv framework` | `upgrade` | Queries GitHub tags, sparsely clones sources, and compiles CLI locally via FPC |
+| `bv framework` | `use <v\|channel>` | Pins BlaiseVue version (`.blaisevue-version`) or tracks active global channel |
+| `bv framework` | `remove-version [v]` | Deletes a cached BlaiseVue version from user storage |
 | `bv pas2js` | `versions` | Lists active compiler, factory baseline, and user-installed compilers |
 | `bv pas2js` | `upgrade` | Dynamically queries GitLab and downloads a Pas2JS compiler distribution |
 | `bv pas2js` | `use <v\|bundled>` | Switches active compiler for current project (`.pas2js-version`) |

@@ -16,11 +16,11 @@
 **BlaiseVue** is a high-performance, enterprise-grade universal reactive framework for **Object Pascal**. It combines the type safety, architectural robustness, and raw compilation speed of Pascal with the elegance, ergonomics, and reactivity of **Vue.js**, enabling seamless multiplatform deployment across Web, Mobile, and Desktop from a single codebase.
 
 > [!NOTE]
-> ### 🚀 Project Status: Active Development & Upcoming Official v1.0.0 Release
+> ### 🚀 Project Status: Public Pre-Release (`v0.1.x`)
 >
-> BlaiseVue is currently in active pre-release development. The platform is **fully functional, battle-tested, and ready for developers to clone, test, build prototypes, explore reactive Pascal, and evaluate full-stack architectures**.
+> BlaiseVue is currently in active public pre-release (**`v0.1.0`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready for developers to clone, compile locally with Free Pascal, run the included `demo-app`, test, build prototypes, and evaluate full-stack architectures**.
 >
-> Current version tags or numbers appearing in the CLI and repository are **internal development milestones** used to track architectural iterations. An official, production-ready **v1.0.0 Release** is being finalized and will be officially launched very soon.
+> BlaiseVue will continue evolving within the **`v0.1.x`** series across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**.
 >
 > We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
 
@@ -111,7 +111,7 @@ For the complete architectural evolution specifications, delivered enterprise pi
 ```text
 BlaiseVue/
 ├── bin/                       # BlaiseVue CLI compiler & development toolchain
-│   ├── bv.pas & bv.exe        # Zero-dependency native CLI compiler & orchestrator
+│   ├── bv.pas                 # Zero-dependency native CLI compiler source (built locally via build.ps1 / build.bat / build.sh)
 │   ├── dev-server.js          # Fast local development HTTP server with live HMR
 │   ├── studio-server.js       # BlaiseVue Studio telemetry hub & API bridge
 │   ├── studio/                # Embedded BlaiseVue Studio web cockpit UI
@@ -164,7 +164,7 @@ BlaiseVue/
 │   ├── Documentation/         # 59 comprehensive technical manuals + API Reference
 │   ├── Course/                # 13-module practical course from beginner to ninja
 │   └── brand/                 # Official vector logos, icons & banner assets
-└── demo-app/                  # Enterprise showcase application (v4.4.0 Full-Stack)
+└── demo-app/                  # Enterprise showcase application (v0.1.0 Full-Stack)
     ├── src/                   # Reactive frontend SPA (views, components, services)
     ├── server-mormot/         # High-throughput native mORMot 2 backend server
     ├── mobile/                # Native Capacitor Android (APK/AAB) & iOS projects
@@ -187,10 +187,10 @@ BlaiseVue/
 > [!NOTE]
 > **Pas2JS is pre-bundled**: You do **not** need to install `pas2js`. Official multi-platform binaries for Windows, Linux, and macOS are already included in `vendor/pas2js/`.
 
-### 1. Clone the Repository & Configure PATH
-Clone the BlaiseVue SDK and configure the native CLI in your system `PATH`:
+### 1. Clone the Repository
+Clone the BlaiseVue SDK using Git:
 ```bash
-# Clone official stable release channel (main):
+# Clone official release channel (main):
 git clone https://github.com/affonsoelias/BlaiseVue.git
 cd BlaiseVue
 
@@ -199,57 +199,101 @@ git clone -b develop https://github.com/affonsoelias/BlaiseVue.git
 cd BlaiseVue
 ```
 
-#### Set Executable Permissions & PATH (Linux / macOS):
+### 2. Compile the Native CLI (`bv`) Locally
+BlaiseVue ships source-first without pre-compiled executables in Git. Run the build script for your platform from the repository root (takes ~2 seconds with Free Pascal 3.2+):
+
+**Windows (PowerShell or CMD):**
+```powershell
+.\build.ps1
+# or in Command Prompt:
+build.bat
+```
+
+**Linux / macOS:**
 ```bash
-chmod +x bin/bv vendor/pas2js/pas2js-*/bin/{pas2js,compileserver,makestub,webidl2pas} 2>/dev/null || true
+chmod +x build.sh
+./build.sh
+```
 
-# Add to ~/.zshrc (if using Zsh, e.g. Manjaro/macOS) or ~/.bashrc (if using Bash):
+> [!TIP]
+> **Atomic Safety Guarantee:** Every build script compiles into a temporary binary (`bv_new`) first and only replaces `bin/bv` (backing up the previous working binary to `bin/bv.bak`) if Free Pascal succeeds. If a build ever fails, your existing executable remains intact.
+
+### 3. Add `bin/` to Your System `PATH`
+Add `BlaiseVue/bin` to your `PATH` so you can invoke `bv` from any directory:
+
+**Windows (PowerShell):**
+```powershell
+$sdkBin = "$PWD\bin"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$sdkBin*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$sdkBin", "User")
+}
+```
+*(Reopen your terminal after updating `User` PATH, or call `.\bin\bv.exe` directly.)*
+
+**Linux / macOS (Zsh or Bash):**
+```bash
+# Add to ~/.zshrc (Zsh) or ~/.bashrc (Bash):
 export PATH="$HOME/BlaiseVue/bin:$PATH"
-
-# Reload your active shell:
 source ~/.zshrc   # or: source ~/.bashrc
 ```
 
-On Windows, add the full path to `BlaiseVue\bin` to your System or User Environment `Path` (or invoke directly via `.\bin\bv.exe`).
-
-### 2. Create Your First Project
-Scaffold a complete, modern BlaiseVue project and enter its directory:
-```bash
-bv create my-app
-# Or initialize directly with DelSafe frontend / a specific backend:
-bv create my-app --delsafe
-bv create my-app --backend=mormot
-bv create my-app --backend=zephyr
-
-cd my-app
-```
-`bv create` automatically scaffolds the reactive frontend, domain services (`src/services/`), Lazarus IDE project files (`.lpi`/`.lpr`), and clean 3-tier test suites (`tests/`). Add `--backend=mormot`, `--backend=zephyr`, or `--backend=<tool>` (or run `bv mormot init` / `bv zephyr init` later) to attach your preferred backend in its own isolated directory.
-
-### 3. Verify Environment Health
-Run the built-in diagnostic doctor **inside** your newly created project directory:
+Verify the environment at any time:
 ```bash
 bv doctor
 ```
-Running `bv doctor` inside your project verifies all system compilers (Git, FPC, Lazarus, Pas2JS, Node) along with your project's local dependencies and mobile configuration with zero false positives.
 
-### 4. Interactive Cockpit Shell (Optional)
-BlaiseVue provides an interactive command shell with real-time `[TAB]` autocompletion, session history (`↑`/`↓`), and intelligent subcommand guidance:
+### 4. Run the Included Demo (`demo-app`) OR Create a Clean Project
+
+#### Option A — Run the Showcase Demo (`demo-app`)
+Explore all BlaiseVue capabilities (reactive views, BlaiseUI, Chart.js, Reports, Offline DataSet, and mORMot 2 full-stack):
 ```bash
-bv enter
-# Opens the interactive Cockpit: [bv: my-app] >
+cd demo-app
+npm install        # Required once for Vitest / Capacitor tooling
+bv doctor          # Inspect environment & project alignment
+bv dev             # Frontend SPA + HMR at http://localhost:8080
 ```
-*(You can exit the shell anytime by typing `exit` or continue executing commands directly via `bv <command>`)*.
-
-### 5. Launch the Development Server
-Start the local development server with instant Hot Module Replacement (HMR):
+*(Optional)* Start the native mORMot 2 backend (`http://localhost:8090`) in another terminal:
 ```bash
+cd demo-app
+bv mormot run
+```
+
+#### Option B — Create & Run a Clean Project from Scratch
+Scaffold a clean application anywhere outside the SDK repository:
+```bash
+bv create my-app
+# Optional variants:
+#   bv create my-app --delsafe           # DelSafe + Object Pascal interop
+#   bv create my-app --backend=mormot    # Attach native mORMot 2 server (port 8090)
+#   bv create my-app --backend=zephyr    # Attach native Zephyr DelSafe server (port 8091)
+
+cd my-app
+npm install
+bv doctor
 bv dev
 # Open http://localhost:8080 in your browser
 ```
-Any modifications saved in `src/` or `app.bv` are recompiled and hot-swapped in the browser in milliseconds!
+Any modifications saved in `src/` are recompiled and hot-swapped in the browser in milliseconds!
+
+### 5. Interactive Cockpit, Multi-Version & Safe Updates
+```bash
+# Interactive Cockpit shell with [TAB] autocompletion:
+bv enter
+
+# Manage multiple BlaiseVue versions per project (.blaisevue-version):
+bv framework upgrade            # Queries GitHub tags & compiles locally via FPC
+bv framework use 0.1.0          # Pin current project to v0.1.0
+bv framework use channel        # Follow your global Git channel again
+
+# Update your global channel safely (preserves bv.bak on error; revert anytime with bv rollback):
+bv self-update --check
+bv self-update
+bv channel use develop          # Switch global channel (main | develop)
+```
 
 ### 6. Explore Full-Stack, Mobile & Desktop
-Your new project is multi-platform by design:
+Your project is multi-platform by design:
 ```bash
 # Native mORMot 2 backend server (Port 8090):
 bv mormot init
@@ -265,9 +309,6 @@ bv capacitor run android --emulator  # or: bv mobile run android --emulator
 # Native Desktop Application (WebUI):
 bv desktop run
 ```
-
-> [!TIP]
-> **Manual CLI Compilation (Optional)**: Pre-compiled binaries are provided in `bin/`. To rebuild manually with **Free Pascal Compiler 3.2+**, run `fpc -O2 bin/bv.pas -FEbin`. Pas2JS is pre-bundled in `vendor/pas2js/` with zero manual configuration required!
 
 ---
 
