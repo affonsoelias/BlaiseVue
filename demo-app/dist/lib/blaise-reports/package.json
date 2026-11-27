@@ -1,7 +1,7 @@
 {
   "name": "blaise-reports",
-  "version": "5.0.0",
-  "description": "Native Vector PDF, Excel (.xlsx), CSV & Thermal/A4 Print Engine in pure Object Pascal for BlaiseVue 5.0",
+  "version": "0.1.0",
+  "description": "Native Vector PDF, Excel (.xlsx), CSV & Thermal/A4 Print Engine in pure Object Pascal for BlaiseVue",
   "main": "BlaiseReports.pas",
   "keywords": [
     "blaisevue",

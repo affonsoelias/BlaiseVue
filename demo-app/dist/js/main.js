@@ -5219,6 +5219,8 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                                 el.removeAttribute(b.name);
                                 try { el[b.name] = false; } catch(e) {}
                              }
+                          } else if (b.name === 'value' && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) {
+                             bv.writeFieldValue(el, v);
                           } else {
                              if (v === null || v === undefined || v === false) {
                                 el.removeAttribute(b.name);
@@ -5423,7 +5425,14 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    let tplStr = opts.template || '';
                    events.forEach(function(evt) {
                       let evLow = (evt.name || '').toLowerCase();
+                      let escEvName = (evt.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      let emitMethodRe = new RegExp('(?:\\$emit|\\bEmit)\\s*\\([^)]*[\'"]' + escEvName + '[\'"]', 'i');
+                      let hasMethodEmit = !!(opts.methods && Object.keys(opts.methods).some(function(mk) {
+                         let fn = opts.methods[mk];
+                         return typeof fn === 'function' && emitMethodRe.test(fn.toString());
+                      }));
                       let isDeclaredEmit = (opts.emits && Array.isArray(opts.emits) && opts.emits.some(function(e) { return e.toLowerCase() === evLow; })) ||
+                                           hasMethodEmit ||
                                            tplStr.indexOf("'" + evt.name + "'") !== -1 || tplStr.indexOf('"' + evt.name + '"') !== -1;
                       if (!isDeclaredEmit) {
                          evtTargets.forEach(function(tNode) {
@@ -5489,6 +5498,157 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    }
                    el['__bv_replacement__'] = rEl;
                 }
+    
+                 pRef['$emit'] = function(ev, ...args) {
+                    let arg = args[0];
+                    if (!pRef['__emitted__']) pRef['__emitted__'] = {};
+                    if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
+                    pRef['__emitted__'][ev].push(arg);
+                    if (rEl) {
+                       if (!rEl['__emitted__']) rEl['__emitted__'] = {};
+                       if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
+                       rEl['__emitted__'][ev].push(arg);
+                    }
+                    if (startAnchor) {
+                       if (!startAnchor['__emitted__']) startAnchor['__emitted__'] = {};
+                       if (!startAnchor['__emitted__'][ev]) startAnchor['__emitted__'][ev] = [];
+                       startAnchor['__emitted__'][ev].push(arg);
+                    }
+                    if (ev === 'input' || ev === 'change' || ev === 'update:modelValue') {
+                       if (pRef['$onInput']) pRef['$onInput'](arg);
+                    }
+                    let targetEv = (ev || '').toLowerCase();
+                    events.forEach(function(evt) {
+                       if (evt.name.toLowerCase() === targetEv) {
+                          if (evt.modifiers && arg && typeof arg === 'object') {
+                             if (evt.modifiers.indexOf('stop') !== -1 && arg.stopPropagation) arg.stopPropagation();
+                             if (evt.modifiers.indexOf('prevent') !== -1 && arg.preventDefault) arg.preventDefault();
+                          }
+                          let expr = evt.expr;
+                          if (expr) {
+                             let r = Data.Evaluate(expr, ...args);
+                             if (typeof r === 'function') {
+                                try { r.call(Data.FData, Data.FData, ...args); }
+                                catch(e) { console.error("[Compiler] Event handler error:", e); }
+                             } else if (Methods && typeof Methods[expr] === 'function') {
+                                try { Methods[expr].call(Data.FData, Data.FData, ...args); }
+                                catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
+                             }
+                          }
+                       }
+                    });
+                    if (window.__BV_DEVTOOLS_HOOK__) {
+                       window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
+                    }
+                 };
+    
+                 if (vmodel) {
+                    let hasModelValProp = (opts.props && opts.props.indexOf('modelValue') !== -1);
+                    let modelProp = hasModelValProp ? 'modelValue' : 'value';
+                    bv.effect(function() { pRef[modelProp] = Data.Evaluate(vmodel); });
+                    pRef['$onInput'] = function(val) {
+                       Data.SetValue(vmodel, val);
+                       if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                          let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
+                          if (fObj && fObj.$dirty) fObj.$touch();
+                       }
+                    };
+                 }
+    
+                 if (vfield) {
+                    let parts = vfield.split('.');
+                    let dsExpr = parts[0];
+                    let fieldName = parts.slice(1).join('.');
+    
+                    const getCompFieldVal = function() {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return '';
+                      if (typeof ds.FieldByName === 'function') {
+                        return ds.FieldByName(fieldName).AsString;
+                      } else if (ds.Current) {
+                        return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                      }
+                      return '';
+                    };
+    
+                    bv.effect(function() {
+                      pRef['value'] = getCompFieldVal();
+                    });
+    
+                    pRef['$onInput'] = function(val) {
+                      let ds = Data.Evaluate(dsExpr);
+                      if (!ds) return;
+                      if (typeof ds.FieldByName === 'function') {
+                        if (ds.StateStr === 'browse') ds.Edit();
+                        ds.FieldByName(fieldName).AsString = val;
+                      } else if (ds.Current) {
+                        ds.Current[fieldName] = val;
+                      }
+                    };
+                 }
+    
+                 if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                    let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+                    if (targetField) {
+                       window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+                    }
+                 }
+    
+                 if (vref && Data && Data.FData) {
+                    if (!Data.FData.$refs) Data.FData.$refs = {};
+                    Data.FData.$refs[vref] = pRef;
+                 }
+    
+                if (opts.inject) {
+                   opts.inject.forEach(function(k) {
+                      let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
+                      let hostParent = (rEl && rEl.parentElement) || (startAnchor && startAnchor.parentElement);
+                      if (!val && hostParent) {
+                         let curr = hostParent;
+                         while (curr && !val) {
+                            if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
+                               val = curr['__bv_instance_data__']['$provided'][k];
+                               break;
+                            }
+                            curr = curr.parentElement;
+                         }
+                      }
+                      if (val) pRef[k] = val;
+                   });
+                }
+                if (opts.provide) {
+                   pRef['$provided'] = Object.assign({}, (Data && Data.FData && Data.FData.$provided) || {}, opts.provide.call(pRef, pRef));
+                }
+    
+                if (opts.computed) { Object.keys(opts.computed).forEach(function(ck) { bv.defineComputed(pRef, ck, opts.computed[ck]); }); }
+                if (opts.methods) {
+                   Object.keys(opts.methods).forEach(function(k) {
+                     let rM = opts.methods[k];
+                     const boundFn = function() {
+                       if (arguments.length > 0 && arguments[0] === pRef) {
+                         return rM.apply(pRef, arguments);
+                       }
+                       return rM.apply(pRef, [pRef, ...arguments]);
+                     };
+                     dRaw[k] = boundFn;
+                     pRef[k] = boundFn;
+                   });
+                }
+    
+                if (opts.watch) {
+                   Object.keys(opts.watch).forEach(function(wk) {
+                      let firstRun = true;
+                      bv.effect(function() {
+                         let val = pRef[wk];
+                         if (firstRun) { firstRun = false; return; }
+                         bv.nonReactive(function() {
+                            opts.watch[wk].call(pRef, pRef, val);
+                         });
+                      });
+                   });
+                }
+    
+                if (opts.created) opts.created.call(pRef, pRef);
     
                 function isNamedSlotNode(node) {
                    if (!node || node.nodeType !== 1) return false;
@@ -5620,154 +5780,7 @@ rtl.module("BVCompiler",["System","JS","Web","SysUtils","BVComponents","BVReacti
                    }
                 });
     
-                 if (vmodel) {
-                    bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
-                    pRef['$onInput'] = function(val) { 
-                       Data.SetValue(vmodel, val); 
-                       if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
-                          let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
-                          if (fObj && fObj.$dirty) fObj.$touch();
-                       }
-                    };
-                 }
     
-                              if (vfield) {
-                    let parts = vfield.split('.');
-                    let dsExpr = parts[0];
-                    let fieldName = parts.slice(1).join('.');
-    
-                    const getCompFieldVal = function() {
-                      let ds = Data.Evaluate(dsExpr);
-                      if (!ds) return '';
-                      if (typeof ds.FieldByName === 'function') {
-                        return ds.FieldByName(fieldName).AsString;
-                      } else if (ds.Current) {
-                        return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
-                      }
-                      return '';
-                    };
-    
-                    bv.effect(function() {
-                      pRef['value'] = getCompFieldVal();
-                    });
-    
-                    pRef['$onInput'] = function(val) {
-                      let ds = Data.Evaluate(dsExpr);
-                      if (!ds) return;
-                      if (typeof ds.FieldByName === 'function') {
-                        if (ds.StateStr === 'browse') ds.Edit();
-                        ds.FieldByName(fieldName).AsString = val;
-                      } else if (ds.Current) {
-                        ds.Current[fieldName] = val;
-                      }
-                    };
-                 }
-    
-                 if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
-                    let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
-                    if (targetField) {
-                       window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
-                    }
-                 }
-    
-                 if (vref && Data && Data.FData) {
-                    if (!Data.FData.$refs) Data.FData.$refs = {};
-                    Data.FData.$refs[vref] = pRef;
-                 }
-                
-                if (opts.inject) {
-                   opts.inject.forEach(function(k) {
-                      let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
-                      let hostParent = (rEl && rEl.parentElement) || (startAnchor && startAnchor.parentElement);
-                      if (!val && hostParent) {
-                         let curr = hostParent;
-                         while (curr && !val) {
-                            if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
-                               val = curr['__bv_instance_data__']['$provided'][k];
-                               break;
-                            }
-                            curr = curr.parentElement;
-                         }
-                      }
-                      if (val) pRef[k] = val;
-                   });
-                }
-                if (opts.provide) {
-                   pRef['$provided'] = Object.assign({}, (Data && Data.FData && Data.FData.$provided) || {}, opts.provide.call(pRef, pRef));
-                }
-    
-                if (opts.computed) { Object.keys(opts.computed).forEach(function(ck) { bv.defineComputed(pRef, ck, opts.computed[ck]); }); }
-                if (opts.methods) { 
-                   Object.keys(opts.methods).forEach(function(k) { 
-                     let rM = opts.methods[k];
-                     const boundFn = function() { 
-                       if (arguments.length > 0 && arguments[0] === pRef) {
-                         return rM.apply(pRef, arguments);
-                       }
-                       return rM.apply(pRef, [pRef, ...arguments]); 
-                     }; 
-                     dRaw[k] = boundFn;
-                     pRef[k] = boundFn;
-                   }); 
-                }
-                
-                if (opts.watch) {
-                   Object.keys(opts.watch).forEach(function(wk) {
-                      let firstRun = true;
-                      bv.effect(function() {
-                         let val = pRef[wk];
-                         if (firstRun) { firstRun = false; return; }
-                         bv.nonReactive(function() {
-                            opts.watch[wk].call(pRef, pRef, val);
-                         });
-                      });
-                   });
-                }
-                
-                if (opts.created) opts.created.call(pRef, pRef);
-                
-                pRef['$emit'] = function(ev, ...args) {
-                   let arg = args[0];
-                   if (!pRef['__emitted__']) pRef['__emitted__'] = {};
-                   if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
-                   pRef['__emitted__'][ev].push(arg);
-                   if (rEl) {
-                      if (!rEl['__emitted__']) rEl['__emitted__'] = {};
-                      if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
-                      rEl['__emitted__'][ev].push(arg);
-                   }
-                   if (startAnchor) {
-                      if (!startAnchor['__emitted__']) startAnchor['__emitted__'] = {};
-                      if (!startAnchor['__emitted__'][ev]) startAnchor['__emitted__'][ev] = [];
-                      startAnchor['__emitted__'][ev].push(arg);
-                   }
-                   if (ev === 'input' || ev === 'change') {
-                      if (pRef['$onInput']) pRef['$onInput'](arg);
-                   }
-                   let targetEv = (ev || '').toLowerCase();
-                   events.forEach(function(evt) {
-                      if (evt.name.toLowerCase() === targetEv) {
-                         if (evt.modifiers && arg && typeof arg === 'object') {
-                            if (evt.modifiers.indexOf('stop') !== -1 && arg.stopPropagation) arg.stopPropagation();
-                            if (evt.modifiers.indexOf('prevent') !== -1 && arg.preventDefault) arg.preventDefault();
-                         }
-                         let expr = evt.expr;
-                         if (expr) {
-                            let r = Data.Evaluate(expr, ...args);
-                            if (typeof r === 'function') {
-                               try { r.call(Data.FData, Data.FData, ...args); }
-                               catch(e) { console.error("[Compiler] Event handler error:", e); }
-                            } else if (Methods && typeof Methods[expr] === 'function') {
-                               try { Methods[expr].call(Data.FData, Data.FData, ...args); }
-                               catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
-                            }
-                         }
-                      }
-                   });
-                   if (window.__BV_DEVTOOLS_HOOK__) {
-                      window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
-                   }
-                };
     
                 let cD = {
                   FData: pRef,
@@ -10217,6 +10230,72 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
     Result = window.confirm(Msg);
     return Result;
   };
+  this.StartTimeout = function (Callback, DelayMs) {
+    var Result = 0;
+    Result = window.setTimeout(function() {
+      if (typeof Callback === 'function') Callback();
+    }, DelayMs);
+    return Result;
+  };
+  this.RunAfterDelay = function (DelayMs, Callback) {
+    var Result = 0;
+    Result = $mod.StartTimeout(Callback,DelayMs);
+    return Result;
+  };
+  this.OnNetworkStatusChange = function (OnOnline, OnOffline) {
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      if (typeof OnOnline === 'function') {
+        window.addEventListener('online', function() { OnOnline(); });
+      }
+      if (typeof OnOffline === 'function') {
+        window.addEventListener('offline', function() { OnOffline(); });
+      }
+    };
+  };
+  this.ScrollToElement = function (ElementId, Smooth) {
+    if (typeof document !== 'undefined' && ElementId) {
+      var el = document.getElementById(ElementId);
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: Smooth ? 'smooth' : 'auto', block: 'nearest' });
+      }
+    };
+  };
+  this.InspectFragmentsReport = function (RootSelector, InspectionNum) {
+    var Result = "";
+    Result = "";
+    if (typeof document === 'undefined') return;
+    var root = (RootSelector ? document.querySelector(RootSelector) : null) || document.body;
+    if (!root || typeof document.createTreeWalker !== 'function') return;
+    var startAnchors = [];
+    var endAnchors = 0;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+      var txt = (node.nodeValue || '').trim();
+      if (txt.indexOf('[bv-fragment:') === 0) {
+        startAnchors.push(node);
+      } else if (txt === '[/bv-fragment]') {
+        endAnchors++;
+      }
+    }
+    var nowStr = new Date().toLocaleTimeString();
+    var lines = [];
+    lines.push('[Leitura #' + InspectionNum + ' às ' + nowStr + '] Âncoras de Início (<!-- [bv-fragment: ...] -->): ' + startAnchors.length + ' | Âncoras de Fim (<!-- [/bv-fragment] -->): ' + endAnchors);
+    lines.push('--------------------------------------------------------------------------------');
+    for (var i = 0; i < startAnchors.length; i++) {
+      var a = startAnchors[i];
+      var sibs = (window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) ? window.__BV_CORE__.getFragmentNodes(a) : [];
+      var tagList = [];
+      for (var j = 0; j < sibs.length; j++) {
+        if (sibs[j].nodeType === 1) {
+          tagList.push('<' + sibs[j].tagName.toLowerCase() + (sibs[j].className ? ' class="' + sibs[j].className + '"' : '') + '>');
+        }
+      }
+      lines.push('#' + (i + 1) + ' <!--' + a.nodeValue + '-->  ==>  ' + tagList.join(' + ') + '  ==>  <!-- [/bv-fragment] -->');
+    }
+    Result = lines.join('\n');
+    return Result;
+  };
   this.CallMethod = function (Instance, MethodName) {
     if (!Instance) return;
     if (typeof Instance[MethodName] === 'function') {
@@ -10228,6 +10307,11 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
   this.CallMethod$1 = function (Instance, MethodName, Args) {
     if (Instance && typeof Instance[MethodName] === 'function') {
       Instance[MethodName].apply(Instance, Args);
+    };
+  };
+  this.Emit = function (Instance, EventName, Payload) {
+    if (Instance && typeof Instance['$emit'] === 'function') {
+      Instance['$emit'](EventName, Payload);
     };
   };
   this.TriggerRef = function (Instance, RefName, MethodName) {
@@ -10598,6 +10682,19 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
     Result = "" + ResVal;
     return Result;
   };
+  this.I18nGetMessagesJSON = function (Locale) {
+    var Result = "";
+    var Loc = "";
+    Loc = Locale;
+    if (Loc === "") Loc = $mod.I18nGetLocale();
+    if (Loc === "") Loc = "en";
+    Result = "{}";
+    var i18n = (typeof window !== 'undefined' && window.__BV_CORE__) ? window.__BV_CORE__.i18n : null;
+    var all = (i18n && i18n.messages) ? i18n.messages : {};
+    var current = all[Loc] || {};
+    Result = JSON.stringify(current, null, 2);
+    return Result;
+  };
   this.GetFieldStr = function (Obj, PropName, DefaultVal) {
     var Result = "";
     if (Obj && typeof Obj === 'object' && Obj[PropName] !== undefined && Obj[PropName] !== null) {
@@ -10752,7 +10849,8 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
         if (st === 'browse') DS.Edit();
         var f = DS.FieldByName(AFieldName);
         if (f) {
-          if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+          if (typeof f.SetValue === 'function') f.SetValue(AValue);
+          else if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
           else f.AsString = String(AValue);
         }
       } else if (DS.Current) {
@@ -10851,6 +10949,60 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
      else {
       if (DS && typeof DS.ClearDelta === 'function') DS.ClearDelta();
     };
+  };
+  this.DataSetStateStr = function (DS) {
+    var Result = "";
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetStateStr()}
+     else {
+      Result = "inactive";
+      if (DS) {
+        if (typeof DS.GetStateStr === 'function') Result = String(DS.GetStateStr());
+        else if (DS.StateStr !== undefined) Result = String(DS.StateStr);
+      };
+    };
+    return Result;
+  };
+  this.DataSetRecordCount = function (DS) {
+    var Result = 0;
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      Result = rtl.getObject(DS).GetRecordCount()}
+     else {
+      Result = 0;
+      if (DS) {
+        if (typeof DS.GetRecordCount === 'function') Result = Number(DS.GetRecordCount()) || 0;
+        else if (DS.RecordCount !== undefined) Result = Number(DS.RecordCount) || 0;
+      };
+    };
+    return Result;
+  };
+  this.DataSetSetTableName = function (DS, ATableName) {
+    if ((DS != null) && pas.BVDataSet.TBVDataSet.isPrototypeOf(rtl.getObject(DS))) {
+      rtl.getObject(DS).FTableName = ATableName}
+     else {
+      if (DS) DS.TableName = ATableName;
+    };
+  };
+  this.DataSetNextId = function (DS, AFieldName) {
+    var Result = 0;
+    Result = 1;
+    if (!DS) return;
+    var recs = DS.FRecords || DS.Data;
+    var maxId = 0;
+    if (recs && recs.length) {
+      for (var i = 0; i < recs.length; i++) {
+        var cur = parseInt(recs[i][AFieldName], 10);
+        if (!isNaN(cur) && cur > maxId) maxId = cur;
+      }
+    }
+    Result = maxId + 1;
+    return Result;
+  };
+  this.DataSetLoadIndexedDBAsync = function (DS, StoreKey, OnComplete) {
+    $mod.DataSetLoadIndexedDB(DS,StoreKey,OnComplete);
+  };
+  this.DataSetApplyUpdatesCallbacks = function (DS, EndpointOrService, OnSuccess, OnError) {
+    $mod.DataSetApplyUpdatesAsync(DS,EndpointOrService,OnSuccess,OnError);
   };
   this.RpcSetBaseUrl = function (Url) {
     pas.BVRpc.TBVRpcClient.SetBaseUrl(Url);
@@ -10999,6 +11151,17 @@ rtl.module("BVPascalDX",["System","JS","Web","SysUtils","BVDataSet","BVRpc","Bla
         $mod.DataSetChangeCount(dummy);
         $mod.DataSetDeltaList(dummy);
         $mod.DataSetClearDelta(dummy);
+        $mod.DataSetStateStr(dummy);
+        $mod.DataSetRecordCount(dummy);
+        $mod.DataSetSetTableName(dummy,"");
+        $mod.DataSetNextId(dummy,"id");
+        $mod.DataSetLoadIndexedDBAsync(dummy,"",null);
+        $mod.DataSetApplyUpdatesCallbacks(dummy,"",null,null);
+        $mod.RunAfterDelay(0,null);
+        $mod.OnNetworkStatusChange(null,null);
+        $mod.ScrollToElement("",true);
+        $mod.InspectFragmentsReport("",0);
+        $mod.I18nGetMessagesJSON("");
         $mod.RpcSetBaseUrl("");
         $mod.RpcSetToken("");
         $mod.RpcClearToken();
@@ -11412,8 +11575,6 @@ rtl.module("uAppVersion",["System"],function () {
   "use strict";
   var $mod = this;
   this.APP_VERSION = "0.1.0";
-  this.APP_AUTHOR = "BlaiseVue Core Team";
-  this.APP_BUILD_DATE = "2026-11-26";
 });
 rtl.module("uAppFooter",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
@@ -11423,7 +11584,7 @@ rtl.module("uAppFooter",["System","JS","Web","BVComponents","BVReactivity","BVSt
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '.app-footer {     padding: 16px 24px;     background: #ffffff;     border-top: 1px solid #e2e8f0;     color: #64748b;     font-size: 12px;     display: flex;     justify-content: space-between;     align-items: center;     margin-top: 40px;     transition: background 0.2s ease, border-color 0.2s ease;   }   .footer-dot {     margin: 0 8px;     color: #cbd5e1;   }   .footer-right strong {     color: #0f172a;   }   html[data-bs-theme="dark"] .app-footer, body.theme-dark .app-footer {     background: #1e293b;     border-top-color: rgba(255, 255, 255, 0.08);     color: #94a3b8;   }   html[data-bs-theme="dark"] .footer-right strong, body.theme-dark .footer-right strong {     color: #f8fafc;   }';
+    _styleEl.textContent = ".app-footer {     padding: 16px 24px;     background: var(--bv-surface);     border-top: 1px solid var(--bv-border);     color: var(--bv-text-muted);     font-size: 12px;     display: flex;     justify-content: space-between;     align-items: center;     margin-top: 40px;     transition: background 0.2s ease, border-color 0.2s ease;   }   .footer-dot {     margin: 0 8px;     color: var(--bv-border);   }   .footer-right strong {     color: var(--bv-text);   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <footer class="app-footer">' + '    <div class="footer-left">' + "      <span>BlaiseVue Framework &copy; 2026</span>" + '      <span class="footer-dot">&bull;</span>' + "      <span>100% Modern Object Pascal</span>" + "    </div>" + '    <div class="footer-right">' + '      <span class="status-item">Locale: <strong>{{ $i18n.locale.toUpperCase() }}</strong></span>' + '      <span class="footer-dot">&bull;</span>' + '      <span class="status-item">Theme: <strong>{{ $theme.current.toUpperCase() }}</strong></span>' + '      <span class="footer-dot">&bull;</span>' + '      <span class="status-item">Engine: <strong>Pas2JS & FPC</strong></span>' + "    </div>" + "  </footer>";
@@ -11440,13 +11601,13 @@ rtl.module("uAppHeader",["System","JS","Web","BVComponents","BVReactivity","BVSt
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '.app-header {     height: 64px;     background: #ffffff;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     padding: 0 24px;     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);     position: sticky;     top: 0;     z-index: 1020;     transition: background 0.2s ease, border-color 0.2s ease;   }   .header-left {     display: flex;     align-items: center;     gap: 16px;   }   .menu-toggle-btn {     background: #f1f5f9;     border: 1px solid #cbd5e1;     color: #334155;     font-size: 18px;     width: 38px;     height: 38px;     border-radius: 8px;     cursor: pointer;     display: flex;     align-items: center;     justify-content: center;     transition: background 0.15s ease, color 0.15s ease;   }   .menu-toggle-btn:hover {     background: #e2e8f0;     color: #0f172a;   }   .header-breadcrumb {     display: flex;     align-items: center;     gap: 8px;     font-size: 14px;   }   .crumb-app {     color: #64748b;     font-weight: 500;   }   .crumb-separator {     color: #94a3b8;   }   .crumb-current {     color: #0f172a;     font-weight: 600;   }   .header-right {     display: flex;     align-items: center;     gap: 12px;   }   .header-control-group {     display: flex;     align-items: center;     gap: 4px;   }   .ctrl-btn {     background: #f8fafc;     border: 1px solid #cbd5e1;     color: #334155;     padding: 6px 12px;     border-radius: 6px;     font-size: 13px;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .ctrl-btn:hover {     background: #e2e8f0;   }   .ctrl-btn.btn-active {     background: #10b981;     border-color: #10b981;     color: #ffffff;     font-weight: 600;   }   .theme-select {     background: #f8fafc;     border: 1px solid #cbd5e1;     color: #334155;     padding: 6px 10px;     border-radius: 6px;     font-size: 13px;     outline: none;     cursor: pointer;   }   .user-pill {     display: flex;     align-items: center;     gap: 8px;     background: #f1f5f9;     border: 1px solid #cbd5e1;     color: #0f172a;     padding: 6px 14px;     border-radius: 20px;     text-decoration: none;     font-size: 13px;     font-weight: 600;     transition: background 0.15s ease, border-color 0.15s ease;   }   .user-pill:hover {     background: #e2e8f0;     border-color: #94a3b8;   }    /* Dark mode overrides */   html[data-bs-theme="dark"] .app-header, body.theme-dark .app-header {     background: #1e293b;     border-bottom-color: rgba(255, 255, 255, 0.1);   }   html[data-bs-theme="dark"] .crumb-current, body.theme-dark .crumb-current {     color: #f8fafc;   }   html[data-bs-theme="dark"] .menu-toggle-btn, body.theme-dark .menu-toggle-btn {     background: #334155;     border-color: #475569;     color: #f8fafc;   }   html[data-bs-theme="dark"] .ctrl-btn, body.theme-dark .ctrl-btn {     background: #334155;     border-color: #475569;     color: #f8fafc;   }   html[data-bs-theme="dark"] .theme-select, body.theme-dark .theme-select {     background: #334155;     border-color: #475569;     color: #f8fafc;   }   html[data-bs-theme="dark"] .user-pill, body.theme-dark .user-pill {     background: #334155;     border-color: #475569;     color: #f8fafc;   }    @media (max-width: 768px) {     .theme-select-wrapper {       display: none;     }     .crumb-current {       display: none;     }   }';
+    _styleEl.textContent = ".app-header {     height: 64px;     background: var(--bv-surface);     border-bottom: 1px solid var(--bv-border);     display: flex;     justify-content: space-between;     align-items: center;     padding: 0 24px;     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);     position: sticky;     top: 0;     z-index: 1020;     transition: background 0.2s ease, border-color 0.2s ease;   }   .header-left {     display: flex;     align-items: center;     gap: 16px;   }   .menu-toggle-btn {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     font-size: 18px;     width: 38px;     height: 38px;     border-radius: 8px;     cursor: pointer;     display: flex;     align-items: center;     justify-content: center;     transition: background 0.15s ease, color 0.15s ease;   }   .menu-toggle-btn:hover {     background: var(--bv-hover-bg);   }   .header-breadcrumb {     display: flex;     align-items: center;     gap: 8px;     font-size: 14px;   }   .crumb-app {     color: var(--bv-text-muted);     font-weight: 500;   }   .crumb-separator {     color: var(--bv-text-muted);   }   .crumb-current {     color: var(--bv-text);     font-weight: 600;   }   .header-right {     display: flex;     align-items: center;     gap: 12px;   }   .header-control-group {     display: flex;     align-items: center;     gap: 4px;   }   .ctrl-btn {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     padding: 6px 12px;     border-radius: 6px;     font-size: 13px;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .ctrl-btn:hover {     background: var(--bv-hover-bg);   }   .theme-select {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     padding: 6px 10px;     border-radius: 6px;     font-size: 13px;     outline: none;     cursor: pointer;   }   .user-pill {     display: flex;     align-items: center;     gap: 8px;     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     padding: 6px 14px;     border-radius: 20px;     text-decoration: none;     font-size: 13px;     font-weight: 600;     transition: background 0.15s ease, border-color 0.15s ease;   }   .user-pill:hover {     background: var(--bv-hover-bg);   }    @media (max-width: 768px) {   .theme-select-wrapper {     display: none;   }   .crumb-current {     display: none;   }   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <header class="app-header">' + '    <div class="header-left">' + '      <button class="menu-toggle-btn" @click="toggleSidebar" title="Toggle Navigation Menu">' + "        ☰" + "      </button>" + '      <div class="header-breadcrumb">' + '        <span class="crumb-app">BlaiseVue</span>' + '        <span class="crumb-separator">/</span>' + '        <strong class="crumb-current">Enterprise Showcase</strong>' + "      </div>" + "    </div>" + "" + '    <div class="header-right">' + "      <!-- Language Switcher -->" + '      <div class="header-control-group lang-group">' + "        <button " + '          class="ctrl-btn lang-btn" ' + '          :class="{ \'btn-active\': $i18n.locale === \'en\' }" ' + '          @click="$setLocale(\'en\')" ' + '          title="Switch to English">' + "          🇺🇸 EN" + "        </button>" + "        <button " + '          class="ctrl-btn lang-btn" ' + '          :class="{ \'btn-active\': $i18n.locale === \'pt\' }" ' + '          @click="$setLocale(\'pt\')" ' + '          title="Mudar para Português">' + "          🇧🇷 PT" + "        </button>" + "      </div>" + "" + "      <!-- Quick Dark/Light Toggle -->" + "      <button " + '        class="ctrl-btn theme-toggle-btn" ' + '        @click="$theme.toggle()" ' + '        :title="$theme.isDark ? \'Switch to Light Theme\' : \'Switch to Dark Theme\'">' + '        <span v-if="$theme.isDark">☀️ Light</span>' + '        <span v-if="!$theme.isDark">🌙 Dark</span>' + "      </button>" + "" + "      <!-- Bootswatch Theme Dropdown -->" + '      <div class="header-control-group theme-select-wrapper">' + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)" title="Choose Bootswatch Theme">' + '          <option value="flatly">Flatly (Clean Light)</option>' + '          <option value="darkly">Darkly (Modern Dark)</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + "" + "      <!-- User Auth Pill -->" + '      <a href="#/login" class="user-pill" title="Authentication Status">' + '        <span class="user-icon">👤</span>' + '        <span class="user-name">{{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Sign In\' }}</span>' + "      </a>" + "    </div>" + "  </header>";
+    comp["template"] = '  <header class="app-header">' + '    <div class="header-left">' + '      <button class="menu-toggle-btn" @click="toggleSidebar" title="Toggle Navigation Menu">' + "        ☰" + "      </button>" + '      <div class="header-breadcrumb">' + '        <span class="crumb-app">BlaiseVue</span>' + '        <span class="crumb-separator">/</span>' + '        <strong class="crumb-current">Enterprise Showcase</strong>' + "      </div>" + "    </div>" + "" + '    <div class="header-right">' + "      <!-- Quick Dark/Light Toggle -->" + "      <button" + '        class="ctrl-btn theme-toggle-btn"' + '        @click="$theme.toggle()"' + '        :title="$theme.isDark ? \'Switch to Light Theme\' : \'Switch to Dark Theme\'">' + '        <span v-if="$theme.isDark">☀️ Light</span>' + '        <span v-if="!$theme.isDark">🌙 Dark</span>' + "      </button>" + "" + "      <!-- Bootswatch Theme Dropdown -->" + '      <div class="header-control-group theme-select-wrapper">' + '        <select class="theme-select" :value="$theme.current" @change="onThemeSelect($event)" title="Choose Bootswatch Theme">' + '          <option value="flatly">Flatly (Clean Light)</option>' + '          <option value="darkly">Darkly (Modern Dark)</option>' + '          <option value="cosmo">Cosmo</option>' + '          <option value="lux">Lux</option>' + '          <option value="zephyr">Zephyr</option>' + '          <option value="cyborg">Cyborg</option>' + '          <option value="solar">Solar</option>' + '          <option value="vapor">Vapor</option>' + '          <option value="pulse">Pulse</option>' + "        </select>" + "      </div>" + "" + "      <!-- User Auth Pill -->" + '      <a href="#/login" class="user-pill" title="Authentication Status">' + '        <span class="user-icon">👤</span>' + '        <span class="user-name">{{ ($auth && $auth.isAuthenticated) ? $auth.user.name : \'Sign In\' }}</span>' + "      </a>" + "    </div>" + "  </header>";
     m = new Object();
     m["toggleSidebar"] = function (_this) {
-      if (typeof this.$emit === 'function') this.$emit('toggle-sidebar');
+      pas.BVPascalDX.Emit(_this,"toggle-sidebar",null);
     };
     m["onThemeSelect"] = function (_this, e) {
       var sel = "";
@@ -11465,10 +11626,10 @@ rtl.module("uAppSidebar",["System","JS","Web","BVComponents","BVReactivity","BVS
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".app-sidebar {     position: relative;     z-index: 1040;   }   .sidebar-container {     width: 260px;     height: 100vh;     position: fixed;     top: 0;     left: 0;     background: #1e293b;     color: #f8fafc;     display: flex;     flex-direction: column;     border-right: 1px solid rgba(255, 255, 255, 0.08);     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);     transition: transform 0.3s ease;     overflow-y: auto;     z-index: 1050;   }   .sidebar-backdrop {     display: none;     position: fixed;     top: 0;     left: 0;     width: 100vw;     height: 100vh;     background: rgba(0, 0, 0, 0.5);     z-index: 1045;   }   .sidebar-brand {     padding: 18px 20px;     display: flex;     justify-content: space-between;     align-items: center;     border-bottom: 1px solid rgba(255, 255, 255, 0.08);     background: #0f172a;   }   .brand-link {     display: flex;     align-items: center;     gap: 12px;     text-decoration: none;     color: #ffffff;   }   .brand-logo {     display: block;   }   .brand-title {     display: block;     font-size: 17px;     font-weight: 700;     color: #42b883;     letter-spacing: -0.01em;   }   .brand-subtitle {     display: block;     font-size: 11px;     color: #94a3b8;     text-transform: uppercase;     letter-spacing: 0.04em;   }   .close-btn {     display: none;     background: transparent;     border: none;     color: #94a3b8;     font-size: 18px;     cursor: pointer;     padding: 4px 8px;     border-radius: 4px;   }   .close-btn:hover {     color: #ffffff;     background: rgba(255, 255, 255, 0.1);   }   .sidebar-nav {     flex: 1;     padding: 16px 12px;   }   .nav-section {     margin-bottom: 20px;   }   .section-title {     display: block;     font-size: 11px;     font-weight: 700;     color: #64748b;     text-transform: uppercase;     letter-spacing: 0.08em;     padding: 4px 12px 8px 12px;   }   .nav-item {     display: flex;     align-items: center;     gap: 10px;     padding: 8px 12px;     color: #cbd5e1;     text-decoration: none;     font-size: 13.5px;     font-weight: 500;     border-radius: 6px;     transition: background 0.15s ease, color 0.15s ease;     margin-bottom: 2px;   }   .nav-item:hover {     background: rgba(66, 184, 131, 0.12);     color: #42b883;   }   .nav-icon {     font-size: 16px;     width: 20px;     text-align: center;   }   .nav-label {     flex: 1;   }   .link-ext {     font-size: 12px;     color: #64748b;   }   .sidebar-footer {     padding: 14px 20px;     border-top: 1px solid rgba(255, 255, 255, 0.08);     background: #0f172a;     font-size: 12px;     color: #64748b;     text-align: center;   }   .sidebar-footer strong {     color: #94a3b8;   }    /* Responsive Mobile Offcanvas Drawer */   @media (max-width: 992px) {     .sidebar-container {       transform: translateX(-100%);     }     .app-sidebar.sidebar-open .sidebar-container {       transform: translateX(0);     }     .app-sidebar.sidebar-open .sidebar-backdrop {       display: block;     }     .close-btn {       display: block;     }   }";
+    _styleEl.textContent = ".app-sidebar {     position: relative;     z-index: 1040;   }   .sidebar-container {     width: 260px;     height: 100vh;     position: fixed;     top: 0;     left: 0;     background: #1e293b;     color: #f8fafc;     display: flex;     flex-direction: column;     border-right: 1px solid rgba(255, 255, 255, 0.08);     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);     transition: transform 0.3s ease;     overflow-y: auto;     z-index: 1050;   }   .sidebar-backdrop {     display: none;     position: fixed;     top: 0;     left: 0;     width: 100vw;     height: 100vh;     background: rgba(0, 0, 0, 0.5);     z-index: 1045;   }   .sidebar-brand {     padding: 18px 20px;     display: flex;     justify-content: space-between;     align-items: center;     border-bottom: 1px solid rgba(255, 255, 255, 0.08);     background: #0f172a;   }   .brand-link {     display: flex;     align-items: center;     gap: 12px;     text-decoration: none;     color: #ffffff;   }   .brand-logo {     display: block;   }   .brand-title {     display: block;     font-size: 17px;     font-weight: 700;     color: #42b883;     letter-spacing: -0.01em;   }   .brand-subtitle {     display: block;     font-size: 11px;     color: #94a3b8;     text-transform: uppercase;     letter-spacing: 0.04em;   }   .close-btn {     display: none;     background: transparent;     border: none;     color: #94a3b8;     font-size: 18px;     cursor: pointer;     padding: 4px 8px;     border-radius: 4px;   }   .close-btn:hover {     color: #ffffff;     background: rgba(255, 255, 255, 0.1);   }   .sidebar-nav {     flex: 1;     padding: 16px 12px;   }   .nav-section {     margin-bottom: 20px;   }   .section-title {     display: block;     font-size: 11px;     font-weight: 700;     color: #64748b;     text-transform: uppercase;     letter-spacing: 0.08em;     padding: 4px 12px 8px 12px;   }   .nav-item {     display: flex;     align-items: center;     gap: 10px;     padding: 8px 12px;     color: #cbd5e1;     text-decoration: none;     font-size: 13.5px;     font-weight: 500;     border-radius: 6px;     transition: background 0.15s ease, color 0.15s ease;     margin-bottom: 2px;   }   .nav-item:hover {     background: rgba(66, 184, 131, 0.12);     color: #42b883;   }   .nav-icon {     font-size: 16px;     width: 20px;     text-align: center;   }   .nav-label {     flex: 1;   }   .link-ext {     font-size: 12px;     color: #64748b;   }   .sidebar-footer {     padding: 14px 20px;     border-top: 1px solid rgba(255, 255, 255, 0.08);     background: #0f172a;     font-size: 12px;     color: #64748b;     text-align: center;   }   .sidebar-footer strong {     color: #94a3b8;   }    .app-sidebar.sidebar-collapsed .sidebar-container {     transform: translateX(-100%);   }    /* Responsive Mobile Offcanvas Drawer */   @media (max-width: 992px) {     .sidebar-container {       transform: translateX(-100%);     }     .app-sidebar.sidebar-open .sidebar-container {       transform: translateX(0) !important;     }     .app-sidebar.sidebar-open .sidebar-backdrop {       display: block;     }     .close-btn {       display: block;     }   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <aside class="app-sidebar" :class="{ \'sidebar-open\': isOpen }">' + '    <div class="sidebar-backdrop" @click="closeSidebar"></div>' + '    <div class="sidebar-container">' + '      <div class="sidebar-brand">' + '        <a href="#/" class="brand-link" @click="closeSidebar">' + '          <img src="logo-transparent.png" alt="BlaiseVue" width="32" height="32" class="brand-logo" />' + '          <div class="brand-text">' + '            <span class="brand-title">BlaiseVue</span>' + '            <span class="brand-subtitle">Showcase & Lab</span>' + "          </div>" + "        </a>" + '        <button class="close-btn" @click="closeSidebar" title="Close Menu">✕</button>' + "      </div>" + "" + '      <nav class="sidebar-nav">' + "        <!-- 1. OVERVIEW & CORE -->" + '        <div class="nav-section">' + '          <span class="section-title">Overview & Core</span>' + '          <a href="#/" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🏠</span>' + '            <span class="nav-label">Dashboard</span>' + "          </a>" + '          <a href="#/about" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">ℹ️</span>' + '            <span class="nav-label">About Framework</span>' + "          </a>" + '          <a href="#/fragments" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🧩</span>' + '            <span class="nav-label">Fragments (Multi-Root)</span>' + "          </a>" + '          <a href="#/pro" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">⚡</span>' + '            <span class="nav-label">Pro Features & FLIP</span>' + "          </a>" + "        </div>" + "" + "        <!-- 2. UI COMPONENT KITS -->" + '        <div class="nav-section">' + '          <span class="section-title">UI Component Kits</span>' + '          <a href="#/bootstrap" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🎨</span>' + '            <span class="nav-label">BlaiseUI (Bootstrap 5)</span>' + "          </a>" + '          <a href="#/charts" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📊</span>' + '            <span class="nav-label">Charts & Graphs</span>' + "          </a>" + '          <a href="#/reports" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📄</span>' + '            <span class="nav-label">Vector PDF & Reports</span>' + "          </a>" + '          <a href="#/showcase" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">✨</span>' + '            <span class="nav-label">Widget Showcase</span>' + "          </a>" + "        </div>" + "" + "        <!-- 3. ENTERPRISE DATA & FULL-STACK -->" + '        <div class="nav-section">' + '          <span class="section-title">Enterprise Data & SOA</span>' + '          <a href="#/dataset" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">💾</span>' + '            <span class="nav-label">TBVDataSet & LiveBindings</span>' + "          </a>" + '          <a href="#/customers" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">⚡</span>' + '            <span class="nav-label">Type-Safe RPC (mORMot 2)</span>' + "          </a>" + '          <a href="#/products" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📦</span>' + '            <span class="nav-label">Product Catalog</span>' + "          </a>" + '          <a href="#/login" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🔐</span>' + '            <span class="nav-label">JWT Authentication</span>' + "          </a>" + "        </div>" + "" + "        <!-- 4. MULTIPLATFORM & DEVICES -->" + '        <div class="nav-section">' + '          <span class="section-title">Multiplatform</span>' + '          <a href="#/mobile" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📱</span>' + '            <span class="nav-label">Mobile Kit (Ionic 8)</span>' + "          </a>" + "        </div>" + "" + "        <!-- 5. ARCHITECTURE & ADVANCED -->" + '        <div class="nav-section">' + '          <span class="section-title">Architecture & Tools</span>' + '          <a href="#/form" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📋</span>' + '            <span class="nav-label">Form Validation</span>' + "          </a>" + '          <a href="#/i18n" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🌐</span>' + '            <span class="nav-label">i18n Laboratory</span>' + "          </a>" + '          <a href="docs/index.html" class="nav-item external-link" target="_blank" @click="closeSidebar">' + '            <span class="nav-icon">📚</span>' + '            <span class="nav-label">Technical Manuals</span>' + '            <span class="link-ext">↗</span>' + "          </a>" + '          <a href="/api/docs" class="nav-item external-link" target="_blank" @click="closeSidebar">' + '            <span class="nav-icon">📜</span>' + '            <span class="nav-label">Swagger API Explorer</span>' + '            <span class="link-ext">↗</span>' + "          </a>" + "        </div>" + "      </nav>" + "" + '      <div class="sidebar-footer">' + '        <span class="footer-powered">Powered by <strong>Object Pascal</strong></span>' + "      </div>" + "    </div>" + "  </aside>";
+    comp["template"] = '  <aside class="app-sidebar" :class="{ \'sidebar-open\': isOpen, \'sidebar-collapsed\': isCollapsed }">' + '    <div class="sidebar-backdrop" @click="closeSidebar"></div>' + '    <div class="sidebar-container">' + '      <div class="sidebar-brand">' + '        <a href="#/" class="brand-link" @click="closeSidebar">' + '          <img src="logo-transparent.png" alt="BlaiseVue" width="32" height="32" class="brand-logo" />' + '          <div class="brand-text">' + '            <span class="brand-title">BlaiseVue</span>' + '            <span class="brand-subtitle">Showcase & Lab</span>' + "          </div>" + "        </a>" + '        <button class="close-btn" @click="closeSidebar" title="Close Menu">✕</button>' + "      </div>" + "" + '      <nav class="sidebar-nav">' + "        <!-- 1. OVERVIEW & CORE -->" + '        <div class="nav-section">' + '          <span class="section-title">Overview & Core</span>' + '          <a href="#/" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🏠</span>' + '            <span class="nav-label">Dashboard</span>' + "          </a>" + '          <a href="#/about" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">ℹ️</span>' + '            <span class="nav-label">About Framework</span>' + "          </a>" + '          <a href="#/fragments" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🧩</span>' + '            <span class="nav-label">Fragments (Multi-Root)</span>' + "          </a>" + '          <a href="#/pro" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">⚡</span>' + '            <span class="nav-label">Pro Features & FLIP</span>' + "          </a>" + "        </div>" + "" + "        <!-- 2. UI COMPONENT KITS -->" + '        <div class="nav-section">' + '          <span class="section-title">UI Component Kits</span>' + '          <a href="#/bootstrap" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🎨</span>' + '            <span class="nav-label">BlaiseUI (Bootstrap 5)</span>' + "          </a>" + '          <a href="#/charts" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📊</span>' + '            <span class="nav-label">Charts & Graphs</span>' + "          </a>" + '          <a href="#/reports" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📄</span>' + '            <span class="nav-label">Vector PDF & Reports</span>' + "          </a>" + '          <a href="#/showcase" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">✨</span>' + '            <span class="nav-label">Widget Showcase</span>' + "          </a>" + "        </div>" + "" + "        <!-- 3. ENTERPRISE DATA & FULL-STACK -->" + '        <div class="nav-section">' + '          <span class="section-title">Enterprise Data & SOA</span>' + '          <a href="#/dataset" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">💾</span>' + '            <span class="nav-label">TBVDataSet & LiveBindings</span>' + "          </a>" + '          <a href="#/customers" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">⚡</span>' + '            <span class="nav-label">Type-Safe RPC (mORMot 2)</span>' + "          </a>" + '          <a href="#/products" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📦</span>' + '            <span class="nav-label">Product Catalog</span>' + "          </a>" + '          <a href="#/login" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🔐</span>' + '            <span class="nav-label">JWT Authentication</span>' + "          </a>" + "        </div>" + "" + "        <!-- 4. MULTIPLATFORM & DEVICES -->" + '        <div class="nav-section">' + '          <span class="section-title">Multiplatform</span>' + '          <a href="#/mobile" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📱</span>' + '            <span class="nav-label">Mobile Kit (Ionic 8)</span>' + "          </a>" + "        </div>" + "" + "        <!-- 5. ARCHITECTURE & ADVANCED -->" + '        <div class="nav-section">' + '          <span class="section-title">Architecture & Tools</span>' + '          <a href="#/form" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">📋</span>' + '            <span class="nav-label">Form Validation</span>' + "          </a>" + '          <a href="#/i18n" class="nav-item" @click="closeSidebar">' + '            <span class="nav-icon">🌐</span>' + '            <span class="nav-label">i18n Laboratory</span>' + "          </a>" + '          <a href="docs/index.html" class="nav-item external-link" target="_blank" @click="closeSidebar">' + '            <span class="nav-icon">📚</span>' + '            <span class="nav-label">Technical Manuals</span>' + '            <span class="link-ext">↗</span>' + "          </a>" + '          <a href="/api/docs" class="nav-item external-link" target="_blank" @click="closeSidebar">' + '            <span class="nav-icon">📜</span>' + '            <span class="nav-label">Swagger API Explorer</span>' + '            <span class="link-ext">↗</span>' + "          </a>" + "        </div>" + "      </nav>" + "" + '      <div class="sidebar-footer">' + '        <span class="footer-powered">Powered by <strong>Object Pascal</strong></span>' + "      </div>" + "    </div>" + "  </aside>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -11480,9 +11641,11 @@ rtl.module("uAppSidebar",["System","JS","Web","BVComponents","BVReactivity","BVS
     comp["defaultProps"] = new Object();
     comp["props"].push("isOpen");
     comp["defaultProps"]["isOpen"] = false;
+    comp["props"].push("isCollapsed");
+    comp["defaultProps"]["isCollapsed"] = true;
     m = new Object();
     m["closeSidebar"] = function (_this) {
-      if (typeof this.$emit === 'function') this.$emit('close');
+      pas.BVPascalDX.Emit(_this,"close",null);
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("app-sidebar",comp);
@@ -11496,10 +11659,10 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bv-card { border-radius: 12px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; border: 1px solid #eee; }   .bv-card-header { background: #f8f9fa; padding: 12px 20px; border-bottom: 1px solid #eee; color: #2c3e50; font-size: 16px; }   .bv-card-body { padding: 20px; color: #444; }   .bv-card-footer { background: #fdfdfd; padding: 10px 20px; font-size: 12px; color: #95a5a6; border-top: 1px solid #f0f0f0; }";
+    _styleEl.textContent = ".bv-card { border-radius: 12px; background: var(--bv-surface); box-shadow: var(--bv-shadow); margin-bottom: 20px; overflow: hidden; border: 1px solid var(--bv-border); color: var(--bv-text); }   .bv-card-header { background: var(--bv-surface-subtle); padding: 12px 20px; border-bottom: 1px solid var(--bv-border); color: var(--bv-text); font-size: 16px; font-weight: 600; }   .bv-card-body { padding: 20px; color: var(--bv-text); }   .bv-card-footer { background: var(--bv-surface-subtle); padding: 10px 20px; font-size: 12px; color: var(--bv-text-muted); border-top: 1px solid var(--bv-border); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="bv-card">' + '    <div class="bv-card-header">' + '       <slot name="header"><strong>{{ titulo }}</strong></slot>' + "    </div>" + '    <div class="bv-card-body">' + "       <!-- SLOT: O buraco mágico para conteúdo externo -->" + "       <slot></slot>" + "    </div>" + '    <div class="bv-card-footer">' + '       <slot name="footer"></slot>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bv-card">' + '    <div class="bv-card-header">' + '      <slot name="header"><strong>{{ titulo }}</strong></slot>' + "    </div>" + '    <div class="bv-card-body">' + "      <!-- SLOT: O buraco mágico para conteúdo externo -->" + "      <slot></slot>" + "    </div>" + '    <div class="bv-card-footer">' + '      <slot name="footer"></slot>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -11515,66 +11678,6 @@ rtl.module("uCard",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     pas.BVComponents.RegisterComponent("card",comp);
   };
 });
-rtl.module("uCommentQuotes",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uCommentQuotes = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="comment-quotes">' + '    <span class="log">{{ log }}</span>' + '    <button class="run" @click="runAll">Run</button>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["log"] = "";
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["mark"] = function (_this, What) {
-      _this["log"] = "" + _this["log"] + What + ";";
-    };
-    m["jsLineComment"] = function (_this) {
-      // the chart's choice
-      var x = 1;
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["1"]);
-    };
-    m["jsBlockComment"] = function (_this) {
-      /* a block */
-      var x = 2;
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["2"]);
-    };
-    m["jsDoubleQuoted"] = function (_this) {
-      var x = "it's";
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["3"]);
-    };
-    m["jsEscapedQuote"] = function (_this) {
-      var x = 'it\'s';
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["4"]);
-    };
-    m["pascalLineComment"] = function (_this) {
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["5"]);
-    };
-    m["pascalBraceComment"] = function (_this) {
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["6"]);
-    };
-    m["pascalStarComment"] = function (_this) {
-      pas.BVPascalDX.CallMethod$1(_this,"mark",["7"]);
-    };
-    m["runAll"] = function (_this) {
-      pas.BVPascalDX.CallMethod(_this,"jsLineComment");
-      pas.BVPascalDX.CallMethod(_this,"jsBlockComment");
-      pas.BVPascalDX.CallMethod(_this,"jsDoubleQuoted");
-      pas.BVPascalDX.CallMethod(_this,"jsEscapedQuote");
-      pas.BVPascalDX.CallMethod(_this,"pascalLineComment");
-      pas.BVPascalDX.CallMethod(_this,"pascalBraceComment");
-      pas.BVPascalDX.CallMethod(_this,"pascalStarComment");
-    };
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("comment-quotes",comp);
-  };
-});
 rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11583,7 +11686,7 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".counter-box { display: inline-block; border: 2px solid #42b883; border-radius: 12px; padding: 16px; margin: 8px; text-align: center; background: #f8fffe; }   .counter-label { font-weight: bold; color: #2c3e50; display: block; margin-bottom: 8px; }   .counter-controls { display: flex; align-items: center; gap: 12px; justify-content: center; }   .counter-value { font-size: 28px; font-weight: bold; color: #42b883; min-width: 40px; }   .counter-controls button { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #42b883; background: white; color: #42b883; font-size: 18px; cursor: pointer; font-weight: bold; }   .counter-controls button:hover { background: #42b883; color: white; }   .counter-reset { margin-top: 8px; padding: 4px 12px; border: 1px solid #e74c3c; background: white; color: #e74c3c; border-radius: 4px; cursor: pointer; font-size: 12px; }   .counter-reset:hover { background: #e74c3c; color: white; }";
+    _styleEl.textContent = ".counter-box { display: inline-block; border: 2px solid #42b883; border-radius: 12px; padding: 16px; margin: 8px; text-align: center; background: var(--bv-surface); color: var(--bv-text); }   .counter-label { font-weight: bold; color: var(--bv-text); display: block; margin-bottom: 8px; }   .counter-controls { display: flex; align-items: center; gap: 12px; justify-content: center; }   .counter-value { font-size: 28px; font-weight: bold; color: #42b883; min-width: 40px; }   .counter-controls button { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #42b883; background: var(--bv-surface-subtle); color: #42b883; font-size: 18px; cursor: pointer; font-weight: bold; }   .counter-controls button:hover { background: #42b883; color: white; }   .counter-reset { margin-top: 8px; padding: 4px 12px; border: 1px solid #e74c3c; background: transparent; color: #e74c3c; border-radius: 4px; cursor: pointer; font-size: 12px; }   .counter-reset:hover { background: #e74c3c; color: white; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <div class="counter-box">' + '    <span class="counter-label">{{ label }}</span>' + '    <div class="counter-controls">' + '      <button @click="menos">-</button>' + '      <span class="counter-value">{{ valor }}</span>' + '      <button @click="mais">+</button>' + "    </div>" + '    <button class="counter-reset" @click="zerar">Zerar</button>' + "  </div>";
@@ -11598,13 +11701,13 @@ rtl.module("uCounter",["System","JS","Web","BVComponents","BVReactivity","BVStor
     };
     m = new Object();
     m["mais"] = function (_this) {
-      _this["valor"] = rtl.trunc(_this["valor"]) + 1;
+      _this.valor += 1;
     };
     m["menos"] = function (_this) {
-      _this["valor"] = rtl.trunc(_this["valor"]) - 1;
+      _this.valor -= 1;
     };
     m["zerar"] = function (_this) {
-      _this["valor"] = 0;
+      _this.valor = 0;
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("counter",comp);
@@ -11669,49 +11772,6 @@ rtl.module("uInfoCard",["System","JS","Web","BVComponents","BVReactivity","BVSto
     pas.BVComponents.RegisterComponent("info-card",comp);
   };
 });
-rtl.module("uMemberBodies",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uMemberBodies = function () {
-    var comp = null;
-    var m = null;
-    comp = new Object();
-    comp["template"] = '  <div class="member-bodies">' + '    <span class="kept">{{ kept }}</span>' + '    <span class="second">{{ second }}</span>' + '    <span class="twice">{{ twice(21) }}</span>' + '    <span class="hits">{{ hits }}</span>' + '    <button class="go" @click="go">Go</button>' + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["hits"] = 0;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    m["twice"] = function (_this, n) {
-      var Result = 0;
-      Result = n * 2;
-      return Result;
-    };
-    m["go"] = function (_this) {
-      // a procedure named in a JS comment
-      var step = function (x) { return x + 1; };
-      window.__bvMemberBodiesStep = step(0);
-      _this["hits"] = rtl.trunc(_this["hits"]) + 1;
-    };
-    comp["methods"] = m;
-    comp["computed"] = new Object();
-    comp["computed"]["kept"] = function (_this) {
-      var Result = undefined;
-      Result = [1, 2, 3].filter(function (x) { return x > 1; }).length;
-      return Result;
-    };
-    comp["computed"]["second"] = function (_this) {
-      var Result = undefined;
-      Result = "ok";
-      return Result;
-    };
-    pas.BVComponents.RegisterComponent("member-bodies",comp);
-  };
-});
 rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
@@ -11720,7 +11780,7 @@ rtl.module("uStatPills",["System","JS","Web","BVComponents","BVReactivity","BVSt
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".frag-grid-label { padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; color: #334155; transition: all 0.2s; }   .frag-grid-value { padding: 12px 18px; background: #0f172a; color: #38bdf8; border-radius: 8px; font-weight: 800; font-family: 'Consolas', monospace; text-align: right; display: flex; align-items: center; justify-content: flex-end; }   .frag-highlight-root { background: #ecfdf5 !important; border-color: #10b981 !important; color: #065f46 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }";
+    _styleEl.textContent = ".frag-grid-label { padding: 12px 16px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; font-weight: 600; color: var(--bv-text); transition: all 0.2s; }   .frag-grid-value { padding: 12px 18px; background: #0f172a; color: #38bdf8; border-radius: 8px; font-weight: 800; font-family: 'Consolas', monospace; text-align: right; display: flex; align-items: center; justify-content: flex-end; border: 1px solid var(--bv-border); }   .frag-highlight-root { background: rgba(16, 185, 129, 0.14) !important; border-color: #10b981 !important; color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <div class="frag-grid-label">{{ label }}</div>' + '  <div class="frag-grid-value">{{ metric }}</div>';
@@ -11750,7 +11810,7 @@ rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVS
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".frag-cell-code code { background: #eef2ff; color: #4f46e5; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; }   .frag-cell-name { color: #1e293b; }   .frag-status-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #dcfce7; color: #15803d; }   .clickable-status-cell { cursor: pointer; transition: background 0.2s; }   .clickable-status-cell:hover { background: #f0fdf4; }";
+    _styleEl.textContent = ".frag-cell-code code { background: rgba(99, 102, 241, 0.14); color: #6366f1; padding: 3px 8px; border-radius: 4px; font-weight: 700; font-size: 12px; }   .frag-cell-name { color: var(--bv-text); }   .frag-status-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: rgba(16, 185, 129, 0.16); color: #10b981; }   .clickable-status-cell { cursor: pointer; transition: background 0.2s; }   .clickable-status-cell:hover { background: var(--bv-hover-bg); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <td class="frag-cell-code"><code>{{ code }}</code></td>' + '  <td class="frag-cell-name"><strong>{{ name }}</strong></td>' + '  <td class="frag-cell-status" b-bind="$attrs">' + '    <span class="frag-status-badge">{{ status }}</span>' + "  </td>";
@@ -11774,34 +11834,7 @@ rtl.module("uTableCells",["System","JS","Web","BVComponents","BVReactivity","BVS
     pas.BVComponents.RegisterComponent("table-cells",comp);
   };
 });
-rtl.module("uVersionCard",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","uAppVersion"],function () {
-  "use strict";
-  var $mod = this;
-  this.Register_uVersionCard = function () {
-    var comp = null;
-    var m = null;
-    var _styleEl = null;
-    _styleEl = document.createElement("style");
-    _styleEl.textContent = ".version-card {     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);     color: #f8fafc;     border-radius: 12px;     padding: 20px;     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);     border: 1px solid rgba(255, 255, 255, 0.1);     margin-bottom: 24px;     transition: transform 0.2s ease, box-shadow 0.2s ease;   }   .version-card:hover {     transform: translateY(-2px);     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);   }   .version-header {     display: flex;     justify-content: space-between;     align-items: center;     border-bottom: 1px solid rgba(255, 255, 255, 0.1);     padding-bottom: 14px;     margin-bottom: 16px;   }   .version-brand {     display: flex;     align-items: center;     gap: 12px;   }   .version-icon {     font-size: 28px;   }   .version-title {     margin: 0;     font-size: 18px;     font-weight: 700;     color: #ffffff;     letter-spacing: -0.01em;   }   .version-subtitle {     font-size: 12px;     color: #94a3b8;     text-transform: uppercase;     letter-spacing: 0.05em;   }   .version-badge {     background: #10b981;     color: #ffffff;     padding: 6px 14px;     border-radius: 20px;     font-size: 14px;     font-weight: 700;     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);     letter-spacing: 0.02em;   }   .version-stat-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));     gap: 12px;     margin-bottom: 16px;   }   .stat-item {     background: rgba(255, 255, 255, 0.04);     padding: 10px 14px;     border-radius: 8px;     border: 1px solid rgba(255, 255, 255, 0.06);   }   .stat-label {     display: block;     font-size: 11px;     color: #94a3b8;     text-transform: uppercase;     margin-bottom: 4px;     letter-spacing: 0.04em;   }   .stat-value {     display: block;     font-size: 13px;     color: #f1f5f9;     font-weight: 600;   }   .version-tags {     display: flex;     flex-wrap: wrap;     gap: 8px;   }   .tag-pill {     font-size: 11px;     font-weight: 600;     padding: 4px 10px;     border-radius: 12px;   }   .tag-success {     background: rgba(16, 185, 129, 0.15);     color: #34d399;     border: 1px solid rgba(16, 185, 129, 0.3);   }   .tag-info {     background: rgba(56, 189, 248, 0.15);     color: #38bdf8;     border: 1px solid rgba(56, 189, 248, 0.3);   }   .tag-primary {     background: rgba(139, 92, 246, 0.15);     color: #a78bfa;     border: 1px solid rgba(139, 92, 246, 0.3);   }";
-    document.head.appendChild(_styleEl);
-    comp = new Object();
-    comp["template"] = '  <div class="version-card">' + '    <div class="version-header">' + '      <div class="version-brand">' + '        <span class="version-icon">🛡️</span>' + "        <div>" + '          <h4 class="version-title">BlaiseVue Framework</h4>' + '          <span class="version-subtitle">Enterprise Universal Release</span>' + "        </div>" + "      </div>" + '      <span class="version-badge">v{{ appVersion }}</span>' + "    </div>" + "" + '    <div class="version-body">' + '      <div class="version-stat-grid">' + '        <div class="stat-item">' + '          <span class="stat-label">Core Runtime</span>' + '          <strong class="stat-value">Pas2JS & FPC</strong>' + "        </div>" + '        <div class="stat-item">' + '          <span class="stat-label">Release Channel</span>' + '          <strong class="stat-value">Stable Enterprise</strong>' + "        </div>" + '        <div class="stat-item">' + '          <span class="stat-label">Architecture</span>' + '          <strong class="stat-value">Universal 4-Tier</strong>' + "        </div>" + '        <div class="stat-item">' + '          <span class="stat-label">Build Date</span>' + '          <strong class="stat-value">{{ buildDate }}</strong>' + "        </div>" + "      </div>" + "" + '      <div class="version-tags">' + '        <span class="tag-pill tag-success">⚡ AST FastEval (CSP Compliant)</span>' + '        <span class="tag-pill tag-info">💾 In-Browser TBVDataSet</span>' + '        <span class="tag-pill tag-primary">📱 Mobile & Desktop Ready</span>' + "      </div>" + "    </div>" + "  </div>";
-    comp["data"] = function () {
-      var Result = null;
-      var d = null;
-      d = new Object();
-      d["appVersion"] = pas.uAppVersion.APP_VERSION;
-      d["buildDate"] = pas.uAppVersion.APP_BUILD_DATE;
-      d["author"] = pas.uAppVersion.APP_AUTHOR;
-      Result = d;
-      return Result;
-    };
-    m = new Object();
-    comp["methods"] = m;
-    pas.BVComponents.RegisterComponent("version-card",comp);
-  };
-});
-rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet","uAppVersion"],function () {
+rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore","BVFSM","SysUtils","BVPascalDX","BVDataSet"],function () {
   "use strict";
   var $mod = this;
   this.Register_uAbout = function () {
@@ -11809,15 +11842,14 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".main-intro { text-align: center; background: #f8fafc; border-bottom: 2px solid #e2e8f0; }   .action-bar { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }      .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }   .resource-item { padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-align: center; }   .resource-item p { font-size: 12px; margin-top: 8px; color: #64748b; }    .tech-card-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }   .tech-card { padding: 20px; border-radius: 12px; color: white; display: flex; flex-direction: column; align-items: center; }   .fpc { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }   .pas2js { background: linear-gradient(135deg, #42b883 0%, #35495e 100%); }   .card-icon { font-size: 40px; margin-bottom: 10px; }    .lab-container { margin-top: 30px; border-top: 4px dashed #cbd5e1; padding-top: 20px; }   .lab-section { background: white; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }    .resource-list { list-style: none; padding: 0; margin-top: 15px; }   .resource-li { padding: 12px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }   .li-tag { font-size: 11px; padding: 2px 8px; background: #f1f5f9; border-radius: 10px; color: #64748b; margin-left: auto; }    .form-horizontal { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }   .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }   .result-box { padding: 15px; background: #f0fdf4; border-left: 4px solid #42b883; border-radius: 4px; }   .res-text { color: #166534; font-weight: bold; margin-left: 10px; }    .alert { padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: 500; }   .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }   .alert-warning { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }    .btn-sm { padding: 6px 12px; font-size: 12px; }    @media (max-width: 600px) {     .tech-card-pair, .form-horizontal { grid-template-columns: 1fr; }   }";
+    _styleEl.textContent = ".main-intro { text-align: center; background: var(--bv-surface-subtle); border-bottom: 2px solid var(--bv-border); }   .action-bar { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }    .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }   .resource-item { padding: 15px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; text-align: center; }   .resource-item p { font-size: 12px; margin-top: 8px; color: var(--bv-text-muted); }    .tech-card-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }   .tech-card { padding: 20px; border-radius: 12px; color: white; display: flex; flex-direction: column; align-items: center; }   .tech-card h3, .tech-card p { color: #ffffff; }   .fpc { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }   .pas2js { background: linear-gradient(135deg, #42b883 0%, #35495e 100%); }   .card-icon { font-size: 40px; margin-bottom: 10px; }    .lab-container { margin-top: 30px; border-top: 4px dashed var(--bv-border); padding-top: 20px; }   .lab-section { background: var(--bv-surface); border-radius: 15px; box-shadow: var(--bv-shadow); margin-bottom: 20px; }    .resource-list { list-style: none; padding: 0; margin-top: 15px; }   .resource-li { padding: 12px; border-bottom: 1px solid var(--bv-border); display: flex; align-items: center; gap: 10px; color: var(--bv-text); }   .li-tag { font-size: 11px; padding: 2px 8px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 10px; color: var(--bv-text-muted); margin-left: auto; }    .form-horizontal { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }   .form-control { width: 100%; padding: 10px; border: 1px solid var(--bv-border); border-radius: 6px; background: var(--bv-input-bg); color: var(--bv-text); }   .result-box { padding: 15px; background: rgba(66, 184, 131, 0.12); border-left: 4px solid #42b883; border-radius: 4px; color: var(--bv-text); }   .res-text { color: #10b981; font-weight: bold; margin-left: 10px; }    .alert { padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: 500; }   .alert-success { background: rgba(16, 185, 129, 0.14); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }   .alert-warning { background: rgba(245, 158, 11, 0.14); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); }    .btn-sm { padding: 6px 12px; font-size: 12px; }    @media (max-width: 600px) {   .tech-card-pair, .form-horizontal { grid-template-columns: 1fr; }   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section main-intro">' + '      <h1 class="section-title">About BlaiseVue Professional</h1>' + '      <p><strong>System Status:</strong> <span class="badge badge-green">Running via Pascal Power ⚔️</span></p>' + "      <p>Below you will find the analytical laboratory of all features implemented in the framework.</p>" + "      " + '      <div class="action-bar">' + '        <button class="btn-primary" @click="toggleDemos">' + "          {{ showDemos ? '🔐 Close Laboratory' : '🔓 Open Feature Laboratory' }}" + "        </button>" + '        <button class="btn-outline" @click="alertaTecnologia">Version: {{ versao }}</button>' + "      </div>" + "    </div>" + "" + "    <!-- Technology Table (Always Visible) -->" + '    <div class="section">' + '      <h2 class="section-title">🛡️ Technological Arsenal</h2>' + '      <div class="resource-grid">' + '        <div class="resource-item">' + '          <span class="badge badge-blue">Reactivity</span>' + "          <p>Dependency Tracking via JS Proxy</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-green">Compilation</span>' + "          <p>AOT Pascal to Optimized JS</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-orange">Routing</span>' + "          <p>SPA Router with History/Hash</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-gray">Store</span>' + "          <p>Global State Management (TBVStore)</p>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Engine Info Section -->" + '    <div class="section engine-section">' + '       <h2 class="section-title">⚙️ High Performance Engine</h2>' + '       <div class="tech-card-pair">' + '          <div class="tech-card fpc">' + '             <div class="card-icon">🏰</div>' + "             <h3>Free Pascal</h3>" + "             <p>The safety of strong typing.</p>" + "          </div>" + '          <div class="tech-card pas2js">' + '             <div class="card-icon">⚡</div>' + "             <h3>Pas2JS</h3>" + "             <p>The agility of the Web ecosystem.</p>" + "          </div>" + "       </div>" + "    </div>" + "" + "    <!-- THE LABORATORY (Feature Demos) -->" + '    <transition name="fade">' + '      <div v-if="showDemos" class="lab-container">' + "          <!-- 1. Reactive Iteration (b-for) -->" + '          <div class="section lab-section">' + '            <h2 class="section-title">🔬 Lab 01: Dynamic Iteration (b-for)</h2>' + "            <p>The items below are injected directly from Pascal into a reactive <code>TJSArray</code>.</p>" + '            <ul class="resource-list">' + '              <li v-for="item in tecnologias" class="resource-li">' + '                <span class="li-icon">🔹</span>' + "                <strong>{{ item.nome }}</strong> " + '                <span class="li-tag">{{ item.tipo }}</span>' + "              </li>" + "            </ul>" + '            <div style="margin-top: 15px;">' + '              <button class="btn-primary btn-sm" @click="addTec">➕ Inject New Tech</button>' + '              <button class="btn-danger btn-sm" @click="limparTecs">🗑️ Clear All</button>' + "            </div>" + "          </div>" + "" + "          <!-- 2. Two-Way and Computed -->" + '          <div class="section lab-section">' + '            <h2 class="section-title">📊 Lab 02: Computed & Two-Way</h2>' + '            <div class="form-horizontal">' + '              <div class="form-group">' + "                <label>First Name:</label>" + '                <input type="text" b-model="firstName" class="form-control">' + "              </div>" + '              <div class="form-group">' + "                <label>Last Name:</label>" + '                <input type="text" b-model="lastName" class="form-control">' + "              </div>" + "            </div>" + '            <div class="result-box">' + "              <strong>Computed Result:</strong> " + '              <span class="res-text">{{ perfilInfo }}</span>' + "            </div>" + "          </div>" + "" + "          <!-- 3. Conditional State (b-if) -->" + '          <div class="section lab-section">' + '            <h2 class="section-title">🎭 Lab 03: Conditional State (b-if)</h2>' + '            <div class="toggle-control">' + '              <button class="btn-outline" @click="toggleLogin">' + "                {{ logado ? '🔓 Logout' : '🔐 Simulate Login' }}" + "              </button>" + "            </div>" + '            <div v-if="logado" class="alert alert-success">' + "               ✅ User authenticated via Pascal State!" + "            </div>" + '            <div v-if="!logado" class="alert alert-warning">' + "               ⚠️ Waiting for authentication..." + "            </div>" + "          </div>" + "      </div>" + "    </transition>" + "  </div>";
+    comp["template"] = "  <div>" + '    <div class="section main-intro">' + '      <h1 class="section-title">About BlaiseVue Professional</h1>' + '      <p><strong>System Status:</strong> <span class="badge badge-green">Running via Pascal Power ⚔️</span></p>' + "      <p>Below you will find the analytical laboratory of all features implemented in the framework.</p>" + "" + '      <div class="action-bar">' + '        <button class="btn-primary" @click="toggleDemos">' + "          {{ showDemos ? '🔐 Close Laboratory' : '🔓 Open Feature Laboratory' }}" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- Technology Table (Always Visible) -->" + '    <div class="section">' + '      <h2 class="section-title">🛡️ Technological Arsenal</h2>' + '      <div class="resource-grid">' + '        <div class="resource-item">' + '          <span class="badge badge-blue">Reactivity</span>' + "          <p>Dependency Tracking via JS Proxy</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-green">Compilation</span>' + "          <p>AOT Pascal to Optimized JS</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-orange">Routing</span>' + "          <p>SPA Router with History/Hash</p>" + "        </div>" + '        <div class="resource-item">' + '          <span class="badge badge-gray">Store</span>' + "          <p>Global State Management (TBVStore)</p>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Engine Info Section -->" + '    <div class="section engine-section">' + '      <h2 class="section-title">⚙️ High Performance Engine</h2>' + '      <div class="tech-card-pair">' + '        <div class="tech-card fpc">' + '          <div class="card-icon">🏰</div>' + "          <h3>Free Pascal</h3>" + "          <p>The safety of strong typing.</p>" + "        </div>" + '        <div class="tech-card pas2js">' + '          <div class="card-icon">⚡</div>' + "          <h3>Pas2JS</h3>" + "          <p>The agility of the Web ecosystem.</p>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- THE LABORATORY (Feature Demos) -->" + '    <transition name="fade">' + '      <div v-if="showDemos" class="lab-container">' + "        <!-- 1. Reactive Iteration (b-for) -->" + '        <div class="section lab-section">' + '          <h2 class="section-title">🔬 Lab 01: Dynamic Iteration (b-for)</h2>' + "          <p>The items below are injected directly from Pascal into a reactive <code>TJSArray</code>.</p>" + '          <ul class="resource-list">' + '            <li v-for="item in tecnologias" class="resource-li">' + '              <span class="li-icon">🔹</span>' + "              <strong>{{ item.nome }}</strong>" + '              <span class="li-tag">{{ item.tipo }}</span>' + "            </li>" + "          </ul>" + '          <div style="margin-top: 15px;">' + '            <button class="btn-primary btn-sm" @click="addTec">➕ Inject New Tech</button>' + '            <button class="btn-danger btn-sm" @click="limparTecs">🗑️ Clear All</button>' + "          </div>" + "        </div>" + "" + "        <!-- 2. Two-Way and Computed -->" + '        <div class="section lab-section">' + '          <h2 class="section-title">📊 Lab 02: Computed & Two-Way</h2>' + '          <div class="form-horizontal">' + '            <div class="form-group">' + "              <label>First Name:</label>" + '              <input type="text" b-model="firstName" class="form-control">' + "            </div>" + '            <div class="form-group">' + "              <label>Last Name:</label>" + '              <input type="text" b-model="lastName" class="form-control">' + "            </div>" + "          </div>" + '          <div class="result-box">' + "            <strong>Computed Result:</strong>" + '            <span class="res-text">{{ perfilInfo }}</span>' + "          </div>" + "        </div>" + "" + "        <!-- 3. Conditional State (b-if) -->" + '        <div class="section lab-section">' + '          <h2 class="section-title">🎭 Lab 03: Conditional State (b-if)</h2>' + '          <div class="toggle-control">' + '            <button class="btn-outline" @click="toggleLogin">' + "              {{ logado ? '🔓 Logout' : '🔐 Simulate Login' }}" + "            </button>" + "          </div>" + '          <div v-if="logado" class="alert alert-success">' + "            ✅ User authenticated via Pascal State!" + "          </div>" + '          <div v-if="!logado" class="alert alert-warning">' + "            ⚠️ Waiting for authentication..." + "          </div>" + "        </div>" + "      </div>" + "    </transition>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
       d = new Object();
-      d["versao"] = pas.uAppVersion.APP_VERSION;
       d["showDemos"] = false;
       d["logado"] = false;
       d["tecnologias"] = new Array();
@@ -11830,7 +11862,7 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     m["toggleDemos"] = function (_this) {
       var o1 = null;
       var o2 = null;
-      _this["showDemos"] = !!(_this["showDemos"] == false);
+      _this.showDemos = !_this.showDemos;
       if (_this["tecnologias"].length === 0) {
         o1 = new Object();
         o1["nome"] = "Object Pascal";
@@ -11855,14 +11887,11 @@ rtl.module("uAbout",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     m["limparTecs"] = function (_this) {
       _this["tecnologias"].length = 0;
     };
-    m["alertaTecnologia"] = function (_this) {
-      window.alert("BlaiseVue v2.1.0 \\nOptimized for high performance!");
-    };
     comp["methods"] = m;
     comp["computed"] = new Object();
     comp["computed"]["perfilInfo"] = function (_this) {
       var Result = undefined;
-      Result = "Master " + ("" + _this["firstName"]) + " " + ("" + _this["lastName"]);
+      Result = "Master " + _this.firstName + " " + _this.lastName;
       return Result;
     };
     pas.BVComponents.RegisterComponent("about-page",comp);
@@ -12322,10 +12351,10 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".chart-dashboard {     padding: 24px 0;     background: transparent;     min-height: 100vh;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }";
+    _styleEl.textContent = '.chart-dashboard {     padding: 24px 0;     background: transparent;     min-height: 100vh;     box-sizing: border-box;   }   .header-card {     background: var(--bv-surface);     padding: 24px 28px;     border-radius: 14px;     box-shadow: var(--bv-shadow);     margin-bottom: 24px;     border: 1px solid var(--bv-border);     box-sizing: border-box;   }   .universal-card {     background: var(--bv-surface);     border: 1px solid var(--bv-border);     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: var(--bv-surface);     padding: 20px 24px;     border-radius: 14px;     box-shadow: var(--bv-shadow);     border: 1px solid var(--bv-border);     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid var(--bv-border);     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: var(--bv-text);   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: var(--bv-surface-subtle);     color: var(--bv-text-muted);     border: 1px solid var(--bv-border);     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    .chart-info-banner {     margin-top: 18px;     padding: 10px 16px;     background: #e0f2fe;     border-left: 4px solid #0284c7;     border-radius: 6px;     font-size: 0.9rem;     color: #0369a1;     text-align: left;   }    .chart-dashboard.charts-dark .chart-info-banner,   html[data-bs-theme="dark"] .chart-info-banner,   html.theme-dark .chart-info-banner,   body.theme-dark .chart-info-banner {     background: rgba(14, 165, 233, 0.16);     border-left-color: #38bdf8;     color: #e0f2fe;   }    .chart-dashboard.charts-dark .chart-info-banner strong,   html[data-bs-theme="dark"] .chart-info-banner strong,   html.theme-dark .chart-info-banner strong,   body.theme-dark .chart-info-banner strong {     color: #7dd3fc;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     --bv-text: #f8fafc;     --bv-text-muted: #94a3b8;     --bv-surface: #1e293b;     --bv-surface-subtle: #334155;     --bv-border: #334155;     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="chart-dashboard" :class="{ \'charts-dark\': isDarkMode }">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' + "            📊 BlaiseCharts - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' + "            Official hardware-accelerated reactive charting suite via HTML5 Canvas (Chart.js), with strongly-typed Object Pascal data models (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomize Data</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Cycle Palette ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Light Mode\' : \'Dark Mode\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' + "        <strong>🎯 Selected Data Point:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. FEATURED: Universal <bv-chart> with Dynamic Type Switching -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Universal Chart Component</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' + '            A single reactive component capable of rendering any chart geometry dynamically via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Bar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Line</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pie</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Doughnut</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Specialized BlaiseCharts Components -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Bar / Column (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Quarterly Revenue (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Line & Spline Trends (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Active WebSocket Connections (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Proportional Pie (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Traffic Distribution by Platform (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Supported Deployment Runtimes (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Polar Area (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Resource Allocation Matrix (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar Matrix (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Framework Performance Benchmark (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="chart-dashboard" :class="{ \'charts-dark\': isDarkMode }">' + '    <div class="header-card">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' + '        <div style="text-align: left;">' + '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--bv-text);">' + "            📊 BlaiseCharts - Data Visualization Suite" + "          </h1>" + '          <p style="margin: 6px 0 0 0; color: var(--bv-text-muted); font-size: 0.95rem;">' + "            Official hardware-accelerated reactive charting suite via HTML5 Canvas (Chart.js), with strongly-typed Object Pascal data models (<strong>packages/blaise-charts</strong>)." + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 10px; flex-wrap: wrap;">' + '          <bv-btn variant="primary" @click="randomizeData">🎲 Randomize Data</bv-btn>' + '          <bv-btn variant="secondary" @click="togglePalette">🎨 Cycle Palette ({{ currentPalette }})</bv-btn>' + '          <bv-btn variant="dark" @click="toggleDarkMode">🌓 {{ isDarkMode ? \'Light Mode\' : \'Dark Mode\' }}</bv-btn>' + "        </div>" + "      </div>" + "" + '      <div b-if="clickedPointInfo" class="chart-info-banner">' + "        <strong>🎯 Selected Data Point:</strong> {{ clickedPointInfo }}" + "      </div>" + "    </div>" + "" + "    <!-- 1. FEATURED: Universal <bv-chart> with Dynamic Type Switching -->" + '    <div class="chart-item universal-card" style="margin-bottom: 24px;">' + '      <div class="chart-header-row">' + "        <div>" + "          <h3>🌟 &lt;bv-chart&gt; - Universal Chart Component</h3>" + '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--bv-text-muted);">' + '            A single reactive component capable of rendering any chart geometry dynamically via prop <code>:type="{{ universalType }}"</code>:' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px; flex-wrap: wrap;">' + '          <button class="btn-type-pill" @click="setUniversalType(\'bar\')">📊 Bar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'line\')">📈 Line</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'pie\')">🍕 Pie</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'doughnut\')">🍩 Doughnut</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'radar\')">🕸️ Radar</button>' + '          <button class="btn-type-pill" @click="setUniversalType(\'polarArea\')">❄️ Polar</button>' + "        </div>" + "      </div>" + '      <bv-chart :type="universalType" :data="barData" :options="chartOptions" height="340px" @chart-click="onPointClick"></bv-chart>' + "    </div>" + "" + "    <!-- 2. GRID: Specialized BlaiseCharts Components -->" + '    <div class="chart-grid">' + "      <!-- 2.1 Bar / Column (bv-bar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📊 Quarterly Revenue (&lt;bv-bar-chart&gt;)</h3>" + '          <span class="badge-type">Bar / Column</span>' + "        </div>" + '        <bv-bar-chart :data="barData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-bar-chart>' + "      </div>" + "" + "      <!-- 2.2 Line & Spline Trends (bv-line-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>📈 Active WebSocket Connections (&lt;bv-line-chart&gt;)</h3>" + '          <span class="badge-type">Spline Line</span>' + "        </div>" + '        <bv-line-chart :data="lineData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-line-chart>' + "      </div>" + "" + "      <!-- 2.3 Proportional Pie (bv-pie-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍕 Traffic Distribution by Platform (&lt;bv-pie-chart&gt;)</h3>" + '          <span class="badge-type">Pie Chart</span>' + "        </div>" + '        <bv-pie-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-pie-chart>' + "      </div>" + "" + "      <!-- 2.4 Doughnut (bv-doughnut-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🍩 Supported Deployment Runtimes (&lt;bv-doughnut-chart&gt;)</h3>" + '          <span class="badge-type">Doughnut</span>' + "        </div>" + '        <bv-doughnut-chart :data="doughnutData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-doughnut-chart>' + "      </div>" + "" + "      <!-- 2.5 Polar Area (bv-polar-area-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>❄️ Resource Allocation Matrix (&lt;bv-polar-area-chart&gt;)</h3>" + '          <span class="badge-type">Polar Area</span>' + "        </div>" + '        <bv-polar-area-chart :data="pieData" :options="pieOptions" height="300px" @chart-click="onPointClick"></bv-polar-area-chart>' + "      </div>" + "" + "      <!-- 2.6 Radar Matrix (bv-radar-chart) -->" + '      <div class="chart-item">' + '        <div class="chart-header-row">' + "          <h3>🕸️ Framework Performance Benchmark (&lt;bv-radar-chart&gt;)</h3>" + '          <span class="badge-type">Radar Matrix</span>' + "        </div>" + '        <bv-radar-chart :data="radarData" :options="chartOptions" height="300px" @chart-click="onPointClick"></bv-radar-chart>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12382,20 +12411,20 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
       _this["radarData"] = RadarModel.ToJS();
     };
     m["setUniversalType"] = function (_this, newType) {
-      _this["universalType"] = newType;
-      _this["clickedPointInfo"] = "Chart type dynamically switched to: " + newType;
+      _this.universalType = newType;
+      _this.clickedPointInfo = "Chart type dynamically switched to: " + newType;
     };
     m["toggleDarkMode"] = function (_this) {
       var NewDark = false;
-      NewDark = !!(_this["isDarkMode"] == false);
-      _this["isDarkMode"] = NewDark;
+      NewDark = !_this.isDarkMode;
+      _this.isDarkMode = NewDark;
       pas.BVPascalDX.UpdateChartDarkMode(_this["chartOptions"],NewDark);
       pas.BVPascalDX.UpdateChartDarkMode(_this["pieOptions"],NewDark);
       _this["chartOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["chartOptions"]);
       _this["pieOptions"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["pieOptions"]);
       if (NewDark) {
-        _this["clickedPointInfo"] = "Dark mode activated for charts!"}
-       else _this["clickedPointInfo"] = "Light mode activated for charts!";
+        _this.clickedPointInfo = "Dark mode activated for charts!"}
+       else _this.clickedPointInfo = "Light mode activated for charts!";
     };
     m["randomizeData"] = function (_this) {
       var NewData = null;
@@ -12416,23 +12445,23 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
           _this["barData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["barData"]);
         };
       };
-      _this["clickedPointInfo"] = "Dataset values randomized!";
+      _this.clickedPointInfo = "Dataset values randomized!";
     };
     m["togglePalette"] = function (_this) {
       var Pal = null;
       var PalBorder = null;
       var Cur = "";
       var Datasets = null;
-      Cur = "" + _this["currentPalette"];
+      Cur = _this.currentPalette;
       if (Cur === "Emerald") {
-        _this["currentPalette"] = "Sunset"}
+        _this.currentPalette = "Sunset"}
        else if (Cur === "Sunset") {
-        _this["currentPalette"] = "Cyberpunk"}
+        _this.currentPalette = "Cyberpunk"}
        else if (Cur === "Cyberpunk") {
-        _this["currentPalette"] = "Neon"}
-       else _this["currentPalette"] = "Emerald";
-      Pal = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],0.65);
-      PalBorder = pas.BlaiseCharts.TBVChartPalette.GetPalette("" + _this["currentPalette"],1.0);
+        _this.currentPalette = "Neon"}
+       else _this.currentPalette = "Emerald";
+      Pal = pas.BlaiseCharts.TBVChartPalette.GetPalette(_this.currentPalette,0.65);
+      PalBorder = pas.BlaiseCharts.TBVChartPalette.GetPalette(_this.currentPalette,1.0);
       if (_this["barData"] != null) {
         Datasets = _this["barData"]["datasets"];
         if ((Datasets !== null) && (Datasets.length > 0)) {
@@ -12477,7 +12506,7 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
           _this["radarData"] = pas.BVPascalDX.ObjectAssign(pas.BVPascalDX.NewObject(),_this["radarData"]);
         };
       };
-      _this["clickedPointInfo"] = "Palette updated to: " + ("" + _this["currentPalette"]);
+      _this.clickedPointInfo = "Palette updated to: " + _this.currentPalette;
     };
     m["onPointClick"] = function (_this, ev) {
       var Lbl = "";
@@ -12487,7 +12516,7 @@ rtl.module("uCharts",["System","JS","Web","BVComponents","BVReactivity","BVStore
         Lbl = pas.BVPascalDX.GetFieldStr(ev,"label","");
         Val = pas.BVPascalDX.GetFieldStr(ev,"value","");
         DsIdx = pas.SysUtils.IntToStr(pas.BVPascalDX.GetFieldInt(ev,"datasetIndex",0) + 1);
-        _this["clickedPointInfo"] = 'Category: "' + Lbl + '", Value: ' + Val + " (Series #" + DsIdx + ")";
+        _this.clickedPointInfo = 'Category: "' + Lbl + '", Value: ' + Val + " (Series #" + DsIdx + ")";
       };
     };
     comp["methods"] = m;
@@ -12574,10 +12603,10 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    _styleEl.textContent = ".customer-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: var(--bv-text); }   .crud-subtitle { color: var(--bv-text-muted); font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: rgba(26, 188, 156, 0.14); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.35); }   .count-badge { background: var(--bv-surface-subtle); color: var(--bv-text); padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid var(--bv-border); }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; box-shadow: var(--bv-shadow); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: var(--bv-surface-subtle); padding: 12px 16px; font-weight: 600; color: var(--bv-text); border-bottom: 2px solid var(--bv-border); }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid var(--bv-border); color: var(--bv-text); }   .crud-table tr:hover { background: var(--bv-hover-bg); }   .cell-id { font-weight: 600; color: var(--bv-text-muted); font-family: monospace; }   .cell-date { font-size: 12px; color: var(--bv-text-muted); }   .badge-num { background: rgba(14, 165, 233, 0.16); color: #0ea5e9; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: rgba(16, 185, 129, 0.16); color: #10b981; }   .pill-inactive { background: rgba(239, 68, 68, 0.16); color: #ef4444; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: var(--bv-surface-subtle); color: var(--bv-text); border-color: var(--bv-border); }   .edit-btn:hover { background: var(--bv-hover-bg); }   .del-btn { background: rgba(239, 68, 68, 0.14); color: #ef4444; border-color: rgba(239, 68, 68, 0.35); }   .del-btn:hover { background: rgba(239, 68, 68, 0.24); }   .crud-empty { padding: 48px 16px; text-align: center; color: var(--bv-text-muted); }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: var(--bv-surface); color: var(--bv-text); border: 1px solid var(--bv-border); border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--bv-border); background: var(--bv-surface-subtle); display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--bv-text-muted); }   .modal-close-btn:hover { color: var(--bv-text); }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: var(--bv-surface-subtle); border-top: 1px solid var(--bv-border); display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--bv-text); margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: rgba(239, 68, 68, 0.16); color: #ef4444; padding: 8px 12px; border-radius: 6px; font-size: 13px; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>Type-Safe RPC:</strong> Test strongly-typed server procedures by clicking the <strong>"⚡ Type-Safe RPC"</strong> button in the header above!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search customers by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="customer-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Customer Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Customer</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + '        <button class="bui-btn" style="background: #8e44ad; color: white;" @click="fetchViaRpc">⚡ Type-Safe RPC</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px; color: #4a235a; font-size: 14px;">' + '      🛡️ <strong>Type-Safe RPC:</strong> Test strongly-typed server procedures by clicking the <strong>"⚡ Type-Safe RPC"</strong> button in the header above!' + "    </div>" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> customers</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '      type="text"' + '      class="crud-search-input"' + '      placeholder="🔍 Search customers by any keyword..."' + '      b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Email</th>" + "            <th>Phone</th>" + "            <th>Active</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + "            <td><strong>{{ item.email }}</strong></td>" + "            <td><strong>{{ item.phone }}</strong></td>" + '            <td><span class="status-pill" :class="{ \'pill-active\': item.active, \'pill-inactive\': !item.active }">{{ item.active ? \'Active\' : \'Inactive\' }}</span></td>' + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No customers found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Customer" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Email:</label>' + '            <input type="text" class="form-control" b-model="form.email" placeholder="Enter email..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Phone:</label>' + '            <input type="text" class="form-control" b-model="form.phone" placeholder="Enter phone..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="checkbox-container">' + '              <input type="checkbox" b-model="form.active" />' + "              <span>Active Active</span>" + "            </label>" + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12635,14 +12664,6 @@ rtl.module("uCustomerView",["System","JS","Web","BVComponents","BVReactivity","B
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + _this.apiEndpoint,_this.currentEditId,_this.isEditing,_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
@@ -12675,10 +12696,10 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { font-size: 14px; color: #7f8c8d; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: #ffffff;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: 0 1px 3px rgba(0,0,0,0.04);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }   .status-offline { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }   .status-storage { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }    .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: #f8fafc;     border: 1px solid #e2e8f0;     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #475569; }   .status-indicator { background: white; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; }   .dataset-nav-controls { display: flex; gap: 4px; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: #ffffff;     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     align-items: center;     background: #f8fafc;   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: #94a3b8;     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: #0f172a; background: #e2e8f0; }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: #f8fafc;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: flex-end;     gap: 10px;   }";
+    _styleEl.textContent = ".dataset-view-page { padding: 8px 0; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: var(--bv-text); }   .crud-subtitle { font-size: 14px; color: var(--bv-text-muted); margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; flex-wrap: wrap; }    .offline-control-bar {     background: var(--bv-surface);     border: 1px solid var(--bv-border);     border-radius: 8px;     padding: 10px 16px;     display: flex;     align-items: center;     gap: 20px;     margin-bottom: 14px;     flex-wrap: wrap;     box-shadow: var(--bv-shadow);   }   .control-bar-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }   .bar-label { font-weight: 600; color: var(--bv-text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }   .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }   .status-online { background: rgba(16, 185, 129, 0.16); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); }   .status-offline { background: rgba(239, 68, 68, 0.16); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); }   .status-storage { background: rgba(14, 165, 233, 0.16); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.35); }    .dataset-view-page .bui-btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }   .dataset-view-page .bui-btn-info { background: #0284c7; color: white; border: none; }    .dataset-status-bar {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     border-radius: 8px;     padding: 12px 18px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 20px;     flex-wrap: wrap;     gap: 12px;   }   .status-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--bv-text-muted); }   .status-indicator { background: var(--bv-surface); color: var(--bv-text); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--bv-border); }   .dataset-nav-controls { display: flex; gap: 4px; }   .dataset-view-page .bui-input { width: 100%; padding: 8px 12px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .dataset-view-page .bui-input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }   .badge-success { background: #10b981; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-danger { background: #ef4444; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-warning { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }   .badge-secondary { background: #64748b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }    .crud-modal-backdrop {     position: fixed;     top: 0;     left: 0;     width: 100%;     height: 100%;     background: rgba(15, 23, 42, 0.6);     display: flex;     align-items: center;     justify-content: center;     z-index: 9999;     backdrop-filter: blur(2px);   }   .crud-modal {     background: var(--bv-surface);     color: var(--bv-text);     border: 1px solid var(--bv-border);     border-radius: 10px;     width: 90%;     max-width: 520px;     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08);     overflow: hidden;   }   .modal-header {     padding: 16px 20px;     border-bottom: 1px solid var(--bv-border);     display: flex;     justify-content: space-between;     align-items: center;     background: var(--bv-surface-subtle);   }   .modal-close-btn {     background: none;     border: none;     font-size: 18px;     cursor: pointer;     color: var(--bv-text-muted);     font-weight: bold;     padding: 4px 8px;     border-radius: 4px;   }   .modal-close-btn:hover { color: var(--bv-text); background: var(--bv-hover-bg); }   .modal-body { padding: 20px; }   .modal-footer {     padding: 14px 20px;     background: var(--bv-surface-subtle);     border-top: 1px solid var(--bv-border);     display: flex;     justify-content: flex-end;     gap: 10px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- TOP TIP -->" + '    <div style="background: #f4ecf7; border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; color: #4a235a; font-size: 13px;">' + '      💡 Explore also <strong>Type-Safe RPC</strong>! <a href="#/customers" style="color: #8e44ad; font-weight: bold; text-decoration: underline;">Click here to navigate to Customers (RPC)</a> or select <strong>Customers</strong> in the sidebar!' + "    </div>" + "" + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First &amp; Delta Sync</h1>' + '        <p class="crud-subtitle">Enterprise in-memory reactive dataset engine with IndexedDB persistence, offline/online auto-detection, delta tracking, and automated synchronization (<code>ApplyUpdates</code>) with mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ New Product</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Save to IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restore from IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 Export PDF</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Export Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Syncing...</span>' + '          <span v-if="!isSyncing">🚀 Sync (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- VIEW TABS: DATASET CRUD vs VIRTUAL SCROLL BENCHMARK -->" + '    <div style="display: flex; gap: 8px; margin-bottom: 16px;">' + "      <button " + '        type="button" ' + '        class="bui-btn bui-btn-sm" ' + '        :style="activeTab === \'dataset\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" ' + '        @click="activeTab = \'dataset\'">' + "        📋 Reactive DataSet &amp; LiveBindings" + "      </button>" + "      <button " + '        type="button" ' + '        class="bui-btn bui-btn-sm" ' + '        :style="activeTab === \'virtual\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" ' + '        @click="activeTab = \'virtual\'">' + "        ⚡ Virtual Scrolling (10,000 Records Benchmark)" + "      </button>" + "    </div>" + "" + "    <!-- TAB 1: DATASET CRUD & OFFLINE-FIRST -->" + '    <div v-show="activeTab === \'dataset\'">' + "      <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '      <div class="offline-control-bar">' + '        <div class="control-bar-item">' + '          <span class="bar-label">Network:</span>' + '          <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '          <span v-if="!isOnline" class="status-pill status-offline">🔴 Offline Mode</span>' + '          <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "            {{ isOnline ? 'Simulate Network Drop' : 'Restore Connection' }}" + "          </button>" + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">Storage:</span>' + '          <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">AutoPersist:</span>' + '          <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "            {{ autoPersistActive ? '⚡ Enabled (IndexedDB)' : '⚪ Disabled' }}" + "          </button>" + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">AutoSync:</span>' + '          <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "            {{ autoSyncActive ? '🔄 Enabled on Reconnect' : '⚪ Disabled' }}" + "          </button>" + "        </div>" + "      </div>" + "" + "      <!-- DATASET LIVE STATUS BAR -->" + '      <div class="dataset-status-bar" v-if="productsDS">' + '        <div class="status-left">' + '          <span class="badge" :class="stateBadgeClass">' + "            State: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "          </span>" + '          <span class="status-indicator">' + "            Record: <strong>{{ productsDS.RecNo }}</strong> of <strong>{{ productsDS.RecordCount }}</strong>" + "          </span>" + '          <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '            Pending Deltas: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Awaiting Sync)</strong>' + "          </span>" + '          <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '            Pending Deltas: <strong style="color: #27ae60;">0 (100% Synced)</strong>' + "          </span>" + "        </div>" + '        <div class="dataset-nav-controls">' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="First">⏮️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Previous">◀️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Next">▶️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Last">⏭️</button>' + "        </div>" + "      </div>" + "" + "      <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '      <div class="card mb-4" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '          <h3 style="font-size: 18px; margin: 0; color: #1e293b;">📋 DataSet DataGrid (&lt;bv-datagrid&gt;)</h3>' + '          <span style="font-size: 13px; color: #7f8c8d;">Click any row to synchronize the dataset active cursor</span>' + "        </div>" + "        " + '        <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "      </div>" + "" + "      <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '      <div class="card mb-4" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 24px;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 18px; margin: 0; color: #2c3e50;">✏️ LiveBindings Form (`b-field`)</h3>' + '            <p style="font-size: 13px; color: #7f8c8d; margin-top: 4px;">Edit any field below: the dataset transitions into <code>dsEdit</code> mode and persists automatically.</p>' + "          </div>" + '          <div style="display: flex; gap: 8px;">' + '            <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Save (Post)</button>' + '            <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancel</button>' + '            <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Delete</button>' + "          </div>" + "        </div>" + "" + '        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Record ID:</label>' + '            <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: #f8fafc; cursor: not-allowed;" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Product Title:</label>' + '            <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Title..." @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Category:</label>' + '            <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Category..." @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Price ($):</label>' + '            <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: #34495e;">Stock:</label>' + '            <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "          </div>" + "        </div>" + "      </div>" + "" + "      <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "        <!-- DELTA JSON INSPECTOR -->" + '        <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "            <div>" + '              <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Delta Inspector (`productsDS.GetDeltaJSON`)</h3>' + '              <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Tracks inserts, updates, and deletes for mORMot 2 backend dispatch.</p>' + "            </div>" + '            <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "              Clear Delta" + "            </button>" + "          </div>" + "" + '          <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "        </div>" + "" + "        <!-- SYNC & PERSISTENCE CONSOLE -->" + '        <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '            <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Sync Console &amp; Logs</h3>' + '            <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">mORMot 2 Integration</span>' + "          </div>" + '          <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "            <div>{{ syncStatusMsg }}</div>" + '            <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "              Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Storage: <code>IndexedDB (Persistent)</code>" + "            </div>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- TAB 2: VIRTUAL SCROLLING BENCHMARK (10,000 RECORDS) -->" + '    <div v-show="activeTab === \'virtual\'">' + '      <div class="card" style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">' + "          <div>" + '            <h3 style="font-size: 18px; margin: 0; color: #1e293b;">⚡ Virtual Scroll Recycler (`&lt;bv-virtual-scroll&gt;`)</h3>' + '            <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Recycles only visible DOM elements at 60 FPS across massive arrays of data (10,000 records loaded in memory).</p>' + "          </div>" + '          <div style="display: flex; align-items: center; gap: 10px;">' + '            <span style="font-size: 13px; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 12px; border-radius: 12px; border: 1px solid #a7f3d0;">' + "              Active in memory: {{ virtualItems.length }} rows" + "            </span>" + "          </div>" + "        </div>" + "" + '        <bv-virtual-scroll :items="virtualItems" :itemHeight="46" height="420px">' + "        </bv-virtual-scroll>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL FOR CREATING NEW PRODUCT -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; color: #1e293b; font-weight: 700;">➕ Create New Product</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Product Title:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="e.g. Mechanical Pascal Keyboard" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Category:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="e.g. Hardware, Peripherals" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Price ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: #475569; margin-bottom: 6px;">Initial Stock:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirm &amp; Insert</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="dataset-view-page">' + "    <!-- TOP TIP -->" + '    <div style="background: rgba(142, 68, 173, 0.12); border-left: 4px solid #8e44ad; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; color: var(--bv-text); font-size: 13px;">' + '      💡 Explore also <strong>Type-Safe RPC</strong>! <a href="#/customers" style="color: #a855f7; font-weight: bold; text-decoration: underline;">Click here to navigate to Customers (RPC)</a> or select <strong>Customers</strong> in the sidebar!' + "    </div>" + "" + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">💾 TBVDataSet Offline-First &amp; Delta Sync</h1>' + '        <p class="crud-subtitle">Enterprise in-memory reactive dataset engine with IndexedDB persistence, offline/online auto-detection, delta tracking, and automated synchronization (<code>ApplyUpdates</code>) with mORMot 2.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="doAppend">➕ New Product</button>' + '        <button class="bui-btn bui-btn-outline" @click="doSaveIndexedDB">💾 Save to IndexedDB</button>' + '        <button class="bui-btn bui-btn-secondary" @click="doLoadIndexedDB">📂 Restore from IndexedDB</button>' + '        <button class="bui-btn" style="background: #ef4444; color: white;" @click="doExportDatasetPDF">📄 Export PDF</button>' + '        <button class="bui-btn" style="background: #10b981; color: white;" @click="doExportDatasetExcel">📊 Export Excel</button>' + '        <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.ChangeCount == 0 || isSyncing" @click="doApplyUpdates">' + '          <span v-if="isSyncing">⏳ Syncing...</span>' + '          <span v-if="!isSyncing">🚀 Sync (ApplyUpdates)</span>' + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- VIEW TABS: DATASET CRUD vs VIRTUAL SCROLL BENCHMARK -->" + '    <div style="display: flex; gap: 8px; margin-bottom: 16px;">' + "      <button" + '        type="button"' + '        class="bui-btn bui-btn-sm"' + '        :style="activeTab === \'dataset\' ? \'background:#10b981;color:#fff;border-color:#10b981;\' : \'background:var(--bv-surface);color:var(--bv-text);border:1px solid var(--bv-border);\'"' + '        @click="activeTab = \'dataset\'">' + "        📋 Reactive DataSet &amp; LiveBindings" + "      </button>" + "      <button" + '        type="button"' + '        class="bui-btn bui-btn-sm"' + '        :style="activeTab === \'virtual\' ? \'background:#10b981;color:#fff;border-color:#10b981;\' : \'background:var(--bv-surface);color:var(--bv-text);border:1px solid var(--bv-border);\'"' + '        @click="activeTab = \'virtual\'">' + "        ⚡ Virtual Scrolling (10,000 Records Benchmark)" + "      </button>" + "    </div>" + "" + "    <!-- TAB 1: DATASET CRUD & OFFLINE-FIRST -->" + '    <div v-show="activeTab === \'dataset\'">' + "      <!-- OFFLINE-FIRST CONTROL & CONFIGURATION BAR -->" + '      <div class="offline-control-bar">' + '        <div class="control-bar-item">' + '          <span class="bar-label">Network:</span>' + '          <span v-if="isOnline" class="status-pill status-online">🟢 Online</span>' + '          <span v-if="!isOnline" class="status-pill status-offline">🔴 Offline Mode</span>' + '          <button class="bui-btn bui-btn-xs bui-btn-outline" @click="toggleOnlineSimulation">' + "            {{ isOnline ? 'Simulate Network Drop' : 'Restore Connection' }}" + "          </button>" + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">Storage:</span>' + '          <span class="status-pill status-storage">🗄️ {{ storageEngine }}</span>' + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">AutoPersist:</span>' + '          <button class="bui-btn bui-btn-xs" :class="autoPersistActive ? \'bui-btn-success\' : \'bui-btn-secondary\'" @click="toggleAutoPersist">' + "            {{ autoPersistActive ? '⚡ Enabled (IndexedDB)' : '⚪ Disabled' }}" + "          </button>" + "        </div>" + "" + '        <div class="control-bar-item">' + '          <span class="bar-label">AutoSync:</span>' + '          <button class="bui-btn bui-btn-xs" :class="autoSyncActive ? \'bui-btn-info\' : \'bui-btn-secondary\'" @click="toggleAutoSync">' + "            {{ autoSyncActive ? '🔄 Enabled on Reconnect' : '⚪ Disabled' }}" + "          </button>" + "        </div>" + "      </div>" + "" + "      <!-- DATASET LIVE STATUS BAR -->" + '      <div class="dataset-status-bar" v-if="productsDS">' + '        <div class="status-left">' + '          <span class="badge" :class="stateBadgeClass">' + "            State: <strong>{{ productsDS.StateStr.toUpperCase() }}</strong>" + "          </span>" + '          <span class="status-indicator">' + "            Record: <strong>{{ productsDS.RecNo }}</strong> of <strong>{{ productsDS.RecordCount }}</strong>" + "          </span>" + '          <span class="status-indicator" v-if="productsDS.ChangeCount > 0">' + '            Pending Deltas: <strong style="color: #e67e22;">{{ productsDS.ChangeCount }} (Awaiting Sync)</strong>' + "          </span>" + '          <span class="status-indicator" v-if="productsDS.ChangeCount == 0">' + '            Pending Deltas: <strong style="color: #27ae60;">0 (100% Synced)</strong>' + "          </span>" + "        </div>" + '        <div class="dataset-nav-controls">' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navFirst" title="First">⏮️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Bof || productsDS.IsEmpty" @click="navPrior" title="Previous">◀️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navNext" title="Next">▶️</button>' + '          <button class="bui-btn bui-btn-sm" :disabled="productsDS.Eof || productsDS.IsEmpty" @click="navLast" title="Last">⏭️</button>' + "        </div>" + "      </div>" + "" + "      <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->" + '      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">' + '          <h3 style="font-size: 18px; margin: 0;">📋 DataSet DataGrid (&lt;bv-datagrid&gt;)</h3>' + '          <span style="font-size: 13px; color: var(--bv-text-muted);">Click any row to synchronize the dataset active cursor</span>' + "        </div>" + "" + '        <bv-datagrid :dataset="productsDS" @row-select="onSelectRow" />' + "      </div>" + "" + "      <!-- LIVEBINDINGS FORM SECTION (b-field) -->" + '      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 24px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--bv-border); padding-bottom: 12px;">' + "          <div>" + '            <h3 style="font-size: 18px; margin: 0;">✏️ LiveBindings Form (`b-field`)</h3>' + '            <p style="font-size: 13px; color: var(--bv-text-muted); margin-top: 4px;">Edit any field below: the dataset transitions into <code>dsEdit</code> mode and persists automatically.</p>' + "          </div>" + '          <div style="display: flex; gap: 8px;">' + '            <button class="bui-btn bui-btn-success" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doPost">💾 Save (Post)</button>' + '            <button class="bui-btn bui-btn-warning" :disabled="productsDS && productsDS.StateStr == \'browse\'" @click="doCancel">❌ Cancel</button>' + '            <button class="bui-btn bui-btn-danger" :disabled="productsDS && productsDS.IsEmpty" @click="doDelete">🗑️ Delete</button>' + "          </div>" + "        </div>" + "" + '        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">' + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: var(--bv-text);">Record ID:</label>' + '            <input type="text" b-field="productsDS.id" class="bui-input" disabled style="background: var(--bv-surface-subtle); cursor: not-allowed; opacity: 0.75;" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: var(--bv-text);">Product Title:</label>' + '            <input type="text" b-field="productsDS.title" class="bui-input" placeholder="Title..." @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: var(--bv-text);">Category:</label>' + '            <input type="text" b-field="productsDS.category" class="bui-input" placeholder="Category..." @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: var(--bv-text);">Price ($):</label>' + '            <input type="text" b-field="productsDS.price" class="bui-input" placeholder="0.00" @input="onFieldInput" />' + "          </div>" + '          <div class="form-group">' + '            <label style="font-weight: 600; font-size: 13px; color: var(--bv-text);">Stock:</label>' + '            <input type="text" b-field="productsDS.stock" class="bui-input" placeholder="0" @input="onFieldInput" />' + "          </div>" + "        </div>" + "      </div>" + "" + "      <!-- OFFLINE DELTA TRACKER & CONSOLE -->" + '      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">' + "        <!-- DELTA JSON INSPECTOR -->" + '        <div class="card" style="background: #1e293b; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + "            <div>" + '              <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📡 Delta Inspector (`productsDS.GetDeltaJSON`)</h3>' + '              <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Tracks inserts, updates, and deletes for mORMot 2 backend dispatch.</p>' + "            </div>" + '            <button class="bui-btn bui-btn-xs bui-btn-danger" :disabled="productsDS && productsDS.ChangeCount == 0" @click="doClearDelta">' + "              Clear Delta" + "            </button>" + "          </div>" + "" + '          <pre style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 220px;">{{ deltaJSONStr }}</pre>' + "        </div>" + "" + "        <!-- SYNC & PERSISTENCE CONSOLE -->" + '        <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #1e293b;">' + '          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '            <h3 style="font-size: 16px; margin: 0; color: #a78bfa;">📜 Sync Console &amp; Logs</h3>' + '            <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">mORMot 2 Integration</span>' + "          </div>" + '          <div style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 13px; min-height: 140px; color: #cbd5e1; line-height: 1.6;">' + "            <div>{{ syncStatusMsg }}</div>" + '            <div style="margin-top: 10px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 8px;">' + "              Endpoint mORMot 2: <code>POST /api/dataset/apply</code> | Storage: <code>IndexedDB (Persistent)</code>" + "            </div>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- TAB 2: VIRTUAL SCROLLING BENCHMARK (10,000 RECORDS) -->" + '    <div v-show="activeTab === \'virtual\'">' + '      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 24px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">' + '        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">' + "          <div>" + '            <h3 style="font-size: 18px; margin: 0;">⚡ Virtual Scroll Recycler (`&lt;bv-virtual-scroll&gt;`)</h3>' + '            <p style="font-size: 13px; color: var(--bv-text-muted); margin-top: 4px;">Recycles only visible DOM elements at 60 FPS across massive arrays of data (10,000 records loaded in memory).</p>' + "          </div>" + '          <div style="display: flex; align-items: center; gap: 10px;">' + '            <span style="font-size: 13px; font-weight: 600; color: #10b981; background: rgba(16, 185, 129, 0.14); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.35);">' + "              Active in memory: {{ virtualItems.length }} rows" + "            </span>" + "          </div>" + "        </div>" + "" + '        <bv-virtual-scroll :items="virtualItems" :itemHeight="46" height="420px">' + "        </bv-virtual-scroll>" + "      </div>" + "    </div>" + "" + "    <!-- MODAL FOR CREATING NEW PRODUCT -->" + '    <div class="crud-modal-backdrop" v-if="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + '          <h3 style="margin: 0; font-size: 18px; font-weight: 700;">➕ Create New Product</h3>' + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: var(--bv-text); margin-bottom: 6px;">Product Title:</label>' + '            <input type="text" class="bui-input" b-model="formTitle" placeholder="e.g. Mechanical Pascal Keyboard" />' + "          </div>" + '          <div class="form-group" style="margin-bottom: 14px;">' + '            <label style="display: block; font-weight: 600; font-size: 13px; color: var(--bv-text); margin-bottom: 6px;">Category:</label>' + '            <input type="text" class="bui-input" b-model="formCategory" placeholder="e.g. Hardware, Peripherals" />' + "          </div>" + '          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">' + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: var(--bv-text); margin-bottom: 6px;">Price ($):</label>' + '              <input type="text" class="bui-input" b-model="formPrice" placeholder="99.90" />' + "            </div>" + '            <div class="form-group">' + '              <label style="display: block; font-weight: 600; font-size: 13px; color: var(--bv-text); margin-bottom: 6px;">Initial Stock:</label>' + '              <input type="text" class="bui-input" b-model="formStock" placeholder="10" />' + "            </div>" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveNewProduct">💾 Confirm &amp; Insert</button>' + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -12704,33 +12725,33 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m = new Object();
     m["updateDeltaView"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["navFirst"] = function (_this) {
       pas.BVPascalDX.DataSetFirst(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["navPrior"] = function (_this) {
       pas.BVPascalDX.DataSetPrior(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["navNext"] = function (_this) {
       pas.BVPascalDX.DataSetNext(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["navLast"] = function (_this) {
       pas.BVPascalDX.DataSetLast(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["doAppend"] = function (_this) {
-      _this["formTitle"] = "";
-      _this["formCategory"] = "Hardware";
-      _this["formPrice"] = "99.90";
-      _this["formStock"] = "10";
-      _this["isModalOpen"] = true;
+      _this.formTitle = "";
+      _this.formCategory = "Hardware";
+      _this.formPrice = "99.90";
+      _this.formStock = "10";
+      _this.isModalOpen = true;
     };
     m["closeModal"] = function (_this) {
-      _this["isModalOpen"] = false;
+      _this.isModalOpen = false;
     };
     m["saveNewProduct"] = function (_this) {
       var ds = undefined;
@@ -12738,160 +12759,146 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
       var categoryVal = "";
       var priceVal = 0.0;
       var stockVal = 0;
-      titleVal = pas.SysUtils.Trim("" + _this["formTitle"]);
+      var nextId = 0;
+      titleVal = pas.SysUtils.Trim(_this.formTitle);
       if (titleVal === "") {
         pas.BVPascalDX.ShowToast("Please provide a product title.",2500);
         return;
       };
-      categoryVal = pas.SysUtils.Trim("" + _this["formCategory"]);
+      categoryVal = pas.SysUtils.Trim(_this.formCategory);
       if (categoryVal === "") categoryVal = "Hardware";
-      priceVal = pas.SysUtils.StrToFloatDef("" + _this["formPrice"],0.0);
-      stockVal = pas.SysUtils.StrToIntDef("" + _this["formStock"],0);
+      priceVal = pas.SysUtils.StrToFloatDef(_this.formPrice,0.0);
+      stockVal = pas.SysUtils.StrToIntDef(_this.formStock,0);
       ds = _this["productsDS"];
+      nextId = pas.BVPascalDX.DataSetNextId(ds,"id");
       pas.BVPascalDX.DataSetAppend(ds);
-      var maxId = 0;
-      if (ds && ds.FRecords) {
-        for (var i = 0; i < ds.FRecords.length; i++) {
-          var curId = parseInt(ds.FRecords[i].id, 10);
-          if (!isNaN(curId) && curId > maxId) maxId = curId;
-        }
-      }
-      var nextId = maxId + 1;
-      if (ds && ds.Current) {
-        ds.Current.id = nextId;
-        ds.Current.title = titleVal;
-        ds.Current.category = categoryVal;
-        ds.Current.price = priceVal;
-        ds.Current.stock = stockVal;
-      }
-      if (ds) ds.FModified = true;
-      if (typeof ds.SyncReactiveState === 'function') ds.SyncReactiveState();
+      pas.BVPascalDX.DataSetSetFieldVal(ds,"id",nextId);
+      pas.BVPascalDX.DataSetSetFieldVal(ds,"title",titleVal);
+      pas.BVPascalDX.DataSetSetFieldVal(ds,"category",categoryVal);
+      pas.BVPascalDX.DataSetSetFieldVal(ds,"price",priceVal);
+      pas.BVPascalDX.DataSetSetFieldVal(ds,"stock",stockVal);
       pas.BVPascalDX.DataSetPost(ds);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(ds);
-      _this["isModalOpen"] = false;
-      _this["syncStatusMsg"] = "New product created and saved in DataSet.";
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(ds);
+      _this.isModalOpen = false;
+      _this.syncStatusMsg = "New product created and saved in DataSet.";
       pas.BVPascalDX.ShowToast("Product registered successfully!",2500);
     };
     m["doPost"] = function (_this) {
       pas.BVPascalDX.DataSetPost(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Record saved to DataSet and persisted in IndexedDB.";
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.syncStatusMsg = "Record saved to DataSet and persisted in IndexedDB.";
       pas.BVPascalDX.ShowToast("Changes saved successfully in DataSet!",2500);
     };
     m["doCancel"] = function (_this) {
       pas.BVPascalDX.DataSetCancel(_this["productsDS"]);
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      _this["syncStatusMsg"] = "Edit cancelled. State reverted to browse.";
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.syncStatusMsg = "Edit cancelled. State reverted to browse.";
       pas.BVPascalDX.ShowToast("Edit cancelled.",2500);
     };
     m["doDelete"] = function (_this) {
       if (pas.BVPascalDX.Confirm("Are you sure you want to delete this product?")) {
         pas.BVPascalDX.DataSetDelete(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Record deleted. Delete operation recorded in Delta.";
+        _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this.syncStatusMsg = "Record deleted. Delete operation recorded in Delta.";
         pas.BVPascalDX.ShowToast("Record deleted successfully.",2500);
       };
     };
     m["onSelectRow"] = function (_this, row) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["onFieldInput"] = function (_this) {
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
     };
     m["doSaveIndexedDB"] = function (_this) {
-      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products_v44",null,null);
-      _this["syncStatusMsg"] = "Full snapshot saved to IndexedDB (store: demo_products_v44).";
+      pas.BVPascalDX.DataSetSaveIndexedDB(_this["productsDS"],"demo_products",null,null);
+      _this.syncStatusMsg = "Full snapshot saved to IndexedDB (store: demo_products).";
       pas.BVPascalDX.ShowToast("Data saved to IndexedDB successfully!",2500);
     };
     m["doLoadIndexedDB"] = function (_this) {
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds) return;
-      if (typeof ds.LoadFromIndexedDB === 'function') {
-        ds.LoadFromIndexedDB('demo_products_v44', function(success, count) {
-          if (success) {
-            self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-            self.syncStatusMsg = 'Restored ' + count + ' records from IndexedDB.';
-            pas.BVPascalDX.ShowToast('Restored ' + count + ' records from IndexedDB successfully!', 2500);
-          } else {
-            self.syncStatusMsg = 'No prior snapshot found in IndexedDB.';
-            pas.BVPascalDX.ShowToast('No data found in IndexedDB.', 2500);
-          }
-        });
-      };
+      pas.BVPascalDX.DataSetLoadIndexedDBAsync(_this["productsDS"],"demo_products",function (success, count) {
+        if (success) {
+          _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+          _this.syncStatusMsg = "Restored " + pas.SysUtils.IntToStr(count) + " records from IndexedDB.";
+          pas.BVPascalDX.ShowToast("Restored " + pas.SysUtils.IntToStr(count) + " records from IndexedDB successfully!",2500);
+        } else {
+          _this.syncStatusMsg = "No prior snapshot found in IndexedDB.";
+          pas.BVPascalDX.ShowToast("No data found in IndexedDB.",2500);
+        };
+      });
     };
     m["toggleAutoPersist"] = function (_this) {
       var newState = false;
-      newState = !!(_this["autoPersistActive"] == false);
-      _this["autoPersistActive"] = newState;
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products_v44");
+      newState = !_this.autoPersistActive;
+      _this.autoPersistActive = newState;
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],newState,"demo_products");
       if (newState) {
-        _this["syncStatusMsg"] = "AutoPersist enabled: any Post/Delete persists to IndexedDB immediately.";
+        _this.syncStatusMsg = "AutoPersist enabled: any Post/Delete persists to IndexedDB immediately.";
         pas.BVPascalDX.ShowToast("AutoPersist enabled (IndexedDB)!",2500);
       } else {
-        _this["syncStatusMsg"] = "AutoPersist disabled: data resides exclusively in RAM.";
+        _this.syncStatusMsg = "AutoPersist disabled: data resides exclusively in RAM.";
         pas.BVPascalDX.ShowToast("AutoPersist disabled.",2500);
       };
     };
     m["toggleAutoSync"] = function (_this) {
       var newState = false;
-      newState = !!(_this["autoSyncActive"] == false);
-      _this["autoSyncActive"] = newState;
+      newState = !_this.autoSyncActive;
+      _this.autoSyncActive = newState;
       pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],newState,"/api/dataset/apply");
       if (newState) {
-        _this["syncStatusMsg"] = "AutoSync enabled: will automatically push to mORMot 2 upon reconnection.";
+        _this.syncStatusMsg = "AutoSync enabled: will automatically push to mORMot 2 upon reconnection.";
         pas.BVPascalDX.ShowToast("AutoSync on reconnect enabled!",2500);
       } else {
-        _this["syncStatusMsg"] = "AutoSync disabled.";
+        _this.syncStatusMsg = "AutoSync disabled.";
         pas.BVPascalDX.ShowToast("AutoSync disabled.",2500);
       };
     };
     m["toggleOnlineSimulation"] = function (_this) {
       var nextOnline = false;
-      nextOnline = !!(_this["isOnline"] == false);
-      _this["isOnline"] = nextOnline;
+      nextOnline = !_this.isOnline;
+      _this.isOnline = nextOnline;
       if (nextOnline) {
-        _this["syncStatusMsg"] = "Online network restored. Checking pending deltas...";
+        _this.syncStatusMsg = "Online network restored. Checking pending deltas...";
         pas.BVPascalDX.ShowToast("Connection restored! (Online)",2500);
-        if (!(_this["autoSyncActive"] == false)) {
+        if (_this.autoSyncActive) {
           pas.BVPascalDX.CallMethod(_this,"doApplyUpdates");
         };
       } else {
-        _this["syncStatusMsg"] = "Offline Mode enabled: new changes queue into Delta and IndexedDB.";
+        _this.syncStatusMsg = "Offline Mode enabled: new changes queue into Delta and IndexedDB.";
         pas.BVPascalDX.ShowToast("Offline Mode enabled (simulation)",2500);
       };
     };
     m["doClearDelta"] = function (_this) {
       if (pas.BVPascalDX.Confirm("Discard pending deltas without sending to server?")) {
         pas.BVPascalDX.DataSetClearDelta(_this["productsDS"]);
-        _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-        _this["syncStatusMsg"] = "Pending deltas discarded by user.";
+        _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+        _this.syncStatusMsg = "Pending deltas discarded by user.";
         pas.BVPascalDX.ShowToast("Deltas cleared.",2500);
       };
     };
     m["doApplyUpdates"] = function (_this) {
-      _this["isSyncing"] = true;
-      var self = _this || this;
-      var ds = self.productsDS;
-      if (!ds || ds.ChangeCount === 0) {
-        self.isSyncing = false;
-        pas.BVPascalDX.ShowToast('No pending changes to synchronize.', 2500);
+      var ds = undefined;
+      var chgCnt = 0;
+      _this.isSyncing = true;
+      ds = _this["productsDS"];
+      chgCnt = pas.BVPascalDX.DataSetChangeCount(ds);
+      if (chgCnt === 0) {
+        _this.isSyncing = false;
+        pas.BVPascalDX.ShowToast("No pending changes to synchronize.",2500);
         return;
-      }
-      self.syncStatusMsg = 'Sending ' + ds.ChangeCount + ' deltas to mORMot 2 (/api/dataset/apply)...';
-      if (typeof ds.ApplyUpdates === 'function') {
-        ds.ApplyUpdates('/api/dataset/apply', function(resp) {
-          self.isSyncing = false;
-          self.deltaJSONStr = (typeof ds.GetDeltaJSON === 'function') ? ds.GetDeltaJSON() : '[]';
-          var count = (resp && resp.syncedCount !== undefined) ? resp.syncedCount : 0;
-          self.syncStatusMsg = 'Success! ' + count + ' modifications synced to mORMot 2 backend.';
-          pas.BVPascalDX.ShowToast('Synchronization completed (' + count + ' deltas)!', 2500);
-        }, function(err) {
-          self.isSyncing = false;
-          self.syncStatusMsg = 'Backend mORMot offline. Deltas preserved securely in IndexedDB!';
-          pas.BVPascalDX.ShowToast('Backend offline. Deltas kept in IndexedDB!', 2500);
-        });
       };
+      _this.syncStatusMsg = "Sending " + pas.SysUtils.IntToStr(chgCnt) + " deltas to mORMot 2 (/api/dataset/apply)...";
+      pas.BVPascalDX.DataSetApplyUpdatesCallbacks(ds,"/api/dataset/apply",function (resp) {
+        var syncedCount = 0;
+        _this.isSyncing = false;
+        _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(ds);
+        syncedCount = pas.BVPascalDX.GetFieldInt(resp,"syncedCount",0);
+        _this.syncStatusMsg = "Success! " + pas.SysUtils.IntToStr(syncedCount) + " modifications synced to mORMot 2 backend.";
+        pas.BVPascalDX.ShowToast("Synchronization completed (" + pas.SysUtils.IntToStr(syncedCount) + " deltas)!",2500);
+      },function (err) {
+        _this.isSyncing = false;
+        _this.syncStatusMsg = "Backend mORMot offline. Deltas preserved securely in IndexedDB!";
+        pas.BVPascalDX.ShowToast("Backend offline. Deltas kept in IndexedDB!",2500);
+      });
     };
     m["doExportDatasetPDF"] = function (_this) {
       var rep = undefined;
@@ -12917,64 +12924,59 @@ rtl.module("uDatasetView",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["methods"] = m;
     comp["created"] = function (_this) {
       var mockData = "";
+      var vList = null;
+      var categories = null;
+      var itemObj = null;
+      var idx = 0;
       if (!_this) _this = this;
       _this["productsDS"] = pas.BVPascalDX.NewDataSet();
-      if (this.productsDS) {
-        this.productsDS.TableName = 'products';
-      };
+      pas.BVPascalDX.DataSetSetTableName(_this["productsDS"],"products");
       mockData = '[{"id":1,"title":"Laptop ThinkPad X1","category":"Hardware","price":1899.99,"stock":15},' + '{"id":2,"title":"Monitor Dell 27 4K","category":"Peripherals","price":549.50,"stock":32},' + '{"id":3,"title":"Mechanical Pascal Keyboard","category":"Peripherals","price":129.90,"stock":78},' + '{"id":4,"title":"Ergonomic Office Chair Pro","category":"Office","price":380.00,"stock":20},' + '{"id":5,"title":"Ultra Wireless Mouse","category":"Peripherals","price":49.99,"stock":120}]';
       pas.BVPascalDX.DataSetLoad(_this["productsDS"],pas.BVPascalDX.JsonParse(mockData));
-      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products_v44");
+      pas.BVPascalDX.DataSetSetAutoPersist(_this["productsDS"],true,"demo_products");
       pas.BVPascalDX.DataSetSetAutoSync(_this["productsDS"],true,"/api/dataset/apply");
-      _this["autoPersistActive"] = true;
-      _this["autoSyncActive"] = true;
-      _this["isOnline"] = true;
-      _this["isSyncing"] = false;
-      _this["isModalOpen"] = false;
-      _this["activeTab"] = "dataset";
-      _this["syncStatusMsg"] = "DataSet initialized with IndexedDB offline persistence and auto-sync.";
-      _this["deltaJSONStr"] = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
-      var vList = [];
-      var categories = ['Hardware', 'Peripherals', 'Cloud Server', 'Security Key', 'Network Cable'];
-      for (var idx = 1; idx <= 10000; idx++) {
-        vList.push({
-          id: idx,
-          sku: 'SKU-' + (100000 + idx),
-          name: 'Inventory Item #' + idx,
-          category: categories[idx % categories.length],
-          price: (20 + (idx % 300) * 1.5).toFixed(2),
-          stock: (idx * 7) % 500
-        });
-      }
-      this.virtualItems = vList;
-      var self = this;
-      if (typeof window !== 'undefined') {
-        window.addEventListener('online', function() {
-          self.isOnline = true;
-          self.syncStatusMsg = 'Network reconnection detected by browser.';
-          if (self.autoSyncActive) {
-            var ds = self.productsDS;
-            if (ds && typeof ds.ApplyUpdates === 'function' && ds.ChangeCount > 0) {
-              ds.ApplyUpdates('/api/dataset/apply');
-            }
-          }
-        });
-        window.addEventListener('offline', function() {
-          self.isOnline = false;
-          self.syncStatusMsg = 'Device offline: deltas safely queued in IndexedDB.';
-        });
+      _this.autoPersistActive = true;
+      _this.autoSyncActive = true;
+      _this.isOnline = true;
+      _this.isSyncing = false;
+      _this.isModalOpen = false;
+      _this.activeTab = "dataset";
+      _this.syncStatusMsg = "DataSet initialized with IndexedDB offline persistence and auto-sync.";
+      _this.deltaJSONStr = pas.BVPascalDX.DataSetDeltaJSON(_this["productsDS"]);
+      vList = pas.BVPascalDX.NewArray();
+      categories = new Array("Hardware","Peripherals","Cloud Server","Security Key","Network Cable");
+      for (idx = 1; idx <= 10000; idx++) {
+        itemObj = pas.BVPascalDX.NewObject();
+        itemObj["id"] = idx;
+        itemObj["sku"] = "SKU-" + pas.SysUtils.IntToStr(100000 + idx);
+        itemObj["name"] = "Inventory Item #" + pas.SysUtils.IntToStr(idx);
+        itemObj["category"] = categories[idx % categories.length];
+        itemObj["price"] = pas.SysUtils.FormatFloat("0.00",20 + ((idx % 300) * 1.5));
+        itemObj["stock"] = (idx * 7) % 500;
+        vList.push(itemObj);
       };
+      _this["virtualItems"] = vList;
+      pas.BVPascalDX.OnNetworkStatusChange(function () {
+        _this.isOnline = true;
+        _this.syncStatusMsg = "Network reconnection detected by browser.";
+        if (_this.autoSyncActive && (pas.BVPascalDX.DataSetChangeCount(_this["productsDS"]) > 0)) pas.BVPascalDX.DataSetApplyUpdatesAsync(_this["productsDS"],"/api/dataset/apply",null,null);
+      },function () {
+        _this.isOnline = false;
+        _this.syncStatusMsg = "Device offline: deltas safely queued in IndexedDB.";
+      });
     };
     comp["computed"] = new Object();
     comp["computed"]["stateBadgeClass"] = function (_this) {
       var Result = undefined;
-      var ds = this.productsDS;
-      if (!ds) return 'badge-secondary';
-      var st = typeof ds.GetStateStr === 'function' ? ds.GetStateStr() : ds.StateStr;
-      if (st === 'insert') return 'badge-warning';
-      if (st === 'edit') return 'badge-danger';
-      if (st === 'browse') return 'badge-success';
-      return 'badge-secondary';
+      var st = "";
+      st = pas.BVPascalDX.DataSetStateStr(_this["productsDS"]);
+      if (st === "insert") {
+        Result = "badge-warning"}
+       else if (st === "edit") {
+        Result = "badge-danger"}
+       else if (st === "browse") {
+        Result = "badge-success"}
+       else Result = "badge-secondary";
       return Result;
     };
     pas.BVComponents.RegisterComponent("dataset-view-page",comp);
@@ -12989,10 +12991,10 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = "label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }";
+    _styleEl.textContent = ".section label { display: block; margin-top: 8px; margin-bottom: 4px; color: var(--bv-text); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header " + '        ref="headerComp"' + '        title="Formulário Especial" ' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "      " + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
+    comp["template"] = "  <div>" + '    <div class="section">' + "      <!-- 1. Passando props e escutando eventos -->" + "      <form-header" + '        ref="headerComp"' + '        title="Formulário Especial"' + '        :subtitle="meuSub"' + '        @header-clicked="onHeaderClick">' + "      </form-header>" + "" + "      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>" + "      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>" + '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' + "      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">{{ $t(\'form.title\') }}</h2>' + '      <p style="color: #64748b; margin-bottom: 14px;">{{ $t(\'form.subtitle\') }}</p>' + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.name') }}:</strong></label>" + '        <input type="text" b-model="nome" b-validate="required|min:3" placeholder="Digite seu nome (mín. 3 letras)">' + '        <span b-if="$errors.nome" class="bv-error-msg">⚠️ {{ $errors.nome }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.email') }}:</strong></label>" + '        <input type="text" b-model="email" b-validate="required|email" placeholder="usuario@dominio.com">' + '        <span b-if="$errors.email" class="bv-error-msg">⚠️ {{ $errors.email }}</span>' + "      </div>" + "" + '      <div style="margin-bottom: 14px;">' + "        <label><strong>{{ $t('form.city') }}:</strong></label>" + '        <input type="text" b-model="cidade" b-validate="required" placeholder="Sua cidade">' + '        <span b-if="$errors.cidade" class="bv-error-msg">⚠️ {{ $errors.cidade }}</span>' + "      </div>" + "" + "      <!-- Card de Status Reativo de $v -->" + '      <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; padding: 14px; margin-top: 16px;">' + '        <div style="display: flex; align-items: center; justify-content: space-between;">' + "          <span><strong>{{ $t('form.formState') }}:</strong></span>" + '          <span class="badge" :class="{ \'badge-green\': !$v.$invalid && $v.$dirty, \'badge-orange\': $v.$invalid, \'badge-gray\': !$v.$dirty }">' + "            {{ $v.$dirty ? ($v.$invalid ? $t('form.statusInvalid') : $t('form.statusValid')) : 'Não modificado' }}" + "          </span>" + "        </div>" + '        <div style="font-size: 13px; color: var(--bv-text-muted); margin-top: 6px;">' + "          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>" + "        </div>" + "      </div>" + "" + '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.14); border: 1px solid #10b981; border-radius: 6px; color: #10b981; font-weight: 600;">' + "        {{ msgSucesso }}" + "      </div>" + "" + '      <div style="margin-top: 16px;">' + '        <button class="btn-primary" @click="enviar">{{ $t(\'form.submit\') }}</button>' + '        <button class="btn-outline" @click="preencher">{{ $t(\'form.fillValid\') }}</button>' + '        <button class="btn-danger" @click="limpar">{{ $t(\'form.reset\') }}</button>' + "      </div>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Preview dos Dados & Validação</h2>' + "      <table>" + "        <tr><th>Campo</th><th>Valor</th><th>Status</th></tr>" + "        <tr>" + "          <td>Nome</td>" + "          <td><strong>{{ nome }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.nome && nome, \'badge-orange\': $errors.nome, \'badge-gray\': !nome }">{{ $errors.nome ? \'Erro\' : (nome ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Email</td>" + "          <td><strong>{{ email }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.email && email, \'badge-orange\': $errors.email, \'badge-gray\': !email }">{{ $errors.email ? \'Erro\' : (email ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "        <tr>" + "          <td>Cidade</td>" + "          <td><strong>{{ cidade }}</strong></td>" + '          <td><span class="badge" :class="{ \'badge-green\': !$errors.cidade && cidade, \'badge-orange\': $errors.cidade, \'badge-gray\': !cidade }">{{ $errors.cidade ? \'Erro\' : (cidade ? \'OK\' : \'Pendente\') }}</span></td>' + "        </tr>" + "      </table>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13008,8 +13010,8 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
     };
     m = new Object();
     m["onHeaderClick"] = function (_this, arg) {
-      _this["msgHeader"] = arg;
-      _this["meuSub"] = "O subtítulo mudou reativamente via props!";
+      _this.msgHeader = arg;
+      _this.meuSub = "O subtítulo mudou reativamente via props!";
     };
     m["mudarHeaderRef"] = function (_this) {
       var refs = null;
@@ -13024,23 +13026,23 @@ rtl.module("uFormulario",["System","JS","Web","BVComponents","BVReactivity","BVS
       var valido = false;
       valido = pas.BVPascalDX.ValidateForm(_this);
       if (valido) {
-        _this["msgSucesso"] = "🎉 Parabéns " + ("" + _this["nome"]) + "! Formulário validado com sucesso.";
+        _this.msgSucesso = "🎉 Parabéns " + _this.nome + "! Formulário validado com sucesso.";
       } else {
-        _this["msgSucesso"] = "";
+        _this.msgSucesso = "";
       };
     };
     m["preencher"] = function (_this) {
-      _this["nome"] = "Blaise Pascal";
-      _this["email"] = "blaise@pascal.dev";
-      _this["cidade"] = "Clermont-Ferrand";
-      _this["msgSucesso"] = "";
+      _this.nome = "Blaise Pascal";
+      _this.email = "blaise@pascal.dev";
+      _this.cidade = "Clermont-Ferrand";
+      _this.msgSucesso = "";
       pas.BVPascalDX.TouchValidation(_this);
     };
     m["limpar"] = function (_this) {
-      _this["nome"] = "";
-      _this["email"] = "";
-      _this["cidade"] = "";
-      _this["msgSucesso"] = "";
+      _this.nome = "";
+      _this.email = "";
+      _this.cidade = "";
+      _this.msgSucesso = "";
       pas.BVPascalDX.ResetValidation(_this);
     };
     comp["methods"] = m;
@@ -13058,7 +13060,7 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
     _styleEl.textContent = ".fragments-view-page { animation: fadeIn 0.35s ease-in; }   .frag-demo-table { width: 100%; border-collapse: collapse; margin-top: 8px; }   .frag-css-grid {     display: grid;     grid-template-columns: 1fr auto;     gap: 10px 14px;     align-items: center;     margin-top: 12px;   }   .frag-inspector-card {     background: #0f172a;     color: #f8fafc;     border-radius: 10px;     padding: 20px;     margin-top: 20px;     box-shadow: 0 4px 12px rgba(0,0,0,0.15);     border: 2px solid transparent;     transition: border-color 0.3s, box-shadow 0.3s;   }   .frag-inspector-flash {     border-color: #38bdf8;     box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);   }   .frag-dom-inspector {     background: #020617;     border: 1px solid #1e293b;     border-radius: 6px;     padding: 14px;     font-size: 12px;     overflow-x: auto;     color: #4ade80;     max-height: 260px;     white-space: pre-wrap;     font-family: 'Consolas', monospace;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="fragments-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #10b981; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">v5.0 Pillar 5</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #a5b4fc; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Vue 3-Style Multi-Root &amp; $attrs</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🧩 Component Fragments (Multi-Root Templates &amp; $attrs Fallthrough)</h1>' + '        <p style="font-size: 13px; color: #cbd5e1; margin-top: 6px;">Componentes com múltiplos nós irmãos na raiz sem <code>&lt;div&gt;</code> wrapper artificial, parser HTML5 <code>&lt;template&gt;</code> nativo para <code>&lt;td&gt;</code>/<code>&lt;tr&gt;</code> e herança reativa de <code>$attrs</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button type="button" class="btn-primary" style="background: #10b981;" @click="addModuleRow">➕ Adicionar Linha (&lt;table-cells&gt;)</button>' + '        <button type="button" class="btn-outline" style="border-color: #a5b4fc; color: #e0e7ff; background: rgba(255,255,255,0.06);" @click="focusAndInspectDOM">🔍 Inspecionar Âncoras DOM</button>' + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">' + "      <span>✨ <strong>{{ lastAction }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Fragmentos em Tabela: <strong>{{ modules.length }}</strong> | Inspeções DOM: <strong>#{{ inspectionCount }}</strong></span>' + "    </div>" + "" + '    <!-- SECTION 1: NATIVE TABLE CELLS FRAGMENT + EXPLICIT b-bind="$attrs" -->' + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0; color: #1e293b;">1. Fragmentos Nativos em Tabelas (<code>&lt;table-cells&gt;</code> + <code>b-bind="$attrs"</code>)</h3>' + '          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">' + '            O componente <code>&lt;table-cells&gt;</code> possui <strong>3 elementos <code>&lt;td&gt;</code> irmãos na raiz</strong> sem nenhum <code>&lt;div&gt;</code> intermediário, mantendo a semântica válida de <code>&lt;tr&gt;</code>. O atributo <code>class="clickable-status-cell"</code> e o evento <code>@click</code> são repassados explicitamente à 3ª coluna via <code>b-bind="$attrs"</code>.' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="btn-primary" @click="addModuleRow">➕ Nova Linha</button>' + '          <button type="button" class="btn-danger" @click="removeLastRow">➖ Remover Última</button>' + "        </div>" + "      </div>" + "" + '      <table class="frag-demo-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 130px;">Código (td #1)</th>' + "            <th>Módulo Arquitetural (td #2)</th>" + '            <th style="width: 190px;">Status via $attrs (td #3)</th>' + '            <th style="width: 140px; text-align: center;">Ação Direta</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in modules" class="frag-table-row">' + "            <table-cells" + '              :code="item.code"' + '              :name="item.name"' + '              :status="item.status"' + '              class="clickable-status-cell"' + '              data-fallthrough="explicit-attrs"' + '              title="Clique para alternar o status via $attrs fallthrough"' + '              @click="toggleModuleStatus(item)"' + "            ></table-cells>" + '            <td style="text-align: center;">' + '              <button type="button" class="btn-outline" style="padding: 4px 10px; font-size: 12px;" @click="toggleModuleStatus(item)">🔄 Alternar</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + "    <!-- SECTION 2: CSS GRID MULTI-ROOT FRAGMENT + AUTOMATIC OPTION A FALLTHROUGH -->" + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0; color: #1e293b;">2. Fragmentos em CSS Grid &amp; Fallthrough Automático (<code>&lt;stat-pills&gt;</code> — Opção A)</h3>' + '          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">' + "            Cada <code>&lt;stat-pills&gt;</code> emite 2 nós irmãos (<code>.frag-grid-label</code> e <code>.frag-grid-value</code>) diretamente como filhos do container CSS Grid de 2 colunas. Na <strong>Opção A</strong>, atributos não-props (como <code>:class</code> e <code>@click</code>) herdam automaticamente para o <strong>1º elemento raiz visível</strong>." + "          </p>" + "        </div>" + '        <button type="button" class="btn-primary" style="background: #6366f1;" @click="toggleHighlightAttrs">' + "          🎨 Alternar Classe em $attrs ({{ highlightActive ? 'Destaque Ativo' : 'Padrão' }})" + "        </button>" + "      </div>" + "" + '      <div class="frag-css-grid">' + "        <stat-pills" + '          label="Parser HTML5 Nativo (<template>)"' + '          metric="Preserva <tr>, <td>, <li>"' + '          :class="highlightClass"' + '          data-mode="auto-first-root"' + '          @click="onPillClick(\'Parser HTML5 <template>\')"' + "        ></stat-pills>" + "        <stat-pills" + '          label="Âncoras de Comentário no DOM"' + '          metric="<!-- [bv-fragment] -->"' + '          :class="highlightClass"' + '          @click="onPillClick(\'Âncoras de Comentário\')"' + "        ></stat-pills>" + "        <stat-pills" + '          label="Overhead de Wrappers <div> Extras"' + '          metric="0 Nós Extras (Zero-Wrapper)"' + '          :class="highlightClass"' + '          @click="onPillClick(\'Zero-Wrapper Overhead\')"' + "        ></stat-pills>" + "      </div>" + "    </div>" + "" + "    <!-- SECTION 3: LIVE DOM ANCHOR INSPECTOR -->" + '    <div id="dom-inspector-panel" :class="inspectorFlash ? \'frag-inspector-card frag-inspector-flash\' : \'frag-inspector-card\'">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Âncoras de Fragmento no DOM Real (Leitura #{{ inspectionCount }})</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Verifica os nós <code>Comment</code> (<code>nodeType === 8</code>) delimitadores de fragmentos ativos nesta página.</p>' + "        </div>" + '        <button type="button" class="btn-primary" style="background: #0284c7; font-size: 12px;" @click="focusAndInspectDOM">🔄 Executar Varredura DOM Agora</button>' + "      </div>" + '      <pre class="frag-dom-inspector">{{ domInspectionReport }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="fragments-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #10b981; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Multi-Root Engine</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #a5b4fc; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Vue 3-Style Multi-Root &amp; $attrs</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🧩 Component Fragments (Multi-Root Templates &amp; $attrs Fallthrough)</h1>' + '        <p style="font-size: 13px; color: #cbd5e1; margin-top: 6px;">Componentes com múltiplos nós irmãos na raiz sem <code>&lt;div&gt;</code> wrapper artificial, parser HTML5 <code>&lt;template&gt;</code> nativo para <code>&lt;td&gt;</code>/<code>&lt;tr&gt;</code> e herança reativa de <code>$attrs</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button type="button" class="btn-primary" style="background: #10b981;" @click="addModuleRow">➕ Adicionar Linha (&lt;table-cells&gt;)</button>' + '        <button type="button" class="btn-outline" style="border-color: #a5b4fc; color: #e0e7ff; background: rgba(255,255,255,0.06);" @click="focusAndInspectDOM">🔍 Inspecionar Âncoras DOM</button>' + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div style="background: rgba(16, 185, 129, 0.12); border-left: 4px solid #10b981; color: #10b981; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">' + "      <span>✨ <strong>{{ lastAction }}</strong></span>" + '      <span style="font-size: 12px;">Fragmentos em Tabela: <strong>{{ modules.length }}</strong> | Inspeções DOM: <strong>#{{ inspectionCount }}</strong></span>' + "    </div>" + "" + '    <!-- SECTION 1: NATIVE TABLE CELLS FRAGMENT + EXPLICIT b-bind="$attrs" -->' + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0;">1. Fragmentos Nativos em Tabelas (<code>&lt;table-cells&gt;</code> + <code>b-bind="$attrs"</code>)</h3>' + '          <p style="font-size: 13px; margin-top: 4px;">' + '            O componente <code>&lt;table-cells&gt;</code> possui <strong>3 elementos <code>&lt;td&gt;</code> irmãos na raiz</strong> sem nenhum <code>&lt;div&gt;</code> intermediário, mantendo a semântica válida de <code>&lt;tr&gt;</code>. O atributo <code>class="clickable-status-cell"</code> e o evento <code>@click</code> são repassados explicitamente à 3ª coluna via <code>b-bind="$attrs"</code>.' + "          </p>" + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="btn-primary" @click="addModuleRow">➕ Nova Linha</button>' + '          <button type="button" class="btn-danger" @click="removeLastRow">➖ Remover Última</button>' + "        </div>" + "      </div>" + "" + '      <table class="frag-demo-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 130px;">Código (td #1)</th>' + "            <th>Módulo Arquitetural (td #2)</th>" + '            <th style="width: 190px;">Status via $attrs (td #3)</th>' + '            <th style="width: 140px; text-align: center;">Ação Direta</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in modules" class="frag-table-row">' + "            <table-cells" + '              :code="item.code"' + '              :name="item.name"' + '              :status="item.status"' + '              class="clickable-status-cell"' + '              data-fallthrough="explicit-attrs"' + '              title="Clique para alternar o status via $attrs fallthrough"' + '              @click="toggleModuleStatus(item)"' + "              ></table-cells>" + '            <td style="text-align: center;">' + '              <button type="button" class="btn-outline" style="padding: 4px 10px; font-size: 12px;" @click="toggleModuleStatus(item)">🔄 Alternar</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "    </div>" + "" + "    <!-- SECTION 2: CSS GRID MULTI-ROOT FRAGMENT + AUTOMATIC OPTION A FALLTHROUGH -->" + '    <div class="section">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">' + "        <div>" + '          <h3 style="margin: 0;">2. Fragmentos em CSS Grid &amp; Fallthrough Automático (<code>&lt;stat-pills&gt;</code> — Opção A)</h3>' + '          <p style="font-size: 13px; margin-top: 4px;">' + "            Cada <code>&lt;stat-pills&gt;</code> emite 2 nós irmãos (<code>.frag-grid-label</code> e <code>.frag-grid-value</code>) diretamente como filhos do container CSS Grid de 2 colunas. Na <strong>Opção A</strong>, atributos não-props (como <code>:class</code> e <code>@click</code>) herdam automaticamente para o <strong>1º elemento raiz visível</strong>." + "          </p>" + "        </div>" + '        <button type="button" class="btn-primary" style="background: #6366f1;" @click="toggleHighlightAttrs">' + "          🎨 Alternar Classe em $attrs ({{ highlightActive ? 'Destaque Ativo' : 'Padrão' }})" + "        </button>" + "      </div>" + "" + '      <div class="frag-css-grid">' + "        <stat-pills" + '          label="Parser HTML5 Nativo (<template>)"' + '            metric="Preserva <tr>, <td>, <li>"' + '                  :class="highlightClass"' + '                  data-mode="auto-first-root"' + '                  @click="onPillClick(\'Parser HTML5 <template>\')"' + "                    ></stat-pills>" + "                  <stat-pills" + '                    label="Âncoras de Comentário no DOM"' + '                    metric="<!-- [bv-fragment] -->"' + '                    :class="highlightClass"' + '                    @click="onPillClick(\'Âncoras de Comentário\')"' + "                    ></stat-pills>" + "                  <stat-pills" + '                    label="Overhead de Wrappers <div> Extras"' + '                      metric="0 Nós Extras (Zero-Wrapper)"' + '                      :class="highlightClass"' + '                      @click="onPillClick(\'Zero-Wrapper Overhead\')"' + "                      ></stat-pills>" + "                  </div>" + "                </div>" + "" + "                <!-- SECTION 3: LIVE DOM ANCHOR INSPECTOR -->" + '                <div id="dom-inspector-panel" :class="inspectorFlash ? \'frag-inspector-card frag-inspector-flash\' : \'frag-inspector-card\'">' + '                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "                    <div>" + '                      <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Inspetor de Âncoras de Fragmento no DOM Real (Leitura #{{ inspectionCount }})</h3>' + '                      <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Verifica os nós <code>Comment</code> (<code>nodeType === 8</code>) delimitadores de fragmentos ativos nesta página.</p>' + "                    </div>" + '                    <button type="button" class="btn-primary" style="background: #0284c7; font-size: 12px;" @click="focusAndInspectDOM">🔄 Executar Varredura DOM Agora</button>' + "                  </div>" + '                  <pre class="frag-dom-inspector">{{ domInspectionReport }}</pre>' + "                </div>" + "              </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13085,7 +13087,7 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
        else if (cur === "Em Revisão ⚡") {
         item["status"] = "Pronto 🚀"}
        else item["status"] = "Ativo ✅";
-      _this["lastAction"] = 'Evento @click recebido via b-bind="$attrs" na 3ª célula <td> do módulo ' + codeStr + "!";
+      _this.lastAction = 'Evento @click recebido via b-bind="$attrs" na 3ª célula <td> do módulo ' + codeStr + "!";
       pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
     };
     m["addModuleRow"] = function (_this) {
@@ -13094,8 +13096,8 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
       var n = 0;
       var codeStr = "";
       arr = _this["modules"];
-      n = rtl.trunc(_this["nextId"]);
-      _this["nextId"] = n + 1;
+      n = _this.nextId;
+      _this.nextId += 1;
       if (n < 10) {
         codeStr = "FRAG-0" + pas.SysUtils.IntToStr(n)}
        else codeStr = "FRAG-" + pas.SysUtils.IntToStr(n);
@@ -13104,7 +13106,7 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
       newObj["name"] = "Componente Multi-Root Dinâmico #" + pas.SysUtils.IntToStr(n);
       newObj["status"] = "Ativo ✅";
       arr.push(newObj);
-      _this["lastAction"] = "Nova linha adicionada à tabela com 3 células <td> irmãs via <table-cells> (" + codeStr + ").";
+      _this.lastAction = "Nova linha adicionada à tabela com 3 células <td> irmãs via <table-cells> (" + codeStr + ").";
       pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
     };
     m["removeLastRow"] = function (_this) {
@@ -13112,77 +13114,41 @@ rtl.module("uFragmentsView",["System","JS","Web","BVComponents","BVReactivity","
       arr = _this["modules"];
       if ((arr !== null) && (arr.length > 1)) {
         arr.pop();
-        _this["lastAction"] = "Último fragmento <table-cells> desmontado (3 nós <td> + âncoras removidos do DOM).";
+        _this.lastAction = "Último fragmento <table-cells> desmontado (3 nós <td> + âncoras removidos do DOM).";
         pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
       };
     };
     m["toggleHighlightAttrs"] = function (_this) {
-      if (!(_this["highlightActive"] == false)) {
-        _this["highlightActive"] = false;
-        _this["highlightClass"] = "";
-        _this["lastAction"] = "Fallthrough automático ($attrs.class) desativado nos fragmentos <stat-pills>.";
+      if (_this.highlightActive) {
+        _this.highlightActive = false;
+        _this.highlightClass = "";
+        _this.lastAction = "Fallthrough automático ($attrs.class) desativado nos fragmentos <stat-pills>.";
       } else {
-        _this["highlightActive"] = true;
-        _this["highlightClass"] = "frag-highlight-root";
-        _this["lastAction"] = 'Fallthrough automático ($attrs.class = "frag-highlight-root") aplicado ao 1º nó raiz de cada <stat-pills>!';
+        _this.highlightActive = true;
+        _this.highlightClass = "frag-highlight-root";
+        _this.lastAction = 'Fallthrough automático ($attrs.class = "frag-highlight-root") aplicado ao 1º nó raiz de cada <stat-pills>!';
       };
       pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
     };
     m["onPillClick"] = function (_this, pillName) {
-      _this["lastAction"] = "Clique capturado via Fallthrough Automático (Opção A) no 1º nó raiz de <stat-pills>: " + pillName;
+      _this.lastAction = "Clique capturado via Fallthrough Automático (Opção A) no 1º nó raiz de <stat-pills>: " + pillName;
     };
     m["inspectFragmentDOM"] = function (_this) {
-      var report = "";
-      var cnt = 0;
-      cnt = rtl.trunc(_this["inspectionCount"]) + 1;
-      _this["inspectionCount"] = cnt;
-      report = "";
-      let root = document.querySelector('.fragments-view-page') || document.body;
-      let startAnchors = [];
-      let endAnchors = 0;
-      let walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
-      let node;
-      while ((node = walker.nextNode())) {
-        let txt = (node.nodeValue || '').trim();
-        if (txt.indexOf('[bv-fragment:') === 0) {
-          startAnchors.push(node);
-        } else if (txt === '[/bv-fragment]') {
-          endAnchors++;
-        }
-      }
-      let nowStr = new Date().toLocaleTimeString();
-      let lines = [];
-      lines.push('[Leitura #' + cnt + ' às ' + nowStr + '] Âncoras de Início (<!-- [bv-fragment: ...] -->): ' + startAnchors.length + ' | Âncoras de Fim (<!-- [/bv-fragment] -->): ' + endAnchors);
-      lines.push('--------------------------------------------------------------------------------');
-      for (let i = 0; i < startAnchors.length; i++) {
-        let a = startAnchors[i];
-        let sibs = (window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) ? window.__BV_CORE__.getFragmentNodes(a) : [];
-        let tagList = [];
-        for (let j = 0; j < sibs.length; j++) {
-          if (sibs[j].nodeType === 1) {
-            tagList.push('<' + sibs[j].tagName.toLowerCase() + (sibs[j].className ? ' class="' + sibs[j].className + '"' : '') + '>');
-          }
-        }
-        lines.push('#' + (i + 1) + ' <!--' + a.nodeValue + '-->  ==>  ' + tagList.join(' + ') + '  ==>  <!-- [/bv-fragment] -->');
-      }
-      report = lines.join('\n');
-      _this["domInspectionReport"] = report;
+      _this.inspectionCount += 1;
+      _this.domInspectionReport = pas.BVPascalDX.InspectFragmentsReport(".fragments-view-page",_this.inspectionCount);
     };
     m["focusAndInspectDOM"] = function (_this) {
       var cnt = 0;
       var totalFrags = 0;
       pas.BVPascalDX.CallMethod(_this,"inspectFragmentDOM");
-      cnt = rtl.trunc(_this["inspectionCount"]);
+      cnt = _this.inspectionCount;
       totalFrags = _this["modules"].length + 3;
-      _this["lastAction"] = "🔍 Inspeção DOM #" + pas.SysUtils.IntToStr(cnt) + " concluída: " + pas.SysUtils.IntToStr(totalFrags) + " fragmentos Multi-Root ativos (" + pas.SysUtils.IntToStr(totalFrags * 2) + " âncoras de comentário) verificados!";
-      _this["inspectorFlash"] = true;
-      let panel = document.getElementById('dom-inspector-panel');
-      if (panel && panel.scrollIntoView) {
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
-      setTimeout(function() {
+      _this.lastAction = "🔍 Inspeção DOM #" + pas.SysUtils.IntToStr(cnt) + " concluída: " + pas.SysUtils.IntToStr(totalFrags) + " fragmentos Multi-Root ativos (" + pas.SysUtils.IntToStr(totalFrags * 2) + " âncoras de comentário) verificados!";
+      _this.inspectorFlash = true;
+      pas.BVPascalDX.ScrollToElement("dom-inspector-panel",true);
+      pas.BVPascalDX.RunAfterDelay(900,function () {
         _this.inspectorFlash = false;
-      }, 900);
+      });
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -13204,10 +13170,10 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".home-page { padding: 0; }   .section { margin-top: 20px; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 4px solid #42b883; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }   .section h3 { margin: 0 0 10px 0; font-size: 17px; color: #1e293b; font-weight: 600; }   .alert-box { margin-top: 12px; padding: 14px 18px; background: #42b883; color: white; border-radius: 6px; font-weight: 600; }   .bui-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }   .bui-input:focus { border-color: #42b883; outline: none; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }      /* Transition Classes: Managed by the BVCompiler transition engine */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
+    _styleEl.textContent = ".home-page { padding: 0; }   .home-page .section { margin-top: 20px; padding: 20px; border-radius: 8px; border: 1px solid var(--bv-border); border-left: 4px solid #42b883; background: var(--bv-surface); box-shadow: var(--bv-shadow); }   .home-page .section h3 { margin: 0 0 10px 0; font-size: 17px; color: var(--bv-text); font-weight: 600; }   .home-page .alert-box { margin-top: 12px; padding: 14px 18px; background: #42b883; color: white; border-radius: 6px; font-weight: 600; }   .home-page .bui-input { max-width: 320px; }    /* Transition Classes: Managed by the BVCompiler transition engine */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }   .fade-enter-from, .fade-leave-to { opacity: 0; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="home-page">' + '    <div style="margin-bottom: 20px;">' + '      <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">🏠 Dashboard &bull; Control Panel</h1>' + '      <p style="font-size: 14px; color: #64748b; margin: 0;">{{ descricao }}</p>' + "    </div>" + "" + "    <!-- DYNAMIC FRAMEWORK VERSION CARD (SINGLE POINT OF TRUTH) -->" + "    <version-card></version-card>" + "" + "    <!-- 1. Slots & Composition -->" + "    <card>" + '      <template slot="header">🎨 Composition via Slots</template>' + "      <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "    </card>" + "" + "    <!-- 2. Form Reactivity (B-Model) -->" + '    <div class="section">' + "      <h3>✍️ Data Synchronization (B-Model)</h3>" + '      <div style="margin: 12px 0;">' + '        <input type="text" b-model="userName" class="bui-input" style="max-width: 320px;" placeholder="Your name...">' + "      </div>" + "      <p>Welcome, <strong>{{ userName }}</strong>!</p>" + "    </div>" + "" + "    <!-- 3. Global Store (B-Store) -->" + '    <div class="section">' + "      <h3>🌍 Global Store (B-Store)</h3>" + "      <p>Current Active Session: <strong>{{ $store.user }}</strong></p>" + '      <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Reactivity Layer: <strong>ECMAScript Proxy &amp; Microtask Scheduler</strong></p>' + "    </div>" + "" + "    <!-- 4. Transitions (MUST KEEP THIS BUTTON AS FIRST BUTTON FOR Home.test.pas) -->" + '    <div class="section">' + "      <h3>✨ Animations &amp; Transitions</h3>" + '      <button class="bui-btn bui-btn-primary" style="margin-top: 6px;" @click="toggleVisible">Toggle Visibility</button>' + '      <transition name="fade">' + '        <div v-show="isVisible" class="alert-box">' + "           Fade Effect Active! 👻" + "        </div>" + "      </transition>" + "    </div>" + "" + "    <!-- 5. Provide and Inject -->" + "    <info-card>" + '       <template slot="title">Dependency Injection (Provide/Inject)</template>' + "       The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "    </info-card>" + "" + "    <!-- 6. Themes & Icons (Blaise-Themes & Blaise-Icons) -->" + '    <div class="section">' + "      <h3>🎨 Dynamic Themes &amp; Vector Icons</h3>" + "      <p>Current Active Theme: <strong>{{ $theme.current }}</strong> (Dark Mode: <strong>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</strong>)</p>" + '      <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "        <bv-theme-toggle></bv-theme-toggle>" + "        <bv-theme-select></bv-theme-select>" + "      </div>" + '      <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '        <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="home-page">' + '    <div style="margin-bottom: 20px;">' + '      <h1 style="font-size: 24px; font-weight: 700; margin: 0 0 6px 0;">🏠 Dashboard &bull; Control Panel</h1>' + '      <p style="font-size: 14px; margin: 0;">{{ descricao }}</p>' + "    </div>" + "" + "    <!-- 1. Slots & Composition -->" + "    <card>" + '<template slot="header">🎨 Composition via Slots</template>' + "  <p>This 'Card' component uses named slots for the header and default slots for the body.</p>" + "  </card>" + "" + "  <!-- 2. Form Reactivity (B-Model) -->" + '  <div class="section">' + "    <h3>✍️ Data Synchronization (B-Model)</h3>" + '    <div style="margin: 12px 0;">' + '      <input type="text" b-model="userName" class="bui-input" style="max-width: 320px;" placeholder="Your name...">' + "    </div>" + "    <p>Welcome, <strong>{{ userName }}</strong>!</p>" + "  </div>" + "" + "  <!-- 3. Global Store (B-Store) -->" + '  <div class="section">' + "    <h3>🌍 Global Store (B-Store)</h3>" + "    <p>Current Active Session: <strong>{{ $store.user }}</strong></p>" + '    <p style="font-size: 13px; margin-top: 4px;">Reactivity Layer: <strong>ECMAScript Proxy &amp; Microtask Scheduler</strong></p>' + "  </div>" + "" + "  <!-- 4. Transitions (MUST KEEP THIS BUTTON AS FIRST BUTTON FOR Home.test.pas) -->" + '  <div class="section">' + "    <h3>✨ Animations &amp; Transitions</h3>" + '    <button class="bui-btn bui-btn-primary" style="margin-top: 6px;" @click="toggleVisible">Toggle Visibility</button>' + '    <transition name="fade">' + '      <div v-show="isVisible" class="alert-box">' + "        Fade Effect Active! 👻" + "      </div>" + "    </transition>" + "  </div>" + "" + "  <!-- 5. Provide and Inject -->" + "  <info-card>" + '<template slot="title">Dependency Injection (Provide/Inject)</template>' + "  The <b>Provide/Inject</b> feature allows this component to receive data from distant ancestors without needing manual properties at every level." + "  </info-card>" + "" + "  <!-- 6. Themes & Icons (Blaise-Themes & Blaise-Icons) -->" + '  <div class="section">' + "    <h3>🎨 Dynamic Themes &amp; Vector Icons</h3>" + "    <p>Current Active Theme: <strong>{{ $theme.current }}</strong> (Dark Mode: <strong>{{ $theme.isDark ? 'Active 🌙' : 'Inactive ☀️' }}</strong>)</p>" + '    <div style="display: flex; gap: 8px; align-items: center; margin: 12px 0;">' + "      <bv-theme-toggle></bv-theme-toggle>" + "      <bv-theme-select></bv-theme-select>" + "    </div>" + '    <div style="display: flex; gap: 16px; align-items: center; margin-top: 12px; flex-wrap: wrap;">' + '      <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="check-circle" size="22" color="#42b883"></bv-icon> <span>check-circle</span></div>' + '      <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="star-fill" size="22" color="#f1c40f"></bv-icon> <span>star-fill</span></div>' + '      <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="heart-fill" size="22" color="#e74c3c"></bv-icon> <span>heart-fill</span></div>' + '      <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="shield-check" size="22" color="#3498db"></bv-icon> <span>shield-check</span></div>' + '      <div style="display: flex; align-items: center; gap: 6px;"><bv-icon name="gear-fill" size="22" color="#95a5a6"></bv-icon> <span>gear-fill</span></div>' + "    </div>" + "  </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13220,7 +13186,7 @@ rtl.module("uHome",["System","JS","Web","BVComponents","BVReactivity","BVStore",
     };
     m = new Object();
     m["toggleVisible"] = function (_this) {
-      _this["isVisible"] = !!(_this["isVisible"] == false);
+      _this.isVisible = !_this.isVisible;
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("home-page",comp);
@@ -13234,10 +13200,10 @@ rtl.module("uI18nLabView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".i18n-lab-view { padding: 8px 0; }   .bui-input { border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }   .bui-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }";
+    _styleEl.textContent = ".i18n-lab-view { padding: 8px 0; }   .i18n-lab-view .bui-input { border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; outline: none; }   .i18n-lab-view .bui-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="i18n-lab-view">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 22px 24px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #3b82f6; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">BVI18n Engine</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-Dependency Reactive i18n</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🌐 Internationalization Laboratory (BVI18n)</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Enterprise localization engine for Object Pascal with reactive DOM binding, named parameter interpolation, nested keys, and fallback locale support.</p>' + "      </div>" + "" + "      <!-- ACTIVE LOCALE BADGE -->" + '      <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px 18px; text-align: center;">' + '        <span style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 600;">Active Locale</span>' + '        <strong style="font-size: 18px; color: #38bdf8;">{{ activeLocale.toUpperCase() }}</strong>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK LOCALE SWITCHER BAR -->" + '    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">' + '        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' + '          <strong style="font-size: 13px; color: #334155; margin-right: 4px;">Switch Language:</strong>' + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'en\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" @click="setLang(\'en\')">' + "            🇺🇸 English (en)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'pt\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" @click="setLang(\'pt\')">' + "            🇧🇷 Português (pt)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'es\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" @click="setLang(\'es\')">' + "            🇪🇸 Español (es)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'fr\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;\'" @click="setLang(\'fr\')">' + "            🇫🇷 Français (fr)" + "          </button>" + "        </div>" + '        <span style="font-size: 12px; color: #64748b;">Fallback Locale: <strong>EN</strong></span>' + "      </div>" + "    </div>" + "" + "    <!-- 4-FEATURE SHOWCASE GRID -->" + '    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">' + "      <!-- CARD 1: CORE TRANSLATIONS ($t) -->" + '      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">1. Direct Key Lookup (`$t`)</h3>' + '        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Instant reactive DOM substitution via <code>{{ $t(\'key\') }}</code>.</p>' + "        " + '        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 8px;"><strong>$t(\'lab.welcome\'):</strong> <span style="color: #0284c7; font-weight: 600;">{{ $t(\'lab.welcome\') }}</span></div>' + '          <div style="margin-bottom: 8px;"><strong>$t(\'lab.save\'):</strong> <span style="color: #10b981; font-weight: 600;">{{ $t(\'lab.save\') }}</span></div>' + '          <div><strong>$t(\'lab.cancel\'):</strong> <span style="color: #ef4444; font-weight: 600;">{{ $t(\'lab.cancel\') }}</span></div>' + "        </div>" + "      </div>" + "" + "      <!-- CARD 2: NESTED DOT-NOTATION -->" + '      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">2. Nested Hierarchy (`dot.notation`)</h3>' + '        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Resolve deeply nested JSON dictionaries seamlessly.</p>' + "        " + '        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 8px;"><strong>$t(\'actions.dialog.confirm\'):</strong> <br><span style="color: #6366f1; font-weight: 600;">{{ $t(\'actions.dialog.confirm\') }}</span></div>' + '          <div><strong>$t(\'actions.dialog.delete\'):</strong> <br><span style="color: #dc2626; font-weight: 600;">{{ $t(\'actions.dialog.delete\') }}</span></div>' + "        </div>" + "      </div>" + "" + "      <!-- CARD 3: NAMED PARAMETER INTERPOLATION -->" + '      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">3. Named Interpolation (`{param}`)</h3>' + '        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Substitute dynamic variables inside translated strings.</p>' + "        " + '        <div style="display: flex; gap: 8px; margin-bottom: 12px;">' + '          <input type="text" class="bui-input" style="padding: 6px 10px; font-size: 13px;" b-model="userName" placeholder="Your name" />' + '          <input type="number" class="bui-input" style="width: 80px; padding: 6px 10px; font-size: 13px;" b-model="itemCount" min="0" />' + "        </div>" + "" + '        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px; font-size: 13px; color: #065f46;">' + "          <strong>Live Output:</strong><br>" + "          {{ interpolatedGreeting }}" + "        </div>" + "      </div>" + "" + "      <!-- CARD 4: FALLBACK LOCALE -->" + '      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">4. Resilient Fallback Locale</h3>' + '        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Keys absent in non-English dictionaries fall back to EN without errors.</p>' + "        " + '        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 6px;"><strong>$t(\'lab.exclusiveEn\'):</strong></div>' + '          <div style="color: #d97706; font-weight: 600; background: #fef3c7; padding: 6px 10px; border-radius: 4px;">' + '            "{{ $t(\'lab.exclusiveEn\') }}"' + "          </div>" + '          <small style="color: #64748b; display: block; margin-top: 6px;">(Key only registered in English dictionary)</small>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- LIVE MESSAGE DICTIONARY INSPECTOR -->" + '    <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '        <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📜 Active Locale In-Memory Dictionary (`{{ activeLocale }}`)</h3>' + '        <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">BVI18n Live Cache</span>' + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 200px;">{{ activeDictionaryJSON }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="i18n-lab-view">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 22px 24px; margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #3b82f6; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">BVI18n Engine</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-Dependency Reactive i18n</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">🌐 Internationalization Laboratory (BVI18n)</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Enterprise localization engine for Object Pascal with reactive DOM binding, named parameter interpolation, nested keys, and fallback locale support.</p>' + "      </div>" + "" + "      <!-- ACTIVE LOCALE BADGE -->" + '      <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px 18px; text-align: center;">' + '        <span style="font-size: 11px; text-transform: uppercase; color: #94a3b8; display: block; font-weight: 600;">Active Locale</span>' + '        <strong style="font-size: 18px; color: #38bdf8;">{{ activeLocale.toUpperCase() }}</strong>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK LOCALE SWITCHER BAR -->" + '    <div class="card mb-4" style="background: var(--bv-surface); border-radius: 8px; padding: 16px 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border); margin-bottom: 24px;">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">' + '        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">' + '          <strong style="font-size: 13px; color: var(--bv-text); margin-right: 4px;">Switch Language:</strong>' + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'en\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="setLang(\'en\')">' + "            🇺🇸 English (en)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'pt\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="setLang(\'pt\')">' + "            🇧🇷 Português (pt)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'es\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="setLang(\'es\')">' + "            🇪🇸 Español (es)" + "          </button>" + '          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === \'fr\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="setLang(\'fr\')">' + "            🇫🇷 Français (fr)" + "          </button>" + "        </div>" + '        <span style="font-size: 12px; color: var(--bv-text-muted);">Fallback Locale: <strong>EN</strong></span>' + "      </div>" + "    </div>" + "" + "    <!-- 4-FEATURE SHOWCASE GRID -->" + '    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">' + "      <!-- CARD 1: CORE TRANSLATIONS ($t) -->" + '      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0;">1. Direct Key Lookup (`$t`)</h3>' + '        <p style="font-size: 13px; margin-bottom: 14px;">Instant reactive DOM substitution via <code>{{ $t(\'key\') }}</code>.</p>' + "" + '        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 8px;"><strong>$t(\'lab.welcome\'):</strong> <span style="color: #0ea5e9; font-weight: 600;">{{ $t(\'lab.welcome\') }}</span></div>' + '          <div style="margin-bottom: 8px;"><strong>$t(\'lab.save\'):</strong> <span style="color: #10b981; font-weight: 600;">{{ $t(\'lab.save\') }}</span></div>' + '          <div><strong>$t(\'lab.cancel\'):</strong> <span style="color: #ef4444; font-weight: 600;">{{ $t(\'lab.cancel\') }}</span></div>' + "        </div>" + "      </div>" + "" + "      <!-- CARD 2: NESTED DOT-NOTATION -->" + '      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0;">2. Nested Hierarchy (`dot.notation`)</h3>' + '        <p style="font-size: 13px; margin-bottom: 14px;">Resolve deeply nested JSON dictionaries seamlessly.</p>' + "" + '        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 8px;"><strong>$t(\'actions.dialog.confirm\'):</strong> <br><span style="color: #818cf8; font-weight: 600;">{{ $t(\'actions.dialog.confirm\') }}</span></div>' + '          <div><strong>$t(\'actions.dialog.delete\'):</strong> <br><span style="color: #f87171; font-weight: 600;">{{ $t(\'actions.dialog.delete\') }}</span></div>' + "        </div>" + "      </div>" + "" + "      <!-- CARD 3: NAMED PARAMETER INTERPOLATION -->" + '      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0;">3. Named Interpolation (`{param}`)</h3>' + '        <p style="font-size: 13px; margin-bottom: 14px;">Substitute dynamic variables inside translated strings.</p>' + "" + '        <div style="display: flex; gap: 8px; margin-bottom: 12px;">' + '          <input type="text" class="bui-input" style="padding: 6px 10px; font-size: 13px;" b-model="userName" placeholder="Your name" />' + '          <input type="number" class="bui-input" style="width: 80px; padding: 6px 10px; font-size: 13px;" b-model="itemCount" min="0" />' + "        </div>" + "" + '        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 12px; font-size: 13px; color: #10b981;">' + "          <strong>Live Output:</strong><br>" + "          {{ interpolatedGreeting }}" + "        </div>" + "      </div>" + "" + "      <!-- CARD 4: FALLBACK LOCALE -->" + '      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">' + '        <h3 style="font-size: 16px; margin: 0 0 10px 0;">4. Resilient Fallback Locale</h3>' + '        <p style="font-size: 13px; margin-bottom: 14px;">Keys absent in non-English dictionaries fall back to EN without errors.</p>' + "" + '        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">' + '          <div style="margin-bottom: 6px;"><strong>$t(\'lab.exclusiveEn\'):</strong></div>' + '          <div style="color: #f59e0b; font-weight: 600; background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); padding: 6px 10px; border-radius: 4px;">' + '            "{{ $t(\'lab.exclusiveEn\') }}"' + "          </div>" + '          <small style="color: var(--bv-text-muted); display: block; margin-top: 6px;">(Key only registered in English dictionary)</small>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- LIVE MESSAGE DICTIONARY INSPECTOR -->" + '    <div class="card" style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' + '        <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">📜 Active Locale In-Memory Dictionary (`{{ activeLocale }}`)</h3>' + '        <span class="badge" style="background: #334155; color: #94a3b8; font-size: 11px;">BVI18n Live Cache</span>' + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 200px;">{{ activeDictionaryJSON }}</pre>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13252,14 +13218,11 @@ rtl.module("uI18nLabView",["System","JS","Web","BVComponents","BVReactivity","BV
     m = new Object();
     m["setLang"] = function (_this, lang) {
       pas.BVPascalDX.I18nSetLocale(lang);
-      _this["activeLocale"] = lang;
+      _this.activeLocale = lang;
       pas.BVPascalDX.CallMethod(_this,"updateDictionaryPreview");
     };
     m["updateDictionaryPreview"] = function (_this) {
-      var loc = this.activeLocale || 'en';
-      var all = (typeof pas !== 'undefined' && pas.BVI18n && pas.BVI18n.TBVI18n && pas.BVI18n.TBVI18n.FMessages) ? pas.BVI18n.TBVI18n.FMessages : {};
-      var current = all[loc] || {};
-      this.activeDictionaryJSON = JSON.stringify(current, null, 2);
+      _this.activeDictionaryJSON = pas.BVPascalDX.I18nGetMessagesJSON(_this.activeLocale);
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
@@ -13268,7 +13231,7 @@ rtl.module("uI18nLabView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.I18nAddMessages("pt",'{"lab":{"welcome":"Bem-vindo ao BlaiseVue","save":"Salvar Alterações","cancel":"Cancelar","welcomeUser":"Olá, {name}! Você tem {count} notificações não lidas."},"actions":{"dialog":{"confirm":"Tem certeza que deseja prosseguir?","delete":"Excluir este registro permanentemente"}}}');
       pas.BVPascalDX.I18nAddMessages("es",'{"lab":{"welcome":"Bienvenido a BlaiseVue","save":"Guardar Cambios","cancel":"Cancelar","welcomeUser":"¡Hola, {name}! Tienes {count} notificaciones no leídas."},"actions":{"dialog":{"confirm":"¿Está seguro de continuar?","delete":"Eliminar este registro permanentemente"}}}');
       pas.BVPascalDX.I18nAddMessages("fr",'{"lab":{"welcome":"Bienvenue sur BlaiseVue","save":"Enregistrer les modifications","cancel":"Annuler","welcomeUser":"Bonjour, {name} ! Vous avez {count} notifications non lues."},"actions":{"dialog":{"confirm":"Êtes-vous sûr de vouloir continuer ?","delete":"Supprimer cet enregistrement définitivement"}}}');
-      _this["activeLocale"] = pas.BVPascalDX.I18nGetLocale();
+      _this.activeLocale = pas.BVPascalDX.I18nGetLocale();
       pas.BVPascalDX.CallMethod(_this,"updateDictionaryPreview");
     };
     comp["computed"] = new Object();
@@ -13276,8 +13239,8 @@ rtl.module("uI18nLabView",["System","JS","Web","BVComponents","BVReactivity","BV
       var Result = undefined;
       var p = null;
       p = new Object();
-      p["name"] = _this["userName"];
-      p["count"] = _this["itemCount"];
+      p["name"] = _this.userName;
+      p["count"] = _this.itemCount;
       Result = pas.BVPascalDX.I18nT("lab.welcomeUser",p);
       return Result;
     };
@@ -13292,10 +13255,10 @@ rtl.module("uLibBootstrap",["System","JS","Web","BVComponents","BVReactivity","B
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }   @media (max-width: 576px) {     .lib-bootstrap-page { padding: 12px 10px; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .gap-3 { gap: 14px; }   .text-muted { color: #64748b; }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
+    _styleEl.textContent = ".mt-4 { margin-top: 20px; }   .mb-2 { margin-bottom: 8px; }   .mb-3 { margin-bottom: 12px; }   .mb-4 { margin-bottom: 16px; }   .mb-5 { margin-bottom: 24px; }   .mt-3 { margin-top: 15px; }   .lib-bootstrap-page { background: transparent; padding: 12px 0; min-height: 100vh; }   @media (max-width: 576px) {   .lib-bootstrap-page { padding: 8px 0; }   }   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }   .col-8 { flex: 0 0 66.666667%; max-width: 66.666667%; padding: 0 15px; }   .col-6 { flex: 0 0 50%; max-width: 50%; padding: 0 15px; }   .d-flex { display: flex; }   .align-items-end { align-items: flex-end; }   .justify-content-end { justify-content: flex-end; }   .gap-2 { gap: 10px; }   .gap-3 { gap: 14px; }   .text-muted { color: var(--bv-text-muted); }   .p-4 { padding: 20px; }   .text-center { text-align: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL DEMO NAVBAR -->" + '    <bv-navbar brand="BlaiseVue UI">' + '       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '         <bv-col cols="12" md="7">' + '            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '            <p class="text-muted mb-4">Enterprise reactive UI components based on Bootstrap 5 standards, built 100% in Object Pascal.</p>' + "            " + "            <bv-breadcrumb>" + '               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "            </bv-breadcrumb>" + "         </bv-col>" + '         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "         </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "         <!-- LEFT COLUMN: Feedback & Status -->" + '         <bv-col cols="12" md="4">' + '            <bv-card title="📊 System Status">' + '               <div class="mb-3">' + "                  <small>Reactivity Engine Load</small>" + '                  <bv-progress :value="count" variant="success"></bv-progress>' + "               </div>" + '               <div class="mb-3">' + "                  <small>Memory Allocation ($Store)</small>" + '                  <bv-progress :value="35" variant="info"></bv-progress>' + "               </div>" + '               <div class="d-flex gap-2">' + '                  <bv-btn label="Increment Load (+10)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "               </div>" + "            </bv-card>" + "" + '            <bv-card title="📋 Notification Center" class="mt-4">' + "               <bv-list-group>" + '                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'Inbox Messages\')">📨 Inbox Messages</bv-list-group-item>' + '                  <bv-list-group-item active="true" @click="clickNotif(\'Weekly Digest\')">🌟 Weekly Digest</bv-list-group-item>' + '                  <bv-list-group-item badge="ONLINE" badgeVariant="success" @click="clickNotif(\'Service Healthy\')">💎 Core Services Online</bv-list-group-item>' + '                  <bv-list-group-item @click="clickNotif(\'Cloud Synchronization\')">☁️ Cloud Synchronization</bv-list-group-item>' + "               </bv-list-group>" + "            </bv-card>" + "" + "            <!-- SKELETON LOADERS SHOWCASE -->" + '            <bv-card title="💀 Skeleton Loading States" class="mt-4">' + '               <div class="mb-3">' + '                  <bv-skeleton type="text" count="3"></bv-skeleton>' + "               </div>" + '               <div class="d-flex gap-3 align-items-center">' + '                  <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>' + '                  <div style="flex: 1;">' + '                     <bv-skeleton type="rect" height="14px" width="80%"></bv-skeleton>' + '                     <div style="margin-top: 6px;">' + '                        <bv-skeleton type="rect" height="10px" width="50%"></bv-skeleton>' + "                     </div>" + "                  </div>" + "               </div>" + "            </bv-card>" + "         </bv-col>" + "" + "         <!-- RIGHT COLUMN: Tabs / Forms / Controls -->" + '         <bv-col cols="12" md="8">' + '            <bv-card style="height: 100%;">' + '               <bv-tabs @change="tabChanged">' + '                  <bv-tab id="forms" title="📝 Form Controls" active="true">' + '                     <div class="p-4">' + "                        <h4>Text Inputs & Groups</h4>" + '                        <bv-row gutter="md" class="mt-4">' + '                           <bv-col cols="12" md="6">' + '                              <bv-input label="Component Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                              <bv-form-select label="Execution Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <bv-input-group label="Unit Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                              <bv-input-group label="API Access Key" append="Copy">' + '                                 <bv-input b-model="libName" readonly="true"></bv-input>' + "                              </bv-input-group>" + "                           </bv-col>" + "                        </bv-row>" + "" + '                        <h4 class="mt-4">Switches, Radios & Checkboxes</h4>' + '                        <bv-row gutter="md" class="mt-3">' + '                           <bv-col cols="12" md="4">' + '                              <bv-switch label="Hardware Acceleration" v-model="hwAccel"></bv-switch>' + '                              <div class="mt-2">' + '                                 <bv-switch label="Offline Cache Sync" v-model="offlineCache"></bv-switch>' + "                              </div>" + "                           </bv-col>" + '                           <bv-col cols="12" md="4">' + '                              <bv-checkbox label="Enable Dark Palette" v-model="darkPalette"></bv-checkbox>' + '                              <div class="mt-2">' + '                                 <bv-checkbox label="Compress Network Payloads" v-model="compressPayloads"></bv-checkbox>' + "                              </div>" + "                           </bv-col>" + '                           <bv-col cols="12" md="4">' + '                              <bv-radio name="accessLevel" value="read" label="Read-Only Mode" v-model="accessMode"></bv-radio>' + '                              <bv-radio name="accessLevel" value="write" label="Read/Write Mode" v-model="accessMode"></bv-radio>' + '                              <bv-radio name="accessLevel" value="admin" label="Administrative Access" v-model="accessMode"></bv-radio>' + "                           </bv-col>" + "                        </bv-row>" + "" + '                        <h4 class="mt-4">Range Slider & Dropdowns</h4>' + '                        <bv-row gutter="md" class="mt-3">' + '                           <bv-col cols="12" md="6">' + '                              <label class="form-label d-block">Volume / Threshold: <strong>{{ sliderValue }}%</strong></label>' + '                              <bv-slider v-model="sliderValue" min="0" max="100" step="5"></bv-slider>' + "                           </bv-col>" + '                           <bv-col cols="12" md="6">' + '                              <label class="form-label d-block">Context Actions</label>' + '                              <bv-dropdown label="Quick Actions" variant="primary">' + '                                 <bv-dropdown-item @click="clickNotif(\'Export Data triggered\')">Export Dataset</bv-dropdown-item>' + '                                 <bv-dropdown-item @click="clickNotif(\'Sync Schema triggered\')">Sync Schema</bv-dropdown-item>' + '                                 <bv-dropdown-item divider="true"></bv-dropdown-item>' + '                                 <bv-dropdown-item @click="clickNotif(\'Purge Cache triggered\')">Purge In-Memory Cache</bv-dropdown-item>' + "                              </bv-dropdown>" + "                           </bv-col>" + "                        </bv-row>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="nav" title="📍 Pagination & Alerts">' + '                     <div class="p-4 text-center">' + '                        <h5 class="mb-4">Data Pagination & Segments</h5>' + '                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                        <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                           Notice: Real-time telemetry connection is running at optimal latency." + "                        </bv-alert>" + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="extras" title="🔥 Accordions">' + '                     <div class="p-4">' + '                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                     </div>" + "                  </bv-tab>" + "" + '                  <bv-tab id="icons" title="⭐ Vector Icons">' + '                     <div class="p-4">' + "                        <h5>Vector Icon Engine (1,800+ Icons)</h5>" + '                        <p class="text-muted">Resolution-independent vector icons with reactive color and sizing.</p>' + '                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#10b981"></bv-icon> <span>check-circle</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#f59e0b"></bv-icon> <span>star-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#ef4444"></bv-icon> <span>heart-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#64748b"></bv-icon> <span>gear-fill</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#3b82f6"></bv-icon> <span>shield-check</span></div>' + '                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#f97316"></bv-icon> <span>lightning</span></div>' + "                        </div>" + "                     </div>" + "                  </bv-tab>" + "               </bv-tabs>" + "            </bv-card>" + "         </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '       <p class="mb-3">This is the reactive <strong>bv-drawer</strong> component! Smoothly slides out on desktop and mobile.</p>' + "       <bv-list-group>" + '          <bv-list-group-item active="true" @click="clickNotif(\'Dashboard View Selected\')">🏠 Dashboard View</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Component Configuration\')">⚙️ Component Config</bv-list-group-item>' + '          <bv-list-group-item @click="clickNotif(\'Mobile Optimization Selected\')">📱 Mobile Optimization</bv-list-group-item>' + "       </bv-list-group>" + '       <div class="mt-4">' + '          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "       </div>" + "    </bv-drawer>" + "" + "    <!-- CONFIRMATION MODAL -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "       <p>You are about to execute a reactive state transaction via Object Pascal.</p>" + '       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">' + "          <p>Current Reactive Values:</p>" + '          <bv-badge variant="info">{{ libName }}</bv-badge>' + '          <bv-badge variant="success">{{ count }}%</bv-badge>' + "       </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configuration & Preferences" okLabel="Apply" cancelLabel="Close" @ok="applySettings">' + '       <div class="p-2">' + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Visual Theme Mode</strong>' + '             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '                <span v-if="$theme.isDark">☀️ Switch to Light Mode</span>' + '                <span v-if="!$theme.isDark">🌙 Switch to Dark Mode</span>' + "             </button>" + "          </div>" + '          <div class="mb-3" style="margin-bottom: 14px;">' + '             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Application Language</strong>' + '             <div style="display: flex; gap: 8px;">' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'en\', \'bui-btn-secondary\': $i18n.locale !== \'en\' }" type="button" @click="$setLocale(\'en\')">🇺🇸 English</button>' + '                <button class="bui-btn bui-btn-sm" :class="{ \'bui-btn-primary\': $i18n.locale === \'pt\', \'bui-btn-secondary\': $i18n.locale !== \'pt\' }" type="button" @click="$setLocale(\'pt\')">🇧🇷 Português</button>' + "             </div>" + "          </div>" + "       </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "       Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
+    comp["template"] = '  <div class="lib-bootstrap-page">' + "    <!-- INTERNAL DEMO NAVBAR -->" + '    <bv-navbar brand="BlaiseVue UI">' + '      <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>' + '      <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>' + '      <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>' + '      <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>' + "    </bv-navbar>" + "" + "    <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->" + '    <bv-container fluid="true">' + '      <bv-row gutter="md" class="mb-5">' + '        <bv-col cols="12" md="7">' + '          <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>' + '          <p class="text-muted mb-4">Enterprise reactive UI components based on Bootstrap 5 standards, built 100% in Object Pascal.</p>' + "" + "          <bv-breadcrumb>" + '            <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>' + '            <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>' + '            <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>' + "          </bv-breadcrumb>" + "        </bv-col>" + '        <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">' + '          <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>' + '          <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>' + '          <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif(\'Manual Toast Trigger\')"></bv-btn>' + '          <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>' + "        </bv-col>" + "      </bv-row>" + "" + '      <bv-row gutter="md">' + "        <!-- LEFT COLUMN: Feedback & Status -->" + '        <bv-col cols="12" md="4">' + '          <bv-card title="📊 System Status">' + '            <div class="mb-3">' + "              <small>Reactivity Engine Load</small>" + '              <bv-progress :value="count" variant="success"></bv-progress>' + "            </div>" + '            <div class="mb-3">' + "              <small>Memory Allocation ($Store)</small>" + '              <bv-progress :value="35" variant="info"></bv-progress>' + "            </div>" + '            <div class="d-flex gap-2">' + '              <bv-btn label="Increment Load (+10)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>' + '              <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>' + "            </div>" + "          </bv-card>" + "" + '          <bv-card title="📋 Notification Center" class="mt-4">' + "            <bv-list-group>" + '              <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif(\'Inbox Messages\')">📨 Inbox Messages</bv-list-group-item>' + '              <bv-list-group-item active="true" @click="clickNotif(\'Weekly Digest\')">🌟 Weekly Digest</bv-list-group-item>' + '              <bv-list-group-item badge="ONLINE" badgeVariant="success" @click="clickNotif(\'Service Healthy\')">💎 Core Services Online</bv-list-group-item>' + '              <bv-list-group-item @click="clickNotif(\'Cloud Synchronization\')">☁️ Cloud Synchronization</bv-list-group-item>' + "            </bv-list-group>" + "          </bv-card>" + "" + "          <!-- SKELETON LOADERS SHOWCASE -->" + '          <bv-card title="💀 Skeleton Loading States" class="mt-4">' + '            <div class="mb-3">' + '              <bv-skeleton type="text" count="3"></bv-skeleton>' + "            </div>" + '            <div class="d-flex gap-3 align-items-center">' + '              <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>' + '              <div style="flex: 1;">' + '                <bv-skeleton type="rect" height="14px" width="80%"></bv-skeleton>' + '                <div style="margin-top: 6px;">' + '                  <bv-skeleton type="rect" height="10px" width="50%"></bv-skeleton>' + "                </div>" + "              </div>" + "            </div>" + "          </bv-card>" + "        </bv-col>" + "" + "        <!-- RIGHT COLUMN: Tabs / Forms / Controls -->" + '        <bv-col cols="12" md="8">' + '          <bv-card style="height: 100%;">' + '            <bv-tabs @change="tabChanged">' + '              <bv-tab id="forms" title="📝 Form Controls" active="true">' + '                <div class="p-4">' + "                  <h4>Text Inputs & Groups</h4>" + '                  <bv-row gutter="md" class="mt-4">' + '                    <bv-col cols="12" md="6">' + '                      <bv-input label="Component Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>' + '                      <bv-form-select label="Execution Priority" b-model="category" :options="catOptions"></bv-form-select>' + "                    </bv-col>" + '                    <bv-col cols="12" md="6">' + '                      <bv-input-group label="Unit Cost" prepend="$" append=".00" b-model="count"></bv-input-group>' + '                      <bv-input-group label="API Access Key" append="Copy">' + '                        <bv-input b-model="libName" readonly="true"></bv-input>' + "                      </bv-input-group>" + "                    </bv-col>" + "                  </bv-row>" + "" + '                  <h4 class="mt-4">Switches, Radios & Checkboxes</h4>' + '                  <bv-row gutter="md" class="mt-3">' + '                    <bv-col cols="12" md="4">' + '                      <bv-switch label="Hardware Acceleration" v-model="hwAccel"></bv-switch>' + '                      <div class="mt-2">' + '                        <bv-switch label="Offline Cache Sync" v-model="offlineCache"></bv-switch>' + "                      </div>" + "                    </bv-col>" + '                    <bv-col cols="12" md="4">' + '                      <bv-checkbox label="Enable Dark Palette" v-model="darkPalette"></bv-checkbox>' + '                      <div class="mt-2">' + '                        <bv-checkbox label="Compress Network Payloads" v-model="compressPayloads"></bv-checkbox>' + "                      </div>" + "                    </bv-col>" + '                    <bv-col cols="12" md="4">' + '                      <bv-radio name="accessLevel" value="read" label="Read-Only Mode" v-model="accessMode"></bv-radio>' + '                      <bv-radio name="accessLevel" value="write" label="Read/Write Mode" v-model="accessMode"></bv-radio>' + '                      <bv-radio name="accessLevel" value="admin" label="Administrative Access" v-model="accessMode"></bv-radio>' + "                    </bv-col>" + "                  </bv-row>" + "" + '                  <h4 class="mt-4">Range Slider & Dropdowns</h4>' + '                  <bv-row gutter="md" class="mt-3">' + '                    <bv-col cols="12" md="6">' + '                      <label class="form-label d-block">Volume / Threshold: <strong>{{ sliderValue }}%</strong></label>' + '                      <bv-slider v-model="sliderValue" min="0" max="100" step="5"></bv-slider>' + "                    </bv-col>" + '                    <bv-col cols="12" md="6">' + '                      <label class="form-label d-block">Context Actions</label>' + '                      <bv-dropdown text="Quick Actions" variant="primary">' + '                        <bv-dropdown-item @click="clickNotif(\'Export Data triggered\')">Export Dataset</bv-dropdown-item>' + '                        <bv-dropdown-item @click="clickNotif(\'Sync Schema triggered\')">Sync Schema</bv-dropdown-item>' + '                        <bv-dropdown-item divider="true"></bv-dropdown-item>' + '                        <bv-dropdown-item @click="clickNotif(\'Purge Cache triggered\')">Purge In-Memory Cache</bv-dropdown-item>' + "                      </bv-dropdown>" + "                    </bv-col>" + "                  </bv-row>" + "                </div>" + "              </bv-tab>" + "" + '              <bv-tab id="nav" title="📍 Pagination & Alerts">' + '                <div class="p-4 text-center">' + '                  <h5 class="mb-4">Data Pagination & Segments</h5>' + '                  <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>' + '                  <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>' + '                  <bv-alert variant="warning" dismissible="true" class="mt-4">' + "                    Notice: Real-time telemetry connection is running at optimal latency." + "                  </bv-alert>" + "                </div>" + "              </bv-tab>" + "" + '              <bv-tab id="extras" title="🔥 Accordions">' + '                <div class="p-4">' + '                  <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>' + "                </div>" + "              </bv-tab>" + "" + '              <bv-tab id="icons" title="⭐ Vector Icons">' + '                <div class="p-4">' + "                  <h5>Vector Icon Engine (1,800+ Icons)</h5>" + '                  <p class="text-muted">Resolution-independent vector icons with reactive color and sizing.</p>' + '                  <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#10b981"></bv-icon> <span>check-circle</span></div>' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#f59e0b"></bv-icon> <span>star-fill</span></div>' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#ef4444"></bv-icon> <span>heart-fill</span></div>' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#64748b"></bv-icon> <span>gear-fill</span></div>' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#3b82f6"></bv-icon> <span>shield-check</span></div>' + '                    <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#f97316"></bv-icon> <span>lightning</span></div>' + "                  </div>" + "                </div>" + "              </bv-tab>" + "            </bv-tabs>" + "          </bv-card>" + "        </bv-col>" + "      </bv-row>" + "    </bv-container>" + "" + "    <!-- DRAWER: Programmatically triggered via $ref -->" + '    <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">' + '      <p class="mb-3">This is the reactive <strong>bv-drawer</strong> component! Smoothly slides out on desktop and mobile.</p>' + "      <bv-list-group>" + '        <bv-list-group-item active="true" @click="clickNotif(\'Dashboard View Selected\')">🏠 Dashboard View</bv-list-group-item>' + '        <bv-list-group-item @click="clickNotif(\'Component Configuration\')">⚙️ Component Config</bv-list-group-item>' + '        <bv-list-group-item @click="clickNotif(\'Mobile Optimization Selected\')">📱 Mobile Optimization</bv-list-group-item>' + "      </bv-list-group>" + '      <div class="mt-4">' + '        <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>' + "      </div>" + "    </bv-drawer>" + "" + "    <!-- CONFIRMATION MODAL -->" + '    <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">' + "      <p>You are about to execute a reactive state transaction via Object Pascal.</p>" + '      <div class="p-3 rounded text-center" style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); padding: 12px; border-radius: 6px; margin-top: 10px;">' + "        <p>Current Reactive Values:</p>" + '        <bv-badge variant="info">{{ libName }}</bv-badge>' + '        <bv-badge variant="success">{{ count }}%</bv-badge>' + "      </div>" + "    </bv-modal>" + "" + "    <!-- SETTINGS MODAL -->" + '    <bv-modal b-ref="settingsModal" title="⚙️ Configuration & Preferences" okLabel="Apply" cancelLabel="Close" @ok="applySettings">' + '      <div class="p-2">' + '        <div class="mb-3" style="margin-bottom: 14px;">' + '          <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Visual Theme Mode</strong>' + '          <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">' + '            <span v-if="$theme.isDark">☀️ Switch to Light Mode</span>' + '            <span v-if="!$theme.isDark">🌙 Switch to Dark Mode</span>' + "          </button>" + "        </div>" + "      </div>" + "    </bv-modal>" + "" + '    <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">' + "      Action performed: <strong>{{ lastAction }}</strong>" + "    </bv-toast>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13401,10 +13364,10 @@ rtl.module("uLoginView",["System","JS","Web","BVComponents","BVReactivity","BVSt
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid #e2e8f0; }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: #64748b; margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #fecaca; }   .auth-success-banner { background: #dcfce7; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid #bbf7d0; }   .bui-btn { padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; text-align: center; }   .btn-block { width: 100%; display: block; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-danger { background: #ef4444; color: white; }   .bui-btn-danger:hover { background: #dc2626; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }   .demo-buttons { display: flex; gap: 8px; justify-content: center; }   .demo-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }   .demo-btn:hover { background: #e2e8f0; }   .logged-in-box { text-align: center; }   .user-info-row { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }   .user-avatar { font-size: 28px; }   .user-email { font-size: 12px; color: #64748b; }   .role-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }   .role-admin { background: #fef3c7; color: #d97706; }   .role-manager { background: #e0f2fe; color: #0284c7; }   .role-user { background: #dcfce7; color: #16a34a; }   .logged-actions { display: flex; gap: 10px; justify-content: center; }";
+    _styleEl.textContent = ".login-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }   .login-card { background: var(--bv-surface); color: var(--bv-text); border-radius: 12px; box-shadow: var(--bv-shadow); width: 100%; max-width: 440px; padding: 32px 28px; border: 1px solid var(--bv-border); }   .login-header { text-align: center; margin-bottom: 24px; }   .login-icon { font-size: 40px; margin-bottom: 8px; }   .login-title { font-size: 22px; font-weight: 700; color: var(--bv-text); margin: 0 0 6px 0; }   .login-subtitle { font-size: 13px; color: var(--bv-text-muted); margin: 0; }   .form-group { margin-bottom: 16px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--bv-text); margin-bottom: 6px; }   .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; box-sizing: border-box; outline: none; transition: all 0.2s; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .auth-error-banner { background: rgba(239, 68, 68, 0.16); color: #ef4444; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid rgba(239, 68, 68, 0.35); }   .auth-success-banner { background: rgba(16, 185, 129, 0.16); color: #10b981; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; border: 1px solid rgba(16, 185, 129, 0.35); }   .btn-block { width: 100%; display: block; text-align: center; }   .demo-logins-section { margin-top: 24px; }   .demo-divider { display: flex; align-items: center; text-align: center; color: var(--bv-text-muted); font-size: 12px; margin-bottom: 14px; }   .demo-divider::before, .demo-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--bv-border); }   .demo-buttons { display: flex; gap: 8px; justify-content: center; }   .demo-btn { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--bv-border); background: var(--bv-surface-subtle); color: var(--bv-text); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }   .demo-btn:hover { background: var(--bv-hover-bg); }   .logged-in-box { text-align: center; }   .user-info-row { display: flex; align-items: center; justify-content: space-between; background: var(--bv-surface-subtle); padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--bv-border); }   .user-avatar { font-size: 28px; }   .user-email { font-size: 12px; color: var(--bv-text-muted); }   .role-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; }   .role-admin { background: rgba(245, 158, 11, 0.16); color: #f59e0b; }   .role-manager { background: rgba(14, 165, 233, 0.16); color: #0ea5e9; }   .role-user { background: rgba(16, 185, 129, 0.16); color: #10b981; }   .logged-actions { display: flex; gap: 10px; justify-content: center; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Authentication &bull; Autenticação</h2>' + '        <p class="login-subtitle">Secure access with native JWT tokens issued by mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Return to Home 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Sign Out 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">Email Address:</label>' + "          <input" + '            type="email"' + '            class="form-control"' + '            placeholder="e.g. admin@blaisevue.dev"' + '            b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Password:</label>' + "          <input" + '            type="password"' + '            class="form-control"' + '            placeholder="••••••••"' + '            b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "        >" + '          <span v-if="!loading">Sign In 🚀</span>' + '          <span v-if="loading">Authenticating with mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Quick Demo Access</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Manager" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 User" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="login-page">' + '    <div class="login-card">' + "      <!-- HEADER -->" + '      <div class="login-header">' + '        <div class="login-icon">🔐</div>' + '        <h2 class="login-title">Authentication &bull; Autenticação</h2>' + '        <p class="login-subtitle">Secure access with native JWT tokens issued by mORMot 2</p>' + "      </div>" + "" + "      <!-- ALREADY LOGGED IN BANNER -->" + '      <div class="logged-in-box" v-if="$auth && $auth.isAuthenticated">' + '        <div class="user-info-row">' + '          <span class="user-avatar">👤</span>' + "          <div>" + "            <strong>{{ $auth.user.name }}</strong>" + '            <div class="user-email">{{ $auth.user.email }}</div>' + "          </div>" + '          <span class="role-badge" :class="\'role-\' + $auth.user.role">{{ $auth.user.role }}</span>' + "        </div>" + '        <div class="logged-actions">' + '          <a href="#/" class="bui-btn bui-btn-primary">Return to Home 🏠</a>' + '          <button class="bui-btn bui-btn-danger" @click="handleLogout">Sign Out 🚪</button>' + "        </div>" + "      </div>" + "" + "      <!-- LOGIN FORM -->" + '      <div class="login-form" v-if="!$auth || !$auth.isAuthenticated">' + '        <div class="form-group">' + '          <label class="form-label">Email Address:</label>' + "          <input" + '          type="email"' + '          class="form-control"' + '          placeholder="e.g. admin@blaisevue.dev"' + '          b-model="email"' + "          />" + "        </div>" + "" + '        <div class="form-group">' + '          <label class="form-label">Password:</label>' + "          <input" + '          type="password"' + '          class="form-control"' + '          placeholder="••••••••"' + '          b-model="password"' + "          />" + "        </div>" + "" + "        <!-- ERROR MESSAGE -->" + '        <div class="auth-error-banner" v-if="errorMessage">' + "          ⚠️ {{ errorMessage }}" + "        </div>" + "" + "        <!-- SUCCESS MESSAGE -->" + '        <div class="auth-success-banner" v-if="successMessage">' + "          ✅ {{ successMessage }}" + "        </div>" + "" + "        <!-- SUBMIT BUTTON -->" + "        <button" + '          class="bui-btn bui-btn-primary btn-block"' + '          :disabled="loading"' + '          @click="submitLogin"' + "          >" + '          <span v-if="!loading">Sign In 🚀</span>' + '          <span v-if="loading">Authenticating with mORMot 2... ⏳</span>' + "        </button>" + "" + "        <!-- QUICK DEMO LOGINS -->" + '        <div class="demo-logins-section">' + '          <div class="demo-divider"><span>Quick Demo Access</span></div>' + '          <div class="demo-buttons">' + '            <button class="demo-btn demo-admin" @click="quickLogin(\'admin@blaisevue.dev\', \'admin123\')">' + "              ⚡ Admin" + "            </button>" + '            <button class="demo-btn demo-manager" @click="quickLogin(\'manager@blaisevue.dev\', \'manager123\')">' + "              👥 Manager" + "            </button>" + '            <button class="demo-btn demo-user" @click="quickLogin(\'user@blaisevue.dev\', \'user123\')">' + "              👤 User" + "            </button>" + "          </div>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13446,10 +13409,10 @@ rtl.module("uMobileView",["System","JS","Web","BVComponents","BVReactivity","BVS
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: #ffffff;     border-radius: 16px;     overflow: hidden;     box-shadow: 0 10px 30px rgba(0,0,0,0.08);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
+    _styleEl.textContent = ".mobile-view-container {     max-width: 760px;     margin: 0 auto;     background: var(--bv-surface);     border: 1px solid var(--bv-border);     border-radius: 16px;     overflow: hidden;     box-shadow: var(--bv-shadow);     min-height: calc(100vh - 120px);     margin-bottom: 80px;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Universal Components (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">' + "            The <strong>blaise-ui-mobile</strong> components are 100% universal! Run on **Web Browser** (PWA), native **Desktop** (via WebUI4Delphi), and on **Mobile devices** (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 iOS Style (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Android Style (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Typed Pascal Controllers (BlaiseIonic.pas)" subtitle="Native Feedback & Dialogs">' + '          <p style="margin-bottom: 12px; color: #4b5563;">' + "            Trigger native dialogues and notifications directly from Object Pascal without manual DOM manipulation:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alert" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirm" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">' + "            <strong>Last Action:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Expandable Accordion Lists" subtitle="Click item or chevron (›) to expand details">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Active HTTP/WebSocket connection on port 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Server Port:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Average Latency:</strong> &lt; 2ms concurrent processing</div>" + "                <div>💾 <strong>RAM Usage:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Security:</strong> RFC 7519 JWT Auth with Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Local Storage & Cache" subtitle="Synchronized SQLite / IndexedDB database" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>ORM Engine:</strong> Synopse mORMot 2 with SQLite3 embedded</div>" + "                <div>🔄 <strong>Real-Time Sync:</strong> Automated WebSocket notifications</div>" + "                <div>📱 <strong>Offline Mode:</strong> Full functionality without active internet</div>" + "                <div>📊 <strong>Mapped Tables:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Universal Execution Platform" subtitle="Pascal codebase shared across Web, Desktop and Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatible with all modern browsers</div>" + "                <div>🖥️ <strong>Desktop:</strong> Ultralightweight native binary via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Native Android APK packaged via Capacitor</div>" + "                <div>🎨 <strong>Adaptive UI:</strong> Auto-toggles Cupertino and Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
+    comp["template"] = '  <div class="mobile-view-container">' + '    <bv-ion-app :mode="currentMode">' + "      <bv-ion-header>" + "        <bv-ion-toolbar>" + '          <bv-ion-title title="📱 BlaiseVue Mobile & Desktop Ecosystem"></bv-ion-title>' + '          <div slot="end">' + '            <bv-ion-badge :value="currentMode.toUpperCase()" :color="currentMode === \'ios\' ? \'primary\' : \'success\'"></bv-ion-badge>' + "          </div>" + "        </bv-ion-toolbar>" + "      </bv-ion-header>" + "" + '      <bv-ion-content :padding="true">' + "        <!-- INTRO CARD -->" + '        <bv-ion-card title="Universal Components (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">' + '          <p style="margin-bottom: 14px; color: var(--bv-text-muted); line-height: 1.5;">' + "            The <strong>blaise-ui-mobile</strong> components are 100% universal! Run on **Web Browser** (PWA), native **Desktop** (via WebUI4Delphi), and on **Mobile devices** (via Capacitor/Android)." + "          </p>" + "" + '          <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '            <bv-ion-button label="🍎 iOS Style (Cupertino)" color="primary" fill="outline" @click="setIosMode"></bv-ion-button>' + '            <bv-ion-button label="🤖 Android Style (Material Design)" color="success" fill="outline" @click="setMdMode"></bv-ion-button>' + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- PASCAL CONTROLLERS CARD -->" + '        <bv-ion-card title="Typed Pascal Controllers (BlaiseIonic.pas)" subtitle="Native Feedback & Dialogs">' + '          <p style="margin-bottom: 12px; color: var(--bv-text-muted);">' + "            Trigger native dialogues and notifications directly from Object Pascal without manual DOM manipulation:" + "          </p>" + "" + '          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">' + '            <bv-ion-button label="🔔 Toast" color="dark" @click="showToast"></bv-ion-button>' + '            <bv-ion-button label="💬 Alert" color="primary" @click="showAlert"></bv-ion-button>' + '            <bv-ion-button label="❓ Confirm" color="warning" @click="showConfirm"></bv-ion-button>' + '            <bv-ion-button label="⏳ Loading" color="secondary" @click="showLoading"></bv-ion-button>' + '            <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>' + "          </div>" + "" + '          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; font-size: 0.88rem; color: var(--bv-text);">' + "            <strong>Last Action:</strong> {{ lastAction }}" + "          </div>" + "        </bv-ion-card>" + "" + "        <!-- EXPANDABLE ACCORDION LIST -->" + '        <bv-ion-card title="Expandable Accordion Lists" subtitle="Click item or chevron (›) to expand details">' + '          <bv-ion-list :inset="true">' + "            <!-- ITEM 1 -->" + '            <bv-ion-item title="mORMot 2 Native Server" subtitle="Active HTTP/WebSocket connection on port 8090" :expandable="true" :expanded="true">' + '              <bv-ion-badge value="Online" color="success" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>⚡ <strong>Server Port:</strong> <code>8090</code> (HTTP 1.1 + WebSockets RFC 6455)</div>" + "                <div>🚀 <strong>Average Latency:</strong> &lt; 2ms concurrent processing</div>" + "                <div>💾 <strong>RAM Usage:</strong> ~22 MB RAM (Free Pascal 64-bit)</div>" + "                <div>🔒 <strong>Security:</strong> RFC 7519 JWT Auth with Argon2/SHA-256</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 2 -->" + '            <bv-ion-item title="Local Storage & Cache" subtitle="Synchronized SQLite / IndexedDB database" :expandable="true">' + '              <bv-ion-badge value="SQLite" color="primary" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>📦 <strong>ORM Engine:</strong> Synopse mORMot 2 with SQLite3 embedded</div>" + "                <div>🔄 <strong>Real-Time Sync:</strong> Automated WebSocket notifications</div>" + "                <div>📱 <strong>Offline Mode:</strong> Full functionality without active internet</div>" + "                <div>📊 <strong>Mapped Tables:</strong> Customers, Products, AuthUsers</div>" + "              </div>" + "            </bv-ion-item>" + "" + "            <!-- ITEM 3 -->" + '            <bv-ion-item title="Universal Execution Platform" subtitle="Pascal codebase shared across Web, Desktop and Android" :expandable="true">' + '              <bv-ion-badge value="Universal" color="dark" slot="end"></bv-ion-badge>' + '              <div slot="expanded" style="display: flex; flex-direction: column; gap: 6px;">' + "                <div>🌐 <strong>Web (PWA):</strong> Compatible with all modern browsers</div>" + "                <div>🖥️ <strong>Desktop:</strong> Ultralightweight native binary via WebUI4Delphi (&lt; 10 MB)</div>" + "                <div>📱 <strong>Mobile:</strong> Native Android APK packaged via Capacitor</div>" + "                <div>🎨 <strong>Adaptive UI:</strong> Auto-toggles Cupertino and Material Design</div>" + "              </div>" + "            </bv-ion-item>" + "          </bv-ion-list>" + "        </bv-ion-card>" + "      </bv-ion-content>" + "    </bv-ion-app>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13517,7 +13480,7 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: #2c3e50; }   .crud-subtitle { color: #7f8c8d; font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: #e8f8f5; color: #1abc9c; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #a3e4d7; }   .count-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 12px; }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }   .crud-table tr:hover { background: #f8fafc; }   .cell-id { font-weight: 600; color: #64748b; font-family: monospace; }   .cell-date { font-size: 12px; color: #94a3b8; }   .badge-num { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: #dcfce7; color: #15803d; }   .pill-inactive { background: #fee2e2; color: #b91c1c; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }   .edit-btn:hover { background: #e2e8f0; }   .del-btn { background: #fef2f2; color: #dc2626; border-color: #fecaca; }   .del-btn:hover { background: #fee2e2; }   .crud-empty { padding: 48px 16px; text-align: center; color: #64748b; }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: #fff; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: #94a3b8; }   .modal-close-btn:hover { color: #1e293b; }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: #fee2e2; color: #dc2626; padding: 8px 12px; border-radius: 6px; font-size: 13px; }   .bui-btn { padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }   .bui-btn-primary { background: #42b883; color: white; }   .bui-btn-primary:hover { background: #33a06f; }   .bui-btn-secondary { background: #e2e8f0; color: #334155; }   .bui-btn-secondary:hover { background: #cbd5e1; }";
+    _styleEl.textContent = ".product-view-page { padding: 24px; max-width: 1200px; margin: 0 auto; }   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }   .crud-title { font-size: 24px; font-weight: 700; color: var(--bv-text); }   .crud-subtitle { color: var(--bv-text-muted); font-size: 14px; margin-top: 4px; }   .crud-header-btns { display: flex; gap: 8px; }   .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }   .sync-badge { background: rgba(26, 188, 156, 0.14); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.35); }   .count-badge { background: var(--bv-surface-subtle); color: var(--bv-text); padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid var(--bv-border); }   .crud-toolbar { margin-bottom: 16px; }   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; outline: none; }   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .crud-table-wrap { background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; box-shadow: var(--bv-shadow); overflow-x: auto; }   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }   .crud-table th { background: var(--bv-surface-subtle); padding: 12px 16px; font-weight: 600; color: var(--bv-text); border-bottom: 2px solid var(--bv-border); }   .crud-table td { padding: 12px 16px; border-bottom: 1px solid var(--bv-border); color: var(--bv-text); }   .crud-table tr:hover { background: var(--bv-hover-bg); }   .cell-id { font-weight: 600; color: var(--bv-text-muted); font-family: monospace; }   .cell-date { font-size: 12px; color: var(--bv-text-muted); }   .badge-num { background: rgba(14, 165, 233, 0.16); color: #0ea5e9; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; }   .badge-price { font-weight: 700; color: #16a34a; }   .status-pill { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }   .pill-active { background: rgba(16, 185, 129, 0.16); color: #10b981; }   .pill-inactive { background: rgba(239, 68, 68, 0.16); color: #ef4444; }   .cell-actions { display: flex; gap: 6px; justify-content: center; }   .action-btn { padding: 5px 10px; border-radius: 4px; font-size: 12px; border: 1px solid transparent; cursor: pointer; transition: all 0.2s; font-weight: 500; }   .edit-btn { background: var(--bv-surface-subtle); color: var(--bv-text); border-color: var(--bv-border); }   .edit-btn:hover { background: var(--bv-hover-bg); }   .del-btn { background: rgba(239, 68, 68, 0.14); color: #ef4444; border-color: rgba(239, 68, 68, 0.35); }   .del-btn:hover { background: rgba(239, 68, 68, 0.24); }   .crud-empty { padding: 48px 16px; text-align: center; color: var(--bv-text-muted); }   .empty-icon { font-size: 42px; margin-bottom: 8px; }   .crud-modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1050; }   .crud-modal { background: var(--bv-surface); color: var(--bv-text); border: 1px solid var(--bv-border); border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.2s ease-out; }   @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }   .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--bv-border); background: var(--bv-surface-subtle); display: flex; justify-content: space-between; align-items: center; }   .modal-close-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--bv-text-muted); }   .modal-close-btn:hover { color: var(--bv-text); }   .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }   .modal-footer { padding: 14px 20px; background: var(--bv-surface-subtle); border-top: 1px solid var(--bv-border); display: flex; justify-content: flex-end; gap: 8px; }   .form-group { margin-bottom: 14px; }   .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--bv-text); margin-bottom: 4px; }   .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; outline: none; }   .form-control:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }   .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; margin-top: 6px; }   .form-error-banner { margin-top: 10px; background: rgba(239, 68, 68, 0.16); color: #ef4444; padding: 8px 12px; border-radius: 6px; font-size: 13px; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
     comp["template"] = '  <div class="product-view-page">' + "    <!-- HEADER SECTION -->" + '    <div class="crud-header">' + "      <div>" + '        <h1 class="crud-title">📦 Product Management</h1>' + '        <p class="crud-subtitle">High-throughput reactive CRUD module connected to mORMot 2 native backend.</p>' + "      </div>" + '      <div class="crud-header-btns">' + '        <button class="bui-btn bui-btn-primary" @click="openCreateModal">➕ New Product</button>' + '        <button class="bui-btn bui-btn-secondary" @click="fetchItems">🔄 Refresh</button>' + "      </div>" + "    </div>" + "" + "    <!-- REAL-TIME SYNC & STATS BAR -->" + '    <div class="crud-stats-bar">' + '      <span class="sync-badge">🟢 Real-time WebSocket Sync Active</span>' + '      <span class="count-badge">Total: <strong>{{ items.length }}</strong> products</span>' + "    </div>" + "" + "    <!-- SEARCH & FILTER TOOLBAR -->" + '    <div class="crud-toolbar">' + "      <input" + '        type="text"' + '        class="crud-search-input"' + '        placeholder="🔍 Search products by any keyword..."' + '        b-model="searchQuery"' + "      />" + "    </div>" + "" + "    <!-- RESPONSIVE DATA TABLE -->" + '    <div class="crud-table-wrap">' + '      <table class="crud-table">' + "        <thead>" + "          <tr>" + '            <th style="width: 70px;">ID</th>' + "            <th>Name</th>" + "            <th>Price</th>" + "            <th>Stock</th>" + "            <th>Category</th>" + "            <th>Created</th>" + '            <th style="width: 170px; text-align: center;">Actions</th>' + "          </tr>" + "        </thead>" + "        <tbody>" + '          <tr b-for="item in filteredItems">' + '            <td class="cell-id">#{{ item.id }}</td>' + "            <td><strong>{{ item.name }}</strong></td>" + '            <td><span class="badge-price">$ {{ Number(item.price).toFixed(2) }}</span></td>' + '            <td><span class="badge-num">{{ item.stock }}</span></td>' + "            <td><strong>{{ item.category }}</strong></td>" + '            <td class="cell-date">{{ item.createdAt }}</td>' + '            <td class="cell-actions">' + '              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>' + '              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>' + "            </td>" + "          </tr>" + "        </tbody>" + "      </table>" + "" + "      <!-- EMPTY STATE -->" + '      <div class="crud-empty" v-if="filteredItems.length === 0">' + '        <div class="empty-icon">📂</div>' + "        <h3>No products found</h3>" + '        <p v-if="searchQuery">No matching records for "<strong>{{ searchQuery }}</strong>".</p>' + '        <p v-if="!searchQuery">Click "➕ New Product" above to add your first record!</p>' + "      </div>" + "    </div>" + "" + "    <!-- MODAL DIALOG -->" + '    <div class="crud-modal-backdrop" v-show="isModalOpen">' + '      <div class="crud-modal">' + '        <div class="modal-header">' + "          <h3>{{ isEditing ? '✏️ Edit ' + modelTitle : '➕ New ' + modelTitle }}</h3>" + '          <button class="modal-close-btn" @click="closeModal">✕</button>' + "        </div>" + '        <div class="modal-body">' + '          <div class="form-group">' + '            <label class="form-label">Name:</label>' + '            <input type="text" class="form-control" b-model="form.name" placeholder="Enter name..." />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Price:</label>' + '            <input type="number" step="0.01" class="form-control" b-model="form.price" placeholder="0.00" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Stock:</label>' + '            <input type="number" class="form-control" b-model="form.stock" placeholder="0" />' + "          </div>" + '          <div class="form-group">' + '            <label class="form-label">Category:</label>' + '            <input type="text" class="form-control" b-model="form.category" placeholder="Enter category..." />' + "          </div>" + '          <div class="form-error-banner" v-if="formError">' + "            ⚠️ {{ formError }}" + "          </div>" + "        </div>" + '        <div class="modal-footer">' + '          <button class="bui-btn bui-btn-secondary" @click="closeModal">Cancel</button>' + '          <button class="bui-btn bui-btn-primary" @click="saveItem">' + "            {{ isEditing ? 'Save Changes' : 'Create ' + modelTitle }}" + "          </button>" + "        </div>" + "      </div>" + "    </div>" + "  </div>";
@@ -13570,14 +13533,6 @@ rtl.module("uProductView",["System","JS","Web","BVComponents","BVReactivity","BV
     };
     m["saveItem"] = function (_this) {
       if (!!(_this["form"] == false)) return;
-      if (this && this.form) {
-        for (var k in this) {
-          if (k.indexOf('form.') === 0) {
-            var fieldName = k.substring(5);
-            this.form[fieldName] = this[k];
-          }
-        }
-      };
       pas.BVPascalDX.ApiSave(_this,"/api/" + _this.apiEndpoint,_this.currentEditId,_this.isEditing,_this["form"],"fetchItems","formError");
     };
     m["deleteItem"] = function (_this, id) {
@@ -13610,10 +13565,10 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '.pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: #ffffff;     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: #2c3e50;     box-shadow: 0 2px 4px rgba(0,0,0,0.05);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: #fff; border-radius: 6px; border: 1px solid #e2e8f0; }   .stat-badge { flex: 1; min-width: 140px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }    /* Dark mode adjustments */   html[data-bs-theme="dark"] .wasm-box, body.theme-dark .wasm-box,   html[data-bs-theme="dark"] .wasm-bench-container, body.theme-dark .wasm-bench-container {     background: #1e2227;     border-color: #333842;   }   html[data-bs-theme="dark"] .wasm-result, body.theme-dark .wasm-result,   html[data-bs-theme="dark"] .stat-badge, body.theme-dark .stat-badge {     background: #282c34;     border-color: #3e4451;     color: #e0e0e0;   }   html[data-bs-theme="dark"] .wasm-bench-title, body.theme-dark .wasm-bench-title {     color: #abb2bf;   }';
+    _styleEl.textContent = ".pro-features { animation: fadeIn 0.5s ease-in; }   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }    /* Transition Classes */   .fade-enter-active, .fade-leave-active { transition: opacity 0.5s, transform 0.5s; }   .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }   .fade-enter-to, .fade-leave-from { opacity: 1; transform: translateY(0); }    /* FLIP List Grid */   .flip-grid {     display: flex;     flex-wrap: wrap;     gap: 10px;     margin-top: 15px;     min-height: 50px;   }   .flip-card {     background: var(--bv-surface);     border: 2px solid #42b883;     border-radius: 8px;     padding: 10px 16px;     font-weight: 600;     color: var(--bv-text);     box-shadow: var(--bv-shadow);     display: inline-block;   }    /* WebAssembly Section Styles */   .wasm-card { border-left: 4px solid #6366f1; }   .wasm-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }   .wasm-box { background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; padding: 14px; }   .wasm-bench-container { margin-top: 20px; padding: 16px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; }   .wasm-result { margin-top: 10px; font-size: 13px; padding: 8px 10px; background: var(--bv-surface); border-radius: 6px; border: 1px solid var(--bv-border); color: var(--bv-text); }   .stat-badge { flex: 1; min-width: 140px; background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 6px; padding: 10px 14px; }   .stat-label { font-size: 11px; text-transform: uppercase; color: var(--bv-text-muted); font-weight: 600; }   .stat-val { font-size: 20px; font-weight: bold; margin-top: 4px; }   .ssg-info-box { margin-top: 20px; padding: 14px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 8px; }   .ssg-info-box h4, .ssg-info-box p { color: #10b981; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "    " + "    <!-- 1. Slot Demonstration -->" + '    <card titulo="Slot Demonstration">' + '      <template slot="header">Custom Title via Slot 🎨</template>' + "      <p>This markup is transmitted <strong>FROM THE PARENT VIEW</strong> and injected inside the Card component slot.</p>" + '      <button class="btn-primary" @click="testarSlot">Click to Inspect Console Log</button>' + '      <template slot="footer">Custom Footer via Slot 🔗</template>' + "    </card>" + "" + "    <!-- 2. Global Store ($store) -->" + '    <div class="section">' + "       <h3>🧠 Central Reactive Memory ($store)</h3>" + "       <p>Active User: <strong>{{ $store.user }}</strong></p>" + '       <button class="btn-outline" @click="mudarVersao">Update Global State</button>' + "    </div>" + "" + "    <!-- 3. Provide/Inject -->" + '    <div class="section">' + "       <h3>🔗 Hierarchical Context (Inject)</h3>" + "       <p>Injected context from Application Root:</p>" + "       <ul>" + "          <li>Environment: <strong>{{ getAmbiente().status }}</strong></li>" + "          <li>Internal Instance ID: <strong>{{ getAmbiente().id }}</strong></li>" + "       </ul>" + "    </div>" + "" + "    <!-- 4. Lifecycle Hook (Updated) -->" + '    <div class="section">' + "       <h3>🔄 Engine Pulse (Updated Lifecycle)</h3>" + "       <p>Reactivity Counter: <strong>{{ contador }}</strong></p>" + '       <button class="btn-primary" @click="incrementar">Pulse Engine</button>' + "       <p><small>(Inspect console log to view 'updated' hook telemetry)</small></p>" + "    </div>" + "" + "    <!-- 5. Transitions -->" + '    <div class="section">' + "       <h3>✨ Visual Polish (Transitions)</h3>" + '       <button class="btn-outline" @click="toggleShow">Toggle Animated Element</button>' + '       <transition name="fade">' + '          <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "             Smoothly Animated Reactive Node 🎭" + "          </div>" + "       </transition>" + "    </div>" + "" + "    <!-- 6. List Transitions (Transition-Group FLIP) -->" + '    <div class="section">' + "       <h3>{{ $t('pro.transitionTitle') }}</h3>" + '       <p style="color: #64748b; margin-bottom: 12px;">' + "         The <strong>FLIP</strong> algorithm (<em>First, Last, Invert, Play</em>) computes coordinate diffs before and after list mutations and applies fluid hardware-accelerated CSS transforms." + "       </p>" + '       <div style="margin-bottom: 14px;">' + '         <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '         <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '         <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '         <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "       </div>" + "" + '       <transition-group tag="div" name="list" class="flip-grid">' + '          <div b-for="item in itens" class="flip-card">' + "             {{ item }}" + "          </div>" + "       </transition-group>" + "    </div>" + "" + "    <!-- 7. WebAssembly Acceleration & Benchmarking -->" + '    <div class="section wasm-card">' + '       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '         <h3 style="color: #6366f1; margin: 0;">⚡ WebAssembly Acceleration ($wasm)</h3>' + '         <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "       </div>" + '       <p style="color: #64748b; margin-bottom: 16px;">' + "         BlaiseVue integrates high-performance computing via <strong>native WebAssembly</strong> directly from Object Pascal through the injected <code>$wasm</code> bridge, achieving near-native execution speed." + "       </p>" + "" + '       <div class="wasm-grid">' + "         <!-- Test 1: Fibonacci Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🔢 Accelerated Fibonacci Computation</h4>' + '           <p style="font-size: 13px; color: #64748b;">Compute the N-th Fibonacci term via Wasm:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="fibInput" style="width: 80px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" min="1" max="45" />' + '             <button class="btn-primary" @click="calcularWasmFib">Compute Wasm ⚡</button>' + "           </div>" + '           <div class="wasm-result">' + "             Result: <strong>{{ wasmFibResult }}</strong>" + "             <br />" + "             <small>Execution Time: <strong>{{ wasmFibTime }} ms</strong></small>" + "           </div>" + "         </div>" + "" + "         <!-- Test 2: Primality Test Wasm -->" + '         <div class="wasm-box">' + '           <h4 style="color: #2c3e50; margin-bottom: 8px;">🛡️ Wasm Primality Benchmark</h4>' + '           <p style="font-size: 13px; color: #64748b;">Verify large integer primality using compiled bytecode:</p>' + '           <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '             <input type="number" b-model="primeInput" style="width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />' + '             <button class="btn-primary" style="background: #8e44ad;" @click="testarPrimoWasm">Verify Prime 🔍</button>' + "           </div>" + '           <div class="wasm-result">' + "             Status: <strong>{{ primeResult }}</strong>" + "           </div>" + "         </div>" + "       </div>" + "" + "       <!-- Test 3: Real-Time Benchmark -->" + '       <div style="margin-top: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;" class="wasm-bench-container">' + '         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "           <div>" + '             <h4 style="margin: 0; color: #1e293b;" class="wasm-bench-title">📊 Real-Time Benchmark: WebAssembly vs JavaScript</h4>' + '             <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Executes 1,000 parallel iterations comparing Wasm bytecode to vanilla JavaScript.</p>' + "           </div>" + '           <button class="btn-primary" style="background: #6366f1;" @click="rodarBenchmark">Run Benchmark 🚀</button>' + "         </div>" + "" + '         <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '           <div class="stat-badge">' + '             <div class="stat-label">Vanilla JavaScript</div>' + '             <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Native WebAssembly</div>' + '             <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "           </div>" + '           <div class="stat-badge">' + '             <div class="stat-label">Speedup Factor</div>' + '             <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "           </div>" + "         </div>" + '         <p style="font-size: 12px; color: #64748b; margin-top: 10px;">' + "           Benchmark Telemetry: <em>{{ benchSummary }}</em>" + "         </p>" + "       </div>" + "" + "       <!-- Test 4: SSG / Hydration Engine Demo -->" + '       <div style="margin-top: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">' + '         <h4 style="margin: 0 0 6px 0; color: #065f46;">🚀 SSG &amp; Client Rehydration Engine</h4>' + '         <p style="font-size: 13px; color: #047857; margin: 0;">' + "           Pre-rendered static HTML via <code>bv run ssg</code> is seamlessly rehydrated on the client preserving existing DOM hierarchy without re-rendering nodes from scratch." + "         </p>" + "       </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="pro-features">' + '    <h2 class="section-title">{{ $t(\'pro.title\') }}</h2>' + "" + "    <!-- 1. Slot Demonstration -->" + '    <card titulo="Slot Demonstration">' + '<template slot="header">Custom Title via Slot 🎨</template>' + "  <p>This markup is transmitted <strong>FROM THE PARENT VIEW</strong> and injected inside the Card component slot.</p>" + '  <button class="btn-primary" @click="testarSlot">Click to Inspect Console Log</button>' + '<template slot="footer">Custom Footer via Slot 🔗</template>' + "  </card>" + "" + "  <!-- 2. Global Store ($store) -->" + '  <div class="section">' + "    <h3>🧠 Central Reactive Memory ($store)</h3>" + "    <p>Active User: <strong>{{ $store.user }}</strong></p>" + '    <button class="btn-outline" @click="atualizarEstadoGlobal">Update Global State</button>' + "  </div>" + "" + "  <!-- 3. Provide/Inject -->" + '  <div class="section">' + "    <h3>🔗 Hierarchical Context (Inject)</h3>" + "    <p>Injected context from Application Root:</p>" + "    <ul>" + "      <li>Environment: <strong>{{ getAmbiente().status }}</strong></li>" + "      <li>Internal Instance ID: <strong>{{ getAmbiente().id }}</strong></li>" + "    </ul>" + "  </div>" + "" + "  <!-- 4. Lifecycle Hook (Updated) -->" + '  <div class="section">' + "    <h3>🔄 Engine Pulse (Updated Lifecycle)</h3>" + "    <p>Reactivity Counter: <strong>{{ contador }}</strong></p>" + '    <button class="btn-primary" @click="incrementar">Pulse Engine</button>' + "    <p><small>(Inspect console log to view 'updated' hook telemetry)</small></p>" + "  </div>" + "" + "  <!-- 5. Transitions -->" + '  <div class="section">' + "    <h3>✨ Visual Polish (Transitions)</h3>" + '    <button class="btn-outline" @click="toggleShow">Toggle Animated Element</button>' + '    <transition name="fade">' + '      <div v-show="showElement" class="badge badge-orange" style="padding: 20px; display: block; margin-top: 10px;">' + "        Smoothly Animated Reactive Node 🎭" + "      </div>" + "    </transition>" + "  </div>" + "" + "  <!-- 6. List Transitions (Transition-Group FLIP) -->" + '  <div class="section">' + "    <h3>{{ $t('pro.transitionTitle') }}</h3>" + '    <p style="color: #64748b; margin-bottom: 12px;">' + "      The <strong>FLIP</strong> algorithm (<em>First, Last, Invert, Play</em>) computes coordinate diffs before and after list mutations and applies fluid hardware-accelerated CSS transforms." + "    </p>" + '    <div style="margin-bottom: 14px;">' + '      <button class="btn-primary" @click="embaralhar">{{ $t(\'pro.shuffle\') }}</button>' + '      <button class="btn-outline" @click="adicionarItem">{{ $t(\'pro.add\') }}</button>' + '      <button class="btn-danger" @click="removerItem">{{ $t(\'pro.remove\') }}</button>' + '      <button class="btn-outline" @click="resetarLista">{{ $t(\'pro.resetList\') }}</button>' + "    </div>" + "" + '    <transition-group tag="div" name="list" class="flip-grid">' + '      <div b-for="item in itens" class="flip-card">' + "        {{ item }}" + "      </div>" + "    </transition-group>" + "  </div>" + "" + "  <!-- 7. WebAssembly Acceleration & Benchmarking -->" + '  <div class="section wasm-card">' + '    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">' + '      <h3 style="color: #6366f1; margin: 0;">⚡ WebAssembly Acceleration ($wasm)</h3>' + '      <span class="badge" style="background: #6366f1;">Wasm Active 🚀</span>' + "    </div>" + '    <p style="color: #64748b; margin-bottom: 16px;">' + "      BlaiseVue integrates high-performance computing via <strong>native WebAssembly</strong> directly from Object Pascal through the injected <code>$wasm</code> bridge, achieving near-native execution speed." + "    </p>" + "" + '    <div class="wasm-grid">' + "      <!-- Test 1: Fibonacci Wasm -->" + '      <div class="wasm-box">' + '        <h4 style="margin-bottom: 8px;">🔢 Accelerated Fibonacci Computation</h4>' + '        <p style="font-size: 13px;">Compute the N-th Fibonacci term via Wasm:</p>' + '        <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '          <input type="number" b-model="fibInput" style="width: 80px;" min="1" max="45" />' + '          <button class="btn-primary" @click="calcularWasmFib">Compute Wasm ⚡</button>' + "        </div>" + '        <div class="wasm-result">' + "          Result: <strong>{{ wasmFibResult }}</strong>" + "          <br />" + "          <small>Execution Time: <strong>{{ wasmFibTime }} ms</strong></small>" + "        </div>" + "      </div>" + "" + "      <!-- Test 2: Primality Test Wasm -->" + '      <div class="wasm-box">' + '        <h4 style="margin-bottom: 8px;">🛡️ Wasm Primality Benchmark</h4>' + '        <p style="font-size: 13px;">Verify large integer primality using compiled bytecode:</p>' + '        <div style="display: flex; gap: 8px; margin: 10px 0; align-items: center;">' + '          <input type="number" b-model="primeInput" style="width: 120px;" />' + '          <button class="btn-primary" style="background: #8e44ad; border-color: #8e44ad;" @click="testarPrimoWasm">Verify Prime 🔍</button>' + "        </div>" + '        <div class="wasm-result">' + "          Status: <strong>{{ primeResult }}</strong>" + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Test 3: Real-Time Benchmark -->" + '    <div class="wasm-bench-container">' + '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h4 style="margin: 0;" class="wasm-bench-title">📊 Real-Time Benchmark: WebAssembly vs JavaScript</h4>' + '          <p style="font-size: 13px; margin-top: 4px;">Executes 1,000 parallel iterations comparing Wasm bytecode to vanilla JavaScript.</p>' + "        </div>" + '        <button class="btn-primary" style="background: #6366f1; border-color: #6366f1;" @click="rodarBenchmark">Run Benchmark 🚀</button>' + "      </div>" + "" + '      <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap;">' + '        <div class="stat-badge">' + '          <div class="stat-label">Vanilla JavaScript</div>' + '          <div class="stat-val" style="color: #e67e22;">{{ benchJsTime }} ms</div>' + "        </div>" + '        <div class="stat-badge">' + '          <div class="stat-label">Native WebAssembly</div>' + '          <div class="stat-val" style="color: #10b981;">{{ benchWasmTime }} ms</div>' + "        </div>" + '        <div class="stat-badge">' + '          <div class="stat-label">Speedup Factor</div>' + '          <div class="stat-val" style="color: #6366f1;">{{ benchSpeedup }}</div>' + "        </div>" + "      </div>" + '      <p style="font-size: 12px; margin-top: 10px;">' + "        Benchmark Telemetry: <em>{{ benchSummary }}</em>" + "      </p>" + "    </div>" + "" + "    <!-- Test 4: SSG / Hydration Engine Demo -->" + '    <div class="ssg-info-box">' + '      <h4 style="margin: 0 0 6px 0;">🚀 SSG &amp; Client Rehydration Engine</h4>' + '      <p style="font-size: 13px; margin: 0;">' + "        Pre-rendered static HTML via <code>bv run ssg</code> is seamlessly rehydrated on the client preserving existing DOM hierarchy without re-rendering nodes from scratch." + "      </p>" + "    </div>" + "  </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13638,30 +13593,23 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
     m["testarSlot"] = function (_this) {
       pas.System.Writeln("[Slot Test] Parent view slot active!");
     };
-    m["mudarVersao"] = function (_this) {
-      var currentVer = "";
-      var newVer = "";
+    m["atualizarEstadoGlobal"] = function (_this) {
+      var currentUser = "";
       var newUser = "";
-      currentVer = "" + _this["$store"]["user"];
-      if (currentVer === "Pascal King 👑") {
-        newVer = "3.0.0-PRO";
-        newUser = "Blaise Visionary 🚀";
-      } else if (currentVer === "Blaise Visionary 🚀") {
-        newVer = "1.0.0-PRO";
-        newUser = "DevMaster 🏆";
-      } else {
-        newVer = "2.1.0-PRO";
-        newUser = "Pascal King 👑";
-      };
-      _this["$store"]["appVersion"] = newVer;
+      currentUser = "" + _this["$store"]["user"];
+      if (currentUser === "Pascal King 👑") {
+        newUser = "Blaise Visionary 🚀"}
+       else if (currentUser === "Blaise Visionary 🚀") {
+        newUser = "DevMaster 🏆"}
+       else newUser = "Pascal King 👑";
       _this["$store"]["user"] = newUser;
       pas.System.Writeln("[Store] Central Store Updated! User: " + newUser);
     };
     m["incrementar"] = function (_this) {
-      _this["contador"] = rtl.trunc(_this["contador"]) + 1;
+      _this.contador += 1;
     };
     m["toggleShow"] = function (_this) {
-      _this["showElement"] = !!(_this["showElement"] == false);
+      _this.showElement = !_this.showElement;
     };
     m["embaralhar"] = function (_this) {
       var Arr = null;
@@ -13707,8 +13655,8 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       t0 = pas.BVPascalDX.NowTimestampMs();
       res = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","fib",n));
       t1 = pas.BVPascalDX.NowTimestampMs();
-      _this["wasmFibResult"] = res;
-      _this["wasmFibTime"] = pas.SysUtils.FormatFloat("0.000",t1 - t0);
+      _this.wasmFibResult = res;
+      _this.wasmFibTime = pas.SysUtils.FormatFloat("0.000",t1 - t0);
     };
     m["testarPrimoWasm"] = function (_this) {
       var n = 0;
@@ -13716,8 +13664,8 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       n = pas.SysUtils.StrToIntDef("" + _this["primeInput"],2);
       isP = rtl.trunc(pas.BVPascalDX.WasmCall(_this,"math","isPrime",n));
       if (isP === 1) {
-        _this["primeResult"] = pas.SysUtils.IntToStr(n) + " is a PRIME NUMBER! 💎"}
-       else _this["primeResult"] = pas.SysUtils.IntToStr(n) + " is NOT prime ❌";
+        _this.primeResult = pas.SysUtils.IntToStr(n) + " is a PRIME NUMBER! 💎"}
+       else _this.primeResult = pas.SysUtils.IntToStr(n) + " is NOT prime ❌";
     };
     m["rodarBenchmark"] = function (_this) {
       var n = 0;
@@ -13725,10 +13673,10 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       n = pas.SysUtils.StrToIntDef("" + _this["fibInput"],20);
       rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",n,1000);
       if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Faster! 🚀";
-        _this["benchSummary"] = "1,000 iterations completed successfully in math module.";
+        _this.benchJsTime = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this.benchWasmTime = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this.benchSpeedup = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Faster! 🚀";
+        _this.benchSummary = "1,000 iterations completed successfully in math module.";
       };
     };
     comp["methods"] = m;
@@ -13742,10 +13690,10 @@ rtl.module("uProFeatures",["System","JS","Web","BVComponents","BVReactivity","BV
       _this["itens"].push("💎 HighPerf");
       rep = pas.BVPascalDX.WasmBenchmark(_this,"math","fib",20,1000);
       if (rep != null) {
-        _this["benchJsTime"] = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
-        _this["benchWasmTime"] = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
-        _this["benchSpeedup"] = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Faster! 🚀";
-        _this["benchSummary"] = "WebAssembly math module operational.";
+        _this.benchJsTime = pas.BVPascalDX.GetFieldStr(rep,"jsDurationMs","");
+        _this.benchWasmTime = pas.BVPascalDX.GetFieldStr(rep,"wasmDurationMs","");
+        _this.benchSpeedup = pas.BVPascalDX.GetFieldStr(rep,"speedup","") + " Faster! 🚀";
+        _this.benchSummary = "WebAssembly math module operational.";
       };
     };
     comp["updated"] = function (_this) {
@@ -13764,7 +13712,7 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Reporting Engine</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Native Vector PDF 1.4, Excel Spreadsheets (<code>.xlsx</code>), CSV (RFC 4180 + BOM) and Thermal POS Receipt Printing (80mm/58mm) generated directly from <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Download Vector PDF</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Download Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Download CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: #334155;">Report Scenario:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadSalesPreset">' + "          💼 Corporate Invoicing (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadPosReceiptPreset">' + "          🧾 POS Thermal Receipt (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#1e293b;color:white;\' : \'background:#f1f5f9;color:#334155;\'" @click="loadInventoryPreset">' + "          📦 Inventory Audit (Landscape)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Add Row to DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px; color: #047857;">Active Records: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report"' + "    ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Raw Output Inspector (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Inspect native vector PDF 1.4, Excel SpreadsheetML, or RFC-4180 CSV generated in memory by Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">View PDF 1.4 Code</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">View Excel XML</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">View CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="reports-view-page">' + "    <!-- TOP BANNER -->" + '    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.12); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">' + "      <div>" + '        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">' + '          <span style="background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase;">Reporting Engine</span>' + '          <span style="background: rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px;">Zero-ASM Object Pascal</span>' + "        </div>" + '        <h1 style="font-size: 22px; font-weight: 700; margin: 0; color: #f8fafc;">📄 BlaiseReports — Native Vector PDF, Excel &amp; Print Engine</h1>' + '        <p style="font-size: 13px; color: #94a3b8; margin-top: 6px;">Native Vector PDF 1.4, Excel Spreadsheets (<code>.xlsx</code>), CSV (RFC 4180 + BOM) and Thermal POS Receipt Printing (80mm/58mm) generated directly from <code>TBVDataSet</code>.</p>' + "      </div>" + '      <div style="display: flex; gap: 8px; flex-wrap: wrap;">' + '        <button class="bui-btn" style="background: #ef4444; color: white; font-weight: 600;" @click="doExportPDF">📄 Download Vector PDF</button>' + '        <button class="bui-btn" style="background: #10b981; color: white; font-weight: 600;" @click="doExportExcel">📊 Download Excel (.xlsx)</button>' + '        <button class="bui-btn" style="background: #3b82f6; color: white; font-weight: 600;" @click="doExportCSV">📑 Download CSV</button>' + "      </div>" + "    </div>" + "" + "    <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->" + '    <div style="background: var(--bv-surface); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">' + '      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">' + '        <strong style="font-size: 13px; color: var(--bv-text);">Report Scenario:</strong>' + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'sales\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="loadSalesPreset">' + "          💼 Corporate Invoicing (A4)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'pos\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="loadPosReceiptPreset">' + "          🧾 POS Thermal Receipt (80mm)" + "        </button>" + '        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === \'inventory\' ? \'background:#10b981;color:white;border-color:#10b981;\' : \'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);\'" @click="loadInventoryPreset">' + "          📦 Inventory Audit (Landscape)" + "        </button>" + "      </div>" + "" + '      <div style="display: flex; align-items: center; gap: 8px;">' + '        <button type="button" class="bui-btn bui-btn-sm" style="background: #8b5cf6; color: white; font-weight: 600;" @click="addSampleInvoice">' + "          ➕ Add Row to DataSet" + "        </button>" + "      </div>" + "    </div>" + "" + "    <!-- STATUS NOTIFICATION BANNER -->" + '    <div v-if="statusMessage" style="background: rgba(16, 185, 129, 0.12); border-left: 4px solid #10b981; color: #10b981; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">' + "      <span>✅ <strong>{{ statusMessage }}</strong></span>" + '      <span style="font-size: 12px;">Active Records: {{ recordCount }}</span>' + "    </div>" + "" + "    <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->" + "    <bv-report-viewer" + '      :report="activeReport"' + '      :dataset="salesDS"' + '      filename="blaisevue_report"' + "      ></bv-report-viewer>" + "" + "    <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->" + '    <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">' + '      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">' + "        <div>" + '          <h3 style="font-size: 16px; margin: 0; color: #38bdf8;">🔍 Raw Output Inspector (`GeneratePDF` / `GenerateExcel` / `GenerateCSV`)</h3>' + '          <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Inspect native vector PDF 1.4, Excel SpreadsheetML, or RFC-4180 CSV generated in memory by Object Pascal.</p>' + "        </div>" + '        <div style="display: flex; gap: 6px;">' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #ef4444; color: white;" @click="inspectPDF">View PDF 1.4 Code</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #10b981; color: white;" @click="inspectExcel">View Excel XML</button>' + '          <button type="button" class="bui-btn bui-btn-xs" style="background: #3b82f6; color: white;" @click="inspectCSV">View CSV</button>' + "        </div>" + "      </div>" + '      <pre style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; font-size: 12px; overflow-x: auto; color: #4ade80; max-height: 260px; white-space: pre-wrap;">{{ rawOutputPreview }}</pre>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13782,7 +13730,7 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
     m["loadSalesPreset"] = function (_this) {
       var mockJson = "";
       var rep = undefined;
-      _this["activePreset"] = "sales";
+      _this.activePreset = "sales";
       mockJson = "[" + '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Paid","total":4850.00},' + '{"id":1002,"customer":"Globex Logistics Inc","segment":"Industrial ERP","status":"Paid","total":3200.50},' + '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Paid","total":9450.00},' + '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pending","total":6120.75},' + '{"id":1005,"customer":"Initech Systems LLC","segment":"Pascal Consulting","status":"Paid","total":2180.25}' + "]";
       pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
       rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
@@ -13796,13 +13744,13 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.ReportAddSummary(rep,"Largest Contract","total","max","currency");
       pas.BVPascalDX.ReportAddSummary(rep,"Total Invoices","id","count","integer");
       _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Scenario "Corporate Invoicing (A4)" loaded successfully!';
+      _this.statusMessage = 'Scenario "Corporate Invoicing (A4)" loaded successfully!';
       pas.BVPascalDX.CallMethod(_this,"inspectPDF");
     };
     m["loadPosReceiptPreset"] = function (_this) {
       var mockJson = "";
       var rep = undefined;
-      _this["activePreset"] = "pos";
+      _this.activePreset = "pos";
       mockJson = "[" + '{"id":1,"customer":"2x Double Espresso","segment":"Beverages","status":"OK","total":18.00},' + '{"id":2,"customer":"1x French Croissant","segment":"Bakery","status":"OK","total":14.50},' + '{"id":3,"customer":"1x Fresh Orange Juice","segment":"Beverages","status":"OK","total":12.00},' + '{"id":4,"customer":"1x Dutch Tart Slice","segment":"Desserts","status":"OK","total":22.90}' + "]";
       pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
       rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
@@ -13814,13 +13762,13 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.ReportAddSummary(rep,"TOTAL DUE","total","sum","currency");
       pas.BVPascalDX.ReportAddSummary(rep,"ITEM COUNT","id","count","integer");
       _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Layout "POS Thermal Receipt (80mm)" activated for receipt printers!';
+      _this.statusMessage = 'Layout "POS Thermal Receipt (80mm)" activated for receipt printers!';
       pas.BVPascalDX.CallMethod(_this,"inspectPDF");
     };
     m["loadInventoryPreset"] = function (_this) {
       var mockJson = "";
       var rep = undefined;
-      _this["activePreset"] = "inventory";
+      _this.activePreset = "inventory";
       mockJson = "[" + '{"id":501,"customer":"Dell PowerEdge R750 Rack Server","segment":"DataCenter","status":"In Stock","total":18500.00},' + '{"id":502,"customer":"Cisco Catalyst 48-Port 10G Switch","segment":"Networks","status":"In Stock","total":6400.00},' + '{"id":503,"customer":"NVMe Enterprise Storage 64TB","segment":"Storage","status":"Critical","total":14200.00},' + '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Security","status":"In Stock","total":4900.00}' + "]";
       pas.BVPascalDX.DataSetLoad(_this["salesDS"],pas.BVPascalDX.JsonParse(mockJson));
       rep = pas.BVPascalDX.NewReport(_this["salesDS"]);
@@ -13832,13 +13780,13 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.ReportAddSummary(rep,"Total Inventory Value","total","sum","currency");
       pas.BVPascalDX.ReportAddSummary(rep,"Average Asset Value","total","avg","currency");
       _this["activeReport"] = rep;
-      _this["statusMessage"] = 'Scenario "Inventory Audit (A4 Landscape)" loaded!';
+      _this.statusMessage = 'Scenario "Inventory Audit (A4 Landscape)" loaded!';
       pas.BVPascalDX.CallMethod(_this,"inspectPDF");
     };
     m["addSampleInvoice"] = function (_this) {
       var newId = 0;
-      newId = rtl.trunc(_this["nextInvoiceId"]);
-      _this["nextInvoiceId"] = newId + 1;
+      newId = _this.nextInvoiceId;
+      _this.nextInvoiceId += 1;
       pas.BVPascalDX.DataSetAppend(_this["salesDS"]);
       pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"id",newId);
       pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"customer","Enterprise Client #" + pas.SysUtils.IntToStr(newId));
@@ -13846,47 +13794,44 @@ rtl.module("uReportsView",["System","JS","Web","BVComponents","BVReactivity","BV
       pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"status","Paid");
       pas.BVPascalDX.DataSetSetFieldVal(_this["salesDS"],"total",3750.00);
       pas.BVPascalDX.DataSetPost(_this["salesDS"]);
-      _this["statusMessage"] = "Invoice #" + pas.SysUtils.IntToStr(newId) + " appended to TBVDataSet! Summaries recalculated in real time.";
+      _this.statusMessage = "Invoice #" + pas.SysUtils.IntToStr(newId) + " appended to TBVDataSet! Summaries recalculated in real time.";
       pas.BVPascalDX.CallMethod(_this,"inspectPDF");
     };
     m["doExportPDF"] = function (_this) {
       pas.BVPascalDX.ReportExportPDF(_this["activeReport"],"blaisevue_report.pdf");
-      _this["statusMessage"] = "Download of Vector PDF 1.4 (blaisevue_report.pdf) initiated!";
+      _this.statusMessage = "Download of Vector PDF 1.4 (blaisevue_report.pdf) initiated!";
       pas.BVPascalDX.CallMethod(_this,"inspectPDF");
     };
     m["doExportExcel"] = function (_this) {
       pas.BVPascalDX.ReportExportExcel(_this["activeReport"],"blaisevue_report.xlsx");
-      _this["statusMessage"] = "Download of Excel Spreadsheet (blaisevue_report.xlsx) initiated!";
+      _this.statusMessage = "Download of Excel Spreadsheet (blaisevue_report.xlsx) initiated!";
       pas.BVPascalDX.CallMethod(_this,"inspectExcel");
     };
     m["doExportCSV"] = function (_this) {
       pas.BVPascalDX.ReportExportCSV(_this["activeReport"],"blaisevue_report.csv");
-      _this["statusMessage"] = "Download of CSV file with UTF-8 BOM (blaisevue_report.csv) initiated!";
+      _this.statusMessage = "Download of CSV file with UTF-8 BOM (blaisevue_report.csv) initiated!";
       pas.BVPascalDX.CallMethod(_this,"inspectCSV");
     };
     m["inspectPDF"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
+      _this.rawOutputPreview = pas.BVPascalDX.ReportGeneratePDF(_this["activeReport"]);
     };
     m["inspectExcel"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
+      _this.rawOutputPreview = pas.BVPascalDX.ReportGenerateExcel(_this["activeReport"]);
     };
     m["inspectCSV"] = function (_this) {
-      _this["rawOutputPreview"] = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
+      _this.rawOutputPreview = pas.BVPascalDX.ReportGenerateCSV(_this["activeReport"]);
     };
     comp["methods"] = m;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
       _this["salesDS"] = pas.BVPascalDX.NewDataSet();
-      _this["nextInvoiceId"] = 1006;
+      _this.nextInvoiceId = 1006;
       pas.BVPascalDX.CallMethod(_this,"loadSalesPreset");
     };
     comp["computed"] = new Object();
     comp["computed"]["recordCount"] = function (_this) {
       var Result = undefined;
-      Result = 0;
-      if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
-        Result = this.salesDS.GetRecordCount();
-      };
+      Result = pas.BVPascalDX.DataSetRecordCount(_this["salesDS"]);
       return Result;
     };
     pas.BVComponents.RegisterComponent("reports-view-page",comp);
@@ -13903,7 +13848,7 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     _styleEl.textContent = "/* CSS styles for layout and icons */   .showcase-container { max-width: 1000px; margin: 20px auto; padding: 30px; border-radius: 12px; border-left: 5px solid #2ecc71 !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }   .showcase-header { border-bottom: 2px solid #2ecc71; margin-bottom: 25px; padding-bottom: 10px; }   .section-card { background-color: rgba(128,128,128,0.08); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #3498db; }   .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 15px; }   .icon-box { background-color: rgba(128,128,128,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid rgba(128,128,128,0.1); transition: transform 0.2s; }   .icon-box:hover { transform: translateY(-5px); background-color: rgba(128,128,128,0.1); }   .text-primary { color: #0d6efd !important; }   .text-success { color: #198754 !important; }   .text-warning { color: #ffc107 !important; }   .text-danger { color: #dc3545 !important; }   .text-info { color: #0dcaf0 !important; }   .text-secondary { color: #6c757d !important; }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="showcase-container">' + '    <div class="showcase-header">' + "      <h1>Showcase: Local Assets 🛡️</h1>" + "      <p>Current Font: <strong>Inter & Outfit</strong> (100% Local)</p>" + "    </div>" + "" + "    <!-- Icon Gallery Demonstration -->" + "    <!-- Icons are rendered using the 'bv-icon' component with explicit SVG templates -->" + '    <div class="section-card">' + "      <h3>Icon Gallery (Inline Local SVGs)</h3>" + '      <div class="icon-grid">' + '        <div class="icon-box">' + '          <bv-icon name="bootstrap-fill" size="32" class="text-primary" />' + '          <div class="small mt-1">bootstrap-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="check-circle" size="32" class="text-success" />' + '          <div class="small mt-1">check-circle</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="warning" size="32" class="text-warning" />' + '          <div class="small mt-1">warning</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="gear-fill" size="32" class="text-secondary" />' + '          <div class="small mt-1">gear-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="heart-fill" size="32" class="text-danger" />' + '          <div class="small mt-1">heart-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="weather" size="32" class="text-info" />' + '          <div class="small mt-1">weather</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="code-slash" size="32" class="text-dark" />' + '          <div class="small mt-1">code-slash</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="cpu" size="32" class="text-primary" />' + '          <div class="small mt-1">cpu</div>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Theme Selector Demonstration -->" + "    <!-- Dynamically switches global CSS files from the local assets folder -->" + '    <div class="section-card">' + "      <h3>Theme Selector (Dynamic CSS)</h3>" + '      <p class="text-muted">Click to swap the main CSS theme in real-time.</p>' + '      <div class="theme-buttons d-flex gap-2 flex-wrap">' + '        <button class="btn btn-outline-secondary" @click="handleTheme(\'default\')">Default</button>' + '        <button class="btn btn-primary" @click="handleTheme(\'darkly\')">Darkly</button>' + '        <button class="btn btn-success" @click="handleTheme(\'flatly\')">Flatly</button>' + '        <button class="btn btn-info" @click="handleTheme(\'cosmo\')">Cosmo</button>' + "      </div>" + '      <div class="mt-3">' + '         Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="showcase-container">' + '    <div class="showcase-header">' + "      <h1>Showcase: Local Assets 🛡️</h1>" + "      <p>Current Font: <strong>Inter & Outfit</strong> (100% Local)</p>" + "    </div>" + "" + "    <!-- Icon Gallery Demonstration -->" + "    <!-- Icons are rendered using the 'bv-icon' component with explicit SVG templates -->" + '    <div class="section-card">' + "      <h3>Icon Gallery (Inline Local SVGs)</h3>" + '      <div class="icon-grid">' + '        <div class="icon-box">' + '          <bv-icon name="bootstrap-fill" size="32" class="text-primary" />' + '          <div class="small mt-1">bootstrap-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="check-circle" size="32" class="text-success" />' + '          <div class="small mt-1">check-circle</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="warning" size="32" class="text-warning" />' + '          <div class="small mt-1">warning</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="gear-fill" size="32" class="text-secondary" />' + '          <div class="small mt-1">gear-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="heart-fill" size="32" class="text-danger" />' + '          <div class="small mt-1">heart-fill</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="weather" size="32" class="text-info" />' + '          <div class="small mt-1">weather</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="code-slash" size="32" class="text-dark" />' + '          <div class="small mt-1">code-slash</div>' + "        </div>" + '        <div class="icon-box">' + '          <bv-icon name="cpu" size="32" class="text-primary" />' + '          <div class="small mt-1">cpu</div>' + "        </div>" + "      </div>" + "    </div>" + "" + "    <!-- Theme Selector Demonstration -->" + "    <!-- Dynamically switches global CSS files from the local assets folder -->" + '    <div class="section-card">' + "      <h3>Theme Selector (Dynamic CSS)</h3>" + '      <p class="text-muted">Click to swap the main CSS theme in real-time.</p>' + '      <div class="theme-buttons d-flex gap-2 flex-wrap">' + '        <button class="btn btn-outline-secondary" @click="handleTheme(\'default\')">Default</button>' + '        <button class="btn btn-primary" @click="handleTheme(\'darkly\')">Darkly</button>' + '        <button class="btn btn-success" @click="handleTheme(\'flatly\')">Flatly</button>' + '        <button class="btn btn-info" @click="handleTheme(\'cosmo\')">Cosmo</button>' + "      </div>" + '      <div class="mt-3">' + '        Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13914,17 +13859,12 @@ rtl.module("uShowcase",["System","JS","Web","BVComponents","BVReactivity","BVSto
     };
     m = new Object();
     m["handleTheme"] = function (_this, ATheme) {
-      var link = null;
-      link = document.getElementById("theme-link");
-      if (link !== null) {
-        if (ATheme === "default") {
-          link.setAttribute("href","css/lib/blaise-ui.css")}
-         else link.setAttribute("href","assets/themes/" + ATheme + ".min.css");
-        document.body.className = "theme-" + ATheme;
-        document.head.appendChild(link);
-        pas.System.Writeln("BlaiseVue: Theme applied.");
-      };
-      _this["currentThemeName"] = ATheme;
+      var targetTheme = "";
+      if (ATheme === "default") {
+        targetTheme = "flatly"}
+       else targetTheme = ATheme;
+      pas.BVPascalDX.ThemeSet(targetTheme);
+      _this.currentThemeName = ATheme;
     };
     comp["methods"] = m;
     pas.BVComponents.RegisterComponent("showcase-page",comp);
@@ -13938,10 +13878,10 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = "table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }";
+    _styleEl.textContent = ".user-profile-page table { width: 100%; border-collapse: collapse; }   .user-profile-page th, .user-profile-page td { padding: 12px; border: 1px solid var(--bv-border); text-align: left; }   .user-profile-page th { background: var(--bv-surface-subtle); width: 30%; color: var(--bv-text); }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = "  <div>" + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="user-profile-page">' + '    <div class="section">' + '      <h1 class="section-title">User Profile</h1>' + "      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Route Data</h2>' + "      <table>" + "        <tr><th>Information</th><th>Value</th></tr>" + '        <tr><td>Param <code>:id</code></td><td><span class="badge badge-blue">{{ id }}</span></td></tr>' + '        <tr><td>Query <code>?tab</code></td><td><span class="badge badge-orange">{{ tab }}</span></td></tr>' + '        <tr><td>Query <code>?tema</code></td><td><span class="badge badge-gray">{{ tema }}</span></td></tr>' + '        <tr><td>Level (Computed)</td><td><span class="badge" :class="userLevel == \'Premium\' ? \'badge-orange\' : \'badge-gray\'">{{ userLevel }}</span></td></tr>' + "      </table>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Edit Name (b-model)</h2>' + '      <input type="text" b-model="nomeUsuario">' + "      <p>Current Name: <strong>{{ nomeUsuario }}</strong></p>" + "    </div>" + "" + '    <div class="section">' + '      <h2 class="section-title">Test Other Routes</h2>' + '      <a href="#/user/1" class="btn-outline" style="text-decoration:none; display:inline-block;">User 1</a>' + '      <a href="#/user/100?tab=posts" class="btn-outline" style="text-decoration:none; display:inline-block;">User 100 + Posts</a>' + '      <a href="#/user/7?tab=config&tema=dark" class="btn-outline" style="text-decoration:none; display:inline-block;">User 7 + Multi Query</a>' + '      <a href="#/" class="btn-danger" style="text-decoration:none; display:inline-block;">Back Home</a>' + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -13958,7 +13898,7 @@ rtl.module("uUserProfile",["System","JS","Web","BVComponents","BVReactivity","BV
     comp["computed"] = new Object();
     comp["computed"]["userLevel"] = function (_this) {
       var Result = undefined;
-      if (rtl.trunc(_this["id"]) > 50) {
+      if (pas.SysUtils.StrToIntDef(_this.id,0) > 50) {
         Result = "Premium"}
        else Result = "Basic";
       return Result;
@@ -14131,11 +14071,20 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
             resizeDelay: 50
           };
           if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
-          let finalOpts = chartOptions;
-          const isRadial = (this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea');
-          if (isRadial && chartOptions.scales) {
-            finalOpts = Object.assign({}, chartOptions);
-            delete finalOpts.scales;
+          let finalOpts = Object.assign({}, chartOptions);
+          const chartType = this.type || 'bar';
+          const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+          const isRadar = (chartType === 'radar');
+          if (finalOpts.scales) {
+            if (isRadial) {
+              delete finalOpts.scales;
+            } else if (isRadar) {
+              finalOpts.scales = finalOpts.scales.r ? { r: Object.assign({}, finalOpts.scales.r) } : {};
+            } else {
+              const cleanScales = Object.assign({}, finalOpts.scales);
+              delete cleanScales.r;
+              finalOpts.scales = cleanScales;
+            }
           }
           if (!finalOpts.onClick) {
             finalOpts.onClick = (event, elements) => {
@@ -14247,14 +14196,7 @@ rtl.module("uBVChart",["System","JS","Web","BVComponents","BVReactivity","BVStor
     };
     comp["watch"]["options"] = function (_this, newVal) {
       if (this._chart && this._chart.canvas && newVal) {
-        try {
-          const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
-          if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
-          this._chart.options = rawNewOpts;
-          this._chart.update();
-        } catch (e) {
-          this.initChart();
-        }
+        this.initChart();
       };
     };
     comp["watch"]["type"] = function (_this, newVal) {
@@ -14481,10 +14423,10 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     var m = null;
     var _styleEl = null;
     _styleEl = document.createElement("style");
-    _styleEl.textContent = ".bv-report-viewer-container {     display: flex;     flex-direction: column;     gap: 16px;     width: 100%;     box-sizing: border-box;   }    .bv-report-toolbar {     display: flex;     flex-wrap: wrap;     justify-content: space-between;     align-items: center;     gap: 12px;     background: #1e293b;     color: #f8fafc;     padding: 12px 16px;     border-radius: 8px;   }    .bv-report-toolbar-left {     display: flex;     align-items: center;     gap: 10px;   }    .bv-report-badge {     background: #3b82f6;     color: #ffffff;     font-size: 11px;     font-weight: 700;     padding: 4px 8px;     border-radius: 4px;     text-transform: uppercase;   }    .bv-report-layout-select {     background: #0f172a;     color: #f8fafc;     border: 1px solid #334155;     border-radius: 6px;     padding: 6px 10px;     font-size: 13px;   }    .bv-report-count-pill {     font-size: 12px;     color: #94a3b8;   }    .bv-report-toolbar-actions {     display: flex;     flex-wrap: wrap;     gap: 8px;   }    .bv-report-btn {     border: none;     border-radius: 6px;     padding: 7px 12px;     font-size: 12px;     font-weight: 600;     cursor: pointer;     color: #ffffff;   }    .bv-report-btn-pdf { background: #ef4444; }   .bv-report-btn-excel { background: #10b981; }   .bv-report-btn-csv { background: #3b82f6; }   .bv-report-btn-print { background: #6366f1; }    .bv-report-sheet {     background: #ffffff;     color: #0f172a;     padding: 24px;     border-radius: 8px;     border: 1px solid #cbd5e1;     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);     margin: 0 auto;     width: 100%;     box-sizing: border-box;   }    .bv-layout-thermal-80mm {     max-width: 320px;     font-family: 'Courier New', monospace;     font-size: 12px;     padding: 12px;   }    .bv-layout-thermal-58mm {     max-width: 240px;     font-family: 'Courier New', monospace;     font-size: 11px;     padding: 8px;   }    .bv-report-banner {     background: #1e293b;     color: #ffffff;     padding: 16px 20px;     border-radius: 6px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 16px;   }    .bv-report-title {     margin: 0;     font-size: 18px;     font-weight: 700;   }    .bv-report-company {     font-size: 12px;     opacity: 0.85;     margin-top: 4px;   }    .bv-report-logo-box {     font-weight: 800;     font-size: 16px;     border: 2px solid rgba(255, 255, 255, 0.5);     padding: 6px 10px;     border-radius: 6px;   }    .bv-report-meta {     font-size: 12px;     color: #475569;     margin-bottom: 14px;     padding-bottom: 8px;     border-bottom: 1px solid #e2e8f0;   }    .bv-report-table {     width: 100%;     border-collapse: collapse;     font-size: 13px;     margin-bottom: 16px;   }    .bv-report-table th {     background: #f1f5f9;     color: #1e293b;     text-align: left;     padding: 9px 12px;     border-bottom: 2px solid #cbd5e1;     font-weight: 600;   }    .bv-report-table td {     padding: 8px 12px;     border-bottom: 1px solid #e2e8f0;     color: #334155;   }    .bv-report-summaries {     display: flex;     flex-wrap: wrap;     gap: 12px;     justify-content: flex-end;     padding-top: 12px;     border-top: 2px solid #cbd5e1;   }    .bv-report-summary-card {     background: #f8fafc;     border: 1px solid #cbd5e1;     border-radius: 6px;     padding: 8px 14px;     min-width: 130px;     text-align: right;   }    .bv-report-summary-label {     font-size: 11px;     color: #64748b;     text-transform: uppercase;     font-weight: 600;   }    .bv-report-summary-value {     font-size: 15px;     color: #0f172a;     font-weight: 700;     margin-top: 2px;   }    .bv-report-footer {     margin-top: 18px;     padding-top: 10px;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     font-size: 11px;     color: #64748b;   }";
+    _styleEl.textContent = ".bv-report-viewer-container {     display: flex;     flex-direction: column;     gap: 16px;     width: 100%;     box-sizing: border-box;   }    .bv-report-toolbar {     display: flex;     flex-wrap: wrap;     justify-content: space-between;     align-items: center;     gap: 12px;     background: #1e293b;     color: #f8fafc;     padding: 12px 16px;     border-radius: 8px;   }    .bv-report-toolbar-left {     display: flex;     align-items: center;     gap: 10px;   }    .bv-report-badge {     background: #3b82f6;     color: #ffffff;     font-size: 11px;     font-weight: 700;     padding: 4px 8px;     border-radius: 4px;     text-transform: uppercase;   }    .bv-report-layout-select {     background: #0f172a;     color: #f8fafc;     border: 1px solid #334155;     border-radius: 6px;     padding: 6px 10px;     font-size: 13px;   }    .bv-report-count-pill {     font-size: 12px;     color: #94a3b8;   }    .bv-report-toolbar-actions {     display: flex;     flex-wrap: wrap;     gap: 8px;   }    .bv-report-btn {     border: none;     border-radius: 6px;     padding: 7px 12px;     font-size: 12px;     font-weight: 600;     cursor: pointer;     color: #ffffff;   }    .bv-report-btn-pdf { background: #ef4444; }   .bv-report-btn-excel { background: #10b981; }   .bv-report-btn-csv { background: #3b82f6; }   .bv-report-btn-print { background: #6366f1; }    .bv-report-sheet {     background: #ffffff;     color: #0f172a;     padding: 24px;     border-radius: 8px;     border: 1px solid #cbd5e1;     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);     margin: 0 auto;     width: 100%;     box-sizing: border-box;   }    .bv-layout-thermal-80mm {     max-width: 320px;     font-family: 'Courier New', monospace;     font-size: 12px;     padding: 12px;   }    .bv-layout-thermal-58mm {     max-width: 240px;     font-family: 'Courier New', monospace;     font-size: 11px;     padding: 8px;   }    .bv-report-banner {     background: #1e293b;     color: #ffffff;     padding: 16px 20px;     border-radius: 6px;     display: flex;     justify-content: space-between;     align-items: center;     margin-bottom: 16px;   }    .bv-report-title {     margin: 0;     font-size: 18px;     font-weight: 700;     color: #ffffff;   }    .bv-report-company {     font-size: 12px;     opacity: 0.85;     margin-top: 4px;   }    .bv-report-logo-box {     font-weight: 800;     font-size: 16px;     border: 2px solid rgba(255, 255, 255, 0.5);     padding: 6px 10px;     border-radius: 6px;   }    .bv-report-meta {     font-size: 12px;     color: #475569;     margin-bottom: 14px;     padding-bottom: 8px;     border-bottom: 1px solid #e2e8f0;   }    .bv-report-table {     width: 100%;     border-collapse: collapse;     font-size: 13px;     margin-bottom: 16px;   }    .bv-report-table th {     background: #f1f5f9;     color: #1e293b;     text-align: left;     padding: 9px 12px;     border-bottom: 2px solid #cbd5e1;     font-weight: 600;   }    .bv-report-table td {     padding: 8px 12px;     border-bottom: 1px solid #e2e8f0;     color: #334155;   }    .bv-report-summaries {     display: flex;     flex-wrap: wrap;     gap: 12px;     justify-content: flex-end;     padding-top: 12px;     border-top: 2px solid #cbd5e1;   }    .bv-report-summary-card {     background: #f8fafc;     border: 1px solid #cbd5e1;     border-radius: 6px;     padding: 8px 14px;     min-width: 130px;     text-align: right;   }    .bv-report-summary-label {     font-size: 11px;     color: #64748b;     text-transform: uppercase;     font-weight: 600;   }    .bv-report-summary-value {     font-size: 15px;     color: #0f172a;     font-weight: 700;     margin-top: 2px;   }    .bv-report-footer {     margin-top: 18px;     padding-top: 10px;     border-top: 1px solid #e2e8f0;     display: flex;     justify-content: space-between;     font-size: 11px;     color: #64748b;   }";
     document.head.appendChild(_styleEl);
     comp = new Object();
-    comp["template"] = '  <div class="bv-report-viewer-root bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports v5.0</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ resolvedTitle }}</h2>' + '          <div v-if="resolvedCompany" class="bv-report-company">{{ resolvedCompany }}</div>' + '          <div v-if="resolvedSubtitle" class="bv-report-subtitle">{{ resolvedSubtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">{{ resolvedLogo }}</div>' + "      </div>" + "" + '      <div v-if="resolvedHeader" class="bv-report-meta">' + "        {{ resolvedHeader }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in formattedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ resolvedFooter }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bv-report-viewer-root bv-report-viewer-container" :class="\'bv-viewer-layout-\' + activeLayout">' + '    <div v-if="showToolbar" class="bv-report-toolbar no-print">' + '      <div class="bv-report-toolbar-left">' + '        <span class="bv-report-badge">BlaiseReports</span>' + '        <select class="bv-report-layout-select" b-model="activeLayout">' + '          <option value="a4">A4 Portrait</option>' + '          <option value="a4-landscape">A4 Landscape</option>' + '          <option value="letter">Letter Portrait</option>' + '          <option value="thermal-80mm">Thermal POS (80mm)</option>' + '          <option value="thermal-58mm">Thermal POS (58mm)</option>' + "        </select>" + '        <span class="bv-report-count-pill">{{ recordCount }} records</span>' + "      </div>" + '      <div class="bv-report-toolbar-actions">' + '        <button type="button" class="bv-report-btn bv-report-btn-pdf" @click="exportPdf">' + "          Export PDF" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-excel" @click="exportExcel">' + "          Export Excel (.xlsx)" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-csv" @click="exportCsv">' + "          Export CSV" + "        </button>" + '        <button type="button" class="bv-report-btn bv-report-btn-print" @click="printReport">' + "          Print / POS" + "        </button>" + "      </div>" + "    </div>" + "" + '    <div class="bv-report-sheet" :class="\'bv-layout-\' + activeLayout">' + '      <div class="bv-report-banner">' + '        <div class="bv-report-banner-info">' + '          <h2 class="bv-report-title">{{ resolvedTitle }}</h2>' + '          <div v-if="resolvedCompany" class="bv-report-company">{{ resolvedCompany }}</div>' + '          <div v-if="resolvedSubtitle" class="bv-report-subtitle">{{ resolvedSubtitle }}</div>' + "        </div>" + '        <div class="bv-report-logo-box">{{ resolvedLogo }}</div>' + "      </div>" + "" + '      <div v-if="resolvedHeader" class="bv-report-meta">' + "        {{ resolvedHeader }}" + "      </div>" + "" + '      <div class="bv-report-table-wrap">' + '        <table class="bv-report-table">' + "          <thead>" + "            <tr>" + '              <th b-for="col in resolvedColumns">' + "                {{ col.label }}" + "              </th>" + "            </tr>" + "          </thead>" + "          <tbody>" + '            <tr b-for="row in formattedRows">' + '              <td b-for="col in resolvedColumns">' + "                {{ row[col.key] }}" + "              </td>" + "            </tr>" + "          </tbody>" + "        </table>" + "      </div>" + "" + '      <div v-if="computedSummaries.length > 0" class="bv-report-summaries">' + '        <div b-for="sumItem in computedSummaries" class="bv-report-summary-card">' + '          <div class="bv-report-summary-label">{{ sumItem.label }}</div>' + '          <div class="bv-report-summary-value">{{ sumItem.formattedValue }}</div>' + "        </div>" + "      </div>" + "" + '      <div class="bv-report-footer">' + "        <span>{{ resolvedFooter }}</span>" + "        <span>Layout: {{ activeLayout }} | Total Records: {{ recordCount }}</span>" + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -14507,7 +14449,7 @@ rtl.module("uBVReportViewer",["System","JS","Web","BVComponents","BVReactivity",
     comp["props"].push("headerText");
     comp["defaultProps"]["headerText"] = "";
     comp["props"].push("footerText");
-    comp["defaultProps"]["footerText"] = "Generated by BlaiseReports Engine v5.0";
+    comp["defaultProps"]["footerText"] = "Generated by BlaiseReports Engine";
     comp["props"].push("dataset");
     comp["defaultProps"]["dataset"] = null;
     comp["props"].push("items");
@@ -14992,7 +14934,7 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a v-if="href && !active" :href="href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "    <span v-else>" + "      <slot></slot>" + "    </span>" + "  </li>";
+    comp["template"] = '  <li class="bui-breadcrumb-item" :class="{ active: active }">' + '    <a class="bui-breadcrumb-link" :href="active ? null : href" @click="handleClick">' + "      <slot></slot>" + "    </a>" + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -15008,6 +14950,10 @@ rtl.module("uBVBreadcrumbItem",["System","JS","Web","BVComponents","BVReactivity
     comp["defaultProps"]["href"] = "#";
     m = new Object();
     m["handleClick"] = function (_this, ev) {
+      if (this.active && this.active !== 'false') {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        return;
+      }
       this.$emit('click', ev);
     };
     comp["methods"] = m;
@@ -15537,7 +15483,7 @@ rtl.module("uBVDropdown",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="dropdown bui-dropdown" :class="dropdownClass">' + "    <!-- Standard Single Dropdown Button -->" + "    <button " + '      b-if="!isSplit"' + '      class="btn dropdown-toggle bui-btn" ' + '      :class="btnClass" ' + '      type="button" ' + '      :disabled="isDisabled"' + '      @click="toggle">' + '      <slot name="button-content">{{ text }}</slot>' + "    </button>" + "" + "    <!-- Split Dropdown Button Group -->" + '    <div b-if="isSplit" class="btn-group">' + '      <button class="btn bui-btn" :class="btnClass" type="button" :disabled="isDisabled" @click="handleMainClick">' + '        <slot name="button-content">{{ text }}</slot>' + "      </button>" + "      <button " + '        class="btn dropdown-toggle dropdown-toggle-split bui-btn" ' + '        :class="btnClass" ' + '        type="button" ' + '        :disabled="isDisabled" ' + '        @click="toggle">' + '        <span class="visually-hidden">Toggle</span>' + "      </button>" + "    </div>" + "" + "    <!-- Dropdown Menu items container -->" + '    <ul class="dropdown-menu bui-dropdown-menu" :class="{ show: isOpen }">' + "      <slot></slot>" + "    </ul>" + "  </div>";
+    comp["template"] = '  <div class="dropdown bui-dropdown" :class="dropdownClass">' + "    <!-- Standard Single Dropdown Button -->" + "    <button " + '      b-if="!isSplit"' + '      class="btn dropdown-toggle bui-btn" ' + '      :class="btnClass" ' + '      type="button" ' + '      :disabled="isDisabled"' + '      @click="toggle">' + '      <slot name="button-content">{{ text || label }}</slot>' + "    </button>" + "" + "    <!-- Split Dropdown Button Group -->" + '    <div b-if="isSplit" class="btn-group">' + '      <button class="btn bui-btn" :class="btnClass" type="button" :disabled="isDisabled" @click="handleMainClick">' + '        <slot name="button-content">{{ text || label }}</slot>' + "      </button>" + "      <button " + '        class="btn dropdown-toggle dropdown-toggle-split bui-btn" ' + '        :class="btnClass" ' + '        type="button" ' + '        :disabled="isDisabled" ' + '        @click="toggle">' + '        <span class="visually-hidden">Toggle</span>' + "      </button>" + "    </div>" + "" + "    <!-- Dropdown Menu items container -->" + '    <ul class="dropdown-menu bui-dropdown-menu" :class="{ show: isOpen }">' + "      <slot></slot>" + "    </ul>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -15550,6 +15496,8 @@ rtl.module("uBVDropdown",["System","JS","Web","BVComponents","BVReactivity","BVS
     comp["defaultProps"] = new Object();
     comp["props"].push("text");
     comp["defaultProps"]["text"] = "";
+    comp["props"].push("label");
+    comp["defaultProps"]["label"] = "";
     comp["props"].push("variant");
     comp["defaultProps"]["variant"] = "primary";
     comp["props"].push("size");
@@ -15608,6 +15556,16 @@ rtl.module("uBVDropdown",["System","JS","Web","BVComponents","BVReactivity","BVS
       return (this.isOpen ? 'show' : '') + dirClass;
       return Result;
     };
+    comp["provide"] = function (_this) {
+      var Result = null;
+      Result = new Object();
+      var self = this;
+      Result.closeDropdown = function() {
+        self.isOpen = false;
+        if (typeof self.$emit === 'function') self.$emit('toggle', false);
+      };
+      return Result;
+    };
     pas.BVComponents.RegisterComponent("bv-dropdown",comp);
   };
 });
@@ -15618,7 +15576,7 @@ rtl.module("uBVDropdownItem",["System","JS","Web","BVComponents","BVReactivity",
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = "  <li>" + '    <hr b-if="isDivider" class="dropdown-divider bui-dropdown-divider" />' + '    <h6 b-if="isHeader" class="dropdown-header bui-dropdown-header">' + "      <slot>{{ text }}</slot>" + "    </h6>" + "    <a " + '      b-if="!isDivider && !isHeader" ' + '      class="dropdown-item bui-dropdown-item" ' + '      :class="{ disabled: isDisabled, active: isActive }" ' + '      :href="href || \'#\'" ' + '      @click="handleClick">' + "      <slot>{{ text }}</slot>" + "    </a>" + "  </li>";
+    comp["template"] = "  <li>" + '    <hr b-if="isDivider" class="dropdown-divider bui-dropdown-divider" />' + '    <h6 b-if="isHeader" class="dropdown-header bui-dropdown-header">' + "      <slot>{{ text }}</slot>" + "    </h6>" + "    <a " + '      b-if="!isDivider && !isHeader" ' + '      class="dropdown-item bui-dropdown-item" ' + '      :class="{ disabled: isDisabled, active: isActive }" ' + '      :href="href || \'javascript:void(0)\'" ' + '      @click="handleClick">' + "      <slot>{{ text }}</slot>" + "    </a>" + "  </li>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -15646,15 +15604,19 @@ rtl.module("uBVDropdownItem",["System","JS","Web","BVComponents","BVReactivity",
         if (ev && ev.preventDefault) ev.preventDefault();
         return;
       }
+      if (!this.href && ev && ev.preventDefault) ev.preventDefault();
       this.$emit('click', ev);
-      // Find parent dropdown if possible and close it
-      var parent = this.$parent;
-      while (parent) {
-        if (typeof parent.close === 'function') {
-          parent.close();
-          break;
+      if (typeof this.closeDropdown === 'function') {
+        this.closeDropdown();
+      } else {
+        var parent = this.$parent;
+        while (parent) {
+          if (typeof parent.close === 'function') {
+            parent.close();
+            break;
+          }
+          parent = parent.$parent;
         }
-        parent = parent.$parent;
       };
     };
     comp["methods"] = m;
@@ -15679,6 +15641,8 @@ rtl.module("uBVDropdownItem",["System","JS","Web","BVComponents","BVReactivity",
       return Boolean(this.active === true || this.active === 'true');
       return Result;
     };
+    comp["inject"] = new Array();
+    comp["inject"].push("closeDropdown");
     pas.BVComponents.RegisterComponent("bv-dropdown-item",comp);
   };
 });
@@ -16226,7 +16190,7 @@ rtl.module("uBVSkeleton",["System","JS","Web","BVComponents","BVReactivity","BVS
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-skeleton-container" :class="animationClass">' + "    <!-- Circle Skeleton -->" + "    <div " + '      b-if="type = \'circle\'" ' + '      class="placeholder bui-skeleton bui-skeleton-circle" ' + '      :style="circleStyle">' + "    </div>" + "" + "    <!-- Rectangular Skeleton (Image / Banner) -->" + "    <div " + '      b-if="type = \'rect\'" ' + '      class="placeholder bui-skeleton bui-skeleton-rect" ' + '      :style="rectStyle">' + "    </div>" + "" + "    <!-- Card Composite Skeleton -->" + '    <div b-if="type = \'card\'" class="card bui-skeleton-card" aria-hidden="true">' + '      <div class="placeholder bui-skeleton bui-skeleton-rect" style="height: 140px; width: 100%;"></div>' + '      <div class="card-body">' + '        <h5 class="card-title placeholder-glow">' + '          <span class="placeholder col-6"></span>' + "        </h5>" + '        <p class="card-text placeholder-glow">' + '          <span class="placeholder col-7"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-6"></span>' + "        </p>" + "      </div>" + "    </div>" + "" + "    <!-- Text Rows Skeleton (Default) -->" + '    <div b-if="type = \'text\'" class="bui-skeleton-text-group">' + "      <div " + '        b-for="n in countArr" ' + '        class="placeholder bui-skeleton bui-skeleton-text" ' + '        :style="textStyle">' + "      </div>" + "    </div>" + "  </div>";
+    comp["template"] = '  <div class="bui-skeleton-container" :class="animationClass">' + "    <!-- Circle Skeleton -->" + "    <div " + '      b-if="type === \'circle\'" ' + '      class="placeholder bui-skeleton bui-skeleton-circle" ' + '      :style="circleStyle">' + "    </div>" + "" + "    <!-- Rectangular Skeleton (Image / Banner) -->" + "    <div " + '      b-if="type === \'rect\'" ' + '      class="placeholder bui-skeleton bui-skeleton-rect" ' + '      :style="rectStyle">' + "    </div>" + "" + "    <!-- Card Composite Skeleton -->" + '    <div b-if="type === \'card\'" class="card bui-skeleton-card" aria-hidden="true">' + '      <div class="placeholder bui-skeleton bui-skeleton-rect" style="height: 140px; width: 100%;"></div>' + '      <div class="card-body">' + '        <h5 class="card-title placeholder-glow">' + '          <span class="placeholder col-6"></span>' + "        </h5>" + '        <p class="card-text placeholder-glow">' + '          <span class="placeholder col-7"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-4"></span>' + '          <span class="placeholder col-6"></span>' + "        </p>" + "      </div>" + "    </div>" + "" + "    <!-- Text Rows Skeleton (Default) -->" + '    <div b-if="type === \'text\'" class="bui-skeleton-text-group">' + "      <div " + '        b-for="n in countArr" ' + '        class="placeholder bui-skeleton bui-skeleton-text" ' + '        :style="textStyle">' + "      </div>" + "    </div>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -16466,7 +16430,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
     var comp = null;
     var m = null;
     comp = new Object();
-    comp["template"] = '  <div class="bui-tab-pane" b-show="active">' + "     <slot></slot>" + "  </div>";
+    comp["template"] = '  <div class="bui-tab-pane" b-show="isTabActive">' + "     <slot></slot>" + "  </div>";
     comp["data"] = function () {
       var Result = null;
       var d = null;
@@ -16499,7 +16463,7 @@ rtl.module("uBVTab",["System","JS","Web","BVComponents","BVReactivity","BVStore"
       };
     };
     comp["computed"] = new Object();
-    comp["computed"]["active"] = function (_this) {
+    comp["computed"]["isTabActive"] = function (_this) {
       var Result = undefined;
       if (typeof this.isActive === 'function') {
         return Boolean(this.isActive(this.id));
@@ -17871,7 +17835,7 @@ rtl.module("uBVThemeToggle",["System","JS","Web","BVComponents","BVReactivity","
     pas.BVComponents.RegisterComponent("bv-theme-toggle",comp);
   };
 });
-rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVFSM","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uAppFooter","uAppHeader","uAppSidebar","uCard","uCommentQuotes","uCounter","uFormHeader","uInfoCard","uMemberBodies","uStatPills","uTableCells","uVersionCard","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uI18nLabView","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCheckbox","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVDropdown","uBVDropdownItem","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRadio","uBVRow","uBVSkeleton","uBVSlider","uBVSpinner","uBVSwitch","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBackButton","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonCheckbox","uBVIonContent","uBVIonFab","uBVIonFabButton","uBVIonHeader","uBVIonInput","uBVIonItem","uBVIonList","uBVIonRefresher","uBVIonSearchBar","uBVIonSelect","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToggle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
+rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVFSM","BVCompiler","BVDevTools","BVPascalDX","BVDataSet","BVRouting","uAppVersion","uAppFooter","uAppHeader","uAppSidebar","uCard","uCounter","uFormHeader","uInfoCard","uStatPills","uTableCells","uAbout","uCharts","uCustomerView","uDatasetView","uFormulario","uFragmentsView","uHome","uI18nLabView","uLibBootstrap","uLoginView","uMobileView","uProductView","uProFeatures","uReportsView","uShowcase","uUserProfile","uBVBarChart","uBVBubbleChart","uBVChart","uBVDoughnutChart","uBVLineChart","uBVPieChart","uBVPolarAreaChart","uBVRadarChart","uBVScatterChart","uBVReportViewer","uBVAccordion","uBVAlert","uBVBadge","uBVBottomNav","uBVBottomNavItem","uBVBreadcrumb","uBVBreadcrumbItem","uBVBtn","uBVCard","uBVCheckbox","uBVCol","uBVContainer","uBVDataGrid","uBVDrawer","uBVDropdown","uBVDropdownItem","uBVFormSelect","uBVIcon","uBVInput","uBVInputGroup","uBVListGroup","uBVListGroupItem","uBVModal","uBVNavbar","uBVNavItem","uBVPagination","uBVProgress","uBVRadio","uBVRow","uBVSkeleton","uBVSlider","uBVSpinner","uBVSwitch","uBVTab","uBVTabs","uBVToast","uBVVirtualScroll","uBVIonApp","uBVIonBackButton","uBVIonBadge","uBVIonButton","uBVIonCard","uBVIonCheckbox","uBVIonContent","uBVIonFab","uBVIonFabButton","uBVIonHeader","uBVIonInput","uBVIonItem","uBVIonList","uBVIonRefresher","uBVIonSearchBar","uBVIonSelect","uBVIonTabBar","uBVIonTabButton","uBVIonTabs","uBVIonTitle","uBVIonToggle","uBVIonToolbar","uBVThemeSelect","uBVThemeToggle"],function () {
   "use strict";
   var $mod = this;
   this.Init_App = function () {
@@ -17896,7 +17860,7 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVF
     };
     console.log("[Init] Injecting Styles...");
     _styleEl = document.createElement("style");
-    _styleEl.textContent = '* { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }      .app-shell {     display: flex;     min-height: 100vh;   }   .app-main-layout {     flex: 1;     display: flex;     flex-direction: column;     min-height: 100vh;     margin-left: 260px; /* Sidebar width on desktop */     transition: margin-left 0.3s ease;   }   .app-content-body {     flex: 1;     padding: 24px 0;   }   .main-content-container {     max-width: 1100px;     margin: 0 auto;     padding: 0 24px;   }   .mobile-bottom-bar {     display: none;   }    /* Responsive layout for tablets and mobile */   @media (max-width: 992px) {     .app-main-layout {       margin-left: 0;     }     .mobile-bottom-bar {       display: flex;       position: fixed;       bottom: 0;       left: 0;       width: 100%;       z-index: 1010;     }     .app-content-body {       padding-bottom: 80px; /* Room for bottom bar on mobile */     }   }    /* Global typography & elements */   h1, h2, h3, h4 { color: #0f172a; font-weight: 700; margin-bottom: 12px; }   p { line-height: 1.6; color: #475569; }   .section { background: #ffffff; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }    /* Dark Mode & Bootswatch Integration */   html[data-bs-theme="dark"] body, body.theme-dark {     background: #0f172a;     color: #e2e8f0;   }   html[data-bs-theme="dark"] h1, html[data-bs-theme="dark"] h2, html[data-bs-theme="dark"] h3, html[data-bs-theme="dark"] h4,   body.theme-dark h1, body.theme-dark h2, body.theme-dark h3, body.theme-dark h4 {     color: #f8fafc;   }   html[data-bs-theme="dark"] p, body.theme-dark p {     color: #94a3b8;   }   html[data-bs-theme="dark"] .section, body.theme-dark .section {     background: #1e293b;     color: #e2e8f0;     border-color: rgba(255, 255, 255, 0.08);     box-shadow: 0 4px 12px rgba(0,0,0,0.3);   }';
+    _styleEl.textContent = ':root {     --bv-bg: var(--bs-body-bg, #f8fafc);     --bv-surface: var(--bs-tertiary-bg, #ffffff);     --bv-surface-subtle: var(--bs-secondary-bg, #f8fafc);     --bv-border: var(--bs-border-color, #e2e8f0);     --bv-text: var(--bs-body-color, #1e293b);     --bv-text-muted: var(--bs-secondary-color, #64748b);     --bv-input-bg: #ffffff;     --bv-hover-bg: #f1f5f9;     --bv-code-bg: #f1f5f9;     --bv-code-color: #0f172a;     --bv-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);   }    html[data-bs-theme="dark"],   html.theme-dark,   body.theme-dark {     --bv-bg: var(--bs-body-bg, #0f172a);     --bv-surface: var(--bs-tertiary-bg, #1e293b);     --bv-surface-subtle: var(--bs-secondary-bg, #162032);     --bv-border: var(--bs-border-color, rgba(255, 255, 255, 0.14));     --bv-text: var(--bs-body-color, #f1f5f9);     --bv-text-muted: var(--bs-secondary-color, #94a3b8);     --bv-input-bg: var(--bs-body-bg, #0f172a);     --bv-hover-bg: rgba(255, 255, 255, 0.06);     --bv-code-bg: #0f172a;     --bv-code-color: #38bdf8;     --bv-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);   }    * { box-sizing: border-box; margin: 0; padding: 0; }   body { font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; background: var(--bv-bg); color: var(--bv-text); min-height: 100vh; }    .app-shell {     display: flex;     min-height: 100vh;   }   .app-main-layout {     flex: 1;     min-width: 0;     display: flex;     flex-direction: column;     min-height: 100vh;     margin-left: 260px; /* Sidebar width on desktop */     transition: margin-left 0.3s ease;   }   .app-shell.sidebar-collapsed .app-main-layout {     margin-left: 0;   }   .app-content-body {     flex: 1;     padding: 24px 0;   }   .main-content-container {     max-width: 1100px;     margin: 0 auto;     padding: 0 24px;   }   .mobile-bottom-bar {     display: none;   }    /* Responsive layout for tablets and mobile */   @media (max-width: 992px) {   .app-main-layout {     margin-left: 0;   }   .mobile-bottom-bar {     display: flex;     position: fixed;     bottom: 0;     left: 0;     width: 100%;     z-index: 1010;   }   .app-content-body {     padding-bottom: 80px; /* Room for bottom bar on mobile */   }   }    /* Global typography & shared view utility classes */   h1, h2, h3, h4 { color: var(--bv-text); font-weight: 700; margin-bottom: 12px; }   p { line-height: 1.6; color: var(--bv-text-muted); }   .section { background: var(--bv-surface); color: var(--bv-text); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border); }   .section-title { color: #42b883; border-bottom: 2px solid #42b883; padding-bottom: 8px; margin-bottom: 16px; }    .btn-primary, .btn-danger, .btn-outline {     display: inline-flex;     align-items: center;     justify-content: center;     gap: 6px;     padding: 8px 16px;     border-radius: 6px;     font-size: 14px;     font-weight: 600;     line-height: 1.4;     cursor: pointer;     margin: 4px 4px 4px 0;     text-decoration: none;     transition: all 0.2s ease;   }   .btn-primary {     background: #42b883;     color: #ffffff;     border: 2px solid #42b883;   }   .btn-primary:hover {     background: #33a06f;     border-color: #33a06f;   }   .btn-danger {     background: #e74c3c;     color: #ffffff;     border: 2px solid #e74c3c;   }   .btn-danger:hover {     background: #c0392b;     border-color: #c0392b;   }   .btn-outline {     background: transparent;     border: 2px solid #42b883;     color: #42b883;   }   .btn-outline:hover {     background: #42b883;     color: #ffffff;   }    .badge {     display: inline-block;     padding: 4px 10px;     border-radius: 12px;     color: #ffffff;     font-weight: 600;     font-size: 12px;     line-height: 1.3;   }   .badge-green { background: #42b883; }   .badge-blue { background: #3498db; }   .badge-orange { background: #e67e22; }   .badge-gray { background: #64748b; }    .section input[type="text"],   .section input[type="number"],   .section select {     width: 100%;     padding: 10px 12px;     border: 1.5px solid var(--bv-border);     border-radius: 6px;     font-size: 14px;     margin: 6px 0;     background: var(--bv-input-bg);     color: var(--bv-text);   }   .section input[type="text"]:focus,   .section input[type="number"]:focus,   .section select:focus {     border-color: #42b883;     outline: none;     box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15);   }   .section table { width: 100%; border-collapse: collapse; margin: 12px 0; }   .section th, .section td { padding: 10px 14px; border: 1px solid var(--bv-border); text-align: left; color: var(--bv-text); }   .section th { background: var(--bv-surface-subtle); font-weight: 600; color: var(--bv-text); }   code { background: var(--bv-code-bg); color: var(--bv-code-color); padding: 2px 6px; border-radius: 4px; font-family: \'Consolas\', monospace; font-size: 13px; }   hr { border: none; border-top: 1px solid var(--bv-border); margin: 16px 0; }';
     document.head.appendChild(_styleEl);
     console.log("[Init] Registering uAppFooter...");
     pas.uAppFooter.Register_uAppFooter();
@@ -17906,22 +17870,16 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVF
     pas.uAppSidebar.Register_uAppSidebar();
     console.log("[Init] Registering uCard...");
     pas.uCard.Register_uCard();
-    console.log("[Init] Registering uCommentQuotes...");
-    pas.uCommentQuotes.Register_uCommentQuotes();
     console.log("[Init] Registering uCounter...");
     pas.uCounter.Register_uCounter();
     console.log("[Init] Registering uFormHeader...");
     pas.uFormHeader.Register_uFormHeader();
     console.log("[Init] Registering uInfoCard...");
     pas.uInfoCard.Register_uInfoCard();
-    console.log("[Init] Registering uMemberBodies...");
-    pas.uMemberBodies.Register_uMemberBodies();
     console.log("[Init] Registering uStatPills...");
     pas.uStatPills.Register_uStatPills();
     console.log("[Init] Registering uTableCells...");
     pas.uTableCells.Register_uTableCells();
-    console.log("[Init] Registering uVersionCard...");
-    pas.uVersionCard.Register_uVersionCard();
     console.log("[Init] Registering uAbout...");
     pas.uAbout.Register_uAbout();
     console.log("[Init] Registering uCharts...");
@@ -18097,22 +18055,25 @@ rtl.module("uApp",["System","JS","Web","BlaiseVue","BVComponents","BVStore","BVF
     console.log("[Init] Registering uBVThemeToggle...");
     pas.uBVThemeToggle.Register_uBVThemeToggle();
     console.log("[Init] Setting #app template...");
-    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate app-shell">' + "    <!-- RESPONSIVE SIDEBAR NAVIGATION (DRAWER ON MOBILE, PINNED ON DESKTOP) -->" + '    <app-sidebar :is-open="isMobileMenuOpen" @close="closeMobileMenu"></app-sidebar>' + "" + "    <!-- MAIN APPLICATION WRAPPER -->" + '    <div class="app-main-layout">' + "      <!-- HEADER WITH BREADCRUMBS, THEME SWITCHER & LOCALE CONTROLS -->" + '      <app-header @toggle-sidebar="toggleSidebar"></app-header>' + "" + "      <!-- RESPONSIVE VIEW OUTLET -->" + '      <main class="app-content-body">' + '        <bv-container class="main-content-container">' + "          <router-view></router-view>" + "        </bv-container>" + "      </main>" + "" + "      <!-- STATUS BAR FOOTER -->" + "      <app-footer></app-footer>" + "    </div>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION BAR (QUICK THUMB ACCESSIBILITY) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Home"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/dataset" icon="💾" label="Data"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "  </div>";
+    document.querySelector("#app").innerHTML = '  <div translate="no" class="notranslate app-shell" :class="{ \'sidebar-collapsed\': isSidebarCollapsed }">' + "    <!-- RESPONSIVE SIDEBAR NAVIGATION (DRAWER ON MOBILE, PINNED ON DESKTOP) -->" + '    <app-sidebar :is-open="isMobileMenuOpen" :is-collapsed="isSidebarCollapsed" @close="closeMobileMenu"></app-sidebar>' + "" + "    <!-- MAIN APPLICATION WRAPPER -->" + '    <div class="app-main-layout">' + "      <!-- HEADER WITH BREADCRUMBS, THEME SWITCHER & LOCALE CONTROLS -->" + '      <app-header @toggle-sidebar="toggleSidebar"></app-header>' + "" + "      <!-- RESPONSIVE VIEW OUTLET -->" + '      <main class="app-content-body">' + '        <bv-container class="main-content-container">' + "          <router-view></router-view>" + "        </bv-container>" + "      </main>" + "" + "      <!-- STATUS BAR FOOTER -->" + "      <app-footer></app-footer>" + "    </div>" + "" + "    <!-- MOBILE BOTTOM NAVIGATION BAR (QUICK THUMB ACCESSIBILITY) -->" + '    <bv-bottom-nav class="mobile-bottom-bar">' + '      <bv-bottom-nav-item href="#/" icon="🏠" label="Home"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/pro" icon="⚡" label="Pro"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/dataset" icon="💾" label="Data"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/bootstrap" icon="🎨" label="BlaiseUI"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="#/mobile" icon="📱" label="Mobile"></bv-bottom-nav-item>' + '      <bv-bottom-nav-item href="docs/index.html" icon="📚" label="Docs"></bv-bottom-nav-item>' + "    </bv-bottom-nav>" + "  </div>";
     data = new Object();
     data["isMobileMenuOpen"] = false;
+    data["isSidebarCollapsed"] = true;
     methods = new Object();
     m = methods;
     m["toggleSidebar"] = function (_this) {
-      _this["isMobileMenuOpen"] = !!(_this["isMobileMenuOpen"] == false);
+      if (window.innerWidth <= 992) {
+        _this.isMobileMenuOpen = !_this.isMobileMenuOpen}
+       else _this.isSidebarCollapsed = !_this.isSidebarCollapsed;
     };
     m["closeMobileMenu"] = function (_this) {
-      _this["isMobileMenuOpen"] = false;
+      _this.isMobileMenuOpen = false;
     };
     opts = new Object();
     comp = opts;
     comp["created"] = function (_this) {
       if (!_this) _this = this;
-      _this["$store"]["appVersion"] = pas.uAppVersion.APP_VERSION;
+      if (pas.uAppVersion.APP_VERSION === "") ;
       _this["$store"]["user"] = "Pascal Master 🚀";
       pas.BVPascalDX.I18nAddMessages("en",'{"nav":{"home":"Home","about":"About","pro":"Pro & Wasm ⚡","form":"Form 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Charts 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Global Store","localeActive":"Active Locale","theme":"Theme"},"form":{"title":"Reactive Form Validation","subtitle":"Demonstrating b-validate, $errors, and $v in BlaiseVue","name":"Full Name","email":"Corporate Email","city":"City","submit":"Validate & Submit 🚀","reset":"Reset Form 🔄","fillValid":"Fill Valid Sample ✨","statusValid":"Valid ✅","statusInvalid":"Invalid ❌","formState":"Form Status"},"pro":{"title":"⚡ BlaiseVue Pro & WebAssembly Engine","transitionTitle":"🎬 FLIP List Transitions (<transition-group>)","shuffle":"Shuffle 🔀","add":"Add Item ➕","remove":"Remove First ➖","resetList":"Reset List 🔄"}}');
       pas.BVPascalDX.I18nAddMessages("pt",'{"nav":{"home":"Início","about":"Sobre","pro":"Pro & Wasm ⚡","form":"Formulário 📋","blaiseui":"BlaiseUI Kit 🎨","charts":"Gráficos 📊","showcase":"Showcase ✨"},"status":{"globalStore":"Memória Global","localeActive":"Idioma Ativo","theme":"Tema"},"form":{"title":"Formulário de Validação Reativa","subtitle":"Demonstração de b-validate, $errors e $v no BlaiseVue","name":"Nome Completo","email":"E-mail Corporativo","city":"Cidade","submit":"Validar & Enviar 🚀","reset":"Limpar Formulário 🔄","fillValid":"Preencher Válido ✨","statusValid":"Válido ✅","statusInvalid":"Inválido ❌","formState":"Status do Formulário"},"pro":{"title":"⚡ BlaiseVue Pro & WebAssembly Engine","transitionTitle":"🎬 Lista com Animações FLIP (<transition-group>)","shuffle":"Embaralhar 🔀","add":"Adicionar Item ➕","remove":"Remover Primeiro ➖","resetList":"Resetar Lista 🔄"}}');

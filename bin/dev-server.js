@@ -1,4 +1,4 @@
-// BlaiseVue 2.0 HMR & Development Server
+// BlaiseVue HMR & Development Server
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
@@ -74,10 +74,10 @@ const server = http.createServer((req, res) => {
         <script id="__BV_HMR_CLIENT__">
           (function() {
             if (window.__BV_CORE__ && window.__BV_CORE__.initHMR) {
-              window.__BV_CORE__.initHMR(${WS_PORT});
+              window.__BV_CORE__.initHMR(${currentWsPort});
             } else {
               try {
-                let ws = new WebSocket('ws://' + window.location.hostname + ':${WS_PORT}');
+                let ws = new WebSocket('ws://' + window.location.hostname + ':${currentWsPort}');
                 ws.onmessage = function(e) {
                   let d = JSON.parse(e.data);
                   if (d.type === 'reload') window.location.reload();
@@ -115,6 +115,7 @@ let wss = null;
 
 function startHttp(port) {
   server.removeAllListeners('error');
+  server.removeAllListeners('listening');
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       console.log(`\x1b[33m[!] HTTP Port ${port} is busy. Switching to port ${port + 1}...\x1b[0m`);
@@ -126,23 +127,30 @@ function startHttp(port) {
   });
   server.listen(port, () => {
     currentHttpPort = port;
-    console.log(`\x1b[32m🛡️  BlaiseVue 2.0 Dev Server running at http://localhost:${port}/\x1b[0m`);
-    startWs(currentWsPort);
+    console.log(`\x1b[32m🛡️  BlaiseVue Dev Server running at http://localhost:${port}/\x1b[0m`);
+    const nextWsPort = (port === PORT) ? WS_PORT : port + 1;
+    startWs(nextWsPort);
   });
 }
 
 function startWs(port) {
+  if (port === currentHttpPort) {
+    startWs(port + 1);
+    return;
+  }
   try {
-    wss = new WebSocketServer({ port: port });
-    wss.on('error', (err) => {
+    const wsServer = new WebSocketServer({ port: port });
+    wsServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.log(`\x1b[33m[!] WebSocket Port ${port} is busy. Switching to port ${port + 1}...\x1b[0m`);
+        try { wsServer.close(); } catch {}
         startWs(port + 1);
       } else {
         console.error(`[HMR WebSocket Error]`, err);
       }
     });
-    wss.on('listening', () => {
+    wsServer.on('listening', () => {
+      wss = wsServer;
       currentWsPort = port;
       console.log(`\x1b[36m⚡ HMR WebSocket service listening on port ${port}\x1b[0m`);
     });

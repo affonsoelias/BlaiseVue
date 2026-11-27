@@ -8,7 +8,7 @@
       b-if="!isDivider && !isHeader" 
       class="dropdown-item bui-dropdown-item" 
       :class="{ disabled: isDisabled, active: isActive }" 
-      :href="href || '#'" 
+      :href="href || 'javascript:void(0)'" 
       @click="handleClick">
       <slot>{{ text }}</slot>
     </a>
@@ -35,6 +35,9 @@
     active: boolean = false;
     divider: boolean = false;
     header: boolean = false;
+
+  inject:
+    closeDropdown;
 
   computed:
     function isDivider: boolean;
@@ -73,15 +76,19 @@
           if (ev && ev.preventDefault) ev.preventDefault();
           return;
         }
+        if (!this.href && ev && ev.preventDefault) ev.preventDefault();
         this.$emit('click', ev);
-        // Find parent dropdown if possible and close it
-        var parent = this.$parent;
-        while (parent) {
-          if (typeof parent.close === 'function') {
-            parent.close();
-            break;
+        if (typeof this.closeDropdown === 'function') {
+          this.closeDropdown();
+        } else {
+          var parent = this.$parent;
+          while (parent) {
+            if (typeof parent.close === 'function') {
+              parent.close();
+              break;
+            }
+            parent = parent.$parent;
           }
-          parent = parent.$parent;
         }
       end;
     end;

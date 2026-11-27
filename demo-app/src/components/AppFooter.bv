@@ -26,9 +26,9 @@
 <style>
   .app-footer {
     padding: 16px 24px;
-    background: #ffffff;
-    border-top: 1px solid #e2e8f0;
-    color: #64748b;
+    background: var(--bv-surface);
+    border-top: 1px solid var(--bv-border);
+    color: var(--bv-text-muted);
     font-size: 12px;
     display: flex;
     justify-content: space-between;
@@ -38,17 +38,9 @@
   }
   .footer-dot {
     margin: 0 8px;
-    color: #cbd5e1;
+    color: var(--bv-border);
   }
   .footer-right strong {
-    color: #0f172a;
-  }
-  html[data-bs-theme="dark"] .app-footer, body.theme-dark .app-footer {
-    background: #1e293b;
-    border-top-color: rgba(255, 255, 255, 0.08);
-    color: #94a3b8;
-  }
-  html[data-bs-theme="dark"] .footer-right strong, body.theme-dark .footer-right strong {
-    color: #f8fafc;
+    color: var(--bv-text);
   }
 </style>

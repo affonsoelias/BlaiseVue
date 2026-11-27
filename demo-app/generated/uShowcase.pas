@@ -86,7 +86,7 @@ begin
     '        <button class="btn btn-info" @click="handleTheme(''cosmo'')">Cosmo</button>' +
     '      </div>' +
     '      <div class="mt-3">' +
-    '         Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' +
+    '        Selected Theme: <span class="badge bg-secondary">{{ currentThemeName }}</span>' +
     '      </div>' +
     '    </div>' +
     '  </div>';
@@ -104,20 +104,14 @@ begin
   m['handleTheme'] := procedure(_this: TJSObject; ATheme: string)
 
     var
-      link: TJSHTMLElement;
+    targetTheme: string;
     begin
-      link := TJSHTMLElement(document.getElementById('theme-link'));
-      if link <> nil then
-      begin
-        if ATheme = 'default' then
-          link['href'] := 'css/lib/blaise-ui.css'
-        else
-          link['href'] := 'assets/themes/' + ATheme + '.min.css';
-        document.body.className := 'theme-' + ATheme;
-        document.head.appendChild(link);
-        WriteLn('BlaiseVue: Theme applied.');
-      end;
-      _this['currentThemeName'] := ATheme;
+      if ATheme = 'default' then
+      targetTheme := 'flatly'
+      else
+      targetTheme := ATheme;
+      ThemeSet(targetTheme);
+      TComponentThis(_this).currentThemeName := ATheme;
     end;
 
   comp['methods'] := m;

@@ -1,0 +1,187 @@
+<template>
+  <div class="bui-ion-searchbar" :class="wrapperClass">
+    <div class="bui-ion-searchbar-container">
+      <div class="bui-ion-searchbar-icon">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input
+        class="bui-ion-searchbar-native"
+        type="search"
+        :placeholder="placeholder"
+        :value="queryValue"
+        :disabled="isDisabled"
+        @input="handleInput"
+        @change="handleChange"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
+      <button
+        type="button"
+        class="bui-ion-searchbar-clear"
+        b-if="showClear"
+        @click="handleClear"
+        aria-label="Clear search">
+        &times;
+      </button>
+    </div>
+    <button
+      type="button"
+      class="bui-ion-searchbar-cancel"
+      b-if="showCancel"
+      @click="handleCancel">
+      {{ cancelButtonText }}
+    </button>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonSearchBar - Mobile Native Search Bar
+    -----------------------------------------
+    Props:
+    - placeholder: string
+    - showCancelButton: string ('always' | 'focus' | 'never')
+    - cancelButtonText: string
+    - debounce: integer
+    - value: string
+    - modelValue: string
+    - disabled: boolean
+  }
+
+  props:
+    placeholder: string = 'Search';
+    showCancelButton: string = 'focus';
+    cancelButtonText: string = 'Cancel';
+    debounce: integer = 250;
+    value: string = '';
+    modelValue: string = '';
+    disabled: boolean = false;
+
+  data:
+    isFocused: boolean = false;
+    internalQuery: string = '';
+
+  computed:
+    function queryValue: string;
+    begin
+      asm
+        if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+          return String(this.modelValue);
+        }
+        if (this.value !== undefined && this.value !== null && this.value !== '') {
+          return String(this.value);
+        }
+        return this.internalQuery || '';
+      end;
+    end;
+
+    function hasQuery: boolean;
+    begin
+      asm
+        var q = this.queryValue;
+        return Boolean(q !== undefined && q !== null && String(q).length > 0);
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function showClear: boolean;
+    begin
+      asm
+        return Boolean(this.hasQuery && !this.isDisabled);
+      end;
+    end;
+
+    function showCancel: boolean;
+    begin
+      asm
+        var mode = this.showCancelButton || 'focus';
+        if (mode === 'always') return true;
+        if (mode === 'focus') return Boolean(this.isFocused || this.hasQuery);
+        return false;
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var f = this.isFocused ? ' is-focused' : '';
+        var h = this.hasQuery ? ' has-query' : '';
+        var d = this.isDisabled ? ' is-disabled' : '';
+        var c = this.showCancel ? ' has-cancel' : '';
+        return 'bui-ion-searchbar' + f + h + d + c;
+      end;
+    end;
+
+  methods:
+    procedure handleInput(ev: JSValue);
+    begin
+      asm
+        var val = ev && ev.target ? ev.target.value : '';
+        this.internalQuery = val;
+        this.$emit('update:modelValue', val);
+        this.$emit('input', val);
+        this.$emit('ionInput', val);
+      end;
+    end;
+
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var val = ev && ev.target ? ev.target.value : '';
+        this.internalQuery = val;
+        this.$emit('change', val);
+        this.$emit('ionChange', val);
+      end;
+    end;
+
+    procedure handleFocus(ev: JSValue);
+    begin
+      asm
+        this.isFocused = true;
+        this.$emit('focus', ev);
+        this.$emit('ionFocus', ev);
+      end;
+    end;
+
+    procedure handleBlur(ev: JSValue);
+    begin
+      asm
+        this.isFocused = false;
+        this.$emit('blur', ev);
+        this.$emit('ionBlur', ev);
+      end;
+    end;
+
+    procedure handleClear(ev: JSValue);
+    begin
+      asm
+        this.internalQuery = '';
+        this.$emit('update:modelValue', '');
+        this.$emit('input', '');
+        this.$emit('ionInput', '');
+        this.$emit('clear', ev);
+        this.$emit('ionClear', ev);
+      end;
+    end;
+
+    procedure handleCancel(ev: JSValue);
+    begin
+      asm
+        this.isFocused = false;
+        this.internalQuery = '';
+        this.$emit('update:modelValue', '');
+        this.$emit('input', '');
+        this.$emit('cancel', ev);
+        this.$emit('ionCancel', ev);
+      end;
+    end;
+</script>

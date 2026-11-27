@@ -1,0 +1,32 @@
+<template>
+  <div class="bui-ion-fab" :class="wrapperClass">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonFab - Floating Action Button Container
+    -------------------------------------------
+    Props:
+    - vertical: string ('bottom' | 'top' | 'center')
+    - horizontal: string ('end' | 'start' | 'center')
+    - edge: boolean
+  }
+
+  props:
+    vertical: string = 'bottom';
+    horizontal: string = 'end';
+    edge: boolean = false;
+
+  computed:
+    function wrapperClass: string;
+    begin
+      asm
+        var v = this.vertical || 'bottom';
+        var h = this.horizontal || 'end';
+        var e = (this.edge === true || this.edge === 'true') ? ' bui-ion-fab-edge' : '';
+        return 'bui-ion-fab bui-ion-fab-vertical-' + v + ' bui-ion-fab-horizontal-' + h + e;
+      end;
+    end;
+</script>

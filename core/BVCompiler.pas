@@ -1886,6 +1886,8 @@ initialization
                             el.removeAttribute(b.name);
                             try { el[b.name] = false; } catch(e) {}
                          }
+                      } else if (b.name === 'value' && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) {
+                         bv.writeFieldValue(el, v);
                       } else {
                          if (v === null || v === undefined || v === false) {
                             el.removeAttribute(b.name);
@@ -2090,7 +2092,14 @@ initialization
                let tplStr = opts.template || '';
                events.forEach(function(evt) {
                   let evLow = (evt.name || '').toLowerCase();
+                  let escEvName = (evt.name || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  let emitMethodRe = new RegExp('(?:\\$emit|\\bEmit)\\s*\\([^)]*[\'"]' + escEvName + '[\'"]', 'i');
+                  let hasMethodEmit = !!(opts.methods && Object.keys(opts.methods).some(function(mk) {
+                     let fn = opts.methods[mk];
+                     return typeof fn === 'function' && emitMethodRe.test(fn.toString());
+                  }));
                   let isDeclaredEmit = (opts.emits && Array.isArray(opts.emits) && opts.emits.some(function(e) { return e.toLowerCase() === evLow; })) ||
+                                       hasMethodEmit ||
                                        tplStr.indexOf("'" + evt.name + "'") !== -1 || tplStr.indexOf('"' + evt.name + '"') !== -1;
                   if (!isDeclaredEmit) {
                      evtTargets.forEach(function(tNode) {
@@ -2156,6 +2165,157 @@ initialization
                }
                el['__bv_replacement__'] = rEl;
             }
+
+             pRef['$emit'] = function(ev, ...args) {
+                let arg = args[0];
+                if (!pRef['__emitted__']) pRef['__emitted__'] = {};
+                if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
+                pRef['__emitted__'][ev].push(arg);
+                if (rEl) {
+                   if (!rEl['__emitted__']) rEl['__emitted__'] = {};
+                   if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
+                   rEl['__emitted__'][ev].push(arg);
+                }
+                if (startAnchor) {
+                   if (!startAnchor['__emitted__']) startAnchor['__emitted__'] = {};
+                   if (!startAnchor['__emitted__'][ev]) startAnchor['__emitted__'][ev] = [];
+                   startAnchor['__emitted__'][ev].push(arg);
+                }
+                if (ev === 'input' || ev === 'change' || ev === 'update:modelValue') {
+                   if (pRef['$onInput']) pRef['$onInput'](arg);
+                }
+                let targetEv = (ev || '').toLowerCase();
+                events.forEach(function(evt) {
+                   if (evt.name.toLowerCase() === targetEv) {
+                      if (evt.modifiers && arg && typeof arg === 'object') {
+                         if (evt.modifiers.indexOf('stop') !== -1 && arg.stopPropagation) arg.stopPropagation();
+                         if (evt.modifiers.indexOf('prevent') !== -1 && arg.preventDefault) arg.preventDefault();
+                      }
+                      let expr = evt.expr;
+                      if (expr) {
+                         let r = Data.Evaluate(expr, ...args);
+                         if (typeof r === 'function') {
+                            try { r.call(Data.FData, Data.FData, ...args); }
+                            catch(e) { console.error("[Compiler] Event handler error:", e); }
+                         } else if (Methods && typeof Methods[expr] === 'function') {
+                            try { Methods[expr].call(Data.FData, Data.FData, ...args); }
+                            catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
+                         }
+                      }
+                   }
+                });
+                if (window.__BV_DEVTOOLS_HOOK__) {
+                   window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
+                }
+             };
+
+             if (vmodel) {
+                let hasModelValProp = (opts.props && opts.props.indexOf('modelValue') !== -1);
+                let modelProp = hasModelValProp ? 'modelValue' : 'value';
+                bv.effect(function() { pRef[modelProp] = Data.Evaluate(vmodel); });
+                pRef['$onInput'] = function(val) {
+                   Data.SetValue(vmodel, val);
+                   if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                      let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
+                      if (fObj && fObj.$dirty) fObj.$touch();
+                   }
+                };
+             }
+
+             if (vfield) {
+                let parts = vfield.split('.');
+                let dsExpr = parts[0];
+                let fieldName = parts.slice(1).join('.');
+
+                const getCompFieldVal = function() {
+                  let ds = Data.Evaluate(dsExpr);
+                  if (!ds) return '';
+                  if (typeof ds.FieldByName === 'function') {
+                    return ds.FieldByName(fieldName).AsString;
+                  } else if (ds.Current) {
+                    return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
+                  }
+                  return '';
+                };
+
+                bv.effect(function() {
+                  pRef['value'] = getCompFieldVal();
+                });
+
+                pRef['$onInput'] = function(val) {
+                  let ds = Data.Evaluate(dsExpr);
+                  if (!ds) return;
+                  if (typeof ds.FieldByName === 'function') {
+                    if (ds.StateStr === 'browse') ds.Edit();
+                    ds.FieldByName(fieldName).AsString = val;
+                  } else if (ds.Current) {
+                    ds.Current[fieldName] = val;
+                  }
+                };
+             }
+
+             if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
+                let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
+                if (targetField) {
+                   window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
+                }
+             }
+
+             if (vref && Data && Data.FData) {
+                if (!Data.FData.$refs) Data.FData.$refs = {};
+                Data.FData.$refs[vref] = pRef;
+             }
+
+            if (opts.inject) {
+               opts.inject.forEach(function(k) {
+                  let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
+                  let hostParent = (rEl && rEl.parentElement) || (startAnchor && startAnchor.parentElement);
+                  if (!val && hostParent) {
+                     let curr = hostParent;
+                     while (curr && !val) {
+                        if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
+                           val = curr['__bv_instance_data__']['$provided'][k];
+                           break;
+                        }
+                        curr = curr.parentElement;
+                     }
+                  }
+                  if (val) pRef[k] = val;
+               });
+            }
+            if (opts.provide) {
+               pRef['$provided'] = Object.assign({}, (Data && Data.FData && Data.FData.$provided) || {}, opts.provide.call(pRef, pRef));
+            }
+
+            if (opts.computed) { Object.keys(opts.computed).forEach(function(ck) { bv.defineComputed(pRef, ck, opts.computed[ck]); }); }
+            if (opts.methods) {
+               Object.keys(opts.methods).forEach(function(k) {
+                 let rM = opts.methods[k];
+                 const boundFn = function() {
+                   if (arguments.length > 0 && arguments[0] === pRef) {
+                     return rM.apply(pRef, arguments);
+                   }
+                   return rM.apply(pRef, [pRef, ...arguments]);
+                 };
+                 dRaw[k] = boundFn;
+                 pRef[k] = boundFn;
+               });
+            }
+
+            if (opts.watch) {
+               Object.keys(opts.watch).forEach(function(wk) {
+                  let firstRun = true;
+                  bv.effect(function() {
+                     let val = pRef[wk];
+                     if (firstRun) { firstRun = false; return; }
+                     bv.nonReactive(function() {
+                        opts.watch[wk].call(pRef, pRef, val);
+                     });
+                  });
+               });
+            }
+
+            if (opts.created) opts.created.call(pRef, pRef);
 
             function isNamedSlotNode(node) {
                if (!node || node.nodeType !== 1) return false;
@@ -2287,154 +2447,7 @@ initialization
                }
             });
 
-             if (vmodel) {
-                bv.effect(function() { pRef['value'] = Data.Evaluate(vmodel); });
-                pRef['$onInput'] = function(val) { 
-                   Data.SetValue(vmodel, val); 
-                   if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
-                      let fObj = Data.FData.$v && Data.FData.$v.$fields && Data.FData.$v.$fields[vmodel];
-                      if (fObj && fObj.$dirty) fObj.$touch();
-                   }
-                };
-             }
 
-                          if (vfield) {
-                let parts = vfield.split('.');
-                let dsExpr = parts[0];
-                let fieldName = parts.slice(1).join('.');
-
-                const getCompFieldVal = function() {
-                  let ds = Data.Evaluate(dsExpr);
-                  if (!ds) return '';
-                  if (typeof ds.FieldByName === 'function') {
-                    return ds.FieldByName(fieldName).AsString;
-                  } else if (ds.Current) {
-                    return ds.Current[fieldName] !== undefined ? ds.Current[fieldName] : '';
-                  }
-                  return '';
-                };
-
-                bv.effect(function() {
-                  pRef['value'] = getCompFieldVal();
-                });
-
-                pRef['$onInput'] = function(val) {
-                  let ds = Data.Evaluate(dsExpr);
-                  if (!ds) return;
-                  if (typeof ds.FieldByName === 'function') {
-                    if (ds.StateStr === 'browse') ds.Edit();
-                    ds.FieldByName(fieldName).AsString = val;
-                  } else if (ds.Current) {
-                    ds.Current[fieldName] = val;
-                  }
-                };
-             }
-
-             if (vvalidate && Data && Data.FData && window.__BV_CORE__.validation) {
-                let targetField = vvalidateField || vmodel || el.getAttribute('name') || el.id || '';
-                if (targetField) {
-                   window.__BV_CORE__.validation.setupField(Data.FData, targetField, vvalidate);
-                }
-             }
-
-             if (vref && Data && Data.FData) {
-                if (!Data.FData.$refs) Data.FData.$refs = {};
-                Data.FData.$refs[vref] = pRef;
-             }
-            
-            if (opts.inject) {
-               opts.inject.forEach(function(k) {
-                  let val = (Data && Data.FData && Data.FData.$provided) ? Data.FData.$provided[k] : null;
-                  let hostParent = (rEl && rEl.parentElement) || (startAnchor && startAnchor.parentElement);
-                  if (!val && hostParent) {
-                     let curr = hostParent;
-                     while (curr && !val) {
-                        if (curr['__bv_instance_data__'] && curr['__bv_instance_data__']['$provided'] && curr['__bv_instance_data__']['$provided'][k]) {
-                           val = curr['__bv_instance_data__']['$provided'][k];
-                           break;
-                        }
-                        curr = curr.parentElement;
-                     }
-                  }
-                  if (val) pRef[k] = val;
-               });
-            }
-            if (opts.provide) {
-               pRef['$provided'] = Object.assign({}, (Data && Data.FData && Data.FData.$provided) || {}, opts.provide.call(pRef, pRef));
-            }
-
-            if (opts.computed) { Object.keys(opts.computed).forEach(function(ck) { bv.defineComputed(pRef, ck, opts.computed[ck]); }); }
-            if (opts.methods) { 
-               Object.keys(opts.methods).forEach(function(k) { 
-                 let rM = opts.methods[k];
-                 const boundFn = function() { 
-                   if (arguments.length > 0 && arguments[0] === pRef) {
-                     return rM.apply(pRef, arguments);
-                   }
-                   return rM.apply(pRef, [pRef, ...arguments]); 
-                 }; 
-                 dRaw[k] = boundFn;
-                 pRef[k] = boundFn;
-               }); 
-            }
-            
-            if (opts.watch) {
-               Object.keys(opts.watch).forEach(function(wk) {
-                  let firstRun = true;
-                  bv.effect(function() {
-                     let val = pRef[wk];
-                     if (firstRun) { firstRun = false; return; }
-                     bv.nonReactive(function() {
-                        opts.watch[wk].call(pRef, pRef, val);
-                     });
-                  });
-               });
-            }
-            
-            if (opts.created) opts.created.call(pRef, pRef);
-            
-            pRef['$emit'] = function(ev, ...args) {
-               let arg = args[0];
-               if (!pRef['__emitted__']) pRef['__emitted__'] = {};
-               if (!pRef['__emitted__'][ev]) pRef['__emitted__'][ev] = [];
-               pRef['__emitted__'][ev].push(arg);
-               if (rEl) {
-                  if (!rEl['__emitted__']) rEl['__emitted__'] = {};
-                  if (!rEl['__emitted__'][ev]) rEl['__emitted__'][ev] = [];
-                  rEl['__emitted__'][ev].push(arg);
-               }
-               if (startAnchor) {
-                  if (!startAnchor['__emitted__']) startAnchor['__emitted__'] = {};
-                  if (!startAnchor['__emitted__'][ev]) startAnchor['__emitted__'][ev] = [];
-                  startAnchor['__emitted__'][ev].push(arg);
-               }
-               if (ev === 'input' || ev === 'change') {
-                  if (pRef['$onInput']) pRef['$onInput'](arg);
-               }
-               let targetEv = (ev || '').toLowerCase();
-               events.forEach(function(evt) {
-                  if (evt.name.toLowerCase() === targetEv) {
-                     if (evt.modifiers && arg && typeof arg === 'object') {
-                        if (evt.modifiers.indexOf('stop') !== -1 && arg.stopPropagation) arg.stopPropagation();
-                        if (evt.modifiers.indexOf('prevent') !== -1 && arg.preventDefault) arg.preventDefault();
-                     }
-                     let expr = evt.expr;
-                     if (expr) {
-                        let r = Data.Evaluate(expr, ...args);
-                        if (typeof r === 'function') {
-                           try { r.call(Data.FData, Data.FData, ...args); }
-                           catch(e) { console.error("[Compiler] Event handler error:", e); }
-                        } else if (Methods && typeof Methods[expr] === 'function') {
-                           try { Methods[expr].call(Data.FData, Data.FData, ...args); }
-                           catch(e) { console.error("[Compiler] Method " + expr + " error:", e); }
-                        }
-                     }
-                  }
-               });
-               if (window.__BV_DEVTOOLS_HOOK__) {
-                  window.__BV_DEVTOOLS_HOOK__.emit('component:emit', { tag: tagName, event: ev, payload: arg });
-               }
-            };
 
             let cD = {
               FData: pRef,

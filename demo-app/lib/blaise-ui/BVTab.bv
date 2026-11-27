@@ -1,5 +1,5 @@
 <template>
-  <div class="bui-tab-pane" b-show="active">
+  <div class="bui-tab-pane" b-show="isTabActive">
      <slot></slot>
   </div>
 </template>
@@ -21,7 +21,7 @@
     isActive;
 
   computed:
-    function active: boolean;
+    function isTabActive: boolean;
     begin
        asm
          if (typeof this.isActive === 'function') {

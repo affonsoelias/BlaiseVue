@@ -109,11 +109,20 @@
              };
              if (chartOptions.resizeDelay === undefined) chartOptions.resizeDelay = 50;
              
-             let finalOpts = chartOptions;
-             const isRadial = (this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea');
-             if (isRadial && chartOptions.scales) {
-               finalOpts = Object.assign({}, chartOptions);
-               delete finalOpts.scales;
+             let finalOpts = Object.assign({}, chartOptions);
+             const chartType = this.type || 'bar';
+             const isRadial = (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea');
+             const isRadar = (chartType === 'radar');
+             if (finalOpts.scales) {
+               if (isRadial) {
+                 delete finalOpts.scales;
+               } else if (isRadar) {
+                 finalOpts.scales = finalOpts.scales.r ? { r: Object.assign({}, finalOpts.scales.r) } : {};
+               } else {
+                 const cleanScales = Object.assign({}, finalOpts.scales);
+                 delete cleanScales.r;
+                 finalOpts.scales = cleanScales;
+               }
              }
 
              if (!finalOpts.onClick) {
@@ -236,14 +245,7 @@
     begin
        asm
          if (this._chart && this._chart.canvas && newVal) {
-           try {
-             const rawNewOpts = (window.__BV_CORE__ && window.__BV_CORE__.unproxy) ? window.__BV_CORE__.unproxy(newVal) : newVal;
-             if (rawNewOpts.resizeDelay === undefined) rawNewOpts.resizeDelay = 50;
-             this._chart.options = rawNewOpts;
-             this._chart.update();
-           } catch (e) {
-             this.initChart();
-           }
+           this.initChart();
          }
        end;
     end;

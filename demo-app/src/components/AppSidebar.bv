@@ -1,5 +1,5 @@
 <template>
-  <aside class="app-sidebar" :class="{ 'sidebar-open': isOpen }">
+  <aside class="app-sidebar" :class="{ 'sidebar-open': isOpen, 'sidebar-collapsed': isCollapsed }">
     <div class="sidebar-backdrop" @click="closeSidebar"></div>
     <div class="sidebar-container">
       <div class="sidebar-brand">
@@ -127,13 +127,12 @@
 
   props:
     isOpen: boolean = false;
+    isCollapsed: boolean = true;
 
   methods:
     procedure closeSidebar;
     begin
-      asm
-        if (typeof this.$emit === 'function') this.$emit('close');
-      end;
+      Emit(this, 'close');
     end;
 </script>
 
@@ -271,13 +270,17 @@
     color: #94a3b8;
   }
 
+  .app-sidebar.sidebar-collapsed .sidebar-container {
+    transform: translateX(-100%);
+  }
+
   /* Responsive Mobile Offcanvas Drawer */
   @media (max-width: 992px) {
     .sidebar-container {
       transform: translateX(-100%);
     }
     .app-sidebar.sidebar-open .sidebar-container {
-      transform: translateX(0);
+      transform: translateX(0) !important;
     }
     .app-sidebar.sidebar-open .sidebar-backdrop {
       display: block;

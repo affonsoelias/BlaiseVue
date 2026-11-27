@@ -1,6 +1,6 @@
 # BlaiseReports (`packages/blaise-reports`)
 
-**Native Vector PDF, Excel (`.xlsx`), CSV & Thermal/A4 Print Engine in Pure Object Pascal for BlaiseVue 5.0.**
+**Native Vector PDF, Excel (`.xlsx`), CSV & Thermal/A4 Print Engine in Pure Object Pascal for BlaiseVue.**
 
 ## Features
 

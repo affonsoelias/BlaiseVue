@@ -12,7 +12,7 @@ begin
   Register_uStatPills;
   Register_uFragmentsView;
 
-  Describe('View: FragmentsView (v5.0 Pillar 5 Multi-Root Fragments Showcase)', procedure
+  Describe('View: FragmentsView (Multi-Root Fragments Showcase)', procedure
     begin
       It('should initialize FragmentsView and render <table-cells> and <stat-pills> as multi-root fragments', procedure
         var

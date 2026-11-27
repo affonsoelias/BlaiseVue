@@ -1,6 +1,6 @@
 # blaise-charts 📊
 
-The official reactive data visualization suite for **BlaiseVue 4.0**, powered by **Chart.js** and strongly typed **Object Pascal** data structures.
+The official reactive data visualization suite for **BlaiseVue**, powered by **Chart.js** and strongly typed **Object Pascal** data structures.
 
 ---
 

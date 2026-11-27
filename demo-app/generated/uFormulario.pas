@@ -29,21 +29,21 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := 'label { display: block; margin-top: 8px; margin-bottom: 4px; color: #555; }';
+  _styleEl.textContent := '.section label { display: block; margin-top: 8px; margin-bottom: 4px; color: var(--bv-text); }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
     '  <div>' +
     '    <div class="section">' +
     '      <!-- 1. Passando props e escutando eventos -->' +
-    '      <form-header ' +
+    '      <form-header' +
     '        ref="headerComp"' +
-    '        title="Formulário Especial" ' +
+    '        title="Formulário Especial"' +
     '        :subtitle="meuSub"' +
     '        @header-clicked="onHeaderClick">' +
     '      </form-header>' +
-    '      ' +
-    '      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada v2.5</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>' +
+    '' +
+    '      <p>Este formulário demonstra <code>b-model</code>, <code>props</code>, <code>$refs</code> e o novo <strong>Motor de Validação Tipada</strong> (<code>b-validate</code>, <code>$errors</code>, <code>$v</code>).</p>' +
     '      <p>Todos os campos abaixo validam e atualizam em tempo real.</p>' +
     '      <button class="btn-outline" @click="mudarHeaderRef">Usar $refs no Header</button>' +
     '      <p>Mensagem do Header: <strong>{{ msgHeader }}</strong></p>' +
@@ -72,19 +72,19 @@ begin
     '      </div>' +
     '' +
     '      <!-- Card de Status Reativo de $v -->' +
-    '      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-top: 16px;">' +
+    '      <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; padding: 14px; margin-top: 16px;">' +
     '        <div style="display: flex; align-items: center; justify-content: space-between;">' +
     '          <span><strong>{{ $t(''form.formState'') }}:</strong></span>' +
     '          <span class="badge" :class="{ ''badge-green'': !$v.$invalid && $v.$dirty, ''badge-orange'': $v.$invalid, ''badge-gray'': !$v.$dirty }">' +
     '            {{ $v.$dirty ? ($v.$invalid ? $t(''form.statusInvalid'') : $t(''form.statusValid'')) : ''Não modificado'' }}' +
     '          </span>' +
     '        </div>' +
-    '        <div style="font-size: 13px; color: #64748b; margin-top: 6px;">' +
+    '        <div style="font-size: 13px; color: var(--bv-text-muted); margin-top: 6px;">' +
     '          Dirty: <code>{{ $v.$dirty }}</code> | Invalid: <code>{{ $v.$invalid }}</code>' +
     '        </div>' +
     '      </div>' +
     '' +
-    '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46;">' +
+    '      <div b-if="msgSucesso" style="margin-top: 15px; padding: 12px; background: rgba(16, 185, 129, 0.14); border: 1px solid #10b981; border-radius: 6px; color: #10b981; font-weight: 600;">' +
     '        {{ msgSucesso }}' +
     '      </div>' +
     '' +
@@ -136,57 +136,57 @@ begin
   m['onHeaderClick'] := procedure(_this: TJSObject; arg: string)
 
     begin
-      _this['msgHeader'] := arg;
-      _this['meuSub'] := 'O subtítulo mudou reativamente via props!';
+      TComponentThis(_this).msgHeader := arg;
+      TComponentThis(_this).meuSub := 'O subtítulo mudou reativamente via props!';
     end;
     
   m['mudarHeaderRef'] := procedure(_this: TJSObject)
 
     var
-      refs, header: TJSObject;
+    refs, header: TJSObject;
     begin
       refs := TJSObject(_this['$refs']);
       if Assigned(refs) then
-      begin
-        header := TJSObject(refs['headerComp']);
-        if Assigned(header) then
-           header['title'] := 'Título alterado via $refs!';
-      end;
+    begin
+      header := TJSObject(refs['headerComp']);
+      if Assigned(header) then
+      header['title'] := 'Título alterado via $refs!';
+    end;
     end;
     
   m['enviar'] := procedure(_this: TJSObject)
 
     var
-      valido: Boolean;
+    valido: Boolean;
     begin
       valido := ValidateForm(_this);
       if valido then
-      begin
-        _this['msgSucesso'] := '🎉 Parabéns ' + string(_this['nome']) + '! Formulário validado com sucesso.';
-      end
-      else
-      begin
-        _this['msgSucesso'] := '';
-      end;
+    begin
+      TComponentThis(_this).msgSucesso := '🎉 Parabéns ' + TComponentThis(_this).nome + '! Formulário validado com sucesso.';
+    end
+    else
+    begin
+      TComponentThis(_this).msgSucesso := '';
+    end;
     end;
     
   m['preencher'] := procedure(_this: TJSObject)
 
     begin
-      _this['nome'] := 'Blaise Pascal'; 
-      _this['email'] := 'blaise@pascal.dev'; 
-      _this['cidade'] := 'Clermont-Ferrand';
-      _this['msgSucesso'] := '';
+      TComponentThis(_this).nome := 'Blaise Pascal';
+      TComponentThis(_this).email := 'blaise@pascal.dev';
+      TComponentThis(_this).cidade := 'Clermont-Ferrand';
+      TComponentThis(_this).msgSucesso := '';
       TouchValidation(_this);
     end;
     
   m['limpar'] := procedure(_this: TJSObject)
 
     begin
-      _this['nome'] := ''; 
-      _this['email'] := ''; 
-      _this['cidade'] := '';
-      _this['msgSucesso'] := '';
+      TComponentThis(_this).nome := '';
+      TComponentThis(_this).email := '';
+      TComponentThis(_this).cidade := '';
+      TComponentThis(_this).msgSucesso := '';
       ResetValidation(_this);
     end;
 

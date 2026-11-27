@@ -2,20 +2,20 @@
   <div class="bui-skeleton-container" :class="animationClass">
     <!-- Circle Skeleton -->
     <div 
-      b-if="type = 'circle'" 
+      b-if="type === 'circle'" 
       class="placeholder bui-skeleton bui-skeleton-circle" 
       :style="circleStyle">
     </div>
 
     <!-- Rectangular Skeleton (Image / Banner) -->
     <div 
-      b-if="type = 'rect'" 
+      b-if="type === 'rect'" 
       class="placeholder bui-skeleton bui-skeleton-rect" 
       :style="rectStyle">
     </div>
 
     <!-- Card Composite Skeleton -->
-    <div b-if="type = 'card'" class="card bui-skeleton-card" aria-hidden="true">
+    <div b-if="type === 'card'" class="card bui-skeleton-card" aria-hidden="true">
       <div class="placeholder bui-skeleton bui-skeleton-rect" style="height: 140px; width: 100%;"></div>
       <div class="card-body">
         <h5 class="card-title placeholder-glow">
@@ -31,7 +31,7 @@
     </div>
 
     <!-- Text Rows Skeleton (Default) -->
-    <div b-if="type = 'text'" class="bui-skeleton-text-group">
+    <div b-if="type === 'text'" class="bui-skeleton-text-group">
       <div 
         b-for="n in countArr" 
         class="placeholder bui-skeleton bui-skeleton-text" 

@@ -12,28 +12,10 @@
     </div>
 
     <div class="header-right">
-      <!-- Language Switcher -->
-      <div class="header-control-group lang-group">
-        <button 
-          class="ctrl-btn lang-btn" 
-          :class="{ 'btn-active': $i18n.locale === 'en' }" 
-          @click="$setLocale('en')" 
-          title="Switch to English">
-          🇺🇸 EN
-        </button>
-        <button 
-          class="ctrl-btn lang-btn" 
-          :class="{ 'btn-active': $i18n.locale === 'pt' }" 
-          @click="$setLocale('pt')" 
-          title="Mudar para Português">
-          🇧🇷 PT
-        </button>
-      </div>
-
       <!-- Quick Dark/Light Toggle -->
-      <button 
-        class="ctrl-btn theme-toggle-btn" 
-        @click="$theme.toggle()" 
+      <button
+        class="ctrl-btn theme-toggle-btn"
+        @click="$theme.toggle()"
         :title="$theme.isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
         <span v-if="$theme.isDark">☀️ Light</span>
         <span v-if="!$theme.isDark">🌙 Dark</span>
@@ -64,36 +46,34 @@
 </template>
 
 <script>
-  {
+    {
     AppHeader.bv
     -------------------------------------------------------------------------
     Top header bar with breadcrumb navigation, theme toggle (Dark/Light),
     Bootswatch theme selector, language switcher, and authentication indicator.
-  }
+    }
 
   methods:
     procedure toggleSidebar;
     begin
-      asm
-        if (typeof this.$emit === 'function') this.$emit('toggle-sidebar');
-      end;
+      Emit(this, 'toggle-sidebar');
     end;
 
     procedure onThemeSelect(e: JSValue);
     var
-      sel: string;
+    sel: string;
     begin
       sel := string(TJSObject(TJSObject(e)['target'])['value']);
       if sel <> '' then
-        ThemeSet(sel);
+      ThemeSet(sel);
     end;
 </script>
 
 <style>
   .app-header {
     height: 64px;
-    background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--bv-surface);
+    border-bottom: 1px solid var(--bv-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -110,9 +90,9 @@
     gap: 16px;
   }
   .menu-toggle-btn {
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #334155;
+    background: var(--bv-surface-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text);
     font-size: 18px;
     width: 38px;
     height: 38px;
@@ -124,8 +104,7 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
   .menu-toggle-btn:hover {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--bv-hover-bg);
   }
   .header-breadcrumb {
     display: flex;
@@ -134,14 +113,14 @@
     font-size: 14px;
   }
   .crumb-app {
-    color: #64748b;
+    color: var(--bv-text-muted);
     font-weight: 500;
   }
   .crumb-separator {
-    color: #94a3b8;
+    color: var(--bv-text-muted);
   }
   .crumb-current {
-    color: #0f172a;
+    color: var(--bv-text);
     font-weight: 600;
   }
   .header-right {
@@ -155,9 +134,9 @@
     gap: 4px;
   }
   .ctrl-btn {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    color: #334155;
+    background: var(--bv-surface-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text);
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 13px;
@@ -166,18 +145,12 @@
     transition: all 0.15s ease;
   }
   .ctrl-btn:hover {
-    background: #e2e8f0;
-  }
-  .ctrl-btn.btn-active {
-    background: #10b981;
-    border-color: #10b981;
-    color: #ffffff;
-    font-weight: 600;
+    background: var(--bv-hover-bg);
   }
   .theme-select {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-    color: #334155;
+    background: var(--bv-surface-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text);
     padding: 6px 10px;
     border-radius: 6px;
     font-size: 13px;
@@ -188,9 +161,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #0f172a;
+    background: var(--bv-surface-subtle);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text);
     padding: 6px 14px;
     border-radius: 20px;
     text-decoration: none;
@@ -199,45 +172,16 @@
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .user-pill:hover {
-    background: #e2e8f0;
-    border-color: #94a3b8;
-  }
-
-  /* Dark mode overrides */
-  html[data-bs-theme="dark"] .app-header, body.theme-dark .app-header {
-    background: #1e293b;
-    border-bottom-color: rgba(255, 255, 255, 0.1);
-  }
-  html[data-bs-theme="dark"] .crumb-current, body.theme-dark .crumb-current {
-    color: #f8fafc;
-  }
-  html[data-bs-theme="dark"] .menu-toggle-btn, body.theme-dark .menu-toggle-btn {
-    background: #334155;
-    border-color: #475569;
-    color: #f8fafc;
-  }
-  html[data-bs-theme="dark"] .ctrl-btn, body.theme-dark .ctrl-btn {
-    background: #334155;
-    border-color: #475569;
-    color: #f8fafc;
-  }
-  html[data-bs-theme="dark"] .theme-select, body.theme-dark .theme-select {
-    background: #334155;
-    border-color: #475569;
-    color: #f8fafc;
-  }
-  html[data-bs-theme="dark"] .user-pill, body.theme-dark .user-pill {
-    background: #334155;
-    border-color: #475569;
-    color: #f8fafc;
+    background: var(--bv-hover-bg);
   }
 
   @media (max-width: 768px) {
-    .theme-select-wrapper {
-      display: none;
-    }
-    .crumb-current {
-      display: none;
-    }
+  .theme-select-wrapper {
+    display: none;
+  }
+  .crumb-current {
+    display: none;
+  }
   }
 </style>
+

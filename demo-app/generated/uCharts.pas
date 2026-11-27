@@ -27,7 +27,7 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := '.chart-dashboard {     padding: 24px 0;     background: transparent;     min-height: 100vh;     box-sizing: border-box;   }   .header-card {     background: #ffffff;     padding: 24px 28px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     margin-bottom: 24px;     border: 1px solid #e2e8f0;     box-sizing: border-box;   }   .universal-card {     background: #ffffff;     border: 1px solid #cbd5e1;     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: #ffffff;     padding: 20px 24px;     border-radius: 14px;     box-shadow: 0 4px 12px rgba(0,0,0,0.04);     border: 1px solid #e2e8f0;     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid #f1f5f9;     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: #1e293b;   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: #f1f5f9;     color: #475569;     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: #ffffff;     border: 1px solid #cbd5e1;     color: #334155;     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
+  _styleEl.textContent := '.chart-dashboard {     padding: 24px 0;     background: transparent;     min-height: 100vh;     box-sizing: border-box;   }   .header-card {     background: var(--bv-surface);     padding: 24px 28px;     border-radius: 14px;     box-shadow: var(--bv-shadow);     margin-bottom: 24px;     border: 1px solid var(--bv-border);     box-sizing: border-box;   }   .universal-card {     background: var(--bv-surface);     border: 1px solid var(--bv-border);     border-top: 4px solid #3b82f6;     box-sizing: border-box;     width: 100%;     min-width: 0;     overflow: hidden;   }   .chart-grid {     display: grid;     grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));     gap: 24px;     width: 100%;   }   .chart-item {     background: var(--bv-surface);     padding: 20px 24px;     border-radius: 14px;     box-shadow: var(--bv-shadow);     border: 1px solid var(--bv-border);     display: flex;     flex-direction: column;     min-width: 0;     box-sizing: border-box;     width: 100%;     overflow: hidden;   }   .chart-header-row {     display: flex;     justify-content: space-between;     align-items: center;     width: 100%;     margin-bottom: 16px;     padding-bottom: 12px;     border-bottom: 1px solid var(--bv-border);     box-sizing: border-box;   }   .chart-item h3 {     margin: 0;     font-size: 1.05rem;     font-weight: 600;     color: var(--bv-text);   }   .badge-type {     font-size: 0.75rem;     padding: 4px 8px;     background: var(--bv-surface-subtle);     color: var(--bv-text-muted);     border: 1px solid var(--bv-border);     border-radius: 6px;     font-weight: 600;     text-transform: uppercase;   }   .btn-type-pill {     background: var(--bv-surface-subtle);     border: 1px solid var(--bv-border);     color: var(--bv-text);     padding: 5px 10px;     border-radius: 6px;     font-size: 0.8rem;     font-weight: 500;     cursor: pointer;     transition: all 0.15s ease;   }   .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }    .chart-info-banner {     margin-top: 18px;     padding: 10px 16px;     background: #e0f2fe;     border-left: 4px solid #0284c7;     border-radius: 6px;     font-size: 0.9rem;     color: #0369a1;     text-align: left;   }    .chart-dashboard.charts-dark .chart-info-banner,   html[data-bs-theme="dark"] .chart-info-banner,   html.theme-dark .chart-info-banner,   body.theme-dark .chart-info-banner {     background: rgba(14, 165, 233, 0.16);     border-left-color: #38bdf8;     color: #e0f2fe;   }    .chart-dashboard.charts-dark .chart-info-banner strong,   html[data-bs-theme="dark"] .chart-info-banner strong,   html.theme-dark .chart-info-banner strong,   body.theme-dark .chart-info-banner strong {     color: #7dd3fc;   }    /* Dark Mode Dashboard Styles */   .chart-dashboard.charts-dark {     --bv-text: #f8fafc;     --bv-text-muted: #94a3b8;     --bv-surface: #1e293b;     --bv-surface-subtle: #334155;     --bv-border: #334155;     background: #0f172a;     color: #f8fafc;   }   .chart-dashboard.charts-dark .header-card {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .header-card h1 {     color: #f8fafc !important;   }   .chart-dashboard.charts-dark .header-card p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .universal-card,   .chart-dashboard.charts-dark .chart-item {     background: #1e293b;     border-color: #334155;     box-shadow: 0 4px 16px rgba(0,0,0,0.4);   }   .chart-dashboard.charts-dark .chart-item h3 {     color: #f1f5f9;   }   .chart-dashboard.charts-dark .chart-header-row {     border-bottom-color: #334155;   }   .chart-dashboard.charts-dark .chart-header-row p {     color: #94a3b8 !important;   }   .chart-dashboard.charts-dark .badge-type {     background: #334155;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill {     background: #1e293b;     border-color: #475569;     color: #cbd5e1;   }   .chart-dashboard.charts-dark .btn-type-pill:hover {     background: #3b82f6;     color: #ffffff;     border-color: #3b82f6;   }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
@@ -35,10 +35,10 @@ begin
     '    <div class="header-card">' +
     '      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">' +
     '        <div style="text-align: left;">' +
-    '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: #1e293b;">' +
+    '          <h1 style="margin: 0; font-size: 1.8rem; font-weight: 700; color: var(--bv-text);">' +
     '            📊 BlaiseCharts - Data Visualization Suite' +
     '          </h1>' +
-    '          <p style="margin: 6px 0 0 0; color: #64748b; font-size: 0.95rem;">' +
+    '          <p style="margin: 6px 0 0 0; color: var(--bv-text-muted); font-size: 0.95rem;">' +
     '            Official hardware-accelerated reactive charting suite via HTML5 Canvas (Chart.js), with strongly-typed Object Pascal data models (<strong>packages/blaise-charts</strong>).' +
     '          </p>' +
     '        </div>' +
@@ -49,7 +49,7 @@ begin
     '        </div>' +
     '      </div>' +
     '' +
-    '      <div b-if="clickedPointInfo" style="margin-top: 18px; padding: 10px 16px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.9rem; color: #0369a1; text-align: left;">' +
+    '      <div b-if="clickedPointInfo" class="chart-info-banner">' +
     '        <strong>🎯 Selected Data Point:</strong> {{ clickedPointInfo }}' +
     '      </div>' +
     '    </div>' +
@@ -59,7 +59,7 @@ begin
     '      <div class="chart-header-row">' +
     '        <div>' +
     '          <h3>🌟 &lt;bv-chart&gt; - Universal Chart Component</h3>' +
-    '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">' +
+    '          <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--bv-text-muted);">' +
     '            A single reactive component capable of rendering any chart geometry dynamically via prop <code>:type="{{ universalType }}"</code>:' +
     '          </p>' +
     '        </div>' +
@@ -156,21 +156,21 @@ begin
   m['initCharts'] := procedure(_this: TJSObject)
 
     var
-      BarModel, LineModel, PieModel, DoughnutModel, RadarModel: TBVChartData;
-      OptsModel, PieOptsModel: TBVChartOptions;
+    BarModel, LineModel, PieModel, DoughnutModel, RadarModel: TBVChartData;
+    OptsModel, PieOptsModel: TBVChartOptions;
     begin
       // 1. Chart Options
       OptsModel := TBVChartOptions.Create;
       OptsModel.Responsive(True)
-               .MaintainAspectRatio(False)
-               .Legend('top')
-               .Tooltip(True)
-               .Scales(True, True, True);
+      .MaintainAspectRatio(False)
+      .Legend('top')
+      .Tooltip(True)
+      .Scales(True, True, True);
       _this['chartOptions'] := OptsModel.ToJS;
       PieOptsModel := TBVChartOptions.Create;
       PieOptsModel.Responsive(True)
-                  .MaintainAspectRatio(False)
-                  .Legend('bottom');
+      .MaintainAspectRatio(False)
+      .Legend('bottom');
       _this['pieOptions'] := PieOptsModel.ToJS;
       // 2. Bar Chart Data (Typed TBVChartData)
       BarModel := TBVChartData.Create;
@@ -182,9 +182,9 @@ begin
       LineModel := TBVChartData.Create;
       LineModel.Labels(['00:00', '04:00', '08:00', '12:00', '16:00', '20:00']);
       LineModel.AddDataset('WebSocket Connections', [320, 180, 840, 1920, 2450, 1880], 'rgba(99, 102, 241, 0.2)', '#6366f1')
-               .Fill(True)
-               .Tension(0.35)
-               .PointRadius(5);
+      .Fill(True)
+      .Tension(0.35)
+      .PointRadius(5);
       _this['lineData'] := LineModel.ToJS;
       // 4. Pie Chart Data (Typed Multi-Color)
       PieModel := TBVChartData.Create;
@@ -200,154 +200,154 @@ begin
       RadarModel := TBVChartData.Create;
       RadarModel.Labels(['Speed', 'Pascal Typing', 'Reactivity', 'Low Memory', 'Full-Stack', 'Multiplatform']);
       RadarModel.AddDataset('BlaiseVue Core', [98, 100, 95, 92, 97, 96], 'rgba(16, 185, 129, 0.3)', '#10b981')
-                .Fill(True);
+      .Fill(True);
       _this['radarData'] := RadarModel.ToJS;
     end;
     
   m['setUniversalType'] := procedure(_this: TJSObject; newType: string)
 
     begin
-      _this['universalType'] := newType;
-      _this['clickedPointInfo'] := 'Chart type dynamically switched to: ' + newType;
+      TComponentThis(_this).universalType := newType;
+      TComponentThis(_this).clickedPointInfo := 'Chart type dynamically switched to: ' + newType;
     end;
     
   m['toggleDarkMode'] := procedure(_this: TJSObject)
 
     var
-      NewDark: Boolean;
+    NewDark: Boolean;
     begin
-      NewDark := not Boolean(_this['isDarkMode']);
-      _this['isDarkMode'] := NewDark;
+      NewDark := not TComponentThis(_this).isDarkMode;
+      TComponentThis(_this).isDarkMode := NewDark;
       UpdateChartDarkMode(_this['chartOptions'], NewDark);
       UpdateChartDarkMode(_this['pieOptions'], NewDark);
       _this['chartOptions'] := ObjectAssign(NewObject, _this['chartOptions']);
       _this['pieOptions'] := ObjectAssign(NewObject, _this['pieOptions']);
       if NewDark then
-        _this['clickedPointInfo'] := 'Dark mode activated for charts!'
+      TComponentThis(_this).clickedPointInfo := 'Dark mode activated for charts!'
       else
-        _this['clickedPointInfo'] := 'Light mode activated for charts!';
+      TComponentThis(_this).clickedPointInfo := 'Light mode activated for charts!';
     end;
     
   m['randomizeData'] := procedure(_this: TJSObject)
 
     var
-      NewData: TJSArray;
-      i, Val: Integer;
-      Datasets: TJSArray;
-      Ds0: TJSObject;
+    NewData: TJSArray;
+    i, Val: Integer;
+    Datasets: TJSArray;
+    Ds0: TJSObject;
     begin
       NewData := TJSArray.new;
       for i := 0 to 5 do
-      begin
-        Val := 10000 + Random(35000);
-        NewData.push(Val);
-      end;
-      if _this['barData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          Ds0 := TJSObject(Datasets[0]);
-          Ds0['data'] := NewData;
-          _this['barData'] := ObjectAssign(NewObject, _this['barData']);
-        end;
-      end;
-      _this['clickedPointInfo'] := 'Dataset values randomized!';
+    begin
+      Val := 10000 + Random(35000);
+      NewData.push(Val);
+    end;
+    if _this['barData'] <> nil then
+    begin
+      Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      Ds0 := TJSObject(Datasets[0]);
+      Ds0['data'] := NewData;
+      _this['barData'] := ObjectAssign(NewObject, _this['barData']);
+    end;
+    end;
+    TComponentThis(_this).clickedPointInfo := 'Dataset values randomized!';
     end;
     
   m['togglePalette'] := procedure(_this: TJSObject)
 
     var
-      Pal, PalBorder: TJSArray;
-      Cur: string;
-      Datasets: TJSArray;
+    Pal, PalBorder: TJSArray;
+    Cur: string;
+    Datasets: TJSArray;
     begin
-      Cur := String(_this['currentPalette']);
+      Cur := TComponentThis(_this).currentPalette;
       if Cur = 'Emerald' then
-        _this['currentPalette'] := 'Sunset'
+      TComponentThis(_this).currentPalette := 'Sunset'
       else if Cur = 'Sunset' then
-        _this['currentPalette'] := 'Cyberpunk'
+      TComponentThis(_this).currentPalette := 'Cyberpunk'
       else if Cur = 'Cyberpunk' then
-        _this['currentPalette'] := 'Neon'
+      TComponentThis(_this).currentPalette := 'Neon'
       else
-        _this['currentPalette'] := 'Emerald';
-      Pal := TBVChartPalette.GetPalette(String(_this['currentPalette']), 0.65);
-      PalBorder := TBVChartPalette.GetPalette(String(_this['currentPalette']), 1.0);
+      TComponentThis(_this).currentPalette := 'Emerald';
+      Pal := TBVChartPalette.GetPalette(TComponentThis(_this).currentPalette, 0.65);
+      PalBorder := TBVChartPalette.GetPalette(TComponentThis(_this).currentPalette, 1.0);
       // 1. Bar Data (Universal <bv-chart> and <bv-bar-chart>)
       if _this['barData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
-          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
-          if Datasets.Length > 1 then
-          begin
-            TJSObject(Datasets[1])['backgroundColor'] := Pal[1];
-            TJSObject(Datasets[1])['borderColor'] := PalBorder[1];
-          end;
-          _this['barData'] := ObjectAssign(NewObject, _this['barData']);
-        end;
-      end;
-      // 2. Line Data
-      if _this['lineData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['lineData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          TJSObject(Datasets[0])['backgroundColor'] := Pal[2];
-          TJSObject(Datasets[0])['borderColor'] := PalBorder[2];
-          _this['lineData'] := ObjectAssign(NewObject, _this['lineData']);
-        end;
-      end;
-      // 3. Pie Data
-      if _this['pieData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['pieData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := PalBorder;
-          _this['pieData'] := ObjectAssign(NewObject, _this['pieData']);
-        end;
-      end;
-      // 4. Doughnut Data
-      if _this['doughnutData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['doughnutData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          TJSObject(Datasets[0])['backgroundColor'] := Pal;
-          TJSObject(Datasets[0])['borderColor'] := PalBorder;
-          _this['doughnutData'] := ObjectAssign(NewObject, _this['doughnutData']);
-        end;
-      end;
-      // 5. Radar Data
-      if _this['radarData'] <> nil then
-      begin
-        Datasets := TJSArray(TJSObject(_this['radarData'])['datasets']);
-        if (Datasets <> nil) and (Datasets.Length > 0) then
-        begin
-          TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
-          TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
-          _this['radarData'] := ObjectAssign(NewObject, _this['radarData']);
-        end;
-      end;
-      _this['clickedPointInfo'] := 'Palette updated to: ' + String(_this['currentPalette']);
+    begin
+      Datasets := TJSArray(TJSObject(_this['barData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+      TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+      if Datasets.Length > 1 then
+    begin
+      TJSObject(Datasets[1])['backgroundColor'] := Pal[1];
+      TJSObject(Datasets[1])['borderColor'] := PalBorder[1];
+    end;
+    _this['barData'] := ObjectAssign(NewObject, _this['barData']);
+    end;
+    end;
+    // 2. Line Data
+    if _this['lineData'] <> nil then
+    begin
+      Datasets := TJSArray(TJSObject(_this['lineData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      TJSObject(Datasets[0])['backgroundColor'] := Pal[2];
+      TJSObject(Datasets[0])['borderColor'] := PalBorder[2];
+      _this['lineData'] := ObjectAssign(NewObject, _this['lineData']);
+    end;
+    end;
+    // 3. Pie Data
+    if _this['pieData'] <> nil then
+    begin
+      Datasets := TJSArray(TJSObject(_this['pieData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      TJSObject(Datasets[0])['backgroundColor'] := Pal;
+      TJSObject(Datasets[0])['borderColor'] := PalBorder;
+      _this['pieData'] := ObjectAssign(NewObject, _this['pieData']);
+    end;
+    end;
+    // 4. Doughnut Data
+    if _this['doughnutData'] <> nil then
+    begin
+      Datasets := TJSArray(TJSObject(_this['doughnutData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      TJSObject(Datasets[0])['backgroundColor'] := Pal;
+      TJSObject(Datasets[0])['borderColor'] := PalBorder;
+      _this['doughnutData'] := ObjectAssign(NewObject, _this['doughnutData']);
+    end;
+    end;
+    // 5. Radar Data
+    if _this['radarData'] <> nil then
+    begin
+      Datasets := TJSArray(TJSObject(_this['radarData'])['datasets']);
+      if (Datasets <> nil) and (Datasets.Length > 0) then
+    begin
+      TJSObject(Datasets[0])['backgroundColor'] := Pal[0];
+      TJSObject(Datasets[0])['borderColor'] := PalBorder[0];
+      _this['radarData'] := ObjectAssign(NewObject, _this['radarData']);
+    end;
+    end;
+    TComponentThis(_this).clickedPointInfo := 'Palette updated to: ' + TComponentThis(_this).currentPalette;
     end;
     
   m['onPointClick'] := procedure(_this: TJSObject; ev: JSValue)
 
     var
-      Lbl, Val, DsIdx: string;
+    Lbl, Val, DsIdx: string;
     begin
       if Boolean(ev) and (GetFieldStr(ev, 'label') <> '') then
-      begin
-        Lbl := GetFieldStr(ev, 'label');
-        Val := GetFieldStr(ev, 'value');
-        DsIdx := IntToStr(GetFieldInt(ev, 'datasetIndex', 0) + 1);
-        _this['clickedPointInfo'] := 'Category: "' + Lbl + '", Value: ' + Val + ' (Series #' + DsIdx + ')';
-      end;
+    begin
+      Lbl := GetFieldStr(ev, 'label');
+      Val := GetFieldStr(ev, 'value');
+      DsIdx := IntToStr(GetFieldInt(ev, 'datasetIndex', 0) + 1);
+      TComponentThis(_this).clickedPointInfo := 'Category: "' + Lbl + '", Value: ' + Val + ' (Series #' + DsIdx + ')';
+    end;
     end;
 
   comp['methods'] := m;

@@ -11,7 +11,7 @@ begin
   Register_uBVReportViewer;
   Register_uReportsView;
 
-  Describe('View: ReportsView (v5.0 BlaiseReports Showcase)', procedure
+  Describe('View: ReportsView (BlaiseReports Showcase)', procedure
     begin
       It('should initialize ReportsView and render <bv-report-viewer> and PDF/Excel/CSV export controls', procedure
         var

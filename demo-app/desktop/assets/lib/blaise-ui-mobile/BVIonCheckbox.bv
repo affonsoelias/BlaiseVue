@@ -1,0 +1,112 @@
+<template>
+  <label class="bui-ion-checkbox" :class="wrapperClass">
+    <input
+      type="checkbox"
+      class="bui-ion-checkbox-native"
+      :checked="currentChecked"
+      :disabled="isDisabled"
+      @change="handleChange"
+    />
+    <span class="bui-ion-checkbox-box">
+      <svg viewBox="0 0 24 24" class="bui-ion-checkbox-check" b-if="currentChecked">
+        <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </span>
+    <span class="bui-ion-checkbox-label" b-if="label">
+      <slot>{{ label }}</slot>
+    </span>
+  </label>
+</template>
+
+<script>
+  {
+    BVIonCheckbox - Mobile Native Selection Box
+    -------------------------------------------
+    Props:
+    - label: string
+    - checked: boolean
+    - value: any
+    - modelValue: any
+    - color: string ('primary' | 'success' | 'warning' | 'danger')
+    - disabled: boolean
+    - alignment: string ('start' | 'center')
+  }
+
+  props:
+    label: string = '';
+    checked: boolean = false;
+    value: any = true;
+    modelValue: any = false;
+    color: string = 'primary';
+    disabled: boolean = false;
+    alignment: string = 'start';
+
+  data:
+    internalChecked: boolean = false;
+    hasInteracted: boolean = false;
+
+  computed:
+    function currentChecked: boolean;
+    begin
+      asm
+        if (this.hasInteracted) {
+          return Boolean(this.internalChecked === true);
+        }
+        if (this.checked === true || this.checked === 'true') return true;
+        if (this.modelValue === true || this.modelValue === 'true') return true;
+        if (Array.isArray(this.modelValue)) {
+          var targetVal = (this.value !== undefined && this.value !== null) ? this.value : true;
+          return this.modelValue.indexOf(targetVal) !== -1;
+        }
+        if (this.value === true || this.value === 'true') return true;
+        return false;
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var c = this.color || 'primary';
+        var chk = this.currentChecked ? ' is-checked' : '';
+        var dis = this.isDisabled ? ' is-disabled' : '';
+        var align = this.alignment ? (' bui-ion-align-' + this.alignment) : '';
+        return 'bui-ion-checkbox bui-ion-checkbox-' + c + chk + dis + align;
+      end;
+    end;
+
+  methods:
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        if (this.isDisabled) return;
+        var next = (ev && ev.target) ? Boolean(ev.target.checked) : !this.currentChecked;
+        this.hasInteracted = true;
+        this.internalChecked = next;
+
+        if (Array.isArray(this.modelValue)) {
+          var arr = this.modelValue.slice();
+          var targetVal = (this.value !== undefined && this.value !== null) ? this.value : true;
+          var idx = arr.indexOf(targetVal);
+          if (next && idx === -1) {
+            arr.push(targetVal);
+          } else if (!next && idx !== -1) {
+            arr.splice(idx, 1);
+          }
+          this.$emit('update:modelValue', arr);
+          this.$emit('change', arr);
+          this.$emit('ionChange', arr);
+        } else {
+          this.$emit('update:modelValue', next);
+          this.$emit('change', next);
+          this.$emit('ionChange', next);
+        }
+      end;
+    end;
+</script>

@@ -19,79 +19,79 @@
     </div>
 
     <!-- QUICK LOCALE SWITCHER BAR -->
-    <div class="card mb-4" style="background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 24px;">
+    <div class="card mb-4" style="background: var(--bv-surface); border-radius: 8px; padding: 16px 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border); margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <strong style="font-size: 13px; color: #334155; margin-right: 4px;">Switch Language:</strong>
-          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'en' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" @click="setLang('en')">
+          <strong style="font-size: 13px; color: var(--bv-text); margin-right: 4px;">Switch Language:</strong>
+          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'en' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('en')">
             🇺🇸 English (en)
           </button>
-          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'pt' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" @click="setLang('pt')">
+          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'pt' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('pt')">
             🇧🇷 Português (pt)
           </button>
-          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'es' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" @click="setLang('es')">
+          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'es' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('es')">
             🇪🇸 Español (es)
           </button>
-          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'fr' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'" @click="setLang('fr')">
+          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'fr' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('fr')">
             🇫🇷 Français (fr)
           </button>
         </div>
-        <span style="font-size: 12px; color: #64748b;">Fallback Locale: <strong>EN</strong></span>
+        <span style="font-size: 12px; color: var(--bv-text-muted);">Fallback Locale: <strong>EN</strong></span>
       </div>
     </div>
 
     <!-- 4-FEATURE SHOWCASE GRID -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 24px;">
       <!-- CARD 1: CORE TRANSLATIONS ($t) -->
-      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">1. Direct Key Lookup (`$t`)</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Instant reactive DOM substitution via <code>{{ $t('key') }}</code>.</p>
-        
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">
-          <div style="margin-bottom: 8px;"><strong>$t('lab.welcome'):</strong> <span style="color: #0284c7; font-weight: 600;">{{ $t('lab.welcome') }}</span></div>
+      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">
+        <h3 style="font-size: 16px; margin: 0 0 10px 0;">1. Direct Key Lookup (`$t`)</h3>
+        <p style="font-size: 13px; margin-bottom: 14px;">Instant reactive DOM substitution via <code>{{ $t('key') }}</code>.</p>
+
+        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">
+          <div style="margin-bottom: 8px;"><strong>$t('lab.welcome'):</strong> <span style="color: #0ea5e9; font-weight: 600;">{{ $t('lab.welcome') }}</span></div>
           <div style="margin-bottom: 8px;"><strong>$t('lab.save'):</strong> <span style="color: #10b981; font-weight: 600;">{{ $t('lab.save') }}</span></div>
           <div><strong>$t('lab.cancel'):</strong> <span style="color: #ef4444; font-weight: 600;">{{ $t('lab.cancel') }}</span></div>
         </div>
       </div>
 
       <!-- CARD 2: NESTED DOT-NOTATION -->
-      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">2. Nested Hierarchy (`dot.notation`)</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Resolve deeply nested JSON dictionaries seamlessly.</p>
-        
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">
-          <div style="margin-bottom: 8px;"><strong>$t('actions.dialog.confirm'):</strong> <br><span style="color: #6366f1; font-weight: 600;">{{ $t('actions.dialog.confirm') }}</span></div>
-          <div><strong>$t('actions.dialog.delete'):</strong> <br><span style="color: #dc2626; font-weight: 600;">{{ $t('actions.dialog.delete') }}</span></div>
+      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">
+        <h3 style="font-size: 16px; margin: 0 0 10px 0;">2. Nested Hierarchy (`dot.notation`)</h3>
+        <p style="font-size: 13px; margin-bottom: 14px;">Resolve deeply nested JSON dictionaries seamlessly.</p>
+
+        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">
+          <div style="margin-bottom: 8px;"><strong>$t('actions.dialog.confirm'):</strong> <br><span style="color: #818cf8; font-weight: 600;">{{ $t('actions.dialog.confirm') }}</span></div>
+          <div><strong>$t('actions.dialog.delete'):</strong> <br><span style="color: #f87171; font-weight: 600;">{{ $t('actions.dialog.delete') }}</span></div>
         </div>
       </div>
 
       <!-- CARD 3: NAMED PARAMETER INTERPOLATION -->
-      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">3. Named Interpolation (`{param}`)</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Substitute dynamic variables inside translated strings.</p>
-        
+      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">
+        <h3 style="font-size: 16px; margin: 0 0 10px 0;">3. Named Interpolation (`{param}`)</h3>
+        <p style="font-size: 13px; margin-bottom: 14px;">Substitute dynamic variables inside translated strings.</p>
+
         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
           <input type="text" class="bui-input" style="padding: 6px 10px; font-size: 13px;" b-model="userName" placeholder="Your name" />
           <input type="number" class="bui-input" style="width: 80px; padding: 6px 10px; font-size: 13px;" b-model="itemCount" min="0" />
         </div>
 
-        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 12px; font-size: 13px; color: #065f46;">
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 12px; font-size: 13px; color: #10b981;">
           <strong>Live Output:</strong><br>
           {{ interpolatedGreeting }}
         </div>
       </div>
 
       <!-- CARD 4: FALLBACK LOCALE -->
-      <div class="card" style="background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-        <h3 style="font-size: 16px; margin: 0 0 10px 0; color: #1e293b;">4. Resilient Fallback Locale</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 14px;">Keys absent in non-English dictionaries fall back to EN without errors.</p>
-        
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 13px;">
+      <div class="card" style="background: var(--bv-surface); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border);">
+        <h3 style="font-size: 16px; margin: 0 0 10px 0;">4. Resilient Fallback Locale</h3>
+        <p style="font-size: 13px; margin-bottom: 14px;">Keys absent in non-English dictionaries fall back to EN without errors.</p>
+
+        <div style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 6px; padding: 12px; font-size: 13px;">
           <div style="margin-bottom: 6px;"><strong>$t('lab.exclusiveEn'):</strong></div>
-          <div style="color: #d97706; font-weight: 600; background: #fef3c7; padding: 6px 10px; border-radius: 4px;">
+          <div style="color: #f59e0b; font-weight: 600; background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); padding: 6px 10px; border-radius: 4px;">
             "{{ $t('lab.exclusiveEn') }}"
           </div>
-          <small style="color: #64748b; display: block; margin-top: 6px;">(Key only registered in English dictionary)</small>
+          <small style="color: var(--bv-text-muted); display: block; margin-top: 6px;">(Key only registered in English dictionary)</small>
         </div>
       </div>
     </div>
@@ -108,12 +108,12 @@
 </template>
 
 <script>
-  {
+    {
     I18nLabView.bv - Internationalization Laboratory
     -------------------------------------------------------------------------
     Showcases reactive BVI18n features, dynamic language switching,
     parameter interpolation, nested dot-notation, and fallback locale.
-  }
+    }
 
   data:
     activeLocale: string = 'en';
@@ -124,11 +124,11 @@
   computed:
     function interpolatedGreeting: string;
     var
-      p: TJSObject;
+    p: TJSObject;
     begin
       p := TJSObject.new;
-      p['name'] := this['userName'];
-      p['count'] := this['itemCount'];
+      p['name'] := this.userName;
+      p['count'] := this.itemCount;
       Result := String(I18nT('lab.welcomeUser', p));
     end;
 
@@ -140,7 +140,7 @@
       I18nAddMessages('es', '{"lab":{"welcome":"Bienvenido a BlaiseVue","save":"Guardar Cambios","cancel":"Cancelar","welcomeUser":"¡Hola, {name}! Tienes {count} notificaciones no leídas."},"actions":{"dialog":{"confirm":"¿Está seguro de continuar?","delete":"Eliminar este registro permanentemente"}}}');
       I18nAddMessages('fr', '{"lab":{"welcome":"Bienvenue sur BlaiseVue","save":"Enregistrer les modifications","cancel":"Annuler","welcomeUser":"Bonjour, {name} ! Vous avez {count} notifications non lues."},"actions":{"dialog":{"confirm":"Êtes-vous sûr de vouloir continuer ?","delete":"Supprimer cet enregistrement définitivement"}}}');
 
-      this['activeLocale'] := I18nGetLocale;
+      this.activeLocale := I18nGetLocale;
       this.updateDictionaryPreview();
     end;
 
@@ -148,23 +148,19 @@
     procedure setLang(lang: string);
     begin
       I18nSetLocale(lang);
-      this['activeLocale'] := lang;
+      this.activeLocale := lang;
       this.updateDictionaryPreview();
     end;
 
     procedure updateDictionaryPreview;
     begin
-      asm
-        var loc = this.activeLocale || 'en';
-        var all = (typeof pas !== 'undefined' && pas.BVI18n && pas.BVI18n.TBVI18n && pas.BVI18n.TBVI18n.FMessages) ? pas.BVI18n.TBVI18n.FMessages : {};
-        var current = all[loc] || {};
-        this.activeDictionaryJSON = JSON.stringify(current, null, 2);
-      end;
+      this.activeDictionaryJSON := I18nGetMessagesJSON(this.activeLocale);
     end;
 </script>
 
 <style>
   .i18n-lab-view { padding: 8px 0; }
-  .bui-input { border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
-  .bui-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+  .i18n-lab-view .bui-input { border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; outline: none; }
+  .i18n-lab-view .bui-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
 </style>
+

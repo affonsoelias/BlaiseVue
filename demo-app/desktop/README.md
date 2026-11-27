@@ -1,4 +1,4 @@
-# BlaiseVue Desktop (BlaiseVue 3.5 Desktop)
+# BlaiseVue Desktop
 
 Native desktop application powered by **Free Pascal**, **Lazarus IDE**, and **WebUI**.
 

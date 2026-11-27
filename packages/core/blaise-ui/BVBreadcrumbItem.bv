@@ -1,11 +1,8 @@
 <template>
   <li class="bui-breadcrumb-item" :class="{ active: active }">
-    <a v-if="href && !active" :href="href" @click="handleClick">
+    <a class="bui-breadcrumb-link" :href="active ? null : href" @click="handleClick">
       <slot></slot>
     </a>
-    <span v-else>
-      <slot></slot>
-    </span>
   </li>
 </template>
 
@@ -25,6 +22,12 @@
   methods:
     procedure handleClick(ev: TJSEvent);
     begin
-       asm this.$emit('click', ev); end;
+       asm
+         if (this.active && this.active !== 'false') {
+           if (ev && ev.preventDefault) ev.preventDefault();
+           return;
+         }
+         this.$emit('click', ev);
+       end;
     end;
 </script>

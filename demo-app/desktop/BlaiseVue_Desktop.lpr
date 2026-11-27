@@ -146,7 +146,7 @@ begin
   {$ENDIF}
 
   WriteLn('====================================================');
-  WriteLn('  ' + APP_TITLE + ' - BlaiseVue 3.5 Desktop');
+  WriteLn('  ' + APP_TITLE + ' - BlaiseVue Desktop');
   WriteLn('====================================================');
 
   // 1. Packaged directly alongside executable (standalone bundle/dist)

@@ -13,7 +13,7 @@
       <bv-ion-content :padding="true">
         <!-- INTRO CARD -->
         <bv-ion-card title="Universal Components (Mobile, Web & Desktop)" subtitle="Ionic Aesthetics + Object Pascal">
-          <p style="margin-bottom: 14px; color: #4b5563; line-height: 1.5;">
+          <p style="margin-bottom: 14px; color: var(--bv-text-muted); line-height: 1.5;">
             The <strong>blaise-ui-mobile</strong> components are 100% universal! Run on **Web Browser** (PWA), native **Desktop** (via WebUI4Delphi), and on **Mobile devices** (via Capacitor/Android).
           </p>
 
@@ -25,7 +25,7 @@
 
         <!-- PASCAL CONTROLLERS CARD -->
         <bv-ion-card title="Typed Pascal Controllers (BlaiseIonic.pas)" subtitle="Native Feedback & Dialogs">
-          <p style="margin-bottom: 12px; color: #4b5563;">
+          <p style="margin-bottom: 12px; color: var(--bv-text-muted);">
             Trigger native dialogues and notifications directly from Object Pascal without manual DOM manipulation:
           </p>
 
@@ -37,7 +37,7 @@
             <bv-ion-button label="📑 Action Sheet" color="danger" @click="showActionSheet"></bv-ion-button>
           </div>
 
-          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: #f3f4f6; border-radius: 8px; font-size: 0.88rem; color: #1f2937;">
+          <div b-if="lastAction" style="margin-top: 14px; padding: 10px 14px; background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); border-radius: 8px; font-size: 0.88rem; color: var(--bv-text);">
             <strong>Last Action:</strong> {{ lastAction }}
           </div>
         </bv-ion-card>
@@ -85,11 +85,11 @@
 </template>
 
 <script>
-  {
+    {
     MobileView.bv - Mobile & Universal UI Showcase
     ---------------------------------------------
     Demonstrates blaise-ui-mobile components and BlaiseIonic Pascal controllers.
-  }
+    }
 
   data:
     currentMode: string = 'md';
@@ -167,11 +167,13 @@
   .mobile-view-container {
     max-width: 760px;
     margin: 0 auto;
-    background: #ffffff;
+    background: var(--bv-surface);
+    border: 1px solid var(--bv-border);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-shadow: var(--bv-shadow);
     min-height: calc(100vh - 120px);
     margin-bottom: 80px;
   }
 </style>
+

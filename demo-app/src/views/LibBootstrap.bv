@@ -2,231 +2,224 @@
   <div class="lib-bootstrap-page">
     <!-- INTERNAL DEMO NAVBAR -->
     <bv-navbar brand="BlaiseVue UI">
-       <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>
-       <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>
-       <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>
-       <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>
+      <bv-nav-item href="#/" active="true" label="Home"></bv-nav-item>
+      <bv-nav-item href="#/charts" label="Charts"></bv-nav-item>
+      <bv-nav-item href="#/pro" label="Pro Features"></bv-nav-item>
+      <bv-nav-item href="#" label="⚙️ Settings" @click="openSettings"></bv-nav-item>
     </bv-navbar>
 
     <!-- CONTENT CONTAINER (USING NATIVE BLAISEUI RESPONSIVE GRID) -->
     <bv-container fluid="true">
       <bv-row gutter="md" class="mb-5">
-         <bv-col cols="12" md="7">
-            <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>
-            <p class="text-muted mb-4">Enterprise reactive UI components based on Bootstrap 5 standards, built 100% in Object Pascal.</p>
-            
-            <bv-breadcrumb>
-               <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>
-               <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>
-               <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>
-            </bv-breadcrumb>
-         </bv-col>
-         <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">
-            <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>
-            <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>
-            <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif('Manual Toast Trigger')"></bv-btn>
-            <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>
-         </bv-col>
+        <bv-col cols="12" md="7">
+          <h1 class="mb-2">🎨 BlaiseUI Official Kit</h1>
+          <p class="text-muted mb-4">Enterprise reactive UI components based on Bootstrap 5 standards, built 100% in Object Pascal.</p>
+
+          <bv-breadcrumb>
+            <bv-breadcrumb-item href="#/">Home</bv-breadcrumb-item>
+            <bv-breadcrumb-item href="#">Components</bv-breadcrumb-item>
+            <bv-breadcrumb-item active="true">BlaiseUI</bv-breadcrumb-item>
+          </bv-breadcrumb>
+        </bv-col>
+        <bv-col cols="12" md="5" class="d-flex align-items-end justify-content-end p-2 gap-2 flex-wrap">
+          <bv-btn label="Open Drawer" variant="secondary" size="lg" @click="showDrawer"></bv-btn>
+          <bv-btn label="Open Modal" variant="primary" size="lg" @click="showModal"></bv-btn>
+          <bv-btn label="Trigger Toast" variant="info" size="lg" @click="clickNotif('Manual Toast Trigger')"></bv-btn>
+          <bv-btn label="⚙️ Settings" variant="outline-primary" size="lg" @click="openSettings"></bv-btn>
+        </bv-col>
       </bv-row>
 
       <bv-row gutter="md">
-         <!-- LEFT COLUMN: Feedback & Status -->
-         <bv-col cols="12" md="4">
-            <bv-card title="📊 System Status">
-               <div class="mb-3">
-                  <small>Reactivity Engine Load</small>
-                  <bv-progress :value="count" variant="success"></bv-progress>
-               </div>
-               <div class="mb-3">
-                  <small>Memory Allocation ($Store)</small>
-                  <bv-progress :value="35" variant="info"></bv-progress>
-               </div>
-               <div class="d-flex gap-2">
-                  <bv-btn label="Increment Load (+10)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>
-                  <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>
-               </div>
-            </bv-card>
+        <!-- LEFT COLUMN: Feedback & Status -->
+        <bv-col cols="12" md="4">
+          <bv-card title="📊 System Status">
+            <div class="mb-3">
+              <small>Reactivity Engine Load</small>
+              <bv-progress :value="count" variant="success"></bv-progress>
+            </div>
+            <div class="mb-3">
+              <small>Memory Allocation ($Store)</small>
+              <bv-progress :value="35" variant="info"></bv-progress>
+            </div>
+            <div class="d-flex gap-2">
+              <bv-btn label="Increment Load (+10)" variant="outline-primary" @click="count = (count + 10) % 105"></bv-btn>
+              <bv-spinner variant="primary" small="true" v-if="count > 80"></bv-spinner>
+            </div>
+          </bv-card>
 
-            <bv-card title="📋 Notification Center" class="mt-4">
-               <bv-list-group>
-                  <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif('Inbox Messages')">📨 Inbox Messages</bv-list-group-item>
-                  <bv-list-group-item active="true" @click="clickNotif('Weekly Digest')">🌟 Weekly Digest</bv-list-group-item>
-                  <bv-list-group-item badge="ONLINE" badgeVariant="success" @click="clickNotif('Service Healthy')">💎 Core Services Online</bv-list-group-item>
-                  <bv-list-group-item @click="clickNotif('Cloud Synchronization')">☁️ Cloud Synchronization</bv-list-group-item>
-               </bv-list-group>
-            </bv-card>
+          <bv-card title="📋 Notification Center" class="mt-4">
+            <bv-list-group>
+              <bv-list-group-item badge="5" badgeVariant="danger" @click="clickNotif('Inbox Messages')">📨 Inbox Messages</bv-list-group-item>
+              <bv-list-group-item active="true" @click="clickNotif('Weekly Digest')">🌟 Weekly Digest</bv-list-group-item>
+              <bv-list-group-item badge="ONLINE" badgeVariant="success" @click="clickNotif('Service Healthy')">💎 Core Services Online</bv-list-group-item>
+              <bv-list-group-item @click="clickNotif('Cloud Synchronization')">☁️ Cloud Synchronization</bv-list-group-item>
+            </bv-list-group>
+          </bv-card>
 
-            <!-- SKELETON LOADERS SHOWCASE -->
-            <bv-card title="💀 Skeleton Loading States" class="mt-4">
-               <div class="mb-3">
-                  <bv-skeleton type="text" count="3"></bv-skeleton>
-               </div>
-               <div class="d-flex gap-3 align-items-center">
-                  <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>
-                  <div style="flex: 1;">
-                     <bv-skeleton type="rect" height="14px" width="80%"></bv-skeleton>
-                     <div style="margin-top: 6px;">
-                        <bv-skeleton type="rect" height="10px" width="50%"></bv-skeleton>
-                     </div>
+          <!-- SKELETON LOADERS SHOWCASE -->
+          <bv-card title="💀 Skeleton Loading States" class="mt-4">
+            <div class="mb-3">
+              <bv-skeleton type="text" count="3"></bv-skeleton>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <bv-skeleton type="circle" width="48px" height="48px"></bv-skeleton>
+              <div style="flex: 1;">
+                <bv-skeleton type="rect" height="14px" width="80%"></bv-skeleton>
+                <div style="margin-top: 6px;">
+                  <bv-skeleton type="rect" height="10px" width="50%"></bv-skeleton>
+                </div>
+              </div>
+            </div>
+          </bv-card>
+        </bv-col>
+
+        <!-- RIGHT COLUMN: Tabs / Forms / Controls -->
+        <bv-col cols="12" md="8">
+          <bv-card style="height: 100%;">
+            <bv-tabs @change="tabChanged">
+              <bv-tab id="forms" title="📝 Form Controls" active="true">
+                <div class="p-4">
+                  <h4>Text Inputs & Groups</h4>
+                  <bv-row gutter="md" class="mt-4">
+                    <bv-col cols="12" md="6">
+                      <bv-input label="Component Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>
+                      <bv-form-select label="Execution Priority" b-model="category" :options="catOptions"></bv-form-select>
+                    </bv-col>
+                    <bv-col cols="12" md="6">
+                      <bv-input-group label="Unit Cost" prepend="$" append=".00" b-model="count"></bv-input-group>
+                      <bv-input-group label="API Access Key" append="Copy">
+                        <bv-input b-model="libName" readonly="true"></bv-input>
+                      </bv-input-group>
+                    </bv-col>
+                  </bv-row>
+
+                  <h4 class="mt-4">Switches, Radios & Checkboxes</h4>
+                  <bv-row gutter="md" class="mt-3">
+                    <bv-col cols="12" md="4">
+                      <bv-switch label="Hardware Acceleration" v-model="hwAccel"></bv-switch>
+                      <div class="mt-2">
+                        <bv-switch label="Offline Cache Sync" v-model="offlineCache"></bv-switch>
+                      </div>
+                    </bv-col>
+                    <bv-col cols="12" md="4">
+                      <bv-checkbox label="Enable Dark Palette" v-model="darkPalette"></bv-checkbox>
+                      <div class="mt-2">
+                        <bv-checkbox label="Compress Network Payloads" v-model="compressPayloads"></bv-checkbox>
+                      </div>
+                    </bv-col>
+                    <bv-col cols="12" md="4">
+                      <bv-radio name="accessLevel" value="read" label="Read-Only Mode" v-model="accessMode"></bv-radio>
+                      <bv-radio name="accessLevel" value="write" label="Read/Write Mode" v-model="accessMode"></bv-radio>
+                      <bv-radio name="accessLevel" value="admin" label="Administrative Access" v-model="accessMode"></bv-radio>
+                    </bv-col>
+                  </bv-row>
+
+                  <h4 class="mt-4">Range Slider & Dropdowns</h4>
+                  <bv-row gutter="md" class="mt-3">
+                    <bv-col cols="12" md="6">
+                      <label class="form-label d-block">Volume / Threshold: <strong>{{ sliderValue }}%</strong></label>
+                      <bv-slider v-model="sliderValue" min="0" max="100" step="5"></bv-slider>
+                    </bv-col>
+                    <bv-col cols="12" md="6">
+                      <label class="form-label d-block">Context Actions</label>
+                      <bv-dropdown text="Quick Actions" variant="primary">
+                        <bv-dropdown-item @click="clickNotif('Export Data triggered')">Export Dataset</bv-dropdown-item>
+                        <bv-dropdown-item @click="clickNotif('Sync Schema triggered')">Sync Schema</bv-dropdown-item>
+                        <bv-dropdown-item divider="true"></bv-dropdown-item>
+                        <bv-dropdown-item @click="clickNotif('Purge Cache triggered')">Purge In-Memory Cache</bv-dropdown-item>
+                      </bv-dropdown>
+                    </bv-col>
+                  </bv-row>
+                </div>
+              </bv-tab>
+
+              <bv-tab id="nav" title="📍 Pagination & Alerts">
+                <div class="p-4 text-center">
+                  <h5 class="mb-4">Data Pagination & Segments</h5>
+                  <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>
+                  <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>
+                  <bv-alert variant="warning" dismissible="true" class="mt-4">
+                    Notice: Real-time telemetry connection is running at optimal latency.
+                  </bv-alert>
+                </div>
+              </bv-tab>
+
+              <bv-tab id="extras" title="🔥 Accordions">
+                <div class="p-4">
+                  <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>
+                </div>
+              </bv-tab>
+
+              <bv-tab id="icons" title="⭐ Vector Icons">
+                <div class="p-4">
+                  <h5>Vector Icon Engine (1,800+ Icons)</h5>
+                  <p class="text-muted">Resolution-independent vector icons with reactive color and sizing.</p>
+                  <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#10b981"></bv-icon> <span>check-circle</span></div>
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#f59e0b"></bv-icon> <span>star-fill</span></div>
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#ef4444"></bv-icon> <span>heart-fill</span></div>
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#64748b"></bv-icon> <span>gear-fill</span></div>
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#3b82f6"></bv-icon> <span>shield-check</span></div>
+                    <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#f97316"></bv-icon> <span>lightning</span></div>
                   </div>
-               </div>
-            </bv-card>
-         </bv-col>
-
-         <!-- RIGHT COLUMN: Tabs / Forms / Controls -->
-         <bv-col cols="12" md="8">
-            <bv-card style="height: 100%;">
-               <bv-tabs @change="tabChanged">
-                  <bv-tab id="forms" title="📝 Form Controls" active="true">
-                     <div class="p-4">
-                        <h4>Text Inputs & Groups</h4>
-                        <bv-row gutter="md" class="mt-4">
-                           <bv-col cols="12" md="6">
-                              <bv-input label="Component Identifier" b-model="libName" placeholder="Ex: Turbo_Node"></bv-input>
-                              <bv-form-select label="Execution Priority" b-model="category" :options="catOptions"></bv-form-select>
-                           </bv-col>
-                           <bv-col cols="12" md="6">
-                              <bv-input-group label="Unit Cost" prepend="$" append=".00" b-model="count"></bv-input-group>
-                              <bv-input-group label="API Access Key" append="Copy">
-                                 <bv-input b-model="libName" readonly="true"></bv-input>
-                              </bv-input-group>
-                           </bv-col>
-                        </bv-row>
-
-                        <h4 class="mt-4">Switches, Radios & Checkboxes</h4>
-                        <bv-row gutter="md" class="mt-3">
-                           <bv-col cols="12" md="4">
-                              <bv-switch label="Hardware Acceleration" v-model="hwAccel"></bv-switch>
-                              <div class="mt-2">
-                                 <bv-switch label="Offline Cache Sync" v-model="offlineCache"></bv-switch>
-                              </div>
-                           </bv-col>
-                           <bv-col cols="12" md="4">
-                              <bv-checkbox label="Enable Dark Palette" v-model="darkPalette"></bv-checkbox>
-                              <div class="mt-2">
-                                 <bv-checkbox label="Compress Network Payloads" v-model="compressPayloads"></bv-checkbox>
-                              </div>
-                           </bv-col>
-                           <bv-col cols="12" md="4">
-                              <bv-radio name="accessLevel" value="read" label="Read-Only Mode" v-model="accessMode"></bv-radio>
-                              <bv-radio name="accessLevel" value="write" label="Read/Write Mode" v-model="accessMode"></bv-radio>
-                              <bv-radio name="accessLevel" value="admin" label="Administrative Access" v-model="accessMode"></bv-radio>
-                           </bv-col>
-                        </bv-row>
-
-                        <h4 class="mt-4">Range Slider & Dropdowns</h4>
-                        <bv-row gutter="md" class="mt-3">
-                           <bv-col cols="12" md="6">
-                              <label class="form-label d-block">Volume / Threshold: <strong>{{ sliderValue }}%</strong></label>
-                              <bv-slider v-model="sliderValue" min="0" max="100" step="5"></bv-slider>
-                           </bv-col>
-                           <bv-col cols="12" md="6">
-                              <label class="form-label d-block">Context Actions</label>
-                              <bv-dropdown label="Quick Actions" variant="primary">
-                                 <bv-dropdown-item @click="clickNotif('Export Data triggered')">Export Dataset</bv-dropdown-item>
-                                 <bv-dropdown-item @click="clickNotif('Sync Schema triggered')">Sync Schema</bv-dropdown-item>
-                                 <bv-dropdown-item divider="true"></bv-dropdown-item>
-                                 <bv-dropdown-item @click="clickNotif('Purge Cache triggered')">Purge In-Memory Cache</bv-dropdown-item>
-                              </bv-dropdown>
-                           </bv-col>
-                        </bv-row>
-                     </div>
-                  </bv-tab>
-
-                  <bv-tab id="nav" title="📍 Pagination & Alerts">
-                     <div class="p-4 text-center">
-                        <h5 class="mb-4">Data Pagination & Segments</h5>
-                        <bv-pagination :value="currentPage" :total="10" @input="updatePage"></bv-pagination>
-                        <p class="mt-3">Currently viewing segment <strong>#{{ currentPage }}</strong></p>
-                        <bv-alert variant="warning" dismissible="true" class="mt-4">
-                           Notice: Real-time telemetry connection is running at optimal latency.
-                        </bv-alert>
-                     </div>
-                  </bv-tab>
-
-                  <bv-tab id="extras" title="🔥 Accordions">
-                     <div class="p-4">
-                        <bv-accordion :items="faqItems" initialActiveId="q1"></bv-accordion>
-                     </div>
-                  </bv-tab>
-
-                  <bv-tab id="icons" title="⭐ Vector Icons">
-                     <div class="p-4">
-                        <h5>Vector Icon Engine (1,800+ Icons)</h5>
-                        <p class="text-muted">Resolution-independent vector icons with reactive color and sizing.</p>
-                        <div class="d-flex gap-4 align-items-center mb-4 flex-wrap" style="display: flex; gap: 16px; flex-wrap: wrap;">
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="check-circle" size="24" color="#10b981"></bv-icon> <span>check-circle</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="star-fill" size="24" color="#f59e0b"></bv-icon> <span>star-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="heart-fill" size="24" color="#ef4444"></bv-icon> <span>heart-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="gear-fill" size="24" color="#64748b"></bv-icon> <span>gear-fill</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="shield-check" size="24" color="#3b82f6"></bv-icon> <span>shield-check</span></div>
-                           <div class="d-flex align-items-center gap-2"><bv-icon name="lightning-charge-fill" size="24" color="#f97316"></bv-icon> <span>lightning</span></div>
-                        </div>
-                     </div>
-                  </bv-tab>
-               </bv-tabs>
-            </bv-card>
-         </bv-col>
+                </div>
+              </bv-tab>
+            </bv-tabs>
+          </bv-card>
+        </bv-col>
       </bv-row>
     </bv-container>
 
     <!-- DRAWER: Programmatically triggered via $ref -->
     <bv-drawer ref="mainDrawer" title="🎨 BlaiseUI Drawer">
-       <p class="mb-3">This is the reactive <strong>bv-drawer</strong> component! Smoothly slides out on desktop and mobile.</p>
-       <bv-list-group>
-          <bv-list-group-item active="true" @click="clickNotif('Dashboard View Selected')">🏠 Dashboard View</bv-list-group-item>
-          <bv-list-group-item @click="clickNotif('Component Configuration')">⚙️ Component Config</bv-list-group-item>
-          <bv-list-group-item @click="clickNotif('Mobile Optimization Selected')">📱 Mobile Optimization</bv-list-group-item>
-       </bv-list-group>
-       <div class="mt-4">
-          <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>
-       </div>
+      <p class="mb-3">This is the reactive <strong>bv-drawer</strong> component! Smoothly slides out on desktop and mobile.</p>
+      <bv-list-group>
+        <bv-list-group-item active="true" @click="clickNotif('Dashboard View Selected')">🏠 Dashboard View</bv-list-group-item>
+        <bv-list-group-item @click="clickNotif('Component Configuration')">⚙️ Component Config</bv-list-group-item>
+        <bv-list-group-item @click="clickNotif('Mobile Optimization Selected')">📱 Mobile Optimization</bv-list-group-item>
+      </bv-list-group>
+      <div class="mt-4">
+        <bv-btn label="Close Drawer" variant="outline-primary" @click="closeDrawer"></bv-btn>
+      </div>
     </bv-drawer>
 
     <!-- CONFIRMATION MODAL -->
     <bv-modal b-ref="mainModal" title="🔥 System Confirmation" okLabel="Process" cancelLabel="Close" @ok="modalConfirm">
-       <p>You are about to execute a reactive state transaction via Object Pascal.</p>
-       <div class="p-3 bg-light rounded text-center" style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 10px;">
-          <p>Current Reactive Values:</p>
-          <bv-badge variant="info">{{ libName }}</bv-badge>
-          <bv-badge variant="success">{{ count }}%</bv-badge>
-       </div>
+      <p>You are about to execute a reactive state transaction via Object Pascal.</p>
+      <div class="p-3 rounded text-center" style="background: var(--bv-surface-subtle); border: 1px solid var(--bv-border); padding: 12px; border-radius: 6px; margin-top: 10px;">
+        <p>Current Reactive Values:</p>
+        <bv-badge variant="info">{{ libName }}</bv-badge>
+        <bv-badge variant="success">{{ count }}%</bv-badge>
+      </div>
     </bv-modal>
 
     <!-- SETTINGS MODAL -->
     <bv-modal b-ref="settingsModal" title="⚙️ Configuration & Preferences" okLabel="Apply" cancelLabel="Close" @ok="applySettings">
-       <div class="p-2">
-          <div class="mb-3" style="margin-bottom: 14px;">
-             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Visual Theme Mode</strong>
-             <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">
-                <span v-if="$theme.isDark">☀️ Switch to Light Mode</span>
-                <span v-if="!$theme.isDark">🌙 Switch to Dark Mode</span>
-             </button>
-          </div>
-          <div class="mb-3" style="margin-bottom: 14px;">
-             <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌐 Application Language</strong>
-             <div style="display: flex; gap: 8px;">
-                <button class="bui-btn bui-btn-sm" :class="{ 'bui-btn-primary': $i18n.locale === 'en', 'bui-btn-secondary': $i18n.locale !== 'en' }" type="button" @click="$setLocale('en')">🇺🇸 English</button>
-                <button class="bui-btn bui-btn-sm" :class="{ 'bui-btn-primary': $i18n.locale === 'pt', 'bui-btn-secondary': $i18n.locale !== 'pt' }" type="button" @click="$setLocale('pt')">🇧🇷 Português</button>
-             </div>
-          </div>
-       </div>
+      <div class="p-2">
+        <div class="mb-3" style="margin-bottom: 14px;">
+          <strong style="display: block; margin-bottom: 6px; font-size: 14px;">🌓 Visual Theme Mode</strong>
+          <button class="bui-btn bui-btn-sm bui-btn-secondary" type="button" @click="$theme.toggle()">
+            <span v-if="$theme.isDark">☀️ Switch to Light Mode</span>
+            <span v-if="!$theme.isDark">🌙 Switch to Dark Mode</span>
+          </button>
+        </div>
+      </div>
     </bv-modal>
 
     <bv-toast b-ref="mainToast" title="Global Notification" variant="success" :duration="4000">
-       Action performed: <strong>{{ lastAction }}</strong>
+      Action performed: <strong>{{ lastAction }}</strong>
     </bv-toast>
   </div>
 </template>
 
 <script uses="BVRouting">
-  {
+    {
     LibBootstrap.bv - BlaiseUI Component Gallery
     -------------------------------------------------------------------------
     Comprehensive showcase of official BlaiseUI Bootstrap 5 components:
     Buttons, Cards, Inputs, Form Controls, Modals, Drawers, Skeletons,
     Dropdowns, Sliders, Switches, Radios, Checkboxes, and Pagination.
-  }
+    }
 
   data:
     count: integer = 45;
@@ -245,10 +238,10 @@
 
   created:
     var
-      items: TJSArray;
-      q1, q2, q3: TJSObject;
-      opts: TJSArray;
-      o1, o2, o3: TJSObject;
+    items: TJSArray;
+    q1, q2, q3: TJSObject;
+    opts: TJSArray;
+    o1, o2, o3: TJSObject;
     begin
       items := NewArray;
       q1 := NewObject; q1['id'] := 'q1'; q1['title'] := 'How does Shared State work?'; q1['content'] := 'BlaiseVue uses B-Store for centralized reactive state management in Pascal.';
@@ -322,9 +315,9 @@
   .mb-4 { margin-bottom: 16px; }
   .mb-5 { margin-bottom: 24px; }
   .mt-3 { margin-top: 15px; }
-  .lib-bootstrap-page { background: #f8fafc; padding: 25px; min-height: 100vh; }
+  .lib-bootstrap-page { background: transparent; padding: 12px 0; min-height: 100vh; }
   @media (max-width: 576px) {
-    .lib-bootstrap-page { padding: 12px 10px; }
+  .lib-bootstrap-page { padding: 8px 0; }
   }
   .row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }
   .col-4 { flex: 0 0 33.333333%; max-width: 33.333333%; padding: 0 15px; }
@@ -335,7 +328,8 @@
   .justify-content-end { justify-content: flex-end; }
   .gap-2 { gap: 10px; }
   .gap-3 { gap: 14px; }
-  .text-muted { color: #64748b; }
+  .text-muted { color: var(--bv-text-muted); }
   .p-4 { padding: 20px; }
   .text-center { text-align: center; }
 </style>
+

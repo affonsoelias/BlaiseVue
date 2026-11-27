@@ -14,6 +14,11 @@ interface
 
 uses JS, Web, SysUtils, BVDataSet, BVRpc, BlaiseReports, BVStore, BVFSM;
 
+type
+  TBVSimpleCallback = reference to procedure;
+  TBVValueCallback = reference to procedure(Value: JSValue);
+  TBVLoadCallback = reference to procedure(Success: Boolean; Count: Integer);
+
 { --- BlaiseX State & FSM Helpers (Zero-ASM DX) --- }
 function UseStore(const ASliceName: string = ''): JSValue;
 function UseFSM(const AMachineName: string): TBVStateMachine; overload;
@@ -35,6 +40,10 @@ function StartInterval(Callback: JSValue; IntervalMs: Integer): Integer;
 procedure StopInterval(TimerId: Integer);
 function StartTimeout(Callback: JSValue; DelayMs: Integer): Integer;
 procedure StopTimeout(TimerId: Integer);
+function RunAfterDelay(DelayMs: Integer; Callback: TBVSimpleCallback): Integer;
+procedure OnNetworkStatusChange(OnOnline, OnOffline: TBVSimpleCallback);
+procedure ScrollToElement(const ElementId: string; Smooth: Boolean = True);
+function InspectFragmentsReport(const RootSelector: string; InspectionNum: Integer): string;
 
 { --- SPA Navigation Helpers --- }
 procedure NavigateTo(const Path: string);
@@ -104,6 +113,7 @@ procedure I18nAddMessages(const Locale: string; const JsonStr: string);
 procedure I18nSetLocale(const Locale: string);
 function I18nGetLocale: string;
 function I18nT(const Key: string; Params: JSValue = nil): string;
+function I18nGetMessagesJSON(const Locale: string = ''): string;
 
 { --- Dynamic Field Accessors --- }
 function GetFieldStr(Obj: JSValue; const PropName: string; const DefaultVal: string = ''): string;
@@ -140,6 +150,12 @@ function DataSetHasPending(DS: JSValue): Boolean;
 function DataSetChangeCount(DS: JSValue): Integer;
 function DataSetDeltaList(DS: JSValue): JSValue;
 procedure DataSetClearDelta(DS: JSValue);
+function DataSetStateStr(DS: JSValue): string;
+function DataSetRecordCount(DS: JSValue): Integer;
+procedure DataSetSetTableName(DS: JSValue; const ATableName: string);
+function DataSetNextId(DS: JSValue; const AFieldName: string = 'id'): Integer;
+procedure DataSetLoadIndexedDBAsync(DS: JSValue; const StoreKey: string; OnComplete: TBVLoadCallback);
+procedure DataSetApplyUpdatesCallbacks(DS: JSValue; const EndpointOrService: string; OnSuccess: TBVValueCallback; OnError: TBVValueCallback);
 
 { --- Type-Safe mORMot 2 Pascal RPC Helpers (BlaiseVue 4.3) --- }
 procedure RpcSetBaseUrl(const Url: string);
@@ -316,6 +332,75 @@ procedure StopTimeout(TimerId: Integer);
 begin
   asm
     window.clearTimeout(TimerId);
+  end;
+end;
+
+function RunAfterDelay(DelayMs: Integer; Callback: TBVSimpleCallback): Integer;
+begin
+  Result := StartTimeout(JSValue(Callback), DelayMs);
+end;
+
+procedure OnNetworkStatusChange(OnOnline, OnOffline: TBVSimpleCallback);
+begin
+  asm
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      if (typeof OnOnline === 'function') {
+        window.addEventListener('online', function() { OnOnline(); });
+      }
+      if (typeof OnOffline === 'function') {
+        window.addEventListener('offline', function() { OnOffline(); });
+      }
+    }
+  end;
+end;
+
+procedure ScrollToElement(const ElementId: string; Smooth: Boolean = True);
+begin
+  asm
+    if (typeof document !== 'undefined' && ElementId) {
+      var el = document.getElementById(ElementId);
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: Smooth ? 'smooth' : 'auto', block: 'nearest' });
+      }
+    }
+  end;
+end;
+
+function InspectFragmentsReport(const RootSelector: string; InspectionNum: Integer): string;
+begin
+  Result := '';
+  asm
+    if (typeof document === 'undefined') return;
+    var root = (RootSelector ? document.querySelector(RootSelector) : null) || document.body;
+    if (!root || typeof document.createTreeWalker !== 'function') return;
+    var startAnchors = [];
+    var endAnchors = 0;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT, null, false);
+    var node;
+    while ((node = walker.nextNode())) {
+      var txt = (node.nodeValue || '').trim();
+      if (txt.indexOf('[bv-fragment:') === 0) {
+        startAnchors.push(node);
+      } else if (txt === '[/bv-fragment]') {
+        endAnchors++;
+      }
+    }
+    var nowStr = new Date().toLocaleTimeString();
+    var lines = [];
+    lines.push('[Leitura #' + InspectionNum + ' às ' + nowStr + '] Âncoras de Início (<!-- [bv-fragment: ...] -->): ' + startAnchors.length + ' | Âncoras de Fim (<!-- [/bv-fragment] -->): ' + endAnchors);
+    lines.push('--------------------------------------------------------------------------------');
+    for (var i = 0; i < startAnchors.length; i++) {
+      var a = startAnchors[i];
+      var sibs = (window.__BV_CORE__ && window.__BV_CORE__.getFragmentNodes) ? window.__BV_CORE__.getFragmentNodes(a) : [];
+      var tagList = [];
+      for (var j = 0; j < sibs.length; j++) {
+        if (sibs[j].nodeType === 1) {
+          tagList.push('<' + sibs[j].tagName.toLowerCase() + (sibs[j].className ? ' class="' + sibs[j].className + '"' : '') + '>');
+        }
+      }
+      lines.push('#' + (i + 1) + ' <!--' + a.nodeValue + '-->  ==>  ' + tagList.join(' + ') + '  ==>  <!-- [/bv-fragment] -->');
+    }
+    Result = lines.join('\n');
   end;
 end;
 
@@ -761,7 +846,8 @@ begin
         if (st === 'browse') DS.Edit();
         var f = DS.FieldByName(AFieldName);
         if (f) {
-          if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
+          if (typeof f.SetValue === 'function') f.SetValue(AValue);
+          else if (typeof f.SetAsString === 'function') f.SetAsString(String(AValue));
           else f.AsString = String(AValue);
         }
       } else if (DS.Current) {
@@ -908,6 +994,77 @@ begin
       if (DS && typeof DS.ClearDelta === 'function') DS.ClearDelta();
     end;
   end;
+end;
+
+function DataSetStateStr(DS: JSValue): string;
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).StateStr
+  else
+  begin
+    Result := 'inactive';
+    asm
+      if (DS) {
+        if (typeof DS.GetStateStr === 'function') Result = String(DS.GetStateStr());
+        else if (DS.StateStr !== undefined) Result = String(DS.StateStr);
+      }
+    end;
+  end;
+end;
+
+function DataSetRecordCount(DS: JSValue): Integer;
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    Result := TBVDataSet(DS).RecordCount
+  else
+  begin
+    Result := 0;
+    asm
+      if (DS) {
+        if (typeof DS.GetRecordCount === 'function') Result = Number(DS.GetRecordCount()) || 0;
+        else if (DS.RecordCount !== undefined) Result = Number(DS.RecordCount) || 0;
+      }
+    end;
+  end;
+end;
+
+procedure DataSetSetTableName(DS: JSValue; const ATableName: string);
+begin
+  if (DS <> nil) and (TObject(DS) is TBVDataSet) then
+    TBVDataSet(DS).TableName := ATableName
+  else
+  begin
+    asm
+      if (DS) DS.TableName = ATableName;
+    end;
+  end;
+end;
+
+function DataSetNextId(DS: JSValue; const AFieldName: string = 'id'): Integer;
+begin
+  Result := 1;
+  asm
+    if (!DS) return;
+    var recs = DS.FRecords || DS.Data;
+    var maxId = 0;
+    if (recs && recs.length) {
+      for (var i = 0; i < recs.length; i++) {
+        var cur = parseInt(recs[i][AFieldName], 10);
+        if (!isNaN(cur) && cur > maxId) maxId = cur;
+      }
+    }
+    Result = maxId + 1;
+  end;
+end;
+
+procedure DataSetLoadIndexedDBAsync(DS: JSValue; const StoreKey: string; OnComplete: TBVLoadCallback);
+begin
+  DataSetLoadIndexedDB(DS, StoreKey, JSValue(OnComplete));
+end;
+
+procedure DataSetApplyUpdatesCallbacks(DS: JSValue; const EndpointOrService: string; OnSuccess: TBVValueCallback; OnError: TBVValueCallback);
+begin
+  DataSetApplyUpdatesAsync(DS, EndpointOrService, JSValue(OnSuccess), JSValue(OnError));
 end;
 
 procedure ApiFetch(Instance: JSValue; const Endpoint: string; const PropertyName: string = 'items');
@@ -1300,6 +1457,24 @@ begin
   Result := String(ResVal);
 end;
 
+function I18nGetMessagesJSON(const Locale: string = ''): string;
+var
+  Loc: string;
+begin
+  Loc := Locale;
+  if Loc = '' then
+    Loc := I18nGetLocale;
+  if Loc = '' then
+    Loc := 'en';
+  Result := '{}';
+  asm
+    var i18n = (typeof window !== 'undefined' && window.__BV_CORE__) ? window.__BV_CORE__.i18n : null;
+    var all = (i18n && i18n.messages) ? i18n.messages : {};
+    var current = all[Loc] || {};
+    Result = JSON.stringify(current, null, 2);
+  end;
+end;
+
 procedure RpcSetBaseUrl(const Url: string);
 begin
   TBVRpcClient.SetBaseUrl(Url);
@@ -1494,6 +1669,17 @@ begin
     DataSetChangeCount(dummy);
     DataSetDeltaList(dummy);
     DataSetClearDelta(dummy);
+    DataSetStateStr(dummy);
+    DataSetRecordCount(dummy);
+    DataSetSetTableName(dummy, '');
+    DataSetNextId(dummy);
+    DataSetLoadIndexedDBAsync(dummy, '', nil);
+    DataSetApplyUpdatesCallbacks(dummy, '', nil, nil);
+    RunAfterDelay(0, nil);
+    OnNetworkStatusChange(nil, nil);
+    ScrollToElement('');
+    InspectFragmentsReport('', 0);
+    I18nGetMessagesJSON('');
     RpcSetBaseUrl('');
     RpcSetToken('');
     RpcClearToken;

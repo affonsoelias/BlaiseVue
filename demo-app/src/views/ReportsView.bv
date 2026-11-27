@@ -18,16 +18,16 @@
     </div>
 
     <!-- QUICK DATASET PRESETS & CUSTOMIZATION BAR -->
-    <div style="background: white; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
+    <div style="background: var(--bv-surface); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--bv-shadow); border: 1px solid var(--bv-border); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px;">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <strong style="font-size: 13px; color: #334155;">Report Scenario:</strong>
-        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'sales' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadSalesPreset">
+        <strong style="font-size: 13px; color: var(--bv-text);">Report Scenario:</strong>
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'sales' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="loadSalesPreset">
           💼 Corporate Invoicing (A4)
         </button>
-        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'pos' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadPosReceiptPreset">
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'pos' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="loadPosReceiptPreset">
           🧾 POS Thermal Receipt (80mm)
         </button>
-        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'inventory' ? 'background:#1e293b;color:white;' : 'background:#f1f5f9;color:#334155;'" @click="loadInventoryPreset">
+        <button type="button" class="bui-btn bui-btn-sm" :style="activePreset === 'inventory' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="loadInventoryPreset">
           📦 Inventory Audit (Landscape)
         </button>
       </div>
@@ -40,9 +40,9 @@
     </div>
 
     <!-- STATUS NOTIFICATION BANNER -->
-    <div v-if="statusMessage" style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
+    <div v-if="statusMessage" style="background: rgba(16, 185, 129, 0.12); border-left: 4px solid #10b981; color: #10b981; padding: 10px 16px; border-radius: 6px; margin-bottom: 18px; font-size: 13px; display: flex; justify-content: space-between; align-items: center;">
       <span>✅ <strong>{{ statusMessage }}</strong></span>
-      <span style="font-size: 12px; color: #047857;">Active Records: {{ recordCount }}</span>
+      <span style="font-size: 12px;">Active Records: {{ recordCount }}</span>
     </div>
 
     <!-- INTERACTIVE REPORT VIEWER COMPONENT (<bv-report-viewer>) -->
@@ -50,7 +50,7 @@
       :report="activeReport"
       :dataset="salesDS"
       filename="blaisevue_report"
-    ></bv-report-viewer>
+      ></bv-report-viewer>
 
     <!-- RAW SOURCE INSPECTOR (PDF / EXCEL / CSV PREVIEW) -->
     <div style="background: #0f172a; color: #f8fafc; border-radius: 8px; padding: 20px; margin-top: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
@@ -82,34 +82,29 @@
   computed:
     function recordCount: integer;
     begin
-      Result := 0;
-      asm
-        if (this.salesDS && typeof this.salesDS.GetRecordCount === 'function') {
-          Result = this.salesDS.GetRecordCount();
-        }
-      end;
+      Result := DataSetRecordCount(this['salesDS']);
     end;
 
   created:
     begin
       this['salesDS'] := NewDataSet;
-      this['nextInvoiceId'] := 1006;
-      CallMethod(this, 'loadSalesPreset');
+      this.nextInvoiceId := 1006;
+      this.loadSalesPreset();
     end;
 
   methods:
     procedure loadSalesPreset;
     var
-      mockJson: string;
-      rep: JSValue;
+    mockJson: string;
+    rep: JSValue;
     begin
-      this['activePreset'] := 'sales';
+      this.activePreset := 'sales';
       mockJson := '[' +
-        '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Paid","total":4850.00},' +
-        '{"id":1002,"customer":"Globex Logistics Inc","segment":"Industrial ERP","status":"Paid","total":3200.50},' +
-        '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Paid","total":9450.00},' +
-        '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pending","total":6120.75},' +
-        '{"id":1005,"customer":"Initech Systems LLC","segment":"Pascal Consulting","status":"Paid","total":2180.25}' +
+      '{"id":1001,"customer":"Acme Cloud Corp","segment":"Enterprise SaaS","status":"Paid","total":4850.00},' +
+      '{"id":1002,"customer":"Globex Logistics Inc","segment":"Industrial ERP","status":"Paid","total":3200.50},' +
+      '{"id":1003,"customer":"Stark Defense Labs","segment":"Cloud Security","status":"Paid","total":9450.00},' +
+      '{"id":1004,"customer":"Wayne FinTech Holding","segment":"Banking Core","status":"Pending","total":6120.75},' +
+      '{"id":1005,"customer":"Initech Systems LLC","segment":"Pascal Consulting","status":"Paid","total":2180.25}' +
       ']';
       DataSetLoad(this['salesDS'], JsonParse(mockJson));
 
@@ -119,11 +114,11 @@
       ReportSetHeader(rep, 'Finance Department | Currency: USD ($) | Automated TBVDataSet Stream', 'Confidential — BlaiseReports Native Vector PDF Engine');
       ReportSetPageLayout(rep, 'a4');
       ReportSetColumns(rep, [
-        'id:Invoice #:integer:center:75',
-        'customer:Corporate Account:string:left:190',
-        'segment:Business Unit:string:left:140',
-        'status:Status:string:center:85',
-        'total:Total Amount:currency:right:115'
+      'id:Invoice #:integer:center:75',
+      'customer:Corporate Account:string:left:190',
+      'segment:Business Unit:string:left:140',
+      'status:Status:string:center:85',
+      'total:Total Amount:currency:right:115'
       ]);
       ReportAddSummary(rep, 'Gross Total Revenue', 'total', 'sum', 'currency');
       ReportAddSummary(rep, 'Average Deal Size', 'total', 'avg', 'currency');
@@ -131,21 +126,21 @@
       ReportAddSummary(rep, 'Total Invoices', 'id', 'count', 'integer');
 
       this['activeReport'] := rep;
-      this['statusMessage'] := 'Scenario "Corporate Invoicing (A4)" loaded successfully!';
-      CallMethod(this, 'inspectPDF');
+      this.statusMessage := 'Scenario "Corporate Invoicing (A4)" loaded successfully!';
+      this.inspectPDF();
     end;
 
     procedure loadPosReceiptPreset;
     var
-      mockJson: string;
-      rep: JSValue;
+    mockJson: string;
+    rep: JSValue;
     begin
-      this['activePreset'] := 'pos';
+      this.activePreset := 'pos';
       mockJson := '[' +
-        '{"id":1,"customer":"2x Double Espresso","segment":"Beverages","status":"OK","total":18.00},' +
-        '{"id":2,"customer":"1x French Croissant","segment":"Bakery","status":"OK","total":14.50},' +
-        '{"id":3,"customer":"1x Fresh Orange Juice","segment":"Beverages","status":"OK","total":12.00},' +
-        '{"id":4,"customer":"1x Dutch Tart Slice","segment":"Desserts","status":"OK","total":22.90}' +
+      '{"id":1,"customer":"2x Double Espresso","segment":"Beverages","status":"OK","total":18.00},' +
+      '{"id":2,"customer":"1x French Croissant","segment":"Bakery","status":"OK","total":14.50},' +
+      '{"id":3,"customer":"1x Fresh Orange Juice","segment":"Beverages","status":"OK","total":12.00},' +
+      '{"id":4,"customer":"1x Dutch Tart Slice","segment":"Desserts","status":"OK","total":22.90}' +
       ']';
       DataSetLoad(this['salesDS'], JsonParse(mockJson));
 
@@ -155,28 +150,28 @@
       ReportSetHeader(rep, 'Tax ID: 12-3456789 | Thermal 80mm Roll', 'Thank you for your business!');
       ReportSetPageLayout(rep, 'thermal-80mm');
       ReportSetColumns(rep, [
-        'customer:Item / Description:string:left:140',
-        'total:Subtotal:currency:right:70'
+      'customer:Item / Description:string:left:140',
+      'total:Subtotal:currency:right:70'
       ]);
       ReportAddSummary(rep, 'TOTAL DUE', 'total', 'sum', 'currency');
       ReportAddSummary(rep, 'ITEM COUNT', 'id', 'count', 'integer');
 
       this['activeReport'] := rep;
-      this['statusMessage'] := 'Layout "POS Thermal Receipt (80mm)" activated for receipt printers!';
-      CallMethod(this, 'inspectPDF');
+      this.statusMessage := 'Layout "POS Thermal Receipt (80mm)" activated for receipt printers!';
+      this.inspectPDF();
     end;
 
     procedure loadInventoryPreset;
     var
-      mockJson: string;
-      rep: JSValue;
+    mockJson: string;
+    rep: JSValue;
     begin
-      this['activePreset'] := 'inventory';
+      this.activePreset := 'inventory';
       mockJson := '[' +
-        '{"id":501,"customer":"Dell PowerEdge R750 Rack Server","segment":"DataCenter","status":"In Stock","total":18500.00},' +
-        '{"id":502,"customer":"Cisco Catalyst 48-Port 10G Switch","segment":"Networks","status":"In Stock","total":6400.00},' +
-        '{"id":503,"customer":"NVMe Enterprise Storage 64TB","segment":"Storage","status":"Critical","total":14200.00},' +
-        '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Security","status":"In Stock","total":4900.00}' +
+      '{"id":501,"customer":"Dell PowerEdge R750 Rack Server","segment":"DataCenter","status":"In Stock","total":18500.00},' +
+      '{"id":502,"customer":"Cisco Catalyst 48-Port 10G Switch","segment":"Networks","status":"In Stock","total":6400.00},' +
+      '{"id":503,"customer":"NVMe Enterprise Storage 64TB","segment":"Storage","status":"Critical","total":14200.00},' +
+      '{"id":504,"customer":"Firewall Hardware Appliance Pro","segment":"Security","status":"In Stock","total":4900.00}' +
       ']';
       DataSetLoad(this['salesDS'], JsonParse(mockJson));
 
@@ -186,26 +181,26 @@
       ReportSetHeader(rep, 'Central Warehouse | Quarterly Audit', 'Authorized Auditor Signature');
       ReportSetPageLayout(rep, 'a4-landscape');
       ReportSetColumns(rep, [
-        'id:Asset Tag:integer:center:80',
-        'customer:Equipment / Asset:string:left:220',
-        'segment:Sector:string:left:120',
-        'status:Condition:string:center:100',
-        'total:Book Value:currency:right:120'
+      'id:Asset Tag:integer:center:80',
+      'customer:Equipment / Asset:string:left:220',
+      'segment:Sector:string:left:120',
+      'status:Condition:string:center:100',
+      'total:Book Value:currency:right:120'
       ]);
       ReportAddSummary(rep, 'Total Inventory Value', 'total', 'sum', 'currency');
       ReportAddSummary(rep, 'Average Asset Value', 'total', 'avg', 'currency');
 
       this['activeReport'] := rep;
-      this['statusMessage'] := 'Scenario "Inventory Audit (A4 Landscape)" loaded!';
-      CallMethod(this, 'inspectPDF');
+      this.statusMessage := 'Scenario "Inventory Audit (A4 Landscape)" loaded!';
+      this.inspectPDF();
     end;
 
     procedure addSampleInvoice;
     var
-      newId: integer;
+    newId: integer;
     begin
-      newId := Integer(this['nextInvoiceId']);
-      this['nextInvoiceId'] := newId + 1;
+      newId := this.nextInvoiceId;
+      this.nextInvoiceId += 1;
 
       DataSetAppend(this['salesDS']);
       DataSetSetFieldVal(this['salesDS'], 'id', newId);
@@ -215,43 +210,44 @@
       DataSetSetFieldVal(this['salesDS'], 'total', 3750.00);
       DataSetPost(this['salesDS']);
 
-      this['statusMessage'] := 'Invoice #' + IntToStr(newId) + ' appended to TBVDataSet! Summaries recalculated in real time.';
-      CallMethod(this, 'inspectPDF');
+      this.statusMessage := 'Invoice #' + IntToStr(newId) + ' appended to TBVDataSet! Summaries recalculated in real time.';
+      this.inspectPDF();
     end;
 
     procedure doExportPDF;
     begin
       ReportExportPDF(this['activeReport'], 'blaisevue_report.pdf');
-      this['statusMessage'] := 'Download of Vector PDF 1.4 (blaisevue_report.pdf) initiated!';
-      CallMethod(this, 'inspectPDF');
+      this.statusMessage := 'Download of Vector PDF 1.4 (blaisevue_report.pdf) initiated!';
+      this.inspectPDF();
     end;
 
     procedure doExportExcel;
     begin
       ReportExportExcel(this['activeReport'], 'blaisevue_report.xlsx');
-      this['statusMessage'] := 'Download of Excel Spreadsheet (blaisevue_report.xlsx) initiated!';
-      CallMethod(this, 'inspectExcel');
+      this.statusMessage := 'Download of Excel Spreadsheet (blaisevue_report.xlsx) initiated!';
+      this.inspectExcel();
     end;
 
     procedure doExportCSV;
     begin
       ReportExportCSV(this['activeReport'], 'blaisevue_report.csv');
-      this['statusMessage'] := 'Download of CSV file with UTF-8 BOM (blaisevue_report.csv) initiated!';
-      CallMethod(this, 'inspectCSV');
+      this.statusMessage := 'Download of CSV file with UTF-8 BOM (blaisevue_report.csv) initiated!';
+      this.inspectCSV();
     end;
 
     procedure inspectPDF;
     begin
-      this['rawOutputPreview'] := ReportGeneratePDF(this['activeReport']);
+      this.rawOutputPreview := ReportGeneratePDF(this['activeReport']);
     end;
 
     procedure inspectExcel;
     begin
-      this['rawOutputPreview'] := ReportGenerateExcel(this['activeReport']);
+      this.rawOutputPreview := ReportGenerateExcel(this['activeReport']);
     end;
 
     procedure inspectCSV;
     begin
-      this['rawOutputPreview'] := ReportGenerateCSV(this['activeReport']);
+      this.rawOutputPreview := ReportGenerateCSV(this['activeReport']);
     end;
 </script>
+

@@ -1,0 +1,169 @@
+<template>
+  <div class="bui-ion-input" :class="wrapperClass">
+    <label class="bui-ion-input-label" b-if="label">{{ label }}</label>
+    <div class="bui-ion-input-wrapper">
+      <slot name="start"></slot>
+      <input
+        class="bui-ion-input-native"
+        :type="type"
+        :placeholder="placeholder"
+        :value="inputValue"
+        :disabled="isDisabled"
+        :readonly="isReadonly"
+        @input="handleInput"
+        @change="handleChange"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
+      <button
+        type="button"
+        class="bui-ion-input-clear"
+        b-if="showClear"
+        @click="handleClear"
+        aria-label="Clear input">
+        &times;
+      </button>
+      <slot name="end"></slot>
+    </div>
+  </div>
+</template>
+
+<script>
+  {
+    BVIonInput - Mobile Adaptive Input Field
+    ----------------------------------------
+    Props:
+    - label: string
+    - labelPlacement: string ('floating' | 'stacked' | 'fixed')
+    - type: string ('text' | 'email' | 'number' | 'password' | 'tel' | 'url')
+    - placeholder: string
+    - value: string
+    - modelValue: string
+    - clearInput: boolean
+    - disabled: boolean
+    - readonly: boolean
+  }
+
+  props:
+    label: string = '';
+    labelPlacement: string = 'floating';
+    type: string = 'text';
+    placeholder: string = '';
+    value: string = '';
+    modelValue: string = '';
+    clearInput: boolean = false;
+    disabled: boolean = false;
+    readonly: boolean = false;
+
+  data:
+    isFocused: boolean = false;
+    internalVal: string = '';
+
+  computed:
+    function inputValue: string;
+    begin
+      asm
+        if (this.modelValue !== undefined && this.modelValue !== null && this.modelValue !== '') {
+          return String(this.modelValue);
+        }
+        if (this.value !== undefined && this.value !== null && this.value !== '') {
+          return String(this.value);
+        }
+        return this.internalVal || '';
+      end;
+    end;
+
+    function hasValue: boolean;
+    begin
+      asm
+        var val = this.inputValue;
+        return Boolean(val !== undefined && val !== null && String(val).length > 0);
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function isReadonly: boolean;
+    begin
+      asm
+        return Boolean(this.readonly === true || this.readonly === 'true');
+      end;
+    end;
+
+    function showClear: boolean;
+    begin
+      asm
+        var isClearable = (this.clearInput === true || this.clearInput === 'true');
+        return Boolean(isClearable && this.hasValue && !this.isDisabled && !this.isReadonly);
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var placement = this.labelPlacement || 'floating';
+        var f = this.isFocused ? ' is-focused' : '';
+        var v = this.hasValue ? ' has-value' : '';
+        var d = this.isDisabled ? ' is-disabled' : '';
+        var r = this.isReadonly ? ' is-readonly' : '';
+        return 'bui-ion-input label-placement-' + placement + f + v + d + r;
+      end;
+    end;
+
+  methods:
+    procedure handleInput(ev: JSValue);
+    begin
+      asm
+        var val = ev && ev.target ? ev.target.value : '';
+        this.internalVal = val;
+        this.$emit('update:modelValue', val);
+        this.$emit('input', val);
+        this.$emit('ionInput', val);
+      end;
+    end;
+
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var val = ev && ev.target ? ev.target.value : '';
+        this.internalVal = val;
+        this.$emit('change', val);
+        this.$emit('ionChange', val);
+      end;
+    end;
+
+    procedure handleFocus(ev: JSValue);
+    begin
+      asm
+        this.isFocused = true;
+        this.$emit('focus', ev);
+        this.$emit('ionFocus', ev);
+      end;
+    end;
+
+    procedure handleBlur(ev: JSValue);
+    begin
+      asm
+        this.isFocused = false;
+        this.$emit('blur', ev);
+        this.$emit('ionBlur', ev);
+      end;
+    end;
+
+    procedure handleClear(ev: JSValue);
+    begin
+      asm
+        this.internalVal = '';
+        this.$emit('update:modelValue', '');
+        this.$emit('input', '');
+        this.$emit('ionInput', '');
+        this.$emit('clear', ev);
+        this.$emit('ionClear', ev);
+      end;
+    end;
+</script>

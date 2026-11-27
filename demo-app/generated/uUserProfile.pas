@@ -27,11 +27,11 @@ var
   _styleEl: TJSHTMLElement;
 begin
   _styleEl := TJSHTMLElement(document.createElement('style'));
-  _styleEl.textContent := 'table { width: 100%; border-collapse: collapse; }   th, td { padding: 12px; border: 1px solid #efefef; text-align: left; }   th { background: #f9f9f9; width: 30%; }';
+  _styleEl.textContent := '.user-profile-page table { width: 100%; border-collapse: collapse; }   .user-profile-page th, .user-profile-page td { padding: 12px; border: 1px solid var(--bv-border); text-align: left; }   .user-profile-page th { background: var(--bv-surface-subtle); width: 30%; color: var(--bv-text); }';
   document.head.appendChild(_styleEl);
   comp := TJSObject.new;
   comp['template'] :=
-    '  <div>' +
+    '  <div class="user-profile-page">' +
     '    <div class="section">' +
     '      <h1 class="section-title">User Profile</h1>' +
     '      <p>This page demonstrates <strong>Route Params</strong> and <strong>Query Strings</strong>.</p>' +
@@ -82,7 +82,7 @@ begin
   TJSObject(comp['computed'])['userLevel'] := function(_this: TJSObject): JSValue
 
     begin
-      if Integer(_this['id']) > 50 then Result := 'Premium'
+      if StrToIntDef(TComponentThis(_this).id, 0) > 50 then Result := 'Premium'
       else Result := 'Basic';
     end;
 

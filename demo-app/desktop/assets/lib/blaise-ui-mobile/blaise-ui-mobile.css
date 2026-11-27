@@ -685,3 +685,474 @@
 @keyframes ionicSpin {
   to { transform: rotate(360deg); }
 }
+
+
+/* ==========================================================================
+   Mobile Form Controls & Native Gestures (Part 2 Expansion)
+   ========================================================================== */
+
+/* --- BVIonInput --- */
+.bui-ion-input {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  padding: 8px 16px;
+  background-color: var(--ion-background-color, #ffffff);
+  border-bottom: 0.5px solid var(--ion-border-color, rgba(0, 0, 0, 0.12));
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.bui-ion-input.is-focused {
+  border-bottom-color: var(--ion-color-primary, #3880ff);
+}
+
+.bui-ion-input-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ion-color-medium, #92949c);
+  margin-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.bui-ion-input.is-focused .bui-ion-input-label {
+  color: var(--ion-color-primary, #3880ff);
+}
+
+.bui-ion-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.bui-ion-input-native {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--ion-text-color, #1a1a1a);
+  padding: 4px 0;
+  font-family: inherit;
+}
+
+.bui-ion-input-clear {
+  border: none;
+  background: rgba(0, 0, 0, 0.1);
+  color: #666;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 0;
+}
+
+/* --- BVIonToggle --- */
+.bui-ion-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.bui-ion-toggle-label {
+  font-size: 1rem;
+  color: var(--ion-text-color, #1a1a1a);
+}
+
+.bui-ion-toggle-track {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  background-color: #e5e5ea;
+  border-radius: 31px;
+  border: none;
+  outline: none;
+  padding: 2px;
+  cursor: pointer;
+  transition: background-color 0.25s ease-in-out;
+  flex-shrink: 0;
+}
+
+.bui-ion-toggle.is-checked .bui-ion-toggle-track {
+  background-color: var(--ion-color-primary, #3880ff);
+}
+
+.bui-ion-toggle-success.is-checked .bui-ion-toggle-track {
+  background-color: var(--ion-color-success, #2dd36f);
+}
+
+.bui-ion-toggle-danger.is-checked .bui-ion-toggle-track {
+  background-color: var(--ion-color-danger, #eb445a);
+}
+
+.bui-ion-toggle-warning.is-checked .bui-ion-toggle-track {
+  background-color: var(--ion-color-warning, #ffc409);
+}
+
+.bui-ion-toggle-handle {
+  display: block;
+  width: 27px;
+  height: 27px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.bui-ion-toggle.is-checked .bui-ion-toggle-handle {
+  transform: translateX(20px);
+}
+
+.bui-ion-toggle.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --- BVIonCheckbox --- */
+.bui-ion-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.bui-ion-checkbox-native {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.bui-ion-checkbox-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 2px solid var(--ion-border-color, #c8c7cc);
+  background-color: transparent;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bui-ion-checkbox.is-checked .bui-ion-checkbox-box {
+  background-color: var(--ion-color-primary, #3880ff);
+  border-color: var(--ion-color-primary, #3880ff);
+}
+
+.bui-ion-checkbox-success.is-checked .bui-ion-checkbox-box {
+  background-color: var(--ion-color-success, #2dd36f);
+  border-color: var(--ion-color-success, #2dd36f);
+}
+
+.bui-ion-checkbox-danger.is-checked .bui-ion-checkbox-box {
+  background-color: var(--ion-color-danger, #eb445a);
+  border-color: var(--ion-color-danger, #eb445a);
+}
+
+.bui-ion-checkbox-check {
+  width: 16px;
+  height: 16px;
+  stroke: #ffffff;
+}
+
+.bui-ion-checkbox-label {
+  font-size: 1rem;
+  color: var(--ion-text-color, #1a1a1a);
+}
+
+.bui-ion-checkbox.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --- BVIonSelect --- */
+.bui-ion-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid var(--ion-border-color, rgba(0, 0, 0, 0.12));
+  background-color: var(--ion-background-color, #ffffff);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.bui-ion-select-label {
+  font-size: 1rem;
+  color: var(--ion-text-color, #1a1a1a);
+}
+
+.bui-ion-select-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bui-ion-select-text {
+  font-size: 0.95rem;
+  color: var(--ion-color-primary, #3880ff);
+}
+
+.bui-ion-select-text.is-placeholder {
+  color: var(--ion-color-medium, #92949c);
+}
+
+.bui-ion-select-icon {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium, #92949c);
+}
+
+.bui-ion-select-native {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bui-ion-select.is-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- BVIonRefresher --- */
+.bui-ion-refresher {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 16px 0;
+  background-color: transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bui-ion-refresher-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--ion-color-medium, #92949c);
+  font-size: 0.85rem;
+}
+
+.bui-ion-refresher-icon {
+  transition: transform 0.2s ease;
+}
+
+.bui-ion-spinner-circle {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(56, 128, 255, 0.2);
+  border-top-color: var(--ion-color-primary, #3880ff);
+  border-radius: 50%;
+  animation: ionicSpin 0.7s linear infinite;
+}
+
+/* --- BVIonSearchBar --- */
+.bui-ion-searchbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: var(--ion-background-color, #ffffff);
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+.bui-ion-searchbar-container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 6px 10px;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.ionic-mode-ios .bui-ion-searchbar-container, [mode="ios"] .bui-ion-searchbar-container {
+  border-radius: 10px;
+}
+
+.ionic-mode-md .bui-ion-searchbar-container, [mode="md"] .bui-ion-searchbar-container {
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  background-color: #ffffff;
+}
+
+.bui-ion-searchbar-icon {
+  display: flex;
+  align-items: center;
+  color: var(--ion-color-medium, #92949c);
+}
+
+.bui-ion-searchbar-native {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--ion-text-color, #1a1a1a);
+  font-family: inherit;
+}
+
+.bui-ion-searchbar-clear {
+  border: none;
+  background: rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bui-ion-searchbar-cancel {
+  border: none;
+  background: transparent;
+  color: var(--ion-color-primary, #3880ff);
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+/* --- BVIonFab & BVIonFabButton --- */
+.bui-ion-fab {
+  position: fixed;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.bui-ion-fab-vertical-bottom {
+  bottom: calc(16px + var(--ion-safe-area-bottom, 0px));
+}
+
+.bui-ion-fab-vertical-top {
+  top: calc(16px + var(--ion-safe-area-top, 0px));
+}
+
+.bui-ion-fab-vertical-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.bui-ion-fab-horizontal-end {
+  right: calc(16px + var(--ion-safe-area-right, 0px));
+}
+
+.bui-ion-fab-horizontal-start {
+  left: calc(16px + var(--ion-safe-area-left, 0px));
+}
+
+.bui-ion-fab-horizontal-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bui-ion-fab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background-color: var(--ion-color-primary, #3880ff);
+  color: #ffffff;
+  font-size: 1.5rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+.bui-ion-fab-button:active {
+  transform: scale(0.93);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.bui-ion-fab-button-sm {
+  width: 40px;
+  height: 40px;
+  font-size: 1.15rem;
+}
+
+.bui-ion-fab-button-lg {
+  width: 68px;
+  height: 68px;
+  font-size: 1.8rem;
+}
+
+.bui-ion-fab-button-secondary {
+  background-color: var(--ion-color-secondary, #3dc2ff);
+}
+
+.bui-ion-fab-button-success {
+  background-color: var(--ion-color-success, #2dd36f);
+}
+
+.bui-ion-fab-button-danger {
+  background-color: var(--ion-color-danger, #eb445a);
+}
+
+/* --- BVIonBackButton --- */
+.bui-ion-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--ion-color-primary, #3880ff);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 4px;
+  transition: opacity 0.15s ease;
+}
+
+.bui-ion-back-button-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.bui-ion-back-button:active {
+  opacity: 0.6;
+}
+
+.bui-ion-back-button.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}

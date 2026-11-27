@@ -1,0 +1,85 @@
+<template>
+  <div class="form-check form-switch bui-switch" :class="wrapperClass">
+    <input 
+      class="form-check-input bui-switch-input" 
+      type="checkbox" 
+      role="switch" 
+      :id="computedId"
+      :checked="isChecked"
+      :disabled="isDisabled"
+      @change="handleChange"
+    />
+    <label class="form-check-label bui-switch-label" :for="computedId" b-if="label">
+      <slot>{{ label }}</slot>
+    </label>
+  </div>
+</template>
+
+<script>
+  {
+    BVSwitch - Toggle Switch Component (Bootstrap 5 Switch)
+    -------------------------------------------------------
+    Props:
+    - id: String
+    - label: String
+    - value: Boolean (support for b-model)
+    - checked: Boolean
+    - disabled: Boolean
+    - size: String ('sm', 'md', 'lg')
+    - color: String ('primary', 'success', 'danger', 'warning', 'info')
+  }
+
+  props:
+    id: string = '';
+    label: string = '';
+    value: boolean = false;
+    checked: boolean = false;
+    modelValue: boolean = false;
+    disabled: boolean = false;
+    size: string = 'md';
+    color: string = 'primary';
+
+  computed:
+    function computedId: string;
+    begin
+      asm
+        return this.id || ('bui-switch-' + Math.floor(Math.random() * 1000000));
+      end;
+    end;
+
+    function isChecked: boolean;
+    begin
+      asm
+        return Boolean(this.value === true || this.value === 'true' || 
+                       this.checked === true || this.checked === 'true' || 
+                       this.modelValue === true || this.modelValue === 'true');
+      end;
+    end;
+
+    function isDisabled: boolean;
+    begin
+      asm
+        return Boolean(this.disabled === true || this.disabled === 'true');
+      end;
+    end;
+
+    function wrapperClass: string;
+    begin
+      asm
+        var s = this.size ? (' bui-switch-' + this.size) : '';
+        var c = this.color ? (' bui-switch-' + this.color) : ' bui-switch-primary';
+        return 'form-check form-switch bui-switch' + s + c;
+      end;
+    end;
+
+  methods:
+    procedure handleChange(ev: JSValue);
+    begin
+      asm
+        var val = (ev && ev.target) ? Boolean(ev.target.checked) : false;
+        this.$emit('input', val);
+        this.$emit('change', val);
+        this.$emit('update:modelValue', val);
+      end;
+    end;
+</script>

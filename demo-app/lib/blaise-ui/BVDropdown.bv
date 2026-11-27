@@ -8,13 +8,13 @@
       type="button" 
       :disabled="isDisabled"
       @click="toggle">
-      <slot name="button-content">{{ text }}</slot>
+      <slot name="button-content">{{ text || label }}</slot>
     </button>
 
     <!-- Split Dropdown Button Group -->
     <div b-if="isSplit" class="btn-group">
       <button class="btn bui-btn" :class="btnClass" type="button" :disabled="isDisabled" @click="handleMainClick">
-        <slot name="button-content">{{ text }}</slot>
+        <slot name="button-content">{{ text || label }}</slot>
       </button>
       <button 
         class="btn dropdown-toggle dropdown-toggle-split bui-btn" 
@@ -48,6 +48,7 @@
 
   props:
     text: string = '';
+    label: string = '';
     variant: string = 'primary';
     size: string = 'md';
     split: boolean = false;
@@ -56,6 +57,18 @@
 
   data:
     isOpen: boolean = false;
+
+  provide:
+    begin
+      Result := TJSObject.new;
+      asm
+        var self = this;
+        Result.closeDropdown = function() {
+          self.isOpen = false;
+          if (typeof self.$emit === 'function') self.$emit('toggle', false);
+        };
+      end;
+    end;
 
   computed:
     function isSplit: boolean;

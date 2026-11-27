@@ -33,7 +33,7 @@ type
     FPort: RawUtf8;
   public
     constructor Create(const ATitle: RawUtf8 = 'BlaiseVue Full-Stack mORMot 2 API';
-      const AVersion: RawUtf8 = '4.0.0'; const APort: RawUtf8 = '8090');
+      const AVersion: RawUtf8 = '0.1.0'; const APort: RawUtf8 = '8090');
     destructor Destroy; override;
     function GenerateOpenApiJson(const HostPort: RawUtf8 = ''): RawUtf8;
     function GetSwaggerHtml: RawUtf8;
@@ -68,7 +68,7 @@ begin
     '<head>'#13#10 +
     '  <meta charset="utf-8" />'#13#10 +
     '  <meta name="viewport" content="width=device-width, initial-scale=1" />'#13#10 +
-    '  <title>BlaiseVue 4.0 - mORMot 2 OpenAPI Explorer</title>'#13#10 +
+    '  <title>BlaiseVue - mORMot 2 OpenAPI Explorer</title>'#13#10 +
     '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />'#13#10 +
     '  <style>'#13#10 +
     '    body { margin: 0; padding: 0; background: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }'#13#10 +
@@ -91,7 +91,7 @@ begin
     '</head>'#13#10 +
     '<body>'#13#10 +
     '  <div class="back-bar">'#13#10 +
-    '    <span>&#9889; <strong>BlaiseVue 4.0</strong> &mdash; Synopse mORMot 2 Native High-Performance Server</span>'#13#10 +
+    '    <span>&#9889; <strong>BlaiseVue</strong> &mdash; Synopse mORMot 2 Native High-Performance Server</span>'#13#10 +
     '    <div>'#13#10 +
     '      <a href="/#/">&#127968; Ir para a Aplica&ccedil;&atilde;o (Frontend)</a> &nbsp;|&nbsp;'#13#10 +
     '      <a href="/api/openapi.json" target="_blank">&#128196; OpenAPI Spec (JSON)</a> &nbsp;|&nbsp;'#13#10 +
@@ -139,7 +139,7 @@ begin
     '  "info": {'#13#10 +
     '    "title": "' + FTitle + '",'#13#10 +
     '    "version": "' + FVersion + '",'#13#10 +
-    '    "description": "High-throughput asynchronous RESTful API powered by Synopse mORMot 2 and BlaiseVue 4.0 in Object Pascal.\n\n### Authentication\nProtected endpoints require a JWT Bearer token obtained from `/api/auth/login`. Click **Authorize** above to authenticate with:\n- **Admin**: `admin@blaisevue.dev` / `admin123`\n- **Manager**: `manager@blaisevue.dev` / `manager123`\n- **User**: `user@blaisevue.dev` / `user123`",'#13#10 +
+    '    "description": "High-throughput asynchronous RESTful API powered by Synopse mORMot 2 and BlaiseVue in Object Pascal.\n\n### Authentication\nProtected endpoints require a JWT Bearer token obtained from `/api/auth/login`. Click **Authorize** above to authenticate with:\n- **Admin**: `admin@blaisevue.dev` / `admin123`\n- **Manager**: `manager@blaisevue.dev` / `manager123`\n- **User**: `user@blaisevue.dev` / `user123`",'#13#10 +
     '    "contact": {'#13#10 +
     '      "name": "BlaiseVue Core Team",'#13#10 +
     '      "url": "https://github.com/affonsoelias/blaisevue"'#13#10 +
@@ -172,9 +172,9 @@ begin
     '        "type": "object",'#13#10 +
     '        "properties": {'#13#10 +
     '          "status": { "type": "string", "example": "online" },'#13#10 +
-    '          "framework": { "type": "string", "example": "BlaiseVue 4.0 (mORMot 2 Universal)" },'#13#10 +
+    '          "framework": { "type": "string", "example": "BlaiseVue (mORMot 2 Universal)" },'#13#10 +
     '          "server": { "type": "string", "example": "mORMot 2 HTTP/WebSocket Server" },'#13#10 +
-    '          "version": { "type": "string", "example": "4.0.0" },'#13#10 +
+    '          "version": { "type": "string", "example": "0.1.0" },'#13#10 +
     '          "uptime": { "type": "string", "example": "0 days, 01:23:45" },'#13#10 +
     '          "requests": { "type": "integer", "example": 1420 },'#13#10 +
     '          "endpoints": { "type": "integer", "example": 18 }'#13#10 +

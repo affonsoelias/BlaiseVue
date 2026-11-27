@@ -127,7 +127,7 @@ begin
 
   SysInfoJSON := '{' +
     '"platform":"' + OSName + '",' +
-    '"framework":"BlaiseVue 3.5 Desktop (WebUI + Lazarus)",' +
+    '"framework":"BlaiseVue Desktop (WebUI + Lazarus)",' +
     '"compiler":"Free Pascal ' + {$I %FPCVERSION%} + '",' +
     '"arch":"' + {$I %FPCTARGETCPU%} + '",' +
     '"isDesktop":true' +
