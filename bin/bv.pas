@@ -85,8 +85,8 @@ windows,
 BaseUnix, termio,
 {$ENDIF}
 SysUtils, Classes, StrUtils, DateUtils, Process, Sockets,
-
-fphttpclient, openssl, opensslsockets, zipper, fpjson, jsonparser;
+fphttpclient, openssl, opensslsockets, zipper, fpjson, jsonparser,
+uBVUpgrade;
 
 // =====================================================================
 
@@ -4730,7 +4730,7 @@ forward;
 Procedure CmdCreate(Const ProjectName: String);
 
 Var 
-  Base, TemplatePath: string;
+  Base, TemplatePath, DownloadedDemoDir, DemoErr: string;
   Content, ArgLow, OldDir, BE, ExtToolName, ServerLabel, Suffix: string;
   IsLib, IsDemo, UseDelSafe, SkipNext, LazCreated, LazUpdated: Boolean;
   LicenseArg, RealProjectName, LazCleanName: string;
@@ -4849,9 +4849,16 @@ Begin
       Begin
         If Not DirectoryExists(TemplatePath) Then
           Begin
-            WriteLn('ERROR: demo-app showcase template not found in SDK root (',
-                    TemplatePath, ').');
-            Halt(1);
+            If Not TBVUpgrade.EnsureDemoAppTemplate(
+                 ExcludeTrailingPathDelimiter(GetSDKPath),
+                 TBVUpgrade.GetReleasesRepo, 'main',
+                 DownloadedDemoDir, DemoErr) Then
+              Begin
+                WriteLn('ERROR: demo-app showcase template not found locally and could not be downloaded.');
+                If DemoErr <> '' Then WriteLn('       ', DemoErr);
+                Halt(1);
+              End;
+            TemplatePath := IncludeTrailingPathDelimiter(DownloadedDemoDir);
           End;
 
         WriteLn('Scaffolding BlaiseVue demo showcase project: ', RealProjectName
@@ -34655,7 +34662,7 @@ End;
 Procedure CmdMormotUpgrade(TargetTag: String);
 
 Var 
-  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot: string;
+  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot, DlErr: string;
   GitAvail, HasBasePas: Boolean;
   RemoteOut, Line, TagName: string;
   TagLines, AvailableTags: TStringList;
@@ -34818,12 +34825,13 @@ Else
       End
     Else
       Begin
-        WriteLn(
-
-
-   '  [!] Git not detected on PATH. Please install Git or clone manually into: '
-                + DestDir);
-        Exit;
+        WriteLn('  [*] Git not detected; fetching mORMot 2 archive directly from GitHub...');
+        If Not TBVUpgrade.DownloadMormot2Archive(TargetTag, DestDir, DlErr) Then
+          Begin
+            WriteLn('  [ERROR] Failed to download mORMot 2: ', DlErr);
+            WriteLn('          You can clone manually into: ', DestDir);
+            Exit;
+          End;
       End;
   End;
 
@@ -35147,7 +35155,7 @@ End;
 Procedure CmdPas2jsUpgrade(TargetVer: String);
 
 Var 
-  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot: string;
+  VersionsDir, DestDir, UserChoice, GitCmd, ProjectRoot, DlErr: string;
   GitAvail: Boolean;
   RemoteOut, Line, TagName, DisplayVer: string;
   TagLines, AvailableVersions: TStringList;
@@ -35924,7 +35932,7 @@ Var
                                                                           string
   ;
   ProjectRoot, DeployDir, DistDir, ZipFile: string;
-  LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs: string;
+  LprFile, TargetExe, MormotPath, FpcCmd, PortArg, ExtraArgs, MormotAutoDir, MormotDlErr: string;
   IsRelease, HasZip, UserSpecifiedPort, IsFresh: Boolean;
   TargetPort, OrigPort: Word;
   EnvLines: TStringList;
@@ -36186,21 +36194,28 @@ Begin
            MormotPath := FindMormot2Path;
            If MormotPath = '' Then
              Begin
+               MormotAutoDir := IncludeTrailingPathDelimiter(GetGlobalVersionsPath('mormot')) + 'latest';
+               WriteLn('  [*] Synopse mORMot 2 not found locally; fetching on demand into:');
+               WriteLn('      ', MormotAutoDir);
+               If TBVUpgrade.DownloadMormot2Archive('latest', MormotAutoDir, MormotDlErr) Then
+                 MormotPath := FindMormot2Path
+               Else If MormotDlErr <> '' Then
+                 WriteLn('  [!] On-demand mORMot 2 download failed: ', MormotDlErr);
+             End;
+
+           If MormotPath = '' Then
+             Begin
                WriteLn('[!] Error: Synopse mORMot 2 installation not found.');
                WriteLn('    BlaiseVue searched:');
+               WriteLn('    - ~/.blaisevue/versions/mormot/latest');
                WriteLn('    - Environment variable MORMOT2_PATH');
                WriteLn('    - C:\ComponenteLazarus\mORMot2');
                WriteLn('    - Local config file server-mormot/mormot.path');
                WriteLn('    - ../mORMot2, /opt/mormot2, ~/mORMot2');
                WriteLn('');
                WriteLn('    To fix:');
-               WriteLn('    1. Set MORMOT2_PATH to your mORMot 2 directory:');
-               WriteLn('       set MORMOT2_PATH=C:\ComponenteLazarus\mORMot2');
-               WriteLn(
-
-
-'    2. Or create server-mormot/mormot.path containing your mORMot 2 directory path.'
-               );
+               WriteLn('    1. Run "bv mormot upgrade" to install mORMot 2 globally.');
+               WriteLn('    2. Or set MORMOT2_PATH / create server-mormot/mormot.path.');
                Halt(1);
              End;
 
@@ -42008,13 +42023,15 @@ Begin
   {$ENDIF}
 
     // Probe Git branch and commit if in repo
-    BranchName := 'Unknown';
+    BranchName := TBVUpgrade.GetConfiguredChannel;
     ShortHash := '';
     RemoteUrl := '';
     If DirectoryExists(SDKDir + DirectorySeparator + '.git') Then
       Begin
         ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD',
                        BranchName);
+        BranchName := Trim(BranchName);
+        If BranchName = '' Then BranchName := TBVUpgrade.GetConfiguredChannel;
         ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --short HEAD',
                        ShortHash);
         ExecCmdCapture('git -C "' + SDKDir + '" remote get-url origin',
@@ -42036,10 +42053,10 @@ Begin
     WriteLn('  Operating System:     ', OSName);
     WriteLn('  SDK Directory:        ', SDKDir);
     If ShortHash <> '' Then
-      WriteLn('  Git Channel:          ', BranchName, ' (Commit: ', ShortHash,
-              ')')
+      WriteLn('  Install Mode:         Git Source (branch: ', BranchName, ', commit: ',
+              ShortHash, ')')
     Else
-      WriteLn('  Git Channel:          Standalone installation');
+      WriteLn('  Install Mode:         Standalone Binary (channel: ', BranchName, ')');
     If RemoteUrl <> '' Then
       WriteLn('  Remote Origin:        ', RemoteUrl);
     WriteLn('');
@@ -42052,13 +42069,15 @@ Begin
               GitVer) > 0);
     If HasGit Then
       WriteLn('  [v] Git CLI:              ', GitVer, ' detected in PATH')
-    Else
+    Else If DirectoryExists(SDKDir + DirectorySeparator + '.git') Then
       Begin
         AllHealthy := False;
         WriteLn('  [X] Git CLI:              Not detected in PATH!');
-        WriteLn('      -> Required for framework updates and synchronization.');
+        WriteLn('      -> Required in Git source clones for "bv self-update --from-source".');
         WriteLn('      -> Install from: https://git-scm.com/');
-      End;
+      End
+    Else
+      WriteLn('  [!] Git CLI:              Not detected (Optional for binary releases; needed only for --from-source)');
 
     // FPC
     HasFpc := FindFPCExecutable(FpcExe, FpcVer, FpcSource);
@@ -42135,17 +42154,14 @@ Begin
         WriteLn('      ', Pas2Path);
       End;
 
-    // mORMot 2 (Bundled)
+    // mORMot 2 (On-demand / Bundled)
     MormotPath := FindMormot2Path;
     HasMormot := (MormotPath <> '') And DirectoryExists(MormotPath);
     If HasMormot Then
       WriteLn('  [v] Synopse mORMot 2:     Verified at ', ExtractRelativePath(
               SDKDir + DirectorySeparator, MormotPath))
     Else
-      Begin
-        AllHealthy := False;
-        WriteLn('  [X] Synopse mORMot 2:     Not found in vendor/mormot2!');
-      End;
+      WriteLn('  [!] Synopse mORMot 2:     Not installed (fetched on demand via "bv mormot upgrade" or "bv mormot run")');
 
     // DelSafe Compiler (Optional)
     HasDelsafec := FindDelsafecInfo(DelsafecExe, DelsafecVer, DelsafecSource);
@@ -42900,7 +42916,7 @@ End;
 End;
 
 // =====================================================================
-//  FRAMEWORK GIT AUTO-UPDATER (bv self-update)
+//  FRAMEWORK BINARY & GIT AUTO-UPDATER (bv self-update)
 // =====================================================================
 
 Procedure CmdSelfUpdate(Const ChannelOverride: String = '');
@@ -42909,155 +42925,163 @@ Var
   SDKDir, CurBranch, TargetBranch, GitVer, GitStatusOut, FilteredStatus, LineStr
   , FetchOut: string;
   DiffOut, BehindOut, AheadOut, CheckoutOut, PullOut, FpcExe, FpcVer, FpcSource:
-
-
-                                                                          string
-  ;
-  BinDir, CompCmd, CompOut, TargetBv, TargetNew, TargetBak, MoveCmd, DummyOut:
-
-
-                                                                          string
-  ;
+                                                                          string;
+  BinDir, CompCmd, CompOut, TargetBv, TargetNew, TargetBak, DummyOut: string;
   DiffList: TStringList;
   CheckOnly, ForceUpdate, NeedRecompile, HadLocalBinMod, SwitchedBranch:
-                                                                         Boolean
-  ;
+                                                                         Boolean;
+  Opts: TBVUpgradeOptions;
+  Arg, LowArg, NormChan: string;
   i: Integer;
 Begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
+  BinDir := SDKDir + DirectorySeparator + 'bin';
+  TBVUpgrade.CleanupStaleOldBinary(BinDir);
 
-  // 1. Verify Git availability
-  If Not (ExecCmdCapture('git --version', GitVer) And (Pos('git version', GitVer
-     ) > 0)) Then
-    Begin
-      WriteLn('');
-      WriteLn(
+  FillChar(Opts, SizeOf(Opts), 0);
+  Opts.Channel := Trim(ChannelOverride);
 
-
-      '========================================================================'
-      );
-      WriteLn('  [ERROR] Git was not detected on this system.');
-      WriteLn('  BlaiseVue requires Git for framework auto-updates.');
-      WriteLn('  Install Git from: https://git-scm.com/');
-      WriteLn(
-
-
-      '========================================================================'
-      );
-      WriteLn('');
-      Halt(1);
-    End;
-
-  // 2. Verify if SDK is a Git clone
-  If Not DirectoryExists(SDKDir + DirectorySeparator + '.git') Then
-    Begin
-      WriteLn('');
-      WriteLn(
-
-
-      '========================================================================'
-      );
-      WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository:');
-      WriteLn('  ', SDKDir);
-      WriteLn('  To use Git self-update, clone the official repository:');
-      WriteLn('    git clone https://github.com/affonsoelias/BlaiseVue.git');
-      WriteLn(
-
-
-      '========================================================================'
-      );
-      WriteLn('');
-      Halt(1);
-    End;
-
-  // 3. Parse arguments
+  // 1. Parse arguments
   CheckOnly := False;
   ForceUpdate := False;
-  TargetBranch := ChannelOverride;
   For i := 2 To ParamCount Do
     Begin
-      If (ParamStr(i) = '--check') Or (ParamStr(i) = '-c') Then
-        CheckOnly := True
-      Else If (ParamStr(i) = '--force') Or (ParamStr(i) = '-f') Then
-             ForceUpdate := True
-      Else If Copy(ParamStr(i), 1, 10) = '--channel=' Then
-             TargetBranch := LowerCase(Trim(Copy(ParamStr(i), 11, MaxInt)))
-      Else If Copy(ParamStr(i), 1, 9) = '--branch=' Then
-             TargetBranch := LowerCase(Trim(Copy(ParamStr(i), 10, MaxInt)))
-      Else If (ParamStr(i) = '-h') Or (ParamStr(i) = '--help') Then
-             Begin
-               WriteLn('');
-               WriteLn('  BlaiseVue Framework Git Auto-Updater');
-               WriteLn('  Usage: bv self-update [options]');
-               WriteLn('  Alias: bv upgrade-cli [options]');
-               WriteLn('');
-               WriteLn('  Options:');
-               WriteLn(
-
-
-            '    --check              Check for GitHub updates without applying'
-               );
-               WriteLn(
-
-
-                '    --force, -f          Force update and recompilation of CLI'
-               );
-               WriteLn(
-
-
-                   '    --channel=<name>     Switch to channel (main | develop)'
-               );
-               WriteLn('    --branch=<name>      Alias for --channel');
-               WriteLn('    -h, --help           Show this help message');
-               WriteLn('');
-               Halt(0);
-             End;
+      Arg := ParamStr(i);
+      LowArg := LowerCase(Trim(Arg));
+      If (LowArg = '--check') Or (LowArg = '-c') Then
+        Begin
+          CheckOnly := True;
+          Opts.CheckOnly := True;
+        End
+      Else If (LowArg = '--force') Or (LowArg = '-f') Then
+        Begin
+          ForceUpdate := True;
+          Opts.Force := True;
+        End
+      Else If LowArg = '--dry-run' Then
+             Opts.DryRun := True
+      Else If LowArg = '--nightly' Then
+             Opts.Nightly := True
+      Else If LowArg = '--binary' Then
+             Opts.BinaryMode := True
+      Else If LowArg = '--from-source' Then
+             Opts.FromSource := True
+      Else If LowArg = '--rollback' Then
+             Opts.Rollback := True
+      Else If LowArg = '--allow-unsigned' Then
+             Opts.AllowUnsigned := True
+      Else If Copy(LowArg, 1, 10) = '--channel=' Then
+             Opts.Channel := Trim(Copy(Arg, 11, MaxInt))
+      Else If Copy(LowArg, 1, 9) = '--branch=' Then
+             Opts.Channel := Trim(Copy(Arg, 10, MaxInt))
+      Else If Copy(LowArg, 1, 10) = '--version=' Then
+             Opts.TargetVersion := Trim(Copy(Arg, 11, MaxInt))
+      Else If (LowArg = '-h') Or (LowArg = '--help') Then
+        Begin
+          WriteLn('');
+          WriteLn('  BlaiseVue Framework Updater (Binary Releases & Git Source)');
+          WriteLn('  Usage: bv self-update [options]');
+          WriteLn('  Alias: bv upgrade-cli [options]');
+          WriteLn('');
+          WriteLn('  Options:');
+          WriteLn('    --check, -c          Check for updates without applying');
+          WriteLn('    --dry-run            Preview update steps without modifying files');
+          WriteLn('    --force, -f          Force update/recompilation even if up to date');
+          WriteLn('    --channel=<name>     Use channel: stable (main) or nightly (develop)');
+          WriteLn('    --nightly            Shortcut for --channel=nightly');
+          WriteLn('    --version=<tag>      Target a specific release tag (e.g. v0.1.0)');
+          WriteLn('    --binary             Download prebuilt GitHub Release binary (default outside Git)');
+          WriteLn('    --from-source        Force Git pull + local FPC build (contributors)');
+          WriteLn('    --rollback           Restore previous CLI & SDK backup');
+          WriteLn('    --allow-unsigned     Bypass SHA-256 checksum enforcement (unsafe)');
+          WriteLn('    -h, --help           Show this help message');
+          WriteLn('');
+          Halt(0);
+        End;
     End;
 
-  // Get current active branch
-  ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD',
-                 CurBranch);
-  CurBranch := Trim(CurBranch);
-  If TargetBranch = '' Then
-    TargetBranch := CurBranch;
-
-  If (TargetBranch <> 'main') And (TargetBranch <> 'develop') Then
+  If Opts.Rollback Then
     Begin
-      WriteLn('  [ERROR] Unknown channel: "', TargetBranch,
-              '". Choose "main" or "develop".');
+      CmdRollback;
+      Exit;
+    End;
+
+  // Use prebuilt binary releases by default on standalone installs or when --binary is requested
+  If Opts.BinaryMode Or
+     ((Not Opts.FromSource) And
+      (Not DirectoryExists(SDKDir + DirectorySeparator + '.git'))) Then
+    Begin
+      If Opts.Channel <> '' Then
+        Begin
+          NormChan := TBVUpgrade.NormalizeChannelName(Opts.Channel);
+          If NormChan = '' Then
+            Begin
+              WriteLn('  [ERROR] Unknown channel: "', Opts.Channel,
+                      '". Choose "stable" (main) or "nightly" (develop).');
+              Halt(1);
+            End;
+          Opts.Channel := NormChan;
+        End;
+      TBVUpgrade.HandleBinaryUpgrade(SDKDir, GetOwnExecutablePath, GetCliVersion, Opts);
+      Exit;
+    End;
+
+  // Source-mode update (Git clone)
+  If Not (ExecCmdCapture('git --version', GitVer) And (Pos('git version', GitVer) > 0)) Then
+    Begin
+      WriteLn('');
+      WriteLn('========================================================================');
+      WriteLn('  [ERROR] Git was not detected on PATH for --from-source update.');
+      WriteLn('  Tip: Run "bv self-update --binary" to download prebuilt binaries without Git.');
+      WriteLn('========================================================================');
+      WriteLn('');
+      Halt(1);
+    End;
+
+  // Map channel aliases onto the single trunk branch 'main'
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD', CurBranch);
+  CurBranch := Trim(CurBranch);
+  TargetBranch := LowerCase(Trim(Opts.Channel));
+  If (TargetBranch = '') Or (TargetBranch = 'stable') Or (TargetBranch = 'main') Then
+    TargetBranch := 'main'
+  Else If (TargetBranch = 'nightly') Or (TargetBranch = 'develop') Or (TargetBranch = 'dev') Then
+    Begin
+      WriteLn('  [INFO] BlaiseVue uses the unified "main" trunk; syncing from "main".');
+      TargetBranch := 'main';
+    End
+  Else
+    Begin
+      WriteLn('  [ERROR] Unknown channel: "', Opts.Channel,
+              '". Choose "stable" (main) or "nightly" (develop).');
       Halt(1);
     End;
 
   WriteLn('');
-  WriteLn(
-
-
-        '======================================================================'
-  );
-  WriteLn('  BlaiseVue Framework Auto-Updater (bv self-update)');
-  WriteLn(
-
-
-        '======================================================================'
-  );
+  WriteLn('======================================================================');
+  WriteLn('  BlaiseVue Source Auto-Updater (bv self-update --from-source)');
+  WriteLn('======================================================================');
   WriteLn('  SDK Directory:    ', SDKDir);
-  WriteLn('  Current Channel:  ', CurBranch);
-  WriteLn('  Target Channel:   ', TargetBranch);
+  WriteLn('  Current Branch:   ', CurBranch);
+  WriteLn('  Target Branch:    ', TargetBranch);
   If CheckOnly Then
     WriteLn('  Mode:             CHECK ONLY (--check)')
+  Else If Opts.DryRun Then
+    WriteLn('  Mode:             DRY RUN (--dry-run)')
   Else
-    WriteLn('  Mode:             SYNC & UPDATE');
-  WriteLn(
-
-
-        '======================================================================'
-  );
+    WriteLn('  Mode:             SYNC & REBUILD');
+  WriteLn('======================================================================');
   WriteLn('');
 
+  If Opts.DryRun Then
+    Begin
+      WriteLn('  [DRY-RUN] Source update plan:');
+      WriteLn('    1. git -C "', SDKDir, '" fetch origin');
+      WriteLn('    2. git -C "', SDKDir, '" pull origin ', TargetBranch);
+      WriteLn('    3. Backup ', BinDir, ' binary -> bv.bak and recompile bv.pas');
+      Exit;
+    End;
 
-
-
-// 4. Safety check for dirty workspace (ignoring compiled CLI binary, untracked files & build logs)
+// Safety check for dirty workspace (ignoring compiled CLI binary & logs)
   ExecCmdCapture('git -C "' + SDKDir + '" status --porcelain', GitStatusOut);
   FilteredStatus := '';
   HadLocalBinMod := False;
@@ -43068,16 +43092,12 @@ Begin
       Begin
         LineStr := StringReplace(Trim(DiffList[i]), '\', '/', [rfReplaceAll]);
         If LineStr = '' Then Continue;
-
-
-
-// Untracked (??) or ignored (!!) files are not uncommitted tracked modifications
         If (Copy(LineStr, 1, 2) = '??') Or (Copy(LineStr, 1, 2) = '!!') Then
           Continue;
         If (Pos('bin/bv.o', LineStr) > 0) Or
            (Pos('bin/bv.exe', LineStr) > 0) Or
-           ((Pos('bin/bv', LineStr) > 0) And (Pos('bin/bv.pas', LineStr) = 0))
-           Or
+           ((Pos('bin/bv', LineStr) > 0) And (Pos('bin/bv.pas', LineStr) = 0) And
+            (Pos('bin/uBVUpgrade', LineStr) = 0)) Or
            (Pos('bin/bv_old', LineStr) > 0) Or
            (Pos('compile_log.txt', LineStr) > 0) Or
            (Pos('compile_err.txt', LineStr) > 0) Then
@@ -43085,305 +43105,196 @@ Begin
             HadLocalBinMod := True;
             Continue;
           End;
-        If FilteredStatus <> '' Then FilteredStatus := FilteredStatus +
-                                                       LineEnding;
+        If FilteredStatus <> '' Then FilteredStatus := FilteredStatus + LineEnding;
         FilteredStatus := FilteredStatus + DiffList[i];
       End;
   Finally
     DiffList.Free;
-End;
-GitStatusOut := FilteredStatus;
-If (Trim(GitStatusOut) <> '') And (Not CheckOnly) Then
-  Begin
-    If ForceUpdate Then
-      Begin
-        WriteLn(
+  End;
+  GitStatusOut := FilteredStatus;
+  If (Trim(GitStatusOut) <> '') And (Not CheckOnly) Then
+    Begin
+      If ForceUpdate Then
+        Begin
+          WriteLn('  [INFO] Local uncommitted changes detected (--force resetting)...');
+          ExecCmdCapture('git -C "' + SDKDir + '" checkout -- .', DummyOut);
+          HadLocalBinMod := True;
+        End
+      Else
+        Begin
+          WriteLn('  [WARNING] You have uncommitted local changes in BlaiseVue:');
+          WriteLn(GitStatusOut);
+          WriteLn('  Run "git stash" or commit first, or use "bv self-update --force".');
+          Halt(1);
+        End;
+    End
+  Else If (Trim(GitStatusOut) <> '') And CheckOnly Then
+    WriteLn('  [INFO] Local workspace has uncommitted changes.');
 
+  WriteLn('  Connecting to GitHub (affonsoelias/BlaiseVue)...');
+  ExecCmdCapture('git -C "' + SDKDir + '" fetch origin', FetchOut);
 
-       '  [INFO] Local uncommitted changes detected, but --force was specified.'
-        );
-        WriteLn(
-
-
-'         Resetting local modifications to ensure a clean update from GitHub...'
-        );
-        ExecCmdCapture('git -C "' + SDKDir + '" checkout -- .', DummyOut);
-        HadLocalBinMod := True;
-      End
-    Else
-      Begin
-        WriteLn(
-
-
-   '  [WARNING] You have uncommitted local changes in the BlaiseVue repository:'
-        );
-        WriteLn(GitStatusOut);
-        WriteLn(
-
-
-'  Run "git stash" or commit before updating to avoid overwriting your changes,'
-        );
-        WriteLn('  or run "bv self-update --force" to bypass and force update.')
-        ;
-        Halt(1);
-      End;
-  End
-Else If (Trim(GitStatusOut) <> '') And CheckOnly Then
-       Begin
-         WriteLn('  [INFO] Local workspace has uncommitted changes.');
-       End;
-
-// 5. Fetch from origin
-WriteLn('  Connecting to GitHub (affonsoelias/BlaiseVue)...');
-ExecCmdCapture('git -C "' + SDKDir + '" fetch origin', FetchOut);
-
-// 6. Diff and commit tracking
-BehindOut := '0';
-AheadOut := '0';
-ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count HEAD..origin/' +
-               TargetBranch, BehindOut);
-ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count origin/' + TargetBranch
-               + '..HEAD', AheadOut);
-BehindOut := Trim(BehindOut);
-AheadOut := Trim(AheadOut);
-If TargetBranch = CurBranch Then
-  Begin
-    // Check if GitHub has zero incoming commits
-    If ((BehindOut = '0') Or (BehindOut = '')) And (Not ForceUpdate) Then
-      Begin
-        WriteLn('  [v] BlaiseVue is already up to date with GitHub.');
-        If (AheadOut <> '0') And (AheadOut <> '') Then
-          WriteLn('      (Local branch has ' + AheadOut + ' unpushed commit' +
-                  IfThen(AheadOut <> '1', 's', '') + ' ahead of origin/' +
-          TargetBranch + ')');
-        WriteLn(
-
-
-        '======================================================================'
-        );
-        WriteLn('');
-        Exit;
-      End;
-
-    // Incoming files from GitHub using three-dot diff (merge-base to origin)
-    ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD...origin/' +
-                   TargetBranch, DiffOut);
-  End
-Else
-  Begin
-    // Switching channel (e.g. develop -> main)
+  BehindOut := '0';
+  AheadOut := '0';
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count HEAD..origin/' +
+                 TargetBranch, BehindOut);
+  ExecCmdCapture('git -C "' + SDKDir + '" rev-list --count origin/' + TargetBranch
+                 + '..HEAD', AheadOut);
+  BehindOut := Trim(BehindOut);
+  AheadOut := Trim(AheadOut);
+  If TargetBranch = CurBranch Then
+    Begin
+      If ((BehindOut = '0') Or (BehindOut = '')) And (Not ForceUpdate) Then
+        Begin
+          WriteLn('  [v] BlaiseVue source is already up to date with origin/', TargetBranch, '.');
+          If (AheadOut <> '0') And (AheadOut <> '') Then
+            WriteLn('      (Local branch has ' + AheadOut + ' unpushed commit' +
+                    IfThen(AheadOut <> '1', 's', '') + ' ahead of origin/' + TargetBranch + ')');
+          WriteLn('======================================================================');
+          WriteLn('');
+          Exit;
+        End;
+      ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD...origin/' +
+                     TargetBranch, DiffOut);
+    End
+  Else
     ExecCmdCapture('git -C "' + SDKDir + '" diff --name-only HEAD origin/' +
                    TargetBranch, DiffOut);
+
+  If (BehindOut <> '0') And (BehindOut <> '') Then
+    WriteLn('  [+] New commits found on GitHub: ', BehindOut);
+
+  WriteLn('  [+] Modified files on GitHub:');
+  DiffList := TStringList.Create;
+  Try
+    DiffList.Text := DiffOut;
+    For i := 0 To DiffList.Count - 1 Do
+      If Trim(DiffList[i]) <> '' Then
+        WriteLn('      * ' + Trim(DiffList[i]));
+  Finally
+    DiffList.Free;
   End;
 
-If (BehindOut <> '0') And (BehindOut <> '') Then
-  WriteLn('  [+] New commits found on GitHub: ', BehindOut);
+  If CheckOnly Then
+    Begin
+      WriteLn('');
+      WriteLn('  [TIP] Run "bv self-update --from-source" to apply changes.');
+      WriteLn('======================================================================');
+      WriteLn('');
+      Exit;
+    End;
 
-WriteLn('  [+] Modified files on GitHub:');
-DiffList := TStringList.Create;
-Try
-  DiffList.Text := DiffOut;
-  For i := 0 To DiffList.Count - 1 Do
-    If Trim(DiffList[i]) <> '' Then
-      WriteLn('      * ' + Trim(DiffList[i]));
-Finally
-  DiffList.Free;
-End;
-
-If CheckOnly Then
-  Begin
-    WriteLn('');
-    WriteLn('  [TIP] Run "bv self-update" to download and apply changes.');
-    WriteLn(
-
-
-        '======================================================================'
-    );
-    WriteLn('');
-    Exit;
-  End;
-
-
-
-
-// Pre-update safety: always ensure a persistent backup of the current working binary exists
-BinDir := SDKDir + DirectorySeparator + 'bin';
-SwitchedBranch := (TargetBranch <> CurBranch);
+  SwitchedBranch := (TargetBranch <> CurBranch);
   {$IFDEF WINDOWS}
-TargetBv := BinDir + DirectorySeparator + 'bv.exe';
-ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-               '" && if exist bv.exe copy /y bv.exe bv.bak.exe > nul 2>&1',
-               DummyOut);
+  TargetBv := BinDir + DirectorySeparator + 'bv.exe';
+  ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
+                 '" && if exist bv.exe copy /y bv.exe bv.bak.exe > nul 2>&1', DummyOut);
   {$ELSE}
-TargetBv := BinDir + DirectorySeparator + 'bv';
-ExecCmdCapture('cd ''' + BinDir +
-               ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi',
-               DummyOut);
+  TargetBv := BinDir + DirectorySeparator + 'bv';
+  ExecCmdCapture('cd ''' + BinDir +
+                 ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi', DummyOut);
   {$ENDIF}
 
-// 7. Checkout branch if switching
-If SwitchedBranch Then
-  Begin
-    WriteLn('  [+] Switching channel: ' + CurBranch + ' -> ' + TargetBranch +
-            '...');
-    ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch,
-                   CheckoutOut);
-    ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD',
-                   CurBranch);
-    CurBranch := Trim(CurBranch);
-    If CurBranch <> TargetBranch Then
-      ExecCmdCapture('git -C "' + SDKDir + '" checkout -f ' + TargetBranch,
-                     CheckoutOut);
-  End;
+  If SwitchedBranch Then
+    Begin
+      WriteLn('  [+] Switching branch: ' + CurBranch + ' -> ' + TargetBranch + '...');
+      ExecCmdCapture('git -C "' + SDKDir + '" checkout ' + TargetBranch, CheckoutOut);
+    End;
 
-// 8. Pull updates (or reset --hard if force update requested)
-If ForceUpdate Then
-  Begin
-    WriteLn('  [+] Force synchronizing files (git reset --hard origin/' +
-            TargetBranch + ')...');
-    ExecCmdCapture('git -C "' + SDKDir + '" reset --hard origin/' + TargetBranch
-                   , PullOut);
-  End
-Else
-  Begin
-    WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch +
-            ')...');
-    ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch,
-                   PullOut);
-    If (Pos('error:', LowerCase(PullOut)) > 0) Or (Pos('erro:', LowerCase(
-       PullOut)) > 0) Or (Pos('abortando', LowerCase(PullOut)) > 0) Or (Pos(
-       'aborting', LowerCase(PullOut)) > 0) Then
-      Begin
-        WriteLn('  [ERROR] Git pull failed with conflicts or unmerged files:');
-        WriteLn('  ' + Trim(PullOut));
-        WriteLn(
+  If ForceUpdate Then
+    Begin
+      WriteLn('  [+] Force synchronizing files (git reset --hard origin/' + TargetBranch + ')...');
+      ExecCmdCapture('git -C "' + SDKDir + '" reset --hard origin/' + TargetBranch, PullOut);
+    End
+  Else
+    Begin
+      WriteLn('  [+] Synchronizing files (git pull origin ' + TargetBranch + ')...');
+      ExecCmdCapture('git -C "' + SDKDir + '" pull origin ' + TargetBranch, PullOut);
+      If (Pos('error:', LowerCase(PullOut)) > 0) Or (Pos('erro:', LowerCase(PullOut)) > 0) Or
+         (Pos('abortando', LowerCase(PullOut)) > 0) Or (Pos('aborting', LowerCase(PullOut)) > 0) Then
+        Begin
+          WriteLn('  [ERROR] Git pull failed with conflicts:');
+          WriteLn('  ' + Trim(PullOut));
+          WriteLn('  Run "bv self-update --force" to overwrite conflicts.');
+          Halt(1);
+        End;
+    End;
 
-
-       '  Run "bv self-update --force" to overwrite conflicts and force update.'
-        );
-        Halt(1);
-      End;
-  End;
-
-// Ensure local working binary remains present even if Git branch transition removed tracked binaries
   {$IFDEF WINDOWS}
-ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-'" && if not exist bv.exe if exist bv.bak.exe copy /y bv.bak.exe bv.exe > nul 2>&1'
-               , DummyOut);
+  ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
+    '" && if not exist bv.exe if exist bv.bak.exe copy /y bv.bak.exe bv.exe > nul 2>&1', DummyOut);
   {$ELSE}
-ExecCmdCapture('cd ''' + BinDir +
-''' && if [ ! -f bv ] && [ -f bv.bak ]; then cp -f bv.bak bv && chmod +x bv 2>/dev/null; fi'
-               , DummyOut);
+  ExecCmdCapture('cd ''' + BinDir +
+    ''' && if [ ! -f bv ] && [ -f bv.bak ]; then cp -f bv.bak bv && chmod +x bv 2>/dev/null; fi', DummyOut);
   {$ENDIF}
 
-// 9. Recompile binary if bv.pas was updated, switched branch, binary missing, or local mod
-NeedRecompile := ForceUpdate Or SwitchedBranch Or (Not FileExists(TargetBv)) Or
-                 (Pos('bin/bv.pas', DiffOut) > 0) Or
-                 (Pos('bin\bv.pas', DiffOut) > 0) Or HadLocalBinMod;
-If NeedRecompile Then
-  Begin
-    WriteLn(
+  NeedRecompile := ForceUpdate Or SwitchedBranch Or (Not FileExists(TargetBv)) Or
+                   (Pos('bin/bv.pas', DiffOut) > 0) Or
+                   (Pos('bin\bv.pas', DiffOut) > 0) Or
+                   (Pos('uBVUpgrade.pas', DiffOut) > 0) Or HadLocalBinMod;
+  If NeedRecompile Then
+    Begin
+      WriteLn('  [BUILD] CLI source updated. Recompiling with Free Pascal...');
+      If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
+        Begin
+          WriteLn('  [WARNING] FPC not found to automatically recompile CLI.');
+          WriteLn('            Install Lazarus/FPC and run "bv doctor" to verify.');
+          Exit;
+        End;
 
-
-        '  [BUILD] CLI source code was updated. Recompiling with Free Pascal...'
-    );
-    If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
-      Begin
-        WriteLn('  [WARNING] FPC not found to automatically recompile CLI.');
-        WriteLn('            Install Lazarus/FPC and run "bv doctor" to verify.'
-        );
-        Exit;
-      End;
-
-    BinDir := SDKDir + DirectorySeparator + 'bin';
-    {$IFDEF WINDOWS}
-    TargetNew := BinDir + DirectorySeparator + 'bv_new.exe';
-    TargetBv := BinDir + DirectorySeparator + 'bv.exe';
-    TargetBak := BinDir + DirectorySeparator + 'bv.bak.exe';
-    // Clean any previous temporary binary
-    ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-                   '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
-    // Compile into isolated temporary target (bv_new.exe)
-    CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe +
-               '" -MObjFPC -Sh -O2 -obv_new.exe bv.pas';
-    ExecCmdCapture(CompCmd, CompOut);
-    {$ELSE}
-    TargetNew := BinDir + DirectorySeparator + 'bv_new';
-    TargetBv := BinDir + DirectorySeparator + 'bv';
-    TargetBak := BinDir + DirectorySeparator + 'bv.bak';
-    // Clean any previous temporary binary
-    ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null', DummyOut
-    );
-    // Compile into isolated temporary target (bv_new)
-    CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe +
-               ''' -MObjFPC -Sh -O2 -obv_new bv.pas && chmod +x bv_new';
-    ExecCmdCapture(CompCmd, CompOut);
-    {$ENDIF}
-
-    If FileExists(TargetNew) Then
-      Begin
-
-
-
- // Atomic promotion: current binary backed up to bv.bak, bv_new becomes live bv
       {$IFDEF WINDOWS}
-        ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-
-
-'" && if exist bv.exe (del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1 & copy /y bv_old.exe bv.bak.exe > nul 2>&1 & del /f /q bv_old.exe > nul 2>&1) & move /y bv_new.exe bv.exe > nul 2>&1'
-                       , DummyOut);
+      TargetNew := BinDir + DirectorySeparator + 'bv_new.exe';
+      TargetBv := BinDir + DirectorySeparator + 'bv.exe';
+      TargetBak := BinDir + DirectorySeparator + 'bv.bak.exe';
+      ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
+      CompCmd := 'cmd.exe /c cd /d "' + BinDir + '" && "' + FpcExe + '" -MObjFPC -Sh -O2 -obv_new.exe bv.pas';
+      ExecCmdCapture(CompCmd, CompOut);
       {$ELSE}
-        ExecCmdCapture('cd ''' + BinDir +
-
-
-''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi && mv -f bv_new bv && chmod +x bv'
-                       , DummyOut);
+      TargetNew := BinDir + DirectorySeparator + 'bv_new';
+      TargetBv := BinDir + DirectorySeparator + 'bv';
+      TargetBak := BinDir + DirectorySeparator + 'bv.bak';
+      ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null', DummyOut);
+      CompCmd := 'cd ''' + BinDir + ''' && ''' + FpcExe + ''' -MObjFPC -Sh -O2 -obv_new bv.pas && chmod +x bv_new';
+      ExecCmdCapture(CompCmd, CompOut);
       {$ENDIF}
-        WriteLn('  [SUCCESS] Binary ' + ExtractFileName(TargetBv) +
-        ' recompiled and updated successfully!');
-        WriteLn('  [BACKUP] Previous binary safely preserved at ' +
-                ExtractFileName(TargetBak));
-      End
-    Else
-      Begin
-        WriteLn('  [ERROR] CLI recompilation failed:');
-        WriteLn(CompOut);
-        // Clean up failed artifacts and ensure current binary is intact
-      {$IFDEF WINDOWS}
-        ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-                       '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
-        If Not FileExists(TargetBv) And FileExists(TargetBak) Then
+
+      If FileExists(TargetNew) Then
+        Begin
+          {$IFDEF WINDOWS}
           ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-                         '" && copy /y bv.bak.exe bv.exe > nul 2>&1', DummyOut);
-      {$ELSE}
-        ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null',
-                       DummyOut);
-        If Not FileExists(TargetBv) And FileExists(TargetBak) Then
+            '" && if exist bv.exe (del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1 & copy /y bv_old.exe bv.bak.exe > nul 2>&1) & move /y bv_new.exe bv.exe > nul 2>&1',
+            DummyOut);
+          {$ELSE}
           ExecCmdCapture('cd ''' + BinDir +
-                         ''' && cp -f bv.bak bv && chmod +x bv 2>/dev/null',
-                         DummyOut);
-      {$ENDIF}
-        WriteLn(
+            ''' && if [ -f bv ]; then cp -f bv bv.bak 2>/dev/null; fi && mv -f bv_new bv && chmod +x bv',
+            DummyOut);
+          {$ENDIF}
+          WriteLn('  [SUCCESS] Binary ', ExtractFileName(TargetBv), ' recompiled and updated!');
+          WriteLn('  [BACKUP]  Previous binary preserved at ', ExtractFileName(TargetBak));
+        End
+      Else
+        Begin
+          WriteLn('  [ERROR] CLI recompilation failed:');
+          WriteLn(CompOut);
+          {$IFDEF WINDOWS}
+          ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && del /f /q bv_new.exe > nul 2>&1', DummyOut);
+          If Not FileExists(TargetBv) And FileExists(TargetBak) Then
+            ExecCmdCapture('cmd.exe /c cd /d "' + BinDir + '" && copy /y bv.bak.exe bv.exe > nul 2>&1', DummyOut);
+          {$ELSE}
+          ExecCmdCapture('cd ''' + BinDir + ''' && rm -f bv_new 2>/dev/null', DummyOut);
+          If Not FileExists(TargetBv) And FileExists(TargetBak) Then
+            ExecCmdCapture('cd ''' + BinDir + ''' && cp -f bv.bak bv && chmod +x bv 2>/dev/null', DummyOut);
+          {$ENDIF}
+          WriteLn('  [SAFETY] Existing binary preserved intact.');
+          Halt(1);
+        End;
+    End;
 
-
-'  [SAFETY] Existing binary preserved intact. Your CLI remains fully functional.'
-        );
-        WriteLn(
-
-
-'  [HINT] Run "bv rollback" anytime if you need to revert to the previous binary.'
-        );
-      End;
-  End;
-
-WriteLn('');
-WriteLn('======================================================================'
-);
-WriteLn('  [v] BlaiseVue successfully updated on channel "' + TargetBranch +
-        '"!');
-WriteLn('======================================================================'
-);
-WriteLn('');
+  WriteLn('');
+  WriteLn('======================================================================');
+  WriteLn('  [v] BlaiseVue source updated cleanly on "', TargetBranch, '"!');
+  WriteLn('======================================================================');
+  WriteLn('');
 End;
 
 // =====================================================================
@@ -43393,108 +43304,116 @@ End;
 Procedure CmdChannel;
 
 Var 
-  SDKDir, CurBranch, ShortHash, RemoteUrl, SubCmd, TargetBranch: string;
+  SDKDir, SubCmd, ArgVal, NormChan, CurChan, SourceLabel, ConfigPath, ErrMsg, ModeStr: string;
+  ApplyNow: Boolean;
+  i: Integer;
 Begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
-  If Not DirectoryExists(SDKDir + DirectorySeparator + '.git') Then
+  SubCmd := '';
+  ArgVal := '';
+  ApplyNow := False;
+
+  For i := 2 To ParamCount Do
     Begin
-      WriteLn('  [ERROR] The BlaiseVue directory is not a Git repository.');
+      If (LowerCase(ParamStr(i)) = '--apply') Or (LowerCase(ParamStr(i)) = '--update') Then
+        ApplyNow := True
+      Else If SubCmd = '' Then
+        SubCmd := LowerCase(Trim(ParamStr(i)))
+      Else If ArgVal = '' Then
+        ArgVal := Trim(ParamStr(i));
+    End;
+
+  If (SubCmd = '-h') Or (SubCmd = '--help') Or (SubCmd = 'help') Then
+    Begin
+      WriteLn('');
+      WriteLn('  Usage: bv channel [stable | nightly | show | use <name> | set <name>] [--apply]');
+      WriteLn('');
+      WriteLn('  Channels:');
+      WriteLn('    stable   (alias: main)            Official tagged GitHub Releases (v*.*.*)');
+      WriteLn('    nightly  (aliases: develop, dev)  Rolling pre-release builds from main');
+      WriteLn('');
+      WriteLn('  Options:');
+      WriteLn('    --apply, --update   Run "bv self-update" immediately after switching channel');
+      WriteLn('    BLAISEVUE_CHANNEL   Environment variable to temporarily override channel');
+      WriteLn('');
+      Exit;
+    End;
+
+  If (SubCmd = '') Or (SubCmd = 'show') Or (SubCmd = 'list') Or (SubCmd = 'status') Then
+    Begin
+      CurChan := TBVUpgrade.GetConfiguredChannel(SourceLabel);
+      ConfigPath := TBVUpgrade.GetConfigFilePath;
+      If ConfigPath = '' Then ConfigPath := '~/.blaisevue/config.json';
+      If DirectoryExists(SDKDir + DirectorySeparator + '.git') Then
+        ModeStr := 'Git Source Clone (supports --from-source or --binary)'
+      Else
+        ModeStr := 'Standalone Binary (GitHub Releases)';
+
+      WriteLn('');
+      WriteLn('======================================================================');
+      WriteLn('  BlaiseVue Release Channel Configuration');
+      WriteLn('======================================================================');
+      WriteLn('  Install Mode   : ', ModeStr);
+      WriteLn('  SDK Directory  : ', SDKDir);
+      WriteLn('  Active Channel : ', CurChan, ' (source: ', SourceLabel, ')');
+      WriteLn('  Config File    : ', ConfigPath);
+      WriteLn('');
+      WriteLn('  Available Channels:');
+      If CurChan = 'stable' Then
+        WriteLn('    * stable   [ACTIVE] Official SemVer releases (v*.*.*)  [alias: main]')
+      Else
+        WriteLn('      stable            Official SemVer releases (v*.*.*)  [alias: main]');
+      If CurChan = 'nightly' Then
+        WriteLn('    * nightly  [ACTIVE] Rolling pre-releases from main     [aliases: develop, dev]')
+      Else
+        WriteLn('      nightly           Rolling pre-releases from main     [aliases: develop, dev]');
+      WriteLn('');
+      WriteLn('  To switch channels:');
+      WriteLn('    bv channel use nightly   # Switch to nightly pre-releases');
+      WriteLn('    bv channel use stable    # Switch to stable releases');
+      WriteLn('======================================================================');
+      WriteLn('');
+      Exit;
+    End;
+
+  If (SubCmd = 'use') Or (SubCmd = 'switch') Or (SubCmd = 'set') Then
+    Begin
+      If ArgVal = '' Then
+        Begin
+          WriteLn('Usage: bv channel use <stable|nightly|main|develop>');
+          Halt(1);
+        End;
+    End
+  Else
+    ArgVal := SubCmd;
+
+  NormChan := TBVUpgrade.NormalizeChannelName(ArgVal);
+  If NormChan = '' Then
+    Begin
+      WriteLn('  [ERROR] Invalid channel: "', ArgVal,
+              '". Choose "stable" (main) or "nightly" (develop).');
       Halt(1);
     End;
 
-  SubCmd := '';
-  If ParamCount >= 2 Then
-    SubCmd := LowerCase(Trim(ParamStr(2)));
-
-  If (SubCmd = 'use') Or (SubCmd = 'switch') Then
+  If Not TBVUpgrade.SetConfiguredChannel(NormChan, ErrMsg) Then
     Begin
-      If ParamCount < 3 Then
-        Begin
-          WriteLn('Usage: bv channel use <main|develop>');
-          Halt(1);
-        End;
-      TargetBranch := LowerCase(Trim(ParamStr(3)));
-      If (TargetBranch <> 'main') And (TargetBranch <> 'develop') Then
-        Begin
-          WriteLn('  [ERROR] Invalid channel: "', TargetBranch,
-                  '". Choose "main" or "develop".');
-          Halt(1);
-        End;
-
-      // Run self-update targeting this branch
-      CmdSelfUpdate(TargetBranch);
-    End
-  Else
-    Begin
-      ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --abbrev-ref HEAD',
-                     CurBranch);
-      CurBranch := Trim(CurBranch);
-      ExecCmdCapture('git -C "' + SDKDir + '" rev-parse --short HEAD', ShortHash
-      );
-      ExecCmdCapture('git -C "' + SDKDir + '" remote get-url origin', RemoteUrl)
-      ;
-      WriteLn('');
-      WriteLn(
-
-
-        '======================================================================'
-      );
-      WriteLn('  BlaiseVue Framework Channels (Git)');
-      WriteLn(
-
-
-        '======================================================================'
-      );
-      WriteLn('  Repository:       ', RemoteUrl);
-      WriteLn('  SDK Directory:    ', SDKDir);
-      WriteLn('');
-      WriteLn('  Available Channels:');
-      If CurBranch = 'main' Then
-        Begin
-          WriteLn(
-
-
-      '    * main       [ACTIVE] Stable release channel (End user / Production)'
-          );
-          WriteLn(
-
-
-'      develop    [Available] Development channel (Contributors / Bleeding-edge)'
-          );
-        End
-      Else If CurBranch = 'develop' Then
-             Begin
-               WriteLn(
-
-
-   '      main       [Available] Stable release channel (End user / Production)'
-               );
-               WriteLn(
-
-
-  '    * develop    [ACTIVE] Development channel (Contributors / Bleeding-edge)'
-               );
-             End
-      Else
-        Begin
-          WriteLn('    * ' + CurBranch + ' [ACTIVE - Custom]');
-          WriteLn('      main       [Available] Stable release channel');
-          WriteLn('      develop    [Available] Development channel');
-        End;
-      WriteLn('');
-      WriteLn('  Current Commit:   ', ShortHash);
-      WriteLn('');
-      WriteLn('  To switch channels:');
-      WriteLn('    bv channel use develop   # Switch to development channel');
-      WriteLn('    bv channel use main      # Switch to stable release channel')
-      ;
-      WriteLn(
-
-
-        '======================================================================'
-      );
-      WriteLn('');
+      WriteLn('  [ERROR] ', ErrMsg);
+      Halt(1);
     End;
+
+  ConfigPath := TBVUpgrade.GetConfigFilePath;
+  WriteLn('');
+  WriteLn('  [SUCCESS] Active release channel set to: ', NormChan);
+  If Not SameText(Trim(ArgVal), NormChan) Then
+    WriteLn('            (Normalized alias "', ArgVal, '" -> "', NormChan, '")');
+  If ConfigPath <> '' Then
+    WriteLn('            Saved configuration to: ', ConfigPath);
+
+  If ApplyNow Then
+    CmdSelfUpdate(NormChan)
+  Else
+    WriteLn('  Run "bv self-update" to update from the ', NormChan, ' channel.');
+  WriteLn('');
 End;
 
 // =====================================================================
@@ -43504,78 +43423,18 @@ End;
 Procedure CmdRollback;
 
 Var 
-  SDKDir, BinDir, TargetBv, TargetBak, DummyOut, VerOut: string;
+  SDKDir: string;
+  DryRun: Boolean;
+  i: Integer;
 Begin
   SDKDir := ExcludeTrailingPathDelimiter(GetSDKPath);
-  BinDir := SDKDir + DirectorySeparator + 'bin';
-  TargetBv := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.exe'{$ELSE}'bv'
-              {$ENDIF};
-  TargetBak := BinDir + DirectorySeparator + {$IFDEF WINDOWS}'bv.bak.exe'{$ELSE}
-               'bv.bak'{$ENDIF};
+  DryRun := False;
+  For i := 2 To ParamCount Do
+    If LowerCase(Trim(ParamStr(i))) = '--dry-run' Then
+      DryRun := True;
 
-  WriteLn('');
-  WriteLn(
-
-
-        '======================================================================'
-  );
-  WriteLn('  BlaiseVue Binary Rollback');
-  WriteLn(
-
-
-        '======================================================================'
-  );
-
-  If Not FileExists(TargetBak) Then
-    Begin
-      WriteLn('  [ERROR] No backup binary found at:');
-      WriteLn('          ' + TargetBak);
-      WriteLn(
-
-
-        '  A backup (bv.bak) is automatically created whenever "bv self-update"'
-      );
-      WriteLn('  or "bv channel use" recompiles the CLI.');
-      WriteLn(
-
-
-        '======================================================================'
-      );
-      WriteLn('');
-      Halt(1);
-    End;
-
-  WriteLn('  [+] Restoring CLI binary from backup: ' + ExtractFileName(TargetBak
-  ) + '...');
-  {$IFDEF WINDOWS}
-  ExecCmdCapture('cmd.exe /c cd /d "' + BinDir +
-
-
-'" && del /f /q bv_old.exe > nul 2>&1 & move /y bv.exe bv_old.exe > nul 2>&1 & copy /y bv.bak.exe bv.exe > nul 2>&1 & del /f /q bv_old.exe > nul 2>&1'
-                 , DummyOut);
-  {$ELSE}
-  ExecCmdCapture('cd ''' + BinDir +
-                 ''' && cp -f bv.bak bv && chmod +x bv 2>/dev/null', DummyOut);
-  {$ENDIF}
-
-  If FileExists(TargetBv) Then
-    Begin
-      WriteLn('  [SUCCESS] Successfully restored binary to previous version!');
-      ExecCmdCapture('"' + TargetBv + '" --version', VerOut);
-      If Trim(VerOut) <> '' Then
-        WriteLn('  Active CLI: ' + Trim(VerOut));
-    End
-  Else
-    Begin
-      WriteLn('  [ERROR] Failed to restore backup binary.');
-      Halt(1);
-    End;
-  WriteLn(
-
-
-        '======================================================================'
-  );
-  WriteLn('');
+  If Not TBVUpgrade.HandleBinaryRollback(SDKDir, DryRun) Then
+    Halt(1);
 End;
 
 // =====================================================================
@@ -43798,8 +43657,7 @@ Procedure CmdFrameworkVersions;
 
 Var 
   VersionsDir, ActiveVer, SdkDir, BranchName, ItemPath, BinPath, StatusStr:
-                                                                          string
-  ;
+                                                                          string;
   SR: TSearchRec;
   SizeBytes: Int64;
   HasUserVersions, IsActive: Boolean;
@@ -43807,13 +43665,13 @@ Begin
   VersionsDir := GetGlobalVersionsPath('blaisevue');
   ActiveVer := GetActiveFrameworkVersion;
   SdkDir := ExcludeTrailingPathDelimiter(GetHostSDKPath);
-  BranchName := 'channel';
+  BranchName := TBVUpgrade.GetConfiguredChannel;
   If DirectoryExists(SdkDir + DirectorySeparator + '.git') Then
     Begin
       ExecCmdCapture('git -C "' + SdkDir + '" rev-parse --abbrev-ref HEAD',
                      BranchName);
       BranchName := Trim(BranchName);
-      If BranchName = '' Then BranchName := 'channel';
+      If BranchName = '' Then BranchName := TBVUpgrade.GetConfiguredChannel;
     End;
 
   WriteLn('================================================================');
@@ -43833,7 +43691,7 @@ Begin
     WriteLn('    [*] channel    ' + SdkDir + ' (ACTIVE: ' + BranchName +
             ', Protected)')
   Else
-    WriteLn('    [ ] channel    ' + SdkDir + ' (Global Git Channel: ' +
+    WriteLn('    [ ] channel    ' + SdkDir + ' (Global Channel: ' +
             BranchName + ', Protected)');
 
   HasUserVersions := False;
@@ -43994,42 +43852,46 @@ Procedure CmdFrameworkUpgrade(TargetVer: String);
   End;
 
 Var 
-  VersionsDir, SdkDir, RepoUrl, NormVer, StageDir, DestDir, UserChoice,
+  VersionsDir, SdkDir, RepoUrl, RepoSlug, NormVer, StageDir, DestDir, UserChoice,
   RemoteOut, Line, TagName, RawRef, CloneLog, ErrLog, FpcExe, FpcVer, FpcSource
-  , ProjectRoot, BinFile: string;
+  , ProjectRoot, BinFile, InstalledTag, BinDlErr, ArgP, LowP: string;
   TagLines, AvailableTags: TStringList;
   I, PosRef, ChoiceIdx, MaxDisp: Integer;
-  GitAvail, CloneOk: Boolean;
+  GitAvail, CloneOk, FromSource, AllowUnsigned, InstalledByBinary: Boolean;
   SizeBytes: Int64;
 Begin
   VersionsDir := GetGlobalVersionsPath('blaisevue');
   TargetVer := Trim(TargetVer);
   GitAvail := HasCommand('git');
+  RepoSlug := TBVUpgrade.GetReleasesRepo;
+  FromSource := False;
+  AllowUnsigned := False;
+
+  For I := 3 To ParamCount Do
+    Begin
+      ArgP := ParamStr(I);
+      LowP := LowerCase(Trim(ArgP));
+      If LowP = '--from-source' Then
+        FromSource := True
+      Else If LowP = '--allow-unsigned' Then
+        AllowUnsigned := True
+      Else If (TargetVer = '') And StartsText('--version=', LowP) Then
+        TargetVer := Trim(Copy(ArgP, 11, MaxInt))
+      Else If (TargetVer = '') And StartsText('--tag=', LowP) Then
+        TargetVer := Trim(Copy(ArgP, 7, MaxInt));
+    End;
 
   If StartsText('--version=', TargetVer) Then
     TargetVer := Copy(TargetVer, 11, Length(TargetVer))
   Else If StartsText('--tag=', TargetVer) Then
-         TargetVer := Copy(TargetVer, 7, Length(TargetVer));
-
-  If Not GitAvail Then
-    Begin
-      WriteLn('  [ERROR] Git was not detected in PATH.');
-      WriteLn('          Install Git from: https://git-scm.com/');
-      Halt(1);
-    End;
-
-  If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
-    Begin
-      WriteLn(
-'  [ERROR] Free Pascal Compiler (FPC) is required to build cached versions locally.'
-      );
-      WriteLn('          Install Lazarus/FPC and run "bv doctor" to verify.');
-      Halt(1);
-    End;
+    TargetVer := Copy(TargetVer, 7, Length(TargetVer))
+  Else If (LowerCase(TargetVer) = '--from-source') Or
+          (LowerCase(TargetVer) = '--allow-unsigned') Then
+    TargetVer := '';
 
   SdkDir := ExcludeTrailingPathDelimiter(GetHostSDKPath);
   RepoUrl := '';
-  If DirectoryExists(SdkDir + DirectorySeparator + '.git') Then
+  If DirectoryExists(SdkDir + DirectorySeparator + '.git') And GitAvail Then
     Begin
       ExecCmdCapture('git -C "' + SdkDir + '" remote get-url origin', RepoUrl);
       RepoUrl := Trim(RepoUrl);
@@ -44038,7 +43900,7 @@ Begin
         RepoUrl := '';
     End;
   If RepoUrl = '' Then
-    RepoUrl := 'https://github.com/affonsoelias/BlaiseVue.git';
+    RepoUrl := 'https://github.com/' + RepoSlug + '.git';
 
   // Interactive menu if empty
   If TargetVer = '' Then
@@ -44046,61 +43908,65 @@ Begin
       AvailableTags := TStringList.Create;
       Try
         WriteLn('  [*] Querying available releases from GitHub ...');
-        If ExecCmdCapture('git ls-remote --tags --refs "' + RepoUrl + '"',
-           RemoteOut) And (RemoteOut <> '') Then
-          Begin
-            TagLines := TStringList.Create;
-            Try
-              TagLines.Text := RemoteOut;
-              For I := TagLines.Count - 1 Downto 0 Do
-                Begin
-                  Line := Trim(TagLines[I]);
-                  PosRef := Pos('refs/tags/', Line);
-                  If PosRef > 0 Then
-                    Begin
-                      TagName := Trim(Copy(Line, PosRef + 10, Length(Line)));
-                      If (TagName <> '') And (AvailableTags.IndexOf(TagName) < 0)
-                        Then
-                        AvailableTags.Add(TagName);
-                    End;
-                End;
-            Finally
-              TagLines.Free;
+        If Not FromSource Then
+          TBVUpgrade.FetchAvailableReleaseTags(RepoSlug, AvailableTags, BinDlErr);
+
+        If (AvailableTags.Count = 0) And GitAvail Then
+          If ExecCmdCapture('git ls-remote --tags --refs "' + RepoUrl + '"',
+             RemoteOut) And (RemoteOut <> '') Then
+            Begin
+              TagLines := TStringList.Create;
+              Try
+                TagLines.Text := RemoteOut;
+                For I := TagLines.Count - 1 Downto 0 Do
+                  Begin
+                    Line := Trim(TagLines[I]);
+                    PosRef := Pos('refs/tags/', Line);
+                    If PosRef > 0 Then
+                      Begin
+                        TagName := Trim(Copy(Line, PosRef + 10, Length(Line)));
+                        If (TagName <> '') And (AvailableTags.IndexOf(TagName) < 0)
+                          Then
+                          AvailableTags.Add(TagName);
+                      End;
+                  End;
+              Finally
+                TagLines.Free;
+              End;
             End;
-          End;
 
         MaxDisp := AvailableTags.Count;
         If MaxDisp > 8 Then MaxDisp := 8;
 
         WriteLn('================================================================');
-        WriteLn('  BlaiseVue Framework Version Manager (Local FPC Build)');
+        WriteLn('  BlaiseVue Framework Version Manager');
         WriteLn('================================================================');
-        WriteLn('  Source: ' + RepoUrl);
+        WriteLn('  Repository: ', RepoSlug);
         WriteLn('');
         If MaxDisp > 0 Then
           Begin
-            WriteLn('  Published Release Tags:');
+            WriteLn('  Published Releases:');
             For I := 0 To MaxDisp - 1 Do
               Begin
                 If I = 0 Then
                   WriteLn('    [' + IntToStr(I + 1) + '] ' +
-                          PadRight(AvailableTags[I], 14) + ' (Latest Tag)')
+                          PadRight(AvailableTags[I], 14) + ' (Latest Release)')
                 Else
                   WriteLn('    [' + IntToStr(I + 1) + '] ' +
                           PadRight(AvailableTags[I], 14));
               End;
           End
         Else
-          WriteLn('  (No release tags published yet on remote)');
-        WriteLn('    [M] main       (Stable channel snapshot)');
-        WriteLn('    [D] develop    (Active development snapshot)');
+          WriteLn('  (No release tags published yet on GitHub)');
+        WriteLn('    [S] stable     (Latest official release / main)');
+        WriteLn('    [N] nightly    (Latest rolling pre-release from main)');
         WriteLn('    [C] Custom     (Specify custom tag or branch)');
         WriteLn('================================================================');
         If MaxDisp > 0 Then
           Write('Select option [1-' + IntToStr(MaxDisp) +
-                ', M, D, C] or [Q]uit: ')
+                ', S, N, C] or [Q]uit: ')
         Else
-          Write('Select option [M, D, C] or [Q]uit: ');
+          Write('Select option [S, N, C] or [Q]uit: ');
         ReadLn(UserChoice);
         UserChoice := Trim(UserChoice);
 
@@ -44111,17 +43977,19 @@ Begin
             WriteLn('Operation cancelled.');
             Exit;
           End
-        Else If (LowerCase(UserChoice) = 'm') Or
+        Else If (LowerCase(UserChoice) = 's') Or (LowerCase(UserChoice) = 'm') Or
+                (LowerCase(UserChoice) = 'stable') Or
                 (LowerCase(UserChoice) = 'main') Then
-               TargetVer := 'main'
-        Else If (LowerCase(UserChoice) = 'd') Or
+               TargetVer := 'stable'
+        Else If (LowerCase(UserChoice) = 'n') Or (LowerCase(UserChoice) = 'd') Or
+                (LowerCase(UserChoice) = 'nightly') Or
                 (LowerCase(UserChoice) = 'dev') Or
                 (LowerCase(UserChoice) = 'develop') Then
-               TargetVer := 'develop'
+               TargetVer := 'nightly'
         Else If (LowerCase(UserChoice) = 'c') Or
                 (LowerCase(UserChoice) = 'custom') Then
                Begin
-                 Write('Enter tag or branch (e.g. v0.1.0, 1.0.0, main): ');
+                 Write('Enter tag or channel (e.g. v0.1.0, stable, nightly): ');
                  ReadLn(TargetVer);
                  TargetVer := Trim(TargetVer);
                  If TargetVer = '' Then
@@ -44151,83 +44019,121 @@ Begin
      (LowerCase(NormVer) = 'bundled') Then
     Begin
       WriteLn(
-'  [INFO] "channel" refers to your global Git branch (bv channel). Use "bv framework use channel" in a project.'
+'  [INFO] "channel" tracks your active channel (bv channel). Use "bv framework use channel" in a project.'
       );
       Exit;
     End;
+  If (LowerCase(NormVer) = 'develop') Or (LowerCase(NormVer) = 'dev') Then
+    NormVer := 'nightly';
 
   DestDir := ExcludeTrailingPathDelimiter(VersionsDir + NormVer);
-  StageDir := ExcludeTrailingPathDelimiter(VersionsDir + NormVer + '.tmp');
+  InstalledByBinary := False;
 
-  WriteLn('================================================================');
-  WriteLn('  Target Framework:  BlaiseVue ' + NormVer + ' (ref: ' + TargetVer +
-          ')');
-  WriteLn('  Install Location:  ' + DestDir);
-  WriteLn('  Build Strategy:    Lean sparse checkout + local FPC (' + FpcVer +
-          ')');
-  WriteLn('================================================================');
-
-  WriteLn('  [*] Fetching lean framework sources from GitHub ...');
-  CloneOk := False;
-  If (Length(TargetVer) > 0) And (TargetVer[1] >= '0') And (TargetVer[1] <= '9')
-    Then
+  // Prefer prebuilt release download unless --from-source was explicitly requested
+  If Not FromSource Then
     Begin
-      RawRef := 'v' + NormVer;
-      CloneOk := TrySparseCloneRef(RepoUrl, RawRef, StageDir, CloneLog);
+      WriteLn('================================================================');
+      WriteLn('  Target Framework:  BlaiseVue ' + NormVer + ' (ref: ' + TargetVer + ')');
+      WriteLn('  Install Location:  ' + DestDir);
+      WriteLn('  Strategy:          Prebuilt GitHub Release (SHA-256 verified)');
+      WriteLn('================================================================');
+
+      If TBVUpgrade.DownloadFrameworkVersionBinary(RepoSlug, TargetVer, DestDir,
+           AllowUnsigned, InstalledTag, BinDlErr) Then
+        InstalledByBinary := True
+      Else
+        Begin
+          WriteLn('  [INFO] Prebuilt release unavailable (', BinDlErr, ').');
+          If (Not GitAvail) Or (Not FindFPCExecutable(FpcExe, FpcVer, FpcSource)) Then
+            Begin
+              WriteLn('  [ERROR] Could not install BlaiseVue ', NormVer,
+                      ' without Git + Free Pascal fallback.');
+              Halt(1);
+            End;
+          WriteLn('  [*] Falling back to source build with Git + Free Pascal...');
+        End;
+    End;
+
+  If Not InstalledByBinary Then
+    Begin
+      If Not GitAvail Then
+        Begin
+          WriteLn('  [ERROR] Git was not detected in PATH (required for --from-source).');
+          WriteLn('          Install Git from: https://git-scm.com/');
+          Halt(1);
+        End;
+
+      If Not FindFPCExecutable(FpcExe, FpcVer, FpcSource) Then
+        Begin
+          WriteLn('  [ERROR] Free Pascal Compiler (FPC) is required for --from-source builds.');
+          WriteLn('          Install Lazarus/FPC and run "bv doctor" to verify.');
+          Halt(1);
+        End;
+
+      StageDir := ExcludeTrailingPathDelimiter(VersionsDir + NormVer + '.tmp');
+      WriteLn('================================================================');
+      WriteLn('  Target Framework:  BlaiseVue ' + NormVer + ' (ref: ' + TargetVer + ')');
+      WriteLn('  Install Location:  ' + DestDir);
+      WriteLn('  Build Strategy:    Lean sparse checkout + local FPC (' + FpcVer + ')');
+      WriteLn('================================================================');
+
+      WriteLn('  [*] Fetching lean framework sources from GitHub ...');
+      CloneOk := False;
+      RawRef := TargetVer;
+      If SameText(RawRef, 'stable') Then RawRef := 'main'
+      Else If SameText(RawRef, 'nightly') Or SameText(RawRef, 'develop') Or SameText(RawRef, 'dev') Then RawRef := 'main';
+
+      If (Length(RawRef) > 0) And (RawRef[1] >= '0') And (RawRef[1] <= '9') Then
+        Begin
+          CloneOk := TrySparseCloneRef(RepoUrl, 'v' + NormVer, StageDir, CloneLog);
+          If Not CloneOk Then
+            CloneOk := TrySparseCloneRef(RepoUrl, NormVer, StageDir, CloneLog);
+        End
+      Else
+        CloneOk := TrySparseCloneRef(RepoUrl, RawRef, StageDir, CloneLog);
+
       If Not CloneOk Then
-        CloneOk := TrySparseCloneRef(RepoUrl, NormVer, StageDir, CloneLog);
-    End
-  Else
-    CloneOk := TrySparseCloneRef(RepoUrl, TargetVer, StageDir, CloneLog);
+        Begin
+          If DirectoryExists(StageDir) Then DeleteDir(StageDir);
+          WriteLn('  [ERROR] Failed to clone BlaiseVue ref "' + RawRef + '" from ' + RepoUrl);
+          If Trim(CloneLog) <> '' Then WriteLn(CloneLog);
+          Halt(1);
+        End;
 
-  If Not CloneOk Then
-    Begin
-      If DirectoryExists(StageDir) Then DeleteDir(StageDir);
-      WriteLn('  [ERROR] Failed to clone BlaiseVue ref "' + TargetVer +
-              '" from ' + RepoUrl);
-      If Trim(CloneLog) <> '' Then WriteLn(CloneLog);
-      Halt(1);
-    End;
+      BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator + 'bv';
+      If FileExists(BinFile) Then DeleteFile(BinFile);
+      BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator + 'bv.exe';
+      If FileExists(BinFile) Then DeleteFile(BinFile);
+      BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator + 'bv.o';
+      If FileExists(BinFile) Then DeleteFile(BinFile);
 
-  // Remove any pre-existing binaries in cloned tree so native binary is always built locally
-  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
-             + 'bv';
-  If FileExists(BinFile) Then DeleteFile(BinFile);
-  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
-             + 'bv.exe';
-  If FileExists(BinFile) Then DeleteFile(BinFile);
-  BinFile := IncludeTrailingPathDelimiter(StageDir) + 'bin' + DirectorySeparator
-             + 'bv.o';
-  If FileExists(BinFile) Then DeleteFile(BinFile);
+      WriteLn('  [+] Compiling native CLI locally with Free Pascal (' + FpcVer + ') ...');
+      If Not CompileFrameworkVersionBinary(StageDir, ErrLog) Then
+        Begin
+          If DirectoryExists(StageDir) Then DeleteDir(StageDir);
+          WriteLn('  [ERROR] Local compilation of BlaiseVue ' + NormVer + ' failed:');
+          WriteLn(ErrLog);
+          If DirectoryExists(DestDir) Then
+            WriteLn('  [SAFETY] Existing cached version at ' + DestDir + ' was preserved intact.');
+          Halt(1);
+        End;
 
-  WriteLn('  [+] Compiling native CLI locally with Free Pascal (' + FpcVer +
-          ') ...');
-  If Not CompileFrameworkVersionBinary(StageDir, ErrLog) Then
-    Begin
-      If DirectoryExists(StageDir) Then DeleteDir(StageDir);
-      WriteLn('  [ERROR] Local compilation of BlaiseVue ' + NormVer +
-              ' failed:');
-      WriteLn(ErrLog);
       If DirectoryExists(DestDir) Then
-        WriteLn(
-'  [SAFETY] Existing cached version at ' + DestDir + ' was preserved intact.'
-        );
-      Halt(1);
-    End;
-
-  If DirectoryExists(DestDir) Then
-    DeleteDir(DestDir);
-  If Not RenameFile(StageDir, DestDir) Then
-    Begin
-      WriteLn('  [ERROR] Failed to promote ' + StageDir + ' -> ' + DestDir);
-      Halt(1);
+        DeleteDir(DestDir);
+      If Not RenameFile(StageDir, DestDir) Then
+        Begin
+          WriteLn('  [ERROR] Failed to promote ' + StageDir + ' -> ' + DestDir);
+          Halt(1);
+        End;
     End;
 
   SizeBytes := GetDirSizeBytes(DestDir);
   WriteLn('');
   WriteLn('================================================================');
-  WriteLn('  [SUCCESS] BlaiseVue ' + NormVer +
-          ' installed and compiled locally!');
+  If InstalledByBinary Then
+    WriteLn('  [SUCCESS] BlaiseVue ' + NormVer + ' (' + InstalledTag + ') installed!')
+  Else
+    WriteLn('  [SUCCESS] BlaiseVue ' + NormVer + ' installed and compiled locally!');
   WriteLn('  Location:  ' + DestDir + ' (' + FormatFileSizeMB(SizeBytes) + ')');
   WriteLn('  CLI Bin:   ' + GetFrameworkVersionBinaryPath(DestDir));
   WriteLn('================================================================');
@@ -45099,6 +45005,7 @@ Var
   SkipTest, SkipTestsArg, IsGlobalArg, UseDelSafeArg: Boolean;
   i: Integer;
 Begin
+  TBVUpgrade.CleanupStaleOldBinary(ExtractFileDir(GetOwnExecutablePath));
   TryDelegatePinnedFrameworkVersion;
 
   PinSuffix := '';
@@ -45706,7 +45613,7 @@ Begin
 '  bv framework versions      Lists active channel & cached BlaiseVue versions (~/.blaisevue/versions/blaisevue)'
       );
       WriteLn(
-'  bv framework upgrade [--version=<v>] Discovers GitHub tags & compiles a BlaiseVue version locally via FPC'
+'  bv framework upgrade [--version=<v>] Downloads prebuilt release (--from-source optional)'
       );
       WriteLn(
 '  bv framework use <ver|channel> Pins BlaiseVue version for project (.blaisevue-version) or tracks active channel'
@@ -45719,22 +45626,22 @@ Begin
       WriteLn(
 
 
-'  bv doctor                  Diagnoses environment tools (Git, FPC, Pas2JS, DelSafe, Node, Android)'
+'  bv doctor                  Diagnoses environment tools (FPC, Pas2JS, DelSafe, Node, Android)'
       );
       WriteLn(
 
 
-'  bv self-update [--check] [--force] Syncs & recompiles active channel directly from GitHub via Git'
+'  bv self-update [--check] [--dry-run] [--channel=<stable|nightly>] Updates CLI & SDK from GitHub'
       );
       WriteLn(
 
 
-'  bv channel [use <name>]    Inspects or switches global framework Git branch (main/develop)'
+'  bv channel [use <stable|nightly>] Inspects or switches release channel (aliases: main/develop)'
       );
       WriteLn(
 
 
-'  bv rollback                Restores previous CLI binary from backup (bv.bak)'
+'  bv rollback                Restores previous CLI binary and runtime backup'
       );
       WriteLn(
 

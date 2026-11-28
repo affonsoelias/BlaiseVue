@@ -1,6 +1,6 @@
 # 📋 BlaiseVue Versioning & Release Model
 
-BlaiseVue adopts standard **Semantic Versioning 2.0.0 (SemVer)** combined with automated Git channel workflows (`main` / `develop`).
+BlaiseVue adopts standard **Semantic Versioning 2.0.0 (SemVer)** combined with **GitHub Releases prebuilt binaries** built from the single **`main`** branch across **`stable`** and **`nightly`** channels.
 
 ---
 
@@ -19,7 +19,7 @@ $$\text{MAJOR} \,.\, \text{MINOR} \,.\, \text{PATCH} \quad (\text{e.g., } \mathb
 ```
 
 > [!NOTE]
-> **Current Public Pre-Release (`v0.1.x`):** BlaiseVue is in the public **`v0.1.x`** pre-release series and will **continue in `v0.1.x`** throughout all upcoming roadmap phases (including Serverless Edge / BlaiseEdge) and beyond. There is currently **no scheduled release date for `v1.0.0`**. BlaiseVue follows standard Semantic Versioning 2.0.0 (`MAJOR.MINOR.PATCH`) with `main`/`develop` Git channels.
+> **First Official Pre-Release (`v0.1.0`):** BlaiseVue is in the public **`v0.1.x`** pre-release series and will **continue in `v0.1.x`** throughout upcoming roadmap phases without a scheduled `v1.0.0` date yet. End-users install prebuilt binaries via `install.ps1` / `install.sh` and update directly from GitHub Releases using `bv self-update` (zero Git or Free Pascal compiler required for core CLI/SPA builds).
 
 ### 1. 🏛️ Major Version (Eras & Architectural Leaps)
 Incremented when fundamental architectural evolutions occur or when breaking API changes are introduced across the framework runtime, compiler pipeline, or core interfaces (`0.x` represents public pre-release development prior to `1.0.0`).
@@ -36,25 +36,42 @@ Incremented for bugfixes, security patches, compiler edge-case resolutions, and 
 
 ---
 
-## 🌿 Git Branching & Release Workflow
+## 🌿 Single-Branch Release Workflow & Channels (`main`)
 
-BlaiseVue enforces a clean separation of concerns between production stability and active development:
+Following the DelSafe release architecture, BlaiseVue develops on a single **`main`** trunk and distributes ready-to-use platform archives via GitHub Releases:
 
 ```
-[develop]  ───●──────●───────●──────●──── (Active Integration: v0.1.x-dev)
-               \                   /
-                └─── [feat/...] ──┘
-                                   \ (Merge / Tag)
-[main]     ─────────────────────────●──── (Release Channel: v0.1.0 / v0.1.x)
-                                    🏷️ v0.1.0
+[feat/*]  ───────●──────────┐
+                            ▼
+[main]    ───●───────●──────●──────────●─────► GitHub Actions Matrix Builds
+                            🏷️ v0.1.0          (Windows, Linux, macOS + SHA-256)
+                                │
+                                ├──► Channel "stable"  (SemVer tags v*.*.*)
+                                └──► Channel "nightly" (Rolling main builds)
 ```
 
-| Branch | Stability | Target Version | Purpose |
+| Channel | CLI Aliases | GitHub Source | Purpose |
 |---|---|---|---|
-| **`main`** | 🟢 Release | Tagged Releases (`v0.1.0`, `v0.1.x`, ...) | Release-ready code, official releases, and release tags. |
-| **`develop`** | 🟡 Active | Active Development | Integration branch for new features, community PRs, and bleeding-edge changes. |
-| **`feat/*`** | 🧪 Experimental | — | Isolated feature development branched from `develop`. |
-| **`fix/*`** | 🩹 Hotfix | Patch bump | Critical bugfixes targeted at `develop` (and cherry-picked to `main` if urgent). |
+| **`stable`** *(default)* | `stable`, `main` | Tagged GitHub Releases (`v0.1.0`, `v*.*.*`) | Recommended release channel for applications and production workflows. |
+| **`nightly`** | `nightly`, `develop`, `dev` | Rolling `nightly` pre-release from `main` | Weekly scheduled and manual pre-release builds from the latest `main` trunk. |
+
+### 📦 What Each Platform Archive Includes
+- **Included in the release archive:** native `bv` CLI executable, `core/`, `packages/core/`, `templates/`, `vendor/zephyr/`, `package.json`, and **the matching platform's `vendor/pas2js/` compiler** — ready for `bv create`, `bv dev`, and `bv build` out of the box.
+- **Fetched on demand:** `vendor/mormot2/` (`bv mormot upgrade` / `bv mormot run`) and `demo-app/` (`bv create --demo`, cached in `~/.blaisevue/cache/demo-app/`).
+- **Cryptographic Verification & Atomic Rollback:** Every archive ships with `<archive>.sha256` and `SHA256SUMS.txt`. `bv self-update` verifies SHA-256 checksums, backs up `bin/bv` (`.bak`) and runtime folders (`.bv_upgrade_backup/`), and supports instant revert via `bv rollback`.
+
+### 🔄 Channel & Update Commands
+```bash
+# Inspect or switch release channel (persisted in ~/.blaisevue/config.json)
+bv channel
+bv channel use stable          # or alias: main
+bv channel use nightly         # or alias: develop
+
+# Check or apply updates (binary releases by default; --from-source inside Git clones)
+bv self-update --check
+bv self-update
+bv rollback                    # Restore previous binary & runtime directories
+```
 
 ---
 
@@ -63,8 +80,6 @@ BlaiseVue enforces a clean separation of concerns between production stability a
 The BlaiseVue CLI (`bv`) features an automated SemVer and metadata synchronization suite for both the framework and user applications.
 
 ### 📦 Bumping Project Versions
-
-You can increment project versions directly from the command line:
 
 ```bash
 # Increment patch: 0.1.0 -> 0.1.1 (Bugfix)
@@ -99,8 +114,6 @@ implementation
 end.
 ```
 
-This guarantees that compile-time constants in Pascal always reflect the exact version stored in repository metadata without manual editing.
-
 ---
 
 ## 📦 Package Ecosystem Versioning (`bv lib`)
@@ -125,7 +138,7 @@ Third-party and official ecosystem packages (`blaise-ui`, `blaise-charts`, etc.)
 
 | Version Range | Era Name | Release Focus | Status |
 |---|---|---|---|
-| **v0.1.0** | **Public Pre-Release Baseline** | Universal Pascal SPA/SSG, mORMot 2, Capacitor Mobile, Desktop WebUI, BlaiseX + Fragments, Multi-Version `bv framework`, CLI tooling, DelSafe/Zephyr *(experimental)* | 🟢 **Current Baseline** |
+| **v0.1.0** | **First Official Pre-Release** | Prebuilt cross-platform CLI & SDK releases (`stable`/`nightly`), Universal Pascal SPA/SSG, on-demand mORMot 2 & `demo-app`, Capacitor Mobile, Desktop WebUI, BlaiseX + Fragments, Multi-Version `bv framework`, DelSafe/Zephyr *(experimental)* | 🟢 **Current Baseline** |
 | **v0.1.x** | **Ongoing Pre-Release Track** | Phase A (PWA, mORMot SSR, Studio 2.0), Phase B (Micro-Frontends & Module Federation), Phase C (BlaiseEdge / `wasm32-wasi` Serverless) — **continues in `0.1.x` even after Phase C** | 🚀 **Active Roadmap (`0.1.x`)** |
 | **v1.0.0** | **Future Official GA** | Long-term API freeze, full cross-platform certification, and standard SemVer 2.0.0 long-term stability guarantees | ⏳ **TBD (No Forecast Yet)** |
 

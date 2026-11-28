@@ -82,6 +82,9 @@ deploy/
 .bv_backup/
 **/.bv_backup/
 .blaisevue/
+.bv_upgrade_backup/
+dist/
+dist_*/
 *.zip
 **/desktop/assets/js/main.*.js
 

@@ -177,90 +177,56 @@ BlaiseVue/
 ## 🏁 Quick Start
 
 ### 📋 Prerequisites
-- **Git (v2.30+)**: Required for cloning the framework, automatic selective updates (`bv self-update`), and channel management (`bv channel`).
-- **Lazarus IDE (or Free Pascal Compiler 3.2+)**: Recommended IDE and compiler for building the native CLI (`bv` / `bv.exe`), desktop applications (`desktop/`), and mORMot 2 servers (`server-mormot/`).
-- **[DelSafe Compiler (`delsafec`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/delsafe)**: Optional compiler needed only if you create `--delsafe` apps, author `<script lang="delsafe">` / `.dels` modules, run `.test.dels` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
-- **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `update.py`, `remove.py`, `pack.py`) for the dynamic developer tooling ecosystem (`bv tool`) and custom user packages (`~/.blaisevue/tools/`).
 - **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv capacitor` / `bv mobile`).
-- **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv capacitor build`), managing emulators, and running `bv capacitor open android`. Bundles the Android SDK, Platform-Tools (`adb`), and Java JDK.
+- **Lazarus IDE (or Free Pascal Compiler 3.2+, Optional)**: Required only if you build native desktop apps (`bv desktop`), native **mORMot 2** servers (`bv mormot`), or compile the CLI from source (`--from-source`).
+- **[DelSafe Compiler (`delsafec`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/delsafe)**: Optional compiler needed only if you create `--delsafe` apps, author `<script lang="delsafe">` / `.dels` modules, run `.test.dels` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
+- **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `update.py`, `remove.py`, `pack.py`) for the developer tooling ecosystem (`bv tool`) and custom user packages (`~/.blaisevue/tools/`).
+- **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv capacitor build`), managing emulators, and running `bv capacitor open android`.
 
 > [!NOTE]
-> **Pas2JS is pre-bundled**: You do **not** need to install `pas2js`. Official multi-platform binaries for Windows, Linux, and macOS are already included in `vendor/pas2js/`.
+> **Pas2JS is pre-bundled per platform**: Release archives automatically include the matching `pas2js` binary for Windows, Linux, or macOS. **`mORMot 2`** and the **`demo-app` showcase template** are fetched on demand the first time you use them (`bv mormot run` / `bv create --demo`).
 
-### 1. Clone the Repository
-Clone the BlaiseVue SDK using Git:
-```bash
-# Clone official release channel (main):
-git clone https://github.com/affonsoelias/BlaiseVue.git
-cd BlaiseVue
+### 1. Official 1-Line Installation (Prebuilt Binaries — Recommended)
+Install the prebuilt BlaiseVue CLI & SDK into `~/.blaisevue` with SHA-256 verification (zero Git or Free Pascal required):
 
-# Or clone the active development channel (develop):
-git clone -b develop https://github.com/affonsoelias/BlaiseVue.git
-cd BlaiseVue
-```
-
-### 2. Compile the Native CLI (`bv`) Locally
-BlaiseVue ships source-first without pre-compiled executables in Git. Run the build script for your platform from the repository root (takes ~2 seconds with Free Pascal 3.2+):
-
-**Windows (PowerShell or CMD):**
+**Windows (PowerShell):**
 ```powershell
-.\build.ps1
-# or in Command Prompt:
-build.bat
+irm https://raw.githubusercontent.com/affonsoelias/BlaiseVue/main/scripts/install.ps1 | iex
 ```
 
 **Linux / macOS:**
 ```bash
-chmod +x build.sh
-./build.sh
+curl -fsSL https://raw.githubusercontent.com/affonsoelias/BlaiseVue/main/scripts/install.sh | bash
+# Add ~/.blaisevue/bin to your PATH as instructed by the installer
 ```
 
 > [!TIP]
-> **Atomic Safety Guarantee:** Every build script compiles into a temporary binary (`bv_new`) first and only replaces `bin/bv` (backing up the previous working binary to `bin/bv.bak`) if Free Pascal succeeds. If a build ever fails, your existing executable remains intact.
-
-### 3. Add `bin/` to Your System `PATH`
-Add `BlaiseVue/bin` to your `PATH` so you can invoke `bv` from any directory:
-
-**Windows (PowerShell):**
-```powershell
-$sdkBin = "$PWD\bin"
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$sdkBin*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$sdkBin", "User")
-}
-```
-*(Reopen your terminal after updating `User` PATH, or call `.\bin\bv.exe` directly.)*
-
-**Linux / macOS (Zsh or Bash):**
-```bash
-# Add to ~/.zshrc (Zsh) or ~/.bashrc (Bash):
-export PATH="$HOME/BlaiseVue/bin:$PATH"
-source ~/.zshrc   # or: source ~/.bashrc
-```
+> **Contributors / Building from Source:** Clone the `main` branch (`git clone https://github.com/affonsoelias/BlaiseVue.git`) and run `.\build.ps1` (or `build.bat` / `./build.sh`), then add `BlaiseVue/bin` to your `PATH`.
 
 Verify the environment at any time:
 ```bash
+bv --version
 bv doctor
 ```
 
-### 4. Run the Included Demo (`demo-app`) OR Create a Clean Project
+### 2. Create the Showcase Demo OR a Clean Project
 
-#### Option A — Run the Showcase Demo (`demo-app`)
-Explore all BlaiseVue capabilities (reactive views, BlaiseUI, Chart.js, Reports, Offline DataSet, and mORMot 2 full-stack):
+#### Option A — Scaffold the Showcase Demo (`--demo`)
+Explore all BlaiseVue capabilities (reactive views, BlaiseUI, Chart.js, Reports, Offline DataSet, i18n, and mORMot 2 full-stack). On binary installs, `demo-app` is automatically downloaded on demand from GitHub and cached:
 ```bash
-cd demo-app
+bv create my-demo --demo
+cd my-demo
 npm install        # Required once for Vitest / Capacitor tooling
 bv doctor          # Inspect environment & project alignment
 bv dev             # Frontend SPA + HMR at http://localhost:8080
 ```
-*(Optional)* Start the native mORMot 2 backend (`http://localhost:8090`) in another terminal:
+*(Optional)* Start the native mORMot 2 backend (`http://localhost:8090`, auto-downloads mORMot 2 on demand if missing):
 ```bash
-cd demo-app
 bv mormot run
 ```
 
 #### Option B — Create & Run a Clean Project from Scratch
-Scaffold a clean application anywhere outside the SDK repository:
+Scaffold a clean application in any workspace:
 ```bash
 bv create my-app
 # Optional variants:
@@ -276,20 +242,22 @@ bv dev
 ```
 Any modifications saved in `src/` are recompiled and hot-swapped in the browser in milliseconds!
 
-### 5. Interactive Cockpit, Multi-Version & Safe Updates
+### 3. Interactive Cockpit, Channels, Multi-Version & Atomic Updates
 ```bash
 # Interactive Cockpit shell with [TAB] autocompletion:
 bv enter
 
 # Manage multiple BlaiseVue versions per project (.blaisevue-version):
-bv framework upgrade            # Queries GitHub tags & compiles locally via FPC
+bv framework upgrade            # Downloads prebuilt GitHub release (--from-source optional)
 bv framework use 0.1.0          # Pin current project to v0.1.0
-bv framework use channel        # Follow your global Git channel again
+bv framework use channel        # Follow your global channel again
 
-# Update your global channel safely (preserves bv.bak on error; revert anytime with bv rollback):
+# Update safely with SHA-256 verification & atomic .bak backup (revert anytime with bv rollback):
 bv self-update --check
 bv self-update
-bv channel use develop          # Switch global channel (main | develop)
+bv channel                      # Inspect active channel (stable | nightly)
+bv channel use nightly          # Switch channel (aliases: main -> stable, develop -> nightly)
+bv rollback                     # Restore previous CLI & runtime directories
 ```
 
 ### 6. Explore Full-Stack, Mobile & Desktop
