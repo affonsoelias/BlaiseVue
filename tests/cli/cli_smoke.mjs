@@ -222,6 +222,11 @@ async function main() {
     assert.ok(aboutBv.includes(`BlaiseVue v${EXPECTED_VER}.`), `About.bv missing v${EXPECTED_VER}: ${aboutBv}`);
     assert.ok(!aboutBv.includes('2.0 PRO'), 'About.bv still contains stale 2.0 PRO string');
 
+    const appChangelog = fs.readFileSync(path.join(appDir, 'CHANGELOG.md'), 'utf8');
+    assert.ok(appChangelog.includes('smoke_app'), 'Clean project CHANGELOG.md missing project name');
+    assert.ok(appChangelog.includes('## [0.1.0]'), 'Clean project CHANGELOG.md missing [0.1.0] section');
+    assert.ok(appChangelog.includes(`BlaiseVue v${EXPECTED_VER}`), 'Clean project CHANGELOG.md missing framework version');
+
     runBv(['build'], appDir);
     const devHtml = fs.readFileSync(path.join(appDir, 'dist', 'index.html'), 'utf8');
     assert.ok(

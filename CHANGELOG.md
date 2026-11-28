@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automatically generate a starter `CHANGELOG.md` (`v0.1.0`) during `bv create`, plus `demo-app/CHANGELOG.md`.
+- Added Zephyr backend evolution roadmap (`vendor/zephyr/ROADMAP.md`, `v0.1.0` -> `v1.0.0`) and `vendor/zephyr/CHANGELOG.md`.
 - Multiplatform GitHub Actions CI workflow (`.github/workflows/ci.yml`) building `bv` and running CLI smoke + SDK unit test suites across Windows, Linux, and macOS.
 - Zero-dependency CLI and native RFC 6455 WebSocket integration smoke suite (`tests/cli/cli_smoke.mjs`).
 - Unit test suite for `BVDevTools` (`tests/core/devtools.test.pas`).

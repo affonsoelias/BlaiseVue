@@ -5336,6 +5336,23 @@ Begin
         WriteStringToFile(Base + 'package.json', Content);
       End;
 
+    // Ensure CHANGELOG.md exists
+    If Not FileExists(Base + 'CHANGELOG.md') Then
+      WriteStringToFile(Base + 'CHANGELOG.md',
+                        '# Changelog' + #10#10 +
+                        'All notable changes to **' + RealProjectName +
+                        '** will be documented in this file.' + #10#10 +
+                        'The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),'
+                        + #10 +
+                        'and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).'
+                        + #10#10 +
+                        '## [Unreleased]' + #10#10 +
+                        '## [0.1.0] - ' + FormatDateTime('yyyy-mm-dd', Now) +
+                        #10#10 +
+                        '### Added' + #10 +
+                        '- Initial project scaffold generated with BlaiseVue v'
+                        + GetCliVersion + ' (`bv create`).' + #10);
+
     // Ensure tests/setup.js exists
     If Not FileExists(Base + 'tests' + DirectorySeparator + 'setup.js') Then
       Begin
