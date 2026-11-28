@@ -40,7 +40,23 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Get-Command fpc -ErrorAction SilentlyContinue)) {
-            choco install lazarus -y --no-progress
+            $installed = $false
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              Write-Host "Installing Lazarus/FPC via Chocolatey (attempt $attempt/3)..."
+              choco install lazarus -y --no-progress
+              if ($LASTEXITCODE -eq 0) {
+                $installed = $true
+                break
+              }
+              if ($attempt -lt 3) {
+                Write-Warning "Chocolatey install failed (exit $LASTEXITCODE). Retrying in 10s..."
+                Start-Sleep -Seconds 10
+              }
+            }
+            if (-not $installed) {
+              Write-Error "Failed to install Lazarus/FPC after 3 attempts."
+              exit 1
+            }
             $fpcDir = Get-ChildItem "C:\lazarus\fpc" -Recurse -Filter "fpc.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty DirectoryName
             if ($fpcDir) { "$fpcDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append }
           }
