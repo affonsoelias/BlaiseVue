@@ -21,8 +21,48 @@ permissions:
   contents: write
 
 jobs:
+  check:
+    name: Check Release Needed
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.gate.outputs.should_build }}
+    steps:
+      - name: Skip checkout on tag or manual runs
+        id: pre
+        if: github.event_name != 'schedule'
+        run: echo "should_build=true" >> $GITHUB_OUTPUT
+
+      - name: Checkout main for schedule comparison
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Compare main HEAD against nightly tag
+        id: gate
+        run: |
+          if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          NIGHTLY_SHA="$(git ls-remote origin refs/tags/nightly 'refs/tags/nightly^{}' | awk '/\^\{\}$/ { sha=$1 } END { print sha }')"
+          if [[ -z "$NIGHTLY_SHA" ]]; then
+            NIGHTLY_SHA="$(git ls-remote origin refs/tags/nightly | awk '{print $1}' | head -n 1 || true)"
+          fi
+          echo "main HEAD: ${{ github.sha }}"
+          echo "nightly  : ${NIGHTLY_SHA:-<none>}"
+          if [[ -n "$NIGHTLY_SHA" && "$NIGHTLY_SHA" == "${{ github.sha }}" ]]; then
+            echo "No new commits on main since last nightly build; skipping."
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          else
+            echo "New commits detected on main (or first nightly); proceeding with build."
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
   build:
     name: Build & Package (${{ matrix.os }})
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -100,11 +140,14 @@ jobs:
           path: dist/*
 
   publish:
-    needs: build
+    needs: [check, build]
+    if: needs.check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -135,6 +178,12 @@ jobs:
             echo "name=BlaiseVue v${BASE_VER}" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Move nightly Git tag to current HEAD
+        if: steps.meta.outputs.tag == 'nightly'
+        run: |
+          git tag -f nightly "${{ github.sha }}"
+          git push -f origin refs/tags/nightly
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
