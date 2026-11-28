@@ -178,6 +178,7 @@ BlaiseVue/
 
 ### 📋 Prerequisites
 - **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv capacitor` / `bv mobile`).
+- **Node.js (v18+ LTS)**: Powers the zero-dependency HMR dev server (`bv dev`), Studio (`bv studio`), and on-demand test/mobile tooling (`bv test`, `bv capacitor`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+, Optional)**: Required only if you build native desktop apps (`bv desktop`), native **mORMot 2** servers (`bv mormot`), or compile the CLI from source (`--from-source`).
 - **[DelSafe Compiler (`delsafec`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/delsafe)**: Optional compiler needed only if you create `--delsafe` apps, author `<script lang="delsafe">` / `.dels` modules, run `.test.dels` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
 - **Python (v3.8+ Recommended)**: Recommended for executing cross-platform lifecycle scripts (`status.py`, `install.py`, `update.py`, `remove.py`, `pack.py`) for the developer tooling ecosystem (`bv tool`) and custom user packages (`~/.blaisevue/tools/`).
@@ -185,6 +186,7 @@ BlaiseVue/
 
 > [!NOTE]
 > **Pas2JS is pre-bundled per platform**: Release archives automatically include the matching `pas2js` binary for Windows, Linux, or macOS. **`mORMot 2`** and the **`demo-app` showcase template** are fetched on demand the first time you use them (`bv mormot run` / `bv create --demo`).
+> **Zero `npm install` needed to build & run:** `bv create`, `bv build`, `bv dev`, and `bv studio` work out of the box without installing `node_modules`. `pas2js` is pre-bundled per platform, while `mORMot 2`, `demo-app`, and optional test/mobile packages (`vitest` on `bv test`, `@capacitor/*` on `bv capacitor init`) are fetched automatically on demand.
 
 ### 1. Official 1-Line Installation (Prebuilt Binaries — Recommended)
 Install the prebuilt BlaiseVue CLI & SDK into `~/.blaisevue` with SHA-256 verification (zero Git or Free Pascal required):
@@ -261,6 +263,7 @@ bv rollback                     # Restore previous CLI & runtime directories
 ```
 
 ### 6. Explore Full-Stack, Mobile & Desktop
+### 4. Explore Full-Stack, Mobile & Desktop
 Your project is multi-platform by design:
 ```bash
 # Native mORMot 2 backend server (Port 8090):

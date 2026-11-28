@@ -1,8 +1,8 @@
-// BlaiseVue HMR & Development Server
+// BlaiseVue HMR & Development Server (zero-dependency Node.js native WebSocket)
 import http from 'http';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { WebSocketServer } from 'ws';
 import { execSync } from 'child_process';
 
 const PORT = parseInt(process.env.PORT || '8080', 10);
@@ -133,13 +133,96 @@ function startHttp(port) {
   });
 }
 
+function encodeWsFrame(opcode, payloadBuf) {
+  const len = payloadBuf.length;
+  let header;
+  if (len < 126) {
+    header = Buffer.allocUnsafe(2);
+    header[0] = 0x80 | opcode;
+    header[1] = len;
+  } else if (len < 65536) {
+    header = Buffer.allocUnsafe(4);
+    header[0] = 0x80 | opcode;
+    header[1] = 126;
+    header.writeUInt16BE(len, 2);
+  } else {
+    header = Buffer.allocUnsafe(10);
+    header[0] = 0x80 | opcode;
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(len), 2);
+  }
+  return Buffer.concat([header, payloadBuf]);
+}
+
+function createNativeWsServer(port) {
+  const clients = new Set();
+  const wsHttp = http.createServer((req, res) => {
+    res.writeHead(426, { 'Content-Type': 'text/plain' });
+    res.end('Upgrade Required');
+  });
+
+  wsHttp.on('upgrade', (req, socket) => {
+    const key = req.headers['sec-websocket-key'];
+    if (!key) {
+      socket.destroy();
+      return;
+    }
+    const accept = crypto
+      .createHash('sha1')
+      .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+      .digest('base64');
+
+    socket.write(
+      'HTTP/1.1 101 Switching Protocols\r\n' +
+      'Upgrade: websocket\r\n' +
+      'Connection: Upgrade\r\n' +
+      `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
+    );
+
+    const client = {
+      get readyState() { return (!socket.destroyed && socket.writable) ? 1 : 3; },
+      send(data) {
+        if (!socket.destroyed && socket.writable) {
+          socket.write(encodeWsFrame(0x1, Buffer.from(String(data), 'utf8')));
+        }
+      },
+      close() {
+        try { socket.end(encodeWsFrame(0x8, Buffer.alloc(0))); } catch {}
+      }
+    };
+    clients.add(client);
+
+    socket.on('data', (buf) => {
+      if (buf.length < 2) return;
+      const opcode = buf[0] & 0x0f;
+      if (opcode === 0x8) {
+        clients.delete(client);
+        try { socket.end(encodeWsFrame(0x8, Buffer.alloc(0))); } catch {}
+      } else if (opcode === 0x9) {
+        if (!socket.destroyed && socket.writable) {
+          socket.write(encodeWsFrame(0xA, Buffer.alloc(0)));
+        }
+      }
+    });
+    socket.on('close', () => clients.delete(client));
+    socket.on('error', () => {
+      clients.delete(client);
+      try { socket.destroy(); } catch {}
+    });
+  });
+
+  wsHttp.clients = clients;
+  wsHttp.listen(port);
+  return wsHttp;
+}
+
 function startWs(port) {
   if (port === currentHttpPort) {
     startWs(port + 1);
     return;
   }
   try {
-    const wsServer = new WebSocketServer({ port: port });
+    const wsServer = createNativeWsServer(port);
     wsServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.log(`\x1b[33m[!] WebSocket Port ${port} is busy. Switching to port ${port + 1}...\x1b[0m`);
@@ -173,7 +256,7 @@ let isBuilding = false;
 let debounceTimer = null;
 function watchDir(dir) {
   if (!fs.existsSync(dir)) return;
-  fs.watch(dir, { recursive: true }, (eventType, filename) => {
+  const onWatchEvent = (eventType, filename) => {
     if (!filename || filename.includes('node_modules') || filename.includes('dist') || filename.includes('generated')) return;
     
     clearTimeout(debounceTimer);
@@ -221,7 +304,12 @@ function watchDir(dir) {
         broadcast({ type: 'reload' });
       }
     }, 200);
-  });
+  };
+  try {
+    fs.watch(dir, { recursive: true }, onWatchEvent);
+  } catch {
+    try { fs.watch(dir, onWatchEvent); } catch {}
+  }
 }
 
 watchDir(SRC_DIR);

@@ -1,10 +1,10 @@
-// BlaiseVue Studio 4.0 - Developer Cockpit & Live Hub Server
+// BlaiseVue Studio 4.0 - Developer Cockpit & Live Hub Server (zero-dependency WebSocket)
 import http from 'http';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { exec, execSync } from 'child_process';
-import { WebSocketServer } from 'ws';
+import { exec } from 'child_process';
 
 // Command line arguments parsing
 let PORT = 9000;
@@ -218,11 +218,62 @@ const server = http.createServer((req, res) => {
   }
 });
 
-// 2. WebSocket Server
-const wss = new WebSocketServer({ server, path: '/ws' });
+// 2. Native WebSocket Server (RFC 6455, zero external deps)
+function encodeWsFrame(opcode, payloadBuf) {
+  const len = payloadBuf.length;
+  let header;
+  if (len < 126) {
+    header = Buffer.allocUnsafe(2);
+    header[0] = 0x80 | opcode;
+    header[1] = len;
+  } else if (len < 65536) {
+    header = Buffer.allocUnsafe(4);
+    header[0] = 0x80 | opcode;
+    header[1] = 126;
+    header.writeUInt16BE(len, 2);
+  } else {
+    header = Buffer.allocUnsafe(10);
+    header[0] = 0x80 | opcode;
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(len), 2);
+  }
+  return Buffer.concat([header, payloadBuf]);
+}
 
-wss.on('connection', (ws) => {
-  ws.send(JSON.stringify({
+const wsClients = new Set();
+const wss = { clients: wsClients };
+
+server.on('upgrade', (req, socket) => {
+  const reqPath = (req.url || '').split('?')[0];
+  const key = req.headers['sec-websocket-key'];
+  if (reqPath !== '/ws' || !key) {
+    socket.destroy();
+    return;
+  }
+
+  const accept = crypto
+    .createHash('sha1')
+    .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+    .digest('base64');
+
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
+  );
+
+  const client = {
+    get readyState() { return (!socket.destroyed && socket.writable) ? 1 : 3; },
+    send(data) {
+      if (!socket.destroyed && socket.writable) {
+        socket.write(encodeWsFrame(0x1, Buffer.from(String(data), 'utf8')));
+      }
+    }
+  };
+  wsClients.add(client);
+
+  client.send(JSON.stringify({
     type: 'studio:welcome',
     payload: {
       message: 'Connected to BlaiseVue Studio 4.0 Hub',
@@ -230,36 +281,86 @@ wss.on('connection', (ws) => {
     }
   }));
 
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message.toString());
-      // Broadcast to all other connected clients
-      wss.clients.forEach((client) => {
-        if (client !== ws && client.readyState === 1) {
-          client.send(JSON.stringify(data));
+  let rxBuf = Buffer.alloc(0);
+  socket.on('data', (chunk) => {
+    rxBuf = Buffer.concat([rxBuf, chunk]);
+    while (rxBuf.length >= 2) {
+      const opcode = rxBuf[0] & 0x0f;
+      const masked = (rxBuf[1] & 0x80) !== 0;
+      let len = rxBuf[1] & 0x7f;
+      let offset = 2;
+      if (len === 126) {
+        if (rxBuf.length < offset + 2) return;
+        len = rxBuf.readUInt16BE(offset);
+        offset += 2;
+      } else if (len === 127) {
+        if (rxBuf.length < offset + 8) return;
+        len = Number(rxBuf.readBigUInt64BE(offset));
+        offset += 8;
+      }
+      const maskLen = masked ? 4 : 0;
+      if (rxBuf.length < offset + maskLen + len) return;
+
+      const payload = Buffer.allocUnsafe(len);
+      if (masked) {
+        const maskKey = rxBuf.subarray(offset, offset + 4);
+        offset += 4;
+        for (let i = 0; i < len; i++) {
+          payload[i] = rxBuf[offset + i] ^ maskKey[i % 4];
         }
-      });
-    } catch(e) {}
+      } else {
+        rxBuf.copy(payload, 0, offset, offset + len);
+      }
+      rxBuf = rxBuf.subarray(offset + len);
+
+      if (opcode === 0x8) {
+        wsClients.delete(client);
+        try { socket.end(encodeWsFrame(0x8, Buffer.alloc(0))); } catch {}
+        return;
+      } else if (opcode === 0x9) {
+        if (!socket.destroyed && socket.writable) {
+          socket.write(encodeWsFrame(0xA, payload));
+        }
+      } else if (opcode === 0x1) {
+        try {
+          const data = JSON.parse(payload.toString('utf8'));
+          wsClients.forEach((other) => {
+            if (other !== client && other.readyState === 1) {
+              other.send(JSON.stringify(data));
+            }
+          });
+        } catch {}
+      }
+    }
+  });
+
+  socket.on('close', () => wsClients.delete(client));
+  socket.on('error', () => {
+    wsClients.delete(client);
+    try { socket.destroy(); } catch {}
   });
 });
 
 // Watch src/ and lib/ for changes to notify Studio
 const watchDirs = ['src', 'lib'].map(d => path.join(ROOT_DIR, d)).filter(fs.existsSync);
 watchDirs.forEach(dir => {
+  const notifyChange = (eventType, filename) => {
+    if (filename && filename.endsWith('.bv')) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({
+            type: 'file:changed',
+            payload: { file: filename, time: new Date().toISOString() }
+          }));
+        }
+      });
+    }
+  };
   try {
-    fs.watch(dir, { recursive: true }, (eventType, filename) => {
-      if (filename && filename.endsWith('.bv')) {
-        wss.clients.forEach(client => {
-          if (client.readyState === 1) {
-            client.send(JSON.stringify({
-              type: 'file:changed',
-              payload: { file: filename, time: new Date().toISOString() }
-            }));
-          }
-        });
-      }
-    });
-  } catch(e) {}
+    fs.watch(dir, { recursive: true }, notifyChange);
+  } catch {
+    try { fs.watch(dir, notifyChange); } catch {}
+  }
 });
 
 // Start Server

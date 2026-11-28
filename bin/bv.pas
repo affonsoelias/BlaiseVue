@@ -5386,28 +5386,9 @@ Begin
           );
       End;
 
-    If HasCommand('npm') Then
-      Begin
-        WriteLn('');
-        WriteLn('Installing dependencies (npm install)...');
-
-    {$IFDEF WINDOWS}
-        ExecuteProcess('cmd', '/c cd /d "' + Base + '" && npm install');
-    {$ELSE}
-        ExecuteProcess('/bin/sh', '-c "npm install --prefix ''' + Base + '''"');
-    {$ENDIF}
-      End
-
-    Else
-      Begin
-        WriteLn('');
-        WriteLn('  [WARNING] npm not found in system PATH.');
-        WriteLn(
-
-
-'            Please install Node.js (https://nodejs.org) and run "npm install" inside '
-                + RealProjectName + '.');
-      End;
+    // Note: No blocking npm install during "bv create".
+    // Core commands (bv build, bv dev, bv studio) work with zero node_modules;
+    // Vitest and Capacitor are installed automatically on demand when used.
 
 
 
@@ -13480,7 +13461,7 @@ Begin
       Exit;
     End;
 
-  Result := '0.1.0';
+  Result := '0.1.1';
   PkgPath := GetCurrentDir + DirectorySeparator + 'package.json';
   If FileExists(PkgPath) Then
     Begin
@@ -16896,6 +16877,41 @@ WriteLn('');
 OldDir := GetCurrentDir;
 Try
   SetCurrentDir(WorkNorm);
+  If (Not DirectoryExists(WorkNorm + DirectorySeparator + 'node_modules' +
+        DirectorySeparator + 'vitest')) And
+     (Not DirectoryExists(ExpandFileName(WorkNorm + DirectorySeparator + '..') +
+        DirectorySeparator + 'node_modules' + DirectorySeparator + 'vitest')) Then
+    Begin
+      If HasCommand('npm') Then
+        Begin
+          WriteLn('');
+          WriteLn('[*] Vitest not installed locally; installing test dependencies on demand...');
+          If FileExists(WorkNorm + DirectorySeparator + 'package.json') And
+             (Pos('"vitest"', ReadFileToString(WorkNorm + DirectorySeparator + 'package.json')) > 0) Then
+            Begin
+              {$IFDEF WINDOWS}
+              ExecuteProcess('cmd', '/c npm install');
+              {$ELSE}
+              ExecuteProcess('/bin/sh', ['-c', 'npm install']);
+              {$ENDIF}
+            End
+          Else
+            Begin
+              {$IFDEF WINDOWS}
+              ExecuteProcess('cmd', '/c npm install --save-dev vitest jsdom');
+              {$ELSE}
+              ExecuteProcess('/bin/sh', ['-c', 'npm install --save-dev vitest jsdom']);
+              {$ENDIF}
+            End;
+        End
+      Else
+        Begin
+          WriteLn('');
+          WriteLn('[!] Vitest is not installed and npm was not detected in PATH.');
+          WriteLn('    Install Node.js (https://nodejs.org) and run "npm install" to run "bv test".');
+        End;
+    End;
+
       {$IFDEF WINDOWS}
   VitestExitCode := ExecuteProcess('cmd', '/c npx vitest run' + VitestArgStr);
       {$ELSE}

@@ -1,6 +1,6 @@
 {
   "name" : "blaisevue",
-  "version" : "0.1.0",
+  "version" : "0.1.1",
   "description" : "BlaiseVue - Universal Full-Stack Object Pascal Framework for Web, Mobile and Desktop",
   "type" : "module",
   "scripts" : {
