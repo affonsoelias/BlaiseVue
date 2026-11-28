@@ -1,7 +1,7 @@
 unit BVDesktop;
 
 {
-  BVDesktop - BlaiseVue 3.5 Native Desktop & WebUI Integration
+  BVDesktop - Native Desktop & WebUI Integration
   ------------------------------------------------------------
   Provides unified Object Pascal access to native desktop window
   and OS-level capabilities:

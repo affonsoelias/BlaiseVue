@@ -1,7 +1,7 @@
 unit BVMobile;
 
 {
-  BVMobile - BlaiseVue 3.5 Mobile Hardware & Capacitor Integration
+  BVMobile - Mobile Hardware & Capacitor Integration
   ---------------------------------------------------------------
   Provides unified Object Pascal access to mobile device hardware:
   - Camera & QR/Barcode capture

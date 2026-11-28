@@ -1,7 +1,7 @@
 unit BVPascalDX;
 
 {
-  BVPascalDX - Idiomatic Object Pascal Developer Experience (Phase 8)
+  BVPascalDX - Idiomatic Object Pascal Developer Experience
   -------------------------------------------------------------------
   Provides high-level, strongly-typed Pascal utilities, UI controllers,
   and collection manipulation routines, eliminating the need for inline
@@ -121,7 +121,7 @@ function GetFieldInt(Obj: JSValue; const PropName: string; DefaultVal: Integer =
 function GetFieldBool(Obj: JSValue; const PropName: string; DefaultVal: Boolean = False): Boolean;
 procedure SetField(Obj: JSValue; const PropName: string; Value: JSValue);
 
-{ --- LiveBindings & Reactive TBVDataSet Helpers (Phase 9 / 4.2) --- }
+{ --- LiveBindings & Reactive TBVDataSet Helpers --- }
 function NewDataSet: JSValue;
 procedure DataSetLoad(DS: JSValue; Data: JSValue);
 procedure DataSetAppend(DS: JSValue);
@@ -140,7 +140,7 @@ function DataSetFieldVal(DS: JSValue; const AFieldName: string): JSValue;
 procedure DataSetSetFieldVal(DS: JSValue; const AFieldName: string; AValue: JSValue);
 function DataSetDeltaJSON(DS: JSValue): string;
 procedure DataSetApplyUpdates(DS: JSValue);
-{ --- Offline-First TBVDataSet & Delta Sync Helpers (BlaiseVue 4.4 Pillar 2) --- }
+{ --- Offline-First TBVDataSet & Delta Sync Helpers --- }
 procedure DataSetSaveIndexedDB(DS: JSValue; const StoreKey: string = ''; OnSuccess: JSValue = nil; OnError: JSValue = nil);
 procedure DataSetLoadIndexedDB(DS: JSValue; const StoreKey: string = ''; OnComplete: JSValue = nil);
 procedure DataSetSetAutoPersist(DS: JSValue; Enable: Boolean; const StoreKey: string = '');
@@ -157,7 +157,7 @@ function DataSetNextId(DS: JSValue; const AFieldName: string = 'id'): Integer;
 procedure DataSetLoadIndexedDBAsync(DS: JSValue; const StoreKey: string; OnComplete: TBVLoadCallback);
 procedure DataSetApplyUpdatesCallbacks(DS: JSValue; const EndpointOrService: string; OnSuccess: TBVValueCallback; OnError: TBVValueCallback);
 
-{ --- Type-Safe mORMot 2 Pascal RPC Helpers (BlaiseVue 4.3) --- }
+{ --- Type-Safe mORMot 2 Pascal RPC Helpers --- }
 procedure RpcSetBaseUrl(const Url: string);
 procedure RpcSetToken(const Token: string);
 procedure RpcClearToken;
@@ -167,7 +167,7 @@ procedure RpcSetUsePack(Enable: Boolean);
 function RpcCall(const ServiceName, MethodName: string; Params: JSValue = nil; OnSuccess: JSValue = nil; OnError: JSValue = nil): JSValue;
 function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue = nil): JSValue;
 
-{ --- BlaiseReports Enterprise Reporting Helpers (BlaiseVue 5.0 Pillar 1) --- }
+{ --- BlaiseReports Enterprise Reporting Helpers --- }
 function NewReport(DataSetOrArray: JSValue = nil): JSValue;
 procedure ReportSetTitle(Report: JSValue; const ATitle: string; const ASubtitle: string = '');
 procedure ReportSetHeader(Report: JSValue; const AHeader: string; const AFooter: string = '');
@@ -644,7 +644,7 @@ begin
   end;
 end;
 
-{ --- LiveBindings & Reactive TBVDataSet Helpers (Phase 9 / 4.2) --- }
+{ --- LiveBindings & Reactive TBVDataSet Helpers --- }
 
 function NewDataSet: JSValue;
 var
@@ -1515,7 +1515,7 @@ begin
   Result := TBVRpcClient.InvokeAsync(ServiceName, MethodName, Params);
 end;
 
-{ --- BlaiseReports Enterprise Reporting Helpers (BlaiseVue 5.0 Pillar 1) --- }
+{ --- BlaiseReports Enterprise Reporting Helpers --- }
 
 function NewReport(DataSetOrArray: JSValue = nil): JSValue;
 begin

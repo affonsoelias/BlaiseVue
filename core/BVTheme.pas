@@ -1,7 +1,7 @@
 unit BVTheme;
 
 {
-  BVTheme - Integrated Reactive Theme Manager (BlaiseVue 2.6)
+  BVTheme - Integrated Reactive Theme Manager
   -----------------------------------------------------------
   Provides reactive theme switching ($theme), Bootswatch support,
   dark/light mode toggling, dynamic DOM stylesheet updating (<link id="bv-theme">),

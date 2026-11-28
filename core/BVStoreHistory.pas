@@ -1,7 +1,7 @@
 unit BVStoreHistory;
 
 {
-  BVStoreHistory - Time-Travel Debugging & State Snapshots (Pillar 1 Step 4)
+  BVStoreHistory - Time-Travel Debugging & State Snapshots
   ----------------------------------------------------------------------------
   Provides historical state snapshot tracking, Undo/Redo capability,
   state travel, audit log exports, and browser DevTools integration for BlaiseX.

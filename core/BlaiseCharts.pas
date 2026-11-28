@@ -3,7 +3,6 @@ unit BlaiseCharts;
 {
   BlaiseCharts - High-Performance Reactive Charting Suite for BlaiseVue
   ---------------------------------------------------------------------
-  Part of BlaiseVue 4.0 (Universal Pascal Ecosystem)
   Provides strongly typed Pascal classes, records, and builders for
   Chart.js integration with reactive HTML5 <canvas> acceleration.
 }

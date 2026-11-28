@@ -26,6 +26,9 @@ begin
             TBVI18n.SetLocale('pt');
             Expect(TBVI18n.GetLocale).ToBe('pt');
 
+            TBVI18n.SetLocale('el');
+            Expect(TBVI18n.GetLocale).ToBe('el');
+
             TBVI18n.SetLocale('en');
             Expect(TBVI18n.GetLocale).ToBe('en');
          end);

@@ -1,7 +1,7 @@
 unit BVValidation;
 
 {
-  BVValidation - Typed Form Validation Engine (BlaiseVue 2.5)
+  BVValidation - Typed Form Validation Engine
   -----------------------------------------------------------
   Provides declarative, reactive validation rules, error tracking ($errors),
   and form validation state management ($v) for BlaiseVue components.

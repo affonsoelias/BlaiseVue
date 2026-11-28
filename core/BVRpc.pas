@@ -1,7 +1,7 @@
 unit BVRpc;
 
 {
-  BVRpc - BlaiseVue 4.3 End-to-End Type-Safe Pascal RPC with mORMot 2
+  BVRpc - End-to-End Type-Safe Pascal RPC with mORMot 2
   -------------------------------------------------------------------
   Provides a compile-time verified, zero-boilerplate remote procedure
   call (RPC) framework in pure Object Pascal.

@@ -1,7 +1,7 @@
 unit BVI18n;
 
 {
-  BVI18n - Integrated Internationalization (BlaiseVue 2.5)
+  BVI18n - Integrated Internationalization
   --------------------------------------------------------
   Provides reactive multi-locale translation ($t), dynamic runtime
   language switching, nested dictionary lookup, and token interpolation.

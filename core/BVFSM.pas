@@ -4,7 +4,7 @@ unit BVFSM;
   BVFSM - Finite State Machine Engine for BlaiseVue (BlaiseX)
   -------------------------------------------------------------
   Implements enterprise-grade deterministic Finite State Machines (FSM)
-  in pure Object Pascal for BlaiseVue 5.0.
+  in pure Object Pascal for BlaiseVue.
 
   Features:
   - Declarative states, events, and transitions

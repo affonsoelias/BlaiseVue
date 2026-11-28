@@ -1,7 +1,7 @@
 unit BVWasm;
 
 {
-  BVWasm - WebAssembly Acceleration Engine (BlaiseVue 3.0)
+  BVWasm - WebAssembly Acceleration Engine
   --------------------------------------------------------
   Enables high-performance computation in Object Pascal applications
   running in the browser via WebAssembly (Wasm).

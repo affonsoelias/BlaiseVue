@@ -1,9 +1,8 @@
 unit BlaiseReports;
 
 {
-  BlaiseReports - Native Vector PDF, Excel, CSV & Print Engine for BlaiseVue 5.0
+  BlaiseReports - Native Vector PDF, Excel, CSV & Print Engine for BlaiseVue
   ------------------------------------------------------------------------------
-  Part of BlaiseVue 5.0 (Pillar 1: Enterprise Reporting & Document Export)
   Provides a declarative, fluent Object Pascal reporting engine binding directly
   to TBVDataSet and <bv-datagrid>, generating:
   - Native Vector PDF 1.4 documents with pagination, running headers/footers,

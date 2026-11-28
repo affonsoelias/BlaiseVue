@@ -1,7 +1,7 @@
 unit BVClient;
 
 {
-  BVClient - BlaiseVue 3.5 Full-Stack Client for Synopse mORMot 2
+  BVClient - Full-Stack Client for Synopse mORMot 2
   --------------------------------------------------------------
   Provides high-throughput HTTP REST API ($api) and real-time
   bidirectional WebSocket ($ws) client integration for BlaiseVue

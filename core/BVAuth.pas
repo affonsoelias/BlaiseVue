@@ -1,7 +1,7 @@
 unit BVAuth;
 
 {
-  BVAuth - BlaiseVue 4.0 Enterprise Authentication & Session Manager
+  BVAuth - Enterprise Authentication & Session Manager
   -------------------------------------------------------------------
   Provides out-of-the-box JWT authentication, reactive session handling ($auth),
   role-based access control (RBAC), and route guard protection for BlaiseVue apps.

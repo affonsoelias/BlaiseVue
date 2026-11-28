@@ -76,7 +76,7 @@ initialization
     if (!bv.evalCache) bv.evalCache = Object.create(null);
 
     // =========================================================================
-    //  BLAISEVUE 4.4: ZERO-WITH NATIVE FAST EXPRESSION EVALUATOR & CSP ENGINE
+    //  BLAISEVUE: ZERO-WITH NATIVE FAST EXPRESSION EVALUATOR & CSP ENGINE
     // =========================================================================
     if (!bv.fastEval) {
       function bvTokenize(str) {

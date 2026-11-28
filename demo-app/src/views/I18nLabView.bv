@@ -35,6 +35,9 @@
           <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'fr' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('fr')">
             🇫🇷 Français (fr)
           </button>
+          <button type="button" class="bui-btn bui-btn-sm" :style="activeLocale === 'el' ? 'background:#10b981;color:white;border-color:#10b981;' : 'background:var(--bv-surface-subtle);color:var(--bv-text);border:1px solid var(--bv-border);'" @click="setLang('el')">
+            🇬🇷 Ελληνικά (el)
+          </button>
         </div>
         <span style="font-size: 12px; color: var(--bv-text-muted);">Fallback Locale: <strong>EN</strong></span>
       </div>
@@ -139,6 +142,7 @@
       I18nAddMessages('pt', '{"lab":{"welcome":"Bem-vindo ao BlaiseVue","save":"Salvar Alterações","cancel":"Cancelar","welcomeUser":"Olá, {name}! Você tem {count} notificações não lidas."},"actions":{"dialog":{"confirm":"Tem certeza que deseja prosseguir?","delete":"Excluir este registro permanentemente"}}}');
       I18nAddMessages('es', '{"lab":{"welcome":"Bienvenido a BlaiseVue","save":"Guardar Cambios","cancel":"Cancelar","welcomeUser":"¡Hola, {name}! Tienes {count} notificaciones no leídas."},"actions":{"dialog":{"confirm":"¿Está seguro de continuar?","delete":"Eliminar este registro permanentemente"}}}');
       I18nAddMessages('fr', '{"lab":{"welcome":"Bienvenue sur BlaiseVue","save":"Enregistrer les modifications","cancel":"Annuler","welcomeUser":"Bonjour, {name} ! Vous avez {count} notifications non lues."},"actions":{"dialog":{"confirm":"Êtes-vous sûr de vouloir continuer ?","delete":"Supprimer cet enregistrement définitivement"}}}');
+      I18nAddMessages('el', '{"lab":{"welcome":"Καλώς ήρθατε στο BlaiseVue","save":"Αποθήκευση αλλαγών","cancel":"Ακύρωση","welcomeUser":"Γεια σου, {name}! Έχεις {count} μη αναγνωσμένες ειδοποιήσεις."},"actions":{"dialog":{"confirm":"Είστε σίγουροι ότι θέλετε να συνεχίσετε;","delete":"Οριστική διαγραφή αυτής της εγγραφής"}}}');
 
       this.activeLocale := I18nGetLocale;
       this.updateDictionaryPreview();

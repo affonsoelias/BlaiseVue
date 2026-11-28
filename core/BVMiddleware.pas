@@ -1,9 +1,9 @@
 unit BVMiddleware;
 
 {
-  BVMiddleware - Action & Mutation Pipeline for BlaiseX (Pillar 1 Step 3)
+  BVMiddleware - Action & Mutation Pipeline for BlaiseX
   ------------------------------------------------------------------------
-  Enterprise middleware pipeline for TBVStore 2.0.
+  Enterprise middleware pipeline for TBVStore.
   Allows intercepting actions, mutations, and state transitions before and
   after execution.
 

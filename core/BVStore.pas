@@ -1,9 +1,9 @@
 unit BVStore;
 
 {
-  BVStore - BlaiseX Advanced Global State Management (TBVStore 2.0)
+  BVStore - BlaiseX Advanced Global State Management (TBVStore)
   -------------------------------------------------------------------
-  Enterprise-grade reactive state management for BlaiseVue 5.0 (Pillar 1).
+  Enterprise-grade reactive state management for BlaiseVue.
   Inspired by Pinia, Redux Toolkit, and Vuex, written in pure Object Pascal.
 
   Features:

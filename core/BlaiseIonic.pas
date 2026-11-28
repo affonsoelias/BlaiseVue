@@ -1,7 +1,7 @@
 unit BlaiseIonic;
 
 {
-  BlaiseIonic - BlaiseVue 4.0 Mobile-First Ionic Ecosystem
+  BlaiseIonic - Mobile-First Ionic Ecosystem for BlaiseVue
   --------------------------------------------------------
   Provides strongly typed Object Pascal wrappers and controllers for
   Ionic Web Components and mobile-native UI elements:
