@@ -18,11 +18,11 @@
 > [!NOTE]
 > ### 🚀 Project Status: Public Pre-Release (`v0.1.x`)
 >
-> BlaiseVue is currently in active public pre-release (**`v0.1.0`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready for developers to clone, compile locally with Free Pascal, run the included `demo-app`, test, build prototypes, and evaluate full-stack architectures**.
+> BlaiseVue is currently in active public pre-release (**`v0.1.1`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready to install in one command via prebuilt binaries (`install.ps1` / `install.sh` — no Git or Free Pascal compiler required to build SPAs)**, create instant projects with zero `npm install`, run the on-demand `demo-app`, test, and evaluate full-stack architectures.
 >
 > BlaiseVue will continue evolving within the **`v0.1.x`** series across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**.
 >
-> We warmly invite developers and the Pascal community to clone the repository, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
+> We warmly invite developers and the Pascal community to install or clone BlaiseVue, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
 
 ---
 
@@ -110,12 +110,17 @@ For the complete architectural evolution specifications, delivered enterprise pi
 
 ```text
 BlaiseVue/
+├── .github/workflows/         # GitHub Actions CI & cross-platform binary releases (release.yml)
 ├── bin/                       # BlaiseVue CLI compiler & development toolchain
 │   ├── bv.pas                 # Zero-dependency native CLI compiler source (built locally via build.ps1 / build.bat / build.sh)
-│   ├── dev-server.js          # Fast local development HTTP server with live HMR
-│   ├── studio-server.js       # BlaiseVue Studio telemetry hub & API bridge
+│   ├── uBVUpgrade.pas         # SHA-256 binary updater, channel manager (stable/nightly), rollback & on-demand fetcher
+│   ├── dev-server.js          # Zero-dependency local development HTTP server with native RFC 6455 HMR WebSocket
+│   ├── studio-server.js       # Zero-dependency BlaiseVue Studio telemetry hub & API bridge
 │   ├── studio/                # Embedded BlaiseVue Studio web cockpit UI
 │   └── templates.res          # Embedded pre-compiled project & component templates
+├── scripts/                   # Official 1-line installers & release packagers
+│   ├── install.ps1 / install.sh             # Prebuilt binary installers (~/.blaisevue, SHA-256 verified)
+│   └── package_release.ps1 / .sh            # Cross-platform archive builders + SHA256SUMS.txt
 ├── core/                      # Core runtime engine (Transpiled via Pas2JS)
 │   ├── BlaiseVue.pas          # Core SPA instance orchestrator & hydration
 │   ├── BVCompiler.pas         # Template engine, directives & AST parser
@@ -155,8 +160,8 @@ BlaiseVue/
 │       ├── blaise-vscode/     # Official VS Code extension (.vsix packaging & snippets)
 │       └── blaise-lazarus/    # Official Lazarus IDE package (.lpk design-time integration)
 ├── vendor/                    # Pre-bundled compilers & native frameworks
-│   ├── pas2js/                # Official multi-platform Pas2JS transpiler & RTL binaries
-│   ├── mormot2/               # High-throughput Synopse mORMot 2.4 framework
+│   ├── pas2js/                # Official Pas2JS transpiler & RTL binaries (per-platform in release archives)
+│   ├── mormot2/               # High-throughput Synopse mORMot 2.4 framework (fetched on demand in binary installs)
 │   └── zephyr/                # Native DelSafe HTTP/1.1 + WebSocket server (experimental)
 ├── tests/                     # SDK-level framework test suites (bv test --sdk)
 ├── doc/                       # Architecture, manuals & educational courses
@@ -164,7 +169,7 @@ BlaiseVue/
 │   ├── Documentation/         # 59 comprehensive technical manuals + API Reference
 │   ├── Course/                # 13-module practical course from beginner to ninja
 │   └── brand/                 # Official vector logos, icons & banner assets
-└── demo-app/                  # Enterprise showcase application (v0.1.0 Full-Stack)
+└── demo-app/                  # Enterprise showcase application (v0.1.x Full-Stack, fetched on demand in binary installs)
     ├── src/                   # Reactive frontend SPA (views, components, services)
     ├── server-mormot/         # High-throughput native mORMot 2 backend server
     ├── mobile/                # Native Capacitor Android (APK/AAB) & iOS projects
@@ -177,7 +182,6 @@ BlaiseVue/
 ## 🏁 Quick Start
 
 ### 📋 Prerequisites
-- **Node.js (v18+ LTS) & npm**: Powers the development server with HMR (`bv dev`), automated testing (`bv test`), and mobile synchronization (`bv capacitor` / `bv mobile`).
 - **Node.js (v18+ LTS)**: Powers the zero-dependency HMR dev server (`bv dev`), Studio (`bv studio`), and on-demand test/mobile tooling (`bv test`, `bv capacitor`).
 - **Lazarus IDE (or Free Pascal Compiler 3.2+, Optional)**: Required only if you build native desktop apps (`bv desktop`), native **mORMot 2** servers (`bv mormot`), or compile the CLI from source (`--from-source`).
 - **[DelSafe Compiler (`delsafec`, Optional & Recommended — Experimental)](https://github.com/affonsoelias/delsafe)**: Optional compiler needed only if you create `--delsafe` apps, author `<script lang="delsafe">` / `.dels` modules, run `.test.dels` suites, or build the **Zephyr** backend (`bv zephyr`). Standard Object Pascal projects work without it.
@@ -185,7 +189,6 @@ BlaiseVue/
 - **Android Studio (Recommended for Mobile)**: Required for compiling native Android `.apk` / `.aab` packages (`bv capacitor build`), managing emulators, and running `bv capacitor open android`.
 
 > [!NOTE]
-> **Pas2JS is pre-bundled per platform**: Release archives automatically include the matching `pas2js` binary for Windows, Linux, or macOS. **`mORMot 2`** and the **`demo-app` showcase template** are fetched on demand the first time you use them (`bv mormot run` / `bv create --demo`).
 > **Zero `npm install` needed to build & run:** `bv create`, `bv build`, `bv dev`, and `bv studio` work out of the box without installing `node_modules`. `pas2js` is pre-bundled per platform, while `mORMot 2`, `demo-app`, and optional test/mobile packages (`vitest` on `bv test`, `@capacitor/*` on `bv capacitor init`) are fetched automatically on demand.
 
 ### 1. Official 1-Line Installation (Prebuilt Binaries — Recommended)
@@ -218,7 +221,6 @@ Explore all BlaiseVue capabilities (reactive views, BlaiseUI, Chart.js, Reports,
 ```bash
 bv create my-demo --demo
 cd my-demo
-npm install        # Required once for Vitest / Capacitor tooling
 bv doctor          # Inspect environment & project alignment
 bv dev             # Frontend SPA + HMR at http://localhost:8080
 ```
@@ -237,7 +239,6 @@ bv create my-app
 #   bv create my-app --backend=zephyr    # Attach native Zephyr DelSafe server (port 8091)
 
 cd my-app
-npm install
 bv doctor
 bv dev
 # Open http://localhost:8080 in your browser
@@ -251,7 +252,7 @@ bv enter
 
 # Manage multiple BlaiseVue versions per project (.blaisevue-version):
 bv framework upgrade            # Downloads prebuilt GitHub release (--from-source optional)
-bv framework use 0.1.0          # Pin current project to v0.1.0
+bv framework use 0.1.1          # Pin current project to v0.1.1
 bv framework use channel        # Follow your global channel again
 
 # Update safely with SHA-256 verification & atomic .bak backup (revert anytime with bv rollback):
@@ -262,7 +263,6 @@ bv channel use nightly          # Switch channel (aliases: main -> stable, devel
 bv rollback                     # Restore previous CLI & runtime directories
 ```
 
-### 6. Explore Full-Stack, Mobile & Desktop
 ### 4. Explore Full-Stack, Mobile & Desktop
 Your project is multi-platform by design:
 ```bash
