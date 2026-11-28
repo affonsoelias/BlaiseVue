@@ -12,7 +12,7 @@ unit BVPascalDX;
 
 interface
 
-uses JS, Web, SysUtils, BVDataSet, BVRpc, BlaiseReports, BVStore, BVFSM;
+uses JS, Web, SysUtils, BVDataSet, BVRpc, BVStore, BVFSM;
 
 type
   TBVSimpleCallback = reference to procedure;
@@ -166,24 +166,6 @@ procedure RpcSetTimeout(TimeoutMs: Integer);
 procedure RpcSetUsePack(Enable: Boolean);
 function RpcCall(const ServiceName, MethodName: string; Params: JSValue = nil; OnSuccess: JSValue = nil; OnError: JSValue = nil): JSValue;
 function RpcCallAsync(const ServiceName, MethodName: string; Params: JSValue = nil): JSValue;
-
-{ --- BlaiseReports Enterprise Reporting Helpers --- }
-function NewReport(DataSetOrArray: JSValue = nil): JSValue;
-procedure ReportSetTitle(Report: JSValue; const ATitle: string; const ASubtitle: string = '');
-procedure ReportSetHeader(Report: JSValue; const AHeader: string; const AFooter: string = '');
-procedure ReportSetCompany(Report: JSValue; const ACompanyName: string; const ALogoText: string = '');
-procedure ReportSetPageLayout(Report: JSValue; const ALayoutName: string);
-procedure ReportSetColumns(Report: JSValue; const AFields: array of string);
-procedure ReportAddColumn(Report: JSValue; const AFieldName, ACaption: string; AWidth: Integer = 120; const AAlign: string = 'left'; const AFormat: string = '');
-procedure ReportAddSummary(Report: JSValue; const ALabel, AFieldName: string; const AAggregate: string = 'sum'; const AFormat: string = 'currency');
-function ReportExportPDF(Report: JSValue; const AFileName: string = 'report.pdf'): string;
-function ReportExportExcel(Report: JSValue; const AFileName: string = 'report.xlsx'): string;
-function ReportExportCSV(Report: JSValue; const AFileName: string = 'report.csv'): string;
-function ReportGeneratePDF(Report: JSValue): string;
-function ReportGenerateExcel(Report: JSValue): string;
-function ReportGenerateCSV(Report: JSValue): string;
-function ReportPrintPreview(Report: JSValue; const ATargetElementId: string = ''): string;
-function ReportComputeSummary(Report: JSValue; const AFieldName: string; const AAggregate: string = 'sum'): Double;
 
 implementation
 
@@ -1515,127 +1497,6 @@ begin
   Result := TBVRpcClient.InvokeAsync(ServiceName, MethodName, Params);
 end;
 
-{ --- BlaiseReports Enterprise Reporting Helpers --- }
-
-function NewReport(DataSetOrArray: JSValue = nil): JSValue;
-begin
-  Result := TBVReport.Create(DataSetOrArray);
-end;
-
-procedure ReportSetTitle(Report: JSValue; const ATitle: string; const ASubtitle: string = '');
-begin
-  if Report <> nil then
-  begin
-    TBVReport(Report).Title(ATitle);
-    if ASubtitle <> '' then
-      TBVReport(Report).Subtitle(ASubtitle);
-  end;
-end;
-
-procedure ReportSetHeader(Report: JSValue; const AHeader: string; const AFooter: string = '');
-begin
-  if Report <> nil then
-  begin
-    TBVReport(Report).Header(AHeader);
-    if AFooter <> '' then
-      TBVReport(Report).Footer(AFooter);
-  end;
-end;
-
-procedure ReportSetCompany(Report: JSValue; const ACompanyName: string; const ALogoText: string = '');
-begin
-  if Report <> nil then
-    TBVReport(Report).Company(ACompanyName, ALogoText);
-end;
-
-procedure ReportSetPageLayout(Report: JSValue; const ALayoutName: string);
-begin
-  if Report <> nil then
-    TBVReport(Report).PageSize(ALayoutName);
-end;
-
-procedure ReportSetColumns(Report: JSValue; const AFields: array of string);
-begin
-  if Report <> nil then
-    TBVReport(Report).Columns(AFields);
-end;
-
-procedure ReportAddColumn(Report: JSValue; const AFieldName, ACaption: string; AWidth: Integer = 120; const AAlign: string = 'left'; const AFormat: string = '');
-begin
-  if Report <> nil then
-    TBVReport(Report).AddColumn(AFieldName, ACaption, AWidth, ParseColumnAlign(AAlign), AFormat);
-end;
-
-procedure ReportAddSummary(Report: JSValue; const ALabel, AFieldName: string; const AAggregate: string = 'sum'; const AFormat: string = 'currency');
-begin
-  if Report <> nil then
-    TBVReport(Report).AddSummary(ALabel, AFieldName, ParseAggregateType(AAggregate), AFormat);
-end;
-
-function ReportExportPDF(Report: JSValue; const AFileName: string = 'report.pdf'): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).ExportPDF(AFileName)
-  else
-    Result := '';
-end;
-
-function ReportExportExcel(Report: JSValue; const AFileName: string = 'report.xlsx'): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).ExportExcel(AFileName)
-  else
-    Result := '';
-end;
-
-function ReportExportCSV(Report: JSValue; const AFileName: string = 'report.csv'): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).ExportCSV(AFileName)
-  else
-    Result := '';
-end;
-
-function ReportGeneratePDF(Report: JSValue): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).GeneratePDF
-  else
-    Result := '';
-end;
-
-function ReportGenerateExcel(Report: JSValue): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).GenerateExcel
-  else
-    Result := '';
-end;
-
-function ReportGenerateCSV(Report: JSValue): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).GenerateCSV
-  else
-    Result := '';
-end;
-
-function ReportPrintPreview(Report: JSValue; const ATargetElementId: string = ''): string;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).PrintPreview(ATargetElementId)
-  else
-    Result := '';
-end;
-
-function ReportComputeSummary(Report: JSValue; const AFieldName: string; const AAggregate: string = 'sum'): Double;
-begin
-  if Report <> nil then
-    Result := TBVReport(Report).ComputeSummary(AFieldName, ParseAggregateType(AAggregate))
-  else
-    Result := 0.0;
-end;
-
 procedure RetainDXDataSetSymbols;
 var
   dummy: JSValue;
@@ -1688,22 +1549,6 @@ begin
     RpcSetUsePack(False);
     RpcCall('', '', nil, nil, nil);
     RpcCallAsync('', '', nil);
-    dummy := NewReport(nil);
-    ReportSetTitle(dummy, '', '');
-    ReportSetHeader(dummy, '', '');
-    ReportSetCompany(dummy, '', '');
-    ReportSetPageLayout(dummy, '');
-    ReportSetColumns(dummy, ['']);
-    ReportAddColumn(dummy, '', '', 100, '', '');
-    ReportAddSummary(dummy, '', '', '', '');
-    ReportExportPDF(dummy, '');
-    ReportExportExcel(dummy, '');
-    ReportExportCSV(dummy, '');
-    ReportGeneratePDF(dummy);
-    ReportGenerateExcel(dummy);
-    ReportGenerateCSV(dummy);
-    ReportPrintPreview(dummy, '');
-    ReportComputeSummary(dummy, '', '');
     UseStore('');
     UseFSM('');
     UseFSM('', '');

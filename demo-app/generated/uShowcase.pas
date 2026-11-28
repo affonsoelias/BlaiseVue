@@ -6,7 +6,7 @@ unit uShowcase;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVTheme, BVPascalDX;
 
 procedure Register_uShowcase;
 
@@ -113,6 +113,7 @@ begin
       ThemeSet(targetTheme);
       TComponentThis(_this).currentThemeName := ATheme;
     end;
+
 
   comp['methods'] := m;
 

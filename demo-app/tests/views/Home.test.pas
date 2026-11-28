@@ -21,7 +21,7 @@ begin
          begin
             Wrapper := Mount('home-page');
             Expect(Wrapper.Element <> nil).ToBe(True);
-            Expect(Wrapper.Find('h2').textContent).ToContain('Home: Control Panel');
+            Expect(Wrapper.Find('h1').textContent).ToContain('Dashboard');
             Expect(Wrapper.Find('.alert-box')).toBeDefined;
          end);
 

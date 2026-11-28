@@ -6,7 +6,7 @@ unit uHome;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVTheme;
 
 procedure Register_uHome;
 
@@ -110,6 +110,7 @@ begin
     begin
       TComponentThis(_this).isVisible := not TComponentThis(_this).isVisible;
     end;
+
 
   comp['methods'] := m;
 

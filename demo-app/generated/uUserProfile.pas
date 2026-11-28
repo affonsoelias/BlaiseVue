@@ -6,7 +6,7 @@ unit uUserProfile;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity;
 
 procedure Register_uUserProfile;
 
@@ -76,7 +76,6 @@ begin
 
 
   m := TJSObject.new;
-  comp['methods'] := m;
 
   comp['computed'] := TJSObject.new;
   TJSObject(comp['computed'])['userLevel'] := function(_this: TJSObject): JSValue
@@ -87,6 +86,8 @@ begin
     end;
 
 ;
+  comp['methods'] := m;
+
   RegisterComponent('user-profile-page', comp);
 end;
 

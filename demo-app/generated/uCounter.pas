@@ -6,7 +6,7 @@ unit uCounter;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity;
 
 procedure Register_uCounter;
 
@@ -66,6 +66,7 @@ begin
     begin
       TComponentThis(_this).valor := 0;
     end;
+
 
   comp['methods'] := m;
 

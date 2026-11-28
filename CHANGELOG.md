@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit test suite for `BVDevTools` (`tests/core/devtools.test.pas`).
 
 ### Changed
+- Decoupled `BlaiseReports` helper wrappers from `BVPascalDX` and replaced unconditional all-unit imports in `BlaiseVue`, `BVCompiler`, and generated `uApp`/`u<Component>` units with automatic feature detection in `bv` (reducing clean starter release bundle size from `495.9 KB` / `120.5 KB` gzip / `34` modules to `168.5 KB` / `30.9 KB` gzip / `15` modules).
 - Removed tracked `node_modules/` directory from the Git repository index.
 - Separated framework version (`window.__BV_FRAMEWORK_VERSION__`) from application version (`window.__BV_APP_VERSION__`), adding an `App Version` row to the floating `BVDevTools` overlay and defaulting newly created projects to `0.1.0`.
 - Standardized CLI Capacitor recommendations to `bv capacitor` while retaining `bv mobile` as an alias.

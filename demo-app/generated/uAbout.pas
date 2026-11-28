@@ -6,7 +6,7 @@ unit uAbout;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore;
 
 procedure Register_uAbout;
 
@@ -201,7 +201,6 @@ begin
       TJSArray(_this['tecnologias']).length := 0;
     end;
 
-  comp['methods'] := m;
 
   comp['computed'] := TJSObject.new;
   TJSObject(comp['computed'])['perfilInfo'] := function(_this: TJSObject): JSValue
@@ -211,6 +210,8 @@ begin
     end;
 
 ;
+  comp['methods'] := m;
+
   RegisterComponent('about-page', comp);
 end;
 

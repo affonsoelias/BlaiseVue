@@ -6,7 +6,7 @@ unit uInfoCard;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity;
 
 procedure Register_uInfoCard;
 
@@ -50,6 +50,7 @@ begin
 
 
   m := TJSObject.new;
+
   comp['methods'] := m;
 
   RegisterComponent('info-card', comp);

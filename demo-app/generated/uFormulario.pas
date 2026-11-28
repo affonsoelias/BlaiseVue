@@ -6,7 +6,7 @@ unit uFormulario;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVValidation, BVI18n, BVPascalDX;
 
 procedure Register_uFormulario;
 
@@ -189,6 +189,7 @@ begin
       TComponentThis(_this).msgSucesso := '';
       ResetValidation(_this);
     end;
+
 
   comp['methods'] := m;
 

@@ -11,7 +11,7 @@ unit BVCompiler;
 
 interface
 
-uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVValidation, BVI18n, BVTheme, BVWasm, BVClient, BVAuth;
+uses JS, Web, SysUtils, BVComponents, BVReactivity;
 
 { Mounts and compiles a specific root element with data and methods }
 procedure Compile(Root, Data, Methods: JSValue);

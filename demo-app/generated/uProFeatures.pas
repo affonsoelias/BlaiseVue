@@ -6,7 +6,7 @@ unit uProFeatures;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVStore, BVI18n, BVWasm, BVPascalDX;
 
 procedure Register_uProFeatures;
 
@@ -338,7 +338,6 @@ begin
     end;
     end;
 
-  comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
     var
@@ -372,6 +371,8 @@ begin
     ;
   comp['inject'] := TJSArray.new;
   TJSArray(comp['inject']).push('getAmbiente');
+  comp['methods'] := m;
+
   RegisterComponent('pro-features-page', comp);
 end;
 

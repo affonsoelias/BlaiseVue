@@ -6,7 +6,7 @@ unit uLibBootstrap;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet, BVRouting;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVRouting, BVStore, BVDataSet, BVTheme, BVPascalDX;
 
 procedure Register_uLibBootstrap;
 
@@ -329,7 +329,6 @@ begin
       CallMethod(_this, 'clickNotif', ['Settings applied successfully!']);
     end;
 
-  comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
     var
@@ -355,6 +354,8 @@ begin
     end;
 
     ;
+  comp['methods'] := m;
+
   RegisterComponent('lib-bootstrap-page', comp);
 end;
 

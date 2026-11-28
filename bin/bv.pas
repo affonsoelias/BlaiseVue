@@ -3155,30 +3155,207 @@ End;
 
 { Generates a Pascal unit from a standard .bv component }
 
+Procedure AppendUniqueUnit(Var UsesLine: String; Const UnitName: String);
+
+Var 
+  CleanUnit, NormLine: string;
+Begin
+  CleanUnit := Trim(UnitName);
+  If CleanUnit = '' Then Exit;
+  NormLine := LowerCase(StringReplace(UsesLine, ' ', '', [rfReplaceAll]));
+  NormLine := StringReplace(NormLine, #10, '', [rfReplaceAll]);
+  NormLine := StringReplace(NormLine, #13, '', [rfReplaceAll]);
+  If Pos(',' + LowerCase(CleanUnit) + ',', ',' + NormLine + ',') = 0 Then
+    UsesLine := UsesLine + ', ' + CleanUnit;
+End;
+
+Function HasAnyToken(Const Haystack: String; Const Needles: Array Of String):
+                     Boolean;
+
+Var 
+  i: Integer;
+Begin
+  Result := False;
+  For i := Low(Needles) To High(Needles) Do
+    Begin
+      If Pos(Needles[i], Haystack) > 0 Then
+        Exit(True);
+    End;
+End;
+
+Procedure AppendRequiredCoreUnits(Var UsesLine: String; Const Parsed: TBVParsed;
+                                  Const GeneratedCode: String = '');
+
+Var 
+  Src: string;
+  i: Integer;
+Begin
+  Src := LowerCase(
+    Parsed.Template + #10 +
+    Parsed.RawScriptBlock + #10 +
+    Parsed.ScriptUses + #10 +
+    Parsed.MethodsCode + #10 +
+    Parsed.CreatedCode + #10 +
+    Parsed.MountedCode + #10 +
+    Parsed.UpdatedCode + #10 +
+    Parsed.WatchCode + #10 +
+    Parsed.ComputedCode + #10 +
+    Parsed.ProvideCode + #10 +
+    Parsed.InjectCode + #10 +
+    Parsed.BeforeEachCode + #10 +
+    GeneratedCode
+  );
+  For i := 0 To High(Parsed.DataFields) Do
+    Src := Src + #10 + LowerCase(Parsed.DataFields[i].FieldType + ' ' +
+           Parsed.DataFields[i].DefaultValue);
+
+  If Parsed.HasRouter Or
+     HasAnyToken(Src, ['$router', '$route', 'router-view', 'router-link',
+                       'navigateto(', 'goback', 'tbvrouter', 'bvrouting']) Then
+    AppendUniqueUnit(UsesLine, 'BVRouting');
+
+  If HasAnyToken(Src, ['$store', '$blaisex', 'usestore', 'getstore',
+                       'storecommit', 'storedispatch', 'storeget', 'storeundo',
+                       'storeredo', 'tbvstore', 'bvstore']) Then
+    AppendUniqueUnit(UsesLine, 'BVStore');
+
+  If HasAnyToken(Src, ['storeundo', 'storeredo', 'bvstorehistory',
+                       'tbvstorehistory', 'canundo', 'canredo']) Then
+    AppendUniqueUnit(UsesLine, 'BVStoreHistory');
+
+  If HasAnyToken(Src, ['bvmiddleware', 'tbvmiddleware', 'usemiddleware',
+                       'applymiddleware']) Then
+    AppendUniqueUnit(UsesLine, 'BVMiddleware');
+
+  If HasAnyToken(Src, ['usefsm', 'tbvstatemachine', 'createfsm', 'bvfsm',
+                       '.fsm(']) Then
+    AppendUniqueUnit(UsesLine, 'BVFSM');
+
+  If HasAnyToken(Src, ['tbvdataset', 'newdataset', 'dataset', 'bv-data-grid',
+                       'bvdataset']) Then
+    AppendUniqueUnit(UsesLine, 'BVDataSet');
+
+  If HasAnyToken(Src, ['$rpc', 'rpcset', 'rpccall', 'tbvrpc', 'bvrpc']) Then
+    AppendUniqueUnit(UsesLine, 'BVRpc');
+
+  If HasAnyToken(Src, ['newreport', 'reportset', 'reportadd', 'reportexport',
+                       'reportgenerate', 'reportprint', 'reportcompute',
+                       'tbvreport', 'bv-report-viewer', 'blaisereports',
+                       'createreport']) Then
+    AppendUniqueUnit(UsesLine, 'BlaiseReports');
+
+  If HasAnyToken(Src, ['b-validate', '$v.', '$v[', '$errors', 'validateform',
+                       'touchvalidation', 'resetvalidation', 'bvvalidation',
+                       'tbvvalidation']) Then
+    AppendUniqueUnit(UsesLine, 'BVValidation');
+
+  If HasAnyToken(Src, ['$t(', '$i18n', 'i18n', 'bvi18n', 'tbvi18n']) Then
+    AppendUniqueUnit(UsesLine, 'BVI18n');
+
+  If HasAnyToken(Src, ['$theme', 'themeset', 'themetoggle', 'bv-theme-',
+                       'bvtheme', 'tbvtheme']) Then
+    AppendUniqueUnit(UsesLine, 'BVTheme');
+
+  If (Parsed.WasmModuleName <> '') Or
+     HasAnyToken(Src, ['$wasm', 'wasmcall', 'wasmbenchmark', 'tbvwasm',
+                       'bvwasm']) Then
+    AppendUniqueUnit(UsesLine, 'BVWasm');
+
+  If HasAnyToken(Src, ['$mobile', 'tbvmobile', 'bvmobile']) Then
+    AppendUniqueUnit(UsesLine, 'BVMobile');
+
+  If HasAnyToken(Src, ['$desktop', 'tbvdesktop', 'bvdesktop']) Then
+    AppendUniqueUnit(UsesLine, 'BVDesktop');
+
+  If HasAnyToken(Src, ['$api', '$ws', 'apifetch', 'apisave', 'apidelete',
+                       'apisetuprealtime', 'tbvclient', 'bvclient']) Then
+    AppendUniqueUnit(UsesLine, 'BVClient');
+
+  If HasAnyToken(Src, ['$auth', 'authlogin', 'authlogout', 'tbvauth',
+                       'bvauth']) Then
+    AppendUniqueUnit(UsesLine, 'BVAuth');
+
+  If HasAnyToken(Src, ['$ionic', 'bv-ion-', 'ionicgetmode', 'ionicsetmode',
+                       'ionictoast', 'ionicalert', 'ionicconfirm',
+                       'ionicloading', 'ionicactionsheet', 'blaiseionic',
+                       'tionic']) Then
+    AppendUniqueUnit(UsesLine, 'BlaiseIonic');
+
+  If HasAnyToken(Src, ['usestore', 'usefsm', 'storecommit', 'storedispatch',
+                       'storeget', 'storeundo', 'storeredo', 'showtoast',
+                       'showalert', 'confirm(', 'consolelog', 'startinterval',
+                       'stopinterval', 'starttimeout', 'stoptimeout',
+                       'runafterdelay', 'onnetworkstatuschange',
+                       'scrolltoelement', 'inspectfragmentsreport',
+                       'navigateto', 'goback', 'callmethod', 'callfunction',
+                       'emit(', 'triggerref', 'validateform', 'touchvalidation',
+                       'resetvalidation', 'newobject', 'newarray',
+                       'objectassign', 'jsonstringify', 'jsonparse',
+                       'nowtimestamp', 'filterbyquery', 'removeitembyid',
+                       'finditembyid', 'apifetch', 'apisave', 'apidelete',
+                       'apisetuprealtime', 'authlogin', 'authlogout',
+                       'ionicgetmode', 'ionicsetmode', 'ionictoast',
+                       'ionicalert', 'ionicconfirm', 'ionicloading',
+                       'ionicactionsheet', 'wasmcall', 'wasmbenchmark',
+                       'updatechartdarkmode', 'themeset', 'themetoggle', 'i18n',
+                       'getfieldstr', 'getfieldint', 'getfieldbool', 'setfield',
+                       'newdataset', 'dataset', 'rpcset', 'rpccall',
+                       'bvpascaldx']) Then
+    AppendUniqueUnit(UsesLine, 'BVPascalDX');
+End;
+
+Procedure AppendUsesListUnique(Var UsesLine: String; Const ExtraUses: String);
+
+Var 
+  Parts: TStringList;
+  i: Integer;
+Begin
+  If Trim(ExtraUses) = '' Then Exit;
+  Parts := TStringList.Create;
+  Try
+    Parts.StrictDelimiter := True;
+    Parts.Delimiter := ',';
+    Parts.DelimitedText := ExtraUses;
+    For i := 0 To Parts.Count - 1 Do
+      AppendUniqueUnit(UsesLine, Parts[i]);
+  Finally
+    Parts.Free;
+  End;
+End;
+
 Function GenerateComponentUnit(Const UnitName, TagName, BVFileName: String;
                                Const Parsed: TBVParsed): string;
 
 Var 
-  UsesLine, TypedThisCode: string;
+  UsesLine, TypedThisCode, HooksCode: string;
 Begin
-  UsesLine := 
+  TypedThisCode := GenerateComponentThisType(Parsed.DataFields);
+  HooksCode :=
+               GenerateMethodsCodeTyped(Parsed.MethodsCode, Parsed.DataFields) +
+               #10 +
+               GenerateLifecycleCodeTyped('created', Parsed.CreatedCode,
+               Parsed.DataFields) +
+               GenerateLifecycleCodeTyped('mounted', Parsed.MountedCode,
+               Parsed.DataFields) +
+               GenerateLifecycleCodeTyped('updated', Parsed.UpdatedCode,
+               Parsed.DataFields) +
+               GenerateWatchCode(Parsed.WatchCode) +
+               GenerateComputedCodeTyped(Parsed.ComputedCode, Parsed.DataFields)
+               +
+               GenerateProvideCode(Parsed.ProvideCode) +
+               GenerateInjectCode(Parsed.InjectCode);
 
-
-'JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet'
-  ;
-  If Parsed.HasRouter Then
-    UsesLine := UsesLine + ', BVRouting';
-
-  If Parsed.WasmModuleName <> '' Then
-    UsesLine := UsesLine + ', BVWasm';
+  UsesLine := 'JS, Web, SysUtils, BVComponents, BVReactivity';
+  AppendRequiredCoreUnits(UsesLine, Parsed, HooksCode);
 
   If Parsed.DelSafeLogicUnit <> '' Then
-    UsesLine := UsesLine + ', uDelSafeRuntime, ' + Parsed.DelSafeLogicUnit;
+    Begin
+      AppendUniqueUnit(UsesLine, 'uDelSafeRuntime');
+      AppendUniqueUnit(UsesLine, Parsed.DelSafeLogicUnit);
+    End;
 
   If Parsed.ScriptUses <> '' Then
-    UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
-
-  TypedThisCode := GenerateComponentThisType(Parsed.DataFields);
+    AppendUsesListUnique(UsesLine, Parsed.ScriptUses);
 
   Result := 
 
@@ -3238,28 +3415,11 @@ Begin
 
             '  m := TJSObject.new;' + #10 +
 
-            GenerateMethodsCodeTyped(Parsed.MethodsCode, Parsed.DataFields) +
+            HooksCode +
 
             '  comp[''methods''] := m;' + #10 +
 
             #10 +
-
-            GenerateLifecycleCodeTyped('created', Parsed.CreatedCode, Parsed.
-            DataFields) +
-
-            GenerateLifecycleCodeTyped('mounted', Parsed.MountedCode, Parsed.
-            DataFields) +
-
-            GenerateLifecycleCodeTyped('updated', Parsed.UpdatedCode, Parsed.
-            DataFields) +
-
-            GenerateWatchCode(Parsed.WatchCode) +
-
-            GenerateComputedCodeTyped(Parsed.ComputedCode, Parsed.DataFields) +
-
-            GenerateProvideCode(Parsed.ProvideCode) +
-
-            GenerateInjectCode(Parsed.InjectCode) +
 
             '  RegisterComponent(''' + TagName + ''', comp);' + #10;
 
@@ -3301,26 +3461,42 @@ Function GenerateAppUnit(Const Parsed: TBVParsed; Const AllUnits: TStringList):
 ;
 
 Var 
-  UsesLine, RouteCode, DataCode, Val, TypedThisCode: string;
+  UsesLine, RouteCode, DataCode, Val, TypedThisCode, AppMethodsCode, AppOptsCode:
+                                                                           string
+  ;
   UniqueUnits: TStringList;
   i: Integer;
 Begin
   UniqueUnits := TStringList.Create;
   Try
+    AppMethodsCode := GenerateMethodsCodeTyped(Parsed.MethodsCode,
+                      Parsed.DataFields) + #10;
+    AppOptsCode :=
+                   GenerateLifecycleCodeTyped('created', Parsed.CreatedCode,
+                   Parsed.DataFields) +
+                   GenerateLifecycleCodeTyped('mounted', Parsed.MountedCode,
+                   Parsed.DataFields) +
+                   GenerateLifecycleCodeTyped('updated', Parsed.UpdatedCode,
+                   Parsed.DataFields) +
+                   GenerateWatchCode(Parsed.WatchCode) +
+                   GenerateComputedCodeTyped(Parsed.ComputedCode,
+                   Parsed.DataFields) +
+                   GenerateProvideCode(Parsed.ProvideCode) +
+                   GenerateInjectCode(Parsed.InjectCode);
 
-    UsesLine := 
-
-
-'JS, Web, BlaiseVue, BVComponents, BVStore, BVFSM, BVCompiler, BVDevTools, BVPascalDX, BVDataSet'
-    ;
-    If Parsed.HasRouter Then
-      UsesLine := UsesLine + ', BVRouting';
+    UsesLine := 'JS, Web, SysUtils, BlaiseVue, BVComponents, BVCompiler';
+    AppendRequiredCoreUnits(UsesLine, Parsed, AppMethodsCode + AppOptsCode);
 
     If Parsed.DelSafeLogicUnit <> '' Then
-      UsesLine := UsesLine + ', uDelSafeRuntime, ' + Parsed.DelSafeLogicUnit;
+      Begin
+        AppendUniqueUnit(UsesLine, 'uDelSafeRuntime');
+        AppendUniqueUnit(UsesLine, Parsed.DelSafeLogicUnit);
+      End;
 
     If Parsed.ScriptUses <> '' Then
-      UsesLine := UsesLine + ', ' + Parsed.ScriptUses;
+      AppendUsesListUnique(UsesLine, Parsed.ScriptUses);
+
+    UsesLine := UsesLine + '{$IFNDEF PRODUCTION}, BVDevTools{$ENDIF}';
 
     // Automatically import all compiled component units for auto-registration
 
@@ -3522,7 +3698,7 @@ Begin
 
               '  m := methods;' + #10 +
 
-              GenerateMethodsCodeTyped(Parsed.MethodsCode, Parsed.DataFields) + #10;
+              AppMethodsCode;
 
     // Options (Lifecycle, Watch & Computed)
 
@@ -3530,24 +3706,7 @@ Begin
 
               '  comp := opts;' + #10 +
 
-              GenerateLifecycleCodeTyped('created', Parsed.CreatedCode,
-              Parsed.DataFields) +
-
-              GenerateLifecycleCodeTyped('mounted', Parsed.MountedCode,
-              Parsed.DataFields) +
-
-              GenerateLifecycleCodeTyped('updated', Parsed.UpdatedCode,
-              Parsed.DataFields);
-
-    Result := Result +
-
-              GenerateWatchCode(Parsed.WatchCode) +
-
-              GenerateComputedCodeTyped(Parsed.ComputedCode, Parsed.DataFields) +
-
-              GenerateProvideCode(Parsed.ProvideCode) +
-
-              GenerateInjectCode(Parsed.InjectCode);
+              AppOptsCode;
 
     // Router
 

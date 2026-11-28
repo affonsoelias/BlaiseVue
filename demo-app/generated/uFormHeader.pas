@@ -6,7 +6,7 @@ unit uFormHeader;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet;
+uses JS, Web, SysUtils, BVComponents, BVReactivity;
 
 procedure Register_uFormHeader;
 
@@ -61,6 +61,7 @@ begin
       // Call emits an event named 'header-clicked' to the parent component.
       TJSFunction(_this['$emit']).call(_this, 'header-clicked', 'Ola do Header!');
     end;
+
 
   comp['methods'] := m;
 

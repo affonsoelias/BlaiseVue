@@ -6,7 +6,7 @@ unit uCharts;
 
 interface
 
-uses JS, Web, BVComponents, BVReactivity, BVStore, BVFSM, SysUtils, BVPascalDX, BVDataSet, BlaiseCharts;
+uses JS, Web, SysUtils, BVComponents, BVReactivity, BVDataSet, BVPascalDX, BlaiseCharts;
 
 procedure Register_uCharts;
 
@@ -350,7 +350,6 @@ begin
     end;
     end;
 
-  comp['methods'] := m;
 
   comp['created'] := procedure(_this: TJSObject)
     begin
@@ -360,6 +359,8 @@ begin
     end;
 
     ;
+  comp['methods'] := m;
+
   RegisterComponent('charts-page', comp);
 end;
 
