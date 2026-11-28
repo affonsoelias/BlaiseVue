@@ -17301,6 +17301,19 @@ Begin
           WriteLn('[1/3] Preparing SDK test fixtures & package components...');
           ScanDirForBV(SDKDir + DirectorySeparator + 'tests' +
                        DirectorySeparator + 'fixtures', FixtureBVs);
+          If FindDelsafecPath = '' Then
+            Begin
+              For I := FixtureBVs.Count - 1 DownTo 0 Do
+                Begin
+                  If Pos('lang="delsafe"', LowerCase(ReadFileToString(FixtureBVs[
+                     I]))) > 0 Then
+                    Begin
+                      WriteLn('  [skip] ', ExtractFileName(FixtureBVs[I]),
+                              ' (optional delsafec not installed)');
+                      FixtureBVs.Delete(I);
+                    End;
+                End;
+            End;
           TranspileBVListCached(FixtureBVs, GenPath, CacheDir, NoCache, False);
 
           If (Domains.IndexOf('platforms') >= 0) Or (FilterLow <> '') Then

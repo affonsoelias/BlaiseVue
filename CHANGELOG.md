@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized CLI Capacitor recommendations to `bv capacitor` while retaining `bv mobile` as an alias.
 
 ### Fixed
+- Skipped optional DelSafe test fixtures in `bv test --sdk` when `delsafec` is not installed so pure-Pascal SDK suites pass in clean CI environments.
 - Used `textContent` in the `BVDevTools` event timeline logger for consistent browser and `jsdom` compatibility.
 - Fixed horizontal clipping on `BVDataGrid` (`Data` page) and CRUD tables in mobile and Capacitor viewports.
 - Automatically injected the active CLI framework version into `BVDevTools`, `BVCompiler`, and clean starter projects created with `bv create <name>`.
