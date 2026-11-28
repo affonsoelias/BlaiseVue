@@ -1,3 +1,7 @@
+param(
+    [string]$Version = ""
+)
+
 $ErrorActionPreference = 'Stop'
 
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -6,6 +10,21 @@ $SrcFile = Join-Path $BinDir 'bv.pas'
 $TargetNew = Join-Path $BinDir 'bv_new.exe'
 $TargetExe = Join-Path $BinDir 'bv.exe'
 $TargetBak = Join-Path $BinDir 'bv.bak.exe'
+
+if (-not [string]::IsNullOrWhiteSpace($Version)) {
+    $env:BV_BUILD_VERSION = $Version.Trim().TrimStart('v', 'V')
+} elseif ([string]::IsNullOrWhiteSpace($env:BV_BUILD_VERSION)) {
+    $pkgFile = Join-Path $RootDir 'package.json'
+    if (Test-Path $pkgFile) {
+        try {
+            $pkg = Get-Content $pkgFile -Raw | ConvertFrom-Json
+            if ($pkg.version) { $env:BV_BUILD_VERSION = ([string]$pkg.version).Trim().TrimStart('v', 'V') }
+        } catch {}
+    }
+    if ([string]::IsNullOrWhiteSpace($env:BV_BUILD_VERSION)) {
+        $env:BV_BUILD_VERSION = '0.1.1'
+    }
+}
 
 function Find-FpcExecutable {
     $cmd = Get-Command fpc -ErrorAction SilentlyContinue

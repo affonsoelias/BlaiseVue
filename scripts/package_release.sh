@@ -114,6 +114,17 @@ for f in package.json README.md LICENSE; do
   [[ -f "$f" ]] && cp "$f" "$STAGE_DIR/$f"
 done
 
+# Auto-stamp staged package.json version to match the exact release/tag version
+if [[ -f "$STAGE_DIR/package.json" ]]; then
+  if command -v node >/dev/null 2>&1; then
+    node -e 'const fs=require("fs");const p=process.argv[1];const d=JSON.parse(fs.readFileSync(p,"utf8"));d.version=process.argv[2];fs.writeFileSync(p,JSON.stringify(d,null,2)+"\n");' "$STAGE_DIR/package.json" "$CLEAN_VERSION"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys;p=sys.argv[1];d=json.load(open(p));d["version"]=sys.argv[2];json.dump(d,open(p,"w"),indent=2)' "$STAGE_DIR/package.json" "$CLEAN_VERSION"
+  else
+    sed -i.bak -E "s/(\"version\"[[:space:]]*:[[:space:]]*\")[^\"]*(\")/\1${CLEAN_VERSION}\2/" "$STAGE_DIR/package.json" && rm -f "$STAGE_DIR/package.json.bak"
+  fi
+fi
+
 # Scrub any stray build artifacts inside staged tree
 find "$STAGE_DIR" -type f \( -name '*.o' -o -name '*.ppu' -o -name '*.dcu' -o -name '*.bak' -o -name '*.log' \) -delete 2>/dev/null || true
 

@@ -9,7 +9,6 @@ Program bv;
   🛡️ BlaiseVue Compiler, Single File Component (SFC) Preprocessor & CLI Engine
   =============================================================================
   Part of the BlaiseVue Universal Reactive Framework for Object Pascal.
-  Version: 0.1.0 (Pre-Release)
   Target:  Free Pascal Compiler (FPC 3.2.0+) / Windows, Linux, macOS
   Build:   fpc -FEbin bin/bv.pas (or "fpc bv.pas" from within bin/)
 
@@ -13451,8 +13450,11 @@ Var
 { Returns the current SemVer version string of the BlaiseVue CLI. }
 Function GetCliVersion: string;
 
+Const 
+  BV_COMPILED_VERSION = {$I %BV_BUILD_VERSION%};
+
 Var 
-  CurP, SdkDir, PkgPath, Content: string;
+  CurP, SdkDir, PkgPath, Content, BuiltVer: string;
   PObj: TJSONObject;
 Begin
   If CachedCliVersion <> '' Then
@@ -13461,7 +13463,10 @@ Begin
       Exit;
     End;
 
-  Result := '0.1.1';
+  BuiltVer := Trim(BV_COMPILED_VERSION);
+  If (Length(BuiltVer) > 1) And ((BuiltVer[1] = 'v') Or (BuiltVer[1] = 'V')) Then
+    Delete(BuiltVer, 1, 1);
+
   PkgPath := GetCurrentDir + DirectorySeparator + 'package.json';
   If FileExists(PkgPath) Then
     Begin
@@ -13471,18 +13476,26 @@ Begin
         Try
           If GetJsonString(PObj, 'name', '') = 'blaisevue' Then
             Begin
-              Result := GetJsonString(PObj, 'version', Result);
+              Result := GetJsonString(PObj, 'version', IfThen(BuiltVer <> '', BuiltVer, '0.1.1'));
               CachedCliVersion := Result;
               Exit;
             End;
         Finally
           PObj.Free;
+        End;
+      Except
+      End;
     End;
-Except
-End;
-End;
 
-PkgPath := GetSDKPath + 'package.json';
+  If BuiltVer <> '' Then
+    Begin
+      Result := BuiltVer;
+      CachedCliVersion := Result;
+      Exit;
+    End;
+
+  Result := '0.1.1';
+  PkgPath := GetSDKPath + 'package.json';
 If Not FileExists(PkgPath) Then
   Begin
     SdkDir := ExtractFilePath(ParamStr(0));
@@ -16374,7 +16387,7 @@ Begin
       CmdBuild;
     End;
 
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Dev Server (HMR Enabled) ===')
+  WriteLn('=== BlaiseVue v' + GetCliVersion + ' Dev Server (HMR Enabled) ===')
   ;
   If Not HasCommand('node') Then
     Begin
@@ -16416,7 +16429,7 @@ Var
   NoOpen: Boolean;
   i: Integer;
 Begin
-  WriteLn('=== BlaiseVue Studio 4.0 Developer Cockpit ===');
+  WriteLn('=== BlaiseVue Studio v' + GetCliVersion + ' Developer Cockpit ===');
   If Not HasCommand('node') Then
     Begin
       PrintNodeRequiredError('launch BlaiseVue Studio');
@@ -17691,7 +17704,7 @@ Var
   Content: string;
   pStart, pEnd: Integer;
 Begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor +
+  WriteLn('=== BlaiseVue v' + GetCliVersion +
           ' Documentation & Component Playground Generator ===');
   CurDir := GetCurrentDir;
   DocPath := CurDir + DirectorySeparator + 'dist' + DirectorySeparator + 'docs'
@@ -17809,7 +17822,7 @@ Begin
 
       '  <meta name="viewport" content="width=device-width, initial-scale=1.0">'#10 +
 
-                    '  <title>BlaiseVue ' + GetCliMajorMinor +
+                    '  <title>BlaiseVue v' + GetCliVersion +
                     ' Documentation & Component Playground</title>'#10 +
 
                     '  <style>'#10 +
@@ -18203,7 +18216,7 @@ Var
   i: Integer;
   SsgFragment: string;
 Begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor +
+  WriteLn('=== BlaiseVue v' + GetCliVersion +
           ' Static Site Generator (SSG & Pre-rendering) ===');
   AppFile := 'src' + DirectorySeparator + 'app.bv';
   If Not FileExists(AppFile) Then
@@ -18287,7 +18300,7 @@ End;
 { WebAssembly compilation, diagnostic, and benchmark runner (bv wasm). }
 Procedure CmdWasm(Const SubCmd: String);
 Begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' WebAssembly Engine ===');
+  WriteLn('=== BlaiseVue v' + GetCliVersion + ' WebAssembly Engine ===');
   If SubCmd = 'info' Then
     Begin
       WriteLn('  Target Architecture: wasm32-wasi / wasm32-unknown');
@@ -18320,7 +18333,7 @@ End;
 { Runs headless end-to-end browser test suites validating navigation, forms, and hydration (bv test e2e). }
 Procedure CmdTestE2E;
 Begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Headless E2E Test Suite ===');
+  WriteLn('=== BlaiseVue v' + GetCliVersion + ' Headless E2E Test Suite ===');
   If Not HasCommand('node') Then
     Begin
       PrintNodeRequiredError('run headless E2E tests with Vitest');
@@ -21866,7 +21879,7 @@ Begin
     End;
 End;
 Begin
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor + ' Capacitor Engine ===');
+  WriteLn('=== BlaiseVue v' + GetCliVersion + ' Capacitor Engine ===');
   IsRelease := False;
   IsBundle := False;
   IsAllTargets := False;
@@ -22479,8 +22492,8 @@ Else If (SubCmd = 'init') Then
            Begin
              ReadmeContent := 
 
-                              '# ' + ActualAppName + ' (BlaiseVue ' +
-                              GetCliMajorMinor + ' Mobile)' + #10 +
+                              '# ' + ActualAppName + ' (BlaiseVue v' +
+                              GetCliVersion + ' Mobile)' + #10 +
 
                               '' + #10 +
 
@@ -23216,7 +23229,7 @@ Begin
 End;
 Begin
   RequireBlaiseVueProject('bv desktop ' + SubCmd);
-  WriteLn('=== BlaiseVue ' + GetCliMajorMinor +
+  WriteLn('=== BlaiseVue v' + GetCliVersion +
           ' Desktop (WebUI & Lazarus IDE) ===');
 
   {$IFDEF MSWINDOWS}

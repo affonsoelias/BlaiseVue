@@ -125,6 +125,19 @@ try {
         }
     }
 
+    # Auto-stamp staged package.json version to match the exact release/tag version
+    $stagedPkg = Join-Path $StageDir "package.json"
+    if (Test-Path $stagedPkg) {
+        try {
+            $pkgObj = Get-Content $stagedPkg -Raw | ConvertFrom-Json
+            $pkgObj.version = $CleanVersion
+            $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllText($stagedPkg, ($pkgObj | ConvertTo-Json -Depth 10) + "`n", $utf8NoBom)
+        } catch {
+            Write-Warning "Could not update staged package.json version: $_"
+        }
+    }
+
     # Scrub any stray build artifacts inside staged core/packages
     Get-ChildItem -Path $StageDir -Recurse -Include "*.o", "*.ppu", "*.dcu", "*.bak", "*.log" -File -ErrorAction SilentlyContinue |
         Remove-Item -Force -ErrorAction SilentlyContinue

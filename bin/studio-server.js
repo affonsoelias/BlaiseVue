@@ -1,4 +1,4 @@
-// BlaiseVue Studio 4.0 - Developer Cockpit & Live Hub Server (zero-dependency WebSocket)
+// BlaiseVue Studio - Developer Cockpit & Live Hub Server (zero-dependency WebSocket)
 import http from 'http';
 import crypto from 'crypto';
 import fs from 'fs';
@@ -23,6 +23,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const STUDIO_DIR = path.resolve(__dirname, 'studio');
 const STUDIO_HTML_PATH = path.join(STUDIO_DIR, 'index.html');
+
+function resolveSdkVersion() {
+  try {
+    const pkgPath = path.resolve(__dirname, '..', 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      if (pkg && pkg.version) return String(pkg.version).replace(/^v/i, '');
+    }
+  } catch {}
+  return '';
+}
+const BV_VERSION = resolveSdkVersion();
+const STUDIO_TITLE = BV_VERSION ? `BlaiseVue Studio v${BV_VERSION}` : 'BlaiseVue Studio';
 
 // Helper to scan directory recursively for .bv files
 function scanBVFiles(dir, fileList = []) {
@@ -276,7 +289,7 @@ server.on('upgrade', (req, socket) => {
   client.send(JSON.stringify({
     type: 'studio:welcome',
     payload: {
-      message: 'Connected to BlaiseVue Studio 4.0 Hub',
+      message: `Connected to ${STUDIO_TITLE} Hub`,
       time: new Date().toISOString()
     }
   }));
@@ -366,7 +379,7 @@ watchDirs.forEach(dir => {
 // Start Server
 server.listen(PORT, () => {
   console.log(`\n======================================================`);
-  console.log(` 🛡️  BlaiseVue Studio 4.0 - Developer Cockpit Active`);
+  console.log(` 🛡️  ${STUDIO_TITLE} - Developer Cockpit Active`);
   console.log(`======================================================`);
   console.log(`  Studio Dashboard: http://localhost:${PORT}`);
   console.log(`  Live WebSocket:   ws://localhost:${PORT}/ws`);

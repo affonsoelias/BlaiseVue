@@ -7,6 +7,13 @@ set "TARGET_NEW=%BIN_DIR%\bv_new.exe"
 set "TARGET_EXE=%BIN_DIR%\bv.exe"
 set "TARGET_BAK=%BIN_DIR%\bv.bak.exe"
 
+if not defined BV_BUILD_VERSION (
+    for /f "usebackq delims=" %%v in (`powershell -NoProfile -Command "$p='%ROOT_DIR%package.json'; if (Test-Path $p) { (Get-Content $p -Raw | ConvertFrom-Json).version }" 2^>nul`) do (
+        if not defined BV_BUILD_VERSION set "BV_BUILD_VERSION=%%v"
+    )
+    if not defined BV_BUILD_VERSION set "BV_BUILD_VERSION=0.1.1"
+)
+
 echo ================================================================
 echo   BlaiseVue CLI Native Build (Windows / CMD)
 echo ================================================================

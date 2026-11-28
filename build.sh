@@ -8,6 +8,16 @@ TARGET_NEW="$BIN_DIR/bv_new"
 TARGET_BIN="$BIN_DIR/bv"
 TARGET_BAK="$BIN_DIR/bv.bak"
 
+if [ -z "${BV_BUILD_VERSION:-}" ]; then
+    if [ -f "$ROOT_DIR/package.json" ]; then
+        BV_BUILD_VERSION="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$ROOT_DIR/package.json" | head -n 1 || true)"
+    fi
+    BV_BUILD_VERSION="${BV_BUILD_VERSION:-0.1.1}"
+    BV_BUILD_VERSION="${BV_BUILD_VERSION#v}"
+    BV_BUILD_VERSION="${BV_BUILD_VERSION#V}"
+fi
+export BV_BUILD_VERSION
+
 echo "================================================================"
 echo "  BlaiseVue CLI Native Build (Linux / macOS)"
 echo "================================================================"
