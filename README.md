@@ -21,6 +21,7 @@
 > BlaiseVue is currently in active public pre-release (**`v0.1.1`** / **`v0.1.x`** series). The platform is **fully functional, battle-tested, and ready to install in one command via prebuilt binaries (`install.ps1` / `install.sh` — no Git or Free Pascal compiler required to build SPAs)**, create instant projects with zero `npm install`, run the on-demand `demo-app`, test, and evaluate full-stack architectures.
 >
 > BlaiseVue will continue evolving within the **`v0.1.x`** series across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**.
+> BlaiseVue will continue evolving within the **`v0.1.x`** series across upcoming architectural milestones (including Serverless Edge / BlaiseEdge), with **no scheduled release date yet for `v1.0.0`**. See [CHANGELOG.md](CHANGELOG.md) for detailed release notes across versions.
 >
 > We warmly invite developers and the Pascal community to install or clone BlaiseVue, build applications, share feedback, and join us in shaping the future of Object Pascal on the modern Web!
 

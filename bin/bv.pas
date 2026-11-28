@@ -5206,6 +5206,11 @@ Begin
 
             // Minimal src/views/About.bv
             Content := GetTemplate('TPL_ABOUT_BV', 'About.bv');
+            Content := StringReplace(Content, '{{FRAMEWORK_VERSION}}',
+                                     GetCliVersion, [rfReplaceAll]);
+            Content := StringReplace(Content, 'BlaiseVue 2.0 PRO',
+                                     'BlaiseVue v' + GetCliVersion,
+                                     [rfReplaceAll]);
             WriteStringToFile(Base + 'src' + DirectorySeparator + 'views' +
                               DirectorySeparator + 'About.bv', Content);
 
@@ -5326,6 +5331,8 @@ Begin
         Content := GetTemplate('TPL_PACKAGE_JSON', 'package.json');
         Content := StringReplace(Content, '{{PROJECT_NAME}}', RealProjectName, [
                    rfReplaceAll]);
+        Content := StringReplace(Content, '"version": "1.0.0"',
+                                 '"version": "0.1.0"', [rfReplaceAll]);
         WriteStringToFile(Base + 'package.json', Content);
       End;
 
@@ -8211,6 +8218,41 @@ End;
 
 // =====================================================================
 
+{ Injects window.__BV_FRAMEWORK_VERSION__ and window.__BV_APP_VERSION__ before </head> so BVDevTools/BVCompiler read them on startup }
+
+Function InjectFrameworkVersionTag(Const Html: String): string;
+
+Var 
+  VerScript, AppVer: string;
+  PkgObj: TJSONObject;
+Begin
+  If (Pos('__BV_FRAMEWORK_VERSION__', Html) > 0) And
+     (Pos('__BV_APP_VERSION__', Html) > 0) Then
+    Begin
+      Result := Html;
+      Exit;
+    End;
+  AppVer := '0.1.0';
+  PkgObj := Nil;
+  If LoadPackageJson(PkgObj) Then
+    Try
+      AppVer := Trim(GetJsonString(PkgObj, 'version', '0.1.0'));
+      If AppVer = '' Then
+        AppVer := '0.1.0';
+    Finally
+      PkgObj.Free;
+    End;
+  AppVer := StringReplace(AppVer, '"', '', [rfReplaceAll]);
+  VerScript := '  <script>window.__BV_FRAMEWORK_VERSION__ = "' +
+               GetCliVersion + '"; window.__BV_APP_VERSION__ = "' +
+               AppVer + '";</script>' + #10;
+  If Pos('</head>', LowerCase(Html)) > 0 Then
+    Result := StringReplace(Html, '</head>', VerScript + '</head>', [
+                            rfIgnoreCase])
+  Else
+    Result := VerScript + Html;
+End;
+
 { Execution cycle: Transpile .bv -> Pascal -> JS and setup public assets }
 
 Procedure CmdBuild;
@@ -8483,6 +8525,7 @@ Begin
       IndexHTML := StringReplace(IndexHTML, 'rtl.js', 'rtl.js?v=' + TagName, [
                    rfReplaceAll]);
 
+    IndexHTML := InjectFrameworkVersionTag(IndexHTML);
     WriteStringToFile(DistPath + 'index.html', IndexHTML);
     WriteLn('  index.html -> dist/ (cache bust v=' + TagName + ')');
 End;
@@ -12983,7 +13026,7 @@ Begin
     Begin
       WriteLn('  [SUCCESS] Mobile platform removed successfully!');
       WriteLn('  [INFO] To re-enable it in the future, simply run:');
-      WriteLn('         bv mobile init');
+      WriteLn('         bv capacitor init');
     End;
 End;
 
@@ -16346,6 +16389,7 @@ Begin
                    rfIgnoreCase]);
     End;
 
+  IndexHTML := InjectFrameworkVersionTag(IndexHTML);
   WriteStringToFile(DistPath + 'index.html', IndexHTML);
 End;
 
@@ -21462,7 +21506,7 @@ Begin
         Begin
           WriteLn('  [ERROR] Android native project not found at: ' + AndroidDir
           );
-          WriteLn('          Run "bv mobile init" first.');
+          WriteLn('          Run "bv capacitor init" first.');
           Exit(False);
         End;
 
@@ -21644,7 +21688,7 @@ Begin
            WriteLn(
 
 
-'         Assets are synchronized and ready. On macOS, run "bv mobile open ios" or "bv mobile build ios".'
+'         Assets are synchronized and ready. On macOS, run "bv capacitor open ios" or "bv capacitor build ios".'
            );
            Result := True;
       {$ENDIF}
@@ -22542,40 +22586,40 @@ Else If (SubCmd = 'init') Then
 
                               '# 1. Sync frontend to mobile assets' + #10 +
 
-                              'bv mobile sync' + #10 +
+                              'bv capacitor sync' + #10 +
 
                               '' + #10 +
 
                               '# 2. Build for Android' + #10 +
 
-                              'bv mobile build android            # Debug APK' +
+                              'bv capacitor build android            # Debug APK' +
                               #10 +
 
 
 
 
-  'bv mobile build android --release  # Release APK (optimized / local testing)'
+  'bv capacitor build android --release  # Release APK (optimized / local testing)'
                               + #10 +
 
 
 
 
-'bv mobile build android --bundle   # Android App Bundle (.aab) for Google Play Console'
+'bv capacitor build android --bundle   # Android App Bundle (.aab) for Google Play Console'
                               + #10 +
 
                               '' + #10 +
 
                               '# 3. Build for iOS (macOS only)' + #10 +
 
-                              'bv mobile build ios' + #10 +
+                              'bv capacitor build ios' + #10 +
 
                               '' + #10 +
 
                               '# 4. Build for all mobile platforms' + #10 +
 
-                              'bv mobile build all' + #10 +
+                              'bv capacitor build all' + #10 +
 
-                              'bv mobile build all --release' + #10 +
+                              'bv capacitor build all --release' + #10 +
 
                               '' + #10 +
 
@@ -22584,37 +22628,37 @@ Else If (SubCmd = 'init') Then
 
 
 
-                 'bv mobile run android              # Install & launch via ADB'
+                 'bv capacitor run android              # Install & launch via ADB'
                               + #10 +
 
 
 
 
-               'bv mobile run android --emulator   # Launch in Android Emulator'
+               'bv capacitor run android --emulator   # Launch in Android Emulator'
                               + #10 +
 
 
 
 
-                      'bv mobile emulator list            # List available AVDs'
+                      'bv capacitor emulator list            # List available AVDs'
                               + #10 +
 
 
 
 
-                        'bv mobile emulator start           # Start default AVD'
+                        'bv capacitor emulator start           # Start default AVD'
                               + #10 +
 
 
 
 
-                   'bv mobile open android             # Open in Android Studio'
+                   'bv capacitor open android             # Open in Android Studio'
                               + #10 +
 
 
 
 
-                            'bv mobile open ios                 # Open in Xcode'
+                            'bv capacitor open ios                 # Open in Xcode'
                               + #10 +
 
                               '```' + #10;
@@ -22625,11 +22669,11 @@ Else If (SubCmd = 'init') Then
 
          WriteLn('');
          WriteLn('Mobile initialization complete in mobile/ !');
-         WriteLn('Run "bv mobile open android" to launch Android Studio.');
+         WriteLn('Run "bv capacitor open android" to launch Android Studio.');
          WriteLn(
 
 
-          'Run "bv mobile build android" to compile APK to mobile/bin/android/.'
+          'Run "bv capacitor build android" to compile APK to mobile/bin/android/.'
          );
        End
 
@@ -22655,7 +22699,7 @@ Else If (SubCmd = 'upgrade') Or (SubCmd = 'migrate') Then
              WriteLn(
 
 
-                '      Run "bv mobile init" to scaffold a mobile project first.'
+                '      Run "bv capacitor init" to scaffold a mobile project first.'
              );
              Exit;
            End;
@@ -45889,7 +45933,7 @@ Begin
                WriteLn(
 
 
-           'Please use "bv mobile remove" to safely delete the mobile platform.'
+           'Please use "bv capacitor remove" to safely delete the mobile platform.'
                );
                Halt(1);
              End

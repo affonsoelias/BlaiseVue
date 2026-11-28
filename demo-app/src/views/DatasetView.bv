@@ -25,7 +25,7 @@
     </div>
 
     <!-- VIEW TABS: DATASET CRUD vs VIRTUAL SCROLL BENCHMARK -->
-    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
       <button
         type="button"
         class="bui-btn bui-btn-sm"
@@ -100,8 +100,8 @@
       </div>
 
       <!-- MAIN GRID SECTION WITH NATIVE :dataset BINDING -->
-      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 20px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 16px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
           <h3 style="font-size: 18px; margin: 0;">📋 DataSet DataGrid (&lt;bv-datagrid&gt;)</h3>
           <span style="font-size: 13px; color: var(--bv-text-muted);">Click any row to synchronize the dataset active cursor</span>
         </div>
@@ -110,8 +110,8 @@
       </div>
 
       <!-- LIVEBINDINGS FORM SECTION (b-field) -->
-      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 24px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--bv-border); padding-bottom: 12px;">
+      <div class="card mb-4" style="background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; padding: 18px; box-shadow: var(--bv-shadow); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; border-bottom: 1px solid var(--bv-border); padding-bottom: 12px;">
           <div>
             <h3 style="font-size: 18px; margin: 0;">✏️ LiveBindings Form (`b-field`)</h3>
             <p style="font-size: 13px; color: var(--bv-text-muted); margin-top: 4px;">Edit any field below: the dataset transitions into <code>dsEdit</code> mode and persists automatically.</p>

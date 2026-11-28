@@ -21,13 +21,24 @@ implementation
 procedure InitDevTools;
 begin
   asm
-    let ver = (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? ('v' + pas.uAppVersion.APP_VERSION) : 'v0.1.0';
-    console.log("%c BlaiseVue DevTools " + ver + " ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", ver + "-enterprise");
+    let fwRaw = (typeof window !== 'undefined' && window.__BV_FRAMEWORK_VERSION__)
+      ? String(window.__BV_FRAMEWORK_VERSION__).replace(/^v/i, '')
+      : 'dev';
+    let fwVer = (fwRaw === 'dev') ? 'dev' : ('v' + fwRaw);
+    let appRaw = (typeof window !== 'undefined' && window.__BV_APP_VERSION__)
+      ? String(window.__BV_APP_VERSION__).replace(/^v/i, '')
+      : ((typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION)
+        ? String(pas.uAppVersion.APP_VERSION).replace(/^v/i, '')
+        : '0.1.0');
+    let appVer = 'v' + appRaw;
+    console.log("%c BlaiseVue DevTools " + fwVer + " ", "background: #41b883; color: #fff; border-radius: 3px; padding: 2px 5px; font-weight: bold;", "App " + appVer);
 
     // Initialize global DevTools Hook for browser extensions and external inspectors
     if (!window.__BV_DEVTOOLS_HOOK__) {
       window.__BV_DEVTOOLS_HOOK__ = {
-        version: (typeof pas !== 'undefined' && pas.uAppVersion && pas.uAppVersion.APP_VERSION) ? pas.uAppVersion.APP_VERSION : "0.1.0",
+        version: fwRaw,
+        frameworkVersion: fwRaw,
+        appVersion: appRaw,
         listeners: {},
         events: [],
         snapshots: [],
@@ -64,7 +75,7 @@ begin
         }
       };
     }
-    
+
     // Inject the visual overlay styles
     let s = document.createElement('style');
     s.innerHTML = `
@@ -164,11 +175,15 @@ begin
            <i class="bv-dt-live-blob"></i>
          </div>
          <div class="bv-dt-header-actions">
-           <span class="bv-dt-tag">` + ver + `</span>
+           <span class="bv-dt-tag">` + fwVer + `</span>
            <button class="bv-dt-collapse-btn" id="bv-dt-btn" title="Minimizar">—</button>
          </div>
        </div>
        <div class="bv-dt-body" id="bv-dt-body">
+         <div class="bv-dt-stat" id="bv-app-version">
+           <span>App Version:</span>
+           <span>` + appVer + `</span>
+         </div>
          <div class="bv-dt-stat">
            <span>Reactivity:</span>
            <span>Active <i class="bv-dt-live-blob"></i></span>

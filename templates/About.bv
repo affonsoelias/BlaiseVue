@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>About</h2>
-    <p>This project was created with BlaiseVue 2.0 PRO.</p>
+    <p>This project was created with BlaiseVue v{{FRAMEWORK_VERSION}}.</p>
   </div>
 </template>
 
