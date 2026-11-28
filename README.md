@@ -97,7 +97,7 @@ Explore production software and companion repositories built with and alongside 
 
 ## 📖 Roadmap & Technical Documentation
 
-For the complete architectural evolution specifications, delivered enterprise pillars, and future roadmap milestones (v2.0 to v5.0), see:
+For the complete architectural specifications, delivered enterprise pillars, and upcoming roadmap phases, see:
 
 - 🎓 **[Complete Course: Zero to Ninja (doc/Course/README.md)](doc/Course/README.md)**: 13 beginner-friendly practical modules with step-by-step guides, runnable `.bv` examples, and real-world analogies.
 - 🗺️ **[Technical Roadmap (doc/Documentation/99-roadmap.md)](doc/Documentation/99-roadmap.md)**: Full architecture breakdown, testing matrices, and future horizons.
@@ -130,7 +130,7 @@ BlaiseVue/
 │   ├── BVI18n.pas             # Internationalization & localization engine ($t)
 │   ├── BVTheme.pas            # Theme switcher & persistence engine ($theme)
 │   ├── BVWasm.pas             # WebAssembly acceleration engine ($wasm)
-│   ├── BVStore.pas            # BlaiseX 2.0 modular store (, )
+│   ├── BVStore.pas            # BlaiseX modular reactive state store
 │   ├── BVFSM.pas              # Deterministic Finite State Machines (TBVStateMachine)
 │   ├── BVMiddleware.pas       # Action/mutation pipeline (Logger, AuthGuard, Telemetry)
 │   ├── BVStoreHistory.pas     # Time-travel debugging, snapshots & DevTools bridge
