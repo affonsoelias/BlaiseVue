@@ -1,0 +1,197 @@
+name: Release BlaiseVue
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  schedule:
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel (stable or nightly)'
+        required: false
+        default: 'stable'
+        type: choice
+        options:
+          - stable
+          - nightly
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Check Release Needed
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.gate.outputs.should_build }}
+    steps:
+      - name: Skip checkout on tag or manual runs
+        id: pre
+        if: github.event_name != 'schedule'
+        run: echo "should_build=true" >> $GITHUB_OUTPUT
+
+      - name: Checkout main for schedule comparison
+        if: github.event_name == 'schedule'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Compare main HEAD against nightly tag
+        id: gate
+        run: |
+          if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          NIGHTLY_SHA="$(git ls-remote origin refs/tags/nightly 'refs/tags/nightly^{}' | awk '/\^\{\}$/ { sha=$1 } END { print sha }')"
+          if [[ -z "$NIGHTLY_SHA" ]]; then
+            NIGHTLY_SHA="$(git ls-remote origin refs/tags/nightly | awk '{print $1}' | head -n 1 || true)"
+          fi
+          echo "main HEAD: ${{ github.sha }}"
+          echo "nightly  : ${NIGHTLY_SHA:-<none>}"
+          if [[ -n "$NIGHTLY_SHA" && "$NIGHTLY_SHA" == "${{ github.sha }}" ]]; then
+            echo "No new commits on main since last nightly build; skipping."
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          else
+            echo "New commits detected on main (or first nightly); proceeding with build."
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build & Package (${{ matrix.os }})
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Free Pascal on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fpc
+
+      - name: Install Free Pascal on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install fpc
+
+      - name: Install Free Pascal on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command fpc -ErrorAction SilentlyContinue)) {
+            choco install lazarus -y --no-progress
+            $fpcDir = Get-ChildItem "C:\lazarus\fpc" -Recurse -Filter "fpc.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty DirectoryName
+            if ($fpcDir) { "$fpcDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append }
+          }
+
+      - name: Build and package on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          $baseVer = if ($pkg.version) { [string]$pkg.version } else { "0.1.1" }
+          $tag = "${{ github.ref_name }}"
+          if ($tag.StartsWith("v")) {
+            $ver = $tag.Substring(1)
+          } elseif ("${{ github.event_name }}" -eq "schedule" -or "${{ inputs.channel }}" -eq "nightly") {
+            $dateStamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd")
+            $ver = "$baseVer-nightly.$dateStamp"
+          } else {
+            $ver = $baseVer
+          }
+          $env:BV_BUILD_VERSION = $ver
+          powershell -ExecutionPolicy Bypass -File .\build.ps1 -Version $ver
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\bin\bv.exe --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -ExecutionPolicy Bypass -File scripts/package_release.ps1 -Version $ver -OutDir dist -SkipBuild
+
+      - name: Build and package on Linux / macOS
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x build.sh scripts/package_release.sh
+          BASE_VER="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' package.json | head -n 1 || true)"
+          BASE_VER="${BASE_VER:-0.1.1}"
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" == v* ]]; then
+            VER="${TAG#v}"
+          elif [[ "${{ github.event_name }}" == "schedule" || "${{ inputs.channel }}" == "nightly" ]]; then
+            VER="${BASE_VER}-nightly.$(date -u +%Y%m%d)"
+          else
+            VER="$BASE_VER"
+          fi
+          export BV_BUILD_VERSION="$VER"
+          ./build.sh
+          ./bin/bv --version
+          ./scripts/package_release.sh --version="$VER" --out-dir=dist --skip-build
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: dist/*
+
+  publish:
+    needs: [check, build]
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Consolidate release files & SHA256SUMS.txt
+        run: |
+          mkdir -p release-files
+          find artifacts -type f \( -name '*.zip' -o -name '*.tar.gz' -o -name '*.sha256' \) -exec cp {} release-files/ \;
+          cat artifacts/**/SHA256SUMS.txt > release-files/SHA256SUMS.txt
+
+      - name: Determine release tag
+        id: meta
+        run: |
+          BASE_VER="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' package.json | head -n 1 || true)"
+          BASE_VER="${BASE_VER:-0.1.0}"
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ inputs.channel }}" == "nightly" ]]; then
+            echo "tag=nightly" >> $GITHUB_OUTPUT
+            echo "name=BlaiseVue Nightly (main)" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "name=BlaiseVue ${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v${BASE_VER}" >> $GITHUB_OUTPUT
+            echo "name=BlaiseVue v${BASE_VER}" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Move nightly Git tag to current HEAD
+        if: steps.meta.outputs.tag == 'nightly'
+        run: |
+          git tag -f nightly "${{ github.sha }}"
+          git push -f origin refs/tags/nightly
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          generate_release_notes: true
+          files: release-files/*

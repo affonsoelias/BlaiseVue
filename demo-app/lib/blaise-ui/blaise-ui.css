@@ -280,6 +280,8 @@ body.theme-dark {
   display: flex;
   align-items: stretch;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--bui-border);
   border-radius: var(--bui-radius);
   overflow: hidden;
@@ -295,12 +297,16 @@ body.theme-dark {
   font-weight: 500;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   user-select: none;
 }
 .bui-input-addon-prepend { border-right: 1px solid var(--bui-border); }
 .bui-input-addon-append { border-left: 1px solid var(--bui-border); }
 .bui-input-group-field {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
   border: none;
   outline: none;
   padding: 8px 12px;
@@ -308,6 +314,19 @@ body.theme-dark {
   font-family: inherit;
   background: transparent;
   color: var(--bui-text);
+}
+.bui-input-group-row > .bui-input-group {
+  flex: 1 1 0%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.bui-input-group-row > .bui-input-group > .bui-input-field,
+.bui-input-group-row > input {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  border-radius: 0;
 }
 
 /* ==========================================================================

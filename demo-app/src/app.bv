@@ -168,8 +168,15 @@
 
   /* Responsive layout for tablets and mobile */
   @media (max-width: 992px) {
+  html, body {
+    overflow-x: clip;
+  }
   .app-main-layout {
     margin-left: 0;
+    overflow-x: clip;
+  }
+  .main-content-container {
+    padding: 0 12px;
   }
   .mobile-bottom-bar {
     display: flex;
@@ -180,7 +187,17 @@
     z-index: 1010;
   }
   .app-content-body {
-    padding-bottom: 80px; /* Room for bottom bar on mobile */
+    padding: 16px 0 80px 0; /* Room for bottom bar on mobile */
+  }
+  }
+  @media (max-width: 768px) {
+  .section { padding: 16px; }
+  pre {
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   }
 

@@ -34,33 +34,35 @@
 
     <!-- RESPONSIVE DATA TABLE -->
     <div class="crud-table-wrap">
-      <table class="crud-table">
-        <thead>
-          <tr>
-            <th style="width: 70px;">ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Active</th>
-            <th>Created</th>
-            <th style="width: 170px; text-align: center;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr b-for="item in filteredItems">
-            <td class="cell-id">#{{ item.id }}</td>
-            <td><strong>{{ item.name }}</strong></td>
-            <td><strong>{{ item.email }}</strong></td>
-            <td><strong>{{ item.phone }}</strong></td>
-            <td><span class="status-pill" :class="{ 'pill-active': item.active, 'pill-inactive': !item.active }">{{ item.active ? 'Active' : 'Inactive' }}</span></td>
-            <td class="cell-date">{{ item.createdAt }}</td>
-            <td class="cell-actions">
-              <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>
-              <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="crud-table-scroll">
+        <table class="crud-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Active</th>
+              <th>Created</th>
+              <th style="text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr b-for="item in filteredItems">
+              <td class="cell-id">#{{ item.id }}</td>
+              <td><strong>{{ item.name }}</strong></td>
+              <td><strong>{{ item.email }}</strong></td>
+              <td><strong>{{ item.phone }}</strong></td>
+              <td><span class="status-pill" :class="{ 'pill-active': item.active, 'pill-inactive': !item.active }">{{ item.active ? 'Active' : 'Inactive' }}</span></td>
+              <td class="cell-date">{{ item.createdAt }}</td>
+              <td class="cell-actions">
+                <button class="action-btn edit-btn" title="Edit" @click="openEditModal(item)">✏️ Edit</button>
+                <button class="action-btn del-btn" title="Delete" @click="deleteItem(item.id)">🗑️ Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- EMPTY STATE -->
       <div class="crud-empty" v-if="filteredItems.length === 0">
@@ -221,17 +223,22 @@
   .crud-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
   .crud-title { font-size: 24px; font-weight: 700; color: var(--bv-text); }
   .crud-subtitle { color: var(--bv-text-muted); font-size: 14px; margin-top: 4px; }
-  .crud-header-btns { display: flex; gap: 8px; }
-  .crud-stats-bar { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+  .crud-header-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .crud-stats-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
   .sync-badge { background: rgba(26, 188, 156, 0.14); color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.35); }
   .count-badge { background: var(--bv-surface-subtle); color: var(--bv-text); padding: 4px 10px; border-radius: 20px; font-size: 12px; border: 1px solid var(--bv-border); }
   .crud-toolbar { margin-bottom: 16px; }
   .crud-search-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1px solid var(--bv-border); background: var(--bv-input-bg); color: var(--bv-text); border-radius: 6px; font-size: 14px; outline: none; }
   .crud-search-input:focus { border-color: #42b883; box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.15); }
-  .crud-table-wrap { background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; box-shadow: var(--bv-shadow); overflow-x: auto; }
+  .crud-table-wrap { background: var(--bv-surface); border: 1px solid var(--bv-border); border-radius: 8px; box-shadow: var(--bv-shadow); overflow: hidden; max-width: 100%; }
+  .crud-table-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .crud-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-  .crud-table th { background: var(--bv-surface-subtle); padding: 12px 16px; font-weight: 600; color: var(--bv-text); border-bottom: 2px solid var(--bv-border); }
-  .crud-table td { padding: 12px 16px; border-bottom: 1px solid var(--bv-border); color: var(--bv-text); }
+  .crud-table th { background: var(--bv-surface-subtle); padding: 12px 16px; font-weight: 600; color: var(--bv-text); border-bottom: 2px solid var(--bv-border); white-space: nowrap; }
+  .crud-table td { padding: 12px 16px; border-bottom: 1px solid var(--bv-border); color: var(--bv-text); white-space: nowrap; }
+  @media (max-width: 768px) {
+    .customer-view-page { padding: 8px 0; }
+    .crud-table th, .crud-table td { padding: 10px 10px; font-size: 13px; }
+  }
   .crud-table tr:hover { background: var(--bv-hover-bg); }
   .cell-id { font-weight: 600; color: var(--bv-text-muted); font-family: monospace; }
   .cell-date { font-size: 12px; color: var(--bv-text-muted); }

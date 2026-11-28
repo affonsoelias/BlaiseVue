@@ -17887,7 +17887,7 @@ Begin
 
 
 
-                  '    .main-view { flex: 1; overflow-y: auto; padding: 32px; }'#10 +
+                  '    .main-view { flex: 1; min-width: 0; max-width: 100%; overflow-y: auto; padding: 32px; }'#10 +
 
 
 
@@ -17907,7 +17907,7 @@ Begin
 
 
 
-'    .card { background: var(--bv-card); border: 1px solid var(--bv-border); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }'#10 +
+'    .card { min-width: 0; max-width: 100%; background: var(--bv-card); border: 1px solid var(--bv-border); border-radius: 10px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }'#10 +
 
                     '    h2 { margin-bottom: 8px; font-size: 1.5rem; }'#10 +
 
@@ -17931,21 +17931,25 @@ Begin
 
 
 
-'    pre { background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; }'#10 +
+'    pre { max-width: 100%; background: #1e293b; color: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 13px; }'#10 +
 
                     '    @media (max-width: 768px) {'#10 +
 
 
 
 
-         '      body { flex-direction: column; height: 100vh; overflow: auto; }'#10 +
+         '      body { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; overflow-x: hidden; }'#10 +
 
 
 
 
 '      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--bv-border); max-height: 220px; flex-shrink: 0; }'#10 +
 
-                    '      .main-view { padding: 16px; }'#10 +
+                    '      .main-view { padding: 14px; overflow-y: visible; }'#10 +
+                    '      .card { padding: 16px; }'#10 +
+                    '      .header-bar { flex-wrap: wrap; gap: 10px; }'#10 +
+                    '      pre { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-size: 12px; padding: 12px; }'#10 +
+                    '      table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }'#10 +
 
                     '    }'#10 +
 
