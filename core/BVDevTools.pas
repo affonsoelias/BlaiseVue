@@ -243,7 +243,7 @@ begin
        let list = document.getElementById('bv-dt-events');
        if (list) {
           let line = document.createElement('div');
-          line.innerText = '[' + ev.time.split(' ')[0] + '] ' + ev.type;
+          line.textContent = '[' + ev.time.split(' ')[0] + '] ' + ev.type;
           list.prepend(line);
           while (list.children.length > 8) list.removeChild(list.lastChild);
        }

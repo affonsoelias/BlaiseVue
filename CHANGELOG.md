@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Multiplatform GitHub Actions CI workflow (`.github/workflows/ci.yml`) building `bv` and running CLI smoke + SDK unit test suites across Windows, Linux, and macOS.
+- Zero-dependency CLI and native RFC 6455 WebSocket integration smoke suite (`tests/cli/cli_smoke.mjs`).
+- Unit test suite for `BVDevTools` (`tests/core/devtools.test.pas`).
+
 ### Changed
+- Removed tracked `node_modules/` directory from the Git repository index.
 - Separated framework version (`window.__BV_FRAMEWORK_VERSION__`) from application version (`window.__BV_APP_VERSION__`), adding an `App Version` row to the floating `BVDevTools` overlay and defaulting newly created projects to `0.1.0`.
 - Standardized CLI Capacitor recommendations to `bv capacitor` while retaining `bv mobile` as an alias.
 
 ### Fixed
+- Used `textContent` in the `BVDevTools` event timeline logger for consistent browser and `jsdom` compatibility.
 - Fixed horizontal clipping on `BVDataGrid` (`Data` page) and CRUD tables in mobile and Capacitor viewports.
 - Automatically injected the active CLI framework version into `BVDevTools`, `BVCompiler`, and clean starter projects created with `bv create <name>`.
 

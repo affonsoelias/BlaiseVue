@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Free Pascal on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fpc
+
+      - name: Install Free Pascal on macOS
+        if: runner.os == 'macOS'
+        run: brew install fpc
+
+      - name: Install Free Pascal on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command fpc -ErrorAction SilentlyContinue)) {
+            choco install lazarus -y --no-progress
+            $fpcDir = Get-ChildItem "C:\lazarus\fpc" -Recurse -Filter "fpc.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty DirectoryName
+            if ($fpcDir) { "$fpcDir" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append }
+          }
+
+      - name: Build CLI on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File .\build.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build CLI on Linux / macOS
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Run CLI & WebSocket smoke tests
+        run: node tests/cli/cli_smoke.mjs
+
+      - name: Install Vitest for SDK unit suites
+        run: npm install --no-package-lock
+
+      - name: Run SDK test suites (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\bin\bv.exe test --sdk core --no-cache
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\bin\bv.exe test --sdk state --no-cache
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\bin\bv.exe test --sdk routing_i18n --no-cache
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\bin\bv.exe test --sdk platforms --no-cache
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run SDK test suites (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: |
+          ./bin/bv test --sdk core --no-cache
+          ./bin/bv test --sdk state --no-cache
+          ./bin/bv test --sdk routing_i18n --no-cache
+          ./bin/bv test --sdk platforms --no-cache
