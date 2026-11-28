@@ -8,6 +8,8 @@
 
 > **The Universal Reactive Framework for Object Pascal.**  
 > Build modern Web (SPA/SSG), Native Mobile (Android/iOS), and Ultra-light Desktop apps from a single Pascal codebase.
+>
+> 🌐 **Live Demo:** https://affonsoelias.github.io/BlaiseVue/ · 📚 **Live Component Docs:** https://affonsoelias.github.io/BlaiseVue/docs/index.html
 
 <p align="center">
   <img src="doc/images/blaisevue-showcase.png" alt="BlaiseVue Multiplatform Showcase (Web, Desktop, Mobile)" width="100%">

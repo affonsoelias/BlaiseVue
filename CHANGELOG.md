@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Automated GitHub Pages deployment workflow (`.github/workflows/pages.yml`) publishing the live `demo-app` showcase and component docs.
 - Automatically generate a starter `CHANGELOG.md` (`v0.1.0`) during `bv create`, plus `demo-app/CHANGELOG.md`.
 - Added Zephyr backend evolution roadmap (`vendor/zephyr/ROADMAP.md`, `v0.1.0` -> `v1.0.0`) and `vendor/zephyr/CHANGELOG.md`.
 - Multiplatform GitHub Actions CI workflow (`.github/workflows/ci.yml`) building `bv` and running CLI smoke + SDK unit test suites across Windows, Linux, and macOS.

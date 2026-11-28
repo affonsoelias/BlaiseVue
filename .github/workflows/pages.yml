@@ -1,0 +1,66 @@
+name: Deploy Demo App to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'demo-app/**'
+      - 'core/**'
+      - 'packages/**'
+      - 'bin/bv.pas'
+      - 'package.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Demo App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Free Pascal
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fpc
+
+      - name: Build BlaiseVue CLI
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Build demo-app for production
+        run: |
+          cd demo-app
+          ../bin/bv build --release
+          touch dist/.nojekyll
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo-app/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
